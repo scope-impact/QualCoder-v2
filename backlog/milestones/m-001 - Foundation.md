@@ -1,7 +1,7 @@
 ---
 id: M-001
 title: Foundation
-status: In Progress
+status: Done
 created_date: '2026-01-29'
 ---
 
@@ -26,7 +26,7 @@ Establish the foundational layers of QualCoder v2: shared domain types, agent in
 | QC-002 | Design System Components | Presentation | Done |
 | QC-003 | Application Shell | Presentation | Done |
 | QC-003.01 | Base Signal Bridge Infrastructure | Application | Done |
-| QC-003.02 | Event Bus Infrastructure | Application | To Do |
+| QC-003.02 | Event Bus Infrastructure | Application | Done |
 
 ## Success Criteria
 
@@ -37,4 +37,4 @@ Establish the foundational layers of QualCoder v2: shared domain types, agent in
 - [x] 50+ reusable UI components
 - [x] Navigation and layout system
 - [x] BaseSignalBridge with thread-safe event→signal bridging
-- [ ] EventBus with pub/sub for domain events
+- [x] EventBus with pub/sub for domain events
