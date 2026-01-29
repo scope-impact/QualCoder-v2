@@ -25,10 +25,27 @@ from .codes_panel import CodesPanel
 from .text_editor_panel import TextEditorPanel
 from .details_panel import DetailsPanel
 
+# QualCoder-specific text highlighting (moved from design_system)
+from .text_highlighter import (
+    TextHighlighter,
+    CodeSegment,
+    Annotation,
+    CodedTextHighlight,
+    OverlapIndicator,
+    AnnotationIndicator,
+)
+
 __all__ = [
     "CodingToolbar",
     "FilesPanel",
     "CodesPanel",
     "TextEditorPanel",
     "DetailsPanel",
+    # Text highlighting
+    "TextHighlighter",
+    "CodeSegment",
+    "Annotation",
+    "CodedTextHighlight",
+    "OverlapIndicator",
+    "AnnotationIndicator",
 ]

@@ -20,10 +20,8 @@ def qapp():
     yield app
 
 
-@pytest.fixture
-def qtbot(qapp, qtbot):
-    """Enhanced qtbot with app reference"""
-    return qtbot
+# Note: pytest-qt provides its own qtbot fixture, no need to redefine it
+# The qapp fixture ensures QApplication exists before tests run
 
 
 @pytest.fixture

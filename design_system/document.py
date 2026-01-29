@@ -1,40 +1,110 @@
 """
-Document/Text components
-Text panels, highlights, annotations, and transcript widgets
+Document/Text components - Generic UI primitives for text display.
+
+This module provides reusable text display components that can be used
+in any PyQt6 application. For qualitative coding-specific components
+(highlighting, code segments, annotations), see:
+    src/presentation/organisms/text_highlighter.py
 """
 
 from typing import List, Optional, Tuple
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
-    QFrame, QScrollArea, QTextEdit, QSizePolicy, QPlainTextEdit
+    QFrame, QScrollArea, QPlainTextEdit
 )
 from PyQt6.QtCore import Qt, pyqtSignal
-from PyQt6.QtGui import QTextCursor, QTextCharFormat, QColor, QFont
 
 from .tokens import SPACING, RADIUS, TYPOGRAPHY, ColorPalette, get_theme
 
 
+# =============================================================================
+# Text Color Helper
+# =============================================================================
+
+class TextColor:
+    """
+    Determines contrasting text color (black or white) for a given background.
+
+    Based on luminance calculation with a curated list of known dark colors
+    that need white text for readability.
+
+    Usage:
+        color = TextColor("#FFC107")
+        text_color = color.recommendation  # "#000000" (black)
+
+        color = TextColor("#1B5E20")
+        text_color = color.recommendation  # "#eeeeee" (white)
+    """
+
+    # Colors that need white text for contrast
+    DARK_COLORS = {
+        "#EB7333", "#E65100", "#C54949", "#B71C1C", "#CB5E3C", "#BF360C",
+        "#FA58F4", "#B76E95", "#9F3E72", "#880E4F", "#7D26CD", "#1B5E20",
+        "#487E4B", "#5E9179", "#AC58FA", "#9090E3", "#6B6BDA", "#4646D1",
+        "#3498DB", "#6D91C6", "#3D6CB3", "#0D47A1", "#5882FA", "#9651D7",
+        "#673AB7", "#3F51B5", "#2196F3", "#009688", "#00BCD4", "#4CAF50",
+        "#8BC34A", "#795548", "#607D8B", "#9C27B0", "#E91E63", "#F44336",
+    }
+
+    def __init__(self, hex_color: str):
+        """
+        Initialize with a hex color string.
+
+        Args:
+            hex_color: Hex color like "#FFC107"
+        """
+        self._color = hex_color.upper()
+        self.recommendation = self._calculate_recommendation()
+
+    def _calculate_recommendation(self) -> str:
+        """Calculate whether black or white text provides better contrast."""
+        # Check against known dark colors
+        if self._color in self.DARK_COLORS:
+            return "#EEEEEE"
+
+        # Fallback: calculate luminance
+        try:
+            hex_clean = self._color.lstrip('#')
+            if len(hex_clean) == 6:
+                r = int(hex_clean[0:2], 16)
+                g = int(hex_clean[2:4], 16)
+                b = int(hex_clean[4:6], 16)
+                # Perceived luminance formula
+                luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255
+                return "#000000" if luminance > 0.5 else "#EEEEEE"
+        except (ValueError, IndexError):
+            pass
+
+        return "#000000"  # Default to black text
+
+
+# =============================================================================
+# Text Panel Component
+# =============================================================================
+
 class TextPanel(QFrame):
     """
-    Panel for displaying and editing text documents.
+    Generic panel for displaying text documents.
 
     Supports optional header with title, badge, and stats display.
+    This is a pure display component - for qualitative coding features,
+    see TextHighlighter in the presentation layer.
 
     Usage:
         # Basic usage
         panel = TextPanel()
-        panel.set_text("Interview transcript content...")
+        panel.set_text("Document content...")
         panel.text_selected.connect(self.on_selection)
 
         # With header
         panel = TextPanel(
-            title="ID2.odt",
-            badge_text="Case: ID2",
+            title="Document.txt",
+            badge_text="Draft",
             show_header=True
         )
         panel.set_stats([
-            ("mdi6.layers", "2 overlapping"),
-            ("mdi6.label", "5 codes applied"),
+            ("mdi6.file-word", "1,234 words"),
+            ("mdi6.clock", "5 min read"),
         ])
     """
 
@@ -230,8 +300,18 @@ class TextPanel(QFrame):
             self._line_numbers.set_line_count(count)
 
 
+# =============================================================================
+# Line Number Area
+# =============================================================================
+
 class LineNumberArea(QFrame):
-    """Line number gutter for text editors"""
+    """
+    Line number gutter for text editors.
+
+    Usage:
+        line_numbers = LineNumberArea()
+        line_numbers.set_line_count(100)
+    """
 
     def __init__(self, colors: ColorPalette = None, parent=None):
         super().__init__(parent)
@@ -274,254 +354,16 @@ class LineNumberArea(QFrame):
             label.setVisible(i < count)
 
 
-class CodedTextHighlight(QFrame):
-    """
-    Highlighted text segment with code indicator.
-
-    Supports single codes, overlapping codes, and inline display.
-
-    Usage:
-        # Simple highlight
-        highlight = CodedTextHighlight(
-            text="important passage",
-            code_name="Learning",
-            code_color="#FFC107"
-        )
-
-        # With overlap indicator
-        highlight = CodedTextHighlight(
-            text="overlapping passage",
-            code_name="Learning",
-            code_color="#FFC107",
-            overlap_count=2
-        )
-
-        # Inline mode (for use in rich text)
-        highlight = CodedTextHighlight(
-            text="inline text",
-            code_color="#FFC107",
-            inline=True
-        )
-    """
-
-    clicked = pyqtSignal(str)  # segment_id
-
-    def __init__(
-        self,
-        text: str,
-        code_name: str = "",
-        code_color: str = "#009688",
-        segment_id: str = "",
-        overlap_count: int = 0,
-        inline: bool = False,
-        colors: ColorPalette = None,
-        parent=None
-    ):
-        super().__init__(parent)
-        self._colors = colors or get_theme("dark")
-        self._segment_id = segment_id
-        self._code_color = code_color
-        self._overlap_count = overlap_count
-
-        self.setCursor(Qt.CursorShape.PointingHandCursor)
-
-        if inline:
-            # Inline mode - like HTML span with highlight
-            self._setup_inline(text, code_color, overlap_count)
-        else:
-            # Block mode - card-like display
-            self._setup_block(text, code_name, code_color, overlap_count)
-
-    def _setup_inline(self, text: str, color: str, overlap_count: int):
-        """Setup inline highlight (for use in text flow)"""
-        overlap_style = "text-decoration: overline; text-decoration-color: #FF9800;" if overlap_count > 1 else ""
-
-        self.setStyleSheet(f"""
-            CodedTextHighlight {{
-                background-color: {color}4D;
-                border-bottom: 2px solid {color};
-                border-radius: 2px;
-                padding: 2px 0;
-            }}
-            CodedTextHighlight:hover {{
-                filter: brightness(1.2);
-            }}
-        """)
-
-        layout = QHBoxLayout(self)
-        layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(0)
-
-        text_label = QLabel(text)
-        text_label.setStyleSheet(f"""
-            color: {self._colors.text_primary};
-            {overlap_style}
-        """)
-        layout.addWidget(text_label)
-
-        # Overlap badge
-        if overlap_count > 1:
-            badge = OverlapIndicator(count=overlap_count, colors=self._colors)
-            layout.addWidget(badge)
-
-    def _setup_block(self, text: str, code_name: str, color: str, overlap_count: int):
-        """Setup block highlight (card-like display)"""
-        self.setStyleSheet(f"""
-            CodedTextHighlight {{
-                background-color: {color}26;
-                border-left: 3px solid {color};
-                border-radius: 0 {RADIUS.sm}px {RADIUS.sm}px 0;
-            }}
-            CodedTextHighlight:hover {{
-                background-color: {color}40;
-            }}
-        """)
-
-        layout = QVBoxLayout(self)
-        layout.setContentsMargins(SPACING.md, SPACING.sm, SPACING.md, SPACING.sm)
-        layout.setSpacing(SPACING.xs)
-
-        # Header with code badge and optional overlap indicator
-        header = QHBoxLayout()
-        header.setSpacing(SPACING.sm)
-
-        if code_name:
-            badge = QLabel(code_name)
-            badge.setStyleSheet(f"""
-                background-color: {color};
-                color: white;
-                padding: 2px 8px;
-                border-radius: 10px;
-                font-size: {TYPOGRAPHY.text_xs}px;
-                font-weight: bold;
-            """)
-            header.addWidget(badge)
-
-        header.addStretch()
-
-        if overlap_count > 1:
-            overlap_badge = OverlapIndicator(count=overlap_count, colors=self._colors)
-            header.addWidget(overlap_badge)
-
-        layout.addLayout(header)
-
-        # Text content
-        text_label = QLabel(text)
-        text_label.setWordWrap(True)
-        text_label.setStyleSheet(f"""
-            color: {self._colors.text_primary};
-            font-size: {TYPOGRAPHY.text_sm}px;
-            line-height: 1.4;
-        """)
-        layout.addWidget(text_label)
-
-    def mousePressEvent(self, event):
-        if event.button() == Qt.MouseButton.LeftButton:
-            self.clicked.emit(self._segment_id)
-
-
-class OverlapIndicator(QFrame):
-    """
-    Badge showing number of overlapping codes on a text segment.
-
-    Usage:
-        indicator = OverlapIndicator(count=3)
-    """
-
-    def __init__(
-        self,
-        count: int = 2,
-        colors: ColorPalette = None,
-        parent=None
-    ):
-        super().__init__(parent)
-        self._colors = colors or get_theme("dark")
-        self._count = count
-
-        self.setFixedSize(18, 18)
-        self.setStyleSheet(f"""
-            OverlapIndicator {{
-                background-color: {self._colors.primary};
-                border-radius: 9px;
-            }}
-        """)
-
-        layout = QHBoxLayout(self)
-        layout.setContentsMargins(0, 0, 0, 0)
-
-        label = QLabel(str(count))
-        label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        label.setStyleSheet(f"""
-            color: white;
-            font-size: 9px;
-            font-weight: {TYPOGRAPHY.weight_medium};
-        """)
-        layout.addWidget(label)
-
-
-class AnnotationIndicator(QFrame):
-    """
-    Inline annotation marker.
-
-    Usage:
-        indicator = AnnotationIndicator(
-            annotation_type="memo",
-            count=3
-        )
-    """
-
-    clicked = pyqtSignal()
-
-    def __init__(
-        self,
-        annotation_type: str = "memo",  # memo, comment, link
-        count: int = 1,
-        colors: ColorPalette = None,
-        parent=None
-    ):
-        super().__init__(parent)
-        self._colors = colors or get_theme("dark")
-
-        type_config = {
-            "memo": ("📝", self._colors.info),
-            "comment": ("💬", self._colors.warning),
-            "link": ("🔗", self._colors.primary),
-        }
-        icon, color = type_config.get(annotation_type, ("📝", self._colors.info))
-
-        self.setCursor(Qt.CursorShape.PointingHandCursor)
-        self.setFixedSize(24, 24)
-        self.setStyleSheet(f"""
-            QFrame {{
-                background-color: {color}26;
-                border-radius: 12px;
-            }}
-            QFrame:hover {{
-                background-color: {color}40;
-            }}
-        """)
-
-        layout = QHBoxLayout(self)
-        layout.setContentsMargins(0, 0, 0, 0)
-
-        label = QLabel(icon if count == 1 else f"{count}")
-        label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        label.setStyleSheet(f"""
-            font-size: {TYPOGRAPHY.text_xs if count > 1 else 12}px;
-            color: {color if count > 1 else 'inherit'};
-        """)
-        layout.addWidget(label)
-
-    def mousePressEvent(self, event):
-        if event.button() == Qt.MouseButton.LeftButton:
-            self.clicked.emit()
-
+# =============================================================================
+# Selection Popup
+# =============================================================================
 
 class SelectionPopup(QFrame):
     """
-    Popup menu for text selection actions.
+    Generic popup menu for text selection actions.
 
     Appears when text is selected, showing quick action buttons.
+    Configure your own actions or use with default placeholder actions.
 
     Usage:
         popup = SelectionPopup()
@@ -530,19 +372,19 @@ class SelectionPopup(QFrame):
 
         # With custom actions
         popup = SelectionPopup(actions=[
-            ("mdi6.label", "Apply Code", "apply_code"),
-            ("mdi6.plus", "Quick Code", "quick_code"),
+            ("mdi6.content-copy", "Copy", "copy", True),
+            ("mdi6.magnify", "Search", "search", False),
         ])
     """
 
     action_clicked = pyqtSignal(str)  # action_id
 
-    # Default actions matching the mockup
+    # Default actions - generic text operations
     DEFAULT_ACTIONS = [
-        ("mdi6.label", "Apply selected code", "apply_code", True),  # primary
-        ("mdi6.plus", "Quick code", "quick_code", False),
-        ("mdi6.note-edit", "Add annotation", "annotate", False),
-        ("mdi6.note-plus", "Add memo", "memo", False),
+        ("mdi6.content-copy", "Copy", "copy", True),
+        ("mdi6.note-plus", "Add note", "note", False),
+        ("mdi6.magnify", "Search", "search", False),
+        ("mdi6.share", "Share", "share", False),
     ]
 
     def __init__(
@@ -635,9 +477,13 @@ class SelectionPopup(QFrame):
         self.show()
 
 
+# =============================================================================
+# Transcript Panel
+# =============================================================================
+
 class TranscriptPanel(QFrame):
     """
-    Audio/video transcript panel with timestamps.
+    Generic audio/video transcript panel with timestamps.
 
     Usage:
         panel = TranscriptPanel()

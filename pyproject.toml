@@ -12,3 +12,8 @@ members = ["design_system", "_template"]
 
 [tool.uv.sources]
 design-system = { workspace = true }
+
+[dependency-groups]
+dev = [
+    "pytest-qt>=4.5.0",
+]

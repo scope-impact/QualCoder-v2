@@ -113,14 +113,14 @@ def create_cards_story(colors: ColorPalette) -> StoryPage:
     # Info card
     info = InfoCard(
         title="Project Statistics",
-        content="This project contains 24 files, 156 codes, and 42 memos.",
-        icon="📊",
+        icon="mdi6.chart-bar",
         colors=colors
     )
+    info.set_text("This project contains 24 files, 156 codes, and 42 memos.")
     examples.append((
         "Info Card",
         info,
-        'InfoCard(title="Stats", content="...", icon="📊")'
+        'InfoCard(title="Stats", icon="mdi6.chart-bar")\ninfo.set_text("...")'
     ))
 
     return StoryPage(
