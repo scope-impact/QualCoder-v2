@@ -10,7 +10,11 @@ labels: [presentation, foundation, P0]
 
 ## Description
 
-Build the reusable PyQt6 component library following Material Design.
+Build the reusable UI component library following Material Design.
+
+## Implementation Notes
+
+**For PyQt6:** Components built as QWidget subclasses.
 
 ## Acceptance Criteria
 
