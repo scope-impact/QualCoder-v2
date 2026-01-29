@@ -18,7 +18,7 @@ Implement the Case bounded context end-to-end - grouping sources and segments in
 - Flexible attributes system
 - Case membership (sources or segments)
 - Cross-case analysis support
-- MCP tools for case operations
+- Agent tools for case operations
 
 ## Tasks
 
@@ -35,4 +35,4 @@ Implement the Case bounded context end-to-end - grouping sources and segments in
 - [ ] Membership assignment
 - [ ] Case manager screen functional
 - [ ] Attribute editor working
-- [ ] MCP tools: create_case, list_cases, add_to_case, set_attribute
+- [ ] Agent tools: create_case, list_cases, add_to_case, set_attribute

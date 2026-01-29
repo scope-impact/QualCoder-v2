@@ -14,8 +14,8 @@ Establish the foundational layers of QualCoder v2: shared domain types, agent in
 ## Goals
 
 - Shared types (Result monad, IDs, base protocols)
-- Agent infrastructure (TrustLevel, session, MCP base)
-- Reusable PyQt6 component library
+- Agent infrastructure (TrustLevel, session, agent server base)
+- Reusable UI component library
 - Application shell with navigation
 
 ## Tasks
@@ -32,7 +32,7 @@ Establish the foundational layers of QualCoder v2: shared domain types, agent in
 - [x] Result[T, E] type with Success/Failure
 - [x] Base ID types and protocols
 - [x] TrustLevel, AgentSession, approval workflow base
-- [x] MCP server skeleton ready to register tools
+- [x] Agent server skeleton ready to register tools
 - [x] 50+ reusable UI components
 - [x] Navigation and layout system
 - [ ] BaseSignalBridge with thread-safe event→signal bridging

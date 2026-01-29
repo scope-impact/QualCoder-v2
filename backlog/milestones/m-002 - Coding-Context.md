@@ -17,7 +17,7 @@ Implement the Coding bounded context end-to-end - the **Core Domain** where rese
 - Persistent storage with SQLite
 - Controller orchestration (serves both UI and agent)
 - Full coding UI screens
-- MCP tools for agent coding
+- Agent tools for agent coding
 
 ## Tasks
 
@@ -35,5 +35,5 @@ Implement the Coding bounded context end-to-end - the **Core Domain** where rese
 - [ ] SQLite repositories working
 - [ ] Controller coordinates operations
 - [ ] All 4 coding screens functional (text, image, A/V, PDF)
-- [ ] MCP tools: create_code, apply_code, list_codes, etc.
+- [ ] Agent tools: create_code, apply_code, list_codes, etc.
 - [ ] Agent actions visible in UI (badges, activity panel)

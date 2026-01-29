@@ -10,7 +10,7 @@ dependencies: [M-002]
 
 Implement the dedicated Agent Experience screens - AI chat, semantic search, and review queue.
 
-**Note:** Agent infrastructure (TrustLevel, sessions, MCP) is in M-001. Agent tools are in each context. This milestone adds the agent-specific UI screens.
+**Note:** Agent infrastructure (TrustLevel, sessions, agent server) is in M-001. Agent tools are in each context. This milestone adds the agent-specific UI screens.
 
 ## Goals
 

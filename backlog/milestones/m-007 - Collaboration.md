@@ -18,7 +18,7 @@ Implement the Collaboration bounded context end-to-end - multi-coder workflows, 
 - Code ownership tracking
 - Project merge with conflict resolution
 - Coder comparison (Kappa scores)
-- MCP tools for coder context
+- Agent tools for coder context
 
 ## Tasks
 
@@ -35,5 +35,5 @@ Implement the Collaboration bounded context end-to-end - multi-coder workflows, 
 - [ ] Merge engine with conflict detection
 - [ ] Kappa score calculation
 - [ ] Coder selector and comparison UI
-- [ ] MCP tools: set_coder, compare_coders
+- [ ] Agent tools: set_coder, compare_coders
 - [ ] AI coder visibility toggle

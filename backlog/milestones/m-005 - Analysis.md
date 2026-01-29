@@ -18,7 +18,7 @@ Implement the Analysis bounded context end-to-end - generating insights, reports
 - Co-occurrence matrices
 - Graph visualizations
 - Export to multiple formats
-- MCP tools for analysis queries
+- Agent tools for analysis queries
 
 ## Tasks
 
@@ -35,5 +35,5 @@ Implement the Analysis bounded context end-to-end - generating insights, reports
 - [ ] Frequency reports working
 - [ ] Chart visualizations
 - [ ] Export to XLSX, REFI-QDA
-- [ ] MCP tools: query_codes, get_frequency, find_cooccurrence
+- [ ] Agent tools: query_codes, get_frequency, find_cooccurrence
 - [ ] Agent can answer questions about coding patterns
