@@ -1,0 +1,3 @@
+[submodule "ddd-workshop"]
+	path = ddd-workshop
+	url = https://github.com/PensionBee/ddd-workshop
