@@ -8,8 +8,6 @@ This project is inspired by and builds upon the original [QualCoder](https://git
 
 If you find this useful, please also consider supporting the original project:
 
-<a href="https://www.buymeacoffee.com/ccbogelB" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/default-orange.png" alt="Buy Me A Coffee" height="41" width="174"></a>
-
 > **Note:** This is an independent community project building modern UI components inspired by QualCoder. We are not officially affiliated with the original QualCoder project but gratefully acknowledge their pioneering work in open-source qualitative data analysis.
 
 ---
@@ -157,7 +155,7 @@ pyqt6_design_system/
 
 ## License
 
-MIT - Use freely in your projects.
+LGPL-3.0 - See [LICENSE.txt](LICENSE.txt) for details.
 
 ## Acknowledgments
 
