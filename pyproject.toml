@@ -1,0 +1,14 @@
+[project]
+name = "qualcoder-v2"
+version = "0.1.0"
+description = "QualCoder v2 - Qualitative Data Analysis"
+requires-python = ">=3.11"
+dependencies = [
+    "design-system",
+]
+
+[tool.uv.workspace]
+members = ["design_system", "_template"]
+
+[tool.uv.sources]
+design-system = { workspace = true }
