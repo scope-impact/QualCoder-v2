@@ -7,19 +7,8 @@ Used by MCP Server, REST API, and other protocol adapters.
 
 from dataclasses import dataclass
 from typing import Optional, List
-from enum import Enum
 
-
-# ============================================================
-# Trust Levels
-# ============================================================
-
-class TrustLevel(Enum):
-    """Permission level required for a tool"""
-    AUTONOMOUS = "auto"      # Execute immediately, no user notification
-    NOTIFY = "notify"        # Execute and inform user
-    SUGGEST = "suggest"      # Queue for user approval
-    REQUIRE = "require"      # Block until user approves
+from src.domain.shared.agent import TrustLevel
 
 
 # ============================================================
