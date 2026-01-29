@@ -1303,6 +1303,68 @@ cloud.generate()
 cloud.word_clicked.connect(lambda word: print(f"Word: {word}"))
 ```
 
+### PDFPageViewer
+
+PDF document viewer with text selection overlay.
+
+![PDF Viewer](../design_system/assets/screenshots/pdf.png)
+
+```python
+from design_system import PDFPageViewer, PDFSelection
+
+viewer = PDFPageViewer(
+    show_toolbar=True,      # Navigation and zoom controls
+    show_thumbnails=True,   # Page thumbnail sidebar
+    initial_zoom=1.0        # Starting zoom level
+)
+
+# Load document
+viewer.load_document("/path/to/document.pdf")
+
+# Navigation
+viewer.go_to_page(5)        # 0-indexed
+viewer.next_page()
+viewer.previous_page()
+
+# Zoom
+viewer.set_zoom(1.5)        # 150%
+viewer.zoom_in()            # +25%
+viewer.zoom_out()           # -25%
+viewer.fit_to_width()       # Auto-fit
+
+# Signals
+viewer.page_changed.connect(lambda page: print(f"Page: {page}"))
+viewer.document_loaded.connect(lambda count: print(f"Pages: {count}"))
+viewer.zoom_changed.connect(lambda zoom: print(f"Zoom: {zoom}"))
+
+# Text selection (Ctrl+Click and drag)
+viewer.text_selected.connect(lambda sel: handle_selection(sel))
+
+def handle_selection(selection: PDFSelection):
+    print(f"Page: {selection.page}")
+    print(f"Text: {selection.text}")
+    print(f"Rect: {selection.rect}")
+
+# Properties
+page = viewer.current_page   # Current page (0-indexed)
+total = viewer.page_count    # Total pages
+zoom = viewer.zoom           # Current zoom level
+
+# Cleanup
+viewer.close_document()
+```
+
+**Key Features:**
+- Page navigation with toolbar or keyboard
+- Zoom controls (25% to 400%)
+- Fit to width
+- Page rotation
+- Text selection overlay (Ctrl+Click drag)
+- Optional page thumbnails sidebar
+- Signals for page changes and text selection
+
+**Dependencies:** Requires `pymupdf` (PyMuPDF) for PDF rendering.
+
 ---
 
 ## Advanced Components
@@ -1654,6 +1716,7 @@ card.add_widget(Button("Action", variant="primary"))
 - **networkx**: Graph algorithms
 - **wordcloud**: Word cloud generation
 - **numpy**: Numerical operations
+- **pymupdf**: PDF rendering (PDFPageViewer)
 
 ---
 
@@ -1687,6 +1750,7 @@ card.add_widget(Button("Action", variant="primary"))
 | `network_graph.py` | Network graph |
 | `word_cloud.py` | Word cloud |
 | `image_annotation.py` | Image annotation |
+| `pdf_viewer.py` | PDF document viewer |
 | `code_tree.py` | Code tree |
 | `stat_card.py` | Statistics cards |
 | `spinner.py` | Loading spinners |
