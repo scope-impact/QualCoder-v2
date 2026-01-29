@@ -27,7 +27,10 @@ PAGES = [
     "messages", "chatinput",
     "codeeditor", "richtext",
     "modals", "toasts", "contextmenu",
-    "panels", "toolbar"
+    "panels", "toolbar",
+    # Visualization components
+    "charts", "network", "wordcloud", "annotation",
+    "pdf", "heatmap", "scores",
 ]
 
 

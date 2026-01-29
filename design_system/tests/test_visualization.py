@@ -520,3 +520,171 @@ class TestLegendItem:
         qtbot.addWidget(item)
 
         assert item is not None
+
+
+# PDF Viewer tests
+from design_system.pdf_viewer import (
+    PDFPageViewer, PDFGraphicsView, PDFThumbnail,
+    PDFTextBlock, PDFSelection, HAS_PYMUPDF
+)
+
+
+class TestPDFPageViewer:
+    """Tests for PDFPageViewer component"""
+
+    def test_viewer_creation(self, qtbot):
+        """PDFPageViewer should be created"""
+        viewer = PDFPageViewer()
+        qtbot.addWidget(viewer)
+
+        assert viewer is not None
+
+    def test_viewer_with_toolbar(self, qtbot):
+        """PDFPageViewer should create with toolbar"""
+        viewer = PDFPageViewer(show_toolbar=True)
+        qtbot.addWidget(viewer)
+
+        assert hasattr(viewer, '_toolbar')
+
+    def test_viewer_with_thumbnails(self, qtbot):
+        """PDFPageViewer should create with thumbnail panel"""
+        viewer = PDFPageViewer(show_thumbnails=True)
+        qtbot.addWidget(viewer)
+
+        assert hasattr(viewer, '_thumbnail_panel')
+
+    def test_viewer_initial_state(self, qtbot):
+        """PDFPageViewer should have correct initial state"""
+        viewer = PDFPageViewer(initial_zoom=1.5)
+        qtbot.addWidget(viewer)
+
+        assert viewer._zoom == 1.5
+        assert viewer._current_page == 0
+        assert viewer._page_count == 0
+
+    def test_viewer_zoom(self, qtbot):
+        """PDFPageViewer should change zoom level"""
+        viewer = PDFPageViewer()
+        qtbot.addWidget(viewer)
+
+        viewer.set_zoom(2.0)
+        assert viewer._zoom == 2.0
+
+        viewer.zoom_in()
+        assert viewer._zoom == 2.25
+
+        viewer.zoom_out()
+        assert viewer._zoom == 2.0
+
+    def test_viewer_zoom_limits(self, qtbot):
+        """PDFPageViewer should respect zoom limits"""
+        viewer = PDFPageViewer()
+        qtbot.addWidget(viewer)
+
+        viewer.set_zoom(10.0)  # Above max
+        assert viewer._zoom == 4.0
+
+        viewer.set_zoom(0.1)  # Below min
+        assert viewer._zoom == 0.25
+
+    def test_viewer_properties(self, qtbot):
+        """PDFPageViewer should expose properties"""
+        viewer = PDFPageViewer()
+        qtbot.addWidget(viewer)
+
+        assert viewer.current_page == 0
+        assert viewer.page_count == 0
+        assert viewer.zoom == 1.0
+
+
+class TestPDFGraphicsView:
+    """Tests for PDFGraphicsView component"""
+
+    def test_view_creation(self, qtbot):
+        """PDFGraphicsView should be created"""
+        view = PDFGraphicsView()
+        qtbot.addWidget(view)
+
+        assert view is not None
+        assert view.scene() is not None
+
+    def test_view_set_page(self, qtbot):
+        """PDFGraphicsView should display page pixmap"""
+        view = PDFGraphicsView()
+        qtbot.addWidget(view)
+
+        pixmap = QPixmap(200, 300)
+        pixmap.fill(QColor("white"))
+        view.set_page(pixmap)
+
+        # Scene should contain items
+        assert len(view.scene().items()) > 0
+
+    def test_view_clear_selection(self, qtbot):
+        """PDFGraphicsView should clear selection"""
+        view = PDFGraphicsView()
+        qtbot.addWidget(view)
+
+        view.clear_selection()
+        assert view._selection_rect is None
+
+
+class TestPDFThumbnail:
+    """Tests for PDFThumbnail component"""
+
+    def test_thumbnail_creation(self, qtbot):
+        """PDFThumbnail should be created"""
+        pixmap = QPixmap(80, 100)
+        pixmap.fill(QColor("white"))
+
+        thumb = PDFThumbnail(pixmap, page_number=1)
+        qtbot.addWidget(thumb)
+
+        assert thumb is not None
+        assert thumb._page_number == 1
+
+    def test_thumbnail_selection(self, qtbot):
+        """PDFThumbnail should track selection state"""
+        pixmap = QPixmap(80, 100)
+        pixmap.fill(QColor("white"))
+
+        thumb = PDFThumbnail(pixmap, page_number=1, selected=False)
+        qtbot.addWidget(thumb)
+
+        assert thumb._selected is False
+
+        thumb.set_selected(True)
+        assert thumb._selected is True
+
+
+class TestPDFDataClasses:
+    """Tests for PDF data classes"""
+
+    def test_pdf_text_block(self):
+        """PDFTextBlock should hold text data"""
+        block = PDFTextBlock(
+            text="Sample text",
+            rect=(10, 20, 100, 50),
+            page=0
+        )
+
+        assert block.text == "Sample text"
+        assert block.rect == (10, 20, 100, 50)
+        assert block.page == 0
+
+    def test_pdf_selection(self):
+        """PDFSelection should hold selection data"""
+        selection = PDFSelection(
+            page=5,
+            rect=(0, 0, 100, 50),
+            text="Selected text"
+        )
+
+        assert selection.page == 5
+        assert selection.text == "Selected text"
+
+    def test_pdf_selection_defaults(self):
+        """PDFSelection should have default text"""
+        selection = PDFSelection(page=0, rect=(0, 0, 10, 10))
+
+        assert selection.text == ""
