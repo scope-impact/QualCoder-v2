@@ -60,7 +60,14 @@ from .code_tree import CodeTree, CodeTreeNode, CodeItem
 from .stat_card import StatCard, StatCardRow, MiniStatCard
 
 # Progress Bar
-from .progress_bar import ProgressBar, ProgressBarWidget, ProgressBarLabeled
+from .progress_bar import (
+    ProgressBar,
+    ProgressBarWidget,
+    ProgressBarLabeled,
+    RelevanceScoreBar,
+    RelevanceBarWidget,
+    ScoreIndicator,
+)
 
 # Spinner
 from .spinner import Spinner, LoadingIndicator, LoadingOverlay, SkeletonLoader
@@ -115,6 +122,8 @@ from .data_display import (
     StatRow,
     KeyValueList,
     EmptyState,
+    HeatMapCell,
+    HeatMapGrid,
 )
 
 # List Components
@@ -156,12 +165,10 @@ from .chat import (
 from .document import (
     TextPanel,
     LineNumberArea,
-    CodedTextHighlight,
-    OverlapIndicator,
-    AnnotationIndicator,
     SelectionPopup,
     TranscriptPanel,
     TranscriptSegment,
+    TextColor,
 )
 
 # Pagination Components
@@ -224,6 +231,36 @@ from .editors import (
     DiffViewer,
 )
 
+# Chart/Visualization Components (ADR-001)
+from .charts import (
+    ChartWidget,
+    PieChart,
+    ChartDataPoint,
+    SparkLine,
+    LegendItem,
+)
+
+# Network Graph Components
+from .network_graph import (
+    NetworkGraphWidget,
+    GraphNode,
+    GraphEdge,
+)
+
+# Word Cloud Components
+from .word_cloud import (
+    WordCloudWidget,
+    WordCloudPreview,
+)
+
+# Image Annotation Components
+from .image_annotation import (
+    ImageAnnotationLayer,
+    ImageAnnotation,
+    AnnotationMode,
+    AnnotationToolbar,
+)
+
 
 __all__ = [
     # Tokens
@@ -284,6 +321,9 @@ __all__ = [
     "ProgressBar",
     "ProgressBarWidget",
     "ProgressBarLabeled",
+    "RelevanceScoreBar",
+    "RelevanceBarWidget",
+    "ScoreIndicator",
     # Spinner
     "Spinner",
     "LoadingIndicator",
@@ -329,6 +369,8 @@ __all__ = [
     "StatRow",
     "KeyValueList",
     "EmptyState",
+    "HeatMapCell",
+    "HeatMapGrid",
     # Lists
     "ListItem",
     "BaseList",
@@ -358,12 +400,10 @@ __all__ = [
     # Document/Text
     "TextPanel",
     "LineNumberArea",
-    "CodedTextHighlight",
-    "OverlapIndicator",
-    "AnnotationIndicator",
     "SelectionPopup",
     "TranscriptPanel",
     "TranscriptSegment",
+    "TextColor",
     # Pagination
     "Pagination",
     "PageButton",
@@ -406,4 +446,22 @@ __all__ = [
     "EditorToolbar",
     "MemoEditor",
     "DiffViewer",
+    # Charts/Visualization
+    "ChartWidget",
+    "PieChart",
+    "ChartDataPoint",
+    "SparkLine",
+    "LegendItem",
+    # Network Graph
+    "NetworkGraphWidget",
+    "GraphNode",
+    "GraphEdge",
+    # Word Cloud
+    "WordCloudWidget",
+    "WordCloudPreview",
+    # Image Annotation
+    "ImageAnnotationLayer",
+    "ImageAnnotation",
+    "AnnotationMode",
+    "AnnotationToolbar",
 ]

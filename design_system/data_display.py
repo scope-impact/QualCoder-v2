@@ -10,6 +10,7 @@ from PyQt6.QtWidgets import (
     QAbstractItemView, QCheckBox
 )
 from PyQt6.QtCore import Qt, pyqtSignal
+from PyQt6.QtGui import QColor
 
 from .tokens import SPACING, RADIUS, TYPOGRAPHY, ColorPalette, get_theme
 
@@ -745,3 +746,280 @@ class EmptyState(QFrame):
                 btn.clicked.connect(on_action)
             btn.clicked.connect(self.action_clicked.emit)
             layout.addWidget(btn, alignment=Qt.AlignmentFlag.AlignCenter)
+
+
+class HeatMapCell(QFrame):
+    """
+    Heat map cell with color intensity based on value.
+
+    Used in co-occurrence matrices and frequency tables to show
+    value intensity through color.
+
+    Usage:
+        cell = HeatMapCell(value=0.75, min_value=0, max_value=1)
+        cell.set_value(0.85)
+
+    Color schemes:
+        - "primary": Light to primary color
+        - "sequential": White to red
+        - "diverging": Blue (-) to white (0) to red (+)
+    """
+
+    clicked = pyqtSignal(float)
+
+    def __init__(
+        self,
+        value: float = 0,
+        min_value: float = 0,
+        max_value: float = 1,
+        show_value: bool = True,
+        color_scheme: str = "primary",
+        size: int = 40,
+        colors: ColorPalette = None,
+        parent=None
+    ):
+        super().__init__(parent)
+        self._colors = colors or get_theme("light")
+        self._value = value
+        self._min_value = min_value
+        self._max_value = max_value
+        self._show_value = show_value
+        self._color_scheme = color_scheme
+
+        self.setFixedSize(size, size)
+        self.setCursor(Qt.CursorShape.PointingHandCursor)
+
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
+
+        self._label = QLabel()
+        self._label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        layout.addWidget(self._label)
+
+        self._update_display()
+
+    def _normalize_value(self) -> float:
+        """Normalize value to 0-1 range"""
+        if self._max_value == self._min_value:
+            return 0
+        return (self._value - self._min_value) / (self._max_value - self._min_value)
+
+    def _get_color(self) -> str:
+        """Calculate color based on value and scheme"""
+        normalized = self._normalize_value()
+
+        if self._color_scheme == "primary":
+            # Interpolate from surface to primary
+            base = QColor(self._colors.surface_lighter)
+            target = QColor(self._colors.primary)
+            return self._interpolate_color(base, target, normalized)
+
+        elif self._color_scheme == "sequential":
+            # White to red
+            base = QColor("#FFFFFF")
+            target = QColor("#F44336")
+            return self._interpolate_color(base, target, normalized)
+
+        elif self._color_scheme == "diverging":
+            # Blue (-) to white (0) to red (+)
+            if normalized < 0.5:
+                base = QColor("#2196F3")  # Blue
+                target = QColor("#FFFFFF")
+                return self._interpolate_color(base, target, normalized * 2)
+            else:
+                base = QColor("#FFFFFF")
+                target = QColor("#F44336")  # Red
+                return self._interpolate_color(base, target, (normalized - 0.5) * 2)
+
+        elif self._color_scheme == "success":
+            # White to success green
+            base = QColor(self._colors.surface_lighter)
+            target = QColor(self._colors.success)
+            return self._interpolate_color(base, target, normalized)
+
+        # Default to primary scheme
+        base = QColor(self._colors.surface_lighter)
+        target = QColor(self._colors.primary)
+        return self._interpolate_color(base, target, normalized)
+
+    def _interpolate_color(self, color1: QColor, color2: QColor, factor: float) -> str:
+        """Interpolate between two colors"""
+        factor = max(0, min(1, factor))
+        r = int(color1.red() + (color2.red() - color1.red()) * factor)
+        g = int(color1.green() + (color2.green() - color1.green()) * factor)
+        b = int(color1.blue() + (color2.blue() - color1.blue()) * factor)
+        return f"#{r:02x}{g:02x}{b:02x}"
+
+    def _get_text_color(self) -> str:
+        """Get appropriate text color for contrast"""
+        bg_color = QColor(self._get_color())
+        # Calculate luminance
+        luminance = (0.299 * bg_color.red() + 0.587 * bg_color.green() + 0.114 * bg_color.blue()) / 255
+        return self._colors.text_primary if luminance > 0.5 else "#FFFFFF"
+
+    def _update_display(self):
+        """Update the cell appearance"""
+        bg_color = self._get_color()
+        text_color = self._get_text_color()
+
+        self.setStyleSheet(f"""
+            HeatMapCell {{
+                background-color: {bg_color};
+                border-radius: {RADIUS.xs}px;
+            }}
+        """)
+
+        if self._show_value:
+            # Format value appropriately
+            if abs(self._value) >= 100:
+                text = f"{int(self._value)}"
+            elif abs(self._value) >= 10:
+                text = f"{self._value:.1f}"
+            else:
+                text = f"{self._value:.2f}"
+
+            self._label.setText(text)
+            self._label.setStyleSheet(f"""
+                color: {text_color};
+                font-size: {TYPOGRAPHY.text_xs}px;
+                font-weight: {TYPOGRAPHY.weight_medium};
+            """)
+
+    def set_value(self, value: float):
+        """Update the cell value"""
+        self._value = value
+        self._update_display()
+
+    def value(self) -> float:
+        """Get current value"""
+        return self._value
+
+    def set_range(self, min_value: float, max_value: float):
+        """Set the value range"""
+        self._min_value = min_value
+        self._max_value = max_value
+        self._update_display()
+
+    def set_color_scheme(self, scheme: str):
+        """Change color scheme"""
+        self._color_scheme = scheme
+        self._update_display()
+
+    def mousePressEvent(self, event):
+        if event.button() == Qt.MouseButton.LeftButton:
+            self.clicked.emit(self._value)
+
+
+class HeatMapGrid(QFrame):
+    """
+    Grid of heat map cells for co-occurrence matrices.
+
+    Usage:
+        grid = HeatMapGrid(
+            row_labels=["Code A", "Code B", "Code C"],
+            col_labels=["Code A", "Code B", "Code C"],
+            values=[
+                [1.0, 0.5, 0.2],
+                [0.5, 1.0, 0.7],
+                [0.2, 0.7, 1.0],
+            ]
+        )
+        grid.cell_clicked.connect(on_cell_click)
+    """
+
+    cell_clicked = pyqtSignal(int, int, float)  # row, col, value
+
+    def __init__(
+        self,
+        row_labels: List[str],
+        col_labels: List[str],
+        values: List[List[float]],
+        cell_size: int = 40,
+        color_scheme: str = "primary",
+        colors: ColorPalette = None,
+        parent=None
+    ):
+        super().__init__(parent)
+        self._colors = colors or get_theme("light")
+        self._row_labels = row_labels
+        self._col_labels = col_labels
+        self._values = values
+        self._cell_size = cell_size
+        self._color_scheme = color_scheme
+        self._cells: List[List[HeatMapCell]] = []
+
+        # Calculate min/max for normalization
+        flat_values = [v for row in values for v in row]
+        self._min_val = min(flat_values) if flat_values else 0
+        self._max_val = max(flat_values) if flat_values else 1
+
+        self._setup_ui()
+
+    def _setup_ui(self):
+        """Build the grid UI"""
+        self.setStyleSheet(f"""
+            HeatMapGrid {{
+                background-color: {self._colors.surface};
+                border-radius: {RADIUS.md}px;
+                border: 1px solid {self._colors.border};
+            }}
+        """)
+
+        from PyQt6.QtWidgets import QGridLayout
+
+        layout = QGridLayout(self)
+        layout.setContentsMargins(SPACING.md, SPACING.md, SPACING.md, SPACING.md)
+        layout.setSpacing(2)
+
+        # Column headers
+        for j, label in enumerate(self._col_labels):
+            header = QLabel(label)
+            header.setStyleSheet(f"""
+                color: {self._colors.text_secondary};
+                font-size: {TYPOGRAPHY.text_xs}px;
+                font-weight: {TYPOGRAPHY.weight_medium};
+            """)
+            header.setAlignment(Qt.AlignmentFlag.AlignCenter)
+            header.setFixedWidth(self._cell_size)
+            layout.addWidget(header, 0, j + 1)
+
+        # Rows
+        for i, row_label in enumerate(self._row_labels):
+            # Row header
+            header = QLabel(row_label)
+            header.setStyleSheet(f"""
+                color: {self._colors.text_secondary};
+                font-size: {TYPOGRAPHY.text_xs}px;
+                font-weight: {TYPOGRAPHY.weight_medium};
+            """)
+            header.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
+            layout.addWidget(header, i + 1, 0)
+
+            # Cells
+            row_cells = []
+            for j, value in enumerate(self._values[i]):
+                cell = HeatMapCell(
+                    value=value,
+                    min_value=self._min_val,
+                    max_value=self._max_val,
+                    color_scheme=self._color_scheme,
+                    size=self._cell_size,
+                    colors=self._colors
+                )
+                cell.clicked.connect(lambda v, r=i, c=j: self.cell_clicked.emit(r, c, v))
+                layout.addWidget(cell, i + 1, j + 1)
+                row_cells.append(cell)
+
+            self._cells.append(row_cells)
+
+    def set_value(self, row: int, col: int, value: float):
+        """Update a single cell value"""
+        if 0 <= row < len(self._cells) and 0 <= col < len(self._cells[row]):
+            self._cells[row][col].set_value(value)
+
+    def get_value(self, row: int, col: int) -> float:
+        """Get a cell value"""
+        if 0 <= row < len(self._cells) and 0 <= col < len(self._cells[row]):
+            return self._cells[row][col].value()
+        return 0

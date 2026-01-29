@@ -16,6 +16,7 @@ from .media import get_stories as get_media_stories
 from .chat import get_stories as get_chat_stories
 from .editors import get_stories as get_editors_stories
 from .overlays import get_stories as get_overlays_stories
+from .visualization import get_stories as get_visualization_stories
 
 
 # Story type: (key, label, page_creator)
@@ -33,6 +34,7 @@ def get_all_sections(colors: ColorPalette) -> List[SectionDef]:
         ("Navigation", get_navigation_stories(colors)),
         ("Forms", get_forms_stories(colors)),
         ("Data Display", get_data_stories(colors)),
+        ("Visualization", get_visualization_stories(colors)),
         ("Media", get_media_stories(colors)),
         ("Chat / AI", get_chat_stories(colors)),
         ("Editors", get_editors_stories(colors)),

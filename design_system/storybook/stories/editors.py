@@ -7,7 +7,6 @@ from PyQt6.QtWidgets import QWidget
 
 from ...tokens import ColorPalette
 from ...editors import CodeEditor, RichTextEditor, MemoEditor
-from ...document import CodedTextHighlight
 from ..page import StoryPage
 
 
@@ -54,22 +53,9 @@ def create_richtext_story(colors: ColorPalette) -> StoryPage:
         'RichTextEditor(show_toolbar=True)'
     ))
 
-    # Coded text highlight
-    highlight = CodedTextHighlight(
-        "This is an important passage about learning experiences.",
-        code_name="Learning",
-        code_color="#FFC107",
-        colors=colors
-    )
-    examples.append((
-        "Coded Text Highlight",
-        highlight,
-        'CodedTextHighlight("text", code_name="Learning", code_color="#FFC107")'
-    ))
-
     return StoryPage(
         "Rich Text",
-        "Rich text editing and text highlighting components.",
+        "Rich text editing components.",
         examples,
         colors=colors
     )
