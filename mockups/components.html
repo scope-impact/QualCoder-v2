@@ -1,0 +1,689 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QualCoder - Component Library</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link href="css/material-theme.css" rel="stylesheet">
+    <style>
+        body { background: var(--background); color: var(--text-primary); font-family: 'Roboto', sans-serif; }
+
+        .component-library { max-width: 1200px; margin: 0 auto; padding: 40px 20px; }
+
+        .library-header { margin-bottom: 48px; text-align: center; }
+        .library-title { font-size: 32px; font-weight: 500; margin-bottom: 8px; }
+        .library-subtitle { color: var(--text-secondary); font-size: 16px; }
+
+        .section { margin-bottom: 48px; }
+        .section-title { font-size: 20px; font-weight: 500; margin-bottom: 8px; padding-bottom: 12px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 12px; }
+        .section-title .material-icons { color: var(--primary); }
+        .section-desc { color: var(--text-secondary); font-size: 14px; margin-bottom: 24px; }
+
+        .component-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 24px; }
+
+        .component-card { background: var(--surface); border-radius: var(--radius-lg); box-shadow: var(--shadow-1); overflow: hidden; }
+        .component-preview { padding: 24px; background: var(--surface-light); display: flex; align-items: center; justify-content: center; min-height: 100px; }
+        .component-info { padding: 16px; }
+        .component-name { font-weight: 500; margin-bottom: 4px; }
+        .component-desc { font-size: 12px; color: var(--text-secondary); }
+
+        /* Full width components */
+        .component-card.full-width { grid-column: 1 / -1; }
+        .component-card.full-width .component-preview { padding: 32px; }
+
+        /* Inline preview */
+        .preview-row { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
+
+        /* Modal Demo */
+        .modal-demo { position: relative; width: 100%; max-width: 400px; }
+        .modal-demo .modal { position: relative; transform: none; }
+
+        /* Toast Demo */
+        .toast-demo { display: flex; flex-direction: column; gap: 12px; width: 100%; max-width: 360px; }
+
+        /* Context Menu Demo */
+        .context-menu-demo { position: relative; width: 200px; }
+
+        /* Code Tree Demo */
+        .code-tree-demo { width: 100%; max-width: 280px; }
+
+        /* Data Table Demo */
+        .data-table-demo { width: 100%; overflow-x: auto; }
+    </style>
+</head>
+<body>
+    <div class="component-library">
+        <div class="library-header">
+            <h1 class="library-title"><span style="color: var(--primary);">Q</span> QualCoder Component Library</h1>
+            <p class="library-subtitle">Reusable UI components for the Material Design theme</p>
+        </div>
+
+        <!-- Buttons -->
+        <div class="section">
+            <h2 class="section-title"><span class="material-icons">smart_button</span> Buttons</h2>
+            <p class="section-desc">Various button styles for different actions and contexts</p>
+            <div class="component-grid">
+                <div class="component-card">
+                    <div class="component-preview">
+                        <div class="preview-row">
+                            <button class="btn btn-primary">Primary</button>
+                            <button class="btn btn-secondary">Secondary</button>
+                            <button class="btn btn-primary" disabled>Disabled</button>
+                        </div>
+                    </div>
+                    <div class="component-info">
+                        <div class="component-name">Standard Buttons</div>
+                        <div class="component-desc">Primary and secondary action buttons</div>
+                    </div>
+                </div>
+                <div class="component-card">
+                    <div class="component-preview">
+                        <div class="preview-row">
+                            <button class="btn btn-primary"><span class="material-icons">add</span> Create</button>
+                            <button class="btn btn-secondary"><span class="material-icons">download</span> Export</button>
+                            <button class="btn btn-secondary"><span class="material-icons">delete</span></button>
+                        </div>
+                    </div>
+                    <div class="component-info">
+                        <div class="component-name">Icon Buttons</div>
+                        <div class="component-desc">Buttons with icons for clearer actions</div>
+                    </div>
+                </div>
+                <div class="component-card">
+                    <div class="component-preview">
+                        <div class="preview-row">
+                            <button class="btn btn-sm btn-primary">Small</button>
+                            <button class="btn btn-primary">Default</button>
+                            <button class="btn btn-primary" style="padding: 12px 28px; font-size: 15px;">Large</button>
+                        </div>
+                    </div>
+                    <div class="component-info">
+                        <div class="component-name">Button Sizes</div>
+                        <div class="component-desc">Different sizes for various contexts</div>
+                    </div>
+                </div>
+                <div class="component-card">
+                    <div class="component-preview">
+                        <div class="preview-row">
+                            <button class="toolbar-btn"><span class="material-icons">save</span></button>
+                            <button class="toolbar-btn active"><span class="material-icons">code</span></button>
+                            <button class="toolbar-btn"><span class="material-icons">settings</span></button>
+                        </div>
+                    </div>
+                    <div class="component-info">
+                        <div class="component-name">Toolbar Buttons</div>
+                        <div class="component-desc">Icon-only buttons for toolbars</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Badges & Tags -->
+        <div class="section">
+            <h2 class="section-title"><span class="material-icons">label</span> Badges & Tags</h2>
+            <p class="section-desc">Labels, badges, and tags for categorization and status</p>
+            <div class="component-grid">
+                <div class="component-card">
+                    <div class="component-preview">
+                        <div class="preview-row">
+                            <span class="badge">Default</span>
+                            <span class="badge success">Success</span>
+                            <span class="badge warning">Warning</span>
+                            <span class="badge error">Error</span>
+                            <span class="badge info">Info</span>
+                        </div>
+                    </div>
+                    <div class="component-info">
+                        <div class="component-name">Status Badges</div>
+                        <div class="component-desc">Color-coded status indicators</div>
+                    </div>
+                </div>
+                <div class="component-card">
+                    <div class="component-preview">
+                        <div class="preview-row">
+                            <span class="code-tag" style="background: rgba(255, 193, 7, 0.3); color: #FFC107;">Learning</span>
+                            <span class="code-tag" style="background: rgba(244, 67, 54, 0.3); color: #F44336;">Challenges</span>
+                            <span class="code-tag" style="background: rgba(33, 150, 243, 0.3); color: #2196F3;">Features</span>
+                            <span class="code-tag" style="background: rgba(76, 175, 80, 0.3); color: #4CAF50;">Success</span>
+                        </div>
+                    </div>
+                    <div class="component-info">
+                        <div class="component-name">Code Tags</div>
+                        <div class="component-desc">Colored tags for qualitative codes</div>
+                    </div>
+                </div>
+                <div class="component-card">
+                    <div class="component-preview">
+                        <div class="preview-row">
+                            <span class="file-badge text"><span class="material-icons">description</span> Text</span>
+                            <span class="file-badge audio"><span class="material-icons">audiotrack</span> Audio</span>
+                            <span class="file-badge video"><span class="material-icons">videocam</span> Video</span>
+                            <span class="file-badge image"><span class="material-icons">image</span> Image</span>
+                            <span class="file-badge pdf"><span class="material-icons">picture_as_pdf</span> PDF</span>
+                        </div>
+                    </div>
+                    <div class="component-info">
+                        <div class="component-name">File Type Badges</div>
+                        <div class="component-desc">Icons and colors for file types</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Form Elements -->
+        <div class="section">
+            <h2 class="section-title"><span class="material-icons">edit</span> Form Elements</h2>
+            <p class="section-desc">Input fields, selects, and other form controls</p>
+            <div class="component-grid">
+                <div class="component-card">
+                    <div class="component-preview">
+                        <div style="width: 100%; max-width: 300px;">
+                            <div class="form-group" style="margin-bottom: 12px;">
+                                <label class="form-label">Text Input</label>
+                                <input type="text" class="form-input" placeholder="Enter text...">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">With Icon</label>
+                                <div style="position: relative;">
+                                    <span class="material-icons" style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--text-secondary); font-size: 18px;">search</span>
+                                    <input type="text" class="form-input" style="padding-left: 40px;" placeholder="Search...">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="component-info">
+                        <div class="component-name">Text Inputs</div>
+                        <div class="component-desc">Standard text input fields</div>
+                    </div>
+                </div>
+                <div class="component-card">
+                    <div class="component-preview">
+                        <div style="width: 100%; max-width: 300px;">
+                            <div class="form-group" style="margin-bottom: 12px;">
+                                <label class="form-label">Select</label>
+                                <select class="form-input">
+                                    <option>Option 1</option>
+                                    <option>Option 2</option>
+                                    <option>Option 3</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Textarea</label>
+                                <textarea class="form-input" rows="3" placeholder="Enter description..."></textarea>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="component-info">
+                        <div class="component-name">Select & Textarea</div>
+                        <div class="component-desc">Dropdown selects and text areas</div>
+                    </div>
+                </div>
+                <div class="component-card">
+                    <div class="component-preview">
+                        <div style="display: flex; flex-direction: column; gap: 16px;">
+                            <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
+                                <input type="checkbox" class="form-checkbox" checked>
+                                <span>Checkbox checked</span>
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
+                                <input type="checkbox" class="form-checkbox">
+                                <span>Checkbox unchecked</span>
+                            </label>
+                            <label class="toggle" style="width: 44px;">
+                                <input type="checkbox" checked>
+                                <span class="toggle-slider"></span>
+                            </label>
+                        </div>
+                    </div>
+                    <div class="component-info">
+                        <div class="component-name">Checkboxes & Toggles</div>
+                        <div class="component-desc">Selection controls</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modals -->
+        <div class="section">
+            <h2 class="section-title"><span class="material-icons">web_asset</span> Modals & Dialogs</h2>
+            <p class="section-desc">Modal dialogs for confirmations and forms</p>
+            <div class="component-grid">
+                <div class="component-card full-width">
+                    <div class="component-preview">
+                        <div class="modal-demo">
+                            <div class="modal" style="box-shadow: var(--shadow-3);">
+                                <div class="modal-header">
+                                    <span class="modal-title">Confirm Action</span>
+                                    <button class="modal-close"><span class="material-icons">close</span></button>
+                                </div>
+                                <div class="modal-body">
+                                    <p style="margin: 0; color: var(--text-secondary);">Are you sure you want to delete this item? This action cannot be undone.</p>
+                                </div>
+                                <div class="modal-footer">
+                                    <button class="btn btn-secondary">Cancel</button>
+                                    <button class="btn" style="background: var(--error); color: white;">Delete</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="component-info">
+                        <div class="component-name">Confirmation Modal</div>
+                        <div class="component-desc">Standard confirmation dialog with actions</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Toasts & Notifications -->
+        <div class="section">
+            <h2 class="section-title"><span class="material-icons">notifications</span> Toasts & Notifications</h2>
+            <p class="section-desc">Feedback messages and alerts</p>
+            <div class="component-grid">
+                <div class="component-card full-width">
+                    <div class="component-preview">
+                        <div class="toast-demo">
+                            <div class="toast success">
+                                <span class="material-icons">check_circle</span>
+                                <span>File saved successfully</span>
+                                <button class="toast-close"><span class="material-icons">close</span></button>
+                            </div>
+                            <div class="toast error">
+                                <span class="material-icons">error</span>
+                                <span>Error: Could not connect to server</span>
+                                <button class="toast-close"><span class="material-icons">close</span></button>
+                            </div>
+                            <div class="toast warning">
+                                <span class="material-icons">warning</span>
+                                <span>Warning: Unsaved changes</span>
+                                <button class="toast-close"><span class="material-icons">close</span></button>
+                            </div>
+                            <div class="toast info">
+                                <span class="material-icons">info</span>
+                                <span>Tip: Use Ctrl+S to save</span>
+                                <button class="toast-close"><span class="material-icons">close</span></button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="component-info">
+                        <div class="component-name">Toast Notifications</div>
+                        <div class="component-desc">Contextual feedback messages</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Context Menu -->
+        <div class="section">
+            <h2 class="section-title"><span class="material-icons">menu</span> Context Menus</h2>
+            <p class="section-desc">Right-click context menus</p>
+            <div class="component-grid">
+                <div class="component-card">
+                    <div class="component-preview">
+                        <div class="context-menu-demo">
+                            <div class="context-menu" style="position: relative; display: block;">
+                                <div class="context-item"><span class="material-icons">edit</span> Edit</div>
+                                <div class="context-item"><span class="material-icons">content_copy</span> Duplicate</div>
+                                <div class="context-divider"></div>
+                                <div class="context-item"><span class="material-icons">code</span> Add Code</div>
+                                <div class="context-item"><span class="material-icons">note_add</span> Add Annotation</div>
+                                <div class="context-divider"></div>
+                                <div class="context-item danger"><span class="material-icons">delete</span> Delete</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="component-info">
+                        <div class="component-name">Context Menu</div>
+                        <div class="component-desc">Right-click action menu</div>
+                    </div>
+                </div>
+                <div class="component-card">
+                    <div class="component-preview">
+                        <div class="context-menu-demo">
+                            <div class="context-menu" style="position: relative; display: block;">
+                                <div class="context-item">
+                                    <span class="material-icons">folder</span>
+                                    Move to
+                                    <span class="material-icons" style="margin-left: auto;">chevron_right</span>
+                                </div>
+                                <div class="context-item">
+                                    <span class="material-icons">label</span>
+                                    Apply Code
+                                    <span class="material-icons" style="margin-left: auto;">chevron_right</span>
+                                </div>
+                                <div class="context-item"><span class="material-icons">share</span> Export</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="component-info">
+                        <div class="component-name">Nested Menu</div>
+                        <div class="component-desc">Menu with submenus</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Code Tree -->
+        <div class="section">
+            <h2 class="section-title"><span class="material-icons">account_tree</span> Code Tree</h2>
+            <p class="section-desc">Hierarchical code structure widget</p>
+            <div class="component-grid">
+                <div class="component-card">
+                    <div class="component-preview">
+                        <div class="code-tree-demo">
+                            <div class="tree-node">
+                                <div class="tree-item parent">
+                                    <span class="material-icons tree-toggle">expand_more</span>
+                                    <span class="code-color" style="background: #FFC107;"></span>
+                                    <span class="tree-label">Learning Experiences</span>
+                                    <span class="tree-count">24</span>
+                                </div>
+                                <div class="tree-children">
+                                    <div class="tree-node">
+                                        <div class="tree-item">
+                                            <span class="code-color" style="background: #FFD54F;"></span>
+                                            <span class="tree-label">Motivation</span>
+                                            <span class="tree-count">12</span>
+                                        </div>
+                                    </div>
+                                    <div class="tree-node">
+                                        <div class="tree-item">
+                                            <span class="code-color" style="background: #FFCA28;"></span>
+                                            <span class="tree-label">Engagement</span>
+                                            <span class="tree-count">8</span>
+                                        </div>
+                                    </div>
+                                    <div class="tree-node">
+                                        <div class="tree-item">
+                                            <span class="code-color" style="background: #FFB300;"></span>
+                                            <span class="tree-label">Satisfaction</span>
+                                            <span class="tree-count">4</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="tree-node">
+                                <div class="tree-item parent collapsed">
+                                    <span class="material-icons tree-toggle">chevron_right</span>
+                                    <span class="code-color" style="background: #F44336;"></span>
+                                    <span class="tree-label">Challenges</span>
+                                    <span class="tree-count">18</span>
+                                </div>
+                            </div>
+                            <div class="tree-node">
+                                <div class="tree-item">
+                                    <span class="code-color" style="background: #4CAF50;"></span>
+                                    <span class="tree-label">Success Stories</span>
+                                    <span class="tree-count">15</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="component-info">
+                        <div class="component-name">Code Tree Widget</div>
+                        <div class="component-desc">Expandable hierarchical code list</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Data Tables -->
+        <div class="section">
+            <h2 class="section-title"><span class="material-icons">table_chart</span> Data Tables</h2>
+            <p class="section-desc">Tables for displaying structured data</p>
+            <div class="component-grid">
+                <div class="component-card full-width">
+                    <div class="component-preview">
+                        <div class="data-table-demo">
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th><input type="checkbox"></th>
+                                        <th>Name</th>
+                                        <th>Type</th>
+                                        <th>Size</th>
+                                        <th>Modified</th>
+                                        <th>Status</th>
+                                        <th></th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><input type="checkbox"></td>
+                                        <td><span class="material-icons" style="color: #2196F3; vertical-align: middle; margin-right: 8px;">description</span> Interview_01.txt</td>
+                                        <td>Text</td>
+                                        <td>12.4 KB</td>
+                                        <td>Jan 28, 2025</td>
+                                        <td><span class="badge success">Coded</span></td>
+                                        <td><button class="toolbar-btn"><span class="material-icons">more_vert</span></button></td>
+                                    </tr>
+                                    <tr class="selected">
+                                        <td><input type="checkbox" checked></td>
+                                        <td><span class="material-icons" style="color: #9C27B0; vertical-align: middle; margin-right: 8px;">audiotrack</span> Focus_group.mp3</td>
+                                        <td>Audio</td>
+                                        <td>45.2 MB</td>
+                                        <td>Jan 25, 2025</td>
+                                        <td><span class="badge warning">In Progress</span></td>
+                                        <td><button class="toolbar-btn"><span class="material-icons">more_vert</span></button></td>
+                                    </tr>
+                                    <tr>
+                                        <td><input type="checkbox"></td>
+                                        <td><span class="material-icons" style="color: #4CAF50; vertical-align: middle; margin-right: 8px;">image</span> Diagram.png</td>
+                                        <td>Image</td>
+                                        <td>2.1 MB</td>
+                                        <td>Jan 22, 2025</td>
+                                        <td><span class="badge">Pending</span></td>
+                                        <td><button class="toolbar-btn"><span class="material-icons">more_vert</span></button></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="component-info">
+                        <div class="component-name">Data Table</div>
+                        <div class="component-desc">Sortable table with selection and actions</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Cards -->
+        <div class="section">
+            <h2 class="section-title"><span class="material-icons">dashboard</span> Cards</h2>
+            <p class="section-desc">Card containers for content grouping</p>
+            <div class="component-grid">
+                <div class="component-card">
+                    <div class="component-preview">
+                        <div class="stat-card" style="text-align: center; padding: 20px; background: var(--surface); border-radius: var(--radius-lg);">
+                            <div style="font-size: 36px; font-weight: 500; color: var(--primary);">341</div>
+                            <div style="font-size: 13px; color: var(--text-secondary); margin-top: 4px;">Coded Segments</div>
+                            <div style="font-size: 11px; color: var(--success); margin-top: 8px;">
+                                <span class="material-icons" style="font-size: 14px; vertical-align: middle;">trending_up</span>
+                                +12% from last week
+                            </div>
+                        </div>
+                    </div>
+                    <div class="component-info">
+                        <div class="component-name">Stat Card</div>
+                        <div class="component-desc">Statistics display card</div>
+                    </div>
+                </div>
+                <div class="component-card">
+                    <div class="component-preview">
+                        <div style="background: var(--surface); border-radius: var(--radius-lg); padding: 16px; width: 100%; max-width: 280px;">
+                            <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
+                                <div style="width: 40px; height: 40px; background: var(--primary); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white;">P1</div>
+                                <div>
+                                    <div style="font-weight: 500;">Participant 01</div>
+                                    <div style="font-size: 12px; color: var(--text-secondary);">3 files • 47 codings</div>
+                                </div>
+                            </div>
+                            <div style="font-size: 13px; color: var(--text-secondary); line-height: 1.5;">First-year student, Computer Science major. Active participant in study groups.</div>
+                        </div>
+                    </div>
+                    <div class="component-info">
+                        <div class="component-name">Entity Card</div>
+                        <div class="component-desc">Card for cases/files with metadata</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Progress & Loading -->
+        <div class="section">
+            <h2 class="section-title"><span class="material-icons">hourglass_top</span> Progress & Loading</h2>
+            <p class="section-desc">Progress indicators and loading states</p>
+            <div class="component-grid">
+                <div class="component-card">
+                    <div class="component-preview">
+                        <div style="width: 100%; max-width: 300px;">
+                            <div style="margin-bottom: 16px;">
+                                <div style="display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 4px;">
+                                    <span>Progress</span>
+                                    <span>67%</span>
+                                </div>
+                                <div style="height: 8px; background: var(--surface-lighter); border-radius: 4px; overflow: hidden;">
+                                    <div style="width: 67%; height: 100%; background: var(--primary); border-radius: 4px;"></div>
+                                </div>
+                            </div>
+                            <div>
+                                <div style="display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 4px;">
+                                    <span>Files Coded</span>
+                                    <span>8/12</span>
+                                </div>
+                                <div style="height: 8px; background: var(--surface-lighter); border-radius: 4px; overflow: hidden;">
+                                    <div style="width: 67%; height: 100%; background: var(--success); border-radius: 4px;"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="component-info">
+                        <div class="component-name">Progress Bars</div>
+                        <div class="component-desc">Linear progress indicators</div>
+                    </div>
+                </div>
+                <div class="component-card">
+                    <div class="component-preview">
+                        <div class="preview-row">
+                            <div class="spinner"></div>
+                            <span style="color: var(--text-secondary); font-size: 13px;">Loading...</span>
+                        </div>
+                    </div>
+                    <div class="component-info">
+                        <div class="component-name">Spinner</div>
+                        <div class="component-desc">Loading spinner animation</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Color Palette -->
+        <div class="section">
+            <h2 class="section-title"><span class="material-icons">palette</span> Color Palette</h2>
+            <p class="section-desc">Primary colors used throughout the design system</p>
+            <div class="component-grid">
+                <div class="component-card full-width">
+                    <div class="component-preview" style="flex-direction: column; gap: 16px;">
+                        <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+                            <div style="text-align: center;">
+                                <div style="width: 60px; height: 60px; background: var(--primary); border-radius: var(--radius-md);"></div>
+                                <div style="font-size: 11px; margin-top: 4px;">Primary</div>
+                                <div style="font-size: 10px; color: var(--text-secondary);">#009688</div>
+                            </div>
+                            <div style="text-align: center;">
+                                <div style="width: 60px; height: 60px; background: var(--primary-light); border-radius: var(--radius-md);"></div>
+                                <div style="font-size: 11px; margin-top: 4px;">Primary Light</div>
+                                <div style="font-size: 10px; color: var(--text-secondary);">#4DB6AC</div>
+                            </div>
+                            <div style="text-align: center;">
+                                <div style="width: 60px; height: 60px; background: var(--primary-dark); border-radius: var(--radius-md);"></div>
+                                <div style="font-size: 11px; margin-top: 4px;">Primary Dark</div>
+                                <div style="font-size: 10px; color: var(--text-secondary);">#00796B</div>
+                            </div>
+                            <div style="text-align: center;">
+                                <div style="width: 60px; height: 60px; background: var(--secondary); border-radius: var(--radius-md);"></div>
+                                <div style="font-size: 11px; margin-top: 4px;">Secondary</div>
+                                <div style="font-size: 10px; color: var(--text-secondary);">#FF5722</div>
+                            </div>
+                            <div style="text-align: center;">
+                                <div style="width: 60px; height: 60px; background: var(--success); border-radius: var(--radius-md);"></div>
+                                <div style="font-size: 11px; margin-top: 4px;">Success</div>
+                                <div style="font-size: 10px; color: var(--text-secondary);">#4CAF50</div>
+                            </div>
+                            <div style="text-align: center;">
+                                <div style="width: 60px; height: 60px; background: var(--warning); border-radius: var(--radius-md);"></div>
+                                <div style="font-size: 11px; margin-top: 4px;">Warning</div>
+                                <div style="font-size: 10px; color: var(--text-secondary);">#FF9800</div>
+                            </div>
+                            <div style="text-align: center;">
+                                <div style="width: 60px; height: 60px; background: var(--error); border-radius: var(--radius-md);"></div>
+                                <div style="font-size: 11px; margin-top: 4px;">Error</div>
+                                <div style="font-size: 10px; color: var(--text-secondary);">#F44336</div>
+                            </div>
+                            <div style="text-align: center;">
+                                <div style="width: 60px; height: 60px; background: var(--info); border-radius: var(--radius-md);"></div>
+                                <div style="font-size: 11px; margin-top: 4px;">Info</div>
+                                <div style="font-size: 10px; color: var(--text-secondary);">#2196F3</div>
+                            </div>
+                        </div>
+                        <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+                            <div style="text-align: center;">
+                                <div style="width: 60px; height: 60px; background: #FFC107; border-radius: var(--radius-md);"></div>
+                                <div style="font-size: 11px; margin-top: 4px;">Yellow</div>
+                            </div>
+                            <div style="text-align: center;">
+                                <div style="width: 60px; height: 60px; background: #F44336; border-radius: var(--radius-md);"></div>
+                                <div style="font-size: 11px; margin-top: 4px;">Red</div>
+                            </div>
+                            <div style="text-align: center;">
+                                <div style="width: 60px; height: 60px; background: #4CAF50; border-radius: var(--radius-md);"></div>
+                                <div style="font-size: 11px; margin-top: 4px;">Green</div>
+                            </div>
+                            <div style="text-align: center;">
+                                <div style="width: 60px; height: 60px; background: #9C27B0; border-radius: var(--radius-md);"></div>
+                                <div style="font-size: 11px; margin-top: 4px;">Purple</div>
+                            </div>
+                            <div style="text-align: center;">
+                                <div style="width: 60px; height: 60px; background: #2196F3; border-radius: var(--radius-md);"></div>
+                                <div style="font-size: 11px; margin-top: 4px;">Blue</div>
+                            </div>
+                            <div style="text-align: center;">
+                                <div style="width: 60px; height: 60px; background: #E91E63; border-radius: var(--radius-md);"></div>
+                                <div style="font-size: 11px; margin-top: 4px;">Pink</div>
+                            </div>
+                            <div style="text-align: center;">
+                                <div style="width: 60px; height: 60px; background: #FF5722; border-radius: var(--radius-md);"></div>
+                                <div style="font-size: 11px; margin-top: 4px;">Orange</div>
+                            </div>
+                            <div style="text-align: center;">
+                                <div style="width: 60px; height: 60px; background: #00BCD4; border-radius: var(--radius-md);"></div>
+                                <div style="font-size: 11px; margin-top: 4px;">Cyan</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="component-info">
+                        <div class="component-name">Color Palette</div>
+                        <div class="component-desc">Semantic and code highlight colors</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="theme-toggle">
+        <button class="theme-btn" onclick="toggleTheme()" title="Toggle theme">
+            <span class="material-icons" id="theme-icon">light_mode</span>
+        </button>
+    </div>
+
+    <script>
+        let isDark = true;
+        function toggleTheme() {
+            isDark = !isDark;
+            document.body.classList.toggle('light-theme', !isDark);
+            document.getElementById('theme-icon').textContent = isDark ? 'light_mode' : 'dark_mode';
+        }
+    </script>
+</body>
+</html>

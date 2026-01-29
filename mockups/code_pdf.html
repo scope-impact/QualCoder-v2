@@ -1,0 +1,1007 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QualCoder - PDF Coding</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link href="css/material-theme.css" rel="stylesheet">
+    <style>
+        /* PDF coding specific styles */
+        .center-panel {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            background: var(--background);
+        }
+
+        /* PDF toolbar */
+        .pdf-toolbar {
+            padding: 8px 16px;
+            background: var(--surface);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .page-controls {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            background: var(--surface-light);
+            padding: 4px 8px;
+            border-radius: var(--radius-md);
+        }
+
+        .page-input {
+            width: 50px;
+            text-align: center;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            color: var(--text-primary);
+            font-size: 13px;
+            padding: 4px;
+        }
+
+        .page-total {
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        .zoom-controls {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            background: var(--surface-light);
+            padding: 4px 8px;
+            border-radius: var(--radius-md);
+        }
+
+        .zoom-value {
+            font-size: 12px;
+            color: var(--text-secondary);
+            min-width: 50px;
+            text-align: center;
+        }
+
+        /* PDF viewer container */
+        .pdf-viewer-container {
+            flex: 1;
+            overflow: auto;
+            display: flex;
+            justify-content: center;
+            padding: 20px;
+            background: var(--background);
+        }
+
+        .pdf-page {
+            position: relative;
+            background: white;
+            box-shadow: var(--shadow-3);
+            border-radius: var(--radius-sm);
+            overflow: hidden;
+        }
+
+        /* PDF page content (simulated) */
+        .pdf-content {
+            width: 612px; /* Letter width at 72dpi */
+            height: 792px; /* Letter height at 72dpi */
+            padding: 72px;
+            font-family: 'Times New Roman', serif;
+            font-size: 12pt;
+            line-height: 1.5;
+            color: #333;
+        }
+
+        .pdf-content h1 {
+            font-size: 18pt;
+            font-weight: bold;
+            margin-bottom: 24px;
+            color: #000;
+        }
+
+        .pdf-content h2 {
+            font-size: 14pt;
+            font-weight: bold;
+            margin: 20px 0 12px;
+            color: #000;
+        }
+
+        .pdf-content p {
+            margin-bottom: 12px;
+            text-align: justify;
+        }
+
+        /* Coded rectangle overlays */
+        .code-rect {
+            position: absolute;
+            border: 2px solid;
+            border-radius: 2px;
+            cursor: pointer;
+            transition: var(--transition);
+            background: transparent;
+        }
+
+        .code-rect:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        .code-rect.selected {
+            box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.3);
+        }
+
+        .code-rect.yellow { border-color: #FFC107; background: rgba(255, 193, 7, 0.25); }
+        .code-rect.red { border-color: #F44336; background: rgba(244, 67, 54, 0.25); }
+        .code-rect.green { border-color: #4CAF50; background: rgba(76, 175, 80, 0.25); }
+        .code-rect.blue { border-color: #2196F3; background: rgba(33, 150, 243, 0.25); }
+        .code-rect.purple { border-color: #9C27B0; background: rgba(156, 39, 176, 0.25); }
+
+        .code-rect-label {
+            position: absolute;
+            top: -20px;
+            left: 0;
+            padding: 2px 6px;
+            font-size: 10px;
+            font-weight: 500;
+            color: white;
+            border-radius: 2px;
+            white-space: nowrap;
+            font-family: 'Roboto', sans-serif;
+        }
+
+        .code-rect.yellow .code-rect-label { background: #FFC107; color: #333; }
+        .code-rect.red .code-rect-label { background: #F44336; }
+        .code-rect.green .code-rect-label { background: #4CAF50; }
+        .code-rect.blue .code-rect-label { background: #2196F3; }
+        .code-rect.purple .code-rect-label { background: #9C27B0; }
+
+        /* Page thumbnails sidebar */
+        .page-thumbnails {
+            width: 120px;
+            background: var(--surface);
+            border-right: 1px solid var(--border);
+            overflow-y: auto;
+            padding: 8px;
+            flex-shrink: 0;
+        }
+
+        .thumbnail {
+            width: 100%;
+            aspect-ratio: 0.77;
+            background: white;
+            border-radius: var(--radius-sm);
+            margin-bottom: 8px;
+            cursor: pointer;
+            border: 2px solid transparent;
+            transition: var(--transition);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .thumbnail:hover {
+            border-color: var(--border);
+        }
+
+        .thumbnail.active {
+            border-color: var(--primary);
+        }
+
+        .thumbnail-number {
+            position: absolute;
+            bottom: 4px;
+            right: 4px;
+            background: rgba(0, 0, 0, 0.6);
+            color: white;
+            font-size: 10px;
+            padding: 2px 6px;
+            border-radius: 2px;
+        }
+
+        .thumbnail-coded {
+            position: absolute;
+            top: 4px;
+            right: 4px;
+            width: 8px;
+            height: 8px;
+            background: var(--primary);
+            border-radius: 50%;
+        }
+
+        /* Files list */
+        .file-list {
+            flex: 1;
+            overflow-y: auto;
+            padding: 8px;
+        }
+
+        .file-item {
+            display: flex;
+            align-items: center;
+            padding: 10px 12px;
+            border-radius: var(--radius-md);
+            cursor: pointer;
+            transition: var(--transition);
+            margin-bottom: 2px;
+        }
+
+        .file-item:hover {
+            background: var(--surface-light);
+        }
+
+        .file-item.selected {
+            background: rgba(0, 150, 136, 0.15);
+            border-left: 3px solid var(--primary);
+        }
+
+        .file-info {
+            flex: 1;
+            min-width: 0;
+            margin-left: 12px;
+        }
+
+        .file-name {
+            font-size: 13px;
+            color: var(--text-primary);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .file-meta {
+            font-size: 11px;
+            color: var(--text-secondary);
+            margin-top: 2px;
+        }
+
+        /* Codes panel */
+        .codes-panel {
+            border-top: 1px solid var(--border);
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .code-tree {
+            flex: 1;
+            overflow-y: auto;
+            padding: 8px;
+        }
+
+        .code-item {
+            display: flex;
+            align-items: center;
+            padding: 8px 12px;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            transition: var(--transition);
+            margin-bottom: 2px;
+        }
+
+        .code-item:hover {
+            background: var(--surface-light);
+        }
+
+        .code-item.selected {
+            background: rgba(0, 150, 136, 0.15);
+            border: 1px solid var(--primary);
+        }
+
+        .code-color {
+            width: 12px;
+            height: 12px;
+            border-radius: 3px;
+            flex-shrink: 0;
+        }
+
+        .code-name {
+            font-size: 13px;
+            flex: 1;
+            margin-left: 10px;
+        }
+
+        .code-count {
+            font-size: 11px;
+            color: var(--text-secondary);
+            background: var(--surface-lighter);
+            padding: 2px 8px;
+            border-radius: 10px;
+        }
+
+        /* Info cards */
+        .info-card {
+            padding: 16px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .info-card-title {
+            font-size: 12px;
+            font-weight: 500;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .info-card-title .material-icons {
+            font-size: 16px;
+            color: var(--primary);
+        }
+
+        /* Selection info */
+        .selection-info {
+            background: var(--surface-light);
+            border-radius: var(--radius-md);
+            padding: 12px;
+        }
+
+        .selection-preview {
+            width: 100%;
+            height: 80px;
+            background: white;
+            border-radius: var(--radius-sm);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 12px;
+            font-size: 11px;
+            color: #333;
+            padding: 8px;
+            overflow: hidden;
+            border: 1px solid var(--border);
+        }
+
+        /* PDF info */
+        .pdf-info-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+        }
+
+        .pdf-info-item {
+            background: var(--surface-light);
+            padding: 8px 12px;
+            border-radius: var(--radius-sm);
+        }
+
+        .pdf-info-label {
+            font-size: 10px;
+            color: var(--text-disabled);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .pdf-info-value {
+            font-size: 13px;
+            font-weight: 500;
+            margin-top: 2px;
+        }
+
+        /* Coded regions list */
+        .coded-regions {
+            max-height: 180px;
+            overflow-y: auto;
+        }
+
+        .coded-region-item {
+            display: flex;
+            align-items: flex-start;
+            padding: 8px;
+            background: var(--surface-light);
+            border-radius: var(--radius-sm);
+            margin-bottom: 4px;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .coded-region-item:hover {
+            background: var(--surface-lighter);
+        }
+
+        .coded-region-item .code-color {
+            width: 12px;
+            height: 12px;
+            border-radius: 2px;
+            margin-right: 8px;
+            margin-top: 2px;
+        }
+
+        .coded-region-info {
+            flex: 1;
+        }
+
+        .coded-region-name {
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .coded-region-page {
+            font-size: 10px;
+            color: var(--text-secondary);
+        }
+
+        .coded-region-text {
+            font-size: 11px;
+            color: var(--text-secondary);
+            margin-top: 4px;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        /* Drawing mode indicator */
+        .drawing-mode {
+            position: fixed;
+            top: 200px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--primary);
+            color: white;
+            padding: 8px 16px;
+            border-radius: var(--radius-md);
+            font-size: 13px;
+            font-weight: 500;
+            display: none;
+            align-items: center;
+            gap: 8px;
+            box-shadow: var(--shadow-3);
+            z-index: 100;
+        }
+
+        .drawing-mode.show {
+            display: flex;
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Title Bar -->
+        <div class="title-bar">
+            <h1>
+                <span class="logo">Q</span>
+                QualCoder - research_project.qda
+            </h1>
+            <div class="window-controls">
+                <button class="window-btn minimize"></button>
+                <button class="window-btn maximize"></button>
+                <button class="window-btn close"></button>
+            </div>
+        </div>
+
+        <!-- Menu Bar -->
+        <div class="menu-bar">
+            <a href="index.html" class="menu-item">Project</a>
+            <a href="phase1_file_manager.html" class="menu-item">Files and Cases</a>
+            <a href="code_text.html" class="menu-item active">Coding</a>
+            <a href="reports_coding.html" class="menu-item">Reports</a>
+            <a href="ai_chat.html" class="menu-item">AI</a>
+            <a href="settings.html" class="menu-item">Help</a>
+        </div>
+
+        <!-- Tab Bar -->
+        <div class="tab-bar">
+            <a href="code_text.html" class="tab active">
+                <span class="material-icons">code</span>
+                Coding
+            </a>
+            <a href="reports_coding.html" class="tab">
+                <span class="material-icons">assessment</span>
+                Reports
+            </a>
+            <a href="phase1_file_manager.html" class="tab">
+                <span class="material-icons">folder</span>
+                Manage
+            </a>
+            <a href="index.html" class="tab">
+                <span class="material-icons">history</span>
+                Action Log
+            </a>
+        </div>
+
+        <!-- Toolbar -->
+        <div class="toolbar">
+            <div class="toolbar-group">
+                <a href="code_text.html" class="toolbar-btn"><span class="material-icons">description</span> Text</a>
+                <a href="code_image.html" class="toolbar-btn"><span class="material-icons">image</span> Image</a>
+                <a href="code_av.html" class="toolbar-btn"><span class="material-icons">videocam</span> A/V</a>
+                <a href="code_pdf.html" class="toolbar-btn active"><span class="material-icons">picture_as_pdf</span> PDF</a>
+            </div>
+            <div class="toolbar-divider"></div>
+            <div class="toolbar-group">
+                <span class="toolbar-label">Coder:</span>
+                <select class="toolbar-select">
+                    <option>colin</option>
+                    <option>sarah</option>
+                </select>
+            </div>
+            <div class="toolbar-group">
+                <button class="toolbar-btn active" title="Select mode" id="selectMode">
+                    <span class="material-icons">pan_tool</span>
+                </button>
+                <button class="toolbar-btn" title="Draw rectangle" id="drawMode">
+                    <span class="material-icons">crop_square</span>
+                </button>
+                <button class="toolbar-btn" title="Text selection">
+                    <span class="material-icons">text_fields</span>
+                </button>
+            </div>
+            <div class="toolbar-group">
+                <button class="toolbar-btn" title="Previous file">
+                    <span class="material-icons">navigate_before</span>
+                </button>
+                <span style="color: var(--text-secondary); font-size: 12px; min-width: 50px; text-align: center;">2 / 4</span>
+                <button class="toolbar-btn" title="Next file">
+                    <span class="material-icons">navigate_next</span>
+                </button>
+            </div>
+            <div class="toolbar-group">
+                <button class="toolbar-btn" title="Memo">
+                    <span class="material-icons">note_add</span>
+                </button>
+                <button class="toolbar-btn" title="View original">
+                    <span class="material-icons">open_in_new</span>
+                </button>
+            </div>
+            <div class="search-box" style="margin-left: auto;">
+                <span class="material-icons">search</span>
+                <input type="text" placeholder="Search in PDF...">
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Left Panel - Files & Codes -->
+            <div class="panel panel-left">
+                <!-- Files Section -->
+                <div class="panel-header">
+                    <span class="panel-title">
+                        <span class="material-icons">picture_as_pdf</span>
+                        PDF Files
+                    </span>
+                    <div class="panel-actions">
+                        <button class="panel-btn" title="Filter">
+                            <span class="material-icons">filter_list</span>
+                        </button>
+                    </div>
+                </div>
+                <div class="file-list" style="max-height: 180px;">
+                    <div class="file-item">
+                        <div class="file-icon pdf">
+                            <span class="material-icons">picture_as_pdf</span>
+                        </div>
+                        <div class="file-info">
+                            <div class="file-name">literature_review.pdf</div>
+                            <div class="file-meta">42 pages &bull; 3 codes</div>
+                        </div>
+                    </div>
+                    <div class="file-item selected">
+                        <div class="file-icon pdf">
+                            <span class="material-icons">picture_as_pdf</span>
+                        </div>
+                        <div class="file-info">
+                            <div class="file-name">research_methodology.pdf</div>
+                            <div class="file-meta">18 pages &bull; 6 codes</div>
+                        </div>
+                    </div>
+                    <div class="file-item">
+                        <div class="file-icon pdf">
+                            <span class="material-icons">picture_as_pdf</span>
+                        </div>
+                        <div class="file-info">
+                            <div class="file-name">interview_guide.pdf</div>
+                            <div class="file-meta">5 pages &bull; 2 codes</div>
+                        </div>
+                    </div>
+                    <div class="file-item">
+                        <div class="file-icon pdf">
+                            <span class="material-icons">picture_as_pdf</span>
+                        </div>
+                        <div class="file-info">
+                            <div class="file-name">consent_form.pdf</div>
+                            <div class="file-meta">2 pages &bull; 0 codes</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Codes Section -->
+                <div class="codes-panel">
+                    <div class="panel-header">
+                        <span class="panel-title">
+                            <span class="material-icons">label</span>
+                            Codes
+                        </span>
+                        <div class="panel-actions">
+                            <button class="panel-btn" title="Add code">
+                                <span class="material-icons">add</span>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="code-tree">
+                        <div class="code-item selected">
+                            <span class="code-color" style="background: #FFC107;"></span>
+                            <span class="code-name">Key Concept</span>
+                            <span class="code-count">8</span>
+                        </div>
+                        <div class="code-item">
+                            <span class="code-color" style="background: #F44336;"></span>
+                            <span class="code-name">Critical Point</span>
+                            <span class="code-count">5</span>
+                        </div>
+                        <div class="code-item">
+                            <span class="code-color" style="background: #4CAF50;"></span>
+                            <span class="code-name">Methodology</span>
+                            <span class="code-count">12</span>
+                        </div>
+                        <div class="code-item">
+                            <span class="code-color" style="background: #2196F3;"></span>
+                            <span class="code-name">Reference</span>
+                            <span class="code-count">15</span>
+                        </div>
+                        <div class="code-item">
+                            <span class="code-color" style="background: #9C27B0;"></span>
+                            <span class="code-name">Definition</span>
+                            <span class="code-count">7</span>
+                        </div>
+                    </div>
+                    <div style="padding: 8px; border-top: 1px solid var(--border);">
+                        <div style="font-size: 11px; color: var(--text-secondary); margin-bottom: 8px;">
+                            Select a code, then draw on the PDF
+                        </div>
+                        <button class="btn btn-primary btn-sm" style="width: 100%;">
+                            <span class="material-icons">add</span>
+                            New Code
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Page Thumbnails -->
+            <div class="page-thumbnails">
+                <div class="thumbnail">
+                    <div class="thumbnail-number">1</div>
+                </div>
+                <div class="thumbnail">
+                    <div class="thumbnail-number">2</div>
+                    <div class="thumbnail-coded"></div>
+                </div>
+                <div class="thumbnail active">
+                    <div class="thumbnail-number">3</div>
+                    <div class="thumbnail-coded"></div>
+                </div>
+                <div class="thumbnail">
+                    <div class="thumbnail-number">4</div>
+                </div>
+                <div class="thumbnail">
+                    <div class="thumbnail-number">5</div>
+                    <div class="thumbnail-coded"></div>
+                </div>
+                <div class="thumbnail">
+                    <div class="thumbnail-number">6</div>
+                </div>
+                <div class="thumbnail">
+                    <div class="thumbnail-number">7</div>
+                </div>
+                <div class="thumbnail">
+                    <div class="thumbnail-number">8</div>
+                </div>
+            </div>
+
+            <!-- Center Panel - PDF Viewer -->
+            <div class="center-panel">
+                <div class="pdf-toolbar">
+                    <span style="font-size: 13px; font-weight: 500;">
+                        <span class="material-icons" style="font-size: 18px; vertical-align: middle; color: var(--file-pdf);">picture_as_pdf</span>
+                        research_methodology.pdf
+                    </span>
+                    <div class="page-controls">
+                        <button class="toolbar-btn" style="width: 28px; height: 28px;" title="Previous page">
+                            <span class="material-icons" style="font-size: 18px;">chevron_left</span>
+                        </button>
+                        <input type="text" class="page-input" value="3">
+                        <span class="page-total">/ 18</span>
+                        <button class="toolbar-btn" style="width: 28px; height: 28px;" title="Next page">
+                            <span class="material-icons" style="font-size: 18px;">chevron_right</span>
+                        </button>
+                    </div>
+                    <div class="zoom-controls">
+                        <button class="toolbar-btn" style="width: 28px; height: 28px;" title="Zoom out">
+                            <span class="material-icons" style="font-size: 18px;">remove</span>
+                        </button>
+                        <span class="zoom-value">100%</span>
+                        <button class="toolbar-btn" style="width: 28px; height: 28px;" title="Zoom in">
+                            <span class="material-icons" style="font-size: 18px;">add</span>
+                        </button>
+                    </div>
+                    <button class="toolbar-btn" title="Fit to width">
+                        <span class="material-icons">fit_screen</span>
+                    </button>
+                    <button class="toolbar-btn" title="Rotate">
+                        <span class="material-icons">rotate_right</span>
+                    </button>
+                </div>
+
+                <div class="pdf-viewer-container">
+                    <div class="pdf-page">
+                        <div class="pdf-content">
+                            <h1>Chapter 3: Research Methodology</h1>
+
+                            <h2>3.1 Introduction</h2>
+                            <p>This chapter presents the research methodology employed in this study. The research design, sampling strategy, data collection methods, and analysis procedures are described in detail to ensure transparency and reproducibility.</p>
+
+                            <h2>3.2 Research Design</h2>
+                            <p>A qualitative research approach was adopted for this study, utilizing semi-structured interviews and focus group discussions as the primary data collection methods. This approach was chosen because it allows for in-depth exploration of participants' experiences and perspectives.</p>
+
+                            <p>The study employed a phenomenological framework to understand the lived experiences of participants engaging with online learning platforms. This methodological choice aligns with the research questions which seek to understand subjective experiences and meanings.</p>
+
+                            <h2>3.3 Sampling Strategy</h2>
+                            <p>Purposive sampling was used to select participants who met specific criteria relevant to the research objectives. The inclusion criteria required participants to have at least six months of experience with the online learning platform being studied.</p>
+
+                            <p>A total of 24 participants were recruited across three different institutions. This sample size was determined through theoretical saturation principles, where data collection continued until no new themes emerged from the analysis.</p>
+                        </div>
+
+                        <!-- Coded rectangles -->
+                        <div class="code-rect yellow" style="top: 72px; left: 72px; width: 468px; height: 30px;">
+                            <span class="code-rect-label">Key Concept</span>
+                        </div>
+                        <div class="code-rect green selected" style="top: 180px; left: 72px; width: 468px; height: 85px;">
+                            <span class="code-rect-label">Methodology</span>
+                        </div>
+                        <div class="code-rect purple" style="top: 290px; left: 72px; width: 468px; height: 70px;">
+                            <span class="code-rect-label">Definition</span>
+                        </div>
+                        <div class="code-rect blue" style="top: 430px; left: 72px; width: 200px; height: 20px;">
+                            <span class="code-rect-label">Reference</span>
+                        </div>
+                        <div class="code-rect red" style="top: 520px; left: 72px; width: 468px; height: 50px;">
+                            <span class="code-rect-label">Critical Point</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Panel - Details -->
+            <div class="panel panel-right" style="border-left: 1px solid var(--border); border-right: none;">
+                <div class="info-card">
+                    <div class="info-card-title">
+                        <span class="material-icons">crop</span>
+                        Selected Region
+                    </div>
+                    <div class="selection-info">
+                        <div class="selection-preview">
+                            A qualitative research approach was adopted for this study, utilizing semi-structured interviews...
+                        </div>
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                            <span style="font-size: 13px; font-weight: 500;">Methodology</span>
+                            <span class="code-color" style="background: #4CAF50; width: 16px; height: 16px;"></span>
+                        </div>
+                        <div style="font-size: 11px; color: var(--text-secondary);">
+                            Page 3 &bull; 85 x 468 px
+                        </div>
+                    </div>
+                </div>
+
+                <div class="info-card">
+                    <div class="info-card-title">
+                        <span class="material-icons">info</span>
+                        PDF Info
+                    </div>
+                    <div class="pdf-info-grid">
+                        <div class="pdf-info-item">
+                            <div class="pdf-info-label">Pages</div>
+                            <div class="pdf-info-value">18</div>
+                        </div>
+                        <div class="pdf-info-item">
+                            <div class="pdf-info-label">File Size</div>
+                            <div class="pdf-info-value">1.8 MB</div>
+                        </div>
+                        <div class="pdf-info-item">
+                            <div class="pdf-info-label">Coded</div>
+                            <div class="pdf-info-value">6 regions</div>
+                        </div>
+                        <div class="pdf-info-item">
+                            <div class="pdf-info-label">Page Size</div>
+                            <div class="pdf-info-value">Letter</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="info-card">
+                    <div class="info-card-title">
+                        <span class="material-icons">layers</span>
+                        Coded Regions (6)
+                    </div>
+                    <div class="coded-regions">
+                        <div class="coded-region-item">
+                            <span class="code-color" style="background: #FFC107;"></span>
+                            <div class="coded-region-info">
+                                <div class="coded-region-name">Key Concept</div>
+                                <div class="coded-region-page">Page 3</div>
+                                <div class="coded-region-text">Chapter 3: Research Methodology</div>
+                            </div>
+                        </div>
+                        <div class="coded-region-item" style="background: rgba(0, 150, 136, 0.15);">
+                            <span class="code-color" style="background: #4CAF50;"></span>
+                            <div class="coded-region-info">
+                                <div class="coded-region-name">Methodology</div>
+                                <div class="coded-region-page">Page 3</div>
+                                <div class="coded-region-text">A qualitative research approach was adopted...</div>
+                            </div>
+                        </div>
+                        <div class="coded-region-item">
+                            <span class="code-color" style="background: #9C27B0;"></span>
+                            <div class="coded-region-info">
+                                <div class="coded-region-name">Definition</div>
+                                <div class="coded-region-page">Page 3</div>
+                                <div class="coded-region-text">phenomenological framework to understand...</div>
+                            </div>
+                        </div>
+                        <div class="coded-region-item">
+                            <span class="code-color" style="background: #2196F3;"></span>
+                            <div class="coded-region-info">
+                                <div class="coded-region-name">Reference</div>
+                                <div class="coded-region-page">Page 3</div>
+                                <div class="coded-region-text">Purposive sampling</div>
+                            </div>
+                        </div>
+                        <div class="coded-region-item">
+                            <span class="code-color" style="background: #F44336;"></span>
+                            <div class="coded-region-info">
+                                <div class="coded-region-name">Critical Point</div>
+                                <div class="coded-region-page">Page 3</div>
+                                <div class="coded-region-text">A total of 24 participants were recruited...</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="info-card">
+                    <div class="info-card-title">
+                        <span class="material-icons">note</span>
+                        Region Memo
+                    </div>
+                    <textarea class="form-input" style="min-height: 80px; resize: vertical;" placeholder="Add notes about this coded region...">Key methodological choice - justification for qualitative approach clearly stated.</textarea>
+                </div>
+            </div>
+        </div>
+
+        <!-- Status Bar -->
+        <div class="status-bar">
+            <div class="status-left">
+                <span class="status-item">
+                    <span class="material-icons">check_circle</span>
+                    Ready
+                </span>
+                <span class="status-item">
+                    <span class="material-icons">storage</span>
+                    research_project.qda
+                </span>
+                <span class="status-item">
+                    <span class="material-icons">pan_tool</span>
+                    Select Mode
+                </span>
+            </div>
+            <div class="status-right">
+                <span class="status-item">
+                    <span class="material-icons">picture_as_pdf</span>
+                    Page 3 of 18
+                </span>
+                <span class="status-item">
+                    <span class="material-icons">schedule</span>
+                    Auto-save: 45s ago
+                </span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Drawing Mode Indicator -->
+    <div class="drawing-mode" id="drawingMode">
+        <span class="material-icons">crop_square</span>
+        Draw rectangle mode - Click and drag on PDF
+        <button class="btn btn-sm" style="padding: 4px 8px; margin-left: 8px;" onclick="exitDrawMode()">Cancel</button>
+    </div>
+
+    <!-- Theme Toggle Button -->
+    <div class="theme-toggle">
+        <button class="theme-btn" onclick="toggleTheme()" title="Toggle theme">
+            <span class="material-icons" id="theme-icon">light_mode</span>
+        </button>
+    </div>
+
+    <!-- FAB for quick actions -->
+    <button class="fab" onclick="enterDrawMode()" title="Draw code region">
+        <span class="material-icons">crop_square</span>
+    </button>
+
+    <!-- Context Menu -->
+    <div class="context-menu" id="contextMenu">
+        <div class="context-item">
+            <span class="material-icons">edit</span>
+            Edit Region
+        </div>
+        <div class="context-item">
+            <span class="material-icons">note_add</span>
+            Add Memo
+        </div>
+        <div class="context-item">
+            <span class="material-icons">content_copy</span>
+            Copy Text
+        </div>
+        <div class="context-divider"></div>
+        <div class="context-item">
+            <span class="material-icons">label</span>
+            Change Code
+        </div>
+        <div class="context-divider"></div>
+        <div class="context-item danger">
+            <span class="material-icons">delete</span>
+            Delete
+        </div>
+    </div>
+
+    <script>
+        let isDark = true;
+
+        function toggleTheme() {
+            isDark = !isDark;
+            document.body.classList.toggle('light-theme', !isDark);
+            document.getElementById('theme-icon').textContent = isDark ? 'light_mode' : 'dark_mode';
+        }
+
+        function enterDrawMode() {
+            document.getElementById('drawingMode').classList.add('show');
+            document.getElementById('drawMode').classList.add('active');
+            document.getElementById('selectMode').classList.remove('active');
+        }
+
+        function exitDrawMode() {
+            document.getElementById('drawingMode').classList.remove('show');
+            document.getElementById('drawMode').classList.remove('active');
+            document.getElementById('selectMode').classList.add('active');
+        }
+
+        // Mode toggle
+        document.getElementById('drawMode').addEventListener('click', enterDrawMode);
+        document.getElementById('selectMode').addEventListener('click', exitDrawMode);
+
+        // Thumbnail selection
+        document.querySelectorAll('.thumbnail').forEach(thumb => {
+            thumb.addEventListener('click', function() {
+                document.querySelectorAll('.thumbnail').forEach(t => t.classList.remove('active'));
+                this.classList.add('active');
+            });
+        });
+
+        // Context menu on right-click
+        document.querySelectorAll('.code-rect').forEach(rect => {
+            rect.addEventListener('contextmenu', function(e) {
+                e.preventDefault();
+                const menu = document.getElementById('contextMenu');
+                menu.style.left = e.pageX + 'px';
+                menu.style.top = e.pageY + 'px';
+                menu.classList.add('show');
+            });
+        });
+
+        // Hide context menu on click
+        document.addEventListener('click', function() {
+            document.getElementById('contextMenu').classList.remove('show');
+        });
+
+        // Code item selection
+        document.querySelectorAll('.code-item').forEach(item => {
+            item.addEventListener('click', function() {
+                document.querySelectorAll('.code-item').forEach(i => i.classList.remove('selected'));
+                this.classList.add('selected');
+            });
+        });
+    </script>
+</body>
+</html>

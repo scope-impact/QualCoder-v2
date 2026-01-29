@@ -1,0 +1,613 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QualCoder - Settings</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link href="css/material-theme.css" rel="stylesheet">
+    <style>
+        .center-panel { flex: 1; display: flex; flex-direction: column; overflow: hidden; background: var(--background); }
+
+        .settings-container { flex: 1; display: flex; overflow: hidden; }
+
+        /* Settings Navigation */
+        .settings-nav { width: 240px; background: var(--surface); border-right: 1px solid var(--border); padding: 16px 0; }
+
+        .nav-section { margin-bottom: 8px; }
+        .nav-section-title { padding: 8px 20px; font-size: 11px; font-weight: 500; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px; }
+
+        .nav-item { display: flex; align-items: center; gap: 12px; padding: 12px 20px; cursor: pointer; transition: var(--transition); color: var(--text-secondary); }
+        .nav-item:hover { background: var(--surface-light); color: var(--text-primary); }
+        .nav-item.active { background: rgba(0, 150, 136, 0.15); color: var(--primary); border-right: 3px solid var(--primary); }
+        .nav-item .material-icons { font-size: 20px; }
+        .nav-item span:not(.material-icons) { font-size: 13px; }
+
+        /* Settings Content */
+        .settings-content { flex: 1; overflow-y: auto; padding: 24px 32px; }
+
+        .settings-header { margin-bottom: 24px; }
+        .settings-title { font-size: 24px; font-weight: 500; margin-bottom: 8px; }
+        .settings-desc { font-size: 14px; color: var(--text-secondary); }
+
+        .settings-section { background: var(--surface); border-radius: var(--radius-lg); box-shadow: var(--shadow-1); margin-bottom: 20px; overflow: hidden; }
+
+        .section-header { padding: 16px 20px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 10px; }
+        .section-icon { width: 36px; height: 36px; border-radius: var(--radius-md); display: flex; align-items: center; justify-content: center; background: rgba(0, 150, 136, 0.15); }
+        .section-icon .material-icons { color: var(--primary); font-size: 20px; }
+        .section-title { font-weight: 500; }
+        .section-subtitle { font-size: 12px; color: var(--text-secondary); }
+
+        .section-body { padding: 20px; }
+
+        .setting-row { display: flex; align-items: center; justify-content: space-between; padding: 14px 0; border-bottom: 1px solid var(--border); }
+        .setting-row:last-child { border-bottom: none; }
+
+        .setting-info { flex: 1; }
+        .setting-label { font-size: 14px; font-weight: 500; margin-bottom: 4px; }
+        .setting-desc { font-size: 12px; color: var(--text-secondary); }
+
+        .setting-control { display: flex; align-items: center; gap: 12px; }
+
+        /* Toggle Switch */
+        .toggle { position: relative; width: 44px; height: 24px; cursor: pointer; }
+        .toggle input { opacity: 0; width: 0; height: 0; }
+        .toggle-slider { position: absolute; inset: 0; background: var(--surface-lighter); border-radius: 12px; transition: var(--transition); }
+        .toggle-slider:before { content: ''; position: absolute; width: 18px; height: 18px; left: 3px; bottom: 3px; background: white; border-radius: 50%; transition: var(--transition); }
+        .toggle input:checked + .toggle-slider { background: var(--primary); }
+        .toggle input:checked + .toggle-slider:before { transform: translateX(20px); }
+
+        /* Select Input */
+        .select-input { padding: 8px 32px 8px 12px; background: var(--surface-light); border: 1px solid var(--border); border-radius: var(--radius-md); color: var(--text-primary); font-size: 13px; min-width: 180px; appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23666' d='M6 8L1 3h10z'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 10px center; cursor: pointer; }
+        .select-input:focus { outline: none; border-color: var(--primary); }
+
+        /* Text Input */
+        .text-input { padding: 8px 12px; background: var(--surface-light); border: 1px solid var(--border); border-radius: var(--radius-md); color: var(--text-primary); font-size: 13px; width: 200px; }
+        .text-input:focus { outline: none; border-color: var(--primary); }
+
+        /* Number Input */
+        .number-input { padding: 8px 12px; background: var(--surface-light); border: 1px solid var(--border); border-radius: var(--radius-md); color: var(--text-primary); font-size: 13px; width: 80px; text-align: center; }
+        .number-input:focus { outline: none; border-color: var(--primary); }
+
+        /* Color Preview */
+        .color-preview { width: 32px; height: 32px; border-radius: var(--radius-sm); border: 2px solid var(--border); cursor: pointer; }
+
+        /* Font Preview */
+        .font-preview { padding: 12px 16px; background: var(--surface-light); border-radius: var(--radius-md); font-size: 14px; min-width: 200px; text-align: center; }
+
+        /* Theme Selector */
+        .theme-selector { display: flex; gap: 12px; }
+        .theme-option { width: 100px; padding: 12px; border: 2px solid var(--border); border-radius: var(--radius-md); cursor: pointer; text-align: center; transition: var(--transition); }
+        .theme-option:hover { border-color: var(--primary); }
+        .theme-option.selected { border-color: var(--primary); background: rgba(0, 150, 136, 0.1); }
+        .theme-preview { height: 40px; border-radius: var(--radius-sm); margin-bottom: 8px; }
+        .theme-preview.dark { background: linear-gradient(135deg, #1e1e1e 50%, #2d2d2d 50%); }
+        .theme-preview.light { background: linear-gradient(135deg, #ffffff 50%, #f5f5f5 50%); }
+        .theme-preview.auto { background: linear-gradient(135deg, #1e1e1e 25%, #2d2d2d 25%, #2d2d2d 50%, #ffffff 50%, #ffffff 75%, #f5f5f5 75%); }
+        .theme-label { font-size: 12px; font-weight: 500; }
+
+        /* API Key Input */
+        .api-key-input { display: flex; gap: 8px; align-items: center; }
+        .api-key-field { flex: 1; max-width: 300px; }
+        .api-key-field input { width: 100%; padding: 8px 12px; background: var(--surface-light); border: 1px solid var(--border); border-radius: var(--radius-md); color: var(--text-primary); font-size: 13px; font-family: 'Roboto Mono', monospace; }
+        .api-key-field input:focus { outline: none; border-color: var(--primary); }
+
+        /* Backup Section */
+        .backup-info { display: flex; align-items: center; gap: 12px; padding: 12px 16px; background: var(--surface-light); border-radius: var(--radius-md); margin-bottom: 16px; }
+        .backup-icon { width: 40px; height: 40px; border-radius: var(--radius-md); background: rgba(76, 175, 80, 0.2); display: flex; align-items: center; justify-content: center; }
+        .backup-icon .material-icons { color: var(--success); }
+        .backup-details { flex: 1; }
+        .backup-status { font-weight: 500; margin-bottom: 2px; }
+        .backup-date { font-size: 12px; color: var(--text-secondary); }
+
+        .backup-location { display: flex; align-items: center; gap: 8px; }
+        .backup-path { flex: 1; padding: 8px 12px; background: var(--surface-light); border: 1px solid var(--border); border-radius: var(--radius-md); font-size: 13px; font-family: 'Roboto Mono', monospace; color: var(--text-secondary); }
+
+        /* Reset Warning */
+        .danger-zone { border: 1px solid var(--error); border-radius: var(--radius-lg); padding: 16px; margin-top: 20px; }
+        .danger-title { color: var(--error); font-weight: 500; margin-bottom: 8px; display: flex; align-items: center; gap: 8px; }
+        .danger-desc { font-size: 13px; color: var(--text-secondary); margin-bottom: 12px; }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <div class="title-bar">
+            <h1><span class="logo">Q</span> QualCoder - research_project.qda</h1>
+            <div class="window-controls">
+                <button class="window-btn minimize"></button>
+                <button class="window-btn maximize"></button>
+                <button class="window-btn close"></button>
+            </div>
+        </div>
+
+        <div class="menu-bar">
+            <a href="index.html" class="menu-item">Project</a>
+            <a href="phase1_file_manager.html" class="menu-item">Files and Cases</a>
+            <a href="code_text.html" class="menu-item">Coding</a>
+            <a href="reports_coding.html" class="menu-item">Reports</a>
+            <a href="ai_chat.html" class="menu-item">AI</a>
+            <a href="settings.html" class="menu-item active">Help</a>
+        </div>
+
+        <div class="tab-bar">
+            <a href="code_text.html" class="tab"><span class="material-icons">code</span> Coding</a>
+            <a href="reports_coding.html" class="tab"><span class="material-icons">assessment</span> Reports</a>
+            <a href="phase1_file_manager.html" class="tab"><span class="material-icons">folder</span> Manage</a>
+            <a href="index.html" class="tab"><span class="material-icons">history</span> Action Log</a>
+        </div>
+
+        <div class="toolbar">
+            <div class="toolbar-group">
+                <a href="settings.html" class="toolbar-btn active"><span class="material-icons">settings</span> Settings</a>
+                <a href="sql_query.html" class="toolbar-btn"><span class="material-icons">terminal</span> SQL Query</a>
+            </div>
+            <div class="toolbar-divider"></div>
+            <div class="toolbar-group" style="margin-left: auto;">
+                <button class="btn btn-secondary"><span class="material-icons">restart_alt</span> Reset to Defaults</button>
+                <button class="btn btn-primary"><span class="material-icons">save</span> Save Changes</button>
+            </div>
+        </div>
+
+        <div class="main-content">
+            <div class="center-panel">
+                <div class="settings-container">
+                    <!-- Navigation -->
+                    <div class="settings-nav">
+                        <div class="nav-section">
+                            <div class="nav-section-title">Application</div>
+                            <div class="nav-item active">
+                                <span class="material-icons">tune</span>
+                                <span>General</span>
+                            </div>
+                            <div class="nav-item">
+                                <span class="material-icons">palette</span>
+                                <span>Appearance</span>
+                            </div>
+                            <div class="nav-item">
+                                <span class="material-icons">text_fields</span>
+                                <span>Fonts</span>
+                            </div>
+                            <div class="nav-item">
+                                <span class="material-icons">keyboard</span>
+                                <span>Shortcuts</span>
+                            </div>
+                        </div>
+                        <div class="nav-section">
+                            <div class="nav-section-title">Data</div>
+                            <div class="nav-item">
+                                <span class="material-icons">backup</span>
+                                <span>Backup</span>
+                            </div>
+                            <div class="nav-item">
+                                <span class="material-icons">import_export</span>
+                                <span>Import/Export</span>
+                            </div>
+                        </div>
+                        <div class="nav-section">
+                            <div class="nav-section-title">AI</div>
+                            <div class="nav-item">
+                                <span class="material-icons">smart_toy</span>
+                                <span>AI Settings</span>
+                            </div>
+                            <div class="nav-item">
+                                <span class="material-icons">vpn_key</span>
+                                <span>API Keys</span>
+                            </div>
+                        </div>
+                        <div class="nav-section">
+                            <div class="nav-section-title">Advanced</div>
+                            <div class="nav-item">
+                                <span class="material-icons">storage</span>
+                                <span>Database</span>
+                            </div>
+                            <div class="nav-item">
+                                <span class="material-icons">bug_report</span>
+                                <span>Debug</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Content -->
+                    <div class="settings-content">
+                        <div class="settings-header">
+                            <h2 class="settings-title">General Settings</h2>
+                            <p class="settings-desc">Configure basic application behavior and preferences</p>
+                        </div>
+
+                        <!-- Language & Region -->
+                        <div class="settings-section">
+                            <div class="section-header">
+                                <div class="section-icon">
+                                    <span class="material-icons">language</span>
+                                </div>
+                                <div>
+                                    <div class="section-title">Language & Region</div>
+                                    <div class="section-subtitle">Set your preferred language and regional settings</div>
+                                </div>
+                            </div>
+                            <div class="section-body">
+                                <div class="setting-row">
+                                    <div class="setting-info">
+                                        <div class="setting-label">Interface Language</div>
+                                        <div class="setting-desc">Choose the language for menus and interface elements</div>
+                                    </div>
+                                    <div class="setting-control">
+                                        <select class="select-input">
+                                            <option selected>English</option>
+                                            <option>Deutsch (German)</option>
+                                            <option>Español (Spanish)</option>
+                                            <option>Français (French)</option>
+                                            <option>Italiano (Italian)</option>
+                                            <option>日本語 (Japanese)</option>
+                                            <option>中文 (Chinese)</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="setting-row">
+                                    <div class="setting-info">
+                                        <div class="setting-label">Date Format</div>
+                                        <div class="setting-desc">How dates are displayed throughout the application</div>
+                                    </div>
+                                    <div class="setting-control">
+                                        <select class="select-input">
+                                            <option>MM/DD/YYYY</option>
+                                            <option selected>DD/MM/YYYY</option>
+                                            <option>YYYY-MM-DD</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="setting-row">
+                                    <div class="setting-info">
+                                        <div class="setting-label">Time Format</div>
+                                        <div class="setting-desc">12-hour or 24-hour time display</div>
+                                    </div>
+                                    <div class="setting-control">
+                                        <select class="select-input">
+                                            <option>12-hour (AM/PM)</option>
+                                            <option selected>24-hour</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Appearance -->
+                        <div class="settings-section">
+                            <div class="section-header">
+                                <div class="section-icon">
+                                    <span class="material-icons">palette</span>
+                                </div>
+                                <div>
+                                    <div class="section-title">Appearance</div>
+                                    <div class="section-subtitle">Customize the look and feel of the application</div>
+                                </div>
+                            </div>
+                            <div class="section-body">
+                                <div class="setting-row">
+                                    <div class="setting-info">
+                                        <div class="setting-label">Theme</div>
+                                        <div class="setting-desc">Choose your preferred color scheme</div>
+                                    </div>
+                                    <div class="setting-control">
+                                        <div class="theme-selector">
+                                            <div class="theme-option selected">
+                                                <div class="theme-preview dark"></div>
+                                                <div class="theme-label">Dark</div>
+                                            </div>
+                                            <div class="theme-option">
+                                                <div class="theme-preview light"></div>
+                                                <div class="theme-label">Light</div>
+                                            </div>
+                                            <div class="theme-option">
+                                                <div class="theme-preview auto"></div>
+                                                <div class="theme-label">Auto</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="setting-row">
+                                    <div class="setting-info">
+                                        <div class="setting-label">Accent Color</div>
+                                        <div class="setting-desc">Primary accent color used throughout the interface</div>
+                                    </div>
+                                    <div class="setting-control">
+                                        <input type="color" class="color-preview" value="#009688">
+                                        <span style="font-size: 13px; color: var(--text-secondary);">#009688</span>
+                                    </div>
+                                </div>
+                                <div class="setting-row">
+                                    <div class="setting-info">
+                                        <div class="setting-label">Compact Mode</div>
+                                        <div class="setting-desc">Reduce spacing for more content on screen</div>
+                                    </div>
+                                    <div class="setting-control">
+                                        <label class="toggle">
+                                            <input type="checkbox">
+                                            <span class="toggle-slider"></span>
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="setting-row">
+                                    <div class="setting-info">
+                                        <div class="setting-label">Show Toolbar Labels</div>
+                                        <div class="setting-desc">Display text labels under toolbar icons</div>
+                                    </div>
+                                    <div class="setting-control">
+                                        <label class="toggle">
+                                            <input type="checkbox" checked>
+                                            <span class="toggle-slider"></span>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Coding -->
+                        <div class="settings-section">
+                            <div class="section-header">
+                                <div class="section-icon">
+                                    <span class="material-icons">code</span>
+                                </div>
+                                <div>
+                                    <div class="section-title">Coding</div>
+                                    <div class="section-subtitle">Default settings for coding documents</div>
+                                </div>
+                            </div>
+                            <div class="section-body">
+                                <div class="setting-row">
+                                    <div class="setting-info">
+                                        <div class="setting-label">Auto-save Coded Segments</div>
+                                        <div class="setting-desc">Automatically save when coding is applied</div>
+                                    </div>
+                                    <div class="setting-control">
+                                        <label class="toggle">
+                                            <input type="checkbox" checked>
+                                            <span class="toggle-slider"></span>
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="setting-row">
+                                    <div class="setting-info">
+                                        <div class="setting-label">Show Code Colors in Text</div>
+                                        <div class="setting-desc">Highlight coded text with code colors</div>
+                                    </div>
+                                    <div class="setting-control">
+                                        <label class="toggle">
+                                            <input type="checkbox" checked>
+                                            <span class="toggle-slider"></span>
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="setting-row">
+                                    <div class="setting-info">
+                                        <div class="setting-label">Default Code Color</div>
+                                        <div class="setting-desc">Color assigned to new codes</div>
+                                    </div>
+                                    <div class="setting-control">
+                                        <input type="color" class="color-preview" value="#FFC107">
+                                    </div>
+                                </div>
+                                <div class="setting-row">
+                                    <div class="setting-info">
+                                        <div class="setting-label">Coder Name</div>
+                                        <div class="setting-desc">Your name for multi-coder projects</div>
+                                    </div>
+                                    <div class="setting-control">
+                                        <input type="text" class="text-input" value="colin">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- AI Settings -->
+                        <div class="settings-section">
+                            <div class="section-header">
+                                <div class="section-icon">
+                                    <span class="material-icons">smart_toy</span>
+                                </div>
+                                <div>
+                                    <div class="section-title">AI Integration</div>
+                                    <div class="section-subtitle">Configure AI-assisted coding features</div>
+                                </div>
+                            </div>
+                            <div class="section-body">
+                                <div class="setting-row">
+                                    <div class="setting-info">
+                                        <div class="setting-label">Enable AI Features</div>
+                                        <div class="setting-desc">Use AI for code suggestions, chat, and analysis</div>
+                                    </div>
+                                    <div class="setting-control">
+                                        <label class="toggle">
+                                            <input type="checkbox" checked>
+                                            <span class="toggle-slider"></span>
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="setting-row">
+                                    <div class="setting-info">
+                                        <div class="setting-label">AI Provider</div>
+                                        <div class="setting-desc">Select your preferred AI service</div>
+                                    </div>
+                                    <div class="setting-control">
+                                        <select class="select-input">
+                                            <option selected>OpenAI (GPT-4)</option>
+                                            <option>Anthropic (Claude)</option>
+                                            <option>Google (Gemini)</option>
+                                            <option>Local (Ollama)</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="setting-row">
+                                    <div class="setting-info">
+                                        <div class="setting-label">API Key</div>
+                                        <div class="setting-desc">Your API key for the selected provider</div>
+                                    </div>
+                                    <div class="setting-control">
+                                        <div class="api-key-input">
+                                            <div class="api-key-field">
+                                                <input type="password" value="sk-xxxx...xxxx" placeholder="Enter API key">
+                                            </div>
+                                            <button class="btn btn-sm btn-secondary"><span class="material-icons">visibility</span></button>
+                                            <button class="btn btn-sm btn-secondary"><span class="material-icons">check</span> Test</button>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="setting-row">
+                                    <div class="setting-info">
+                                        <div class="setting-label">Model</div>
+                                        <div class="setting-desc">AI model to use for analysis</div>
+                                    </div>
+                                    <div class="setting-control">
+                                        <select class="select-input">
+                                            <option>GPT-4 Turbo</option>
+                                            <option selected>GPT-4.1</option>
+                                            <option>GPT-4o</option>
+                                            <option>GPT-3.5 Turbo</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="setting-row">
+                                    <div class="setting-info">
+                                        <div class="setting-label">Temperature</div>
+                                        <div class="setting-desc">Creativity level (0 = focused, 1 = creative)</div>
+                                    </div>
+                                    <div class="setting-control">
+                                        <input type="range" style="width: 120px;" min="0" max="100" value="30">
+                                        <span style="font-size: 13px; margin-left: 8px;">0.3</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Backup -->
+                        <div class="settings-section">
+                            <div class="section-header">
+                                <div class="section-icon">
+                                    <span class="material-icons">backup</span>
+                                </div>
+                                <div>
+                                    <div class="section-title">Backup & Recovery</div>
+                                    <div class="section-subtitle">Automatic backup settings and data protection</div>
+                                </div>
+                            </div>
+                            <div class="section-body">
+                                <div class="backup-info">
+                                    <div class="backup-icon">
+                                        <span class="material-icons">check_circle</span>
+                                    </div>
+                                    <div class="backup-details">
+                                        <div class="backup-status">Last backup: Successful</div>
+                                        <div class="backup-date">January 28, 2025 at 2:30 PM (47 MB)</div>
+                                    </div>
+                                    <button class="btn btn-secondary"><span class="material-icons">backup</span> Backup Now</button>
+                                </div>
+                                <div class="setting-row">
+                                    <div class="setting-info">
+                                        <div class="setting-label">Auto Backup</div>
+                                        <div class="setting-desc">Automatically backup project at regular intervals</div>
+                                    </div>
+                                    <div class="setting-control">
+                                        <label class="toggle">
+                                            <input type="checkbox" checked>
+                                            <span class="toggle-slider"></span>
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="setting-row">
+                                    <div class="setting-info">
+                                        <div class="setting-label">Backup Frequency</div>
+                                        <div class="setting-desc">How often to create automatic backups</div>
+                                    </div>
+                                    <div class="setting-control">
+                                        <select class="select-input">
+                                            <option>Every 15 minutes</option>
+                                            <option selected>Every 30 minutes</option>
+                                            <option>Every hour</option>
+                                            <option>Daily</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="setting-row">
+                                    <div class="setting-info">
+                                        <div class="setting-label">Backup Location</div>
+                                        <div class="setting-desc">Where backup files are stored</div>
+                                    </div>
+                                    <div class="setting-control">
+                                        <div class="backup-location">
+                                            <span class="backup-path">~/Documents/QualCoder_Backups</span>
+                                            <button class="btn btn-sm btn-secondary"><span class="material-icons">folder_open</span></button>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="setting-row">
+                                    <div class="setting-info">
+                                        <div class="setting-label">Keep Backups</div>
+                                        <div class="setting-desc">Number of backup versions to retain</div>
+                                    </div>
+                                    <div class="setting-control">
+                                        <input type="number" class="number-input" value="10" min="1" max="100">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Danger Zone -->
+                        <div class="danger-zone">
+                            <div class="danger-title">
+                                <span class="material-icons">warning</span>
+                                Danger Zone
+                            </div>
+                            <div class="danger-desc">These actions are irreversible. Please proceed with caution.</div>
+                            <div style="display: flex; gap: 12px;">
+                                <button class="btn btn-secondary"><span class="material-icons">restart_alt</span> Reset All Settings</button>
+                                <button class="btn" style="background: var(--error); color: white;"><span class="material-icons">delete_forever</span> Clear Cache</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="status-bar">
+            <div class="status-left">
+                <span class="status-item"><span class="material-icons">check_circle</span> Settings loaded</span>
+                <span class="status-item"><span class="material-icons">storage</span> research_project.qda</span>
+            </div>
+            <div class="status-right">
+                <span class="status-item"><span class="material-icons">smart_toy</span> AI: GPT-4.1 connected</span>
+                <span class="status-item"><span class="material-icons">person</span> colin</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="theme-toggle">
+        <button class="theme-btn" onclick="toggleTheme()" title="Toggle theme">
+            <span class="material-icons" id="theme-icon">light_mode</span>
+        </button>
+    </div>
+
+    <script>
+        let isDark = true;
+        function toggleTheme() {
+            isDark = !isDark;
+            document.body.classList.toggle('light-theme', !isDark);
+            document.getElementById('theme-icon').textContent = isDark ? 'light_mode' : 'dark_mode';
+        }
+
+        document.querySelectorAll('.nav-item').forEach(item => {
+            item.addEventListener('click', function() {
+                document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+                this.classList.add('active');
+            });
+        });
+
+        document.querySelectorAll('.theme-option').forEach(opt => {
+            opt.addEventListener('click', function() {
+                document.querySelectorAll('.theme-option').forEach(o => o.classList.remove('selected'));
+                this.classList.add('selected');
+            });
+        });
+    </script>
+</body>
+</html>

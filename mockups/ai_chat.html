@@ -1,0 +1,939 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QualCoder - AI Chat</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link href="css/material-theme.css" rel="stylesheet">
+    <style>
+        /* AI Chat specific styles */
+        .center-panel {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            background: var(--background);
+        }
+
+        /* Chat type selector */
+        .chat-type-selector {
+            display: flex;
+            gap: 8px;
+            padding: 16px;
+            background: var(--surface);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .chat-type-btn {
+            flex: 1;
+            padding: 12px 16px;
+            background: var(--surface-light);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+            cursor: pointer;
+            transition: var(--transition);
+            text-align: center;
+        }
+
+        .chat-type-btn:hover {
+            background: var(--surface-lighter);
+        }
+
+        .chat-type-btn.active {
+            background: rgba(0, 150, 136, 0.15);
+            border-color: var(--primary);
+        }
+
+        .chat-type-icon {
+            font-size: 24px;
+            color: var(--primary);
+            margin-bottom: 4px;
+        }
+
+        .chat-type-label {
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text-primary);
+        }
+
+        .chat-type-desc {
+            font-size: 11px;
+            color: var(--text-secondary);
+            margin-top: 2px;
+        }
+
+        /* Chat container */
+        .chat-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: var(--surface);
+            margin: 16px;
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-2);
+            overflow: hidden;
+        }
+
+        /* Chat header */
+        .chat-header {
+            padding: 12px 16px;
+            background: var(--surface-light);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .chat-title {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 500;
+        }
+
+        .chat-title .material-icons {
+            color: var(--primary);
+        }
+
+        .model-indicator {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 12px;
+            background: var(--surface);
+            border-radius: var(--radius-md);
+            font-size: 12px;
+        }
+
+        .model-dot {
+            width: 8px;
+            height: 8px;
+            background: var(--success);
+            border-radius: 50%;
+        }
+
+        /* Messages area */
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .message {
+            max-width: 80%;
+            display: flex;
+            gap: 12px;
+        }
+
+        .message.user {
+            align-self: flex-end;
+            flex-direction: row-reverse;
+        }
+
+        .message-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: var(--surface-lighter);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .message.user .message-avatar {
+            background: var(--primary);
+            color: white;
+        }
+
+        .message.assistant .message-avatar {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .message-content {
+            background: var(--surface-light);
+            border-radius: var(--radius-lg);
+            padding: 12px 16px;
+        }
+
+        .message.user .message-content {
+            background: var(--primary);
+            color: white;
+        }
+
+        .message-text {
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        .message-text p {
+            margin-bottom: 8px;
+        }
+
+        .message-text p:last-child {
+            margin-bottom: 0;
+        }
+
+        .message-text ul, .message-text ol {
+            margin: 8px 0;
+            padding-left: 20px;
+        }
+
+        .message-text li {
+            margin-bottom: 4px;
+        }
+
+        .message-text code {
+            background: var(--surface);
+            padding: 2px 6px;
+            border-radius: var(--radius-xs);
+            font-family: 'Roboto Mono', monospace;
+            font-size: 12px;
+        }
+
+        .message.user .message-text code {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .message-time {
+            font-size: 11px;
+            color: var(--text-disabled);
+            margin-top: 4px;
+        }
+
+        .message.user .message-time {
+            color: rgba(255, 255, 255, 0.7);
+            text-align: right;
+        }
+
+        /* Code suggestion in message */
+        .code-suggestion {
+            margin-top: 12px;
+            padding: 12px;
+            background: var(--surface);
+            border-radius: var(--radius-md);
+            border: 1px solid var(--border);
+        }
+
+        .code-suggestion-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 8px;
+        }
+
+        .code-suggestion-title {
+            font-size: 12px;
+            font-weight: 500;
+            color: var(--text-secondary);
+        }
+
+        .suggested-codes {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+
+        .suggested-code {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 12px;
+            background: var(--surface-light);
+            border-radius: var(--radius-md);
+            font-size: 12px;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .suggested-code:hover {
+            background: var(--surface-lighter);
+        }
+
+        .suggested-code .code-color {
+            width: 10px;
+            height: 10px;
+            border-radius: 2px;
+        }
+
+        /* Input area */
+        .chat-input-area {
+            padding: 16px;
+            background: var(--surface-light);
+            border-top: 1px solid var(--border);
+        }
+
+        .chat-input-container {
+            display: flex;
+            gap: 12px;
+            align-items: flex-end;
+        }
+
+        .chat-input-wrapper {
+            flex: 1;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            overflow: hidden;
+        }
+
+        .chat-input {
+            width: 100%;
+            padding: 12px 16px;
+            background: transparent;
+            border: none;
+            color: var(--text-primary);
+            font-size: 14px;
+            resize: none;
+            outline: none;
+            min-height: 44px;
+            max-height: 150px;
+        }
+
+        .chat-input::placeholder {
+            color: var(--text-disabled);
+        }
+
+        .chat-input-actions {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            padding: 8px 12px;
+            border-top: 1px solid var(--border);
+        }
+
+        .send-btn {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            background: var(--primary);
+            color: white;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: var(--transition);
+        }
+
+        .send-btn:hover {
+            background: var(--primary-light);
+            transform: scale(1.05);
+        }
+
+        /* Context panel */
+        .context-panel {
+            padding: 8px 12px;
+            background: var(--surface-lighter);
+            border-radius: var(--radius-md);
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 12px;
+        }
+
+        .context-panel .material-icons {
+            font-size: 16px;
+            color: var(--primary);
+        }
+
+        .context-file {
+            background: var(--surface);
+            padding: 2px 8px;
+            border-radius: var(--radius-sm);
+        }
+
+        /* Right panel - conversation history */
+        .conversation-list {
+            flex: 1;
+            overflow-y: auto;
+            padding: 8px;
+        }
+
+        .conversation-item {
+            padding: 12px;
+            background: var(--surface-light);
+            border-radius: var(--radius-md);
+            margin-bottom: 8px;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .conversation-item:hover {
+            background: var(--surface-lighter);
+        }
+
+        .conversation-item.active {
+            background: rgba(0, 150, 136, 0.15);
+            border-left: 3px solid var(--primary);
+        }
+
+        .conversation-title {
+            font-size: 13px;
+            font-weight: 500;
+            margin-bottom: 4px;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .conversation-meta {
+            font-size: 11px;
+            color: var(--text-secondary);
+            display: flex;
+            justify-content: space-between;
+        }
+
+        /* Info cards */
+        .info-card {
+            padding: 16px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .info-card-title {
+            font-size: 12px;
+            font-weight: 500;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .info-card-title .material-icons {
+            font-size: 16px;
+            color: var(--primary);
+        }
+
+        /* AI settings */
+        .ai-setting {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 0;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .ai-setting:last-child {
+            border-bottom: none;
+        }
+
+        .ai-setting-label {
+            font-size: 13px;
+        }
+
+        .ai-setting-value {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        /* Typing indicator */
+        .typing-indicator {
+            display: flex;
+            gap: 4px;
+            padding: 12px 16px;
+        }
+
+        .typing-dot {
+            width: 8px;
+            height: 8px;
+            background: var(--text-disabled);
+            border-radius: 50%;
+            animation: typing 1.4s infinite;
+        }
+
+        .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+        .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+
+        @keyframes typing {
+            0%, 60%, 100% { transform: translateY(0); }
+            30% { transform: translateY(-4px); }
+        }
+
+        /* Quick prompts */
+        .quick-prompts {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+
+        .quick-prompt {
+            padding: 8px 12px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+            font-size: 12px;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .quick-prompt:hover {
+            background: var(--surface-light);
+            border-color: var(--primary);
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Title Bar -->
+        <div class="title-bar">
+            <h1>
+                <span class="logo">Q</span>
+                QualCoder - research_project.qda
+            </h1>
+            <div class="window-controls">
+                <button class="window-btn minimize"></button>
+                <button class="window-btn maximize"></button>
+                <button class="window-btn close"></button>
+            </div>
+        </div>
+
+        <!-- Menu Bar -->
+        <div class="menu-bar">
+            <a href="index.html" class="menu-item">Project</a>
+            <a href="phase1_file_manager.html" class="menu-item">Files and Cases</a>
+            <a href="code_text.html" class="menu-item">Coding</a>
+            <a href="reports_coding.html" class="menu-item">Reports</a>
+            <a href="ai_chat.html" class="menu-item active">AI</a>
+            <a href="settings.html" class="menu-item">Help</a>
+        </div>
+
+        <!-- Tab Bar -->
+        <div class="tab-bar">
+            <a href="code_text.html" class="tab">
+                <span class="material-icons">code</span>
+                Coding
+            </a>
+            <a href="reports_coding.html" class="tab">
+                <span class="material-icons">assessment</span>
+                Reports
+            </a>
+            <a href="phase1_file_manager.html" class="tab">
+                <span class="material-icons">folder</span>
+                Manage
+            </a>
+            <a href="ai_chat.html" class="tab active">
+                <span class="material-icons">smart_toy</span>
+                AI Assistant
+            </a>
+        </div>
+
+        <!-- AI Toolbar -->
+        <div class="toolbar">
+            <div class="toolbar-group">
+                <a href="ai_chat.html" class="toolbar-btn active"><span class="material-icons">chat</span> AI Chat</a>
+                <a href="ai_search.html" class="toolbar-btn"><span class="material-icons">search</span> AI Search</a>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Left Panel - Chat Type & History -->
+            <div class="panel panel-left">
+                <div class="panel-header">
+                    <span class="panel-title">
+                        <span class="material-icons">chat</span>
+                        Chat Type
+                    </span>
+                </div>
+                <div style="padding: 12px;">
+                    <div class="chat-type-btn active" style="margin-bottom: 8px;">
+                        <div class="chat-type-icon material-icons">topic</div>
+                        <div class="chat-type-label">Topic Chat</div>
+                        <div class="chat-type-desc">Discuss research topics</div>
+                    </div>
+                    <div class="chat-type-btn" style="margin-bottom: 8px;">
+                        <div class="chat-type-icon material-icons">description</div>
+                        <div class="chat-type-label">Text Chat</div>
+                        <div class="chat-type-desc">Analyze specific text</div>
+                    </div>
+                    <div class="chat-type-btn">
+                        <div class="chat-type-icon material-icons">label</div>
+                        <div class="chat-type-label">Code Chat</div>
+                        <div class="chat-type-desc">Discuss coding decisions</div>
+                    </div>
+                </div>
+
+                <div class="panel-header" style="margin-top: 8px;">
+                    <span class="panel-title">
+                        <span class="material-icons">history</span>
+                        Conversations
+                    </span>
+                    <div class="panel-actions">
+                        <button class="panel-btn" title="New conversation">
+                            <span class="material-icons">add</span>
+                        </button>
+                    </div>
+                </div>
+                <div class="conversation-list">
+                    <div class="conversation-item active">
+                        <div class="conversation-title">Analysis of participant responses about online learning</div>
+                        <div class="conversation-meta">
+                            <span>Topic Chat</span>
+                            <span>10 min ago</span>
+                        </div>
+                    </div>
+                    <div class="conversation-item">
+                        <div class="conversation-title">Code suggestions for motivation theme</div>
+                        <div class="conversation-meta">
+                            <span>Code Chat</span>
+                            <span>2 hours ago</span>
+                        </div>
+                    </div>
+                    <div class="conversation-item">
+                        <div class="conversation-title">Interpret interview with ID3</div>
+                        <div class="conversation-meta">
+                            <span>Text Chat</span>
+                            <span>Yesterday</span>
+                        </div>
+                    </div>
+                    <div class="conversation-item">
+                        <div class="conversation-title">Theme development discussion</div>
+                        <div class="conversation-meta">
+                            <span>Topic Chat</span>
+                            <span>Jan 25</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Center Panel - Chat -->
+            <div class="center-panel">
+                <div class="chat-container">
+                    <div class="chat-header">
+                        <div class="chat-title">
+                            <span class="material-icons">topic</span>
+                            Topic Chat: Research Analysis
+                        </div>
+                        <div class="model-indicator">
+                            <span class="model-dot"></span>
+                            <span>GPT-4</span>
+                        </div>
+                    </div>
+
+                    <div class="chat-messages">
+                        <!-- Assistant message -->
+                        <div class="message assistant">
+                            <div class="message-avatar">
+                                <span class="material-icons" style="font-size: 20px;">smart_toy</span>
+                            </div>
+                            <div class="message-content">
+                                <div class="message-text">
+                                    <p>Hello! I'm here to help you with your qualitative research analysis. I can see you're working on a project about online learning experiences.</p>
+                                    <p>How can I assist you today? I can help with:</p>
+                                    <ul>
+                                        <li>Analyzing themes across your data</li>
+                                        <li>Suggesting codes for text segments</li>
+                                        <li>Discussing theoretical frameworks</li>
+                                        <li>Generating summaries of coded content</li>
+                                    </ul>
+                                </div>
+                                <div class="message-time">10:32 AM</div>
+                            </div>
+                        </div>
+
+                        <!-- User message -->
+                        <div class="message user">
+                            <div class="message-avatar">
+                                <span class="material-icons" style="font-size: 20px;">person</span>
+                            </div>
+                            <div class="message-content">
+                                <div class="message-text">
+                                    <p>I'm seeing a pattern in my data where participants mention both positive and negative aspects of the online platform. Can you help me understand what themes might be emerging?</p>
+                                </div>
+                                <div class="message-time">10:35 AM</div>
+                            </div>
+                        </div>
+
+                        <!-- Assistant message with code suggestions -->
+                        <div class="message assistant">
+                            <div class="message-avatar">
+                                <span class="material-icons" style="font-size: 20px;">smart_toy</span>
+                            </div>
+                            <div class="message-content">
+                                <div class="message-text">
+                                    <p>Based on my analysis of your coded segments, I can see several emerging themes:</p>
+                                    <p><strong>1. Technical Usability</strong> - Participants frequently mention interface challenges alongside appreciation for certain features. This suggests a nuanced view of platform design.</p>
+                                    <p><strong>2. Learning Autonomy</strong> - There's tension between wanting self-directed learning and needing more guidance. This could be a key theoretical dimension.</p>
+                                    <p><strong>3. Social Connection</strong> - Despite being online, participants value peer interaction and feel its absence.</p>
+                                </div>
+                                <div class="code-suggestion">
+                                    <div class="code-suggestion-header">
+                                        <span class="code-suggestion-title">Suggested codes for this theme:</span>
+                                    </div>
+                                    <div class="suggested-codes">
+                                        <div class="suggested-code">
+                                            <span class="code-color" style="background: #4CAF50;"></span>
+                                            <span>Platform Usability</span>
+                                        </div>
+                                        <div class="suggested-code">
+                                            <span class="code-color" style="background: #2196F3;"></span>
+                                            <span>Learning Autonomy</span>
+                                        </div>
+                                        <div class="suggested-code">
+                                            <span class="code-color" style="background: #9C27B0;"></span>
+                                            <span>Social Isolation</span>
+                                        </div>
+                                        <div class="suggested-code">
+                                            <span class="code-color" style="background: #FF9800;"></span>
+                                            <span>Support Seeking</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="message-time">10:36 AM</div>
+                            </div>
+                        </div>
+
+                        <!-- User message -->
+                        <div class="message user">
+                            <div class="message-avatar">
+                                <span class="material-icons" style="font-size: 20px;">person</span>
+                            </div>
+                            <div class="message-content">
+                                <div class="message-text">
+                                    <p>That's really helpful! Can you explain more about the "Learning Autonomy" theme? I want to make sure I'm capturing this correctly in my coding.</p>
+                                </div>
+                                <div class="message-time">10:38 AM</div>
+                            </div>
+                        </div>
+
+                        <!-- Typing indicator -->
+                        <div class="message assistant">
+                            <div class="message-avatar">
+                                <span class="material-icons" style="font-size: 20px;">smart_toy</span>
+                            </div>
+                            <div class="message-content">
+                                <div class="typing-indicator">
+                                    <div class="typing-dot"></div>
+                                    <div class="typing-dot"></div>
+                                    <div class="typing-dot"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="chat-input-area">
+                        <div class="context-panel">
+                            <span class="material-icons">attachment</span>
+                            <span>Context:</span>
+                            <span class="context-file">ID2.odt</span>
+                            <span class="context-file">ID3_interview.txt</span>
+                            <span style="color: var(--text-disabled);">+ 5 codes selected</span>
+                            <button class="panel-btn" style="margin-left: auto;" title="Edit context">
+                                <span class="material-icons">edit</span>
+                            </button>
+                        </div>
+                        <div class="quick-prompts">
+                            <div class="quick-prompt">Summarize my codes</div>
+                            <div class="quick-prompt">Find patterns</div>
+                            <div class="quick-prompt">Suggest new codes</div>
+                            <div class="quick-prompt">Compare themes</div>
+                        </div>
+                        <div class="chat-input-container">
+                            <div class="chat-input-wrapper">
+                                <textarea class="chat-input" placeholder="Ask about your research..." rows="1"></textarea>
+                                <div class="chat-input-actions">
+                                    <button class="panel-btn" title="Attach file">
+                                        <span class="material-icons">attach_file</span>
+                                    </button>
+                                    <button class="panel-btn" title="Add codes to context">
+                                        <span class="material-icons">label</span>
+                                    </button>
+                                    <button class="panel-btn" title="Voice input">
+                                        <span class="material-icons">mic</span>
+                                    </button>
+                                </div>
+                            </div>
+                            <button class="send-btn" title="Send message">
+                                <span class="material-icons">send</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Panel - Settings & Info -->
+            <div class="panel panel-right" style="border-left: 1px solid var(--border); border-right: none;">
+                <div class="info-card">
+                    <div class="info-card-title">
+                        <span class="material-icons">settings</span>
+                        AI Settings
+                    </div>
+                    <div class="ai-setting">
+                        <span class="ai-setting-label">Model</span>
+                        <select class="toolbar-select" style="min-width: 100px;">
+                            <option>GPT-4</option>
+                            <option>GPT-3.5</option>
+                            <option>Claude</option>
+                        </select>
+                    </div>
+                    <div class="ai-setting">
+                        <span class="ai-setting-label">Temperature</span>
+                        <span class="ai-setting-value">0.7</span>
+                    </div>
+                    <div class="ai-setting">
+                        <span class="ai-setting-label">Max tokens</span>
+                        <span class="ai-setting-value">2000</span>
+                    </div>
+                </div>
+
+                <div class="info-card">
+                    <div class="info-card-title">
+                        <span class="material-icons">description</span>
+                        Context Files
+                    </div>
+                    <div style="font-size: 12px;">
+                        <div style="display: flex; align-items: center; gap: 8px; padding: 6px 0; border-bottom: 1px solid var(--border);">
+                            <span class="material-icons" style="font-size: 16px; color: var(--file-text);">description</span>
+                            <span style="flex: 1;">ID2.odt</span>
+                            <button class="panel-btn" style="width: 24px; height: 24px;">
+                                <span class="material-icons" style="font-size: 14px;">close</span>
+                            </button>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 8px; padding: 6px 0; border-bottom: 1px solid var(--border);">
+                            <span class="material-icons" style="font-size: 16px; color: var(--file-text);">description</span>
+                            <span style="flex: 1;">ID3_interview.txt</span>
+                            <button class="panel-btn" style="width: 24px; height: 24px;">
+                                <span class="material-icons" style="font-size: 14px;">close</span>
+                            </button>
+                        </div>
+                        <button class="btn btn-secondary btn-sm" style="width: 100%; margin-top: 8px;">
+                            <span class="material-icons">add</span>
+                            Add Files
+                        </button>
+                    </div>
+                </div>
+
+                <div class="info-card">
+                    <div class="info-card-title">
+                        <span class="material-icons">label</span>
+                        Context Codes
+                    </div>
+                    <div style="display: flex; flex-wrap: wrap; gap: 6px;">
+                        <div class="chip" style="padding: 4px 8px;">
+                            <span class="code-color" style="background: #FFC107; width: 8px; height: 8px;"></span>
+                            <span style="font-size: 11px;">Key Insight</span>
+                        </div>
+                        <div class="chip" style="padding: 4px 8px;">
+                            <span class="code-color" style="background: #4CAF50; width: 8px; height: 8px;"></span>
+                            <span style="font-size: 11px;">Motivation</span>
+                        </div>
+                        <div class="chip" style="padding: 4px 8px;">
+                            <span class="code-color" style="background: #F44336; width: 8px; height: 8px;"></span>
+                            <span style="font-size: 11px;">Struggles</span>
+                        </div>
+                        <div class="chip" style="padding: 4px 8px;">
+                            <span class="code-color" style="background: #2196F3; width: 8px; height: 8px;"></span>
+                            <span style="font-size: 11px;">Facilities</span>
+                        </div>
+                        <div class="chip" style="padding: 4px 8px;">
+                            <span class="code-color" style="background: #9C27B0; width: 8px; height: 8px;"></span>
+                            <span style="font-size: 11px;">Learning</span>
+                        </div>
+                    </div>
+                    <button class="btn btn-secondary btn-sm" style="width: 100%; margin-top: 8px;">
+                        <span class="material-icons">edit</span>
+                        Edit Codes
+                    </button>
+                </div>
+
+                <div class="info-card">
+                    <div class="info-card-title">
+                        <span class="material-icons">analytics</span>
+                        Usage
+                    </div>
+                    <div style="font-size: 12px; color: var(--text-secondary);">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                            <span>Messages today:</span>
+                            <span style="color: var(--text-primary);">12</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                            <span>Tokens used:</span>
+                            <span style="color: var(--text-primary);">4,523</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between;">
+                            <span>Cost estimate:</span>
+                            <span style="color: var(--text-primary);">$0.14</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Status Bar -->
+        <div class="status-bar">
+            <div class="status-left">
+                <span class="status-item">
+                    <span class="material-icons">check_circle</span>
+                    Ready
+                </span>
+                <span class="status-item">
+                    <span class="material-icons">storage</span>
+                    research_project.qda
+                </span>
+            </div>
+            <div class="status-right">
+                <span class="status-item">
+                    <span class="material-icons">psychology</span>
+                    AI: GPT-4 Connected
+                </span>
+                <span class="status-item">
+                    <span class="material-icons">schedule</span>
+                    Auto-save: 1 min ago
+                </span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Theme Toggle Button -->
+    <div class="theme-toggle">
+        <button class="theme-btn" onclick="toggleTheme()" title="Toggle theme">
+            <span class="material-icons" id="theme-icon">light_mode</span>
+        </button>
+    </div>
+
+    <script>
+        let isDark = true;
+
+        function toggleTheme() {
+            isDark = !isDark;
+            document.body.classList.toggle('light-theme', !isDark);
+            document.getElementById('theme-icon').textContent = isDark ? 'light_mode' : 'dark_mode';
+        }
+
+        // Chat type selection
+        document.querySelectorAll('.chat-type-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                document.querySelectorAll('.chat-type-btn').forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+            });
+        });
+
+        // Conversation selection
+        document.querySelectorAll('.conversation-item').forEach(item => {
+            item.addEventListener('click', function() {
+                document.querySelectorAll('.conversation-item').forEach(i => i.classList.remove('active'));
+                this.classList.add('active');
+            });
+        });
+
+        // Auto-resize textarea
+        const textarea = document.querySelector('.chat-input');
+        textarea.addEventListener('input', function() {
+            this.style.height = 'auto';
+            this.style.height = Math.min(this.scrollHeight, 150) + 'px';
+        });
+    </script>
+</body>
+</html>

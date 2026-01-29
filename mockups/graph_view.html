@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QualCoder - Code Graph</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link href="css/material-theme.css" rel="stylesheet">
+    <style>
+        .center-panel { flex: 1; display: flex; flex-direction: column; overflow: hidden; background: var(--background); }
+
+        .graph-container { flex: 1; display: flex; overflow: hidden; }
+
+        .graph-area { flex: 1; position: relative; overflow: hidden; }
+
+        .graph-canvas { width: 100%; height: 100%; background: var(--surface); position: relative; }
+
+        /* SVG placeholder for network diagram */
+        .network-diagram { width: 100%; height: 100%; }
+
+        /* Node styles */
+        .node { cursor: pointer; transition: var(--transition); }
+        .node:hover { filter: brightness(1.2); }
+        .node.selected { filter: drop-shadow(0 0 8px var(--primary)); }
+
+        .node-circle { transition: var(--transition); }
+        .node-label { font-family: 'Roboto', sans-serif; font-size: 12px; font-weight: 500; fill: var(--text-primary); }
+
+        /* Edge styles */
+        .edge { stroke: var(--border); stroke-width: 2; fill: none; opacity: 0.6; }
+        .edge.highlighted { stroke: var(--primary); stroke-width: 3; opacity: 1; }
+
+        /* Legend */
+        .graph-legend { position: absolute; bottom: 20px; left: 20px; background: var(--surface); border-radius: var(--radius-lg); padding: 16px; box-shadow: var(--shadow-2); }
+        .legend-title { font-size: 12px; font-weight: 500; color: var(--text-secondary); text-transform: uppercase; margin-bottom: 12px; }
+        .legend-item { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; font-size: 12px; }
+        .legend-item:last-child { margin-bottom: 0; }
+        .legend-color { width: 14px; height: 14px; border-radius: 50%; }
+        .legend-line { width: 30px; height: 2px; background: var(--text-secondary); }
+
+        /* Controls */
+        .graph-controls { position: absolute; top: 20px; right: 20px; display: flex; flex-direction: column; gap: 8px; }
+        .graph-controls .toolbar-btn { background: var(--surface); box-shadow: var(--shadow-1); }
+
+        /* Minimap */
+        .minimap { position: absolute; bottom: 20px; right: 20px; width: 150px; height: 100px; background: var(--surface); border-radius: var(--radius-md); box-shadow: var(--shadow-2); overflow: hidden; }
+        .minimap-viewport { position: absolute; border: 2px solid var(--primary); background: rgba(0, 150, 136, 0.1); }
+
+        /* Options panel */
+        .options-panel { width: 280px; background: var(--surface); border-left: 1px solid var(--border); overflow-y: auto; }
+
+        .options-section { padding: 16px; border-bottom: 1px solid var(--border); }
+        .options-title { font-size: 12px; font-weight: 500; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+        .options-title .material-icons { font-size: 16px; color: var(--primary); }
+
+        .option-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+        .option-label { font-size: 13px; }
+
+        .node-info { background: var(--surface-light); border-radius: var(--radius-md); padding: 12px; }
+        .node-info-header { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+        .node-info-color { width: 16px; height: 16px; border-radius: 50%; }
+        .node-info-name { font-weight: 500; }
+        .node-info-stats { font-size: 12px; color: var(--text-secondary); }
+
+        .connections-list { max-height: 150px; overflow-y: auto; }
+        .connection-item { display: flex; align-items: center; gap: 8px; padding: 6px 0; font-size: 12px; border-bottom: 1px solid var(--border); }
+        .connection-item:last-child { border-bottom: none; }
+        .connection-color { width: 10px; height: 10px; border-radius: 50%; }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <div class="title-bar">
+            <h1><span class="logo">Q</span> QualCoder - research_project.qda</h1>
+            <div class="window-controls">
+                <button class="window-btn minimize"></button>
+                <button class="window-btn maximize"></button>
+                <button class="window-btn close"></button>
+            </div>
+        </div>
+
+        <div class="menu-bar">
+            <a href="index.html" class="menu-item">Project</a>
+            <a href="phase1_file_manager.html" class="menu-item">Files and Cases</a>
+            <a href="code_text.html" class="menu-item">Coding</a>
+            <a href="reports_coding.html" class="menu-item active">Reports</a>
+            <a href="ai_chat.html" class="menu-item">AI</a>
+            <a href="settings.html" class="menu-item">Help</a>
+        </div>
+
+        <div class="tab-bar">
+            <a href="code_text.html" class="tab"><span class="material-icons">code</span> Coding</a>
+            <a href="reports_coding.html" class="tab active"><span class="material-icons">assessment</span> Reports</a>
+            <a href="phase1_file_manager.html" class="tab"><span class="material-icons">folder</span> Manage</a>
+            <a href="index.html" class="tab"><span class="material-icons">history</span> Action Log</a>
+        </div>
+
+        <div class="toolbar">
+            <div class="toolbar-group">
+                <a href="reports_coding.html" class="toolbar-btn"><span class="material-icons">list_alt</span> Coding Summary</a>
+                <a href="reports_charts.html" class="toolbar-btn"><span class="material-icons">bar_chart</span> Charts</a>
+                <a href="reports_comparison.html" class="toolbar-btn"><span class="material-icons">compare</span> Comparison</a>
+                <a href="text_mining.html" class="toolbar-btn"><span class="material-icons">cloud</span> Text Mining</a>
+                <a href="graph_view.html" class="toolbar-btn active"><span class="material-icons">account_tree</span> Graph</a>
+            </div>
+            <div class="toolbar-divider"></div>
+            <div class="toolbar-group">
+                <span class="toolbar-label">Layout:</span>
+                <select class="toolbar-select">
+                    <option>Force-directed</option>
+                    <option>Hierarchical</option>
+                    <option>Circular</option>
+                    <option>Grid</option>
+                </select>
+            </div>
+            <div class="toolbar-group">
+                <button class="toolbar-btn"><span class="material-icons">center_focus_strong</span> Fit</button>
+                <button class="toolbar-btn"><span class="material-icons">refresh</span> Reset</button>
+                <button class="toolbar-btn"><span class="material-icons">image</span> Export</button>
+            </div>
+        </div>
+
+        <div class="main-content">
+            <div class="center-panel">
+                <div class="graph-container">
+                    <div class="graph-area">
+                        <div class="graph-canvas">
+                            <svg class="network-diagram" viewBox="0 0 800 600">
+                                <!-- Edges -->
+                                <line class="edge" x1="400" y1="150" x2="250" y2="280"/>
+                                <line class="edge" x1="400" y1="150" x2="550" y2="280"/>
+                                <line class="edge" x1="400" y1="150" x2="400" y2="320"/>
+                                <line class="edge highlighted" x1="250" y1="280" x2="180" y2="420"/>
+                                <line class="edge" x1="250" y1="280" x2="320" y2="420"/>
+                                <line class="edge" x1="550" y1="280" x2="480" y2="420"/>
+                                <line class="edge" x1="550" y1="280" x2="620" y2="420"/>
+                                <line class="edge" x1="400" y1="320" x2="400" y2="460"/>
+                                <line class="edge" x1="180" y1="420" x2="320" y2="420"/>
+
+                                <!-- Root Node -->
+                                <g class="node" transform="translate(400, 150)">
+                                    <circle class="node-circle" r="35" fill="#009688"/>
+                                    <text class="node-label" text-anchor="middle" dy="4" fill="white">Research</text>
+                                </g>
+
+                                <!-- Level 2 Nodes -->
+                                <g class="node selected" transform="translate(250, 280)">
+                                    <circle class="node-circle" r="30" fill="#FFC107"/>
+                                    <text class="node-label" text-anchor="middle" dy="4">Motivation</text>
+                                </g>
+                                <g class="node" transform="translate(550, 280)">
+                                    <circle class="node-circle" r="30" fill="#F44336"/>
+                                    <text class="node-label" text-anchor="middle" dy="4" fill="white">Challenges</text>
+                                </g>
+                                <g class="node" transform="translate(400, 320)">
+                                    <circle class="node-circle" r="28" fill="#2196F3"/>
+                                    <text class="node-label" text-anchor="middle" dy="4" fill="white">Platform</text>
+                                </g>
+
+                                <!-- Level 3 Nodes -->
+                                <g class="node" transform="translate(180, 420)">
+                                    <circle class="node-circle" r="22" fill="#4CAF50"/>
+                                    <text class="node-label" text-anchor="middle" dy="4" fill="white">Intrinsic</text>
+                                </g>
+                                <g class="node" transform="translate(320, 420)">
+                                    <circle class="node-circle" r="22" fill="#9C27B0"/>
+                                    <text class="node-label" text-anchor="middle" dy="4" fill="white">Extrinsic</text>
+                                </g>
+                                <g class="node" transform="translate(480, 420)">
+                                    <circle class="node-circle" r="22" fill="#E91E63"/>
+                                    <text class="node-label" text-anchor="middle" dy="4" fill="white">Technical</text>
+                                </g>
+                                <g class="node" transform="translate(620, 420)">
+                                    <circle class="node-circle" r="22" fill="#FF9800"/>
+                                    <text class="node-label" text-anchor="middle" dy="4">Time</text>
+                                </g>
+                                <g class="node" transform="translate(400, 460)">
+                                    <circle class="node-circle" r="20" fill="#00BCD4"/>
+                                    <text class="node-label" text-anchor="middle" dy="4">UI/UX</text>
+                                </g>
+                            </svg>
+                        </div>
+
+                        <!-- Legend -->
+                        <div class="graph-legend">
+                            <div class="legend-title">Legend</div>
+                            <div class="legend-item">
+                                <span class="legend-color" style="background: var(--primary);"></span>
+                                <span>Category (root)</span>
+                            </div>
+                            <div class="legend-item">
+                                <span class="legend-color" style="width: 24px; height: 24px;"></span>
+                                <span>High frequency</span>
+                            </div>
+                            <div class="legend-item">
+                                <span class="legend-color" style="width: 14px; height: 14px;"></span>
+                                <span>Low frequency</span>
+                            </div>
+                            <div class="legend-item">
+                                <span class="legend-line"></span>
+                                <span>Relationship</span>
+                            </div>
+                        </div>
+
+                        <!-- Controls -->
+                        <div class="graph-controls">
+                            <button class="toolbar-btn" title="Zoom in"><span class="material-icons">add</span></button>
+                            <button class="toolbar-btn" title="Zoom out"><span class="material-icons">remove</span></button>
+                            <button class="toolbar-btn" title="Fit to screen"><span class="material-icons">fit_screen</span></button>
+                            <button class="toolbar-btn" title="Fullscreen"><span class="material-icons">fullscreen</span></button>
+                        </div>
+
+                        <!-- Minimap -->
+                        <div class="minimap">
+                            <div class="minimap-viewport" style="width: 50px; height: 35px; top: 25px; left: 40px;"></div>
+                        </div>
+                    </div>
+
+                    <!-- Options Panel -->
+                    <div class="options-panel">
+                        <div class="options-section">
+                            <div class="options-title">
+                                <span class="material-icons">info</span>
+                                Selected Node
+                            </div>
+                            <div class="node-info">
+                                <div class="node-info-header">
+                                    <span class="node-info-color" style="background: #FFC107;"></span>
+                                    <span class="node-info-name">Learning Motivation</span>
+                                </div>
+                                <div class="node-info-stats">
+                                    <div>Coded segments: 24</div>
+                                    <div>Files: 8</div>
+                                    <div>Connected to: 3 codes</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="options-section">
+                            <div class="options-title">
+                                <span class="material-icons">link</span>
+                                Connections
+                            </div>
+                            <div class="connections-list">
+                                <div class="connection-item">
+                                    <span class="connection-color" style="background: #4CAF50;"></span>
+                                    <span>Intrinsic Motivation</span>
+                                    <span style="margin-left: auto; color: var(--text-secondary);">12</span>
+                                </div>
+                                <div class="connection-item">
+                                    <span class="connection-color" style="background: #9C27B0;"></span>
+                                    <span>Extrinsic Motivation</span>
+                                    <span style="margin-left: auto; color: var(--text-secondary);">8</span>
+                                </div>
+                                <div class="connection-item">
+                                    <span class="connection-color" style="background: #009688;"></span>
+                                    <span>Research</span>
+                                    <span style="margin-left: auto; color: var(--text-secondary);">&bull;</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="options-section">
+                            <div class="options-title">Display Options</div>
+                            <div class="option-row">
+                                <span class="option-label">Show labels</span>
+                                <span class="switch checked"></span>
+                            </div>
+                            <div class="option-row">
+                                <span class="option-label">Show counts</span>
+                                <span class="switch checked"></span>
+                            </div>
+                            <div class="option-row">
+                                <span class="option-label">Size by frequency</span>
+                                <span class="switch checked"></span>
+                            </div>
+                            <div class="option-row">
+                                <span class="option-label">Animate layout</span>
+                                <span class="switch"></span>
+                            </div>
+                        </div>
+
+                        <div class="options-section">
+                            <div class="options-title">Filter</div>
+                            <div class="form-group" style="margin-bottom: 12px;">
+                                <label class="form-label">Minimum connections</label>
+                                <select class="form-input">
+                                    <option>Show all</option>
+                                    <option selected>1+</option>
+                                    <option>2+</option>
+                                    <option>5+</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Depth</label>
+                                <select class="form-input">
+                                    <option>1 level</option>
+                                    <option>2 levels</option>
+                                    <option selected>3 levels</option>
+                                    <option>All levels</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="options-section">
+                            <button class="btn btn-primary" style="width: 100%; margin-bottom: 8px;">
+                                <span class="material-icons">add_link</span>
+                                Add Relationship
+                            </button>
+                            <button class="btn btn-secondary" style="width: 100%;">
+                                <span class="material-icons">image</span>
+                                Export Graph
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="status-bar">
+            <div class="status-left">
+                <span class="status-item"><span class="material-icons">check_circle</span> Graph loaded</span>
+                <span class="status-item"><span class="material-icons">storage</span> research_project.qda</span>
+            </div>
+            <div class="status-right">
+                <span class="status-item"><span class="material-icons">account_tree</span> 9 nodes, 9 edges</span>
+                <span class="status-item"><span class="material-icons">zoom_in</span> 100%</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="theme-toggle">
+        <button class="theme-btn" onclick="toggleTheme()" title="Toggle theme">
+            <span class="material-icons" id="theme-icon">light_mode</span>
+        </button>
+    </div>
+
+    <script>
+        let isDark = true;
+        function toggleTheme() {
+            isDark = !isDark;
+            document.body.classList.toggle('light-theme', !isDark);
+            document.getElementById('theme-icon').textContent = isDark ? 'light_mode' : 'dark_mode';
+        }
+
+        document.querySelectorAll('.switch').forEach(sw => {
+            sw.addEventListener('click', function() { this.classList.toggle('checked'); });
+        });
+
+        document.querySelectorAll('.node').forEach(node => {
+            node.addEventListener('click', function() {
+                document.querySelectorAll('.node').forEach(n => n.classList.remove('selected'));
+                this.classList.add('selected');
+            });
+        });
+    </script>
+</body>
+</html>

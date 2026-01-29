@@ -1,0 +1,1380 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QualCoder - AI Review Queue</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link href="css/material-theme.css" rel="stylesheet">
+    <style>
+        /* Review Queue specific styles */
+        .center-panel {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            background: var(--background);
+        }
+
+        /* Review content container */
+        .review-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            padding: 16px;
+            gap: 16px;
+        }
+
+        /* Current Review Item - Expanded View */
+        .current-review {
+            background: var(--surface);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-2);
+            overflow: hidden;
+            flex-shrink: 0;
+        }
+
+        .current-review-header {
+            padding: 16px 20px;
+            background: var(--surface-light);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .review-item-title {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .action-type-badge {
+            padding: 6px 12px;
+            border-radius: var(--radius-md);
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .action-type-badge.create { background: rgba(76, 175, 80, 0.2); color: var(--success); }
+        .action-type-badge.apply { background: rgba(33, 150, 243, 0.2); color: var(--info); }
+        .action-type-badge.merge { background: rgba(156, 39, 176, 0.2); color: #9C27B0; }
+        .action-type-badge.delete { background: rgba(244, 67, 54, 0.2); color: var(--error); }
+        .action-type-badge.rename { background: rgba(255, 152, 0, 0.2); color: var(--warning); }
+
+        .review-item-name {
+            font-weight: 500;
+            font-size: 16px;
+        }
+
+        .keyboard-hints {
+            display: flex;
+            gap: 8px;
+            font-size: 11px;
+            color: var(--text-secondary);
+        }
+
+        .keyboard-hint {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .key {
+            padding: 2px 6px;
+            background: var(--surface-lighter);
+            border-radius: var(--radius-xs);
+            font-family: 'Roboto Mono', monospace;
+            font-size: 10px;
+            font-weight: 500;
+        }
+
+        .current-review-body {
+            padding: 20px;
+        }
+
+        .ai-reasoning {
+            background: var(--surface-light);
+            border-radius: var(--radius-md);
+            padding: 16px;
+            margin-bottom: 16px;
+            border-left: 3px solid var(--primary);
+        }
+
+        .ai-reasoning-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 8px;
+            font-size: 12px;
+            font-weight: 500;
+            color: var(--primary);
+        }
+
+        .ai-reasoning-header .material-icons {
+            font-size: 16px;
+        }
+
+        .ai-reasoning-text {
+            font-size: 14px;
+            line-height: 1.6;
+            color: var(--text-secondary);
+        }
+
+        .affected-segments {
+            margin-bottom: 16px;
+        }
+
+        .affected-segments-header {
+            font-size: 12px;
+            font-weight: 500;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 12px;
+        }
+
+        .segment-preview {
+            background: var(--surface-light);
+            border-radius: var(--radius-md);
+            padding: 12px 16px;
+            margin-bottom: 8px;
+            font-size: 13px;
+            line-height: 1.6;
+            border-left: 3px solid var(--warning);
+            position: relative;
+        }
+
+        .segment-preview .file-source {
+            font-size: 11px;
+            color: var(--text-disabled);
+            margin-top: 8px;
+        }
+
+        .segment-preview.highlight {
+            animation: pulse-highlight 2s infinite;
+        }
+
+        @keyframes pulse-highlight {
+            0%, 100% { border-left-color: var(--warning); }
+            50% { border-left-color: var(--primary); }
+        }
+
+        .current-review-actions {
+            padding: 16px 20px;
+            background: var(--surface-light);
+            border-top: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 12px;
+        }
+
+        .action-btn {
+            padding: 10px 24px;
+            border-radius: var(--radius-md);
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            border: none;
+        }
+
+        .action-btn.approve {
+            background: var(--success);
+            color: white;
+        }
+
+        .action-btn.approve:hover {
+            background: var(--success-light);
+        }
+
+        .action-btn.reject {
+            background: var(--error);
+            color: white;
+        }
+
+        .action-btn.reject:hover {
+            background: var(--error-light);
+        }
+
+        .action-btn.edit {
+            background: var(--surface-lighter);
+            color: var(--text-primary);
+        }
+
+        .action-btn.edit:hover {
+            background: var(--surface-elevated);
+        }
+
+        .action-btn.skip {
+            background: transparent;
+            color: var(--text-secondary);
+            border: 1px solid var(--border);
+        }
+
+        .action-btn.skip:hover {
+            background: var(--surface-light);
+            color: var(--text-primary);
+        }
+
+        .secondary-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        /* Queue List */
+        .queue-list {
+            flex: 1;
+            background: var(--surface);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-2);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .queue-list-header {
+            padding: 12px 16px;
+            background: var(--surface-light);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .queue-list-title {
+            font-weight: 500;
+            font-size: 13px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .queue-list-title .material-icons {
+            font-size: 18px;
+            color: var(--primary);
+        }
+
+        .queue-count {
+            background: var(--primary);
+            color: white;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 11px;
+            font-weight: 500;
+        }
+
+        .queue-list-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 8px;
+        }
+
+        .queue-item {
+            display: flex;
+            align-items: center;
+            padding: 12px 16px;
+            border-radius: var(--radius-md);
+            cursor: pointer;
+            transition: var(--transition);
+            margin-bottom: 4px;
+            gap: 12px;
+        }
+
+        .queue-item:hover {
+            background: var(--surface-light);
+        }
+
+        .queue-item.active {
+            background: rgba(0, 150, 136, 0.15);
+            border: 1px solid var(--primary);
+        }
+
+        .queue-item.reviewing {
+            background: rgba(255, 152, 0, 0.1);
+            border: 1px solid var(--warning);
+        }
+
+        .queue-status-icon {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+
+        .queue-status-icon.pending { background: var(--warning); }
+        .queue-status-icon.reviewing {
+            background: var(--info);
+            animation: pulse 1.5s infinite;
+        }
+        .queue-status-icon.queued { background: var(--text-disabled); }
+        .queue-status-icon.approved { background: var(--success); }
+        .queue-status-icon.rejected { background: var(--error); }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .queue-item-content {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .queue-item-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 4px;
+        }
+
+        .queue-item-type {
+            font-size: 10px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            padding: 2px 6px;
+            border-radius: var(--radius-xs);
+        }
+
+        .queue-item-type.create { background: rgba(76, 175, 80, 0.2); color: var(--success); }
+        .queue-item-type.apply { background: rgba(33, 150, 243, 0.2); color: var(--info); }
+        .queue-item-type.merge { background: rgba(156, 39, 176, 0.2); color: #9C27B0; }
+
+        .queue-item-title {
+            font-size: 13px;
+            font-weight: 500;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .queue-item-desc {
+            font-size: 12px;
+            color: var(--text-secondary);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .queue-item-time {
+            font-size: 11px;
+            color: var(--text-disabled);
+            flex-shrink: 0;
+        }
+
+        /* Code Tree Panel */
+        .code-tree {
+            flex: 1;
+            overflow-y: auto;
+            padding: 8px;
+        }
+
+        .code-category {
+            margin-bottom: 8px;
+        }
+
+        .category-header {
+            display: flex;
+            align-items: center;
+            padding: 8px 12px;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            transition: var(--transition);
+            color: var(--text-secondary);
+        }
+
+        .category-header:hover {
+            background: var(--surface-light);
+        }
+
+        .category-header .material-icons {
+            font-size: 18px;
+            margin-right: 8px;
+            transition: var(--transition);
+        }
+
+        .category-header.expanded .material-icons.expand {
+            transform: rotate(90deg);
+        }
+
+        .category-name {
+            font-weight: 500;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .category-count {
+            margin-left: auto;
+            font-size: 11px;
+            background: var(--surface-lighter);
+            padding: 2px 8px;
+            border-radius: 10px;
+        }
+
+        .code-list {
+            padding-left: 24px;
+        }
+
+        .code-item {
+            display: flex;
+            align-items: center;
+            padding: 8px 12px;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            transition: var(--transition);
+            margin-bottom: 2px;
+        }
+
+        .code-item:hover {
+            background: var(--surface-light);
+        }
+
+        .code-item.ai-pending {
+            border: 1px dashed var(--warning);
+            opacity: 0.8;
+        }
+
+        .code-item .ai-badge {
+            margin-left: 4px;
+            font-size: 10px;
+            color: var(--primary);
+        }
+
+        .code-name {
+            font-size: 13px;
+            flex: 1;
+            margin-left: 10px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .code-count {
+            font-size: 11px;
+            color: var(--text-secondary);
+            background: var(--surface-lighter);
+            padding: 2px 8px;
+            border-radius: 10px;
+        }
+
+        /* Context Panel */
+        .context-panel-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 12px;
+        }
+
+        .document-preview {
+            background: var(--surface-light);
+            border-radius: var(--radius-md);
+            padding: 16px;
+            font-size: 13px;
+            line-height: 1.8;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .document-preview .highlight-segment {
+            background: rgba(255, 193, 7, 0.3);
+            padding: 2px 0;
+            border-bottom: 2px solid var(--warning);
+            animation: pulse-segment 2s infinite;
+        }
+
+        @keyframes pulse-segment {
+            0%, 100% { background: rgba(255, 193, 7, 0.3); }
+            50% { background: rgba(255, 193, 7, 0.5); }
+        }
+
+        .document-preview .context-text {
+            color: var(--text-secondary);
+        }
+
+        /* Agent Info Panel */
+        .agent-info {
+            padding: 16px;
+            border-top: 1px solid var(--border);
+            background: var(--surface-light);
+        }
+
+        .agent-info-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+
+        .agent-status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--success);
+        }
+
+        .agent-status-dot.paused {
+            background: var(--warning);
+        }
+
+        .agent-status-dot.disconnected {
+            background: var(--error);
+        }
+
+        .agent-name {
+            font-weight: 500;
+            font-size: 13px;
+        }
+
+        .agent-stats {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            font-size: 12px;
+        }
+
+        .agent-stat {
+            display: flex;
+            justify-content: space-between;
+            color: var(--text-secondary);
+        }
+
+        .agent-stat-value {
+            color: var(--text-primary);
+            font-weight: 500;
+        }
+
+        /* Info cards */
+        .info-card {
+            padding: 16px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .info-card-title {
+            font-size: 12px;
+            font-weight: 500;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .info-card-title .material-icons {
+            font-size: 16px;
+            color: var(--primary);
+        }
+
+        /* Trust level styles */
+        .trust-level-indicator {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 12px;
+            background: var(--surface-light);
+            border-radius: var(--radius-md);
+            font-size: 12px;
+        }
+
+        .trust-level-indicator .material-icons {
+            font-size: 16px;
+        }
+
+        .trust-level-indicator.autonomous {
+            color: var(--success);
+        }
+
+        .trust-level-indicator.notify {
+            color: var(--info);
+        }
+
+        .trust-level-indicator.suggest {
+            color: var(--warning);
+        }
+
+        .trust-level-indicator.require {
+            color: var(--error);
+        }
+
+        /* Pause button */
+        .pause-btn {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 12px;
+            background: var(--surface-light);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+            color: var(--text-primary);
+            font-size: 12px;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .pause-btn:hover {
+            background: var(--surface-lighter);
+            border-color: var(--warning);
+        }
+
+        .pause-btn.active {
+            background: rgba(255, 152, 0, 0.15);
+            border-color: var(--warning);
+            color: var(--warning);
+        }
+
+        .pause-btn .material-icons {
+            font-size: 16px;
+        }
+
+        /* Batch mode toggle */
+        .batch-toggle {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        /* Progress indicator */
+        .review-progress {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .progress-text {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        .progress-bar-mini {
+            width: 100px;
+            height: 4px;
+            background: var(--surface-lighter);
+            border-radius: 2px;
+            overflow: hidden;
+        }
+
+        .progress-bar-mini .progress-fill {
+            height: 100%;
+            background: var(--primary);
+            border-radius: 2px;
+            transition: width 0.3s ease;
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Title Bar -->
+        <div class="title-bar">
+            <h1>
+                <span class="logo">Q</span>
+                QualCoder - research_project.qda
+            </h1>
+            <div class="window-controls">
+                <button class="window-btn minimize"></button>
+                <button class="window-btn maximize"></button>
+                <button class="window-btn close"></button>
+            </div>
+        </div>
+
+        <!-- Menu Bar -->
+        <div class="menu-bar">
+            <a href="index.html" class="menu-item">Project</a>
+            <a href="phase1_file_manager.html" class="menu-item">Files and Cases</a>
+            <a href="code_text.html" class="menu-item">Coding</a>
+            <a href="reports_coding.html" class="menu-item">Reports</a>
+            <a href="ai_chat.html" class="menu-item active">AI</a>
+            <a href="settings.html" class="menu-item">Help</a>
+        </div>
+
+        <!-- Tab Bar -->
+        <div class="tab-bar">
+            <a href="code_text.html" class="tab">
+                <span class="material-icons">code</span>
+                Coding
+            </a>
+            <a href="reports_coding.html" class="tab">
+                <span class="material-icons">assessment</span>
+                Reports
+            </a>
+            <a href="phase1_file_manager.html" class="tab">
+                <span class="material-icons">folder</span>
+                Manage
+            </a>
+            <a href="review_queue.html" class="tab active">
+                <span class="material-icons">rate_review</span>
+                AI Review
+            </a>
+        </div>
+
+        <!-- AI Review Toolbar -->
+        <div class="toolbar">
+            <div class="toolbar-group">
+                <a href="review_queue.html" class="toolbar-btn active">
+                    <span class="material-icons">playlist_add_check</span> Review Queue
+                </a>
+                <a href="#" class="toolbar-btn">
+                    <span class="material-icons">history</span> Activity Log
+                </a>
+            </div>
+            <div class="toolbar-divider"></div>
+            <div class="toolbar-group">
+                <span class="toolbar-label">Trust Level:</span>
+                <select class="toolbar-select" id="trustLevel">
+                    <option value="require" selected>Require Approval</option>
+                    <option value="suggest">Suggest Only</option>
+                    <option value="notify">Notify</option>
+                    <option value="autonomous">Autonomous</option>
+                </select>
+            </div>
+            <div class="toolbar-group">
+                <button class="pause-btn" id="pauseBtn" onclick="togglePause()">
+                    <span class="material-icons">pause</span>
+                    <span id="pauseText">Pause AI</span>
+                </button>
+            </div>
+            <div class="toolbar-group">
+                <div class="batch-toggle">
+                    <span>Batch Mode</span>
+                    <div class="switch" id="batchSwitch" onclick="this.classList.toggle('checked')"></div>
+                </div>
+            </div>
+            <div class="toolbar-group" style="margin-left: auto;">
+                <div class="review-progress">
+                    <span class="progress-text">3 of 12 reviewed</span>
+                    <div class="progress-bar-mini">
+                        <div class="progress-fill" style="width: 25%;"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Left Panel - Code Tree -->
+            <div class="panel panel-left">
+                <div class="panel-header">
+                    <span class="panel-title">
+                        <span class="material-icons">label</span>
+                        Codes
+                    </span>
+                    <div class="panel-actions">
+                        <button class="panel-btn" title="Filter codes">
+                            <span class="material-icons">filter_list</span>
+                        </button>
+                        <button class="panel-btn" title="Expand all">
+                            <span class="material-icons">unfold_more</span>
+                        </button>
+                    </div>
+                </div>
+                <div class="code-tree">
+                    <div class="code-category">
+                        <div class="category-header expanded">
+                            <span class="material-icons expand">chevron_right</span>
+                            <span class="category-name">Health Themes</span>
+                            <span class="category-count">4</span>
+                        </div>
+                        <div class="code-list">
+                            <div class="code-item ai-pending">
+                                <span class="code-color" style="background: #9C27B0;"></span>
+                                <span class="code-name">
+                                    Sleep Disruption
+                                    <span class="ai-badge">AI</span>
+                                </span>
+                                <span class="code-count">7</span>
+                            </div>
+                            <div class="code-item">
+                                <span class="code-color" style="background: #F44336;"></span>
+                                <span class="code-name">Anxiety</span>
+                                <span class="code-count">15</span>
+                            </div>
+                            <div class="code-item">
+                                <span class="code-color" style="background: #E91E63;"></span>
+                                <span class="code-name">Worry</span>
+                                <span class="code-count">12</span>
+                            </div>
+                            <div class="code-item">
+                                <span class="code-color" style="background: #4CAF50;"></span>
+                                <span class="code-name">Well-being</span>
+                                <span class="code-count">8</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="code-category">
+                        <div class="category-header expanded">
+                            <span class="material-icons expand">chevron_right</span>
+                            <span class="category-name">Learning Experience</span>
+                            <span class="category-count">3</span>
+                        </div>
+                        <div class="code-list">
+                            <div class="code-item">
+                                <span class="code-color" style="background: #FFC107;"></span>
+                                <span class="code-name">Motivation</span>
+                                <span class="code-count">18</span>
+                            </div>
+                            <div class="code-item">
+                                <span class="code-color" style="background: #2196F3;"></span>
+                                <span class="code-name">Engagement</span>
+                                <span class="code-count">14</span>
+                            </div>
+                            <div class="code-item">
+                                <span class="code-color" style="background: #FF9800;"></span>
+                                <span class="code-name">Struggles</span>
+                                <span class="code-count">11</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="code-category">
+                        <div class="category-header">
+                            <span class="material-icons expand">chevron_right</span>
+                            <span class="category-name">Social Factors</span>
+                            <span class="category-count">2</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Center Panel - Review Queue -->
+            <div class="center-panel">
+                <div class="review-content">
+                    <!-- Current Review Item -->
+                    <div class="current-review">
+                        <div class="current-review-header">
+                            <div class="review-item-title">
+                                <span class="action-type-badge create">Create Code</span>
+                                <span class="review-item-name">"Sleep Disruption" in Health Themes</span>
+                            </div>
+                            <div class="keyboard-hints">
+                                <span class="keyboard-hint"><span class="key">Y</span> Approve</span>
+                                <span class="keyboard-hint"><span class="key">N</span> Reject</span>
+                                <span class="keyboard-hint"><span class="key">E</span> Edit</span>
+                                <span class="keyboard-hint"><span class="key">S</span> Skip</span>
+                            </div>
+                        </div>
+                        <div class="current-review-body">
+                            <div class="ai-reasoning">
+                                <div class="ai-reasoning-header">
+                                    <span class="material-icons">psychology</span>
+                                    AI Reasoning
+                                </div>
+                                <div class="ai-reasoning-text">
+                                    Found 7 mentions of sleep-related issues across 3 interviews (Interview_P01.txt, Interview_P03.txt, Interview_P05.txt). These segments discuss difficulty falling asleep, disrupted sleep patterns, and fatigue. Recommend creating a new code "Sleep Disruption" under Health Themes category to capture this emerging pattern.
+                                </div>
+                            </div>
+                            <div class="affected-segments">
+                                <div class="affected-segments-header">
+                                    Affected Segments (7 will be coded if approved)
+                                </div>
+                                <div class="segment-preview highlight">
+                                    "I couldn't sleep for days after hearing the news. My mind just kept racing..."
+                                    <div class="file-source">Interview_P01.txt (pos 127-189)</div>
+                                </div>
+                                <div class="segment-preview">
+                                    "The anxiety really affected my sleep. I would wake up at 3am every night..."
+                                    <div class="file-source">Interview_P03.txt (pos 342-412)</div>
+                                </div>
+                                <div class="segment-preview">
+                                    "Lack of sleep made everything worse. I felt so tired during the day..."
+                                    <div class="file-source">Interview_P05.txt (pos 89-156)</div>
+                                </div>
+                                <div style="text-align: center; padding: 8px; color: var(--text-disabled); font-size: 12px;">
+                                    + 4 more segments
+                                </div>
+                            </div>
+                        </div>
+                        <div class="current-review-actions">
+                            <div class="action-buttons">
+                                <button class="action-btn approve">
+                                    <span class="material-icons">check</span>
+                                    Approve
+                                </button>
+                                <button class="action-btn reject">
+                                    <span class="material-icons">close</span>
+                                    Reject
+                                </button>
+                                <button class="action-btn edit">
+                                    <span class="material-icons">edit</span>
+                                    Edit
+                                </button>
+                                <button class="action-btn skip">
+                                    <span class="material-icons">skip_next</span>
+                                    Skip
+                                </button>
+                            </div>
+                            <div class="secondary-actions">
+                                <button class="toolbar-btn" title="View full context">
+                                    <span class="material-icons">open_in_full</span>
+                                </button>
+                                <button class="toolbar-btn" title="Add note">
+                                    <span class="material-icons">note_add</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Queue List -->
+                    <div class="queue-list">
+                        <div class="queue-list-header">
+                            <div class="queue-list-title">
+                                <span class="material-icons">queue</span>
+                                Pending Review
+                                <span class="queue-count">9</span>
+                            </div>
+                            <div class="panel-actions">
+                                <button class="panel-btn" title="Sort queue">
+                                    <span class="material-icons">sort</span>
+                                </button>
+                                <button class="panel-btn" title="Filter">
+                                    <span class="material-icons">filter_list</span>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="queue-list-content">
+                            <!-- Current reviewing item -->
+                            <div class="queue-item reviewing">
+                                <span class="queue-status-icon reviewing"></span>
+                                <div class="queue-item-content">
+                                    <div class="queue-item-header">
+                                        <span class="queue-item-type create">Create</span>
+                                        <span class="queue-item-title">Sleep Disruption</span>
+                                    </div>
+                                    <div class="queue-item-desc">New code with 7 segments in Health Themes</div>
+                                </div>
+                                <span class="queue-item-time">Now</span>
+                            </div>
+
+                            <!-- Pending items -->
+                            <div class="queue-item">
+                                <span class="queue-status-icon pending"></span>
+                                <div class="queue-item-content">
+                                    <div class="queue-item-header">
+                                        <span class="queue-item-type apply">Apply</span>
+                                        <span class="queue-item-title">Anxiety</span>
+                                    </div>
+                                    <div class="queue-item-desc">"I felt so anxious when..." - Interview_P01.txt</div>
+                                </div>
+                                <span class="queue-item-time">2m ago</span>
+                            </div>
+
+                            <div class="queue-item">
+                                <span class="queue-status-icon pending"></span>
+                                <div class="queue-item-content">
+                                    <div class="queue-item-header">
+                                        <span class="queue-item-type merge">Merge</span>
+                                        <span class="queue-item-title">Worry &rarr; Anxiety</span>
+                                    </div>
+                                    <div class="queue-item-desc">12 segments will be reassigned</div>
+                                </div>
+                                <span class="queue-item-time">5m ago</span>
+                            </div>
+
+                            <div class="queue-item">
+                                <span class="queue-status-icon queued"></span>
+                                <div class="queue-item-content">
+                                    <div class="queue-item-header">
+                                        <span class="queue-item-type apply">Apply</span>
+                                        <span class="queue-item-title">Motivation</span>
+                                    </div>
+                                    <div class="queue-item-desc">"I really wanted to succeed..." - Interview_P02.txt</div>
+                                </div>
+                                <span class="queue-item-time">8m ago</span>
+                            </div>
+
+                            <div class="queue-item">
+                                <span class="queue-status-icon queued"></span>
+                                <div class="queue-item-content">
+                                    <div class="queue-item-header">
+                                        <span class="queue-item-type apply">Apply</span>
+                                        <span class="queue-item-title">Engagement</span>
+                                    </div>
+                                    <div class="queue-item-desc">"The interactive sessions kept me..." - Interview_P04.txt</div>
+                                </div>
+                                <span class="queue-item-time">10m ago</span>
+                            </div>
+
+                            <div class="queue-item">
+                                <span class="queue-status-icon queued"></span>
+                                <div class="queue-item-content">
+                                    <div class="queue-item-header">
+                                        <span class="queue-item-type create">Create</span>
+                                        <span class="queue-item-title">Peer Support</span>
+                                    </div>
+                                    <div class="queue-item-desc">New code with 5 segments in Social Factors</div>
+                                </div>
+                                <span class="queue-item-time">12m ago</span>
+                            </div>
+
+                            <div class="queue-item">
+                                <span class="queue-status-icon queued"></span>
+                                <div class="queue-item-content">
+                                    <div class="queue-item-header">
+                                        <span class="queue-item-type apply">Apply</span>
+                                        <span class="queue-item-title">Struggles</span>
+                                    </div>
+                                    <div class="queue-item-desc">"I found it really hard to..." - Interview_P03.txt</div>
+                                </div>
+                                <span class="queue-item-time">15m ago</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Panel - Context & Agent Info -->
+            <div class="panel panel-right" style="border-left: 1px solid var(--border); border-right: none;">
+                <div class="info-card">
+                    <div class="info-card-title">
+                        <span class="material-icons">visibility</span>
+                        Document Context
+                    </div>
+                    <div class="document-preview">
+                        <span class="context-text">...was a really difficult time for me. </span>
+                        <span class="highlight-segment">I couldn't sleep for days after hearing the news. My mind just kept racing and I would lie awake for hours.</span>
+                        <span class="context-text"> The doctor said it was stress-related and recommended some relaxation techniques...</span>
+                    </div>
+                    <div style="margin-top: 12px;">
+                        <button class="btn btn-secondary btn-sm" style="width: 100%;">
+                            <span class="material-icons">open_in_new</span>
+                            Open in Coding View
+                        </button>
+                    </div>
+                </div>
+
+                <div class="info-card">
+                    <div class="info-card-title">
+                        <span class="material-icons">smart_toy</span>
+                        Agent Info
+                    </div>
+                    <div class="agent-info-header">
+                        <span class="agent-status-dot"></span>
+                        <span class="agent-name">Claude (claude-3-opus)</span>
+                    </div>
+                    <div class="agent-stats">
+                        <div class="agent-stat">
+                            <span>Actions/min:</span>
+                            <span class="agent-stat-value">2.4</span>
+                        </div>
+                        <div class="agent-stat">
+                            <span>Session actions:</span>
+                            <span class="agent-stat-value">47</span>
+                        </div>
+                        <div class="agent-stat">
+                            <span>Approved:</span>
+                            <span class="agent-stat-value" style="color: var(--success);">38 (81%)</span>
+                        </div>
+                        <div class="agent-stat">
+                            <span>Rejected:</span>
+                            <span class="agent-stat-value" style="color: var(--error);">6 (13%)</span>
+                        </div>
+                        <div class="agent-stat">
+                            <span>Edited:</span>
+                            <span class="agent-stat-value" style="color: var(--warning);">3 (6%)</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="info-card">
+                    <div class="info-card-title">
+                        <span class="material-icons">security</span>
+                        Trust Level
+                    </div>
+                    <div class="trust-level-indicator require">
+                        <span class="material-icons">verified_user</span>
+                        <span>Require Approval</span>
+                    </div>
+                    <div style="font-size: 11px; color: var(--text-secondary); margin-top: 8px; line-height: 1.5;">
+                        All AI suggestions require manual review before being applied to the project.
+                    </div>
+                </div>
+
+                <div class="info-card">
+                    <div class="info-card-title">
+                        <span class="material-icons">analytics</span>
+                        Session Stats
+                    </div>
+                    <div style="font-size: 12px; color: var(--text-secondary);">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                            <span>Duration:</span>
+                            <span style="color: var(--text-primary);">42 min</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                            <span>Files processed:</span>
+                            <span style="color: var(--text-primary);">5 of 12</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between;">
+                            <span>Codes suggested:</span>
+                            <span style="color: var(--text-primary);">14</span>
+                        </div>
+                    </div>
+                    <div class="progress-bar" style="margin-top: 12px;">
+                        <div class="progress-fill" style="width: 42%;"></div>
+                    </div>
+                    <div style="font-size: 11px; color: var(--text-disabled); margin-top: 4px;">
+                        Processing: 42% complete
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Status Bar -->
+        <div class="status-bar">
+            <div class="status-left">
+                <span class="status-item">
+                    <span class="material-icons">playlist_add_check</span>
+                    Review: 3 of 12
+                </span>
+                <span class="status-item">
+                    <span class="material-icons">pending</span>
+                    Pending: 9
+                </span>
+                <span class="status-item">
+                    <span class="material-icons">storage</span>
+                    research_project.qda
+                </span>
+            </div>
+            <div class="status-right">
+                <span class="status-item">
+                    <span class="material-icons" style="color: var(--success);">cloud_done</span>
+                    Agent: Connected
+                </span>
+                <span class="status-item">
+                    <span class="material-icons">speed</span>
+                    2.4 actions/min
+                </span>
+                <span class="status-item">
+                    <span class="material-icons">schedule</span>
+                    Auto-save: 30s ago
+                </span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Theme Toggle Button -->
+    <div class="theme-toggle">
+        <button class="theme-btn" onclick="toggleTheme()" title="Toggle theme">
+            <span class="material-icons" id="theme-icon">light_mode</span>
+        </button>
+    </div>
+
+    <!-- Edit Modal -->
+    <div class="modal-overlay" id="editModal">
+        <div class="modal" style="width: 600px;">
+            <div class="modal-header">
+                <span class="modal-title">
+                    <span class="material-icons" style="color: var(--primary);">edit</span>
+                    Edit AI Suggestion
+                </span>
+                <button class="modal-close" onclick="hideEditModal()">
+                    <span class="material-icons">close</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label class="form-label">Code Name</label>
+                    <input type="text" class="form-input" value="Sleep Disruption">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Category</label>
+                    <select class="form-input">
+                        <option selected>Health Themes</option>
+                        <option>Learning Experience</option>
+                        <option>Social Factors</option>
+                        <option value="new">+ Create new category</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Memo/Description</label>
+                    <textarea class="form-input" rows="3">Captures references to sleep-related issues including difficulty falling asleep, disrupted sleep patterns, and fatigue related to the research topic.</textarea>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Color</label>
+                    <div style="display: flex; gap: 8px; margin-top: 4px; flex-wrap: wrap;">
+                        <span style="width: 28px; height: 28px; border-radius: var(--radius-sm); background: #F44336; cursor: pointer;"></span>
+                        <span style="width: 28px; height: 28px; border-radius: var(--radius-sm); background: #E91E63; cursor: pointer;"></span>
+                        <span style="width: 28px; height: 28px; border-radius: var(--radius-sm); background: #9C27B0; cursor: pointer; border: 2px solid var(--primary);"></span>
+                        <span style="width: 28px; height: 28px; border-radius: var(--radius-sm); background: #2196F3; cursor: pointer;"></span>
+                        <span style="width: 28px; height: 28px; border-radius: var(--radius-sm); background: #00BCD4; cursor: pointer;"></span>
+                        <span style="width: 28px; height: 28px; border-radius: var(--radius-sm); background: #4CAF50; cursor: pointer;"></span>
+                        <span style="width: 28px; height: 28px; border-radius: var(--radius-sm); background: #FFC107; cursor: pointer;"></span>
+                        <span style="width: 28px; height: 28px; border-radius: var(--radius-sm); background: #FF9800; cursor: pointer;"></span>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Segments to Apply (uncheck to exclude)</label>
+                    <div style="max-height: 150px; overflow-y: auto; background: var(--surface-light); border-radius: var(--radius-md); padding: 8px;">
+                        <label style="display: flex; align-items: flex-start; gap: 8px; padding: 8px; cursor: pointer;">
+                            <input type="checkbox" checked style="margin-top: 4px;">
+                            <span style="font-size: 12px; line-height: 1.5;">"I couldn't sleep for days after hearing the news..." - Interview_P01.txt</span>
+                        </label>
+                        <label style="display: flex; align-items: flex-start; gap: 8px; padding: 8px; cursor: pointer;">
+                            <input type="checkbox" checked style="margin-top: 4px;">
+                            <span style="font-size: 12px; line-height: 1.5;">"The anxiety really affected my sleep..." - Interview_P03.txt</span>
+                        </label>
+                        <label style="display: flex; align-items: flex-start; gap: 8px; padding: 8px; cursor: pointer;">
+                            <input type="checkbox" checked style="margin-top: 4px;">
+                            <span style="font-size: 12px; line-height: 1.5;">"Lack of sleep made everything worse..." - Interview_P05.txt</span>
+                        </label>
+                        <label style="display: flex; align-items: flex-start; gap: 8px; padding: 8px; cursor: pointer;">
+                            <input type="checkbox" style="margin-top: 4px;">
+                            <span style="font-size: 12px; line-height: 1.5; color: var(--text-secondary);">"I was tired all the time..." - Interview_P01.txt</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="hideEditModal()">Cancel</button>
+                <button class="btn btn-primary" onclick="hideEditModal()">
+                    <span class="material-icons">check</span>
+                    Apply with Changes
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notifications -->
+    <div class="toast-container">
+        <div class="toast success" id="approveToast" style="display: none;">
+            <span class="material-icons" style="color: var(--success);">check_circle</span>
+            <span>Suggestion approved and applied</span>
+        </div>
+        <div class="toast error" id="rejectToast" style="display: none;">
+            <span class="material-icons" style="color: var(--error);">cancel</span>
+            <span>Suggestion rejected</span>
+        </div>
+    </div>
+
+    <script>
+        let isDark = true;
+        let isPaused = false;
+
+        function toggleTheme() {
+            isDark = !isDark;
+            document.body.classList.toggle('light-theme', !isDark);
+            document.getElementById('theme-icon').textContent = isDark ? 'light_mode' : 'dark_mode';
+        }
+
+        function togglePause() {
+            isPaused = !isPaused;
+            const btn = document.getElementById('pauseBtn');
+            const text = document.getElementById('pauseText');
+            const icon = btn.querySelector('.material-icons');
+
+            btn.classList.toggle('active', isPaused);
+            text.textContent = isPaused ? 'Resume AI' : 'Pause AI';
+            icon.textContent = isPaused ? 'play_arrow' : 'pause';
+        }
+
+        function showEditModal() {
+            document.getElementById('editModal').classList.add('show');
+        }
+
+        function hideEditModal() {
+            document.getElementById('editModal').classList.remove('show');
+        }
+
+        function showToast(type) {
+            const toast = document.getElementById(type + 'Toast');
+            toast.style.display = 'flex';
+            setTimeout(() => toast.style.display = 'none', 3000);
+        }
+
+        // Keyboard shortcuts
+        document.addEventListener('keydown', function(e) {
+            if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+
+            switch(e.key.toLowerCase()) {
+                case 'y':
+                    showToast('approve');
+                    break;
+                case 'n':
+                    showToast('reject');
+                    break;
+                case 'e':
+                    showEditModal();
+                    break;
+                case 'escape':
+                    hideEditModal();
+                    break;
+            }
+        });
+
+        // Close modal on overlay click
+        document.getElementById('editModal').addEventListener('click', function(e) {
+            if (e.target === this) hideEditModal();
+        });
+
+        // Toggle category expand/collapse
+        document.querySelectorAll('.category-header').forEach(header => {
+            header.addEventListener('click', () => {
+                header.classList.toggle('expanded');
+                const codeList = header.nextElementSibling;
+                if (codeList) {
+                    codeList.style.display = header.classList.contains('expanded') ? 'block' : 'none';
+                }
+            });
+        });
+
+        // Queue item selection
+        document.querySelectorAll('.queue-item').forEach(item => {
+            item.addEventListener('click', function() {
+                document.querySelectorAll('.queue-item').forEach(i => {
+                    i.classList.remove('active', 'reviewing');
+                    i.querySelector('.queue-status-icon').classList.remove('reviewing');
+                    i.querySelector('.queue-status-icon').classList.add('pending');
+                });
+                this.classList.add('reviewing');
+                this.querySelector('.queue-status-icon').classList.remove('pending');
+                this.querySelector('.queue-status-icon').classList.add('reviewing');
+            });
+        });
+
+        // Edit button click
+        document.querySelector('.action-btn.edit').addEventListener('click', showEditModal);
+
+        // Approve button click
+        document.querySelector('.action-btn.approve').addEventListener('click', function() {
+            showToast('approve');
+        });
+
+        // Reject button click
+        document.querySelector('.action-btn.reject').addEventListener('click', function() {
+            showToast('reject');
+        });
+
+        // Trust level change
+        document.getElementById('trustLevel').addEventListener('change', function() {
+            const indicator = document.querySelector('.trust-level-indicator');
+            const icons = {
+                'require': 'verified_user',
+                'suggest': 'thumb_up',
+                'notify': 'notifications',
+                'autonomous': 'auto_awesome'
+            };
+            const labels = {
+                'require': 'Require Approval',
+                'suggest': 'Suggest Only',
+                'notify': 'Notify',
+                'autonomous': 'Autonomous'
+            };
+
+            indicator.className = 'trust-level-indicator ' + this.value;
+            indicator.innerHTML = `<span class="material-icons">${icons[this.value]}</span><span>${labels[this.value]}</span>`;
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,719 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QualCoder UI Modernization - Phase 1 Mockups</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #009688;
+            --primary-light: #4DB6AC;
+            --primary-dark: #00796B;
+            --background: #1E1E1E;
+            --surface: #2D2D2D;
+            --surface-light: #383838;
+            --text-primary: #FFFFFF;
+            --text-secondary: #B0B0B0;
+            --border: #404040;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Roboto', sans-serif;
+            background: var(--background);
+            color: var(--text-primary);
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 60px;
+        }
+
+        .logo {
+            width: 80px;
+            height: 80px;
+            background: var(--primary);
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 700;
+            font-size: 36px;
+            margin: 0 auto 24px;
+        }
+
+        h1 {
+            font-size: 36px;
+            font-weight: 300;
+            margin-bottom: 12px;
+        }
+
+        h1 span {
+            color: var(--primary);
+            font-weight: 500;
+        }
+
+        .subtitle {
+            font-size: 18px;
+            color: var(--text-secondary);
+            margin-bottom: 24px;
+        }
+
+        .stats {
+            display: flex;
+            justify-content: center;
+            gap: 40px;
+            flex-wrap: wrap;
+        }
+
+        .stat {
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 32px;
+            font-weight: 500;
+            color: var(--primary);
+        }
+
+        .stat-label {
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+
+        .section {
+            margin-bottom: 60px;
+        }
+
+        .section-title {
+            font-size: 24px;
+            font-weight: 500;
+            margin-bottom: 24px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .section-title .material-icons {
+            color: var(--primary);
+        }
+
+        .section-desc {
+            color: var(--text-secondary);
+            margin-bottom: 24px;
+            font-size: 15px;
+        }
+
+        .mockup-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 20px;
+        }
+
+        .mockup-card {
+            background: var(--surface);
+            border-radius: 12px;
+            overflow: hidden;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            text-decoration: none;
+            color: inherit;
+            display: block;
+        }
+
+        .mockup-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 24px rgba(0, 0, 0, 0.3);
+        }
+
+        .mockup-preview {
+            height: 160px;
+            background: var(--surface-light);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .mockup-icon {
+            width: 64px;
+            height: 64px;
+            background: rgba(0, 150, 136, 0.2);
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .mockup-icon .material-icons {
+            font-size: 32px;
+            color: var(--primary);
+        }
+
+        .mockup-info {
+            padding: 16px;
+        }
+
+        .mockup-title {
+            font-size: 15px;
+            font-weight: 500;
+            margin-bottom: 4px;
+        }
+
+        .mockup-desc {
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        .mockup-badge {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            padding: 4px 10px;
+            background: var(--primary);
+            color: white;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 500;
+        }
+
+        .category-header {
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .category-header .material-icons {
+            font-size: 18px;
+            color: var(--primary);
+        }
+
+        .mockup-category {
+            margin-bottom: 32px;
+        }
+
+        .features {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+        }
+
+        .feature-card {
+            background: var(--surface);
+            border-radius: 12px;
+            padding: 24px;
+        }
+
+        .feature-icon {
+            width: 48px;
+            height: 48px;
+            background: rgba(0, 150, 136, 0.2);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 16px;
+        }
+
+        .feature-icon .material-icons {
+            color: var(--primary);
+            font-size: 24px;
+        }
+
+        .feature-title {
+            font-size: 16px;
+            font-weight: 500;
+            margin-bottom: 8px;
+        }
+
+        .feature-desc {
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+
+        .color-palette {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-top: 16px;
+        }
+
+        .color-swatch {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: var(--surface-light);
+            padding: 8px 12px;
+            border-radius: 8px;
+        }
+
+        .color-swatch .swatch {
+            width: 24px;
+            height: 24px;
+            border-radius: 4px;
+        }
+
+        .color-swatch span {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        .quick-links {
+            background: var(--surface);
+            border-radius: 12px;
+            padding: 24px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            justify-content: center;
+        }
+
+        .quick-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 10px 16px;
+            background: var(--surface-light);
+            color: var(--text-primary);
+            text-decoration: none;
+            border-radius: 8px;
+            font-size: 13px;
+            transition: all 0.2s ease;
+        }
+
+        .quick-link:hover {
+            background: var(--primary);
+            color: white;
+        }
+
+        .quick-link .material-icons {
+            font-size: 18px;
+        }
+
+        footer {
+            text-align: center;
+            padding: 40px 20px;
+            border-top: 1px solid var(--border);
+            margin-top: 60px;
+            color: var(--text-secondary);
+            font-size: 14px;
+        }
+
+        footer a {
+            color: var(--primary);
+            text-decoration: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="logo">Q</div>
+            <h1>QualCoder <span>Phase 1</span> UI Modernization</h1>
+            <p class="subtitle">Complete Material Design mockups for PyQt6 using qt-material</p>
+            <div class="stats">
+                <div class="stat">
+                    <div class="stat-value">18</div>
+                    <div class="stat-label">Screen Mockups</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-value">1</div>
+                    <div class="stat-label">Component Library</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-value">1</div>
+                    <div class="stat-label">Shared Stylesheet</div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Quick Links -->
+        <section class="section">
+            <h2 class="section-title">
+                <span class="material-icons">bolt</span>
+                Quick Links
+            </h2>
+            <div class="quick-links">
+                <a href="components.html" class="quick-link"><span class="material-icons">widgets</span> Component Library</a>
+                <a href="css/material-theme.css" class="quick-link"><span class="material-icons">css</span> Shared CSS</a>
+                <a href="code_text.html" class="quick-link"><span class="material-icons">code</span> Text Coding</a>
+                <a href="ai_chat.html" class="quick-link"><span class="material-icons">smart_toy</span> AI Chat</a>
+                <a href="reports_charts.html" class="quick-link"><span class="material-icons">bar_chart</span> Charts</a>
+                <a href="settings.html" class="quick-link"><span class="material-icons">settings</span> Settings</a>
+            </div>
+        </section>
+
+        <!-- Coding Interfaces -->
+        <section class="section">
+            <h2 class="section-title">
+                <span class="material-icons">code</span>
+                Coding Interfaces
+            </h2>
+            <p class="section-desc">Core coding screens for text, image, audio/video, and PDF annotation</p>
+            <div class="mockup-grid">
+                <a href="code_text.html" class="mockup-card">
+                    <div class="mockup-preview">
+                        <div class="mockup-icon"><span class="material-icons">description</span></div>
+                        <span class="mockup-badge">Core</span>
+                    </div>
+                    <div class="mockup-info">
+                        <h3 class="mockup-title">Text Coding</h3>
+                        <p class="mockup-desc">Code tree, text editor with highlights, overlapping codes, annotations</p>
+                    </div>
+                </a>
+                <a href="code_image.html" class="mockup-card">
+                    <div class="mockup-preview">
+                        <div class="mockup-icon"><span class="material-icons">image</span></div>
+                    </div>
+                    <div class="mockup-info">
+                        <h3 class="mockup-title">Image Coding</h3>
+                        <p class="mockup-desc">Image canvas with rectangle annotations, zoom controls</p>
+                    </div>
+                </a>
+                <a href="code_av.html" class="mockup-card">
+                    <div class="mockup-preview">
+                        <div class="mockup-icon"><span class="material-icons">videocam</span></div>
+                    </div>
+                    <div class="mockup-info">
+                        <h3 class="mockup-title">Audio/Video Coding</h3>
+                        <p class="mockup-desc">Media player, waveform visualization, timeline segments</p>
+                    </div>
+                </a>
+                <a href="code_pdf.html" class="mockup-card">
+                    <div class="mockup-preview">
+                        <div class="mockup-icon"><span class="material-icons">picture_as_pdf</span></div>
+                    </div>
+                    <div class="mockup-info">
+                        <h3 class="mockup-title">PDF Coding</h3>
+                        <p class="mockup-desc">PDF viewer, page navigation, thumbnails, annotations</p>
+                    </div>
+                </a>
+            </div>
+        </section>
+
+        <!-- AI Features -->
+        <section class="section">
+            <h2 class="section-title">
+                <span class="material-icons">smart_toy</span>
+                AI Features
+            </h2>
+            <p class="section-desc">AI-assisted coding and chat interfaces</p>
+            <div class="mockup-grid">
+                <a href="ai_chat.html" class="mockup-card">
+                    <div class="mockup-preview">
+                        <div class="mockup-icon"><span class="material-icons">chat</span></div>
+                        <span class="mockup-badge">New</span>
+                    </div>
+                    <div class="mockup-info">
+                        <h3 class="mockup-title">AI Chat</h3>
+                        <p class="mockup-desc">Chat interface with Topic/Text/Code modes, model indicator</p>
+                    </div>
+                </a>
+                <a href="ai_search.html" class="mockup-card">
+                    <div class="mockup-preview">
+                        <div class="mockup-icon"><span class="material-icons">search</span></div>
+                    </div>
+                    <div class="mockup-info">
+                        <h3 class="mockup-title">AI-Assisted Search</h3>
+                        <p class="mockup-desc">AI-powered search with code suggestions, confidence scores</p>
+                    </div>
+                </a>
+            </div>
+        </section>
+
+        <!-- Reports & Analysis -->
+        <section class="section">
+            <h2 class="section-title">
+                <span class="material-icons">assessment</span>
+                Reports & Analysis
+            </h2>
+            <p class="section-desc">Data visualization, coding reports, and analysis tools</p>
+            <div class="mockup-grid">
+                <a href="reports_coding.html" class="mockup-card">
+                    <div class="mockup-preview">
+                        <div class="mockup-icon"><span class="material-icons">list_alt</span></div>
+                    </div>
+                    <div class="mockup-info">
+                        <h3 class="mockup-title">Coding Reports</h3>
+                        <p class="mockup-desc">Filter panel, list/matrix view, context preview</p>
+                    </div>
+                </a>
+                <a href="reports_charts.html" class="mockup-card">
+                    <div class="mockup-preview">
+                        <div class="mockup-icon"><span class="material-icons">bar_chart</span></div>
+                    </div>
+                    <div class="mockup-info">
+                        <h3 class="mockup-title">Charts & Visualizations</h3>
+                        <p class="mockup-desc">Sunburst, bar, pie, treemap, heatmap charts</p>
+                    </div>
+                </a>
+                <a href="reports_comparison.html" class="mockup-card">
+                    <div class="mockup-preview">
+                        <div class="mockup-icon"><span class="material-icons">compare</span></div>
+                    </div>
+                    <div class="mockup-info">
+                        <h3 class="mockup-title">Coder Comparison</h3>
+                        <p class="mockup-desc">Cohen's Kappa statistics, agreement visualization</p>
+                    </div>
+                </a>
+                <a href="text_mining.html" class="mockup-card">
+                    <div class="mockup-preview">
+                        <div class="mockup-icon"><span class="material-icons">cloud</span></div>
+                    </div>
+                    <div class="mockup-info">
+                        <h3 class="mockup-title">Text Mining & Wordcloud</h3>
+                        <p class="mockup-desc">Wordcloud with color schemes, stopwords, n-grams</p>
+                    </div>
+                </a>
+                <a href="graph_view.html" class="mockup-card">
+                    <div class="mockup-preview">
+                        <div class="mockup-icon"><span class="material-icons">account_tree</span></div>
+                    </div>
+                    <div class="mockup-info">
+                        <h3 class="mockup-title">Code Graph</h3>
+                        <p class="mockup-desc">Network diagram with nodes, edges, minimap, legend</p>
+                    </div>
+                </a>
+            </div>
+        </section>
+
+        <!-- Management -->
+        <section class="section">
+            <h2 class="section-title">
+                <span class="material-icons">folder_open</span>
+                Management
+            </h2>
+            <p class="section-desc">File, case, journal, and attribute management screens</p>
+            <div class="mockup-grid">
+                <a href="phase1_file_manager.html" class="mockup-card">
+                    <div class="mockup-preview">
+                        <div class="mockup-icon"><span class="material-icons">folder</span></div>
+                    </div>
+                    <div class="mockup-info">
+                        <h3 class="mockup-title">File Manager</h3>
+                        <p class="mockup-desc">Data table, stats cards, drag-and-drop import</p>
+                    </div>
+                </a>
+                <a href="manage_cases.html" class="mockup-card">
+                    <div class="mockup-preview">
+                        <div class="mockup-icon"><span class="material-icons">people</span></div>
+                    </div>
+                    <div class="mockup-info">
+                        <h3 class="mockup-title">Cases Management</h3>
+                        <p class="mockup-desc">Cases table, file associations, attributes, memo</p>
+                    </div>
+                </a>
+                <a href="manage_journals.html" class="mockup-card">
+                    <div class="mockup-preview">
+                        <div class="mockup-icon"><span class="material-icons">book</span></div>
+                    </div>
+                    <div class="mockup-info">
+                        <h3 class="mockup-title">Research Journals</h3>
+                        <p class="mockup-desc">Journal list, date selector, rich text editor</p>
+                    </div>
+                </a>
+                <a href="manage_attributes.html" class="mockup-card">
+                    <div class="mockup-preview">
+                        <div class="mockup-icon"><span class="material-icons">tune</span></div>
+                    </div>
+                    <div class="mockup-info">
+                        <h3 class="mockup-title">Attributes Management</h3>
+                        <p class="mockup-desc">Attribute table for files/cases, add/edit dialogs</p>
+                    </div>
+                </a>
+            </div>
+        </section>
+
+        <!-- Settings & Utilities -->
+        <section class="section">
+            <h2 class="section-title">
+                <span class="material-icons">settings</span>
+                Settings & Utilities
+            </h2>
+            <p class="section-desc">Application settings and database tools</p>
+            <div class="mockup-grid">
+                <a href="settings.html" class="mockup-card">
+                    <div class="mockup-preview">
+                        <div class="mockup-icon"><span class="material-icons">tune</span></div>
+                    </div>
+                    <div class="mockup-info">
+                        <h3 class="mockup-title">Settings</h3>
+                        <p class="mockup-desc">General, Appearance, Fonts, AI, Backup settings</p>
+                    </div>
+                </a>
+                <a href="sql_query.html" class="mockup-card">
+                    <div class="mockup-preview">
+                        <div class="mockup-icon"><span class="material-icons">terminal</span></div>
+                    </div>
+                    <div class="mockup-info">
+                        <h3 class="mockup-title">SQL Query</h3>
+                        <p class="mockup-desc">Query editor, results table, saved queries, schema browser</p>
+                    </div>
+                </a>
+            </div>
+        </section>
+
+        <!-- Resources -->
+        <section class="section">
+            <h2 class="section-title">
+                <span class="material-icons">build</span>
+                Development Resources
+            </h2>
+            <p class="section-desc">Component library and shared stylesheet for implementation</p>
+            <div class="mockup-grid">
+                <a href="components.html" class="mockup-card">
+                    <div class="mockup-preview">
+                        <div class="mockup-icon"><span class="material-icons">widgets</span></div>
+                        <span class="mockup-badge">Reference</span>
+                    </div>
+                    <div class="mockup-info">
+                        <h3 class="mockup-title">Component Library</h3>
+                        <p class="mockup-desc">Buttons, badges, forms, modals, toasts, trees, tables</p>
+                    </div>
+                </a>
+                <a href="phase1_material_design.html" class="mockup-card">
+                    <div class="mockup-preview">
+                        <div class="mockup-icon"><span class="material-icons">palette</span></div>
+                        <span class="mockup-badge">Original</span>
+                    </div>
+                    <div class="mockup-info">
+                        <h3 class="mockup-title">Original Coding Mockup</h3>
+                        <p class="mockup-desc">Initial Material Design prototype for reference</p>
+                    </div>
+                </a>
+            </div>
+        </section>
+
+        <!-- Design Features -->
+        <section class="section">
+            <h2 class="section-title">
+                <span class="material-icons">auto_awesome</span>
+                Design Features
+            </h2>
+            <div class="features">
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <span class="material-icons">dark_mode</span>
+                    </div>
+                    <h3 class="feature-title">Dark & Light Themes</h3>
+                    <p class="feature-desc">Runtime theme switching with teal accent. Both themes are carefully crafted for readability and reduced eye strain.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <span class="material-icons">rounded_corner</span>
+                    </div>
+                    <h3 class="feature-title">Modern Components</h3>
+                    <p class="feature-desc">Rounded corners, subtle shadows, and smooth transitions create a contemporary feel while maintaining usability.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <span class="material-icons">palette</span>
+                    </div>
+                    <h3 class="feature-title">Consistent Color System</h3>
+                    <p class="feature-desc">Material Design color palette with semantic colors for success, warning, error states, and file type indicators.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <span class="material-icons">text_fields</span>
+                    </div>
+                    <h3 class="feature-title">Typography Hierarchy</h3>
+                    <p class="feature-desc">Clear visual hierarchy with Roboto font family, proper font weights, and consistent spacing throughout.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <span class="material-icons">touch_app</span>
+                    </div>
+                    <h3 class="feature-title">Interactive Feedback</h3>
+                    <p class="feature-desc">Hover states, focus indicators, and micro-animations provide clear feedback for user interactions.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <span class="material-icons">accessibility</span>
+                    </div>
+                    <h3 class="feature-title">Accessibility</h3>
+                    <p class="feature-desc">High contrast ratios, keyboard navigation support, and clear focus states for all interactive elements.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Color Palette -->
+        <section class="section">
+            <h2 class="section-title">
+                <span class="material-icons">color_lens</span>
+                Color Palette
+            </h2>
+            <div class="color-palette">
+                <div class="color-swatch">
+                    <div class="swatch" style="background: #009688;"></div>
+                    <span>Primary Teal</span>
+                </div>
+                <div class="color-swatch">
+                    <div class="swatch" style="background: #4DB6AC;"></div>
+                    <span>Primary Light</span>
+                </div>
+                <div class="color-swatch">
+                    <div class="swatch" style="background: #00796B;"></div>
+                    <span>Primary Dark</span>
+                </div>
+                <div class="color-swatch">
+                    <div class="swatch" style="background: #FF5722;"></div>
+                    <span>Secondary</span>
+                </div>
+                <div class="color-swatch">
+                    <div class="swatch" style="background: #4CAF50;"></div>
+                    <span>Success</span>
+                </div>
+                <div class="color-swatch">
+                    <div class="swatch" style="background: #FF9800;"></div>
+                    <span>Warning</span>
+                </div>
+                <div class="color-swatch">
+                    <div class="swatch" style="background: #F44336;"></div>
+                    <span>Error</span>
+                </div>
+                <div class="color-swatch">
+                    <div class="swatch" style="background: #2196F3;"></div>
+                    <span>Info / Text</span>
+                </div>
+                <div class="color-swatch">
+                    <div class="swatch" style="background: #9C27B0;"></div>
+                    <span>Audio</span>
+                </div>
+                <div class="color-swatch">
+                    <div class="swatch" style="background: #E91E63;"></div>
+                    <span>Video</span>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <footer>
+        <p>QualCoder UI Modernization Mockups &bull; Phase 1: Material Design Theming</p>
+        <p style="margin-top: 8px;">
+            Created for <a href="https://qualcoder.wordpress.com/" target="_blank">QualCoder</a> &bull;
+            Framework: <a href="https://qt-material.readthedocs.io/" target="_blank">qt-material</a>
+        </p>
+        <p style="margin-top: 16px; font-size: 12px; color: #666;">
+            18 screens | 1 component library | Shared CSS stylesheet
+        </p>
+    </footer>
+</body>
+</html>

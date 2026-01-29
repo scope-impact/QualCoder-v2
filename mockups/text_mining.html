@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QualCoder - Text Mining & Wordcloud</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link href="css/material-theme.css" rel="stylesheet">
+    <style>
+        .center-panel { flex: 1; display: flex; flex-direction: column; overflow: hidden; background: var(--background); }
+
+        .wordcloud-container { flex: 1; display: flex; overflow: hidden; }
+
+        .wordcloud-area { flex: 1; padding: 20px; display: flex; flex-direction: column; }
+
+        .wordcloud-card { flex: 1; background: var(--surface); border-radius: var(--radius-lg); box-shadow: var(--shadow-2); display: flex; flex-direction: column; overflow: hidden; }
+
+        .wordcloud-header { padding: 16px 20px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+        .wordcloud-title { font-weight: 500; display: flex; align-items: center; gap: 8px; }
+        .wordcloud-title .material-icons { color: var(--primary); }
+
+        .wordcloud-content { flex: 1; display: flex; align-items: center; justify-content: center; padding: 40px; background: white; margin: 20px; border-radius: var(--radius-md); }
+
+        /* Wordcloud simulation */
+        .wordcloud { position: relative; width: 100%; height: 100%; display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 12px; }
+
+        .word { font-family: 'Roboto', sans-serif; cursor: pointer; transition: var(--transition); padding: 4px 8px; border-radius: var(--radius-sm); }
+        .word:hover { background: rgba(0, 150, 136, 0.1); transform: scale(1.1); }
+
+        .word.size-1 { font-size: 14px; color: #888; }
+        .word.size-2 { font-size: 18px; color: #666; }
+        .word.size-3 { font-size: 24px; color: #444; font-weight: 500; }
+        .word.size-4 { font-size: 32px; color: var(--primary); font-weight: 500; }
+        .word.size-5 { font-size: 42px; color: var(--primary-dark); font-weight: 700; }
+        .word.size-6 { font-size: 56px; color: #00796B; font-weight: 700; }
+
+        /* Options panel */
+        .options-panel { width: 300px; background: var(--surface); border-left: 1px solid var(--border); overflow-y: auto; }
+
+        .options-section { padding: 16px; border-bottom: 1px solid var(--border); }
+        .options-title { font-size: 12px; font-weight: 500; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px; }
+
+        .option-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+        .option-row:last-child { margin-bottom: 0; }
+        .option-label { font-size: 13px; }
+
+        .slider-container { margin-top: 8px; }
+        .slider-labels { display: flex; justify-content: space-between; font-size: 11px; color: var(--text-secondary); margin-bottom: 4px; }
+        .slider { width: 100%; height: 4px; background: var(--surface-lighter); border-radius: 2px; appearance: none; cursor: pointer; }
+        .slider::-webkit-slider-thumb { appearance: none; width: 16px; height: 16px; background: var(--primary); border-radius: 50%; cursor: pointer; }
+
+        .color-scheme-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 8px; }
+        .color-scheme { height: 30px; border-radius: var(--radius-sm); cursor: pointer; transition: var(--transition); }
+        .color-scheme:hover { transform: scale(1.05); }
+        .color-scheme.selected { box-shadow: 0 0 0 2px var(--surface), 0 0 0 4px var(--primary); }
+
+        .word-list { max-height: 200px; overflow-y: auto; }
+        .word-item { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--border); font-size: 13px; }
+        .word-item:last-child { border-bottom: none; }
+        .word-freq { color: var(--primary); font-weight: 500; }
+
+        .stopwords-list { display: flex; flex-wrap: wrap; gap: 6px; }
+        .stopword { padding: 4px 8px; background: var(--surface-light); border-radius: 12px; font-size: 11px; display: flex; align-items: center; gap: 4px; }
+        .stopword .material-icons { font-size: 14px; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <div class="title-bar">
+            <h1><span class="logo">Q</span> QualCoder - research_project.qda</h1>
+            <div class="window-controls">
+                <button class="window-btn minimize"></button>
+                <button class="window-btn maximize"></button>
+                <button class="window-btn close"></button>
+            </div>
+        </div>
+
+        <div class="menu-bar">
+            <a href="index.html" class="menu-item">Project</a>
+            <a href="phase1_file_manager.html" class="menu-item">Files and Cases</a>
+            <a href="code_text.html" class="menu-item">Coding</a>
+            <a href="reports_coding.html" class="menu-item active">Reports</a>
+            <a href="ai_chat.html" class="menu-item">AI</a>
+            <a href="settings.html" class="menu-item">Help</a>
+        </div>
+
+        <div class="tab-bar">
+            <a href="code_text.html" class="tab"><span class="material-icons">code</span> Coding</a>
+            <a href="reports_coding.html" class="tab active"><span class="material-icons">assessment</span> Reports</a>
+            <a href="phase1_file_manager.html" class="tab"><span class="material-icons">folder</span> Manage</a>
+            <a href="index.html" class="tab"><span class="material-icons">history</span> Action Log</a>
+        </div>
+
+        <div class="toolbar">
+            <div class="toolbar-group">
+                <a href="reports_coding.html" class="toolbar-btn"><span class="material-icons">list_alt</span> Coding Summary</a>
+                <a href="reports_charts.html" class="toolbar-btn"><span class="material-icons">bar_chart</span> Charts</a>
+                <a href="reports_comparison.html" class="toolbar-btn"><span class="material-icons">compare</span> Comparison</a>
+                <a href="text_mining.html" class="toolbar-btn active"><span class="material-icons">cloud</span> Text Mining</a>
+                <a href="graph_view.html" class="toolbar-btn"><span class="material-icons">account_tree</span> Graph</a>
+            </div>
+            <div class="toolbar-divider"></div>
+            <div class="toolbar-group">
+                <button class="toolbar-btn"><span class="material-icons">refresh</span> Regenerate</button>
+                <button class="toolbar-btn"><span class="material-icons">image</span> Export Image</button>
+            </div>
+        </div>
+
+        <div class="main-content">
+            <div class="center-panel">
+                <div class="wordcloud-container">
+                    <div class="wordcloud-area">
+                        <div class="wordcloud-card">
+                            <div class="wordcloud-header">
+                                <div class="wordcloud-title">
+                                    <span class="material-icons">cloud</span>
+                                    Word Cloud - All Text Files
+                                </div>
+                                <div style="display: flex; gap: 8px;">
+                                    <button class="btn btn-sm btn-secondary"><span class="material-icons">fullscreen</span></button>
+                                    <button class="btn btn-sm btn-secondary"><span class="material-icons">download</span> Save</button>
+                                </div>
+                            </div>
+                            <div class="wordcloud-content">
+                                <div class="wordcloud">
+                                    <span class="word size-6">learning</span>
+                                    <span class="word size-5">students</span>
+                                    <span class="word size-5">course</span>
+                                    <span class="word size-4">online</span>
+                                    <span class="word size-4">platform</span>
+                                    <span class="word size-4">experience</span>
+                                    <span class="word size-4">challenges</span>
+                                    <span class="word size-3">motivation</span>
+                                    <span class="word size-3">support</span>
+                                    <span class="word size-3">content</span>
+                                    <span class="word size-3">tutorials</span>
+                                    <span class="word size-3">interface</span>
+                                    <span class="word size-3">helpful</span>
+                                    <span class="word size-2">materials</span>
+                                    <span class="word size-2">feedback</span>
+                                    <span class="word size-2">difficult</span>
+                                    <span class="word size-2">improve</span>
+                                    <span class="word size-2">access</span>
+                                    <span class="word size-2">resources</span>
+                                    <span class="word size-2">study</span>
+                                    <span class="word size-2">understand</span>
+                                    <span class="word size-1">navigation</span>
+                                    <span class="word size-1">training</span>
+                                    <span class="word size-1">interaction</span>
+                                    <span class="word size-1">deadlines</span>
+                                    <span class="word size-1">lectures</span>
+                                    <span class="word size-1">progress</span>
+                                    <span class="word size-1">features</span>
+                                    <span class="word size-1">videos</span>
+                                    <span class="word size-1">questions</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="options-panel">
+                        <div class="options-section">
+                            <div class="options-title">Data Source</div>
+                            <div class="form-group" style="margin-bottom: 12px;">
+                                <label class="form-label">Source</label>
+                                <select class="form-input">
+                                    <option selected>All text files</option>
+                                    <option>Coded segments only</option>
+                                    <option>Selected files</option>
+                                    <option>Selected codes</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="options-section">
+                            <div class="options-title">Word Options</div>
+                            <div class="slider-container">
+                                <div class="option-label">Minimum word length</div>
+                                <div class="slider-labels"><span>2</span><span>10</span></div>
+                                <input type="range" class="slider" min="2" max="10" value="3">
+                            </div>
+                            <div class="slider-container" style="margin-top: 16px;">
+                                <div class="option-label">Maximum words</div>
+                                <div class="slider-labels"><span>25</span><span>200</span></div>
+                                <input type="range" class="slider" min="25" max="200" value="100">
+                            </div>
+                            <div class="option-row" style="margin-top: 16px;">
+                                <span class="option-label">N-grams</span>
+                                <select class="toolbar-select" style="min-width: 100px;">
+                                    <option>1 (words)</option>
+                                    <option>2 (bigrams)</option>
+                                    <option>3 (trigrams)</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="options-section">
+                            <div class="options-title">Colors</div>
+                            <div class="color-scheme-grid">
+                                <div class="color-scheme selected" style="background: linear-gradient(90deg, #00796B, #4DB6AC);"></div>
+                                <div class="color-scheme" style="background: linear-gradient(90deg, #1976D2, #64B5F6);"></div>
+                                <div class="color-scheme" style="background: linear-gradient(90deg, #7B1FA2, #BA68C8);"></div>
+                                <div class="color-scheme" style="background: linear-gradient(90deg, #E64A19, #FF8A65);"></div>
+                                <div class="color-scheme" style="background: linear-gradient(90deg, #388E3C, #81C784);"></div>
+                                <div class="color-scheme" style="background: linear-gradient(90deg, #455A64, #90A4AE);"></div>
+                                <div class="color-scheme" style="background: linear-gradient(90deg, #C2185B, #F48FB1);"></div>
+                                <div class="color-scheme" style="background: linear-gradient(90deg, #FFA000, #FFCA28);"></div>
+                            </div>
+                        </div>
+
+                        <div class="options-section">
+                            <div class="options-title">Top Words</div>
+                            <div class="word-list">
+                                <div class="word-item"><span>learning</span><span class="word-freq">156</span></div>
+                                <div class="word-item"><span>students</span><span class="word-freq">124</span></div>
+                                <div class="word-item"><span>course</span><span class="word-freq">98</span></div>
+                                <div class="word-item"><span>online</span><span class="word-freq">87</span></div>
+                                <div class="word-item"><span>platform</span><span class="word-freq">76</span></div>
+                                <div class="word-item"><span>experience</span><span class="word-freq">68</span></div>
+                                <div class="word-item"><span>challenges</span><span class="word-freq">54</span></div>
+                                <div class="word-item"><span>motivation</span><span class="word-freq">47</span></div>
+                            </div>
+                        </div>
+
+                        <div class="options-section">
+                            <div class="options-title">Stopwords</div>
+                            <div class="stopwords-list">
+                                <div class="stopword">the <span class="material-icons">close</span></div>
+                                <div class="stopword">and <span class="material-icons">close</span></div>
+                                <div class="stopword">to <span class="material-icons">close</span></div>
+                                <div class="stopword">is <span class="material-icons">close</span></div>
+                                <div class="stopword">it <span class="material-icons">close</span></div>
+                                <div class="stopword">that <span class="material-icons">close</span></div>
+                            </div>
+                            <button class="btn btn-secondary btn-sm" style="width: 100%; margin-top: 12px;">
+                                <span class="material-icons">add</span> Add Stopword
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="status-bar">
+            <div class="status-left">
+                <span class="status-item"><span class="material-icons">check_circle</span> Wordcloud generated</span>
+                <span class="status-item"><span class="material-icons">storage</span> research_project.qda</span>
+            </div>
+            <div class="status-right">
+                <span class="status-item"><span class="material-icons">text_fields</span> 2,847 unique words</span>
+                <span class="status-item"><span class="material-icons">schedule</span> Generated: just now</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="theme-toggle">
+        <button class="theme-btn" onclick="toggleTheme()" title="Toggle theme">
+            <span class="material-icons" id="theme-icon">light_mode</span>
+        </button>
+    </div>
+
+    <script>
+        let isDark = true;
+        function toggleTheme() {
+            isDark = !isDark;
+            document.body.classList.toggle('light-theme', !isDark);
+            document.getElementById('theme-icon').textContent = isDark ? 'light_mode' : 'dark_mode';
+        }
+
+        document.querySelectorAll('.color-scheme').forEach(c => {
+            c.addEventListener('click', function() {
+                document.querySelectorAll('.color-scheme').forEach(s => s.classList.remove('selected'));
+                this.classList.add('selected');
+            });
+        });
+    </script>
+</body>
+</html>

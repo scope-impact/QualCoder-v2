@@ -1,0 +1,566 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QualCoder - Cases Management</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link href="css/material-theme.css" rel="stylesheet">
+    <style>
+        .center-panel { flex: 1; display: flex; flex-direction: column; overflow: hidden; background: var(--background); }
+
+        .cases-container { flex: 1; display: flex; overflow: hidden; padding: 20px; gap: 20px; }
+
+        /* Cases List Panel */
+        .cases-list-panel { width: 350px; background: var(--surface); border-radius: var(--radius-lg); box-shadow: var(--shadow-2); display: flex; flex-direction: column; overflow: hidden; }
+
+        .panel-header { padding: 16px 20px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+        .panel-title { font-weight: 500; display: flex; align-items: center; gap: 8px; }
+        .panel-title .material-icons { color: var(--primary); }
+
+        .cases-search { padding: 12px 16px; border-bottom: 1px solid var(--border); }
+        .search-input-wrap { position: relative; }
+        .search-input-wrap .material-icons { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--text-secondary); font-size: 20px; }
+        .search-input-wrap input { width: 100%; padding: 10px 12px 10px 40px; background: var(--surface-light); border: 1px solid var(--border); border-radius: var(--radius-md); color: var(--text-primary); font-size: 13px; }
+        .search-input-wrap input:focus { outline: none; border-color: var(--primary); }
+
+        .cases-list { flex: 1; overflow-y: auto; padding: 8px; }
+
+        .case-item { padding: 12px 16px; border-radius: var(--radius-md); cursor: pointer; transition: var(--transition); margin-bottom: 4px; }
+        .case-item:hover { background: var(--surface-light); }
+        .case-item.selected { background: rgba(0, 150, 136, 0.15); border-left: 3px solid var(--primary); }
+
+        .case-item-header { display: flex; align-items: center; gap: 10px; margin-bottom: 6px; }
+        .case-icon { width: 32px; height: 32px; background: var(--primary); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: 14px; font-weight: 500; }
+        .case-name { font-weight: 500; font-size: 14px; }
+        .case-meta { font-size: 11px; color: var(--text-secondary); display: flex; gap: 12px; margin-left: 42px; }
+
+        /* Case Details Panel */
+        .case-details-panel { flex: 1; background: var(--surface); border-radius: var(--radius-lg); box-shadow: var(--shadow-2); display: flex; flex-direction: column; overflow: hidden; }
+
+        .details-content { flex: 1; overflow-y: auto; padding: 20px; }
+
+        .details-section { margin-bottom: 24px; }
+        .section-title { font-size: 12px; font-weight: 500; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+        .section-title .material-icons { font-size: 16px; color: var(--primary); }
+
+        .case-info-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; }
+        .info-item { background: var(--surface-light); padding: 12px 16px; border-radius: var(--radius-md); }
+        .info-label { font-size: 11px; color: var(--text-secondary); margin-bottom: 4px; }
+        .info-value { font-size: 14px; font-weight: 500; }
+
+        .memo-editor { background: var(--surface-light); border-radius: var(--radius-md); padding: 16px; min-height: 120px; }
+        .memo-textarea { width: 100%; min-height: 100px; background: transparent; border: none; color: var(--text-primary); font-size: 13px; line-height: 1.6; resize: vertical; }
+        .memo-textarea:focus { outline: none; }
+
+        /* Linked Files */
+        .linked-files-list { display: flex; flex-direction: column; gap: 8px; }
+        .linked-file { display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; background: var(--surface-light); border-radius: var(--radius-md); }
+        .linked-file-info { display: flex; align-items: center; gap: 10px; }
+        .file-icon-small { width: 28px; height: 28px; border-radius: var(--radius-sm); display: flex; align-items: center; justify-content: center; }
+        .file-icon-small .material-icons { font-size: 16px; color: white; }
+        .file-icon-small.text { background: #2196F3; }
+        .file-icon-small.audio { background: #9C27B0; }
+        .file-icon-small.image { background: #4CAF50; }
+        .file-icon-small.pdf { background: #FF5722; }
+        .linked-file-name { font-size: 13px; }
+        .linked-file-portion { font-size: 11px; color: var(--text-secondary); }
+        .unlink-btn { padding: 4px; border-radius: var(--radius-sm); background: transparent; border: none; color: var(--text-secondary); cursor: pointer; }
+        .unlink-btn:hover { background: rgba(244, 67, 54, 0.1); color: var(--error); }
+
+        /* Attributes */
+        .attributes-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+        .attributes-table th, .attributes-table td { padding: 10px 12px; text-align: left; border-bottom: 1px solid var(--border); }
+        .attributes-table th { background: var(--surface-light); font-weight: 500; font-size: 11px; color: var(--text-secondary); text-transform: uppercase; }
+        .attributes-table tr:hover { background: var(--surface-light); }
+        .attr-type { padding: 2px 8px; border-radius: 10px; font-size: 10px; text-transform: uppercase; }
+        .attr-type.text { background: rgba(33, 150, 243, 0.2); color: #2196F3; }
+        .attr-type.numeric { background: rgba(76, 175, 80, 0.2); color: #4CAF50; }
+        .attr-value-input { background: transparent; border: 1px solid transparent; padding: 4px 8px; border-radius: var(--radius-sm); width: 100%; color: var(--text-primary); }
+        .attr-value-input:hover { border-color: var(--border); }
+        .attr-value-input:focus { outline: none; border-color: var(--primary); background: var(--surface-light); }
+
+        /* Right Sidebar */
+        .cases-sidebar { width: 280px; display: flex; flex-direction: column; gap: 16px; }
+
+        .sidebar-card { background: var(--surface); border-radius: var(--radius-lg); box-shadow: var(--shadow-1); padding: 16px; }
+        .sidebar-title { font-size: 12px; font-weight: 500; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px; }
+
+        .stat-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--border); }
+        .stat-row:last-child { border-bottom: none; }
+        .stat-label { font-size: 13px; color: var(--text-secondary); }
+        .stat-value { font-size: 13px; font-weight: 500; color: var(--primary); }
+
+        .quick-actions { display: flex; flex-direction: column; gap: 8px; }
+        .quick-action-btn { display: flex; align-items: center; gap: 10px; padding: 10px 14px; background: var(--surface-light); border: none; border-radius: var(--radius-md); color: var(--text-primary); cursor: pointer; transition: var(--transition); font-size: 13px; width: 100%; text-align: left; }
+        .quick-action-btn:hover { background: var(--surface-lighter); }
+        .quick-action-btn .material-icons { font-size: 18px; color: var(--primary); }
+
+        /* Add Case Modal */
+        .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); display: flex; align-items: center; justify-content: center; z-index: 1000; }
+        .modal { background: var(--surface); border-radius: var(--radius-lg); width: 480px; box-shadow: var(--shadow-3); }
+        .modal-header { padding: 20px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+        .modal-title { font-size: 18px; font-weight: 500; }
+        .modal-close { background: none; border: none; color: var(--text-secondary); cursor: pointer; padding: 4px; border-radius: var(--radius-sm); }
+        .modal-close:hover { background: var(--surface-light); }
+        .modal-body { padding: 20px; }
+        .modal-footer { padding: 16px 20px; border-top: 1px solid var(--border); display: flex; justify-content: flex-end; gap: 12px; }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <div class="title-bar">
+            <h1><span class="logo">Q</span> QualCoder - research_project.qda</h1>
+            <div class="window-controls">
+                <button class="window-btn minimize"></button>
+                <button class="window-btn maximize"></button>
+                <button class="window-btn close"></button>
+            </div>
+        </div>
+
+        <div class="menu-bar">
+            <a href="index.html" class="menu-item">Project</a>
+            <a href="phase1_file_manager.html" class="menu-item active">Files and Cases</a>
+            <a href="code_text.html" class="menu-item">Coding</a>
+            <a href="reports_coding.html" class="menu-item">Reports</a>
+            <a href="ai_chat.html" class="menu-item">AI</a>
+            <a href="settings.html" class="menu-item">Help</a>
+        </div>
+
+        <div class="tab-bar">
+            <a href="code_text.html" class="tab"><span class="material-icons">code</span> Coding</a>
+            <a href="reports_coding.html" class="tab"><span class="material-icons">assessment</span> Reports</a>
+            <a href="phase1_file_manager.html" class="tab active"><span class="material-icons">folder</span> Manage</a>
+            <a href="index.html" class="tab"><span class="material-icons">history</span> Action Log</a>
+        </div>
+
+        <div class="toolbar">
+            <div class="toolbar-group">
+                <a href="phase1_file_manager.html" class="toolbar-btn"><span class="material-icons">description</span> Files</a>
+                <a href="manage_cases.html" class="toolbar-btn active"><span class="material-icons">people</span> Cases</a>
+                <a href="manage_journals.html" class="toolbar-btn"><span class="material-icons">book</span> Journals</a>
+                <a href="manage_attributes.html" class="toolbar-btn"><span class="material-icons">tune</span> Attributes</a>
+            </div>
+            <div class="toolbar-divider"></div>
+            <div class="toolbar-group">
+                <button class="btn btn-primary" onclick="showAddCaseModal()"><span class="material-icons">add</span> New Case</button>
+                <button class="toolbar-btn"><span class="material-icons">file_upload</span> Import</button>
+                <button class="toolbar-btn"><span class="material-icons">file_download</span> Export</button>
+            </div>
+        </div>
+
+        <div class="main-content">
+            <div class="center-panel">
+                <div class="cases-container">
+                    <!-- Cases List -->
+                    <div class="cases-list-panel">
+                        <div class="panel-header">
+                            <div class="panel-title">
+                                <span class="material-icons">people</span>
+                                Cases (8)
+                            </div>
+                            <button class="btn btn-sm btn-secondary"><span class="material-icons">sort</span></button>
+                        </div>
+                        <div class="cases-search">
+                            <div class="search-input-wrap">
+                                <span class="material-icons">search</span>
+                                <input type="text" placeholder="Search cases...">
+                            </div>
+                        </div>
+                        <div class="cases-list">
+                            <div class="case-item selected">
+                                <div class="case-item-header">
+                                    <div class="case-icon">P1</div>
+                                    <span class="case-name">Participant 01</span>
+                                </div>
+                                <div class="case-meta">
+                                    <span>3 files</span>
+                                    <span>47 codings</span>
+                                </div>
+                            </div>
+                            <div class="case-item">
+                                <div class="case-item-header">
+                                    <div class="case-icon">P2</div>
+                                    <span class="case-name">Participant 02</span>
+                                </div>
+                                <div class="case-meta">
+                                    <span>2 files</span>
+                                    <span>32 codings</span>
+                                </div>
+                            </div>
+                            <div class="case-item">
+                                <div class="case-item-header">
+                                    <div class="case-icon">P3</div>
+                                    <span class="case-name">Participant 03</span>
+                                </div>
+                                <div class="case-meta">
+                                    <span>4 files</span>
+                                    <span>58 codings</span>
+                                </div>
+                            </div>
+                            <div class="case-item">
+                                <div class="case-item-header">
+                                    <div class="case-icon">P4</div>
+                                    <span class="case-name">Participant 04</span>
+                                </div>
+                                <div class="case-meta">
+                                    <span>2 files</span>
+                                    <span>28 codings</span>
+                                </div>
+                            </div>
+                            <div class="case-item">
+                                <div class="case-item-header">
+                                    <div class="case-icon">P5</div>
+                                    <span class="case-name">Participant 05</span>
+                                </div>
+                                <div class="case-meta">
+                                    <span>3 files</span>
+                                    <span>41 codings</span>
+                                </div>
+                            </div>
+                            <div class="case-item">
+                                <div class="case-item-header">
+                                    <div class="case-icon">FG</div>
+                                    <span class="case-name">Focus Group A</span>
+                                </div>
+                                <div class="case-meta">
+                                    <span>1 file</span>
+                                    <span>65 codings</span>
+                                </div>
+                            </div>
+                            <div class="case-item">
+                                <div class="case-item-header">
+                                    <div class="case-icon">EX</div>
+                                    <span class="case-name">Expert Interview</span>
+                                </div>
+                                <div class="case-meta">
+                                    <span>2 files</span>
+                                    <span>52 codings</span>
+                                </div>
+                            </div>
+                            <div class="case-item">
+                                <div class="case-item-header">
+                                    <div class="case-icon">PI</div>
+                                    <span class="case-name">Pilot Study</span>
+                                </div>
+                                <div class="case-meta">
+                                    <span>1 file</span>
+                                    <span>18 codings</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Case Details -->
+                    <div class="case-details-panel">
+                        <div class="panel-header">
+                            <div class="panel-title">
+                                <span class="material-icons">person</span>
+                                Participant 01
+                            </div>
+                            <div style="display: flex; gap: 8px;">
+                                <button class="btn btn-sm btn-secondary"><span class="material-icons">edit</span> Rename</button>
+                                <button class="btn btn-sm btn-secondary" style="color: var(--error);"><span class="material-icons">delete</span></button>
+                            </div>
+                        </div>
+                        <div class="details-content">
+                            <!-- Case Info -->
+                            <div class="details-section">
+                                <div class="section-title">
+                                    <span class="material-icons">info</span>
+                                    Case Information
+                                </div>
+                                <div class="case-info-grid">
+                                    <div class="info-item">
+                                        <div class="info-label">Created</div>
+                                        <div class="info-value">Jan 15, 2025</div>
+                                    </div>
+                                    <div class="info-item">
+                                        <div class="info-label">Last Modified</div>
+                                        <div class="info-value">Jan 28, 2025</div>
+                                    </div>
+                                    <div class="info-item">
+                                        <div class="info-label">Owner</div>
+                                        <div class="info-value">colin</div>
+                                    </div>
+                                    <div class="info-item">
+                                        <div class="info-label">Status</div>
+                                        <div class="info-value" style="color: var(--success);">Active</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Memo -->
+                            <div class="details-section">
+                                <div class="section-title">
+                                    <span class="material-icons">notes</span>
+                                    Case Memo
+                                </div>
+                                <div class="memo-editor">
+                                    <textarea class="memo-textarea" placeholder="Add notes about this case...">First-year undergraduate student majoring in Computer Science.
+
+Participated in the online learning study during Fall 2024 semester. Completed all three interview sessions and submitted learning journals.
+
+Key themes emerging:
+- Strong preference for asynchronous content
+- Challenges with time management
+- Positive experience with peer study groups</textarea>
+                                </div>
+                            </div>
+
+                            <!-- Linked Files -->
+                            <div class="details-section">
+                                <div class="section-title">
+                                    <span class="material-icons">attach_file</span>
+                                    Linked Files (3)
+                                    <button class="btn btn-sm btn-secondary" style="margin-left: auto;"><span class="material-icons">add</span> Link File</button>
+                                </div>
+                                <div class="linked-files-list">
+                                    <div class="linked-file">
+                                        <div class="linked-file-info">
+                                            <div class="file-icon-small text">
+                                                <span class="material-icons">description</span>
+                                            </div>
+                                            <div>
+                                                <div class="linked-file-name">P01_interview_1.txt</div>
+                                                <div class="linked-file-portion">Full file (2,847 chars)</div>
+                                            </div>
+                                        </div>
+                                        <button class="unlink-btn"><span class="material-icons">link_off</span></button>
+                                    </div>
+                                    <div class="linked-file">
+                                        <div class="linked-file-info">
+                                            <div class="file-icon-small text">
+                                                <span class="material-icons">description</span>
+                                            </div>
+                                            <div>
+                                                <div class="linked-file-name">P01_interview_2.txt</div>
+                                                <div class="linked-file-portion">Full file (3,125 chars)</div>
+                                            </div>
+                                        </div>
+                                        <button class="unlink-btn"><span class="material-icons">link_off</span></button>
+                                    </div>
+                                    <div class="linked-file">
+                                        <div class="linked-file-info">
+                                            <div class="file-icon-small audio">
+                                                <span class="material-icons">audiotrack</span>
+                                            </div>
+                                            <div>
+                                                <div class="linked-file-name">P01_focus_group.mp3</div>
+                                                <div class="linked-file-portion">Segment: 00:15:30 - 00:32:45</div>
+                                            </div>
+                                        </div>
+                                        <button class="unlink-btn"><span class="material-icons">link_off</span></button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Attributes -->
+                            <div class="details-section">
+                                <div class="section-title">
+                                    <span class="material-icons">tune</span>
+                                    Attributes
+                                </div>
+                                <table class="attributes-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Attribute</th>
+                                            <th>Type</th>
+                                            <th>Value</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td>Age</td>
+                                            <td><span class="attr-type numeric">Numeric</span></td>
+                                            <td><input class="attr-value-input" type="text" value="21"></td>
+                                        </tr>
+                                        <tr>
+                                            <td>Gender</td>
+                                            <td><span class="attr-type text">Text</span></td>
+                                            <td><input class="attr-value-input" type="text" value="Female"></td>
+                                        </tr>
+                                        <tr>
+                                            <td>Year of Study</td>
+                                            <td><span class="attr-type numeric">Numeric</span></td>
+                                            <td><input class="attr-value-input" type="text" value="1"></td>
+                                        </tr>
+                                        <tr>
+                                            <td>Major</td>
+                                            <td><span class="attr-type text">Text</span></td>
+                                            <td><input class="attr-value-input" type="text" value="Computer Science"></td>
+                                        </tr>
+                                        <tr>
+                                            <td>Prior Online Experience</td>
+                                            <td><span class="attr-type text">Text</span></td>
+                                            <td><input class="attr-value-input" type="text" value="Moderate"></td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Sidebar -->
+                    <div class="cases-sidebar">
+                        <div class="sidebar-card">
+                            <div class="sidebar-title">Case Statistics</div>
+                            <div class="stat-row">
+                                <span class="stat-label">Linked Files</span>
+                                <span class="stat-value">3</span>
+                            </div>
+                            <div class="stat-row">
+                                <span class="stat-label">Total Codings</span>
+                                <span class="stat-value">47</span>
+                            </div>
+                            <div class="stat-row">
+                                <span class="stat-label">Unique Codes</span>
+                                <span class="stat-value">12</span>
+                            </div>
+                            <div class="stat-row">
+                                <span class="stat-label">Annotations</span>
+                                <span class="stat-value">8</span>
+                            </div>
+                            <div class="stat-row">
+                                <span class="stat-label">Memo Words</span>
+                                <span class="stat-value">64</span>
+                            </div>
+                        </div>
+
+                        <div class="sidebar-card">
+                            <div class="sidebar-title">Quick Actions</div>
+                            <div class="quick-actions">
+                                <button class="quick-action-btn">
+                                    <span class="material-icons">code</span>
+                                    View Codings
+                                </button>
+                                <button class="quick-action-btn">
+                                    <span class="material-icons">bar_chart</span>
+                                    Generate Report
+                                </button>
+                                <button class="quick-action-btn">
+                                    <span class="material-icons">compare</span>
+                                    Compare Cases
+                                </button>
+                                <button class="quick-action-btn">
+                                    <span class="material-icons">content_copy</span>
+                                    Duplicate Case
+                                </button>
+                                <button class="quick-action-btn">
+                                    <span class="material-icons">merge_type</span>
+                                    Merge with...
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="sidebar-card">
+                            <div class="sidebar-title">Top Codes</div>
+                            <div style="display: flex; flex-direction: column; gap: 8px;">
+                                <div style="display: flex; align-items: center; gap: 8px;">
+                                    <div style="width: 10px; height: 10px; background: #FFC107; border-radius: 2px;"></div>
+                                    <span style="flex: 1; font-size: 13px;">Learning Motivation</span>
+                                    <span style="font-size: 12px; color: var(--primary);">12</span>
+                                </div>
+                                <div style="display: flex; align-items: center; gap: 8px;">
+                                    <div style="width: 10px; height: 10px; background: #F44336; border-radius: 2px;"></div>
+                                    <span style="flex: 1; font-size: 13px;">Challenges</span>
+                                    <span style="font-size: 12px; color: var(--primary);">9</span>
+                                </div>
+                                <div style="display: flex; align-items: center; gap: 8px;">
+                                    <div style="width: 10px; height: 10px; background: #2196F3; border-radius: 2px;"></div>
+                                    <span style="flex: 1; font-size: 13px;">Platform Features</span>
+                                    <span style="font-size: 12px; color: var(--primary);">8</span>
+                                </div>
+                                <div style="display: flex; align-items: center; gap: 8px;">
+                                    <div style="width: 10px; height: 10px; background: #4CAF50; border-radius: 2px;"></div>
+                                    <span style="flex: 1; font-size: 13px;">Success Stories</span>
+                                    <span style="font-size: 12px; color: var(--primary);">7</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="status-bar">
+            <div class="status-left">
+                <span class="status-item"><span class="material-icons">check_circle</span> Ready</span>
+                <span class="status-item"><span class="material-icons">storage</span> research_project.qda</span>
+            </div>
+            <div class="status-right">
+                <span class="status-item"><span class="material-icons">people</span> 8 cases</span>
+                <span class="status-item"><span class="material-icons">person</span> colin</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Case Modal (hidden by default) -->
+    <div class="modal-overlay" id="addCaseModal" style="display: none;">
+        <div class="modal">
+            <div class="modal-header">
+                <span class="modal-title">New Case</span>
+                <button class="modal-close" onclick="hideAddCaseModal()">
+                    <span class="material-icons">close</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group" style="margin-bottom: 16px;">
+                    <label class="form-label">Case Name *</label>
+                    <input type="text" class="form-input" placeholder="Enter case name...">
+                </div>
+                <div class="form-group" style="margin-bottom: 16px;">
+                    <label class="form-label">Description</label>
+                    <textarea class="form-input" rows="3" placeholder="Optional description..."></textarea>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Link Files</label>
+                    <select class="form-input" multiple style="height: 120px;">
+                        <option>ID1_interview.txt</option>
+                        <option>ID2.odt</option>
+                        <option>ID3_interview.txt</option>
+                        <option>focus_group.txt</option>
+                        <option>survey_responses.txt</option>
+                    </select>
+                    <span style="font-size: 11px; color: var(--text-secondary); margin-top: 4px; display: block;">Hold Ctrl/Cmd to select multiple files</span>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="hideAddCaseModal()">Cancel</button>
+                <button class="btn btn-primary"><span class="material-icons">add</span> Create Case</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="theme-toggle">
+        <button class="theme-btn" onclick="toggleTheme()" title="Toggle theme">
+            <span class="material-icons" id="theme-icon">light_mode</span>
+        </button>
+    </div>
+
+    <script>
+        let isDark = true;
+        function toggleTheme() {
+            isDark = !isDark;
+            document.body.classList.toggle('light-theme', !isDark);
+            document.getElementById('theme-icon').textContent = isDark ? 'light_mode' : 'dark_mode';
+        }
+
+        function showAddCaseModal() {
+            document.getElementById('addCaseModal').style.display = 'flex';
+        }
+
+        function hideAddCaseModal() {
+            document.getElementById('addCaseModal').style.display = 'none';
+        }
+
+        document.querySelectorAll('.case-item').forEach(item => {
+            item.addEventListener('click', function() {
+                document.querySelectorAll('.case-item').forEach(i => i.classList.remove('selected'));
+                this.classList.add('selected');
+            });
+        });
+    </script>
+</body>
+</html>

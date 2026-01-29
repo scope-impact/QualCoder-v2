@@ -1,0 +1,756 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QualCoder - Charts & Visualizations</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link href="css/material-theme.css" rel="stylesheet">
+    <style>
+        .center-panel {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            background: var(--background);
+        }
+
+        /* Chart type selector */
+        .chart-selector {
+            display: flex;
+            gap: 8px;
+            padding: 16px;
+            background: var(--surface);
+            border-bottom: 1px solid var(--border);
+            overflow-x: auto;
+        }
+
+        .chart-type-btn {
+            padding: 12px 20px;
+            background: var(--surface-light);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+            min-width: 100px;
+        }
+
+        .chart-type-btn:hover {
+            background: var(--surface-lighter);
+        }
+
+        .chart-type-btn.active {
+            background: rgba(0, 150, 136, 0.15);
+            border-color: var(--primary);
+        }
+
+        .chart-type-btn .material-icons {
+            font-size: 28px;
+            color: var(--primary);
+        }
+
+        .chart-type-btn span {
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        /* Chart container */
+        .chart-container {
+            flex: 1;
+            display: flex;
+            overflow: hidden;
+        }
+
+        .chart-area {
+            flex: 1;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .chart-card {
+            flex: 1;
+            background: var(--surface);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-2);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .chart-header {
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .chart-title {
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .chart-title .material-icons {
+            color: var(--primary);
+        }
+
+        .chart-content {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            position: relative;
+        }
+
+        /* Sunburst chart placeholder */
+        .sunburst-chart {
+            width: 400px;
+            height: 400px;
+            border-radius: 50%;
+            background: conic-gradient(
+                #FFC107 0deg 60deg,
+                #FF9800 60deg 90deg,
+                #F44336 90deg 150deg,
+                #E91E63 150deg 180deg,
+                #9C27B0 180deg 220deg,
+                #2196F3 220deg 280deg,
+                #4CAF50 280deg 340deg,
+                #00BCD4 340deg 360deg
+            );
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .sunburst-chart::after {
+            content: '';
+            width: 150px;
+            height: 150px;
+            background: var(--surface);
+            border-radius: 50%;
+        }
+
+        .sunburst-center {
+            position: absolute;
+            text-align: center;
+        }
+
+        .sunburst-center .total {
+            font-size: 32px;
+            font-weight: 500;
+        }
+
+        .sunburst-center .label {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        /* Bar chart placeholder */
+        .bar-chart {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: flex-end;
+            justify-content: space-around;
+            padding: 20px 40px;
+        }
+
+        .bar-group {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .bar {
+            width: 60px;
+            border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+            transition: var(--transition);
+        }
+
+        .bar:hover {
+            opacity: 0.8;
+        }
+
+        .bar-label {
+            font-size: 11px;
+            color: var(--text-secondary);
+            text-align: center;
+            max-width: 80px;
+        }
+
+        .bar-value {
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        /* Pie chart placeholder */
+        .pie-chart {
+            width: 300px;
+            height: 300px;
+            border-radius: 50%;
+            background: conic-gradient(
+                #FFC107 0deg 100deg,
+                #F44336 100deg 170deg,
+                #4CAF50 170deg 230deg,
+                #2196F3 230deg 280deg,
+                #9C27B0 280deg 360deg
+            );
+        }
+
+        /* Heatmap placeholder */
+        .heatmap {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 4px;
+            padding: 20px;
+        }
+
+        .heatmap-cell {
+            width: 50px;
+            height: 50px;
+            border-radius: var(--radius-sm);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .heatmap-cell.low { background: rgba(0, 150, 136, 0.1); }
+        .heatmap-cell.medium { background: rgba(0, 150, 136, 0.3); color: white; }
+        .heatmap-cell.high { background: rgba(0, 150, 136, 0.6); color: white; }
+        .heatmap-cell.very-high { background: var(--primary); color: white; }
+
+        /* Treemap placeholder */
+        .treemap {
+            width: 100%;
+            height: 100%;
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr;
+            grid-template-rows: 1fr 1fr;
+            gap: 4px;
+            padding: 20px;
+        }
+
+        .treemap-cell {
+            border-radius: var(--radius-md);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 500;
+        }
+
+        .treemap-cell span {
+            font-size: 11px;
+            opacity: 0.8;
+        }
+
+        /* Legend */
+        .chart-legend {
+            padding: 16px 20px;
+            border-top: 1px solid var(--border);
+            display: flex;
+            flex-wrap: wrap;
+            gap: 16px;
+            justify-content: center;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 12px;
+        }
+
+        .legend-color {
+            width: 14px;
+            height: 14px;
+            border-radius: 3px;
+        }
+
+        /* Options panel */
+        .options-panel {
+            width: 280px;
+            background: var(--surface);
+            border-left: 1px solid var(--border);
+            overflow-y: auto;
+        }
+
+        .options-section {
+            padding: 16px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .options-title {
+            font-size: 12px;
+            font-weight: 500;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 12px;
+        }
+
+        .option-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 12px;
+        }
+
+        .option-row:last-child {
+            margin-bottom: 0;
+        }
+
+        .option-label {
+            font-size: 13px;
+        }
+
+        .color-picker-row {
+            display: flex;
+            gap: 6px;
+            margin-top: 8px;
+        }
+
+        .color-option {
+            width: 24px;
+            height: 24px;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .color-option:hover {
+            transform: scale(1.1);
+        }
+
+        .color-option.selected {
+            box-shadow: 0 0 0 2px var(--surface), 0 0 0 4px var(--primary);
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Title Bar -->
+        <div class="title-bar">
+            <h1>
+                <span class="logo">Q</span>
+                QualCoder - research_project.qda
+            </h1>
+            <div class="window-controls">
+                <button class="window-btn minimize"></button>
+                <button class="window-btn maximize"></button>
+                <button class="window-btn close"></button>
+            </div>
+        </div>
+
+        <!-- Menu Bar -->
+        <div class="menu-bar">
+            <a href="index.html" class="menu-item">Project</a>
+            <a href="phase1_file_manager.html" class="menu-item">Files and Cases</a>
+            <a href="code_text.html" class="menu-item">Coding</a>
+            <a href="reports_coding.html" class="menu-item active">Reports</a>
+            <a href="ai_chat.html" class="menu-item">AI</a>
+            <a href="settings.html" class="menu-item">Help</a>
+        </div>
+
+        <!-- Tab Bar -->
+        <div class="tab-bar">
+            <a href="code_text.html" class="tab">
+                <span class="material-icons">code</span>
+                Coding
+            </a>
+            <a href="reports_coding.html" class="tab active">
+                <span class="material-icons">assessment</span>
+                Reports
+            </a>
+            <a href="phase1_file_manager.html" class="tab">
+                <span class="material-icons">folder</span>
+                Manage
+            </a>
+            <a href="index.html" class="tab">
+                <span class="material-icons">history</span>
+                Action Log
+            </a>
+        </div>
+
+        <!-- Toolbar -->
+        <div class="toolbar">
+            <div class="toolbar-group">
+                <a href="reports_coding.html" class="toolbar-btn">
+                    <span class="material-icons">list_alt</span>
+                    Coding Summary
+                </a>
+                <a href="reports_charts.html" class="toolbar-btn active">
+                    <span class="material-icons">bar_chart</span>
+                    Charts
+                </a>
+                <a href="reports_comparison.html" class="toolbar-btn">
+                    <span class="material-icons">compare</span>
+                    Comparison
+                </a>
+                <a href="text_mining.html" class="toolbar-btn">
+                    <span class="material-icons">cloud</span>
+                    Text Mining
+                </a>
+                <a href="graph_view.html" class="toolbar-btn">
+                    <span class="material-icons">account_tree</span>
+                    Graph
+                </a>
+            </div>
+            <div class="toolbar-divider"></div>
+            <div class="toolbar-group">
+                <button class="toolbar-btn">
+                    <span class="material-icons">refresh</span>
+                </button>
+                <button class="toolbar-btn">
+                    <span class="material-icons">download</span>
+                    Export
+                </button>
+                <button class="toolbar-btn">
+                    <span class="material-icons">print</span>
+                    Print
+                </button>
+            </div>
+        </div>
+
+        <!-- Chart Type Selector -->
+        <div class="chart-selector">
+            <div class="chart-type-btn active" onclick="showChart('sunburst')">
+                <span class="material-icons">donut_large</span>
+                <span>Sunburst</span>
+            </div>
+            <div class="chart-type-btn" onclick="showChart('bar')">
+                <span class="material-icons">bar_chart</span>
+                <span>Bar Chart</span>
+            </div>
+            <div class="chart-type-btn" onclick="showChart('pie')">
+                <span class="material-icons">pie_chart</span>
+                <span>Pie Chart</span>
+            </div>
+            <div class="chart-type-btn" onclick="showChart('treemap')">
+                <span class="material-icons">view_module</span>
+                <span>Treemap</span>
+            </div>
+            <div class="chart-type-btn" onclick="showChart('heatmap')">
+                <span class="material-icons">grid_on</span>
+                <span>Heatmap</span>
+            </div>
+            <div class="chart-type-btn">
+                <span class="material-icons">timeline</span>
+                <span>Timeline</span>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <div class="center-panel">
+                <div class="chart-container">
+                    <div class="chart-area">
+                        <div class="chart-card">
+                            <div class="chart-header">
+                                <div class="chart-title">
+                                    <span class="material-icons">donut_large</span>
+                                    Code Distribution - Sunburst Chart
+                                </div>
+                                <div style="display: flex; gap: 8px;">
+                                    <button class="btn btn-sm btn-secondary">
+                                        <span class="material-icons">fullscreen</span>
+                                    </button>
+                                    <button class="btn btn-sm btn-secondary">
+                                        <span class="material-icons">image</span>
+                                        Save Image
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Sunburst Chart -->
+                            <div class="chart-content" id="sunburstChart">
+                                <div class="sunburst-chart">
+                                    <div class="sunburst-center">
+                                        <div class="total">147</div>
+                                        <div class="label">Total Codes</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Bar Chart (hidden) -->
+                            <div class="chart-content" id="barChart" style="display: none;">
+                                <div class="bar-chart">
+                                    <div class="bar-group">
+                                        <div class="bar-value">24</div>
+                                        <div class="bar" style="height: 200px; background: #FFC107;"></div>
+                                        <div class="bar-label">Learning Motivation</div>
+                                    </div>
+                                    <div class="bar-group">
+                                        <div class="bar-value">18</div>
+                                        <div class="bar" style="height: 150px; background: #F44336;"></div>
+                                        <div class="bar-label">Challenges</div>
+                                    </div>
+                                    <div class="bar-group">
+                                        <div class="bar-value">31</div>
+                                        <div class="bar" style="height: 260px; background: #2196F3;"></div>
+                                        <div class="bar-label">Platform Features</div>
+                                    </div>
+                                    <div class="bar-group">
+                                        <div class="bar-value">15</div>
+                                        <div class="bar" style="height: 125px; background: #9C27B0;"></div>
+                                        <div class="bar-label">Social Interaction</div>
+                                    </div>
+                                    <div class="bar-group">
+                                        <div class="bar-value">12</div>
+                                        <div class="bar" style="height: 100px; background: #4CAF50;"></div>
+                                        <div class="bar-label">Success Stories</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Pie Chart (hidden) -->
+                            <div class="chart-content" id="pieChart" style="display: none;">
+                                <div class="pie-chart"></div>
+                            </div>
+
+                            <!-- Treemap (hidden) -->
+                            <div class="chart-content" id="treemapChart" style="display: none;">
+                                <div class="treemap">
+                                    <div class="treemap-cell" style="background: #2196F3; grid-row: span 2;">
+                                        Platform Features
+                                        <span>31 (21%)</span>
+                                    </div>
+                                    <div class="treemap-cell" style="background: #FFC107;">
+                                        Learning Motivation
+                                        <span>24 (16%)</span>
+                                    </div>
+                                    <div class="treemap-cell" style="background: #F44336;">
+                                        Challenges
+                                        <span>18 (12%)</span>
+                                    </div>
+                                    <div class="treemap-cell" style="background: #9C27B0;">
+                                        Social Interaction
+                                        <span>15 (10%)</span>
+                                    </div>
+                                    <div class="treemap-cell" style="background: #4CAF50;">
+                                        Success Stories
+                                        <span>12 (8%)</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Heatmap (hidden) -->
+                            <div class="chart-content" id="heatmapChart" style="display: none;">
+                                <div class="heatmap">
+                                    <div class="heatmap-cell"></div>
+                                    <div class="heatmap-cell" style="font-weight: 500; color: var(--text-secondary);">ID1</div>
+                                    <div class="heatmap-cell" style="font-weight: 500; color: var(--text-secondary);">ID2</div>
+                                    <div class="heatmap-cell" style="font-weight: 500; color: var(--text-secondary);">ID3</div>
+                                    <div class="heatmap-cell" style="font-weight: 500; color: var(--text-secondary);">ID4</div>
+                                    <div class="heatmap-cell" style="font-weight: 500; color: var(--text-secondary);">FG1</div>
+
+                                    <div class="heatmap-cell" style="font-size: 10px; color: var(--text-secondary);">Motivation</div>
+                                    <div class="heatmap-cell medium">5</div>
+                                    <div class="heatmap-cell very-high">8</div>
+                                    <div class="heatmap-cell high">6</div>
+                                    <div class="heatmap-cell low">3</div>
+                                    <div class="heatmap-cell low">2</div>
+
+                                    <div class="heatmap-cell" style="font-size: 10px; color: var(--text-secondary);">Challenges</div>
+                                    <div class="heatmap-cell low">3</div>
+                                    <div class="heatmap-cell medium">5</div>
+                                    <div class="heatmap-cell medium">4</div>
+                                    <div class="heatmap-cell low">2</div>
+                                    <div class="heatmap-cell medium">4</div>
+
+                                    <div class="heatmap-cell" style="font-size: 10px; color: var(--text-secondary);">Success</div>
+                                    <div class="heatmap-cell low">2</div>
+                                    <div class="heatmap-cell low">3</div>
+                                    <div class="heatmap-cell medium">4</div>
+                                    <div class="heatmap-cell low">2</div>
+                                    <div class="heatmap-cell low">1</div>
+
+                                    <div class="heatmap-cell" style="font-size: 10px; color: var(--text-secondary);">Platform</div>
+                                    <div class="heatmap-cell high">7</div>
+                                    <div class="heatmap-cell very-high">9</div>
+                                    <div class="heatmap-cell medium">5</div>
+                                    <div class="heatmap-cell high">6</div>
+                                    <div class="heatmap-cell medium">4</div>
+                                </div>
+                            </div>
+
+                            <div class="chart-legend">
+                                <div class="legend-item">
+                                    <span class="legend-color" style="background: #FFC107;"></span>
+                                    <span>Learning Motivation (24)</span>
+                                </div>
+                                <div class="legend-item">
+                                    <span class="legend-color" style="background: #F44336;"></span>
+                                    <span>Challenges (18)</span>
+                                </div>
+                                <div class="legend-item">
+                                    <span class="legend-color" style="background: #2196F3;"></span>
+                                    <span>Platform Features (31)</span>
+                                </div>
+                                <div class="legend-item">
+                                    <span class="legend-color" style="background: #9C27B0;"></span>
+                                    <span>Social Interaction (15)</span>
+                                </div>
+                                <div class="legend-item">
+                                    <span class="legend-color" style="background: #4CAF50;"></span>
+                                    <span>Success Stories (12)</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Options Panel -->
+                    <div class="options-panel">
+                        <div class="options-section">
+                            <div class="options-title">Data Selection</div>
+                            <div class="form-group" style="margin-bottom: 12px;">
+                                <label class="form-label">Display</label>
+                                <select class="form-input">
+                                    <option>All codes</option>
+                                    <option>Top-level codes only</option>
+                                    <option>Selected codes</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Group by</label>
+                                <select class="form-input">
+                                    <option>Code category</option>
+                                    <option>File</option>
+                                    <option>Case</option>
+                                    <option>Coder</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="options-section">
+                            <div class="options-title">Chart Options</div>
+                            <div class="option-row">
+                                <span class="option-label">Show values</span>
+                                <span class="switch checked"></span>
+                            </div>
+                            <div class="option-row">
+                                <span class="option-label">Show percentages</span>
+                                <span class="switch checked"></span>
+                            </div>
+                            <div class="option-row">
+                                <span class="option-label">Show legend</span>
+                                <span class="switch checked"></span>
+                            </div>
+                            <div class="option-row">
+                                <span class="option-label">Animate</span>
+                                <span class="switch"></span>
+                            </div>
+                        </div>
+
+                        <div class="options-section">
+                            <div class="options-title">Color Scheme</div>
+                            <div class="color-picker-row">
+                                <div class="color-option selected" style="background: linear-gradient(135deg, #FFC107, #F44336, #9C27B0);"></div>
+                                <div class="color-option" style="background: linear-gradient(135deg, #2196F3, #00BCD4, #4CAF50);"></div>
+                                <div class="color-option" style="background: linear-gradient(135deg, #FF5722, #E91E63, #673AB7);"></div>
+                                <div class="color-option" style="background: linear-gradient(135deg, #607D8B, #9E9E9E, #455A64);"></div>
+                            </div>
+                        </div>
+
+                        <div class="options-section">
+                            <div class="options-title">Export</div>
+                            <button class="btn btn-secondary btn-sm" style="width: 100%; margin-bottom: 8px;">
+                                <span class="material-icons">image</span>
+                                Export as PNG
+                            </button>
+                            <button class="btn btn-secondary btn-sm" style="width: 100%; margin-bottom: 8px;">
+                                <span class="material-icons">picture_as_pdf</span>
+                                Export as PDF
+                            </button>
+                            <button class="btn btn-secondary btn-sm" style="width: 100%;">
+                                <span class="material-icons">code</span>
+                                Export as SVG
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Status Bar -->
+        <div class="status-bar">
+            <div class="status-left">
+                <span class="status-item">
+                    <span class="material-icons">check_circle</span>
+                    Chart generated
+                </span>
+                <span class="status-item">
+                    <span class="material-icons">storage</span>
+                    research_project.qda
+                </span>
+            </div>
+            <div class="status-right">
+                <span class="status-item">
+                    <span class="material-icons">label</span>
+                    147 coded segments
+                </span>
+                <span class="status-item">
+                    <span class="material-icons">schedule</span>
+                    Generated: just now
+                </span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Theme Toggle Button -->
+    <div class="theme-toggle">
+        <button class="theme-btn" onclick="toggleTheme()" title="Toggle theme">
+            <span class="material-icons" id="theme-icon">light_mode</span>
+        </button>
+    </div>
+
+    <script>
+        let isDark = true;
+
+        function toggleTheme() {
+            isDark = !isDark;
+            document.body.classList.toggle('light-theme', !isDark);
+            document.getElementById('theme-icon').textContent = isDark ? 'light_mode' : 'dark_mode';
+        }
+
+        function showChart(type) {
+            // Hide all charts
+            document.querySelectorAll('.chart-content').forEach(c => c.style.display = 'none');
+            // Show selected chart
+            document.getElementById(type + 'Chart').style.display = 'flex';
+            // Update buttons
+            document.querySelectorAll('.chart-type-btn').forEach(b => b.classList.remove('active'));
+            event.currentTarget.classList.add('active');
+        }
+
+        // Switch toggle
+        document.querySelectorAll('.switch').forEach(sw => {
+            sw.addEventListener('click', function() {
+                this.classList.toggle('checked');
+            });
+        });
+
+        // Color option selection
+        document.querySelectorAll('.color-option').forEach(opt => {
+            opt.addEventListener('click', function() {
+                document.querySelectorAll('.color-option').forEach(o => o.classList.remove('selected'));
+                this.classList.add('selected');
+            });
+        });
+    </script>
+</body>
+</html>

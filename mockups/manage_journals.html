@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QualCoder - Research Journals</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link href="css/material-theme.css" rel="stylesheet">
+    <style>
+        .center-panel { flex: 1; display: flex; flex-direction: column; overflow: hidden; background: var(--background); }
+
+        .journals-container { flex: 1; display: flex; overflow: hidden; padding: 20px; gap: 20px; }
+
+        /* Journals List Panel */
+        .journals-list-panel { width: 320px; background: var(--surface); border-radius: var(--radius-lg); box-shadow: var(--shadow-2); display: flex; flex-direction: column; overflow: hidden; }
+
+        .panel-header { padding: 16px 20px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+        .panel-title { font-weight: 500; display: flex; align-items: center; gap: 8px; }
+        .panel-title .material-icons { color: var(--primary); }
+
+        .journals-list { flex: 1; overflow-y: auto; padding: 8px; }
+
+        .journal-item { padding: 14px 16px; border-radius: var(--radius-md); cursor: pointer; transition: var(--transition); margin-bottom: 4px; border-left: 3px solid transparent; }
+        .journal-item:hover { background: var(--surface-light); }
+        .journal-item.selected { background: rgba(0, 150, 136, 0.15); border-left-color: var(--primary); }
+
+        .journal-title { font-weight: 500; font-size: 14px; margin-bottom: 6px; display: flex; align-items: center; gap: 8px; }
+        .journal-title .material-icons { font-size: 18px; color: var(--primary); }
+        .journal-date { font-size: 11px; color: var(--text-secondary); margin-bottom: 4px; }
+        .journal-preview { font-size: 12px; color: var(--text-secondary); line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+
+        .journal-badge { padding: 2px 8px; border-radius: 10px; font-size: 10px; font-weight: 500; }
+        .journal-badge.memo { background: rgba(156, 39, 176, 0.2); color: #9C27B0; }
+        .journal-badge.field { background: rgba(33, 150, 243, 0.2); color: #2196F3; }
+        .journal-badge.analysis { background: rgba(76, 175, 80, 0.2); color: #4CAF50; }
+        .journal-badge.reflection { background: rgba(255, 152, 0, 0.2); color: #FF9800; }
+
+        /* Journal Editor Panel */
+        .journal-editor-panel { flex: 1; background: var(--surface); border-radius: var(--radius-lg); box-shadow: var(--shadow-2); display: flex; flex-direction: column; overflow: hidden; }
+
+        .editor-header { padding: 16px 20px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 16px; }
+        .editor-title-input { flex: 1; background: transparent; border: none; font-size: 18px; font-weight: 500; color: var(--text-primary); }
+        .editor-title-input:focus { outline: none; }
+        .editor-title-input::placeholder { color: var(--text-disabled); }
+
+        .editor-meta { padding: 12px 20px; background: var(--surface-light); display: flex; align-items: center; gap: 20px; border-bottom: 1px solid var(--border); }
+        .meta-item { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--text-secondary); }
+        .meta-item .material-icons { font-size: 16px; }
+
+        .editor-toolbar { padding: 8px 16px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 4px; flex-wrap: wrap; }
+        .format-btn { padding: 6px 10px; background: transparent; border: none; border-radius: var(--radius-sm); color: var(--text-secondary); cursor: pointer; transition: var(--transition); }
+        .format-btn:hover { background: var(--surface-light); color: var(--text-primary); }
+        .format-btn.active { background: rgba(0, 150, 136, 0.15); color: var(--primary); }
+        .format-divider { width: 1px; height: 24px; background: var(--border); margin: 0 8px; }
+
+        .editor-content { flex: 1; overflow-y: auto; padding: 20px; }
+        .editor-textarea { width: 100%; height: 100%; min-height: 400px; background: transparent; border: none; color: var(--text-primary); font-size: 14px; line-height: 1.8; resize: none; font-family: 'Roboto', sans-serif; }
+        .editor-textarea:focus { outline: none; }
+
+        /* Right Sidebar */
+        .journals-sidebar { width: 280px; display: flex; flex-direction: column; gap: 16px; }
+
+        .sidebar-card { background: var(--surface); border-radius: var(--radius-lg); box-shadow: var(--shadow-1); padding: 16px; }
+        .sidebar-title { font-size: 12px; font-weight: 500; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px; display: flex; align-items: center; gap: 6px; }
+        .sidebar-title .material-icons { font-size: 16px; color: var(--primary); }
+
+        .stat-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--border); }
+        .stat-row:last-child { border-bottom: none; }
+        .stat-label { font-size: 13px; color: var(--text-secondary); }
+        .stat-value { font-size: 13px; font-weight: 500; color: var(--primary); }
+
+        .type-selector { display: flex; flex-wrap: wrap; gap: 8px; }
+        .type-option { padding: 6px 12px; border-radius: 16px; font-size: 12px; cursor: pointer; transition: var(--transition); border: 1px solid var(--border); }
+        .type-option:hover { border-color: var(--primary); }
+        .type-option.selected { background: var(--primary); color: white; border-color: var(--primary); }
+
+        .linked-items { display: flex; flex-direction: column; gap: 8px; }
+        .linked-item { display: flex; align-items: center; gap: 8px; padding: 8px 10px; background: var(--surface-light); border-radius: var(--radius-sm); font-size: 12px; }
+        .linked-item .material-icons { font-size: 16px; color: var(--primary); }
+
+        .calendar-mini { background: var(--surface-light); border-radius: var(--radius-md); padding: 12px; }
+        .calendar-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+        .calendar-month { font-size: 13px; font-weight: 500; }
+        .calendar-nav { display: flex; gap: 4px; }
+        .calendar-nav button { padding: 4px; background: transparent; border: none; color: var(--text-secondary); cursor: pointer; border-radius: var(--radius-sm); }
+        .calendar-nav button:hover { background: var(--surface-lighter); }
+        .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; text-align: center; font-size: 11px; }
+        .calendar-day { padding: 6px 2px; border-radius: var(--radius-sm); }
+        .calendar-day.header { color: var(--text-secondary); font-weight: 500; }
+        .calendar-day.has-entry { background: rgba(0, 150, 136, 0.2); color: var(--primary); cursor: pointer; }
+        .calendar-day.today { background: var(--primary); color: white; }
+        .calendar-day.other-month { color: var(--text-disabled); }
+
+        .quick-actions { display: flex; flex-direction: column; gap: 8px; }
+        .quick-action-btn { display: flex; align-items: center; gap: 10px; padding: 10px 14px; background: var(--surface-light); border: none; border-radius: var(--radius-md); color: var(--text-primary); cursor: pointer; transition: var(--transition); font-size: 13px; width: 100%; text-align: left; }
+        .quick-action-btn:hover { background: var(--surface-lighter); }
+        .quick-action-btn .material-icons { font-size: 18px; color: var(--primary); }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <div class="title-bar">
+            <h1><span class="logo">Q</span> QualCoder - research_project.qda</h1>
+            <div class="window-controls">
+                <button class="window-btn minimize"></button>
+                <button class="window-btn maximize"></button>
+                <button class="window-btn close"></button>
+            </div>
+        </div>
+
+        <div class="menu-bar">
+            <a href="index.html" class="menu-item">Project</a>
+            <a href="phase1_file_manager.html" class="menu-item active">Files and Cases</a>
+            <a href="code_text.html" class="menu-item">Coding</a>
+            <a href="reports_coding.html" class="menu-item">Reports</a>
+            <a href="ai_chat.html" class="menu-item">AI</a>
+            <a href="settings.html" class="menu-item">Help</a>
+        </div>
+
+        <div class="tab-bar">
+            <a href="code_text.html" class="tab"><span class="material-icons">code</span> Coding</a>
+            <a href="reports_coding.html" class="tab"><span class="material-icons">assessment</span> Reports</a>
+            <a href="phase1_file_manager.html" class="tab active"><span class="material-icons">folder</span> Manage</a>
+            <a href="index.html" class="tab"><span class="material-icons">history</span> Action Log</a>
+        </div>
+
+        <div class="toolbar">
+            <div class="toolbar-group">
+                <a href="phase1_file_manager.html" class="toolbar-btn"><span class="material-icons">description</span> Files</a>
+                <a href="manage_cases.html" class="toolbar-btn"><span class="material-icons">people</span> Cases</a>
+                <a href="manage_journals.html" class="toolbar-btn active"><span class="material-icons">book</span> Journals</a>
+                <a href="manage_attributes.html" class="toolbar-btn"><span class="material-icons">tune</span> Attributes</a>
+            </div>
+            <div class="toolbar-divider"></div>
+            <div class="toolbar-group">
+                <button class="btn btn-primary"><span class="material-icons">add</span> New Entry</button>
+                <button class="toolbar-btn"><span class="material-icons">file_download</span> Export</button>
+                <button class="toolbar-btn"><span class="material-icons">print</span> Print</button>
+            </div>
+        </div>
+
+        <div class="main-content">
+            <div class="center-panel">
+                <div class="journals-container">
+                    <!-- Journals List -->
+                    <div class="journals-list-panel">
+                        <div class="panel-header">
+                            <div class="panel-title">
+                                <span class="material-icons">book</span>
+                                Journal Entries (12)
+                            </div>
+                            <button class="btn btn-sm btn-secondary"><span class="material-icons">filter_list</span></button>
+                        </div>
+                        <div class="journals-list">
+                            <div class="journal-item selected">
+                                <div class="journal-title">
+                                    <span class="material-icons">edit_note</span>
+                                    Analysis Notes - Week 4
+                                    <span class="journal-badge analysis">Analysis</span>
+                                </div>
+                                <div class="journal-date">January 28, 2025 at 2:45 PM</div>
+                                <div class="journal-preview">Initial themes emerging from the coding process. The learning motivation category is showing strong connections to...</div>
+                            </div>
+                            <div class="journal-item">
+                                <div class="journal-title">
+                                    <span class="material-icons">psychology</span>
+                                    Reflection on Methodology
+                                    <span class="journal-badge reflection">Reflection</span>
+                                </div>
+                                <div class="journal-date">January 25, 2025 at 10:30 AM</div>
+                                <div class="journal-preview">Considering whether my coding approach is capturing the nuances of participant experiences...</div>
+                            </div>
+                            <div class="journal-item">
+                                <div class="journal-title">
+                                    <span class="material-icons">event_note</span>
+                                    Field Notes - Interview 5
+                                    <span class="journal-badge field">Field</span>
+                                </div>
+                                <div class="journal-date">January 22, 2025 at 4:15 PM</div>
+                                <div class="journal-preview">P05 was particularly articulate about their challenges with time management. Environment notes: quiet room...</div>
+                            </div>
+                            <div class="journal-item">
+                                <div class="journal-title">
+                                    <span class="material-icons">lightbulb</span>
+                                    Research Memo
+                                    <span class="journal-badge memo">Memo</span>
+                                </div>
+                                <div class="journal-date">January 20, 2025 at 11:00 AM</div>
+                                <div class="journal-preview">Theoretical connection: Might relate to self-determination theory - autonomy, competence, relatedness...</div>
+                            </div>
+                            <div class="journal-item">
+                                <div class="journal-title">
+                                    <span class="material-icons">edit_note</span>
+                                    Analysis Notes - Week 3
+                                    <span class="journal-badge analysis">Analysis</span>
+                                </div>
+                                <div class="journal-date">January 18, 2025 at 3:20 PM</div>
+                                <div class="journal-preview">Completed first round of coding for all interview transcripts. Need to revisit platform features code...</div>
+                            </div>
+                            <div class="journal-item">
+                                <div class="journal-title">
+                                    <span class="material-icons">event_note</span>
+                                    Field Notes - Focus Group
+                                    <span class="journal-badge field">Field</span>
+                                </div>
+                                <div class="journal-date">January 15, 2025 at 5:00 PM</div>
+                                <div class="journal-preview">Group dynamics: Active discussion, some participants more dominant. P01 and P03 had contrasting views...</div>
+                            </div>
+                            <div class="journal-item">
+                                <div class="journal-title">
+                                    <span class="material-icons">psychology</span>
+                                    Positionality Statement
+                                    <span class="journal-badge reflection">Reflection</span>
+                                </div>
+                                <div class="journal-date">January 10, 2025 at 9:45 AM</div>
+                                <div class="journal-preview">As a researcher who has also been a student in online courses, I need to be aware of my own biases...</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Journal Editor -->
+                    <div class="journal-editor-panel">
+                        <div class="editor-header">
+                            <input type="text" class="editor-title-input" value="Analysis Notes - Week 4" placeholder="Journal entry title...">
+                            <button class="btn btn-sm btn-secondary"><span class="material-icons">save</span> Save</button>
+                            <button class="btn btn-sm btn-secondary" style="color: var(--error);"><span class="material-icons">delete</span></button>
+                        </div>
+                        <div class="editor-meta">
+                            <div class="meta-item">
+                                <span class="material-icons">calendar_today</span>
+                                January 28, 2025
+                            </div>
+                            <div class="meta-item">
+                                <span class="material-icons">schedule</span>
+                                2:45 PM
+                            </div>
+                            <div class="meta-item">
+                                <span class="material-icons">person</span>
+                                colin
+                            </div>
+                            <div class="meta-item">
+                                <span class="material-icons">label</span>
+                                Analysis
+                            </div>
+                        </div>
+                        <div class="editor-toolbar">
+                            <button class="format-btn" title="Bold"><span class="material-icons">format_bold</span></button>
+                            <button class="format-btn" title="Italic"><span class="material-icons">format_italic</span></button>
+                            <button class="format-btn" title="Underline"><span class="material-icons">format_underlined</span></button>
+                            <button class="format-btn" title="Strikethrough"><span class="material-icons">strikethrough_s</span></button>
+                            <div class="format-divider"></div>
+                            <button class="format-btn" title="Heading 1"><span class="material-icons">title</span></button>
+                            <button class="format-btn" title="Heading 2"><span class="material-icons">text_fields</span></button>
+                            <div class="format-divider"></div>
+                            <button class="format-btn" title="Bullet List"><span class="material-icons">format_list_bulleted</span></button>
+                            <button class="format-btn" title="Numbered List"><span class="material-icons">format_list_numbered</span></button>
+                            <div class="format-divider"></div>
+                            <button class="format-btn" title="Quote"><span class="material-icons">format_quote</span></button>
+                            <button class="format-btn" title="Code"><span class="material-icons">code</span></button>
+                            <button class="format-btn" title="Link"><span class="material-icons">link</span></button>
+                            <div class="format-divider"></div>
+                            <button class="format-btn" title="Insert Table"><span class="material-icons">table_chart</span></button>
+                            <button class="format-btn" title="Insert Image"><span class="material-icons">image</span></button>
+                        </div>
+                        <div class="editor-content">
+                            <textarea class="editor-textarea">Analysis Notes - Week 4
+======================
+
+Initial themes emerging from the coding process. The learning motivation category is showing strong connections to platform features and student support.
+
+## Key Observations
+
+### Theme 1: Intrinsic vs Extrinsic Motivation
+Several participants mentioned being motivated by:
+- Personal interest in the subject matter (intrinsic)
+- Grades and deadlines (extrinsic)
+- Peer encouragement and accountability (social)
+
+Quote from P01: "I find myself more engaged when I can connect the material to real-world applications."
+
+### Theme 2: Platform Usability
+The learning platform's interface emerged as both a facilitator and barrier:
+
+**Positive aspects:**
+- Clean, organized layout
+- Easy access to materials
+- Progress tracking features
+
+**Challenges:**
+- Navigation confusion for some features
+- Mobile experience limitations
+- Lack of customization options
+
+### Theme 3: Social Learning
+Interesting patterns around peer interaction:
+1. Students who participated in study groups reported higher satisfaction
+2. Forum engagement varied widely between participants
+3. Synchronous vs asynchronous preferences divided
+
+## Connections to Literature
+
+This aligns with Smith et al. (2023) findings on online learning engagement. Consider revisiting:
+- Self-determination theory (Deci & Ryan)
+- Community of Inquiry framework
+- Transactional distance theory
+
+## Next Steps
+
+- [ ] Review coding for "Platform Features" - may need subcategories
+- [ ] Cross-reference with case attributes (year of study, prior experience)
+- [ ] Schedule meeting with supervisor to discuss emerging themes
+- [ ] Begin drafting theoretical framework section
+
+## Questions to Explore
+
+1. How does prior online learning experience influence motivation patterns?
+2. What role does instructor presence play in student engagement?
+3. Are there differences between undergraduate and graduate students?
+
+---
+*Last updated: 2:45 PM*</textarea>
+                        </div>
+                    </div>
+
+                    <!-- Sidebar -->
+                    <div class="journals-sidebar">
+                        <div class="sidebar-card">
+                            <div class="sidebar-title">
+                                <span class="material-icons">calendar_month</span>
+                                Calendar
+                            </div>
+                            <div class="calendar-mini">
+                                <div class="calendar-header">
+                                    <span class="calendar-month">January 2025</span>
+                                    <div class="calendar-nav">
+                                        <button><span class="material-icons">chevron_left</span></button>
+                                        <button><span class="material-icons">chevron_right</span></button>
+                                    </div>
+                                </div>
+                                <div class="calendar-grid">
+                                    <div class="calendar-day header">Su</div>
+                                    <div class="calendar-day header">Mo</div>
+                                    <div class="calendar-day header">Tu</div>
+                                    <div class="calendar-day header">We</div>
+                                    <div class="calendar-day header">Th</div>
+                                    <div class="calendar-day header">Fr</div>
+                                    <div class="calendar-day header">Sa</div>
+                                    <div class="calendar-day other-month">29</div>
+                                    <div class="calendar-day other-month">30</div>
+                                    <div class="calendar-day other-month">31</div>
+                                    <div class="calendar-day">1</div>
+                                    <div class="calendar-day">2</div>
+                                    <div class="calendar-day">3</div>
+                                    <div class="calendar-day">4</div>
+                                    <div class="calendar-day">5</div>
+                                    <div class="calendar-day">6</div>
+                                    <div class="calendar-day">7</div>
+                                    <div class="calendar-day">8</div>
+                                    <div class="calendar-day">9</div>
+                                    <div class="calendar-day has-entry">10</div>
+                                    <div class="calendar-day">11</div>
+                                    <div class="calendar-day">12</div>
+                                    <div class="calendar-day">13</div>
+                                    <div class="calendar-day">14</div>
+                                    <div class="calendar-day has-entry">15</div>
+                                    <div class="calendar-day">16</div>
+                                    <div class="calendar-day">17</div>
+                                    <div class="calendar-day has-entry">18</div>
+                                    <div class="calendar-day">19</div>
+                                    <div class="calendar-day has-entry">20</div>
+                                    <div class="calendar-day">21</div>
+                                    <div class="calendar-day has-entry">22</div>
+                                    <div class="calendar-day">23</div>
+                                    <div class="calendar-day">24</div>
+                                    <div class="calendar-day has-entry">25</div>
+                                    <div class="calendar-day">26</div>
+                                    <div class="calendar-day">27</div>
+                                    <div class="calendar-day today has-entry">28</div>
+                                    <div class="calendar-day">29</div>
+                                    <div class="calendar-day">30</div>
+                                    <div class="calendar-day">31</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="sidebar-card">
+                            <div class="sidebar-title">
+                                <span class="material-icons">label</span>
+                                Entry Type
+                            </div>
+                            <div class="type-selector">
+                                <div class="type-option">Memo</div>
+                                <div class="type-option">Field Notes</div>
+                                <div class="type-option selected">Analysis</div>
+                                <div class="type-option">Reflection</div>
+                            </div>
+                        </div>
+
+                        <div class="sidebar-card">
+                            <div class="sidebar-title">
+                                <span class="material-icons">link</span>
+                                Linked Items
+                            </div>
+                            <div class="linked-items">
+                                <div class="linked-item">
+                                    <span class="material-icons">code</span>
+                                    Learning Motivation (code)
+                                </div>
+                                <div class="linked-item">
+                                    <span class="material-icons">description</span>
+                                    P01_interview_1.txt
+                                </div>
+                                <div class="linked-item">
+                                    <span class="material-icons">person</span>
+                                    Participant 01 (case)
+                                </div>
+                            </div>
+                            <button class="btn btn-sm btn-secondary" style="width: 100%; margin-top: 12px;">
+                                <span class="material-icons">add_link</span> Link Item
+                            </button>
+                        </div>
+
+                        <div class="sidebar-card">
+                            <div class="sidebar-title">
+                                <span class="material-icons">analytics</span>
+                                Statistics
+                            </div>
+                            <div class="stat-row">
+                                <span class="stat-label">Word Count</span>
+                                <span class="stat-value">387</span>
+                            </div>
+                            <div class="stat-row">
+                                <span class="stat-label">Characters</span>
+                                <span class="stat-value">2,156</span>
+                            </div>
+                            <div class="stat-row">
+                                <span class="stat-label">Linked Items</span>
+                                <span class="stat-value">3</span>
+                            </div>
+                        </div>
+
+                        <div class="sidebar-card">
+                            <div class="sidebar-title">
+                                <span class="material-icons">bolt</span>
+                                Quick Actions
+                            </div>
+                            <div class="quick-actions">
+                                <button class="quick-action-btn">
+                                    <span class="material-icons">content_copy</span>
+                                    Duplicate Entry
+                                </button>
+                                <button class="quick-action-btn">
+                                    <span class="material-icons">download</span>
+                                    Export as PDF
+                                </button>
+                                <button class="quick-action-btn">
+                                    <span class="material-icons">smart_toy</span>
+                                    AI Summarize
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="status-bar">
+            <div class="status-left">
+                <span class="status-item"><span class="material-icons">check_circle</span> Auto-saved</span>
+                <span class="status-item"><span class="material-icons">storage</span> research_project.qda</span>
+            </div>
+            <div class="status-right">
+                <span class="status-item"><span class="material-icons">book</span> 12 journal entries</span>
+                <span class="status-item"><span class="material-icons">person</span> colin</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="theme-toggle">
+        <button class="theme-btn" onclick="toggleTheme()" title="Toggle theme">
+            <span class="material-icons" id="theme-icon">light_mode</span>
+        </button>
+    </div>
+
+    <script>
+        let isDark = true;
+        function toggleTheme() {
+            isDark = !isDark;
+            document.body.classList.toggle('light-theme', !isDark);
+            document.getElementById('theme-icon').textContent = isDark ? 'light_mode' : 'dark_mode';
+        }
+
+        document.querySelectorAll('.journal-item').forEach(item => {
+            item.addEventListener('click', function() {
+                document.querySelectorAll('.journal-item').forEach(i => i.classList.remove('selected'));
+                this.classList.add('selected');
+            });
+        });
+
+        document.querySelectorAll('.type-option').forEach(opt => {
+            opt.addEventListener('click', function() {
+                document.querySelectorAll('.type-option').forEach(o => o.classList.remove('selected'));
+                this.classList.add('selected');
+            });
+        });
+
+        document.querySelectorAll('.format-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                this.classList.toggle('active');
+            });
+        });
+    </script>
+</body>
+</html>

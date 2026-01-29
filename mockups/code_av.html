@@ -1,0 +1,1070 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QualCoder - Audio/Video Coding</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link href="css/material-theme.css" rel="stylesheet">
+    <style>
+        /* A/V coding specific styles */
+        .center-panel {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            background: var(--background);
+        }
+
+        /* Media player area */
+        .media-player {
+            background: var(--surface);
+            margin: 16px;
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-2);
+            overflow: hidden;
+        }
+
+        .video-container {
+            position: relative;
+            background: #000;
+            aspect-ratio: 16/9;
+            max-height: 400px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .video-placeholder {
+            color: rgba(255, 255, 255, 0.5);
+            text-align: center;
+        }
+
+        .video-placeholder .material-icons {
+            font-size: 80px;
+        }
+
+        /* Waveform visualization */
+        .waveform-container {
+            background: var(--surface-light);
+            padding: 16px;
+            border-top: 1px solid var(--border);
+        }
+
+        .waveform {
+            height: 80px;
+            background: var(--surface);
+            border-radius: var(--radius-md);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .waveform-bars {
+            display: flex;
+            align-items: center;
+            height: 100%;
+            gap: 2px;
+            padding: 10px;
+        }
+
+        .waveform-bar {
+            flex: 1;
+            background: var(--primary);
+            border-radius: 2px;
+            opacity: 0.6;
+        }
+
+        .waveform-bar.coded {
+            opacity: 1;
+        }
+
+        /* Timeline segments (coded regions) */
+        .timeline-segments {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 20px;
+            display: flex;
+            gap: 2px;
+            padding: 0 10px;
+        }
+
+        .timeline-segment {
+            position: absolute;
+            height: 100%;
+            border-radius: 2px;
+            cursor: pointer;
+            transition: var(--transition);
+            opacity: 0.8;
+        }
+
+        .timeline-segment:hover {
+            opacity: 1;
+            transform: scaleY(1.2);
+        }
+
+        .timeline-segment.yellow { background: #FFC107; }
+        .timeline-segment.red { background: #F44336; }
+        .timeline-segment.green { background: #4CAF50; }
+        .timeline-segment.blue { background: #2196F3; }
+        .timeline-segment.purple { background: #9C27B0; }
+
+        /* Playhead */
+        .playhead {
+            position: absolute;
+            top: 0;
+            width: 2px;
+            height: 100%;
+            background: white;
+            z-index: 10;
+            left: 35%;
+        }
+
+        .playhead::after {
+            content: '';
+            position: absolute;
+            top: -4px;
+            left: -4px;
+            width: 10px;
+            height: 10px;
+            background: white;
+            border-radius: 50%;
+        }
+
+        /* Player controls */
+        .player-controls {
+            padding: 16px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            border-top: 1px solid var(--border);
+        }
+
+        .play-btn {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background: var(--primary);
+            color: white;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: var(--transition);
+        }
+
+        .play-btn:hover {
+            background: var(--primary-light);
+            transform: scale(1.05);
+        }
+
+        .time-display {
+            font-family: 'Roboto Mono', monospace;
+            font-size: 14px;
+            color: var(--text-primary);
+            min-width: 120px;
+        }
+
+        .time-display .current {
+            color: var(--primary);
+        }
+
+        .volume-control {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-left: auto;
+        }
+
+        .volume-slider {
+            width: 80px;
+            height: 4px;
+            background: var(--surface-lighter);
+            border-radius: 2px;
+            appearance: none;
+            cursor: pointer;
+        }
+
+        .volume-slider::-webkit-slider-thumb {
+            appearance: none;
+            width: 12px;
+            height: 12px;
+            background: var(--primary);
+            border-radius: 50%;
+            cursor: pointer;
+        }
+
+        .playback-rate {
+            padding: 4px 8px;
+            background: var(--surface-light);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            color: var(--text-primary);
+            font-size: 12px;
+            cursor: pointer;
+        }
+
+        /* Transcript panel */
+        .transcript-panel {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            margin: 0 16px 16px;
+            background: var(--surface);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-2);
+            overflow: hidden;
+        }
+
+        .transcript-header {
+            padding: 12px 16px;
+            background: var(--surface-light);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .transcript-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 16px;
+        }
+
+        .transcript-line {
+            display: flex;
+            padding: 8px 12px;
+            border-radius: var(--radius-md);
+            margin-bottom: 4px;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .transcript-line:hover {
+            background: var(--surface-light);
+        }
+
+        .transcript-line.current {
+            background: rgba(0, 150, 136, 0.1);
+            border-left: 3px solid var(--primary);
+        }
+
+        .transcript-line.coded {
+            position: relative;
+        }
+
+        .transcript-line.coded::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 3px;
+            border-radius: 3px;
+        }
+
+        .transcript-line.coded.yellow::before { background: #FFC107; }
+        .transcript-line.coded.red::before { background: #F44336; }
+        .transcript-line.coded.green::before { background: #4CAF50; }
+        .transcript-line.coded.blue::before { background: #2196F3; }
+        .transcript-line.coded.purple::before { background: #9C27B0; }
+
+        .transcript-timestamp {
+            font-family: 'Roboto Mono', monospace;
+            font-size: 12px;
+            color: var(--primary);
+            min-width: 70px;
+            cursor: pointer;
+        }
+
+        .transcript-timestamp:hover {
+            text-decoration: underline;
+        }
+
+        .transcript-speaker {
+            font-weight: 500;
+            font-size: 12px;
+            color: var(--text-secondary);
+            min-width: 100px;
+        }
+
+        .transcript-text {
+            flex: 1;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        .coded-text {
+            padding: 2px 0;
+            border-radius: 2px;
+        }
+
+        .coded-text.yellow { background: rgba(255, 193, 7, 0.3); }
+        .coded-text.red { background: rgba(244, 67, 54, 0.3); }
+        .coded-text.green { background: rgba(76, 175, 80, 0.3); }
+        .coded-text.blue { background: rgba(33, 150, 243, 0.3); }
+        .coded-text.purple { background: rgba(156, 39, 176, 0.3); }
+
+        /* Files list */
+        .file-list {
+            flex: 1;
+            overflow-y: auto;
+            padding: 8px;
+        }
+
+        .file-item {
+            display: flex;
+            align-items: center;
+            padding: 10px 12px;
+            border-radius: var(--radius-md);
+            cursor: pointer;
+            transition: var(--transition);
+            margin-bottom: 2px;
+        }
+
+        .file-item:hover {
+            background: var(--surface-light);
+        }
+
+        .file-item.selected {
+            background: rgba(0, 150, 136, 0.15);
+            border-left: 3px solid var(--primary);
+        }
+
+        .file-info {
+            flex: 1;
+            min-width: 0;
+            margin-left: 12px;
+        }
+
+        .file-name {
+            font-size: 13px;
+            color: var(--text-primary);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .file-meta {
+            font-size: 11px;
+            color: var(--text-secondary);
+            margin-top: 2px;
+        }
+
+        /* Codes panel */
+        .codes-panel {
+            border-top: 1px solid var(--border);
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .code-tree {
+            flex: 1;
+            overflow-y: auto;
+            padding: 8px;
+        }
+
+        .code-item {
+            display: flex;
+            align-items: center;
+            padding: 8px 12px;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            transition: var(--transition);
+            margin-bottom: 2px;
+        }
+
+        .code-item:hover {
+            background: var(--surface-light);
+        }
+
+        .code-item.selected {
+            background: rgba(0, 150, 136, 0.15);
+            border: 1px solid var(--primary);
+        }
+
+        .code-color {
+            width: 12px;
+            height: 12px;
+            border-radius: 3px;
+            flex-shrink: 0;
+        }
+
+        .code-name {
+            font-size: 13px;
+            flex: 1;
+            margin-left: 10px;
+        }
+
+        .code-count {
+            font-size: 11px;
+            color: var(--text-secondary);
+            background: var(--surface-lighter);
+            padding: 2px 8px;
+            border-radius: 10px;
+        }
+
+        /* Info cards */
+        .info-card {
+            padding: 16px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .info-card-title {
+            font-size: 12px;
+            font-weight: 500;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .info-card-title .material-icons {
+            font-size: 16px;
+            color: var(--primary);
+        }
+
+        /* Segment info */
+        .segment-info {
+            background: var(--surface-light);
+            border-radius: var(--radius-md);
+            padding: 12px;
+        }
+
+        .segment-time {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-family: 'Roboto Mono', monospace;
+            font-size: 13px;
+        }
+
+        .segment-duration {
+            color: var(--text-secondary);
+            font-size: 11px;
+        }
+
+        /* Coded segments list */
+        .coded-segments {
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .coded-segment-item {
+            display: flex;
+            align-items: center;
+            padding: 8px;
+            background: var(--surface-light);
+            border-radius: var(--radius-sm);
+            margin-bottom: 4px;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .coded-segment-item:hover {
+            background: var(--surface-lighter);
+        }
+
+        .coded-segment-item .code-color {
+            width: 8px;
+            height: 100%;
+            min-height: 30px;
+            border-radius: 2px;
+            margin-right: 10px;
+        }
+
+        .coded-segment-info {
+            flex: 1;
+        }
+
+        .coded-segment-name {
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .coded-segment-time {
+            font-size: 10px;
+            color: var(--text-secondary);
+            font-family: 'Roboto Mono', monospace;
+        }
+
+        /* Keyboard shortcuts hint */
+        .shortcuts-hint {
+            padding: 12px;
+            background: var(--surface-light);
+            border-radius: var(--radius-md);
+            font-size: 11px;
+            color: var(--text-secondary);
+        }
+
+        .shortcut-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 4px;
+        }
+
+        .shortcut-key {
+            font-family: 'Roboto Mono', monospace;
+            background: var(--surface-lighter);
+            padding: 2px 6px;
+            border-radius: var(--radius-xs);
+            font-size: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Title Bar -->
+        <div class="title-bar">
+            <h1>
+                <span class="logo">Q</span>
+                QualCoder - research_project.qda
+            </h1>
+            <div class="window-controls">
+                <button class="window-btn minimize"></button>
+                <button class="window-btn maximize"></button>
+                <button class="window-btn close"></button>
+            </div>
+        </div>
+
+        <!-- Menu Bar -->
+        <div class="menu-bar">
+            <a href="index.html" class="menu-item">Project</a>
+            <a href="phase1_file_manager.html" class="menu-item">Files and Cases</a>
+            <a href="code_text.html" class="menu-item active">Coding</a>
+            <a href="reports_coding.html" class="menu-item">Reports</a>
+            <a href="ai_chat.html" class="menu-item">AI</a>
+            <a href="settings.html" class="menu-item">Help</a>
+        </div>
+
+        <!-- Tab Bar -->
+        <div class="tab-bar">
+            <a href="code_text.html" class="tab active">
+                <span class="material-icons">code</span>
+                Coding
+            </a>
+            <a href="reports_coding.html" class="tab">
+                <span class="material-icons">assessment</span>
+                Reports
+            </a>
+            <a href="phase1_file_manager.html" class="tab">
+                <span class="material-icons">folder</span>
+                Manage
+            </a>
+            <a href="index.html" class="tab">
+                <span class="material-icons">history</span>
+                Action Log
+            </a>
+        </div>
+
+        <!-- Toolbar -->
+        <div class="toolbar">
+            <div class="toolbar-group">
+                <a href="code_text.html" class="toolbar-btn"><span class="material-icons">description</span> Text</a>
+                <a href="code_image.html" class="toolbar-btn"><span class="material-icons">image</span> Image</a>
+                <a href="code_av.html" class="toolbar-btn active"><span class="material-icons">videocam</span> A/V</a>
+                <a href="code_pdf.html" class="toolbar-btn"><span class="material-icons">picture_as_pdf</span> PDF</a>
+            </div>
+            <div class="toolbar-divider"></div>
+            <div class="toolbar-group">
+                <span class="toolbar-label">Coder:</span>
+                <select class="toolbar-select">
+                    <option>colin</option>
+                    <option>sarah</option>
+                </select>
+            </div>
+            <div class="toolbar-group">
+                <button class="toolbar-btn" title="Previous file">
+                    <span class="material-icons">navigate_before</span>
+                </button>
+                <span style="color: var(--text-secondary); font-size: 12px; min-width: 50px; text-align: center;">1 / 3</span>
+                <button class="toolbar-btn" title="Next file">
+                    <span class="material-icons">navigate_next</span>
+                </button>
+            </div>
+            <div class="toolbar-group">
+                <button class="toolbar-btn active" title="Show transcript">
+                    <span class="material-icons">subtitles</span>
+                </button>
+                <button class="toolbar-btn" title="Waveform view">
+                    <span class="material-icons">graphic_eq</span>
+                </button>
+                <button class="toolbar-btn" title="Full screen">
+                    <span class="material-icons">fullscreen</span>
+                </button>
+            </div>
+            <div class="toolbar-group">
+                <button class="toolbar-btn" title="Set start point">
+                    <span class="material-icons">first_page</span>
+                </button>
+                <button class="toolbar-btn" title="Set end point">
+                    <span class="material-icons">last_page</span>
+                </button>
+                <button class="toolbar-btn primary" title="Code selection">
+                    <span class="material-icons">label</span>
+                    Code
+                </button>
+            </div>
+            <div class="toolbar-group">
+                <button class="toolbar-btn" title="Memo">
+                    <span class="material-icons">note_add</span>
+                </button>
+                <button class="toolbar-btn" title="Transcribe with AI">
+                    <span class="material-icons">record_voice_over</span>
+                </button>
+            </div>
+            <div class="search-box" style="margin-left: auto;">
+                <span class="material-icons">search</span>
+                <input type="text" placeholder="Search transcript...">
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Left Panel - Files & Codes -->
+            <div class="panel panel-left">
+                <!-- Files Section -->
+                <div class="panel-header">
+                    <span class="panel-title">
+                        <span class="material-icons">video_library</span>
+                        Media Files
+                    </span>
+                    <div class="panel-actions">
+                        <button class="panel-btn" title="Filter">
+                            <span class="material-icons">filter_list</span>
+                        </button>
+                    </div>
+                </div>
+                <div class="file-list" style="max-height: 180px;">
+                    <div class="file-item selected">
+                        <div class="file-icon video">
+                            <span class="material-icons">videocam</span>
+                        </div>
+                        <div class="file-info">
+                            <div class="file-name">focus_group_session.mp4</div>
+                            <div class="file-meta">Video &bull; 45:32 &bull; 8 codes</div>
+                        </div>
+                    </div>
+                    <div class="file-item">
+                        <div class="file-icon audio">
+                            <span class="material-icons">audiotrack</span>
+                        </div>
+                        <div class="file-info">
+                            <div class="file-name">interview_participant_03.mp3</div>
+                            <div class="file-meta">Audio &bull; 32:15 &bull; 5 codes</div>
+                        </div>
+                    </div>
+                    <div class="file-item">
+                        <div class="file-icon video">
+                            <span class="material-icons">videocam</span>
+                        </div>
+                        <div class="file-info">
+                            <div class="file-name">classroom_observation.mp4</div>
+                            <div class="file-meta">Video &bull; 1:22:48 &bull; 12 codes</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Codes Section -->
+                <div class="codes-panel">
+                    <div class="panel-header">
+                        <span class="panel-title">
+                            <span class="material-icons">label</span>
+                            Codes
+                        </span>
+                        <div class="panel-actions">
+                            <button class="panel-btn" title="Add code">
+                                <span class="material-icons">add</span>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="code-tree">
+                        <div class="code-item selected">
+                            <span class="code-color" style="background: #FFC107;"></span>
+                            <span class="code-name">Key Insight</span>
+                            <span class="code-count">5</span>
+                        </div>
+                        <div class="code-item">
+                            <span class="code-color" style="background: #F44336;"></span>
+                            <span class="code-name">Disagreement</span>
+                            <span class="code-count">3</span>
+                        </div>
+                        <div class="code-item">
+                            <span class="code-color" style="background: #4CAF50;"></span>
+                            <span class="code-name">Agreement</span>
+                            <span class="code-count">8</span>
+                        </div>
+                        <div class="code-item">
+                            <span class="code-color" style="background: #2196F3;"></span>
+                            <span class="code-name">Question</span>
+                            <span class="code-count">4</span>
+                        </div>
+                        <div class="code-item">
+                            <span class="code-color" style="background: #9C27B0;"></span>
+                            <span class="code-name">Emotion</span>
+                            <span class="code-count">6</span>
+                        </div>
+                    </div>
+                    <div style="padding: 8px; border-top: 1px solid var(--border);">
+                        <button class="btn btn-primary btn-sm" style="width: 100%;">
+                            <span class="material-icons">add</span>
+                            New Code
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Center Panel - Media Player & Transcript -->
+            <div class="center-panel">
+                <!-- Media Player -->
+                <div class="media-player">
+                    <div class="video-container">
+                        <div class="video-placeholder">
+                            <span class="material-icons">play_circle</span>
+                            <div style="font-size: 14px; margin-top: 8px;">focus_group_session.mp4</div>
+                        </div>
+                    </div>
+
+                    <!-- Waveform -->
+                    <div class="waveform-container">
+                        <div class="waveform">
+                            <div class="waveform-bars">
+                                <!-- Generate waveform bars -->
+                                <script>
+                                    for (let i = 0; i < 100; i++) {
+                                        const height = Math.random() * 60 + 20;
+                                        document.write(`<div class="waveform-bar" style="height: ${height}%"></div>`);
+                                    }
+                                </script>
+                            </div>
+                            <!-- Timeline segments (coded regions) -->
+                            <div class="timeline-segments">
+                                <div class="timeline-segment yellow" style="left: 5%; width: 8%;"></div>
+                                <div class="timeline-segment green" style="left: 20%; width: 12%;"></div>
+                                <div class="timeline-segment red" style="left: 38%; width: 5%;"></div>
+                                <div class="timeline-segment purple" style="left: 52%; width: 10%;"></div>
+                                <div class="timeline-segment blue" style="left: 70%; width: 6%;"></div>
+                                <div class="timeline-segment yellow" style="left: 82%; width: 8%;"></div>
+                            </div>
+                            <!-- Playhead -->
+                            <div class="playhead"></div>
+                        </div>
+                    </div>
+
+                    <!-- Player Controls -->
+                    <div class="player-controls">
+                        <button class="toolbar-btn" title="Skip back 10s">
+                            <span class="material-icons">replay_10</span>
+                        </button>
+                        <button class="play-btn" title="Play/Pause">
+                            <span class="material-icons">play_arrow</span>
+                        </button>
+                        <button class="toolbar-btn" title="Skip forward 10s">
+                            <span class="material-icons">forward_10</span>
+                        </button>
+                        <div class="time-display">
+                            <span class="current">15:42</span> / 45:32
+                        </div>
+                        <select class="playback-rate">
+                            <option>0.5x</option>
+                            <option>0.75x</option>
+                            <option selected>1x</option>
+                            <option>1.25x</option>
+                            <option>1.5x</option>
+                            <option>2x</option>
+                        </select>
+                        <div class="volume-control">
+                            <span class="material-icons" style="font-size: 20px; color: var(--text-secondary);">volume_up</span>
+                            <input type="range" class="volume-slider" min="0" max="100" value="80">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Transcript Panel -->
+                <div class="transcript-panel">
+                    <div class="transcript-header">
+                        <span style="font-size: 13px; font-weight: 500; display: flex; align-items: center; gap: 8px;">
+                            <span class="material-icons" style="font-size: 18px; color: var(--primary);">subtitles</span>
+                            Transcript
+                        </span>
+                        <div style="display: flex; gap: 8px;">
+                            <button class="btn btn-sm btn-secondary">
+                                <span class="material-icons">edit</span>
+                                Edit
+                            </button>
+                            <button class="btn btn-sm btn-secondary">
+                                <span class="material-icons">download</span>
+                                Export
+                            </button>
+                        </div>
+                    </div>
+                    <div class="transcript-content">
+                        <div class="transcript-line coded yellow">
+                            <span class="transcript-timestamp">00:14:20</span>
+                            <span class="transcript-speaker">Moderator:</span>
+                            <span class="transcript-text">
+                                <span class="coded-text yellow">Can you tell us more about your experience with the online learning platform?</span>
+                            </span>
+                        </div>
+                        <div class="transcript-line">
+                            <span class="transcript-timestamp">00:14:35</span>
+                            <span class="transcript-speaker">Participant 1:</span>
+                            <span class="transcript-text">
+                                Well, I found it quite challenging at first. The interface wasn't very intuitive.
+                            </span>
+                        </div>
+                        <div class="transcript-line coded green">
+                            <span class="transcript-timestamp">00:15:02</span>
+                            <span class="transcript-speaker">Participant 2:</span>
+                            <span class="transcript-text">
+                                <span class="coded-text green">I agree with that. It took me several weeks to get comfortable with navigation.</span>
+                            </span>
+                        </div>
+                        <div class="transcript-line current">
+                            <span class="transcript-timestamp">00:15:42</span>
+                            <span class="transcript-speaker">Participant 3:</span>
+                            <span class="transcript-text">
+                                Actually, I had a different experience. The tutorials were very helpful for me.
+                            </span>
+                        </div>
+                        <div class="transcript-line coded red">
+                            <span class="transcript-timestamp">00:16:15</span>
+                            <span class="transcript-speaker">Participant 1:</span>
+                            <span class="transcript-text">
+                                <span class="coded-text red">That's interesting, but I disagree. The tutorials were too basic and didn't cover the advanced features.</span>
+                            </span>
+                        </div>
+                        <div class="transcript-line coded purple">
+                            <span class="transcript-timestamp">00:16:48</span>
+                            <span class="transcript-speaker">Participant 4:</span>
+                            <span class="transcript-text">
+                                <span class="coded-text purple">I felt really frustrated at times, especially when I couldn't find the resources I needed.</span>
+                            </span>
+                        </div>
+                        <div class="transcript-line">
+                            <span class="transcript-timestamp">00:17:20</span>
+                            <span class="transcript-speaker">Moderator:</span>
+                            <span class="transcript-text">
+                                Let's talk about the support resources. How did you find the help documentation?
+                            </span>
+                        </div>
+                        <div class="transcript-line coded blue">
+                            <span class="transcript-timestamp">00:17:45</span>
+                            <span class="transcript-speaker">Participant 2:</span>
+                            <span class="transcript-text">
+                                <span class="coded-text blue">Is there a way to request additional training sessions?</span>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Panel - Details -->
+            <div class="panel panel-right" style="border-left: 1px solid var(--border); border-right: none;">
+                <div class="info-card">
+                    <div class="info-card-title">
+                        <span class="material-icons">schedule</span>
+                        Current Segment
+                    </div>
+                    <div class="segment-info">
+                        <div class="segment-time">
+                            <span style="color: var(--primary);">15:42</span>
+                            <span>-</span>
+                            <span style="color: var(--primary);">16:15</span>
+                        </div>
+                        <div class="segment-duration">Duration: 33 seconds</div>
+                        <div style="margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--border);">
+                            <div style="font-size: 12px; color: var(--text-secondary); margin-bottom: 4px;">Speaker</div>
+                            <div style="font-size: 13px; font-weight: 500;">Participant 3</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="info-card">
+                    <div class="info-card-title">
+                        <span class="material-icons">layers</span>
+                        Coded Segments (6)
+                    </div>
+                    <div class="coded-segments">
+                        <div class="coded-segment-item">
+                            <span class="code-color" style="background: #FFC107;"></span>
+                            <div class="coded-segment-info">
+                                <div class="coded-segment-name">Key Insight</div>
+                                <div class="coded-segment-time">00:14:20 - 00:14:35</div>
+                            </div>
+                        </div>
+                        <div class="coded-segment-item">
+                            <span class="code-color" style="background: #4CAF50;"></span>
+                            <div class="coded-segment-info">
+                                <div class="coded-segment-name">Agreement</div>
+                                <div class="coded-segment-time">00:15:02 - 00:15:28</div>
+                            </div>
+                        </div>
+                        <div class="coded-segment-item">
+                            <span class="code-color" style="background: #F44336;"></span>
+                            <div class="coded-segment-info">
+                                <div class="coded-segment-name">Disagreement</div>
+                                <div class="coded-segment-time">00:16:15 - 00:16:45</div>
+                            </div>
+                        </div>
+                        <div class="coded-segment-item">
+                            <span class="code-color" style="background: #9C27B0;"></span>
+                            <div class="coded-segment-info">
+                                <div class="coded-segment-name">Emotion</div>
+                                <div class="coded-segment-time">00:16:48 - 00:17:15</div>
+                            </div>
+                        </div>
+                        <div class="coded-segment-item">
+                            <span class="code-color" style="background: #2196F3;"></span>
+                            <div class="coded-segment-info">
+                                <div class="coded-segment-name">Question</div>
+                                <div class="coded-segment-time">00:17:45 - 00:18:00</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="info-card">
+                    <div class="info-card-title">
+                        <span class="material-icons">info</span>
+                        Media Info
+                    </div>
+                    <div style="font-size: 12px; color: var(--text-secondary);">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                            <span>Duration:</span>
+                            <span style="color: var(--text-primary);">45:32</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                            <span>Format:</span>
+                            <span style="color: var(--text-primary);">MP4 (H.264)</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                            <span>Resolution:</span>
+                            <span style="color: var(--text-primary);">1920x1080</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between;">
+                            <span>File size:</span>
+                            <span style="color: var(--text-primary);">234 MB</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="info-card">
+                    <div class="info-card-title">
+                        <span class="material-icons">keyboard</span>
+                        Shortcuts
+                    </div>
+                    <div class="shortcuts-hint">
+                        <div class="shortcut-row">
+                            <span>Play/Pause</span>
+                            <span class="shortcut-key">Space</span>
+                        </div>
+                        <div class="shortcut-row">
+                            <span>Skip back 10s</span>
+                            <span class="shortcut-key">J</span>
+                        </div>
+                        <div class="shortcut-row">
+                            <span>Skip forward 10s</span>
+                            <span class="shortcut-key">L</span>
+                        </div>
+                        <div class="shortcut-row">
+                            <span>Set start point</span>
+                            <span class="shortcut-key">[</span>
+                        </div>
+                        <div class="shortcut-row">
+                            <span>Set end point</span>
+                            <span class="shortcut-key">]</span>
+                        </div>
+                        <div class="shortcut-row">
+                            <span>Apply code</span>
+                            <span class="shortcut-key">Enter</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Status Bar -->
+        <div class="status-bar">
+            <div class="status-left">
+                <span class="status-item">
+                    <span class="material-icons">check_circle</span>
+                    Ready
+                </span>
+                <span class="status-item">
+                    <span class="material-icons">storage</span>
+                    research_project.qda
+                </span>
+                <span class="status-item">
+                    <span class="material-icons">videocam</span>
+                    Video Mode
+                </span>
+            </div>
+            <div class="status-right">
+                <span class="status-item">
+                    <span class="material-icons">psychology</span>
+                    AI: Connected
+                </span>
+                <span class="status-item">
+                    <span class="material-icons">schedule</span>
+                    Auto-save: 30s ago
+                </span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Theme Toggle Button -->
+    <div class="theme-toggle">
+        <button class="theme-btn" onclick="toggleTheme()" title="Toggle theme">
+            <span class="material-icons" id="theme-icon">light_mode</span>
+        </button>
+    </div>
+
+    <!-- FAB for quick code -->
+    <button class="fab" title="Apply selected code to segment">
+        <span class="material-icons">label</span>
+    </button>
+
+    <script>
+        let isDark = true;
+
+        function toggleTheme() {
+            isDark = !isDark;
+            document.body.classList.toggle('light-theme', !isDark);
+            document.getElementById('theme-icon').textContent = isDark ? 'light_mode' : 'dark_mode';
+        }
+
+        // Play button toggle
+        const playBtn = document.querySelector('.play-btn');
+        let isPlaying = false;
+        playBtn.addEventListener('click', () => {
+            isPlaying = !isPlaying;
+            playBtn.querySelector('.material-icons').textContent = isPlaying ? 'pause' : 'play_arrow';
+        });
+
+        // Timestamp click to jump
+        document.querySelectorAll('.transcript-timestamp').forEach(ts => {
+            ts.addEventListener('click', function() {
+                document.querySelectorAll('.transcript-line').forEach(l => l.classList.remove('current'));
+                this.closest('.transcript-line').classList.add('current');
+            });
+        });
+
+        // Code item selection
+        document.querySelectorAll('.code-item').forEach(item => {
+            item.addEventListener('click', function() {
+                document.querySelectorAll('.code-item').forEach(i => i.classList.remove('selected'));
+                this.classList.add('selected');
+            });
+        });
+    </script>
+</body>
+</html>

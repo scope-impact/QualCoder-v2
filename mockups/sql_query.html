@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QualCoder - SQL Query</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link href="css/material-theme.css" rel="stylesheet">
+    <style>
+        .center-panel { flex: 1; display: flex; flex-direction: column; overflow: hidden; background: var(--background); }
+
+        .sql-container { flex: 1; display: flex; overflow: hidden; }
+
+        /* Sidebar - Saved Queries & Schema */
+        .sql-sidebar { width: 280px; background: var(--surface); border-right: 1px solid var(--border); display: flex; flex-direction: column; overflow: hidden; }
+
+        .sidebar-section { border-bottom: 1px solid var(--border); }
+        .sidebar-header { padding: 14px 16px; display: flex; align-items: center; justify-content: space-between; cursor: pointer; }
+        .sidebar-title { font-size: 12px; font-weight: 500; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px; display: flex; align-items: center; gap: 8px; }
+        .sidebar-title .material-icons { font-size: 16px; color: var(--primary); }
+        .sidebar-toggle { color: var(--text-secondary); transition: var(--transition); }
+        .sidebar-toggle.collapsed { transform: rotate(-90deg); }
+
+        .sidebar-content { padding: 0 8px 12px; }
+
+        .saved-query { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: var(--radius-md); cursor: pointer; transition: var(--transition); }
+        .saved-query:hover { background: var(--surface-light); }
+        .saved-query.selected { background: rgba(0, 150, 136, 0.15); }
+        .saved-query .material-icons { font-size: 18px; color: var(--primary); }
+        .saved-query-info { flex: 1; min-width: 0; }
+        .saved-query-name { font-size: 13px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .saved-query-date { font-size: 11px; color: var(--text-secondary); }
+
+        /* Schema Tree */
+        .schema-tree { padding: 0 8px 12px; }
+        .schema-table { margin-bottom: 4px; }
+        .table-header { display: flex; align-items: center; gap: 8px; padding: 8px 10px; border-radius: var(--radius-sm); cursor: pointer; transition: var(--transition); }
+        .table-header:hover { background: var(--surface-light); }
+        .table-header .material-icons { font-size: 18px; color: var(--warning); }
+        .table-name { font-size: 13px; font-family: 'Roboto Mono', monospace; }
+        .table-count { font-size: 10px; color: var(--text-secondary); margin-left: auto; }
+
+        .table-columns { padding-left: 28px; display: none; }
+        .table-columns.expanded { display: block; }
+        .column-item { display: flex; align-items: center; gap: 6px; padding: 4px 8px; font-size: 12px; font-family: 'Roboto Mono', monospace; color: var(--text-secondary); }
+        .column-item .material-icons { font-size: 14px; }
+        .column-item .pk { color: var(--warning); }
+        .column-item .fk { color: var(--info); }
+        .column-type { font-size: 10px; color: var(--text-disabled); margin-left: auto; }
+
+        /* Main Content */
+        .sql-main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+
+        /* Query Editor */
+        .query-editor { background: var(--surface); border-bottom: 1px solid var(--border); display: flex; flex-direction: column; }
+
+        .editor-toolbar { padding: 8px 16px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 8px; }
+
+        .editor-area { display: flex; min-height: 180px; }
+        .line-numbers { padding: 12px 8px; background: var(--surface-light); color: var(--text-disabled); font-family: 'Roboto Mono', monospace; font-size: 13px; line-height: 1.6; text-align: right; user-select: none; min-width: 40px; }
+        .code-input { flex: 1; padding: 12px 16px; background: transparent; border: none; color: var(--text-primary); font-family: 'Roboto Mono', monospace; font-size: 13px; line-height: 1.6; resize: none; }
+        .code-input:focus { outline: none; }
+
+        /* Syntax highlighting colors */
+        .keyword { color: #C792EA; }
+        .function { color: #82AAFF; }
+        .string { color: #C3E88D; }
+        .number { color: #F78C6C; }
+        .comment { color: #546E7A; font-style: italic; }
+
+        /* Results Panel */
+        .results-panel { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+
+        .results-header { padding: 12px 16px; background: var(--surface); border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+        .results-tabs { display: flex; gap: 4px; }
+        .results-tab { padding: 6px 14px; background: transparent; border: none; border-radius: var(--radius-md); color: var(--text-secondary); font-size: 12px; cursor: pointer; transition: var(--transition); }
+        .results-tab:hover { background: var(--surface-light); }
+        .results-tab.active { background: rgba(0, 150, 136, 0.15); color: var(--primary); }
+        .results-info { font-size: 12px; color: var(--text-secondary); display: flex; align-items: center; gap: 16px; }
+        .results-info .material-icons { font-size: 16px; vertical-align: middle; margin-right: 4px; }
+
+        .results-content { flex: 1; overflow: auto; background: var(--surface); }
+
+        .results-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+        .results-table th, .results-table td { padding: 10px 14px; text-align: left; border-bottom: 1px solid var(--border); white-space: nowrap; }
+        .results-table th { background: var(--surface-light); font-weight: 500; font-size: 12px; color: var(--text-secondary); text-transform: uppercase; position: sticky; top: 0; }
+        .results-table tr:hover { background: var(--surface-light); }
+        .results-table td { font-family: 'Roboto Mono', monospace; }
+
+        .null-value { color: var(--text-disabled); font-style: italic; }
+        .truncated { max-width: 200px; overflow: hidden; text-overflow: ellipsis; }
+
+        /* Error State */
+        .error-message { padding: 20px; background: rgba(244, 67, 54, 0.1); border-left: 4px solid var(--error); margin: 16px; border-radius: var(--radius-md); }
+        .error-title { color: var(--error); font-weight: 500; margin-bottom: 8px; display: flex; align-items: center; gap: 8px; }
+        .error-text { font-family: 'Roboto Mono', monospace; font-size: 13px; color: var(--text-secondary); line-height: 1.6; }
+
+        /* Quick Insert */
+        .quick-insert { display: flex; gap: 4px; flex-wrap: wrap; }
+        .quick-chip { padding: 4px 10px; background: var(--surface-light); border: 1px solid var(--border); border-radius: 12px; font-size: 11px; font-family: 'Roboto Mono', monospace; cursor: pointer; transition: var(--transition); }
+        .quick-chip:hover { border-color: var(--primary); background: rgba(0, 150, 136, 0.1); }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <div class="title-bar">
+            <h1><span class="logo">Q</span> QualCoder - research_project.qda</h1>
+            <div class="window-controls">
+                <button class="window-btn minimize"></button>
+                <button class="window-btn maximize"></button>
+                <button class="window-btn close"></button>
+            </div>
+        </div>
+
+        <div class="menu-bar">
+            <a href="index.html" class="menu-item">Project</a>
+            <a href="phase1_file_manager.html" class="menu-item">Files and Cases</a>
+            <a href="code_text.html" class="menu-item">Coding</a>
+            <a href="reports_coding.html" class="menu-item">Reports</a>
+            <a href="ai_chat.html" class="menu-item">AI</a>
+            <a href="settings.html" class="menu-item active">Help</a>
+        </div>
+
+        <div class="tab-bar">
+            <a href="code_text.html" class="tab"><span class="material-icons">code</span> Coding</a>
+            <a href="reports_coding.html" class="tab"><span class="material-icons">assessment</span> Reports</a>
+            <a href="phase1_file_manager.html" class="tab"><span class="material-icons">folder</span> Manage</a>
+            <a href="index.html" class="tab"><span class="material-icons">history</span> Action Log</a>
+        </div>
+
+        <div class="toolbar">
+            <div class="toolbar-group">
+                <a href="settings.html" class="toolbar-btn"><span class="material-icons">settings</span> Settings</a>
+                <a href="sql_query.html" class="toolbar-btn active"><span class="material-icons">terminal</span> SQL Query</a>
+            </div>
+            <div class="toolbar-divider"></div>
+            <div class="toolbar-group" style="margin-left: auto;">
+                <button class="toolbar-btn"><span class="material-icons">help_outline</span> SQL Help</button>
+            </div>
+        </div>
+
+        <div class="main-content">
+            <div class="center-panel">
+                <div class="sql-container">
+                    <!-- Sidebar -->
+                    <div class="sql-sidebar">
+                        <!-- Saved Queries -->
+                        <div class="sidebar-section">
+                            <div class="sidebar-header">
+                                <div class="sidebar-title">
+                                    <span class="material-icons">bookmark</span>
+                                    Saved Queries
+                                </div>
+                                <span class="material-icons sidebar-toggle">expand_more</span>
+                            </div>
+                            <div class="sidebar-content">
+                                <div class="saved-query selected">
+                                    <span class="material-icons">description</span>
+                                    <div class="saved-query-info">
+                                        <div class="saved-query-name">Get all codes with counts</div>
+                                        <div class="saved-query-date">Jan 28, 2025</div>
+                                    </div>
+                                </div>
+                                <div class="saved-query">
+                                    <span class="material-icons">description</span>
+                                    <div class="saved-query-info">
+                                        <div class="saved-query-name">Files by coder</div>
+                                        <div class="saved-query-date">Jan 25, 2025</div>
+                                    </div>
+                                </div>
+                                <div class="saved-query">
+                                    <span class="material-icons">description</span>
+                                    <div class="saved-query-info">
+                                        <div class="saved-query-name">Case attributes summary</div>
+                                        <div class="saved-query-date">Jan 20, 2025</div>
+                                    </div>
+                                </div>
+                                <div class="saved-query">
+                                    <span class="material-icons">description</span>
+                                    <div class="saved-query-info">
+                                        <div class="saved-query-name">Coded segments by file</div>
+                                        <div class="saved-query-date">Jan 15, 2025</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Database Schema -->
+                        <div class="sidebar-section" style="flex: 1; overflow-y: auto;">
+                            <div class="sidebar-header">
+                                <div class="sidebar-title">
+                                    <span class="material-icons">storage</span>
+                                    Database Schema
+                                </div>
+                                <span class="material-icons sidebar-toggle">expand_more</span>
+                            </div>
+                            <div class="schema-tree">
+                                <div class="schema-table">
+                                    <div class="table-header" onclick="toggleTable(this)">
+                                        <span class="material-icons">table_chart</span>
+                                        <span class="table-name">source</span>
+                                        <span class="table-count">12 rows</span>
+                                        <span class="material-icons" style="font-size: 16px;">expand_more</span>
+                                    </div>
+                                    <div class="table-columns expanded">
+                                        <div class="column-item"><span class="material-icons pk">vpn_key</span> id <span class="column-type">INTEGER</span></div>
+                                        <div class="column-item"><span class="material-icons">text_fields</span> name <span class="column-type">TEXT</span></div>
+                                        <div class="column-item"><span class="material-icons">text_fields</span> fulltext <span class="column-type">TEXT</span></div>
+                                        <div class="column-item"><span class="material-icons">text_fields</span> memo <span class="column-type">TEXT</span></div>
+                                        <div class="column-item"><span class="material-icons">text_fields</span> owner <span class="column-type">TEXT</span></div>
+                                        <div class="column-item"><span class="material-icons">text_fields</span> date <span class="column-type">TEXT</span></div>
+                                        <div class="column-item"><span class="material-icons">text_fields</span> mediapath <span class="column-type">TEXT</span></div>
+                                    </div>
+                                </div>
+                                <div class="schema-table">
+                                    <div class="table-header" onclick="toggleTable(this)">
+                                        <span class="material-icons">table_chart</span>
+                                        <span class="table-name">code_name</span>
+                                        <span class="table-count">15 rows</span>
+                                        <span class="material-icons" style="font-size: 16px;">chevron_right</span>
+                                    </div>
+                                    <div class="table-columns">
+                                        <div class="column-item"><span class="material-icons pk">vpn_key</span> cid <span class="column-type">INTEGER</span></div>
+                                        <div class="column-item"><span class="material-icons">text_fields</span> name <span class="column-type">TEXT</span></div>
+                                        <div class="column-item"><span class="material-icons">text_fields</span> memo <span class="column-type">TEXT</span></div>
+                                        <div class="column-item"><span class="material-icons fk">link</span> catid <span class="column-type">INTEGER</span></div>
+                                        <div class="column-item"><span class="material-icons">text_fields</span> color <span class="column-type">TEXT</span></div>
+                                    </div>
+                                </div>
+                                <div class="schema-table">
+                                    <div class="table-header" onclick="toggleTable(this)">
+                                        <span class="material-icons">table_chart</span>
+                                        <span class="table-name">code_text</span>
+                                        <span class="table-count">341 rows</span>
+                                        <span class="material-icons" style="font-size: 16px;">chevron_right</span>
+                                    </div>
+                                    <div class="table-columns">
+                                        <div class="column-item"><span class="material-icons pk">vpn_key</span> ctid <span class="column-type">INTEGER</span></div>
+                                        <div class="column-item"><span class="material-icons fk">link</span> cid <span class="column-type">INTEGER</span></div>
+                                        <div class="column-item"><span class="material-icons fk">link</span> fid <span class="column-type">INTEGER</span></div>
+                                        <div class="column-item"><span class="material-icons">tag</span> pos0 <span class="column-type">INTEGER</span></div>
+                                        <div class="column-item"><span class="material-icons">tag</span> pos1 <span class="column-type">INTEGER</span></div>
+                                        <div class="column-item"><span class="material-icons">text_fields</span> seltext <span class="column-type">TEXT</span></div>
+                                        <div class="column-item"><span class="material-icons">text_fields</span> owner <span class="column-type">TEXT</span></div>
+                                    </div>
+                                </div>
+                                <div class="schema-table">
+                                    <div class="table-header" onclick="toggleTable(this)">
+                                        <span class="material-icons">table_chart</span>
+                                        <span class="table-name">cases</span>
+                                        <span class="table-count">8 rows</span>
+                                        <span class="material-icons" style="font-size: 16px;">chevron_right</span>
+                                    </div>
+                                    <div class="table-columns">
+                                        <div class="column-item"><span class="material-icons pk">vpn_key</span> caseid <span class="column-type">INTEGER</span></div>
+                                        <div class="column-item"><span class="material-icons">text_fields</span> name <span class="column-type">TEXT</span></div>
+                                        <div class="column-item"><span class="material-icons">text_fields</span> memo <span class="column-type">TEXT</span></div>
+                                        <div class="column-item"><span class="material-icons">text_fields</span> owner <span class="column-type">TEXT</span></div>
+                                    </div>
+                                </div>
+                                <div class="schema-table">
+                                    <div class="table-header" onclick="toggleTable(this)">
+                                        <span class="material-icons">table_chart</span>
+                                        <span class="table-name">attribute</span>
+                                        <span class="table-count">5 rows</span>
+                                        <span class="material-icons" style="font-size: 16px;">chevron_right</span>
+                                    </div>
+                                    <div class="table-columns">
+                                        <div class="column-item"><span class="material-icons pk">vpn_key</span> attrid <span class="column-type">INTEGER</span></div>
+                                        <div class="column-item"><span class="material-icons">text_fields</span> name <span class="column-type">TEXT</span></div>
+                                        <div class="column-item"><span class="material-icons">text_fields</span> attr_type <span class="column-type">TEXT</span></div>
+                                    </div>
+                                </div>
+                                <div class="schema-table">
+                                    <div class="table-header" onclick="toggleTable(this)">
+                                        <span class="material-icons">table_chart</span>
+                                        <span class="table-name">journal</span>
+                                        <span class="table-count">12 rows</span>
+                                        <span class="material-icons" style="font-size: 16px;">chevron_right</span>
+                                    </div>
+                                    <div class="table-columns">
+                                        <div class="column-item"><span class="material-icons pk">vpn_key</span> jid <span class="column-type">INTEGER</span></div>
+                                        <div class="column-item"><span class="material-icons">text_fields</span> name <span class="column-type">TEXT</span></div>
+                                        <div class="column-item"><span class="material-icons">text_fields</span> jentry <span class="column-type">TEXT</span></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Main Content -->
+                    <div class="sql-main">
+                        <!-- Query Editor -->
+                        <div class="query-editor">
+                            <div class="editor-toolbar">
+                                <button class="btn btn-primary"><span class="material-icons">play_arrow</span> Run Query</button>
+                                <button class="btn btn-secondary"><span class="material-icons">bookmark_add</span> Save</button>
+                                <button class="btn btn-secondary"><span class="material-icons">clear_all</span> Clear</button>
+                                <div class="toolbar-divider"></div>
+                                <div class="quick-insert">
+                                    <span style="font-size: 11px; color: var(--text-secondary); margin-right: 4px;">Insert:</span>
+                                    <span class="quick-chip">SELECT *</span>
+                                    <span class="quick-chip">FROM</span>
+                                    <span class="quick-chip">WHERE</span>
+                                    <span class="quick-chip">JOIN</span>
+                                    <span class="quick-chip">GROUP BY</span>
+                                    <span class="quick-chip">ORDER BY</span>
+                                    <span class="quick-chip">LIMIT</span>
+                                </div>
+                            </div>
+                            <div class="editor-area">
+                                <div class="line-numbers">
+                                    1<br>2<br>3<br>4<br>5<br>6<br>7<br>8
+                                </div>
+                                <textarea class="code-input" spellcheck="false">SELECT
+    cn.name AS code_name,
+    cn.color,
+    COUNT(ct.ctid) AS segment_count,
+    cn.memo
+FROM code_name cn
+LEFT JOIN code_text ct ON cn.cid = ct.cid
+GROUP BY cn.cid
+ORDER BY segment_count DESC;</textarea>
+                            </div>
+                        </div>
+
+                        <!-- Results Panel -->
+                        <div class="results-panel">
+                            <div class="results-header">
+                                <div class="results-tabs">
+                                    <button class="results-tab active">Results</button>
+                                    <button class="results-tab">Messages</button>
+                                    <button class="results-tab">Execution Plan</button>
+                                </div>
+                                <div class="results-info">
+                                    <span><span class="material-icons">check_circle</span> 15 rows returned</span>
+                                    <span><span class="material-icons">timer</span> 12ms</span>
+                                    <button class="btn btn-sm btn-secondary"><span class="material-icons">download</span> Export CSV</button>
+                                </div>
+                            </div>
+                            <div class="results-content">
+                                <table class="results-table">
+                                    <thead>
+                                        <tr>
+                                            <th>code_name</th>
+                                            <th>color</th>
+                                            <th>segment_count</th>
+                                            <th>memo</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td>Learning Motivation</td>
+                                            <td>#FFC107</td>
+                                            <td>56</td>
+                                            <td class="truncated">Themes related to student motivation...</td>
+                                        </tr>
+                                        <tr>
+                                            <td>Platform Features</td>
+                                            <td>#2196F3</td>
+                                            <td>48</td>
+                                            <td class="truncated">Discussion of LMS features and tools...</td>
+                                        </tr>
+                                        <tr>
+                                            <td>Challenges</td>
+                                            <td>#F44336</td>
+                                            <td>42</td>
+                                            <td class="truncated">Obstacles and difficulties reported...</td>
+                                        </tr>
+                                        <tr>
+                                            <td>Success Stories</td>
+                                            <td>#4CAF50</td>
+                                            <td>35</td>
+                                            <td class="truncated">Positive outcomes and achievements...</td>
+                                        </tr>
+                                        <tr>
+                                            <td>Social Interaction</td>
+                                            <td>#9C27B0</td>
+                                            <td>31</td>
+                                            <td class="truncated">Peer interaction and collaboration...</td>
+                                        </tr>
+                                        <tr>
+                                            <td>Time Management</td>
+                                            <td>#FF5722</td>
+                                            <td>28</td>
+                                            <td class="truncated">Scheduling and time allocation...</td>
+                                        </tr>
+                                        <tr>
+                                            <td>Content Quality</td>
+                                            <td>#795548</td>
+                                            <td>24</td>
+                                            <td class="truncated">Quality of course materials...</td>
+                                        </tr>
+                                        <tr>
+                                            <td>Technical Issues</td>
+                                            <td>#607D8B</td>
+                                            <td>22</td>
+                                            <td class="truncated">Technical problems encountered...</td>
+                                        </tr>
+                                        <tr>
+                                            <td>Instructor Support</td>
+                                            <td>#00BCD4</td>
+                                            <td>19</td>
+                                            <td class="truncated">Support from instructors and TAs...</td>
+                                        </tr>
+                                        <tr>
+                                            <td>Self-Directed Learning</td>
+                                            <td>#8BC34A</td>
+                                            <td>15</td>
+                                            <td class="truncated">Autonomous learning strategies...</td>
+                                        </tr>
+                                        <tr>
+                                            <td>Assessment Feedback</td>
+                                            <td>#E91E63</td>
+                                            <td>12</td>
+                                            <td class="truncated">Feedback on assignments and exams...</td>
+                                        </tr>
+                                        <tr>
+                                            <td>Resource Access</td>
+                                            <td>#3F51B5</td>
+                                            <td>10</td>
+                                            <td class="truncated">Access to learning resources...</td>
+                                        </tr>
+                                        <tr>
+                                            <td>Engagement Strategies</td>
+                                            <td>#FFEB3B</td>
+                                            <td>8</td>
+                                            <td class="truncated">Methods to stay engaged...</td>
+                                        </tr>
+                                        <tr>
+                                            <td>Work-Life Balance</td>
+                                            <td>#009688</td>
+                                            <td>6</td>
+                                            <td class="truncated">Balancing study with other life...</td>
+                                        </tr>
+                                        <tr>
+                                            <td>Career Relevance</td>
+                                            <td>#FF9800</td>
+                                            <td>4</td>
+                                            <td class="truncated">Connection to career goals...</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="status-bar">
+            <div class="status-left">
+                <span class="status-item"><span class="material-icons">check_circle</span> Query executed successfully</span>
+                <span class="status-item"><span class="material-icons">storage</span> research_project.qda</span>
+            </div>
+            <div class="status-right">
+                <span class="status-item"><span class="material-icons">table_chart</span> 6 tables, 341 coded segments</span>
+                <span class="status-item"><span class="material-icons">person</span> colin</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="theme-toggle">
+        <button class="theme-btn" onclick="toggleTheme()" title="Toggle theme">
+            <span class="material-icons" id="theme-icon">light_mode</span>
+        </button>
+    </div>
+
+    <script>
+        let isDark = true;
+        function toggleTheme() {
+            isDark = !isDark;
+            document.body.classList.toggle('light-theme', !isDark);
+            document.getElementById('theme-icon').textContent = isDark ? 'light_mode' : 'dark_mode';
+        }
+
+        function toggleTable(header) {
+            const columns = header.nextElementSibling;
+            const icon = header.querySelector('.material-icons:last-child');
+            if (columns.classList.contains('expanded')) {
+                columns.classList.remove('expanded');
+                icon.textContent = 'chevron_right';
+            } else {
+                columns.classList.add('expanded');
+                icon.textContent = 'expand_more';
+            }
+        }
+
+        document.querySelectorAll('.saved-query').forEach(query => {
+            query.addEventListener('click', function() {
+                document.querySelectorAll('.saved-query').forEach(q => q.classList.remove('selected'));
+                this.classList.add('selected');
+            });
+        });
+
+        document.querySelectorAll('.results-tab').forEach(tab => {
+            tab.addEventListener('click', function() {
+                document.querySelectorAll('.results-tab').forEach(t => t.classList.remove('active'));
+                this.classList.add('active');
+            });
+        });
+
+        document.querySelectorAll('.quick-chip').forEach(chip => {
+            chip.addEventListener('click', function() {
+                const textarea = document.querySelector('.code-input');
+                const text = this.textContent + ' ';
+                const start = textarea.selectionStart;
+                textarea.value = textarea.value.substring(0, start) + text + textarea.value.substring(start);
+                textarea.focus();
+                textarea.selectionStart = textarea.selectionEnd = start + text.length;
+            });
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,1242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QualCoder - File Manager (Material Design)</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <style>
+        :root {
+            /* Material Design Teal Theme - Dark Mode */
+            --primary: #009688;
+            --primary-light: #4DB6AC;
+            --primary-dark: #00796B;
+            --secondary: #FF5722;
+            --background: #1E1E1E;
+            --surface: #2D2D2D;
+            --surface-light: #383838;
+            --surface-lighter: #424242;
+            --text-primary: #FFFFFF;
+            --text-secondary: #B0B0B0;
+            --text-disabled: #6B6B6B;
+            --border: #404040;
+            --success: #4CAF50;
+            --warning: #FF9800;
+            --error: #F44336;
+            --info: #2196F3;
+            --shadow-1: 0 2px 4px rgba(0,0,0,0.3);
+            --shadow-2: 0 4px 8px rgba(0,0,0,0.3);
+            --shadow-3: 0 8px 16px rgba(0,0,0,0.3);
+            --transition: all 0.2s ease-in-out;
+        }
+
+        .light-theme {
+            --background: #FAFAFA;
+            --surface: #FFFFFF;
+            --surface-light: #F5F5F5;
+            --surface-lighter: #EEEEEE;
+            --text-primary: #212121;
+            --text-secondary: #757575;
+            --text-disabled: #9E9E9E;
+            --border: #E0E0E0;
+            --shadow-1: 0 2px 4px rgba(0,0,0,0.1);
+            --shadow-2: 0 4px 8px rgba(0,0,0,0.1);
+            --shadow-3: 0 8px 16px rgba(0,0,0,0.15);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: var(--background);
+            color: var(--text-primary);
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        .app-container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* Title Bar */
+        .title-bar {
+            background: var(--surface);
+            padding: 8px 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .title-bar h1 {
+            font-size: 16px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .logo {
+            width: 24px;
+            height: 24px;
+            background: var(--primary);
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 700;
+            font-size: 12px;
+        }
+
+        .window-controls { display: flex; gap: 8px; }
+        .window-btn {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            border: none;
+            cursor: pointer;
+        }
+        .window-btn.close { background: #FF5F56; }
+        .window-btn.minimize { background: #FFBD2E; }
+        .window-btn.maximize { background: #27C93F; }
+
+        /* Menu Bar */
+        .menu-bar {
+            background: var(--surface);
+            padding: 0 8px;
+            display: flex;
+            align-items: center;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .menu-item {
+            padding: 10px 16px;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: var(--transition);
+            font-size: 13px;
+            border-radius: 4px;
+            margin: 4px 2px;
+        }
+
+        .menu-item:hover {
+            background: var(--surface-light);
+            color: var(--text-primary);
+        }
+
+        /* Tab Bar */
+        .tab-bar {
+            background: var(--surface);
+            display: flex;
+            padding: 0 16px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .tab {
+            padding: 12px 24px;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: var(--transition);
+            border-bottom: 2px solid transparent;
+            font-weight: 500;
+            font-size: 13px;
+        }
+
+        .tab:hover {
+            color: var(--text-primary);
+            background: var(--surface-light);
+        }
+
+        .tab.active {
+            color: var(--primary);
+            border-bottom-color: var(--primary);
+        }
+
+        /* Toolbar */
+        .toolbar {
+            background: var(--surface);
+            padding: 12px 16px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            border-bottom: 1px solid var(--border);
+            flex-wrap: wrap;
+        }
+
+        .toolbar-btn {
+            height: 36px;
+            padding: 0 16px;
+            border: none;
+            background: var(--surface-light);
+            color: var(--text-primary);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            font-weight: 500;
+        }
+
+        .toolbar-btn:hover {
+            background: var(--surface-lighter);
+        }
+
+        .toolbar-btn.primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .toolbar-btn.primary:hover {
+            background: var(--primary-light);
+        }
+
+        .toolbar-btn .material-icons {
+            font-size: 18px;
+        }
+
+        .toolbar-divider {
+            width: 1px;
+            height: 24px;
+            background: var(--border);
+            margin: 0 8px;
+        }
+
+        .search-box {
+            display: flex;
+            align-items: center;
+            background: var(--surface-light);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 4px 12px;
+            margin-left: auto;
+        }
+
+        .search-box input {
+            background: transparent;
+            border: none;
+            color: var(--text-primary);
+            font-size: 13px;
+            padding: 4px 8px;
+            width: 250px;
+            outline: none;
+        }
+
+        .search-box input::placeholder {
+            color: var(--text-disabled);
+        }
+
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            overflow: hidden;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Stats Cards */
+        .stats-row {
+            display: flex;
+            gap: 16px;
+            margin-bottom: 16px;
+        }
+
+        .stat-card {
+            background: var(--surface);
+            border-radius: 12px;
+            padding: 16px 20px;
+            flex: 1;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            box-shadow: var(--shadow-1);
+        }
+
+        .stat-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .stat-icon.text { background: rgba(33, 150, 243, 0.2); color: #2196F3; }
+        .stat-icon.audio { background: rgba(156, 39, 176, 0.2); color: #9C27B0; }
+        .stat-icon.video { background: rgba(244, 67, 54, 0.2); color: #F44336; }
+        .stat-icon.image { background: rgba(76, 175, 80, 0.2); color: #4CAF50; }
+        .stat-icon.pdf { background: rgba(255, 87, 34, 0.2); color: #FF5722; }
+
+        .stat-info h3 {
+            font-size: 24px;
+            font-weight: 500;
+            margin-bottom: 2px;
+        }
+
+        .stat-info p {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        /* Data Table */
+        .table-container {
+            background: var(--surface);
+            border-radius: 12px;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            box-shadow: var(--shadow-1);
+        }
+
+        .table-header {
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .table-title {
+            font-weight: 500;
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .table-title .material-icons {
+            color: var(--primary);
+        }
+
+        .table-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .table-wrapper {
+            flex: 1;
+            overflow: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        thead {
+            background: var(--surface-light);
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        th {
+            padding: 12px 16px;
+            text-align: left;
+            font-weight: 500;
+            font-size: 12px;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border-bottom: 1px solid var(--border);
+            white-space: nowrap;
+        }
+
+        th .sort-icon {
+            font-size: 16px;
+            vertical-align: middle;
+            margin-left: 4px;
+            opacity: 0.5;
+        }
+
+        th:hover .sort-icon {
+            opacity: 1;
+        }
+
+        td {
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--border);
+            font-size: 13px;
+        }
+
+        tr:hover {
+            background: var(--surface-light);
+        }
+
+        tr.selected {
+            background: rgba(0, 150, 136, 0.1);
+        }
+
+        /* File row */
+        .file-cell {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .file-type-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+        }
+
+        .file-type-icon.text { background: rgba(33, 150, 243, 0.15); color: #2196F3; }
+        .file-type-icon.audio { background: rgba(156, 39, 176, 0.15); color: #9C27B0; }
+        .file-type-icon.video { background: rgba(244, 67, 54, 0.15); color: #F44336; }
+        .file-type-icon.image { background: rgba(76, 175, 80, 0.15); color: #4CAF50; }
+        .file-type-icon.pdf { background: rgba(255, 87, 34, 0.15); color: #FF5722; }
+
+        .file-details {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .file-name {
+            font-weight: 500;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .file-meta {
+            font-size: 11px;
+            color: var(--text-secondary);
+        }
+
+        /* Checkbox */
+        .checkbox {
+            width: 18px;
+            height: 18px;
+            border: 2px solid var(--text-disabled);
+            border-radius: 4px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: var(--transition);
+        }
+
+        .checkbox:hover {
+            border-color: var(--primary);
+        }
+
+        .checkbox.checked {
+            background: var(--primary);
+            border-color: var(--primary);
+        }
+
+        .checkbox.checked::after {
+            content: '✓';
+            color: white;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        /* Badge */
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 500;
+        }
+
+        .badge.success { background: rgba(76, 175, 80, 0.2); color: #4CAF50; }
+        .badge.warning { background: rgba(255, 152, 0, 0.2); color: #FF9800; }
+        .badge.info { background: rgba(33, 150, 243, 0.2); color: #2196F3; }
+
+        /* Action buttons in table */
+        .row-actions {
+            display: flex;
+            gap: 4px;
+            opacity: 0;
+            transition: var(--transition);
+        }
+
+        tr:hover .row-actions {
+            opacity: 1;
+        }
+
+        .row-btn {
+            width: 28px;
+            height: 28px;
+            border: none;
+            background: transparent;
+            color: var(--text-secondary);
+            border-radius: 6px;
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .row-btn:hover {
+            background: var(--surface-lighter);
+            color: var(--primary);
+        }
+
+        .row-btn .material-icons {
+            font-size: 18px;
+        }
+
+        /* Pagination */
+        .table-footer {
+            padding: 12px 20px;
+            border-top: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: var(--surface-light);
+        }
+
+        .pagination-info {
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        .pagination {
+            display: flex;
+            gap: 4px;
+        }
+
+        .page-btn {
+            width: 32px;
+            height: 32px;
+            border: none;
+            background: transparent;
+            color: var(--text-secondary);
+            border-radius: 6px;
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 13px;
+        }
+
+        .page-btn:hover {
+            background: var(--surface-lighter);
+        }
+
+        .page-btn.active {
+            background: var(--primary);
+            color: white;
+        }
+
+        /* Status Bar */
+        .status-bar {
+            background: var(--primary-dark);
+            color: white;
+            padding: 6px 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 12px;
+        }
+
+        .status-left, .status-right {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .status-item {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .status-item .material-icons {
+            font-size: 14px;
+        }
+
+        /* Theme Toggle */
+        .theme-toggle {
+            position: fixed;
+            bottom: 60px;
+            right: 20px;
+            z-index: 1000;
+        }
+
+        .theme-btn {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background: var(--primary);
+            color: white;
+            border: none;
+            cursor: pointer;
+            box-shadow: var(--shadow-3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: var(--transition);
+        }
+
+        .theme-btn:hover {
+            transform: scale(1.1);
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: var(--surface); }
+        ::-webkit-scrollbar-thumb { background: var(--surface-lighter); border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--text-disabled); }
+
+        /* Import Modal */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 2000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-overlay.show { display: flex; }
+
+        .modal {
+            background: var(--surface);
+            border-radius: 12px;
+            box-shadow: var(--shadow-3);
+            width: 500px;
+            max-width: 90%;
+            animation: modalSlideIn 0.2s ease-out;
+        }
+
+        @keyframes modalSlideIn {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .modal-header {
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .modal-title { font-size: 16px; font-weight: 500; }
+
+        .modal-close {
+            width: 32px;
+            height: 32px;
+            border: none;
+            background: transparent;
+            color: var(--text-secondary);
+            cursor: pointer;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-body { padding: 20px; }
+
+        .modal-footer {
+            padding: 12px 20px;
+            border-top: 1px solid var(--border);
+            display: flex;
+            justify-content: flex-end;
+            gap: 8px;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .btn-primary { background: var(--primary); color: white; }
+        .btn-primary:hover { background: var(--primary-light); }
+        .btn-secondary { background: var(--surface-light); color: var(--text-primary); }
+        .btn-secondary:hover { background: var(--surface-lighter); }
+
+        /* Drop Zone */
+        .drop-zone {
+            border: 2px dashed var(--border);
+            border-radius: 12px;
+            padding: 40px;
+            text-align: center;
+            transition: var(--transition);
+            cursor: pointer;
+        }
+
+        .drop-zone:hover, .drop-zone.drag-over {
+            border-color: var(--primary);
+            background: rgba(0, 150, 136, 0.05);
+        }
+
+        .drop-zone .material-icons {
+            font-size: 48px;
+            color: var(--primary);
+            margin-bottom: 12px;
+        }
+
+        .drop-zone h3 {
+            font-size: 16px;
+            margin-bottom: 8px;
+        }
+
+        .drop-zone p {
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        .file-types {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 16px;
+            justify-content: center;
+        }
+
+        .file-type-badge {
+            padding: 4px 10px;
+            background: var(--surface-light);
+            border-radius: 16px;
+            font-size: 11px;
+            color: var(--text-secondary);
+        }
+
+        /* Context Menu */
+        .context-menu {
+            position: fixed;
+            background: var(--surface);
+            border-radius: 8px;
+            box-shadow: var(--shadow-3);
+            padding: 8px 0;
+            min-width: 180px;
+            z-index: 3000;
+            display: none;
+        }
+
+        .context-menu.show { display: block; }
+
+        .context-item {
+            padding: 10px 16px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            cursor: pointer;
+            transition: var(--transition);
+            font-size: 13px;
+        }
+
+        .context-item:hover { background: var(--surface-light); }
+
+        .context-item .material-icons {
+            font-size: 18px;
+            color: var(--text-secondary);
+        }
+
+        .context-divider {
+            height: 1px;
+            background: var(--border);
+            margin: 8px 0;
+        }
+
+        .context-item.danger { color: var(--error); }
+        .context-item.danger .material-icons { color: var(--error); }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Title Bar -->
+        <div class="title-bar">
+            <h1>
+                <span class="logo">Q</span>
+                QualCoder - research_project.qda
+            </h1>
+            <div class="window-controls">
+                <button class="window-btn minimize"></button>
+                <button class="window-btn maximize"></button>
+                <button class="window-btn close"></button>
+            </div>
+        </div>
+
+        <!-- Menu Bar -->
+        <div class="menu-bar">
+            <a href="index.html" class="menu-item">Project</a>
+            <a href="phase1_file_manager.html" class="menu-item active">Files and Cases</a>
+            <a href="code_text.html" class="menu-item">Coding</a>
+            <a href="reports_coding.html" class="menu-item">Reports</a>
+            <a href="ai_chat.html" class="menu-item">AI</a>
+            <a href="settings.html" class="menu-item">Help</a>
+        </div>
+
+        <!-- Tab Bar -->
+        <div class="tab-bar">
+            <a href="code_text.html" class="tab"><span class="material-icons">code</span> Coding</a>
+            <a href="reports_coding.html" class="tab"><span class="material-icons">assessment</span> Reports</a>
+            <a href="phase1_file_manager.html" class="tab active"><span class="material-icons">folder</span> Manage</a>
+            <a href="index.html" class="tab"><span class="material-icons">history</span> Action Log</a>
+        </div>
+
+        <!-- Toolbar -->
+        <div class="toolbar">
+            <div class="toolbar-group">
+                <a href="phase1_file_manager.html" class="toolbar-btn active"><span class="material-icons">description</span> Files</a>
+                <a href="manage_cases.html" class="toolbar-btn"><span class="material-icons">people</span> Cases</a>
+                <a href="manage_journals.html" class="toolbar-btn"><span class="material-icons">book</span> Journals</a>
+                <a href="manage_attributes.html" class="toolbar-btn"><span class="material-icons">tune</span> Attributes</a>
+            </div>
+            <div class="toolbar-divider"></div>
+            <button class="toolbar-btn primary" onclick="showImportModal()">
+                <span class="material-icons">upload_file</span>
+                Import Files
+            </button>
+            <button class="toolbar-btn">
+                <span class="material-icons">link</span>
+                Link Files
+            </button>
+            <button class="toolbar-btn">
+                <span class="material-icons">edit</span>
+                Create Text
+            </button>
+            <div class="toolbar-divider"></div>
+            <button class="toolbar-btn">
+                <span class="material-icons">download</span>
+                Export
+            </button>
+            <div class="search-box">
+                <span class="material-icons" style="color: var(--text-disabled);">search</span>
+                <input type="text" placeholder="Search files...">
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Stats Cards -->
+            <div class="stats-row">
+                <div class="stat-card">
+                    <div class="stat-icon text">
+                        <span class="material-icons">description</span>
+                    </div>
+                    <div class="stat-info">
+                        <h3>12</h3>
+                        <p>Text Documents</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon audio">
+                        <span class="material-icons">audiotrack</span>
+                    </div>
+                    <div class="stat-info">
+                        <h3>5</h3>
+                        <p>Audio Files</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon video">
+                        <span class="material-icons">videocam</span>
+                    </div>
+                    <div class="stat-info">
+                        <h3>3</h3>
+                        <p>Video Files</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon image">
+                        <span class="material-icons">image</span>
+                    </div>
+                    <div class="stat-info">
+                        <h3>8</h3>
+                        <p>Images</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon pdf">
+                        <span class="material-icons">picture_as_pdf</span>
+                    </div>
+                    <div class="stat-info">
+                        <h3>4</h3>
+                        <p>PDF Documents</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Data Table -->
+            <div class="table-container">
+                <div class="table-header">
+                    <span class="table-title">
+                        <span class="material-icons">folder_open</span>
+                        Project Files
+                    </span>
+                    <div class="table-actions">
+                        <button class="toolbar-btn" style="padding: 0 12px; height: 32px;">
+                            <span class="material-icons">filter_list</span>
+                            Filter
+                        </button>
+                        <button class="toolbar-btn" style="padding: 0 12px; height: 32px;">
+                            <span class="material-icons">view_column</span>
+                            Columns
+                        </button>
+                    </div>
+                </div>
+                <div class="table-wrapper">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th style="width: 40px;">
+                                    <span class="checkbox"></span>
+                                </th>
+                                <th>File Name <span class="material-icons sort-icon">unfold_more</span></th>
+                                <th>Type</th>
+                                <th>Date Added <span class="material-icons sort-icon">unfold_more</span></th>
+                                <th>Cases</th>
+                                <th>Origin</th>
+                                <th>Status</th>
+                                <th style="width: 100px;">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr class="selected">
+                                <td><span class="checkbox checked"></span></td>
+                                <td>
+                                    <div class="file-cell">
+                                        <div class="file-type-icon text">
+                                            <span class="material-icons">description</span>
+                                        </div>
+                                        <div class="file-details">
+                                            <div class="file-name">interview_participant_01.docx</div>
+                                            <div class="file-meta">2.4 KB</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>Text</td>
+                                <td>Jan 15, 2026</td>
+                                <td>ID3</td>
+                                <td>Field Interview</td>
+                                <td><span class="badge success">Coded</span></td>
+                                <td>
+                                    <div class="row-actions">
+                                        <button class="row-btn" title="View"><span class="material-icons">visibility</span></button>
+                                        <button class="row-btn" title="Edit"><span class="material-icons">edit</span></button>
+                                        <button class="row-btn" title="More"><span class="material-icons">more_vert</span></button>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td><span class="checkbox"></span></td>
+                                <td>
+                                    <div class="file-cell">
+                                        <div class="file-type-icon audio">
+                                            <span class="material-icons">audiotrack</span>
+                                        </div>
+                                        <div class="file-details">
+                                            <div class="file-name">focus_group_session_02.mp3</div>
+                                            <div class="file-meta">45.2 MB</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>Audio</td>
+                                <td>Jan 14, 2026</td>
+                                <td>-</td>
+                                <td>Focus Group</td>
+                                <td><span class="badge warning">Transcribing</span></td>
+                                <td>
+                                    <div class="row-actions">
+                                        <button class="row-btn" title="View"><span class="material-icons">visibility</span></button>
+                                        <button class="row-btn" title="Edit"><span class="material-icons">edit</span></button>
+                                        <button class="row-btn" title="More"><span class="material-icons">more_vert</span></button>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td><span class="checkbox"></span></td>
+                                <td>
+                                    <div class="file-cell">
+                                        <div class="file-type-icon pdf">
+                                            <span class="material-icons">picture_as_pdf</span>
+                                        </div>
+                                        <div class="file-details">
+                                            <div class="file-name">literature_review_chapter3.pdf</div>
+                                            <div class="file-meta">1.8 MB</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>PDF</td>
+                                <td>Jan 12, 2026</td>
+                                <td>-</td>
+                                <td>Literature</td>
+                                <td><span class="badge info">Imported</span></td>
+                                <td>
+                                    <div class="row-actions">
+                                        <button class="row-btn" title="View"><span class="material-icons">visibility</span></button>
+                                        <button class="row-btn" title="Edit"><span class="material-icons">edit</span></button>
+                                        <button class="row-btn" title="More"><span class="material-icons">more_vert</span></button>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td><span class="checkbox"></span></td>
+                                <td>
+                                    <div class="file-cell">
+                                        <div class="file-type-icon video">
+                                            <span class="material-icons">videocam</span>
+                                        </div>
+                                        <div class="file-details">
+                                            <div class="file-name">classroom_observation_01.mp4</div>
+                                            <div class="file-meta">234.5 MB</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>Video</td>
+                                <td>Jan 10, 2026</td>
+                                <td>ID1, ID2</td>
+                                <td>Observation</td>
+                                <td><span class="badge success">Coded</span></td>
+                                <td>
+                                    <div class="row-actions">
+                                        <button class="row-btn" title="View"><span class="material-icons">visibility</span></button>
+                                        <button class="row-btn" title="Edit"><span class="material-icons">edit</span></button>
+                                        <button class="row-btn" title="More"><span class="material-icons">more_vert</span></button>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td><span class="checkbox"></span></td>
+                                <td>
+                                    <div class="file-cell">
+                                        <div class="file-type-icon image">
+                                            <span class="material-icons">image</span>
+                                        </div>
+                                        <div class="file-details">
+                                            <div class="file-name">participant_drawing_therapy.jpg</div>
+                                            <div class="file-meta">892 KB</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>Image</td>
+                                <td>Jan 8, 2026</td>
+                                <td>ID4</td>
+                                <td>Art Therapy</td>
+                                <td><span class="badge success">Coded</span></td>
+                                <td>
+                                    <div class="row-actions">
+                                        <button class="row-btn" title="View"><span class="material-icons">visibility</span></button>
+                                        <button class="row-btn" title="Edit"><span class="material-icons">edit</span></button>
+                                        <button class="row-btn" title="More"><span class="material-icons">more_vert</span></button>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td><span class="checkbox"></span></td>
+                                <td>
+                                    <div class="file-cell">
+                                        <div class="file-type-icon text">
+                                            <span class="material-icons">description</span>
+                                        </div>
+                                        <div class="file-details">
+                                            <div class="file-name">field_notes_week2.odt</div>
+                                            <div class="file-meta">156 KB</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>Text</td>
+                                <td>Jan 5, 2026</td>
+                                <td>-</td>
+                                <td>Field Notes</td>
+                                <td><span class="badge warning">In Progress</span></td>
+                                <td>
+                                    <div class="row-actions">
+                                        <button class="row-btn" title="View"><span class="material-icons">visibility</span></button>
+                                        <button class="row-btn" title="Edit"><span class="material-icons">edit</span></button>
+                                        <button class="row-btn" title="More"><span class="material-icons">more_vert</span></button>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="table-footer">
+                    <span class="pagination-info">Showing 1-6 of 32 files</span>
+                    <div class="pagination">
+                        <button class="page-btn"><span class="material-icons">chevron_left</span></button>
+                        <button class="page-btn active">1</button>
+                        <button class="page-btn">2</button>
+                        <button class="page-btn">3</button>
+                        <button class="page-btn">4</button>
+                        <button class="page-btn">5</button>
+                        <button class="page-btn"><span class="material-icons">chevron_right</span></button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Status Bar -->
+        <div class="status-bar">
+            <div class="status-left">
+                <span class="status-item">
+                    <span class="material-icons">check_circle</span>
+                    Ready
+                </span>
+                <span class="status-item">
+                    <span class="material-icons">storage</span>
+                    32 files &bull; 1.2 GB total
+                </span>
+            </div>
+            <div class="status-right">
+                <span class="status-item">
+                    <span class="material-icons">psychology</span>
+                    AI: Reading files...
+                </span>
+                <span class="status-item">
+                    <span class="material-icons">schedule</span>
+                    Last saved: 2 min ago
+                </span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Theme Toggle -->
+    <div class="theme-toggle">
+        <button class="theme-btn" onclick="toggleTheme()" title="Toggle theme">
+            <span class="material-icons" id="theme-icon">light_mode</span>
+        </button>
+    </div>
+
+    <!-- Import Modal -->
+    <div class="modal-overlay" id="importModal">
+        <div class="modal">
+            <div class="modal-header">
+                <span class="modal-title">Import Files</span>
+                <button class="modal-close" onclick="hideImportModal()">
+                    <span class="material-icons">close</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="drop-zone" id="dropZone">
+                    <span class="material-icons">cloud_upload</span>
+                    <h3>Drag & Drop Files Here</h3>
+                    <p>or click to browse your computer</p>
+                    <div class="file-types">
+                        <span class="file-type-badge">TXT</span>
+                        <span class="file-type-badge">DOCX</span>
+                        <span class="file-type-badge">ODT</span>
+                        <span class="file-type-badge">PDF</span>
+                        <span class="file-type-badge">EPUB</span>
+                        <span class="file-type-badge">MP3</span>
+                        <span class="file-type-badge">MP4</span>
+                        <span class="file-type-badge">JPG</span>
+                        <span class="file-type-badge">PNG</span>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="hideImportModal()">Cancel</button>
+                <button class="btn btn-primary">
+                    <span class="material-icons">upload</span>
+                    Import Selected
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Context Menu -->
+    <div class="context-menu" id="contextMenu">
+        <div class="context-item">
+            <span class="material-icons">visibility</span>
+            View File
+        </div>
+        <div class="context-item">
+            <span class="material-icons">code</span>
+            Code File
+        </div>
+        <div class="context-item">
+            <span class="material-icons">note_add</span>
+            Add Memo
+        </div>
+        <div class="context-divider"></div>
+        <div class="context-item">
+            <span class="material-icons">edit</span>
+            Rename
+        </div>
+        <div class="context-item">
+            <span class="material-icons">download</span>
+            Export
+        </div>
+        <div class="context-divider"></div>
+        <div class="context-item danger">
+            <span class="material-icons">delete</span>
+            Delete
+        </div>
+    </div>
+
+    <script>
+        let isDark = true;
+
+        function toggleTheme() {
+            isDark = !isDark;
+            document.body.classList.toggle('light-theme', !isDark);
+            document.getElementById('theme-icon').textContent = isDark ? 'light_mode' : 'dark_mode';
+        }
+
+        function showImportModal() {
+            document.getElementById('importModal').classList.add('show');
+        }
+
+        function hideImportModal() {
+            document.getElementById('importModal').classList.remove('show');
+        }
+
+        // Drop zone interactions
+        const dropZone = document.getElementById('dropZone');
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropZone.classList.add('drag-over');
+        });
+        dropZone.addEventListener('dragleave', () => {
+            dropZone.classList.remove('drag-over');
+        });
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('drag-over');
+        });
+
+        // Close modal on overlay click
+        document.getElementById('importModal').addEventListener('click', function(e) {
+            if (e.target === this) hideImportModal();
+        });
+
+        // Close modal on Escape key
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') hideImportModal();
+        });
+
+        // Checkbox toggle
+        document.querySelectorAll('.checkbox').forEach(cb => {
+            cb.addEventListener('click', () => {
+                cb.classList.toggle('checked');
+            });
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,968 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QualCoder - Text Coding</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link href="css/material-theme.css" rel="stylesheet">
+    <style>
+        /* Page-specific styles */
+        .center-panel {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            background: var(--background);
+        }
+
+        .editor-header {
+            padding: 12px 16px;
+            background: var(--surface);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .editor-title {
+            font-size: 14px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .editor-title .material-icons {
+            color: var(--primary);
+        }
+
+        .editor-stats {
+            display: flex;
+            gap: 16px;
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        .editor-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 24px 32px;
+            background: var(--surface);
+            margin: 16px;
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-2);
+        }
+
+        .text-content {
+            font-family: 'Roboto', sans-serif;
+            font-size: 15px;
+            line-height: 1.8;
+            color: var(--text-primary);
+        }
+
+        .text-content p {
+            margin-bottom: 16px;
+        }
+
+        /* Coded text highlights */
+        .coded {
+            padding: 2px 0;
+            border-radius: 2px;
+            cursor: pointer;
+            transition: var(--transition);
+            position: relative;
+        }
+
+        .coded:hover {
+            filter: brightness(1.2);
+        }
+
+        .coded.yellow { background: rgba(255, 193, 7, 0.3); border-bottom: 2px solid #FFC107; }
+        .coded.red { background: rgba(244, 67, 54, 0.3); border-bottom: 2px solid #F44336; }
+        .coded.green { background: rgba(76, 175, 80, 0.3); border-bottom: 2px solid #4CAF50; }
+        .coded.purple { background: rgba(156, 39, 176, 0.3); border-bottom: 2px solid #9C27B0; }
+        .coded.blue { background: rgba(33, 150, 243, 0.3); border-bottom: 2px solid #2196F3; }
+        .coded.pink { background: rgba(233, 30, 99, 0.3); border-bottom: 2px solid #E91E63; }
+        .coded.orange { background: rgba(255, 152, 0, 0.3); border-bottom: 2px solid #FF9800; }
+
+        .coded.overlap {
+            text-decoration: overline;
+            text-decoration-color: var(--warning);
+            text-decoration-thickness: 2px;
+        }
+
+        /* Code count indicator */
+        .code-indicator {
+            position: absolute;
+            top: -8px;
+            right: -4px;
+            background: var(--primary);
+            color: white;
+            font-size: 9px;
+            padding: 1px 4px;
+            border-radius: 8px;
+            font-weight: 500;
+        }
+
+        /* Annotation */
+        .annotation {
+            font-weight: 600;
+            text-decoration: underline;
+            text-decoration-style: dotted;
+            cursor: help;
+            color: var(--info);
+        }
+
+        /* Files list */
+        .file-list {
+            flex: 1;
+            overflow-y: auto;
+            padding: 8px;
+        }
+
+        .file-item {
+            display: flex;
+            align-items: center;
+            padding: 10px 12px;
+            border-radius: var(--radius-md);
+            cursor: pointer;
+            transition: var(--transition);
+            margin-bottom: 2px;
+        }
+
+        .file-item:hover {
+            background: var(--surface-light);
+        }
+
+        .file-item.selected {
+            background: rgba(0, 150, 136, 0.15);
+            border-left: 3px solid var(--primary);
+        }
+
+        .file-info {
+            flex: 1;
+            min-width: 0;
+            margin-left: 12px;
+        }
+
+        .file-name {
+            font-size: 13px;
+            color: var(--text-primary);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .file-meta {
+            font-size: 11px;
+            color: var(--text-secondary);
+            margin-top: 2px;
+        }
+
+        /* Codes panel */
+        .codes-panel {
+            border-top: 1px solid var(--border);
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .code-tree {
+            flex: 1;
+            overflow-y: auto;
+            padding: 8px;
+        }
+
+        .code-category {
+            margin-bottom: 8px;
+        }
+
+        .category-header {
+            display: flex;
+            align-items: center;
+            padding: 8px 12px;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            transition: var(--transition);
+            color: var(--text-secondary);
+        }
+
+        .category-header:hover {
+            background: var(--surface-light);
+        }
+
+        .category-header .material-icons {
+            font-size: 18px;
+            margin-right: 8px;
+            transition: var(--transition);
+        }
+
+        .category-header.expanded .material-icons.expand {
+            transform: rotate(90deg);
+        }
+
+        .category-name {
+            font-weight: 500;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .category-count {
+            margin-left: auto;
+            font-size: 11px;
+            background: var(--surface-lighter);
+            padding: 2px 8px;
+            border-radius: 10px;
+        }
+
+        .code-list {
+            padding-left: 24px;
+        }
+
+        .code-item {
+            display: flex;
+            align-items: center;
+            padding: 8px 12px;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            transition: var(--transition);
+            margin-bottom: 2px;
+        }
+
+        .code-item:hover {
+            background: var(--surface-light);
+        }
+
+        .code-item.selected {
+            background: rgba(0, 150, 136, 0.15);
+        }
+
+        .code-item.active {
+            border: 1px solid var(--primary);
+        }
+
+        .code-name {
+            font-size: 13px;
+            flex: 1;
+            margin-left: 10px;
+        }
+
+        .code-count {
+            font-size: 11px;
+            color: var(--text-secondary);
+            background: var(--surface-lighter);
+            padding: 2px 8px;
+            border-radius: 10px;
+        }
+
+        /* Code navigation */
+        .code-nav {
+            display: flex;
+            gap: 4px;
+            padding: 8px;
+            border-top: 1px solid var(--border);
+        }
+
+        .code-nav .toolbar-btn {
+            flex: 1;
+        }
+
+        /* Right panel info cards */
+        .info-card {
+            padding: 16px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .info-card-title {
+            font-size: 12px;
+            font-weight: 500;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .info-card-title .material-icons {
+            font-size: 16px;
+            color: var(--primary);
+        }
+
+        .code-details {
+            background: var(--surface-light);
+            border-radius: var(--radius-md);
+            padding: 12px;
+        }
+
+        .code-detail-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+
+        .code-detail-color {
+            width: 16px;
+            height: 16px;
+            border-radius: var(--radius-xs);
+        }
+
+        .code-detail-name {
+            font-weight: 500;
+            font-size: 14px;
+        }
+
+        .code-detail-memo {
+            font-size: 12px;
+            color: var(--text-secondary);
+            line-height: 1.6;
+        }
+
+        .example-text {
+            background: var(--surface-lighter);
+            border-radius: var(--radius-sm);
+            padding: 10px;
+            margin-top: 8px;
+            font-size: 12px;
+            font-style: italic;
+            color: var(--text-secondary);
+            border-left: 3px solid var(--code-yellow);
+        }
+
+        /* Selection popup */
+        .selection-popup {
+            position: fixed;
+            background: var(--surface);
+            border-radius: var(--radius-md);
+            box-shadow: var(--shadow-3);
+            padding: 8px;
+            display: none;
+            z-index: 1100;
+        }
+
+        .selection-popup.show {
+            display: flex;
+            gap: 4px;
+        }
+
+        .selection-popup .toolbar-btn {
+            width: 32px;
+            height: 32px;
+        }
+
+        /* Overlapping codes indicator */
+        .overlap-indicator {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 12px;
+            background: rgba(255, 152, 0, 0.1);
+            border-radius: var(--radius-md);
+            margin-bottom: 12px;
+            font-size: 12px;
+            border: 1px solid rgba(255, 152, 0, 0.3);
+        }
+
+        .overlap-indicator .material-icons {
+            color: var(--warning);
+            font-size: 18px;
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Title Bar -->
+        <div class="title-bar">
+            <h1>
+                <span class="logo">Q</span>
+                QualCoder - research_project.qda
+            </h1>
+            <div class="window-controls">
+                <button class="window-btn minimize"></button>
+                <button class="window-btn maximize"></button>
+                <button class="window-btn close"></button>
+            </div>
+        </div>
+
+        <!-- Menu Bar -->
+        <div class="menu-bar">
+            <a href="index.html" class="menu-item">Project</a>
+            <a href="phase1_file_manager.html" class="menu-item">Files and Cases</a>
+            <a href="code_text.html" class="menu-item active">Coding</a>
+            <a href="reports_coding.html" class="menu-item">Reports</a>
+            <a href="ai_chat.html" class="menu-item">AI</a>
+            <a href="settings.html" class="menu-item">Help</a>
+        </div>
+
+        <!-- Tab Bar -->
+        <div class="tab-bar">
+            <a href="code_text.html" class="tab active">
+                <span class="material-icons">code</span>
+                Coding
+            </a>
+            <a href="reports_coding.html" class="tab">
+                <span class="material-icons">assessment</span>
+                Reports
+            </a>
+            <a href="phase1_file_manager.html" class="tab">
+                <span class="material-icons">folder</span>
+                Manage
+            </a>
+            <a href="index.html" class="tab">
+                <span class="material-icons">history</span>
+                Action Log
+            </a>
+        </div>
+
+        <!-- Toolbar -->
+        <div class="toolbar">
+            <div class="toolbar-group">
+                <a href="code_text.html" class="toolbar-btn active"><span class="material-icons">description</span> Text</a>
+                <a href="code_image.html" class="toolbar-btn"><span class="material-icons">image</span> Image</a>
+                <a href="code_av.html" class="toolbar-btn"><span class="material-icons">videocam</span> A/V</a>
+                <a href="code_pdf.html" class="toolbar-btn"><span class="material-icons">picture_as_pdf</span> PDF</a>
+            </div>
+            <div class="toolbar-divider"></div>
+            <div class="toolbar-group">
+                <span class="toolbar-label">Coder:</span>
+                <select class="toolbar-select">
+                    <option>colin</option>
+                    <option>sarah</option>
+                    <option>james</option>
+                </select>
+            </div>
+            <div class="toolbar-group">
+                <button class="toolbar-btn" title="Help">
+                    <span class="material-icons">help_outline</span>
+                </button>
+                <button class="toolbar-btn" title="Text size">
+                    <span class="material-icons">text_fields</span>
+                </button>
+                <button class="toolbar-btn" title="Important only">
+                    <span class="material-icons">star_border</span>
+                </button>
+                <button class="toolbar-btn" title="Show annotations">
+                    <span class="material-icons">comment</span>
+                </button>
+            </div>
+            <div class="toolbar-group">
+                <button class="toolbar-btn" title="Previous">
+                    <span class="material-icons">navigate_before</span>
+                </button>
+                <span style="color: var(--text-secondary); font-size: 12px; min-width: 50px; text-align: center;">2 / 5</span>
+                <button class="toolbar-btn" title="Next">
+                    <span class="material-icons">navigate_next</span>
+                </button>
+            </div>
+            <div class="toolbar-group">
+                <button class="toolbar-btn" title="Auto-code exact">
+                    <span class="material-icons">auto_fix_high</span>
+                </button>
+                <button class="toolbar-btn" title="Auto-code fragment">
+                    <span class="material-icons">auto_awesome</span>
+                </button>
+                <button class="toolbar-btn" title="Mark speakers">
+                    <span class="material-icons">record_voice_over</span>
+                </button>
+                <button class="toolbar-btn" title="Undo auto-code">
+                    <span class="material-icons">undo</span>
+                </button>
+            </div>
+            <div class="toolbar-group">
+                <button class="toolbar-btn" title="Memo">
+                    <span class="material-icons">note_add</span>
+                </button>
+                <button class="toolbar-btn" title="Annotate">
+                    <span class="material-icons">edit_note</span>
+                </button>
+            </div>
+            <div class="search-box" style="margin-left: auto;">
+                <span class="material-icons">search</span>
+                <input type="text" placeholder="Search in text...">
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Left Panel - Files & Codes -->
+            <div class="panel panel-left">
+                <!-- Files Section -->
+                <div class="panel-header">
+                    <span class="panel-title">
+                        <span class="material-icons">folder_open</span>
+                        Files
+                    </span>
+                    <div class="panel-actions">
+                        <button class="panel-btn" title="Filter files">
+                            <span class="material-icons">filter_list</span>
+                        </button>
+                        <button class="panel-btn" title="File memo">
+                            <span class="material-icons">note</span>
+                        </button>
+                    </div>
+                </div>
+                <div class="file-list" style="max-height: 200px;">
+                    <div class="file-item">
+                        <div class="file-icon text">
+                            <span class="material-icons">description</span>
+                        </div>
+                        <div class="file-info">
+                            <div class="file-name">Blur - Girls & Boys.mp3.transcribed</div>
+                            <div class="file-meta">Text &bull; 2.4 KB &bull; 3 codes</div>
+                        </div>
+                    </div>
+                    <div class="file-item">
+                        <div class="file-icon text">
+                            <span class="material-icons">description</span>
+                        </div>
+                        <div class="file-info">
+                            <div class="file-name">ID1.docx</div>
+                            <div class="file-meta">Text &bull; 3.1 KB &bull; 7 codes</div>
+                        </div>
+                    </div>
+                    <div class="file-item selected">
+                        <div class="file-icon text">
+                            <span class="material-icons">description</span>
+                        </div>
+                        <div class="file-info">
+                            <div class="file-name">ID2.odt</div>
+                            <div class="file-meta">Text &bull; 1.2 KB &bull; 5 codes</div>
+                        </div>
+                    </div>
+                    <div class="file-item">
+                        <div class="file-icon text">
+                            <span class="material-icons">description</span>
+                        </div>
+                        <div class="file-info">
+                            <div class="file-name">ID3_interview.txt</div>
+                            <div class="file-meta">Text &bull; 8.5 KB &bull; 12 codes</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Codes Section -->
+                <div class="codes-panel">
+                    <div class="panel-header">
+                        <span class="panel-title">
+                            <span class="material-icons">label</span>
+                            Codes
+                        </span>
+                        <div class="panel-actions">
+                            <button class="panel-btn" title="Add code">
+                                <span class="material-icons">add</span>
+                            </button>
+                            <button class="panel-btn" title="Search codes">
+                                <span class="material-icons">search</span>
+                            </button>
+                            <button class="panel-btn" title="Expand all">
+                                <span class="material-icons">unfold_more</span>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="code-tree">
+                        <div class="code-category">
+                            <div class="category-header expanded">
+                                <span class="material-icons expand">chevron_right</span>
+                                <span class="category-name">Abilities</span>
+                                <span class="category-count">3</span>
+                            </div>
+                            <div class="code-list">
+                                <div class="code-item selected">
+                                    <span class="code-color" style="background: #FFC107;"></span>
+                                    <span class="code-name">soccer playing</span>
+                                    <span class="code-count">3</span>
+                                </div>
+                                <div class="code-item">
+                                    <span class="code-color" style="background: #F44336;"></span>
+                                    <span class="code-name">struggling</span>
+                                    <span class="code-count">5</span>
+                                </div>
+                                <div class="code-item">
+                                    <span class="code-color" style="background: #9C27B0;"></span>
+                                    <span class="code-name">tactics</span>
+                                    <span class="code-count">2</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="code-category">
+                            <div class="category-header expanded">
+                                <span class="material-icons expand">chevron_right</span>
+                                <span class="category-name">Opinion of Club</span>
+                                <span class="category-count">2</span>
+                            </div>
+                            <div class="code-list">
+                                <div class="code-item">
+                                    <span class="code-color" style="background: #4CAF50;"></span>
+                                    <span class="code-name">club development</span>
+                                    <span class="code-count">4</span>
+                                </div>
+                                <div class="code-item">
+                                    <span class="code-color" style="background: #2196F3;"></span>
+                                    <span class="code-name">facilities</span>
+                                    <span class="code-count">1</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="code-category">
+                            <div class="category-header expanded">
+                                <span class="material-icons expand">chevron_right</span>
+                                <span class="category-name">Motivation</span>
+                                <span class="category-count">3</span>
+                            </div>
+                            <div class="code-list">
+                                <div class="code-item">
+                                    <span class="code-color" style="background: #E91E63;"></span>
+                                    <span class="code-name">cost concerns</span>
+                                    <span class="code-count">2</span>
+                                </div>
+                                <div class="code-item">
+                                    <span class="code-color" style="background: #00BCD4;"></span>
+                                    <span class="code-name">learning enthusiasm</span>
+                                    <span class="code-count">6</span>
+                                </div>
+                                <div class="code-item">
+                                    <span class="code-color" style="background: #FF9800;"></span>
+                                    <span class="code-name">time pressure</span>
+                                    <span class="code-count">3</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="code-nav">
+                        <button class="toolbar-btn" title="Previous code instance">
+                            <span class="material-icons">skip_previous</span>
+                        </button>
+                        <button class="toolbar-btn" title="Next code instance">
+                            <span class="material-icons">skip_next</span>
+                        </button>
+                        <button class="toolbar-btn" title="Show all instances">
+                            <span class="material-icons">grid_view</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Center Panel - Editor -->
+            <div class="center-panel">
+                <div class="editor-header">
+                    <span class="editor-title">
+                        <span class="material-icons">edit_document</span>
+                        ID2.odt
+                        <span class="badge info" style="margin-left: 8px;">Case: ID2</span>
+                    </span>
+                    <div class="editor-stats">
+                        <span class="chip">
+                            <span class="material-icons">layers</span>
+                            2 overlapping
+                        </span>
+                        <span class="chip">
+                            <span class="material-icons">label</span>
+                            5 codes applied
+                        </span>
+                        <span class="chip">
+                            <span class="material-icons">text_fields</span>
+                            324 words
+                        </span>
+                    </div>
+                </div>
+                <div class="editor-content">
+                    <div class="text-content">
+                        <p>
+                            <span class="coded yellow">I have not studied much before.</span> I know that I must get help as I have <span class="coded red">struggled understanding the lecture slides</span> so far and searching the web did not help.
+                        </p>
+                        <p>
+                            I really want someone to sit down with me and explain the course material. The tutors seem helpful but there are not enough of them to go around.
+                        </p>
+                        <p>
+                            <span class="coded pink">The course cost &euro;200.00 and I do not want to waste my money.</span> I have to make the most of this opportunity.
+                        </p>
+                        <p>
+                            <span class="coded green overlap" style="position: relative;">
+                                I really like learning new things. I think this course is good for me as I have wanted to learn about world history for a while.
+                                <span class="code-indicator">2</span>
+                            </span> The structured content, lecture slides and web links have been really good. I guess some less computer-savvy people would have some <span class="annotation" title="Annotation: Accessibility concern noted by researcher">trouble</span> accessing the internet-based material, but its like a duck to water for me &ndash; no problem at all.
+                        </p>
+                        <p>
+                            <span class="coded red overlap" style="position: relative;">
+                                I get the feeling most students are having some problems with the coursework deadlines.
+                                <span class="code-indicator">2</span>
+                            </span> There is much to learn and not many of us practice directed learning. We need more guidance on <span class="coded orange">time management and prioritization</span>.
+                        </p>
+                        <p>
+                            Overall, I am <span class="coded blue">satisfied with the club's facilities</span> and the quality of instruction. The new training ground has made a big difference. <span class="coded green">I feel like I am improving week by week</span>, which keeps me motivated to continue.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Panel - Details -->
+            <div class="panel panel-right" style="border-left: 1px solid var(--border); border-right: none;">
+                <div class="info-card">
+                    <div class="info-card-title">
+                        <span class="material-icons">info</span>
+                        Selected Code
+                    </div>
+                    <div class="code-details">
+                        <div class="code-detail-header">
+                            <span class="code-detail-color" style="background: #FFC107;"></span>
+                            <span class="code-detail-name">soccer playing</span>
+                        </div>
+                        <div class="code-detail-memo">
+                            Code for references to playing soccer, including training, matches, and general participation in the sport.
+                        </div>
+                        <div class="example-text">
+                            "I have not studied much before..."
+                        </div>
+                    </div>
+                </div>
+
+                <div class="info-card">
+                    <div class="info-card-title">
+                        <span class="material-icons">warning</span>
+                        Overlapping Codes
+                    </div>
+                    <div class="overlap-indicator">
+                        <span class="material-icons">info</span>
+                        2 segments have multiple codes
+                    </div>
+                    <div style="font-size: 12px; color: var(--text-secondary);">
+                        <div style="margin-bottom: 8px; padding: 8px; background: var(--surface-light); border-radius: var(--radius-sm);">
+                            <strong>Segment 1:</strong>
+                            <div style="display: flex; gap: 4px; margin-top: 4px;">
+                                <span class="code-color" style="background: #4CAF50;"></span>
+                                <span class="code-color" style="background: #00BCD4;"></span>
+                            </div>
+                        </div>
+                        <div style="padding: 8px; background: var(--surface-light); border-radius: var(--radius-sm);">
+                            <strong>Segment 2:</strong>
+                            <div style="display: flex; gap: 4px; margin-top: 4px;">
+                                <span class="code-color" style="background: #F44336;"></span>
+                                <span class="code-color" style="background: #FF9800;"></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="info-card">
+                    <div class="info-card-title">
+                        <span class="material-icons">bookmark</span>
+                        File Memo
+                    </div>
+                    <div style="color: var(--text-secondary); font-size: 13px; line-height: 1.6;">
+                        Participant ID2 interview transcript. Student is positive about the course but expresses concerns about workload and cost.
+                    </div>
+                    <div class="progress-bar" style="margin-top: 12px;">
+                        <div class="progress-fill" style="width: 65%;"></div>
+                    </div>
+                    <div style="font-size: 11px; color: var(--text-disabled); margin-top: 4px;">
+                        Coding progress: 65%
+                    </div>
+                </div>
+
+                <div class="info-card">
+                    <div class="info-card-title">
+                        <span class="material-icons">smart_toy</span>
+                        AI Assistant
+                    </div>
+                    <button class="btn btn-primary" style="width: 100%;">
+                        <span class="material-icons">chat</span>
+                        Start AI Chat
+                    </button>
+                    <button class="btn btn-secondary" style="width: 100%; margin-top: 8px;">
+                        <span class="material-icons">auto_awesome</span>
+                        Suggest Codes
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Status Bar -->
+        <div class="status-bar">
+            <div class="status-left">
+                <span class="status-item">
+                    <span class="material-icons">check_circle</span>
+                    Ready
+                </span>
+                <span class="status-item">
+                    <span class="material-icons">storage</span>
+                    research_project.qda
+                </span>
+                <span class="status-item">
+                    <span class="material-icons">person</span>
+                    Coder: colin
+                </span>
+            </div>
+            <div class="status-right">
+                <span class="status-item">
+                    <span class="material-icons">psychology</span>
+                    AI: Connected
+                </span>
+                <span class="status-item">
+                    <span class="material-icons">schedule</span>
+                    Auto-save: 2 min ago
+                </span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Theme Toggle Button -->
+    <div class="theme-toggle">
+        <button class="theme-btn" onclick="toggleTheme()" title="Toggle theme">
+            <span class="material-icons" id="theme-icon">light_mode</span>
+        </button>
+    </div>
+
+    <!-- Selection Popup (shown when text is selected) -->
+    <div class="selection-popup" id="selectionPopup" style="top: 300px; left: 500px;">
+        <button class="toolbar-btn" title="Apply selected code" style="background: var(--primary); color: white;">
+            <span class="material-icons">label</span>
+        </button>
+        <button class="toolbar-btn" title="Quick code">
+            <span class="material-icons">add</span>
+        </button>
+        <button class="toolbar-btn" title="Add annotation">
+            <span class="material-icons">edit_note</span>
+        </button>
+        <button class="toolbar-btn" title="Add memo">
+            <span class="material-icons">note_add</span>
+        </button>
+    </div>
+
+    <!-- FAB for quick code -->
+    <button class="fab" onclick="showCodeModal()" title="Quick code">
+        <span class="material-icons">add</span>
+    </button>
+
+    <!-- Modal for creating code -->
+    <div class="modal-overlay" id="codeModal">
+        <div class="modal">
+            <div class="modal-header">
+                <span class="modal-title">
+                    <span class="material-icons" style="color: var(--primary);">label</span>
+                    Create New Code
+                </span>
+                <button class="modal-close" onclick="hideCodeModal()">
+                    <span class="material-icons">close</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label class="form-label">Code Name</label>
+                    <input type="text" class="form-input" placeholder="Enter code name...">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Category</label>
+                    <select class="form-input">
+                        <option>Abilities</option>
+                        <option>Opinion of Club</option>
+                        <option>Motivation</option>
+                        <option value="new">+ Create new category</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Memo</label>
+                    <textarea class="form-input" placeholder="Add a description..."></textarea>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Color</label>
+                    <div style="display: flex; gap: 8px; margin-top: 4px; flex-wrap: wrap;">
+                        <span style="width: 28px; height: 28px; border-radius: var(--radius-sm); background: #F44336; cursor: pointer;"></span>
+                        <span style="width: 28px; height: 28px; border-radius: var(--radius-sm); background: #E91E63; cursor: pointer;"></span>
+                        <span style="width: 28px; height: 28px; border-radius: var(--radius-sm); background: #9C27B0; cursor: pointer;"></span>
+                        <span style="width: 28px; height: 28px; border-radius: var(--radius-sm); background: #2196F3; cursor: pointer;"></span>
+                        <span style="width: 28px; height: 28px; border-radius: var(--radius-sm); background: #00BCD4; cursor: pointer;"></span>
+                        <span style="width: 28px; height: 28px; border-radius: var(--radius-sm); background: #4CAF50; cursor: pointer;"></span>
+                        <span style="width: 28px; height: 28px; border-radius: var(--radius-sm); background: #FFC107; cursor: pointer; border: 2px solid var(--primary);"></span>
+                        <span style="width: 28px; height: 28px; border-radius: var(--radius-sm); background: #FF9800; cursor: pointer;"></span>
+                        <span style="width: 28px; height: 28px; border-radius: var(--radius-sm); background: #FF5722; cursor: pointer;"></span>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="hideCodeModal()">Cancel</button>
+                <button class="btn btn-primary" onclick="hideCodeModal()">
+                    <span class="material-icons">check</span>
+                    Create Code
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div class="toast-container">
+        <div class="toast success" id="toast" style="display: none;">
+            <span class="material-icons" style="color: var(--success);">check_circle</span>
+            Code applied successfully
+        </div>
+    </div>
+
+    <script>
+        let isDark = true;
+
+        function toggleTheme() {
+            isDark = !isDark;
+            document.body.classList.toggle('light-theme', !isDark);
+            document.getElementById('theme-icon').textContent = isDark ? 'light_mode' : 'dark_mode';
+        }
+
+        function showCodeModal() {
+            document.getElementById('codeModal').classList.add('show');
+        }
+
+        function hideCodeModal() {
+            document.getElementById('codeModal').classList.remove('show');
+        }
+
+        function showToast() {
+            const toast = document.getElementById('toast');
+            toast.style.display = 'flex';
+            setTimeout(() => toast.style.display = 'none', 3000);
+        }
+
+        // Close modal on overlay click
+        document.getElementById('codeModal').addEventListener('click', function(e) {
+            if (e.target === this) hideCodeModal();
+        });
+
+        // Close modal on Escape
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') hideCodeModal();
+        });
+
+        // Toggle category expand/collapse
+        document.querySelectorAll('.category-header').forEach(header => {
+            header.addEventListener('click', () => {
+                header.classList.toggle('expanded');
+                const codeList = header.nextElementSibling;
+                if (codeList) {
+                    codeList.style.display = header.classList.contains('expanded') ? 'block' : 'none';
+                }
+            });
+        });
+
+        // Show selection popup on text selection (demo)
+        document.querySelector('.editor-content').addEventListener('mouseup', function(e) {
+            const selection = window.getSelection();
+            if (selection.toString().length > 0) {
+                const popup = document.getElementById('selectionPopup');
+                popup.style.left = (e.pageX - 80) + 'px';
+                popup.style.top = (e.pageY - 50) + 'px';
+                popup.classList.add('show');
+            }
+        });
+
+        // Hide selection popup on click outside
+        document.addEventListener('mousedown', function(e) {
+            if (!e.target.closest('#selectionPopup') && !e.target.closest('.editor-content')) {
+                document.getElementById('selectionPopup').classList.remove('show');
+            }
+        });
+    </script>
+</body>
+</html>

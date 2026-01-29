@@ -1,0 +1,607 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QualCoder - Attributes Management</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link href="css/material-theme.css" rel="stylesheet">
+    <style>
+        .center-panel { flex: 1; display: flex; flex-direction: column; overflow: hidden; background: var(--background); }
+
+        .attributes-container { flex: 1; display: flex; flex-direction: column; overflow: hidden; padding: 20px; gap: 20px; }
+
+        /* Attribute Types Tabs */
+        .attr-tabs { display: flex; gap: 8px; padding-bottom: 4px; }
+        .attr-tab { padding: 10px 20px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-md) var(--radius-md) 0 0; cursor: pointer; font-size: 13px; font-weight: 500; transition: var(--transition); display: flex; align-items: center; gap: 8px; }
+        .attr-tab:hover { background: var(--surface-light); }
+        .attr-tab.active { background: var(--surface); border-bottom-color: var(--surface); color: var(--primary); }
+        .attr-tab .material-icons { font-size: 18px; }
+        .attr-tab .count { padding: 2px 8px; background: var(--surface-light); border-radius: 10px; font-size: 11px; color: var(--text-secondary); }
+        .attr-tab.active .count { background: rgba(0, 150, 136, 0.2); color: var(--primary); }
+
+        /* Main Content Area */
+        .attributes-main { flex: 1; display: flex; gap: 20px; overflow: hidden; }
+
+        /* Attributes List Panel */
+        .attr-list-panel { width: 280px; background: var(--surface); border-radius: var(--radius-lg); box-shadow: var(--shadow-2); display: flex; flex-direction: column; overflow: hidden; }
+
+        .panel-header { padding: 16px 20px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+        .panel-title { font-weight: 500; font-size: 14px; display: flex; align-items: center; gap: 8px; }
+        .panel-title .material-icons { color: var(--primary); font-size: 18px; }
+
+        .attr-list { flex: 1; overflow-y: auto; padding: 8px; }
+
+        .attr-item { padding: 12px 14px; border-radius: var(--radius-md); cursor: pointer; transition: var(--transition); margin-bottom: 4px; display: flex; align-items: center; justify-content: space-between; }
+        .attr-item:hover { background: var(--surface-light); }
+        .attr-item.selected { background: rgba(0, 150, 136, 0.15); border-left: 3px solid var(--primary); }
+
+        .attr-info { display: flex; align-items: center; gap: 10px; }
+        .attr-icon { width: 32px; height: 32px; border-radius: var(--radius-sm); display: flex; align-items: center; justify-content: center; }
+        .attr-icon.text { background: rgba(33, 150, 243, 0.2); color: #2196F3; }
+        .attr-icon.numeric { background: rgba(76, 175, 80, 0.2); color: #4CAF50; }
+        .attr-icon .material-icons { font-size: 18px; }
+        .attr-name { font-size: 13px; font-weight: 500; }
+        .attr-type-label { font-size: 11px; color: var(--text-secondary); }
+        .attr-actions { display: flex; gap: 4px; opacity: 0; transition: var(--transition); }
+        .attr-item:hover .attr-actions { opacity: 1; }
+        .attr-action-btn { padding: 4px; background: transparent; border: none; border-radius: var(--radius-sm); color: var(--text-secondary); cursor: pointer; }
+        .attr-action-btn:hover { background: var(--surface-lighter); color: var(--text-primary); }
+        .attr-action-btn:hover.delete { color: var(--error); }
+
+        /* Values Table Panel */
+        .values-panel { flex: 1; background: var(--surface); border-radius: var(--radius-lg); box-shadow: var(--shadow-2); display: flex; flex-direction: column; overflow: hidden; }
+
+        .values-toolbar { padding: 12px 20px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 12px; }
+        .search-box { position: relative; flex: 1; max-width: 300px; }
+        .search-box .material-icons { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--text-secondary); font-size: 18px; }
+        .search-box input { width: 100%; padding: 8px 12px 8px 38px; background: var(--surface-light); border: 1px solid var(--border); border-radius: var(--radius-md); color: var(--text-primary); font-size: 13px; }
+        .search-box input:focus { outline: none; border-color: var(--primary); }
+
+        .values-content { flex: 1; overflow: auto; }
+
+        .values-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+        .values-table th, .values-table td { padding: 12px 16px; text-align: left; border-bottom: 1px solid var(--border); }
+        .values-table th { background: var(--surface-light); font-weight: 500; font-size: 12px; color: var(--text-secondary); text-transform: uppercase; position: sticky; top: 0; }
+        .values-table tr:hover { background: var(--surface-light); }
+        .values-table tr.selected { background: rgba(0, 150, 136, 0.1); }
+
+        .entity-cell { display: flex; align-items: center; gap: 10px; }
+        .entity-icon { width: 28px; height: 28px; border-radius: var(--radius-sm); display: flex; align-items: center; justify-content: center; }
+        .entity-icon.case { background: rgba(0, 150, 136, 0.2); color: var(--primary); }
+        .entity-icon.file { background: rgba(33, 150, 243, 0.2); color: #2196F3; }
+        .entity-icon .material-icons { font-size: 16px; }
+
+        .value-input { background: transparent; border: 1px solid transparent; padding: 6px 10px; border-radius: var(--radius-sm); width: 100%; color: var(--text-primary); font-size: 13px; }
+        .value-input:hover { border-color: var(--border); background: var(--surface-light); }
+        .value-input:focus { outline: none; border-color: var(--primary); background: var(--surface-light); }
+
+        .empty-value { color: var(--text-disabled); font-style: italic; }
+
+        /* Statistics Panel */
+        .stats-panel { width: 260px; display: flex; flex-direction: column; gap: 16px; }
+
+        .sidebar-card { background: var(--surface); border-radius: var(--radius-lg); box-shadow: var(--shadow-1); padding: 16px; }
+        .sidebar-title { font-size: 12px; font-weight: 500; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px; display: flex; align-items: center; gap: 6px; }
+        .sidebar-title .material-icons { font-size: 16px; color: var(--primary); }
+
+        .stat-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--border); }
+        .stat-row:last-child { border-bottom: none; }
+        .stat-label { font-size: 13px; color: var(--text-secondary); }
+        .stat-value { font-size: 13px; font-weight: 500; color: var(--primary); }
+
+        .value-distribution { display: flex; flex-direction: column; gap: 8px; }
+        .dist-item { display: flex; align-items: center; gap: 10px; font-size: 12px; }
+        .dist-bar { flex: 1; height: 8px; background: var(--surface-light); border-radius: 4px; overflow: hidden; }
+        .dist-fill { height: 100%; background: var(--primary); border-radius: 4px; }
+        .dist-label { width: 80px; }
+        .dist-count { width: 30px; text-align: right; color: var(--text-secondary); }
+
+        /* Modal */
+        .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); display: flex; align-items: center; justify-content: center; z-index: 1000; }
+        .modal { background: var(--surface); border-radius: var(--radius-lg); width: 420px; box-shadow: var(--shadow-3); }
+        .modal-header { padding: 20px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+        .modal-title { font-size: 18px; font-weight: 500; }
+        .modal-close { background: none; border: none; color: var(--text-secondary); cursor: pointer; padding: 4px; border-radius: var(--radius-sm); }
+        .modal-close:hover { background: var(--surface-light); }
+        .modal-body { padding: 20px; }
+        .modal-footer { padding: 16px 20px; border-top: 1px solid var(--border); display: flex; justify-content: flex-end; gap: 12px; }
+
+        .type-options { display: flex; gap: 12px; margin-top: 8px; }
+        .type-option { flex: 1; padding: 16px; border: 2px solid var(--border); border-radius: var(--radius-md); cursor: pointer; text-align: center; transition: var(--transition); }
+        .type-option:hover { border-color: var(--primary); }
+        .type-option.selected { border-color: var(--primary); background: rgba(0, 150, 136, 0.1); }
+        .type-option .material-icons { font-size: 28px; margin-bottom: 8px; color: var(--primary); }
+        .type-option-label { font-size: 13px; font-weight: 500; }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <div class="title-bar">
+            <h1><span class="logo">Q</span> QualCoder - research_project.qda</h1>
+            <div class="window-controls">
+                <button class="window-btn minimize"></button>
+                <button class="window-btn maximize"></button>
+                <button class="window-btn close"></button>
+            </div>
+        </div>
+
+        <div class="menu-bar">
+            <a href="index.html" class="menu-item">Project</a>
+            <a href="phase1_file_manager.html" class="menu-item active">Files and Cases</a>
+            <a href="code_text.html" class="menu-item">Coding</a>
+            <a href="reports_coding.html" class="menu-item">Reports</a>
+            <a href="ai_chat.html" class="menu-item">AI</a>
+            <a href="settings.html" class="menu-item">Help</a>
+        </div>
+
+        <div class="tab-bar">
+            <a href="code_text.html" class="tab"><span class="material-icons">code</span> Coding</a>
+            <a href="reports_coding.html" class="tab"><span class="material-icons">assessment</span> Reports</a>
+            <a href="phase1_file_manager.html" class="tab active"><span class="material-icons">folder</span> Manage</a>
+            <a href="index.html" class="tab"><span class="material-icons">history</span> Action Log</a>
+        </div>
+
+        <div class="toolbar">
+            <div class="toolbar-group">
+                <a href="phase1_file_manager.html" class="toolbar-btn"><span class="material-icons">description</span> Files</a>
+                <a href="manage_cases.html" class="toolbar-btn"><span class="material-icons">people</span> Cases</a>
+                <a href="manage_journals.html" class="toolbar-btn"><span class="material-icons">book</span> Journals</a>
+                <a href="manage_attributes.html" class="toolbar-btn active"><span class="material-icons">tune</span> Attributes</a>
+            </div>
+            <div class="toolbar-divider"></div>
+            <div class="toolbar-group">
+                <button class="btn btn-primary" onclick="showAddAttrModal()"><span class="material-icons">add</span> New Attribute</button>
+                <button class="toolbar-btn"><span class="material-icons">file_upload</span> Import</button>
+                <button class="toolbar-btn"><span class="material-icons">file_download</span> Export</button>
+            </div>
+        </div>
+
+        <div class="main-content">
+            <div class="center-panel">
+                <div class="attributes-container">
+                    <!-- Tabs for File/Case Attributes -->
+                    <div class="attr-tabs">
+                        <div class="attr-tab active">
+                            <span class="material-icons">people</span>
+                            Case Attributes
+                            <span class="count">5</span>
+                        </div>
+                        <div class="attr-tab">
+                            <span class="material-icons">description</span>
+                            File Attributes
+                            <span class="count">3</span>
+                        </div>
+                    </div>
+
+                    <div class="attributes-main">
+                        <!-- Attributes List -->
+                        <div class="attr-list-panel">
+                            <div class="panel-header">
+                                <div class="panel-title">
+                                    <span class="material-icons">tune</span>
+                                    Attributes
+                                </div>
+                            </div>
+                            <div class="attr-list">
+                                <div class="attr-item selected">
+                                    <div class="attr-info">
+                                        <div class="attr-icon numeric">
+                                            <span class="material-icons">tag</span>
+                                        </div>
+                                        <div>
+                                            <div class="attr-name">Age</div>
+                                            <div class="attr-type-label">Numeric</div>
+                                        </div>
+                                    </div>
+                                    <div class="attr-actions">
+                                        <button class="attr-action-btn"><span class="material-icons">edit</span></button>
+                                        <button class="attr-action-btn delete"><span class="material-icons">delete</span></button>
+                                    </div>
+                                </div>
+                                <div class="attr-item">
+                                    <div class="attr-info">
+                                        <div class="attr-icon text">
+                                            <span class="material-icons">text_fields</span>
+                                        </div>
+                                        <div>
+                                            <div class="attr-name">Gender</div>
+                                            <div class="attr-type-label">Text</div>
+                                        </div>
+                                    </div>
+                                    <div class="attr-actions">
+                                        <button class="attr-action-btn"><span class="material-icons">edit</span></button>
+                                        <button class="attr-action-btn delete"><span class="material-icons">delete</span></button>
+                                    </div>
+                                </div>
+                                <div class="attr-item">
+                                    <div class="attr-info">
+                                        <div class="attr-icon numeric">
+                                            <span class="material-icons">tag</span>
+                                        </div>
+                                        <div>
+                                            <div class="attr-name">Year of Study</div>
+                                            <div class="attr-type-label">Numeric</div>
+                                        </div>
+                                    </div>
+                                    <div class="attr-actions">
+                                        <button class="attr-action-btn"><span class="material-icons">edit</span></button>
+                                        <button class="attr-action-btn delete"><span class="material-icons">delete</span></button>
+                                    </div>
+                                </div>
+                                <div class="attr-item">
+                                    <div class="attr-info">
+                                        <div class="attr-icon text">
+                                            <span class="material-icons">text_fields</span>
+                                        </div>
+                                        <div>
+                                            <div class="attr-name">Major</div>
+                                            <div class="attr-type-label">Text</div>
+                                        </div>
+                                    </div>
+                                    <div class="attr-actions">
+                                        <button class="attr-action-btn"><span class="material-icons">edit</span></button>
+                                        <button class="attr-action-btn delete"><span class="material-icons">delete</span></button>
+                                    </div>
+                                </div>
+                                <div class="attr-item">
+                                    <div class="attr-info">
+                                        <div class="attr-icon text">
+                                            <span class="material-icons">text_fields</span>
+                                        </div>
+                                        <div>
+                                            <div class="attr-name">Prior Online Experience</div>
+                                            <div class="attr-type-label">Text</div>
+                                        </div>
+                                    </div>
+                                    <div class="attr-actions">
+                                        <button class="attr-action-btn"><span class="material-icons">edit</span></button>
+                                        <button class="attr-action-btn delete"><span class="material-icons">delete</span></button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Values Table -->
+                        <div class="values-panel">
+                            <div class="panel-header">
+                                <div class="panel-title">
+                                    <span class="material-icons">tag</span>
+                                    Age - Values
+                                </div>
+                                <button class="btn btn-sm btn-secondary"><span class="material-icons">sort</span> Sort</button>
+                            </div>
+                            <div class="values-toolbar">
+                                <div class="search-box">
+                                    <span class="material-icons">search</span>
+                                    <input type="text" placeholder="Filter cases...">
+                                </div>
+                                <button class="btn btn-sm btn-secondary"><span class="material-icons">filter_list</span> Filter Empty</button>
+                                <button class="btn btn-sm btn-secondary"><span class="material-icons">select_all</span> Batch Edit</button>
+                            </div>
+                            <div class="values-content">
+                                <table class="values-table">
+                                    <thead>
+                                        <tr>
+                                            <th style="width: 40px;"><input type="checkbox"></th>
+                                            <th>Case</th>
+                                            <th>Value</th>
+                                            <th style="width: 100px;">Modified</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td><input type="checkbox"></td>
+                                            <td>
+                                                <div class="entity-cell">
+                                                    <div class="entity-icon case">
+                                                        <span class="material-icons">person</span>
+                                                    </div>
+                                                    Participant 01
+                                                </div>
+                                            </td>
+                                            <td><input class="value-input" type="text" value="21"></td>
+                                            <td style="color: var(--text-secondary); font-size: 12px;">Jan 28</td>
+                                        </tr>
+                                        <tr>
+                                            <td><input type="checkbox"></td>
+                                            <td>
+                                                <div class="entity-cell">
+                                                    <div class="entity-icon case">
+                                                        <span class="material-icons">person</span>
+                                                    </div>
+                                                    Participant 02
+                                                </div>
+                                            </td>
+                                            <td><input class="value-input" type="text" value="23"></td>
+                                            <td style="color: var(--text-secondary); font-size: 12px;">Jan 25</td>
+                                        </tr>
+                                        <tr>
+                                            <td><input type="checkbox"></td>
+                                            <td>
+                                                <div class="entity-cell">
+                                                    <div class="entity-icon case">
+                                                        <span class="material-icons">person</span>
+                                                    </div>
+                                                    Participant 03
+                                                </div>
+                                            </td>
+                                            <td><input class="value-input" type="text" value="19"></td>
+                                            <td style="color: var(--text-secondary); font-size: 12px;">Jan 22</td>
+                                        </tr>
+                                        <tr>
+                                            <td><input type="checkbox"></td>
+                                            <td>
+                                                <div class="entity-cell">
+                                                    <div class="entity-icon case">
+                                                        <span class="material-icons">person</span>
+                                                    </div>
+                                                    Participant 04
+                                                </div>
+                                            </td>
+                                            <td><input class="value-input" type="text" value="25"></td>
+                                            <td style="color: var(--text-secondary); font-size: 12px;">Jan 20</td>
+                                        </tr>
+                                        <tr>
+                                            <td><input type="checkbox"></td>
+                                            <td>
+                                                <div class="entity-cell">
+                                                    <div class="entity-icon case">
+                                                        <span class="material-icons">person</span>
+                                                    </div>
+                                                    Participant 05
+                                                </div>
+                                            </td>
+                                            <td><input class="value-input" type="text" value="22"></td>
+                                            <td style="color: var(--text-secondary); font-size: 12px;">Jan 18</td>
+                                        </tr>
+                                        <tr>
+                                            <td><input type="checkbox"></td>
+                                            <td>
+                                                <div class="entity-cell">
+                                                    <div class="entity-icon case">
+                                                        <span class="material-icons">group</span>
+                                                    </div>
+                                                    Focus Group A
+                                                </div>
+                                            </td>
+                                            <td><input class="value-input" type="text" placeholder="N/A" class="empty-value"></td>
+                                            <td style="color: var(--text-secondary); font-size: 12px;">-</td>
+                                        </tr>
+                                        <tr>
+                                            <td><input type="checkbox"></td>
+                                            <td>
+                                                <div class="entity-cell">
+                                                    <div class="entity-icon case">
+                                                        <span class="material-icons">person</span>
+                                                    </div>
+                                                    Expert Interview
+                                                </div>
+                                            </td>
+                                            <td><input class="value-input" type="text" value="42"></td>
+                                            <td style="color: var(--text-secondary); font-size: 12px;">Jan 15</td>
+                                        </tr>
+                                        <tr>
+                                            <td><input type="checkbox"></td>
+                                            <td>
+                                                <div class="entity-cell">
+                                                    <div class="entity-icon case">
+                                                        <span class="material-icons">person</span>
+                                                    </div>
+                                                    Pilot Study
+                                                </div>
+                                            </td>
+                                            <td><input class="value-input" type="text" value="20"></td>
+                                            <td style="color: var(--text-secondary); font-size: 12px;">Jan 10</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- Statistics Panel -->
+                        <div class="stats-panel">
+                            <div class="sidebar-card">
+                                <div class="sidebar-title">
+                                    <span class="material-icons">analytics</span>
+                                    Attribute Statistics
+                                </div>
+                                <div class="stat-row">
+                                    <span class="stat-label">Total Values</span>
+                                    <span class="stat-value">7</span>
+                                </div>
+                                <div class="stat-row">
+                                    <span class="stat-label">Empty Values</span>
+                                    <span class="stat-value">1</span>
+                                </div>
+                                <div class="stat-row">
+                                    <span class="stat-label">Min Value</span>
+                                    <span class="stat-value">19</span>
+                                </div>
+                                <div class="stat-row">
+                                    <span class="stat-label">Max Value</span>
+                                    <span class="stat-value">42</span>
+                                </div>
+                                <div class="stat-row">
+                                    <span class="stat-label">Average</span>
+                                    <span class="stat-value">24.6</span>
+                                </div>
+                                <div class="stat-row">
+                                    <span class="stat-label">Median</span>
+                                    <span class="stat-value">22</span>
+                                </div>
+                            </div>
+
+                            <div class="sidebar-card">
+                                <div class="sidebar-title">
+                                    <span class="material-icons">bar_chart</span>
+                                    Value Distribution
+                                </div>
+                                <div class="value-distribution">
+                                    <div class="dist-item">
+                                        <span class="dist-label">18-20</span>
+                                        <div class="dist-bar"><div class="dist-fill" style="width: 28%;"></div></div>
+                                        <span class="dist-count">2</span>
+                                    </div>
+                                    <div class="dist-item">
+                                        <span class="dist-label">21-23</span>
+                                        <div class="dist-bar"><div class="dist-fill" style="width: 43%;"></div></div>
+                                        <span class="dist-count">3</span>
+                                    </div>
+                                    <div class="dist-item">
+                                        <span class="dist-label">24-26</span>
+                                        <div class="dist-bar"><div class="dist-fill" style="width: 14%;"></div></div>
+                                        <span class="dist-count">1</span>
+                                    </div>
+                                    <div class="dist-item">
+                                        <span class="dist-label">27+</span>
+                                        <div class="dist-bar"><div class="dist-fill" style="width: 14%;"></div></div>
+                                        <span class="dist-count">1</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="sidebar-card">
+                                <div class="sidebar-title">
+                                    <span class="material-icons">info</span>
+                                    Attribute Info
+                                </div>
+                                <div style="font-size: 13px; line-height: 1.6;">
+                                    <div style="margin-bottom: 8px;">
+                                        <strong>Name:</strong> Age
+                                    </div>
+                                    <div style="margin-bottom: 8px;">
+                                        <strong>Type:</strong> Numeric
+                                    </div>
+                                    <div style="margin-bottom: 8px;">
+                                        <strong>Created:</strong> Jan 10, 2025
+                                    </div>
+                                    <div style="margin-bottom: 8px;">
+                                        <strong>Owner:</strong> colin
+                                    </div>
+                                    <div style="color: var(--text-secondary); font-size: 12px;">
+                                        Participant age at time of interview
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="sidebar-card">
+                                <div class="sidebar-title">
+                                    <span class="material-icons">bolt</span>
+                                    Quick Actions
+                                </div>
+                                <div style="display: flex; flex-direction: column; gap: 8px;">
+                                    <button class="btn btn-sm btn-secondary" style="width: 100%;">
+                                        <span class="material-icons">bar_chart</span> View Chart
+                                    </button>
+                                    <button class="btn btn-sm btn-secondary" style="width: 100%;">
+                                        <span class="material-icons">download</span> Export Values
+                                    </button>
+                                    <button class="btn btn-sm btn-secondary" style="width: 100%;">
+                                        <span class="material-icons">calculate</span> Recalculate Stats
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="status-bar">
+            <div class="status-left">
+                <span class="status-item"><span class="material-icons">check_circle</span> Ready</span>
+                <span class="status-item"><span class="material-icons">storage</span> research_project.qda</span>
+            </div>
+            <div class="status-right">
+                <span class="status-item"><span class="material-icons">tune</span> 5 case attributes, 3 file attributes</span>
+                <span class="status-item"><span class="material-icons">person</span> colin</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Attribute Modal -->
+    <div class="modal-overlay" id="addAttrModal" style="display: none;">
+        <div class="modal">
+            <div class="modal-header">
+                <span class="modal-title">New Attribute</span>
+                <button class="modal-close" onclick="hideAddAttrModal()">
+                    <span class="material-icons">close</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group" style="margin-bottom: 16px;">
+                    <label class="form-label">Attribute Name *</label>
+                    <input type="text" class="form-input" placeholder="Enter attribute name...">
+                </div>
+                <div class="form-group" style="margin-bottom: 16px;">
+                    <label class="form-label">Description</label>
+                    <textarea class="form-input" rows="2" placeholder="Optional description..."></textarea>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Data Type *</label>
+                    <div class="type-options">
+                        <div class="type-option selected">
+                            <span class="material-icons">text_fields</span>
+                            <div class="type-option-label">Text</div>
+                        </div>
+                        <div class="type-option">
+                            <span class="material-icons">tag</span>
+                            <div class="type-option-label">Numeric</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="hideAddAttrModal()">Cancel</button>
+                <button class="btn btn-primary"><span class="material-icons">add</span> Create</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="theme-toggle">
+        <button class="theme-btn" onclick="toggleTheme()" title="Toggle theme">
+            <span class="material-icons" id="theme-icon">light_mode</span>
+        </button>
+    </div>
+
+    <script>
+        let isDark = true;
+        function toggleTheme() {
+            isDark = !isDark;
+            document.body.classList.toggle('light-theme', !isDark);
+            document.getElementById('theme-icon').textContent = isDark ? 'light_mode' : 'dark_mode';
+        }
+
+        function showAddAttrModal() {
+            document.getElementById('addAttrModal').style.display = 'flex';
+        }
+
+        function hideAddAttrModal() {
+            document.getElementById('addAttrModal').style.display = 'none';
+        }
+
+        document.querySelectorAll('.attr-item').forEach(item => {
+            item.addEventListener('click', function() {
+                document.querySelectorAll('.attr-item').forEach(i => i.classList.remove('selected'));
+                this.classList.add('selected');
+            });
+        });
+
+        document.querySelectorAll('.attr-tab').forEach(tab => {
+            tab.addEventListener('click', function() {
+                document.querySelectorAll('.attr-tab').forEach(t => t.classList.remove('active'));
+                this.classList.add('active');
+            });
+        });
+
+        document.querySelectorAll('.type-option').forEach(opt => {
+            opt.addEventListener('click', function() {
+                document.querySelectorAll('.type-option').forEach(o => o.classList.remove('selected'));
+                this.classList.add('selected');
+            });
+        });
+    </script>
+</body>
+</html>

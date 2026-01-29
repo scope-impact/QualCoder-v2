@@ -1,0 +1,1071 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QualCoder - AI-Assisted Coding</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link href="css/material-theme.css" rel="stylesheet">
+    <style>
+        /* AI Search specific styles */
+        .center-panel {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            background: var(--background);
+        }
+
+        /* Search header */
+        .search-header {
+            padding: 20px;
+            background: var(--surface);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .search-title {
+            font-size: 18px;
+            font-weight: 500;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .search-title .material-icons {
+            color: var(--primary);
+        }
+
+        .search-input-large {
+            display: flex;
+            gap: 12px;
+        }
+
+        .search-input-wrapper {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            background: var(--surface-light);
+            border: 2px solid var(--border);
+            border-radius: var(--radius-lg);
+            padding: 4px 16px;
+            transition: var(--transition);
+        }
+
+        .search-input-wrapper:focus-within {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 4px rgba(0, 150, 136, 0.15);
+        }
+
+        .search-input-wrapper input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            padding: 12px;
+            font-size: 16px;
+            color: var(--text-primary);
+            outline: none;
+        }
+
+        .search-input-wrapper input::placeholder {
+            color: var(--text-disabled);
+        }
+
+        .search-btn {
+            padding: 14px 28px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: var(--radius-lg);
+            font-size: 15px;
+            font-weight: 500;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: var(--transition);
+        }
+
+        .search-btn:hover {
+            background: var(--primary-light);
+        }
+
+        /* Search options */
+        .search-options {
+            display: flex;
+            gap: 16px;
+            margin-top: 12px;
+            flex-wrap: wrap;
+        }
+
+        .search-option {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        /* Results container */
+        .results-container {
+            flex: 1;
+            display: flex;
+            overflow: hidden;
+        }
+
+        /* Results list */
+        .results-list {
+            flex: 1;
+            overflow-y: auto;
+            padding: 16px;
+        }
+
+        .results-summary {
+            padding: 12px 16px;
+            background: var(--surface);
+            border-radius: var(--radius-md);
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .results-count {
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+
+        .results-count strong {
+            color: var(--text-primary);
+        }
+
+        /* Result item */
+        .result-item {
+            background: var(--surface);
+            border-radius: var(--radius-lg);
+            padding: 16px;
+            margin-bottom: 12px;
+            box-shadow: var(--shadow-1);
+            transition: var(--transition);
+        }
+
+        .result-item:hover {
+            box-shadow: var(--shadow-2);
+        }
+
+        .result-item.selected {
+            border: 2px solid var(--primary);
+        }
+
+        .result-header {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            margin-bottom: 8px;
+        }
+
+        .result-file {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            font-weight: 500;
+        }
+
+        .result-file .material-icons {
+            font-size: 18px;
+            color: var(--file-text);
+        }
+
+        .result-confidence {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 12px;
+            padding: 4px 10px;
+            border-radius: var(--radius-md);
+        }
+
+        .result-confidence.high {
+            background: rgba(76, 175, 80, 0.15);
+            color: var(--success);
+        }
+
+        .result-confidence.medium {
+            background: rgba(255, 152, 0, 0.15);
+            color: var(--warning);
+        }
+
+        .result-confidence.low {
+            background: rgba(244, 67, 54, 0.15);
+            color: var(--error);
+        }
+
+        .result-text {
+            font-size: 14px;
+            line-height: 1.6;
+            color: var(--text-primary);
+            margin-bottom: 12px;
+            padding: 12px;
+            background: var(--surface-light);
+            border-radius: var(--radius-md);
+            border-left: 3px solid var(--primary);
+        }
+
+        .result-text mark {
+            background: rgba(255, 193, 7, 0.4);
+            color: inherit;
+            padding: 1px 2px;
+            border-radius: 2px;
+        }
+
+        .result-meta {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-bottom: 12px;
+        }
+
+        .result-meta-item {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .result-meta-item .material-icons {
+            font-size: 14px;
+        }
+
+        /* Suggested codes */
+        .suggested-codes {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+
+        .suggested-code {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 12px;
+            background: var(--surface-light);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+            font-size: 12px;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .suggested-code:hover {
+            border-color: var(--primary);
+            background: rgba(0, 150, 136, 0.1);
+        }
+
+        .suggested-code.selected {
+            background: rgba(0, 150, 136, 0.15);
+            border-color: var(--primary);
+        }
+
+        .suggested-code .code-color {
+            width: 10px;
+            height: 10px;
+            border-radius: 2px;
+        }
+
+        /* Result actions */
+        .result-actions {
+            display: flex;
+            gap: 8px;
+            padding-top: 12px;
+            border-top: 1px solid var(--border);
+        }
+
+        /* Preview panel */
+        .preview-panel {
+            width: 400px;
+            background: var(--surface);
+            border-left: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .preview-header {
+            padding: 16px;
+            background: var(--surface-light);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .preview-title {
+            font-size: 14px;
+            font-weight: 500;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .preview-title .material-icons {
+            font-size: 18px;
+            color: var(--primary);
+        }
+
+        .preview-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 16px;
+        }
+
+        .preview-text {
+            font-size: 14px;
+            line-height: 1.8;
+            color: var(--text-primary);
+        }
+
+        .preview-text .highlight {
+            background: rgba(255, 193, 7, 0.3);
+            padding: 2px 0;
+            border-bottom: 2px solid #FFC107;
+        }
+
+        .preview-actions {
+            padding: 16px;
+            border-top: 1px solid var(--border);
+            display: flex;
+            gap: 8px;
+        }
+
+        /* Codes panel */
+        .codes-panel {
+            border-top: 1px solid var(--border);
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .code-tree {
+            flex: 1;
+            overflow-y: auto;
+            padding: 8px;
+        }
+
+        .code-item {
+            display: flex;
+            align-items: center;
+            padding: 8px 12px;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            transition: var(--transition);
+            margin-bottom: 2px;
+        }
+
+        .code-item:hover {
+            background: var(--surface-light);
+        }
+
+        .code-item.selected {
+            background: rgba(0, 150, 136, 0.15);
+            border: 1px solid var(--primary);
+        }
+
+        .code-color {
+            width: 12px;
+            height: 12px;
+            border-radius: 3px;
+            flex-shrink: 0;
+        }
+
+        .code-name {
+            font-size: 13px;
+            flex: 1;
+            margin-left: 10px;
+        }
+
+        .code-count {
+            font-size: 11px;
+            color: var(--text-secondary);
+            background: var(--surface-lighter);
+            padding: 2px 8px;
+            border-radius: 10px;
+        }
+
+        /* Info cards */
+        .info-card {
+            padding: 16px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .info-card-title {
+            font-size: 12px;
+            font-weight: 500;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .info-card-title .material-icons {
+            font-size: 16px;
+            color: var(--primary);
+        }
+
+        /* Batch actions bar */
+        .batch-actions {
+            padding: 12px 16px;
+            background: var(--primary);
+            color: white;
+            display: none;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .batch-actions.show {
+            display: flex;
+        }
+
+        .batch-count {
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .batch-buttons {
+            display: flex;
+            gap: 8px;
+        }
+
+        .batch-btn {
+            padding: 8px 16px;
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            border-radius: var(--radius-md);
+            color: white;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: var(--transition);
+        }
+
+        .batch-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        /* Search history */
+        .search-history {
+            padding: 8px;
+        }
+
+        .search-history-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 12px;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            transition: var(--transition);
+            font-size: 13px;
+        }
+
+        .search-history-item:hover {
+            background: var(--surface-light);
+        }
+
+        .search-history-item .material-icons {
+            font-size: 16px;
+            color: var(--text-disabled);
+        }
+
+        /* Loading state */
+        .loading-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+        }
+
+        .loading-overlay.show {
+            display: flex;
+        }
+
+        .loading-content {
+            background: var(--surface);
+            padding: 24px 32px;
+            border-radius: var(--radius-lg);
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Title Bar -->
+        <div class="title-bar">
+            <h1>
+                <span class="logo">Q</span>
+                QualCoder - research_project.qda
+            </h1>
+            <div class="window-controls">
+                <button class="window-btn minimize"></button>
+                <button class="window-btn maximize"></button>
+                <button class="window-btn close"></button>
+            </div>
+        </div>
+
+        <!-- Menu Bar -->
+        <div class="menu-bar">
+            <a href="index.html" class="menu-item">Project</a>
+            <a href="phase1_file_manager.html" class="menu-item">Files and Cases</a>
+            <a href="code_text.html" class="menu-item">Coding</a>
+            <a href="reports_coding.html" class="menu-item">Reports</a>
+            <a href="ai_chat.html" class="menu-item active">AI</a>
+            <a href="settings.html" class="menu-item">Help</a>
+        </div>
+
+        <!-- Tab Bar -->
+        <div class="tab-bar">
+            <a href="code_text.html" class="tab">
+                <span class="material-icons">code</span>
+                Coding
+            </a>
+            <a href="reports_coding.html" class="tab">
+                <span class="material-icons">assessment</span>
+                Reports
+            </a>
+            <a href="phase1_file_manager.html" class="tab">
+                <span class="material-icons">folder</span>
+                Manage
+            </a>
+            <a href="ai_chat.html" class="tab active">
+                <span class="material-icons">auto_awesome</span>
+                AI-Assisted Coding
+            </a>
+        </div>
+
+        <!-- AI Toolbar -->
+        <div class="toolbar">
+            <div class="toolbar-group">
+                <a href="ai_chat.html" class="toolbar-btn"><span class="material-icons">chat</span> AI Chat</a>
+                <a href="ai_search.html" class="toolbar-btn active"><span class="material-icons">search</span> AI Search</a>
+            </div>
+        </div>
+
+        <!-- Batch Actions Bar -->
+        <div class="batch-actions" id="batchActions">
+            <span class="batch-count">3 items selected</span>
+            <div class="batch-buttons">
+                <button class="batch-btn">
+                    <span class="material-icons">label</span>
+                    Apply Code
+                </button>
+                <button class="batch-btn">
+                    <span class="material-icons">check_circle</span>
+                    Accept All
+                </button>
+                <button class="batch-btn" onclick="document.getElementById('batchActions').classList.remove('show')">
+                    <span class="material-icons">close</span>
+                    Cancel
+                </button>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Left Panel - Codes & History -->
+            <div class="panel panel-left">
+                <div class="panel-header">
+                    <span class="panel-title">
+                        <span class="material-icons">label</span>
+                        Target Code
+                    </span>
+                </div>
+                <div class="code-tree" style="max-height: 200px;">
+                    <div class="code-item selected">
+                        <span class="code-color" style="background: #FFC107;"></span>
+                        <span class="code-name">Learning Motivation</span>
+                        <span class="code-count">8</span>
+                    </div>
+                    <div class="code-item">
+                        <span class="code-color" style="background: #F44336;"></span>
+                        <span class="code-name">Challenges</span>
+                        <span class="code-count">12</span>
+                    </div>
+                    <div class="code-item">
+                        <span class="code-color" style="background: #4CAF50;"></span>
+                        <span class="code-name">Success Stories</span>
+                        <span class="code-count">6</span>
+                    </div>
+                    <div class="code-item">
+                        <span class="code-color" style="background: #2196F3;"></span>
+                        <span class="code-name">Platform Features</span>
+                        <span class="code-count">15</span>
+                    </div>
+                    <div class="code-item">
+                        <span class="code-color" style="background: #9C27B0;"></span>
+                        <span class="code-name">Social Interaction</span>
+                        <span class="code-count">9</span>
+                    </div>
+                </div>
+
+                <div class="panel-header">
+                    <span class="panel-title">
+                        <span class="material-icons">history</span>
+                        Search History
+                    </span>
+                </div>
+                <div class="search-history">
+                    <div class="search-history-item">
+                        <span class="material-icons">search</span>
+                        motivation to learn
+                    </div>
+                    <div class="search-history-item">
+                        <span class="material-icons">search</span>
+                        platform challenges
+                    </div>
+                    <div class="search-history-item">
+                        <span class="material-icons">search</span>
+                        student experiences
+                    </div>
+                    <div class="search-history-item">
+                        <span class="material-icons">search</span>
+                        online learning benefits
+                    </div>
+                </div>
+
+                <div class="info-card" style="border-top: 1px solid var(--border);">
+                    <div class="info-card-title">
+                        <span class="material-icons">insights</span>
+                        Quick Stats
+                    </div>
+                    <div style="font-size: 12px; color: var(--text-secondary);">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                            <span>Total files:</span>
+                            <span style="color: var(--text-primary);">32</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                            <span>Uncoded segments:</span>
+                            <span style="color: var(--warning);">145</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between;">
+                            <span>AI suggestions used:</span>
+                            <span style="color: var(--success);">67%</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Center Panel - Search & Results -->
+            <div class="center-panel">
+                <div class="search-header">
+                    <div class="search-title">
+                        <span class="material-icons">auto_awesome</span>
+                        AI-Assisted Coding Search
+                    </div>
+                    <div class="search-input-large">
+                        <div class="search-input-wrapper">
+                            <span class="material-icons" style="color: var(--text-disabled);">search</span>
+                            <input type="text" placeholder="Describe what you're looking for (e.g., 'passages about student motivation')..." value="passages about learning motivation and enthusiasm">
+                        </div>
+                        <button class="search-btn">
+                            <span class="material-icons">auto_awesome</span>
+                            Search with AI
+                        </button>
+                    </div>
+                    <div class="search-options">
+                        <label class="search-option">
+                            <span class="checkbox checked"></span>
+                            <span>All files</span>
+                        </label>
+                        <label class="search-option">
+                            <span class="checkbox"></span>
+                            <span>Uncoded only</span>
+                        </label>
+                        <label class="search-option">
+                            <span class="checkbox checked"></span>
+                            <span>Include similar phrases</span>
+                        </label>
+                        <label class="search-option">
+                            <span class="checkbox"></span>
+                            <span>Exact match</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="results-container">
+                    <div class="results-list">
+                        <div class="results-summary">
+                            <span class="results-count">Found <strong>8 matches</strong> across <strong>4 files</strong></span>
+                            <div style="display: flex; gap: 8px;">
+                                <button class="btn btn-sm btn-secondary">
+                                    <span class="material-icons">sort</span>
+                                    Sort by relevance
+                                </button>
+                                <button class="btn btn-sm btn-secondary">
+                                    <span class="material-icons">filter_list</span>
+                                    Filter
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Result 1 -->
+                        <div class="result-item selected">
+                            <div class="result-header">
+                                <div class="result-file">
+                                    <span class="material-icons">description</span>
+                                    ID2.odt
+                                </div>
+                                <div class="result-confidence high">
+                                    <span class="material-icons" style="font-size: 14px;">verified</span>
+                                    95% match
+                                </div>
+                            </div>
+                            <div class="result-text">
+                                "<mark>I really like learning new things.</mark> I think this course is good for me as I have wanted to learn about world history for a while."
+                            </div>
+                            <div class="result-meta">
+                                <span class="result-meta-item">
+                                    <span class="material-icons">format_quote</span>
+                                    Paragraph 4
+                                </span>
+                                <span class="result-meta-item">
+                                    <span class="material-icons">person</span>
+                                    Case: ID2
+                                </span>
+                                <span class="result-meta-item">
+                                    <span class="material-icons">label_off</span>
+                                    Not yet coded
+                                </span>
+                            </div>
+                            <div class="suggested-codes">
+                                <span style="font-size: 11px; color: var(--text-secondary); margin-right: 8px;">Suggested:</span>
+                                <div class="suggested-code selected">
+                                    <span class="code-color" style="background: #FFC107;"></span>
+                                    <span>Learning Motivation</span>
+                                </div>
+                                <div class="suggested-code">
+                                    <span class="code-color" style="background: #4CAF50;"></span>
+                                    <span>Positive Attitude</span>
+                                </div>
+                            </div>
+                            <div class="result-actions">
+                                <button class="btn btn-sm btn-primary">
+                                    <span class="material-icons">check</span>
+                                    Apply Code
+                                </button>
+                                <button class="btn btn-sm btn-secondary">
+                                    <span class="material-icons">visibility</span>
+                                    Preview
+                                </button>
+                                <button class="btn btn-sm btn-secondary">
+                                    <span class="material-icons">close</span>
+                                    Dismiss
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Result 2 -->
+                        <div class="result-item">
+                            <div class="result-header">
+                                <div class="result-file">
+                                    <span class="material-icons">description</span>
+                                    ID3_interview.txt
+                                </div>
+                                <div class="result-confidence high">
+                                    <span class="material-icons" style="font-size: 14px;">verified</span>
+                                    92% match
+                                </div>
+                            </div>
+                            <div class="result-text">
+                                "The <mark>enthusiasm for learning</mark> has been amazing. Students are actively participating and showing genuine interest in the material."
+                            </div>
+                            <div class="result-meta">
+                                <span class="result-meta-item">
+                                    <span class="material-icons">format_quote</span>
+                                    Line 45-47
+                                </span>
+                                <span class="result-meta-item">
+                                    <span class="material-icons">person</span>
+                                    Case: ID3
+                                </span>
+                                <span class="result-meta-item">
+                                    <span class="material-icons">label</span>
+                                    1 code applied
+                                </span>
+                            </div>
+                            <div class="suggested-codes">
+                                <span style="font-size: 11px; color: var(--text-secondary); margin-right: 8px;">Suggested:</span>
+                                <div class="suggested-code selected">
+                                    <span class="code-color" style="background: #FFC107;"></span>
+                                    <span>Learning Motivation</span>
+                                </div>
+                                <div class="suggested-code">
+                                    <span class="code-color" style="background: #9C27B0;"></span>
+                                    <span>Engagement</span>
+                                </div>
+                            </div>
+                            <div class="result-actions">
+                                <button class="btn btn-sm btn-primary">
+                                    <span class="material-icons">check</span>
+                                    Apply Code
+                                </button>
+                                <button class="btn btn-sm btn-secondary">
+                                    <span class="material-icons">visibility</span>
+                                    Preview
+                                </button>
+                                <button class="btn btn-sm btn-secondary">
+                                    <span class="material-icons">close</span>
+                                    Dismiss
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Result 3 -->
+                        <div class="result-item">
+                            <div class="result-header">
+                                <div class="result-file">
+                                    <span class="material-icons">description</span>
+                                    ID1.docx
+                                </div>
+                                <div class="result-confidence medium">
+                                    <span class="material-icons" style="font-size: 14px;">help</span>
+                                    78% match
+                                </div>
+                            </div>
+                            <div class="result-text">
+                                "Despite the challenges, I remain <mark>motivated to continue</mark> because I can see the value in what I'm learning."
+                            </div>
+                            <div class="result-meta">
+                                <span class="result-meta-item">
+                                    <span class="material-icons">format_quote</span>
+                                    Paragraph 8
+                                </span>
+                                <span class="result-meta-item">
+                                    <span class="material-icons">person</span>
+                                    Case: ID1
+                                </span>
+                                <span class="result-meta-item">
+                                    <span class="material-icons">label_off</span>
+                                    Not yet coded
+                                </span>
+                            </div>
+                            <div class="suggested-codes">
+                                <span style="font-size: 11px; color: var(--text-secondary); margin-right: 8px;">Suggested:</span>
+                                <div class="suggested-code">
+                                    <span class="code-color" style="background: #FFC107;"></span>
+                                    <span>Learning Motivation</span>
+                                </div>
+                                <div class="suggested-code">
+                                    <span class="code-color" style="background: #F44336;"></span>
+                                    <span>Perseverance</span>
+                                </div>
+                            </div>
+                            <div class="result-actions">
+                                <button class="btn btn-sm btn-primary">
+                                    <span class="material-icons">check</span>
+                                    Apply Code
+                                </button>
+                                <button class="btn btn-sm btn-secondary">
+                                    <span class="material-icons">visibility</span>
+                                    Preview
+                                </button>
+                                <button class="btn btn-sm btn-secondary">
+                                    <span class="material-icons">close</span>
+                                    Dismiss
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Result 4 -->
+                        <div class="result-item">
+                            <div class="result-header">
+                                <div class="result-file">
+                                    <span class="material-icons">description</span>
+                                    focus_group_transcript.txt
+                                </div>
+                                <div class="result-confidence low">
+                                    <span class="material-icons" style="font-size: 14px;">help_outline</span>
+                                    62% match
+                                </div>
+                            </div>
+                            <div class="result-text">
+                                "What keeps me going is the support from peers and instructors. The <mark>desire to learn</mark> is there, but I need help along the way."
+                            </div>
+                            <div class="result-meta">
+                                <span class="result-meta-item">
+                                    <span class="material-icons">format_quote</span>
+                                    Line 156
+                                </span>
+                                <span class="result-meta-item">
+                                    <span class="material-icons">person</span>
+                                    Case: FG1
+                                </span>
+                                <span class="result-meta-item">
+                                    <span class="material-icons">label_off</span>
+                                    Not yet coded
+                                </span>
+                            </div>
+                            <div class="suggested-codes">
+                                <span style="font-size: 11px; color: var(--text-secondary); margin-right: 8px;">Suggested:</span>
+                                <div class="suggested-code">
+                                    <span class="code-color" style="background: #FFC107;"></span>
+                                    <span>Learning Motivation</span>
+                                </div>
+                                <div class="suggested-code">
+                                    <span class="code-color" style="background: #9C27B0;"></span>
+                                    <span>Social Support</span>
+                                </div>
+                            </div>
+                            <div class="result-actions">
+                                <button class="btn btn-sm btn-primary">
+                                    <span class="material-icons">check</span>
+                                    Apply Code
+                                </button>
+                                <button class="btn btn-sm btn-secondary">
+                                    <span class="material-icons">visibility</span>
+                                    Preview
+                                </button>
+                                <button class="btn btn-sm btn-secondary">
+                                    <span class="material-icons">close</span>
+                                    Dismiss
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Preview Panel -->
+                    <div class="preview-panel">
+                        <div class="preview-header">
+                            <div class="preview-title">
+                                <span class="material-icons">visibility</span>
+                                Context Preview
+                            </div>
+                            <div style="font-size: 12px; color: var(--text-secondary);">ID2.odt - Paragraph 4</div>
+                        </div>
+                        <div class="preview-content">
+                            <div class="preview-text">
+                                <p>I have not studied much before. I know that I must get help as I have struggled understanding the lecture slides so far and searching the web did not help.</p>
+                                <p>I really want someone to sit down with me and explain the course material.</p>
+                                <p>The course cost &euro;200.00 and I do not want to waste my money.</p>
+                                <p><span class="highlight">I really like learning new things. I think this course is good for me as I have wanted to learn about world history for a while.</span> The structured content, lecture slides and web links have been really good. I guess some less computer-savvy people would have some trouble accessing the internet-based material, but its like a duck to water for me &ndash; no problem at all.</p>
+                                <p>I get the feeling most students are having some problems with the coursework deadlines. There is much to learn and not many of us practice directed learning.</p>
+                            </div>
+                        </div>
+                        <div class="preview-actions">
+                            <button class="btn btn-primary" style="flex: 1;">
+                                <span class="material-icons">check</span>
+                                Apply "Learning Motivation"
+                            </button>
+                            <button class="btn btn-secondary">
+                                <span class="material-icons">open_in_new</span>
+                                Open File
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Status Bar -->
+        <div class="status-bar">
+            <div class="status-left">
+                <span class="status-item">
+                    <span class="material-icons">check_circle</span>
+                    Ready
+                </span>
+                <span class="status-item">
+                    <span class="material-icons">storage</span>
+                    research_project.qda
+                </span>
+            </div>
+            <div class="status-right">
+                <span class="status-item">
+                    <span class="material-icons">psychology</span>
+                    AI: Connected
+                </span>
+                <span class="status-item">
+                    <span class="material-icons">schedule</span>
+                    Last search: 2 min ago
+                </span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Theme Toggle Button -->
+    <div class="theme-toggle">
+        <button class="theme-btn" onclick="toggleTheme()" title="Toggle theme">
+            <span class="material-icons" id="theme-icon">light_mode</span>
+        </button>
+    </div>
+
+    <script>
+        let isDark = true;
+
+        function toggleTheme() {
+            isDark = !isDark;
+            document.body.classList.toggle('light-theme', !isDark);
+            document.getElementById('theme-icon').textContent = isDark ? 'light_mode' : 'dark_mode';
+        }
+
+        // Result item selection
+        document.querySelectorAll('.result-item').forEach(item => {
+            item.addEventListener('click', function(e) {
+                if (!e.target.closest('.btn') && !e.target.closest('.suggested-code')) {
+                    document.querySelectorAll('.result-item').forEach(i => i.classList.remove('selected'));
+                    this.classList.add('selected');
+                }
+            });
+        });
+
+        // Code item selection
+        document.querySelectorAll('.code-item').forEach(item => {
+            item.addEventListener('click', function() {
+                document.querySelectorAll('.code-item').forEach(i => i.classList.remove('selected'));
+                this.classList.add('selected');
+            });
+        });
+
+        // Suggested code selection
+        document.querySelectorAll('.suggested-code').forEach(code => {
+            code.addEventListener('click', function() {
+                this.classList.toggle('selected');
+            });
+        });
+
+        // Checkbox toggle
+        document.querySelectorAll('.checkbox').forEach(cb => {
+            cb.addEventListener('click', function() {
+                this.classList.toggle('checked');
+            });
+        });
+
+        // Show batch actions when multiple selected
+        let selectedCount = 0;
+        document.querySelectorAll('.result-item').forEach(item => {
+            item.addEventListener('dblclick', function() {
+                this.classList.toggle('batch-selected');
+                selectedCount = document.querySelectorAll('.result-item.batch-selected').length;
+                if (selectedCount > 0) {
+                    document.querySelector('.batch-count').textContent = selectedCount + ' items selected';
+                    document.getElementById('batchActions').classList.add('show');
+                } else {
+                    document.getElementById('batchActions').classList.remove('show');
+                }
+            });
+        });
+    </script>
+</body>
+</html>
