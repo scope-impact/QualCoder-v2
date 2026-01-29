@@ -6,7 +6,7 @@ milestone: M-002
 layer: Application
 created_date: '2026-01-29'
 labels: [application, coding, agent, P1]
-dependencies: [QC-004, QC-005]
+dependencies: [QC-003.02, QC-004, QC-005]
 ---
 
 ## Description
@@ -17,7 +17,6 @@ Implement the application layer for Coding: controller, event bus, command handl
 
 ## Acceptance Criteria
 
-- [ ] Event bus (publish/subscribe)
 - [ ] CodingController implementation
 - [ ] All commands working (create, rename, delete, apply code, etc.)
 - [ ] Events published for state changes
@@ -28,15 +27,16 @@ Implement the application layer for Coding: controller, event bus, command handl
 
 | ID | Subtask | Status |
 |----|---------|--------|
-| QC-006.1 | Event Bus | To Do |
-| QC-006.2 | Controller Protocol | To Do |
-| QC-006.3 | CodingController | To Do |
-| QC-006.4 | Agent Tool Registration | To Do |
-| QC-006.5 | Trust Enforcement | To Do |
-| QC-006.6 | Integration Tests | To Do |
+| QC-006.01 | CodingController | To Do |
+| QC-006.02 | Image and AV Coding Commands | To Do |
+| QC-006.03 | Batch Operations | To Do |
+| QC-006.04 | Coding Signal Bridge | To Do |
+| QC-006.05 | Recent Codes Service | To Do |
+| QC-006.06 | Agent Tool Registration | To Do |
+| QC-006.07 | Trust Enforcement | To Do |
+| QC-006.08 | Integration Tests | To Do |
 
 ## Implementation
 
-- `src/application/event_bus.py`
 - `src/application/controllers/coding_controller.py`
 - `src/agent_context/tools/coding.py`
