@@ -261,6 +261,15 @@ from .image_annotation import (
     AnnotationToolbar,
 )
 
+# PDF Viewer Components
+from .pdf_viewer import (
+    PDFPageViewer,
+    PDFGraphicsView,
+    PDFThumbnail,
+    PDFTextBlock,
+    PDFSelection,
+)
+
 
 __all__ = [
     # Tokens
@@ -464,4 +473,10 @@ __all__ = [
     "ImageAnnotation",
     "AnnotationMode",
     "AnnotationToolbar",
+    # PDF Viewer
+    "PDFPageViewer",
+    "PDFGraphicsView",
+    "PDFThumbnail",
+    "PDFTextBlock",
+    "PDFSelection",
 ]

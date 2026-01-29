@@ -13,6 +13,7 @@ from ...word_cloud import WordCloudWidget
 from ...image_annotation import ImageAnnotationLayer, AnnotationMode
 from ...data_display import HeatMapCell, HeatMapGrid
 from ...progress_bar import RelevanceScoreBar, ScoreIndicator
+from ...pdf_viewer import PDFPageViewer
 from ..page import StoryPage
 
 
@@ -369,6 +370,43 @@ def create_score_bars_story(colors: ColorPalette) -> StoryPage:
     )
 
 
+def create_pdf_viewer_story(colors: ColorPalette) -> StoryPage:
+    """PDF viewer story"""
+    examples = []
+
+    # PDF viewer with toolbar
+    viewer = PDFPageViewer(show_toolbar=True, show_thumbnails=False, colors=colors)
+    viewer.setMinimumSize(500, 400)
+
+    examples.append((
+        "PDF Page Viewer",
+        viewer,
+        'viewer = PDFPageViewer(show_toolbar=True)\n'
+        'viewer.load_document("/path/to/doc.pdf")\n'
+        'viewer.page_changed.connect(on_page_change)\n'
+        'viewer.text_selected.connect(on_selection)'
+    ))
+
+    # PDF viewer with thumbnails
+    viewer_thumbs = PDFPageViewer(show_toolbar=True, show_thumbnails=True, colors=colors)
+    viewer_thumbs.setMinimumSize(600, 400)
+
+    examples.append((
+        "With Thumbnails",
+        viewer_thumbs,
+        'PDFPageViewer(show_toolbar=True, show_thumbnails=True)'
+    ))
+
+    return StoryPage(
+        "PDF Viewer",
+        "PDF document viewer with text selection overlay. "
+        "Ctrl+Click and drag to select text regions. "
+        "Requires PyMuPDF (pymupdf) to be installed.",
+        examples,
+        colors=colors
+    )
+
+
 def get_stories(colors: ColorPalette) -> List[Tuple[str, str, StoryPage]]:
     """Return all visualization stories"""
     return [
@@ -376,6 +414,7 @@ def get_stories(colors: ColorPalette) -> List[Tuple[str, str, StoryPage]]:
         ("network", "Network Graph", create_network_graph_story(colors)),
         ("wordcloud", "Word Cloud", create_word_cloud_story(colors)),
         ("annotation", "Image Annotation", create_image_annotation_story(colors)),
+        ("pdf", "PDF Viewer", create_pdf_viewer_story(colors)),
         ("heatmap", "Heat Map", create_heatmap_story(colors)),
         ("scores", "Score Bars", create_score_bars_story(colors)),
     ]
