@@ -419,7 +419,13 @@ class ToolbarButton(QPushButton):
         display_text = f"{icon} {text}" if icon and text else (icon or text)
         self.setText(display_text)
 
-        self.setMinimumSize(36, 36)
+        self.setMinimumHeight(36)
+        # If there's text, ensure button is wide enough
+        if text:
+            self.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Fixed)
+        else:
+            self.setMinimumWidth(36)
+            self.setMaximumWidth(36)
         self.setCursor(Qt.CursorShape.PointingHandCursor)
         self._apply_style()
 

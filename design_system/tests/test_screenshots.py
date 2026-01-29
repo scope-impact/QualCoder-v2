@@ -318,11 +318,12 @@ class TestNavigationScreenshots:
         from design_system.navigation import TabGroup
 
         tabs = TabGroup()
-        tabs.add_tab("Overview", "overview")
-        tabs.add_tab("Files", "files")
-        tabs.add_tab("Codes", "codes")
-        tabs.add_tab("Reports", "reports")
+        tabs.add_tab("Overview", active=True)
+        tabs.add_tab("Files")
+        tabs.add_tab("Codes")
+        tabs.add_tab("Reports")
 
+        tabs.setMinimumWidth(500)
         qtbot.addWidget(tabs)
         take_screenshot(tabs, "tab_group")
 
@@ -478,3 +479,586 @@ class TestListScreenshots:
 
         qtbot.addWidget(lst)
         take_screenshot(lst, "case_list")
+
+
+class TestToggleScreenshots:
+    """Capture screenshots of toggle components"""
+
+    def test_toggle_states(self, qtbot, take_screenshot):
+        """Screenshot toggle in different states"""
+        from design_system.toggle import Toggle, LabeledToggle
+
+        container = QWidget()
+        layout = QVBoxLayout(container)
+        layout.setSpacing(16)
+
+        # Simple toggles
+        row1 = QWidget()
+        row1_layout = QHBoxLayout(row1)
+        row1_layout.setSpacing(16)
+
+        toggle_off = Toggle()
+        toggle_off.setChecked(False)
+        row1_layout.addWidget(QLabel("Off:"))
+        row1_layout.addWidget(toggle_off)
+
+        toggle_on = Toggle()
+        toggle_on.setChecked(True)
+        row1_layout.addWidget(QLabel("On:"))
+        row1_layout.addWidget(toggle_on)
+
+        layout.addWidget(row1)
+
+        # Labeled toggles
+        labeled1 = LabeledToggle(label="Enable notifications")
+        labeled1.setChecked(True)
+        layout.addWidget(labeled1)
+
+        labeled2 = LabeledToggle(label="Dark mode")
+        labeled2.setChecked(False)
+        layout.addWidget(labeled2)
+
+        container.setFixedWidth(300)
+        qtbot.addWidget(container)
+        take_screenshot(container, "toggle_states")
+
+
+class TestPickerScreenshots:
+    """Capture screenshots of picker components"""
+
+    def test_color_picker(self, qtbot, take_screenshot):
+        """Screenshot color picker"""
+        from design_system.forms import ColorPicker
+
+        picker = ColorPicker()
+        picker.setFixedWidth(280)
+
+        qtbot.addWidget(picker)
+        take_screenshot(picker, "color_picker")
+
+    def test_date_range_picker(self, qtbot, take_screenshot):
+        """Screenshot date range picker"""
+        from design_system.calendar import DateRangePicker
+
+        picker = DateRangePicker()
+        picker.setFixedWidth(320)
+
+        qtbot.addWidget(picker)
+        take_screenshot(picker, "date_range_picker")
+
+
+class TestTreeScreenshots:
+    """Capture screenshots of tree components"""
+
+    def test_code_tree(self, qtbot, take_screenshot):
+        """Screenshot code tree with hierarchy"""
+        from design_system.code_tree import CodeTree, CodeItem
+
+        tree = CodeTree()
+
+        # Add hierarchical items
+        items = [
+            CodeItem(
+                id="1",
+                name="Themes",
+                color="#4CAF50",
+                count=25,
+                children=[
+                    CodeItem(id="1.1", name="Main Theme", color="#66BB6A", count=12),
+                    CodeItem(id="1.2", name="Sub Theme", color="#81C784", count=8),
+                    CodeItem(id="1.3", name="Minor Theme", color="#A5D6A7", count=5),
+                ]
+            ),
+            CodeItem(
+                id="2",
+                name="Categories",
+                color="#2196F3",
+                count=18,
+                children=[
+                    CodeItem(id="2.1", name="Category A", color="#42A5F5", count=10),
+                    CodeItem(id="2.2", name="Category B", color="#64B5F6", count=8),
+                ]
+            ),
+            CodeItem(id="3", name="Uncategorized", color="#FF9800", count=7),
+        ]
+
+        tree.set_items(items)
+        # Expand parent items to show hierarchy
+        tree.expand_item("1", True)
+        tree.expand_item("2", True)
+        tree.setFixedSize(300, 300)
+
+        qtbot.addWidget(tree)
+        take_screenshot(tree, "code_tree")
+
+
+class TestStatScreenshots:
+    """Capture screenshots of statistics components"""
+
+    def test_stat_cards(self, qtbot, take_screenshot):
+        """Screenshot stat card variants"""
+        from design_system.stat_card import StatCard, MiniStatCard
+
+        container = QWidget()
+        layout = QVBoxLayout(container)
+        layout.setSpacing(16)
+
+        # Full stat cards
+        row1 = QWidget()
+        row1_layout = QHBoxLayout(row1)
+        row1_layout.setSpacing(12)
+
+        card1 = StatCard(
+            value="1,234",
+            label="Total Files",
+            icon="mdi6.file-multiple",
+            trend="+12%",
+            trend_direction="up"
+        )
+        row1_layout.addWidget(card1)
+
+        card2 = StatCard(
+            value="567",
+            label="Codes Applied",
+            icon="mdi6.tag-multiple",
+            trend="+8%",
+            trend_direction="up"
+        )
+        row1_layout.addWidget(card2)
+
+        layout.addWidget(row1)
+
+        # Mini stat cards
+        row2 = QWidget()
+        row2_layout = QHBoxLayout(row2)
+        row2_layout.setSpacing(8)
+
+        mini1 = MiniStatCard(value="42", label="Memos")
+        mini2 = MiniStatCard(value="15", label="Cases")
+        mini3 = MiniStatCard(value="8", label="Coders")
+
+        row2_layout.addWidget(mini1)
+        row2_layout.addWidget(mini2)
+        row2_layout.addWidget(mini3)
+
+        layout.addWidget(row2)
+
+        qtbot.addWidget(container)
+        take_screenshot(container, "stat_cards")
+
+
+class TestUploadScreenshots:
+    """Capture screenshots of upload components"""
+
+    def test_drop_zone(self, qtbot, take_screenshot):
+        """Screenshot drop zone"""
+        from design_system.upload import DropZone
+
+        zone = DropZone(
+            accepted_types=[".txt", ".pdf", ".docx", ".mp3", ".mp4"],
+            max_files=10
+        )
+        zone.setFixedSize(400, 200)
+
+        qtbot.addWidget(zone)
+        take_screenshot(zone, "drop_zone")
+
+
+class TestChatScreenshots:
+    """Capture screenshots of chat/AI components"""
+
+    def test_message_bubbles(self, qtbot, take_screenshot):
+        """Screenshot chat message bubbles"""
+        from design_system.chat import MessageBubble
+
+        container = QWidget()
+        layout = QVBoxLayout(container)
+        layout.setSpacing(12)
+
+        # User message
+        user_msg = MessageBubble(
+            text="Can you help me find patterns in the interview data?",
+            role="user",
+            timestamp="10:30 AM"
+        )
+        layout.addWidget(user_msg)
+
+        # Assistant message
+        assistant_msg = MessageBubble(
+            text="I found 3 recurring themes in your data:\n\n1. **Work-life balance** (mentioned 15 times)\n2. **Career growth** (mentioned 12 times)\n3. **Team collaboration** (mentioned 9 times)",
+            role="assistant",
+            timestamp="10:31 AM"
+        )
+        layout.addWidget(assistant_msg)
+
+        container.setFixedWidth(450)
+        qtbot.addWidget(container)
+        take_screenshot(container, "message_bubbles")
+
+    def test_typing_indicator(self, qtbot, take_screenshot):
+        """Screenshot typing indicator"""
+        from design_system.chat import TypingIndicator
+
+        indicator = TypingIndicator()
+
+        qtbot.addWidget(indicator)
+        take_screenshot(indicator, "typing_indicator")
+
+    def test_chat_input(self, qtbot, take_screenshot):
+        """Screenshot chat input"""
+        from design_system.chat import ChatInput
+
+        chat_input = ChatInput(placeholder="Ask a question about your data...")
+        chat_input.setFixedWidth(400)
+
+        qtbot.addWidget(chat_input)
+        take_screenshot(chat_input, "chat_input")
+
+    def test_code_suggestion(self, qtbot, take_screenshot):
+        """Screenshot AI code suggestion"""
+        from design_system.chat import CodeSuggestion
+
+        container = QWidget()
+        layout = QVBoxLayout(container)
+        layout.setSpacing(8)
+
+        suggestion1 = CodeSuggestion(
+            code_name="Work-Life Balance",
+            color="#4CAF50",
+            confidence=0.92
+        )
+        layout.addWidget(suggestion1)
+
+        suggestion2 = CodeSuggestion(
+            code_name="Career Growth",
+            color="#2196F3",
+            confidence=0.78
+        )
+        layout.addWidget(suggestion2)
+
+        container.setFixedWidth(400)
+        qtbot.addWidget(container)
+        take_screenshot(container, "code_suggestions")
+
+
+class TestEditorScreenshots:
+    """Capture screenshots of editor components"""
+
+    def test_code_editor(self, qtbot, take_screenshot):
+        """Screenshot code editor with syntax highlighting"""
+        from design_system.editors import CodeEditor
+
+        editor = CodeEditor(language="python")
+        editor.set_code('''def analyze_codes(data):
+    """Analyze qualitative codes in data."""
+    themes = {}
+    for item in data:
+        code = item.get("code")
+        if code not in themes:
+            themes[code] = 0
+        themes[code] += 1
+    return themes
+''')
+        editor.setFixedSize(450, 280)
+
+        qtbot.addWidget(editor)
+        take_screenshot(editor, "code_editor")
+
+    def test_rich_text_editor(self, qtbot, take_screenshot):
+        """Screenshot rich text editor"""
+        from design_system.editors import RichTextEditor
+
+        editor = RichTextEditor()
+        editor.set_html("""
+        <h3>Research Notes</h3>
+        <p>Key findings from the <b>interview session</b>:</p>
+        <ul>
+            <li>Participant expressed <i>strong feelings</i> about work culture</li>
+            <li>Mentioned team dynamics multiple times</li>
+        </ul>
+        """)
+        editor.setFixedSize(400, 250)
+
+        qtbot.addWidget(editor)
+        take_screenshot(editor, "rich_text_editor")
+
+    def test_memo_editor(self, qtbot, take_screenshot):
+        """Screenshot memo editor"""
+        from design_system.editors import MemoEditor
+
+        editor = MemoEditor()
+        editor.set_content("This participant showed interesting patterns in their responses about work-life balance. Follow up on the connection to remote work policies.")
+        editor.setFixedSize(400, 180)
+
+        qtbot.addWidget(editor)
+        take_screenshot(editor, "memo_editor")
+
+
+class TestModalScreenshots:
+    """Capture screenshots of modal/dialog components"""
+
+    def test_modal_dialog(self, qtbot, take_screenshot):
+        """Screenshot modal dialog"""
+        from design_system.modal import Modal
+        from design_system.components import Label
+
+        modal = Modal(title="Confirm Delete", size="sm")
+        modal.body.layout().addWidget(
+            Label("Are you sure you want to delete this code?\nThis action cannot be undone.")
+        )
+        modal.add_button("Cancel", variant="outline")
+        modal.add_button("Delete", variant="destructive")
+        modal.setFixedSize(400, 200)
+
+        qtbot.addWidget(modal)
+        take_screenshot(modal, "modal_dialog")
+
+    def test_context_menu(self, qtbot, take_screenshot):
+        """Screenshot context menu"""
+        from design_system.context_menu import ContextMenu
+
+        # Create a container to show the menu in
+        container = QWidget()
+        container.setFixedSize(250, 200)
+
+        menu = ContextMenu(parent=container)
+        menu.add_item("Edit", icon="mdi6.pencil")
+        menu.add_item("Duplicate", icon="mdi6.content-copy")
+        menu.add_separator()
+        menu.add_item("Move to...", icon="mdi6.folder-move")
+        menu.add_separator()
+        menu.add_item("Delete", icon="mdi6.delete", variant="danger")
+
+        # Show menu at a position
+        menu.popup(container.mapToGlobal(container.rect().center()))
+
+        qtbot.addWidget(container)
+        take_screenshot(menu, "context_menu")
+
+
+class TestLayoutScreenshots:
+    """Capture screenshots of layout components"""
+
+    def test_panel(self, qtbot, take_screenshot):
+        """Screenshot panel with header"""
+        from design_system.layout import Panel, PanelHeader
+        from design_system.components import Label
+
+        # Create container to hold header + panel
+        container = QWidget()
+        container_layout = QVBoxLayout(container)
+        container_layout.setContentsMargins(0, 0, 0, 0)
+        container_layout.setSpacing(0)
+
+        # Add header
+        header = PanelHeader(title="Properties")
+        header.add_action("➕", lambda: None)
+        header.add_action("⋮", lambda: None)
+        container_layout.addWidget(header)
+
+        # Add panel content
+        panel = Panel(title="")
+        content = QWidget()
+        content_layout = QVBoxLayout(content)
+        content_layout.addWidget(Label("Name: Interview 01"))
+        content_layout.addWidget(Label("Type: Text Document"))
+        content_layout.addWidget(Label("Size: 24 KB"))
+        content_layout.addStretch()
+        panel.set_content(content)
+        container_layout.addWidget(panel)
+
+        container.setFixedSize(280, 250)
+
+        qtbot.addWidget(container)
+        take_screenshot(container, "panel_with_header")
+
+    def test_toolbar(self, qtbot, take_screenshot):
+        """Screenshot toolbar with buttons"""
+        from design_system.layout import Toolbar
+
+        toolbar = Toolbar()
+
+        # File group - add_group() returns a ToolbarGroup
+        file_group = toolbar.add_group()
+        file_group.add_button("Open", icon="📂")
+        file_group.add_button("Save", icon="💾")
+
+        toolbar.add_divider()
+
+        # Edit group
+        edit_group = toolbar.add_group()
+        edit_group.add_button("Undo", icon="↩️")
+        edit_group.add_button("Redo", icon="↪️")
+
+        toolbar.add_divider()
+
+        # View group
+        view_group = toolbar.add_group()
+        view_group.add_button("Zoom In", icon="🔍")
+        view_group.add_button("Zoom Out", icon="🔎")
+
+        toolbar.setFixedWidth(650)
+
+        qtbot.addWidget(toolbar)
+        take_screenshot(toolbar, "toolbar")
+
+    def test_sidebar(self, qtbot, take_screenshot):
+        """Screenshot sidebar navigation"""
+        from design_system.layout import Sidebar
+
+        sidebar = Sidebar()
+        sidebar.add_section("Project")
+        sidebar.add_item("Files", icon="📁")
+        sidebar.add_item("Codes", icon="🏷️")
+        sidebar.add_item("Cases", icon="📂")
+
+        sidebar.add_section("Analysis")
+        sidebar.add_item("Reports", icon="📊")
+        sidebar.add_item("Queries", icon="🔍")
+
+        sidebar.setFixedSize(220, 300)
+
+        qtbot.addWidget(sidebar)
+        take_screenshot(sidebar, "sidebar")
+
+
+class TestVisualizationScreenshots:
+    """Capture screenshots of visualization components"""
+
+    def test_chart_bar(self, qtbot, take_screenshot):
+        """Screenshot bar chart"""
+        from design_system.charts import ChartWidget, ChartDataPoint
+
+        chart = ChartWidget(title="Code Frequency")
+        chart.set_bar_data([
+            ChartDataPoint("Theme A", 25, "#4CAF50"),
+            ChartDataPoint("Theme B", 18, "#2196F3"),
+            ChartDataPoint("Theme C", 12, "#FF9800"),
+            ChartDataPoint("Theme D", 8, "#9C27B0"),
+        ])
+        chart.setFixedSize(400, 300)
+
+        qtbot.addWidget(chart)
+        take_screenshot(chart, "chart_bar")
+
+    def test_network_graph(self, qtbot, take_screenshot):
+        """Screenshot network graph"""
+        from design_system.network_graph import NetworkGraphWidget, GraphNode, GraphEdge
+
+        graph = NetworkGraphWidget()
+
+        # Add nodes
+        graph.add_node(GraphNode(id="1", label="Work-Life", color="#4CAF50", size=30))
+        graph.add_node(GraphNode(id="2", label="Career", color="#2196F3", size=25))
+        graph.add_node(GraphNode(id="3", label="Team", color="#FF9800", size=20))
+        graph.add_node(GraphNode(id="4", label="Remote", color="#9C27B0", size=15))
+
+        # Add edges
+        graph.add_edge(GraphEdge(source="1", target="2", weight=5))
+        graph.add_edge(GraphEdge(source="1", target="3", weight=3))
+        graph.add_edge(GraphEdge(source="2", target="3", weight=4))
+        graph.add_edge(GraphEdge(source="1", target="4", weight=6))
+
+        graph.layout("spring")
+        graph.setFixedSize(400, 350)
+
+        qtbot.addWidget(graph)
+        take_screenshot(graph, "network_graph")
+
+    def test_word_cloud(self, qtbot, take_screenshot):
+        """Screenshot word cloud"""
+        from design_system.word_cloud import WordCloudWidget
+
+        cloud = WordCloudWidget()
+        cloud.set_frequencies({
+            "qualitative": 50,
+            "research": 45,
+            "coding": 40,
+            "analysis": 35,
+            "themes": 30,
+            "patterns": 28,
+            "interviews": 25,
+            "data": 22,
+            "findings": 20,
+            "methodology": 18,
+        })
+        # set_frequencies automatically generates the cloud
+        cloud.setFixedSize(400, 300)
+
+        qtbot.addWidget(cloud)
+        take_screenshot(cloud, "word_cloud")
+
+
+class TestFilterScreenshots:
+    """Capture screenshots of filter components"""
+
+    def test_filter_panel(self, qtbot, take_screenshot):
+        """Screenshot filter panel"""
+        from design_system.filters import FilterPanel
+
+        panel = FilterPanel()
+        panel.add_section("File Type", ["Text", "Audio", "Video", "Image", "PDF"])
+        panel.add_section("Status", ["Coded", "Uncoded", "In Progress"])
+        panel.add_section("Coder", ["Alice", "Bob", "Charlie"])
+        panel.setFixedSize(250, 350)
+
+        qtbot.addWidget(panel)
+        take_screenshot(panel, "filter_panel")
+
+    def test_view_toggle(self, qtbot, take_screenshot):
+        """Screenshot view toggle"""
+        from design_system.filters import ViewToggle
+
+        container = QWidget()
+        layout = QVBoxLayout(container)
+        layout.setSpacing(16)
+
+        toggle1 = ViewToggle(views=["list", "grid", "table"], current="list")
+        layout.addWidget(toggle1)
+
+        toggle2 = ViewToggle(views=["day", "week", "month"], current="week")
+        layout.addWidget(toggle2)
+
+        qtbot.addWidget(container)
+        take_screenshot(container, "view_toggle")
+
+
+class TestDocumentScreenshots:
+    """Capture screenshots of document components"""
+
+    def test_text_panel(self, qtbot, take_screenshot):
+        """Screenshot text panel with content"""
+        from design_system.document import TextPanel
+
+        panel = TextPanel(
+            title="Interview Transcript",
+            badge_text="Coded",
+            show_line_numbers=True
+        )
+        panel.set_text("""Interviewer: Thank you for joining us today. Can you tell me about your experience with remote work?
+
+Participant: Sure. I've been working remotely for about two years now. Initially, it was challenging to adjust, but I've grown to appreciate the flexibility it offers.
+
+Interviewer: What aspects of remote work do you find most beneficial?
+
+Participant: I think the biggest benefit is the work-life balance. I can spend more time with my family and avoid the daily commute. It's also easier to focus on deep work without office distractions.""")
+        panel.setFixedSize(500, 300)
+
+        qtbot.addWidget(panel)
+        take_screenshot(panel, "text_panel")
+
+    def test_transcript_panel(self, qtbot, take_screenshot):
+        """Screenshot transcript panel"""
+        from design_system.document import TranscriptPanel
+
+        panel = TranscriptPanel()
+
+        # add_segment takes positional args: start_time, end_time, speaker, text
+        panel.add_segment(15.0, 25.0, "Interviewer", "Can you describe your typical workday?")
+        panel.add_segment(25.0, 65.0, "Participant", "I usually start around 8 AM. I check emails first, then move on to my main tasks for the day.")
+        panel.add_segment(65.0, 75.0, "Interviewer", "How do you handle distractions when working from home?")
+
+        panel.setFixedSize(450, 280)
+
+        qtbot.addWidget(panel)
+        take_screenshot(panel, "transcript_panel")

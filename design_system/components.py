@@ -371,8 +371,8 @@ class Avatar(QLabel):
         self.setFixedSize(size, size)
         self.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.setStyleSheet(f"""
-            background-color: {colors.surface_light};
-            color: {colors.text_secondary};
+            background-color: {colors.surface_lighter};
+            color: {colors.text_primary};
             border-radius: {size // 2}px;
             font-weight: {TYPOGRAPHY.weight_medium};
             font-size: {size // 3}px;

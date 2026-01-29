@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Capture screenshots of all Storybook pages.
-Saves to: _template/storybook_screenshots/
+Saves to: design_system/assets/screenshots/storybook/
 """
 
 import sys
@@ -37,7 +37,7 @@ def capture_screenshots():
     app.setStyle("Fusion")
 
     # Output directory
-    output_dir = Path(__file__).parent.parent / "_template" / "storybook_screenshots"
+    output_dir = Path(__file__).parent / "assets" / "screenshots" / "storybook"
     output_dir.mkdir(parents=True, exist_ok=True)
 
     screenshots_taken = []

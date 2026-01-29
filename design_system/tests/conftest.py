@@ -38,14 +38,16 @@ def light_theme():
     return get_theme("light")
 
 
-# Screenshot directory
+# Screenshot directories
 SCREENSHOT_DIR = Path(__file__).parent / "screenshots"
+ASSETS_SCREENSHOT_DIR = Path(__file__).parent.parent / "assets" / "screenshots"
 
 
 @pytest.fixture(scope="session")
 def screenshot_dir():
     """Create and return screenshot directory"""
     SCREENSHOT_DIR.mkdir(exist_ok=True)
+    ASSETS_SCREENSHOT_DIR.mkdir(parents=True, exist_ok=True)
     return SCREENSHOT_DIR
 
 
@@ -78,6 +80,9 @@ def take_screenshot(screenshot_dir, request):
         filename = f"{name}_{timestamp}.png"
         filepath = screenshot_dir / filename
 
+        # Also save to assets with clean name (for API documentation)
+        assets_filepath = ASSETS_SCREENSHOT_DIR / f"{name}.png"
+
         # Ensure widget is visible and rendered
         widget.show()
         widget.raise_()
@@ -94,9 +99,15 @@ def take_screenshot(screenshot_dir, request):
 
         # Capture the widget
         pixmap = widget.grab()
+
+        # Save timestamped version (for history/tracking)
         pixmap.save(str(filepath))
 
+        # Save clean version to assets (for API docs)
+        pixmap.save(str(assets_filepath))
+
         print(f"\nScreenshot saved: {filepath}")
+        print(f"Assets copy: {assets_filepath}")
         return filepath
 
     return _take_screenshot

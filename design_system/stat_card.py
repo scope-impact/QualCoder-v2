@@ -11,6 +11,7 @@ from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QColor
 
 from .tokens import SPACING, RADIUS, TYPOGRAPHY, ColorPalette, get_theme
+from .icons import Icon
 
 
 class StatCard(QFrame):
@@ -63,13 +64,19 @@ class StatCard(QFrame):
 
         # Icon (optional)
         if icon:
-            icon_label = QLabel(icon)
-            icon_label.setStyleSheet(f"""
-                color: {self._accent_color};
-                font-size: 24px;
-            """)
-            icon_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-            layout.addWidget(icon_label)
+            # Check if it's an MDI icon (mdi6.xxx) or emoji/text
+            if icon.startswith("mdi6."):
+                icon_widget = Icon(icon, size=28, color=self._accent_color, colors=self._colors)
+                layout.addWidget(icon_widget, alignment=Qt.AlignmentFlag.AlignCenter)
+            else:
+                # Emoji or text icon
+                icon_label = QLabel(icon)
+                icon_label.setStyleSheet(f"""
+                    color: {self._accent_color};
+                    font-size: 24px;
+                """)
+                icon_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+                layout.addWidget(icon_label)
 
         # Value
         value_label = QLabel(value)

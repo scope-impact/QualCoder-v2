@@ -100,6 +100,7 @@ class Tab(QPushButton):
         display = f"{icon}  {text}" if icon else text
         self.setText(display)
 
+        self.setMinimumHeight(36)
         self.setCursor(Qt.CursorShape.PointingHandCursor)
         self._apply_style()
 
@@ -159,6 +160,9 @@ class TabGroup(QFrame):
         self._colors = colors or get_theme("dark")
         self._tabs = []
         self._active = None
+
+        # Ensure minimum height for tabs to be visible
+        self.setMinimumHeight(40)
 
         self._layout = QHBoxLayout(self)
         self._layout.setContentsMargins(0, 0, 0, 0)
