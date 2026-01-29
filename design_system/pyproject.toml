@@ -1,0 +1,29 @@
+[project]
+name = "design-system"
+version = "0.1.0"
+description = "PyQt6 Design System - Material Design components for QualCoder"
+requires-python = ">=3.11"
+dependencies = [
+    "pyqt6>=6.5.0",
+    "qtawesome>=1.3.0",
+]
+
+[project.scripts]
+storybook = "design_system.storybook:main"
+
+[dependency-groups]
+dev = [
+    "pytest>=7.0.0",
+    "pytest-qt>=4.2.0",
+]
+
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+py-modules = []
+
+[tool.setuptools.packages.find]
+where = [".."]
+include = ["design_system*"]
