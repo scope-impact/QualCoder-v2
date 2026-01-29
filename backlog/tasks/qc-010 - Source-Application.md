@@ -11,9 +11,9 @@ dependencies: [QC-008, QC-009]
 
 ## Description
 
-Implement the application layer for Source Management with MCP tool registration.
+Implement the application layer for Source Management with Agent tool registration.
 
-**Agent-First:** Controller serves both UI and agent. MCP tools registered.
+**Agent-First:** Controller serves both UI and agent. Agent tools registered.
 
 ## Acceptance Criteria
 
@@ -21,7 +21,7 @@ Implement the application layer for Source Management with MCP tool registration
 - [ ] Import commands (ImportFile, ImportFolder)
 - [ ] Delete and organize commands
 - [ ] Events published
-- [ ] MCP tools registered (list_sources, read_source)
+- [ ] Agent tools registered (list_sources, read_source)
 - [ ] Trust level enforcement
 
 ## Implementation

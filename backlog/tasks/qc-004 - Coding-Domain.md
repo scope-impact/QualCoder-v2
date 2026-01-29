@@ -13,7 +13,7 @@ dependencies: [QC-001]
 
 Define the domain layer for the Coding bounded context: entities, events, invariants, derivers, and agent tool schemas.
 
-**Agent-First:** MCP tool schemas are defined alongside domain entities.
+**Agent-First:** Agent tool schemas are defined alongside domain entities.
 
 ## Acceptance Criteria
 

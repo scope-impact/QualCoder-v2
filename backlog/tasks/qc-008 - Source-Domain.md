@@ -13,7 +13,7 @@ dependencies: [QC-001]
 
 Define the domain layer for Source Management: entities, events, invariants, derivers, and agent tool schemas.
 
-**Agent-First:** MCP tool schemas defined so AI can list and read sources.
+**Agent-First:** Agent tool schemas defined so AI can list and read sources.
 
 ## Acceptance Criteria
 

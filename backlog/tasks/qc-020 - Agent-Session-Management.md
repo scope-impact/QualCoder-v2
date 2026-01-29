@@ -13,7 +13,7 @@ dependencies: [QC-001, QC-006]
 
 Implement session management and statistics tracking for AI agent interactions.
 
-**Note:** Trust levels and MCP infrastructure are in M-001. This task adds session lifecycle, statistics, and suggestion queue management.
+**Note:** Trust levels and agent infrastructure are in M-001. This task adds session lifecycle, statistics, and suggestion queue management.
 
 ## Acceptance Criteria
 
