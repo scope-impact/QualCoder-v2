@@ -18,7 +18,7 @@ Implement the Source Management bounded context end-to-end - importing, organizi
 - File organization with folders
 - Text extraction and transcription
 - Source preview and metadata
-- MCP tools for source operations
+- Agent tools for source operations
 
 ## Tasks
 
@@ -35,5 +35,5 @@ Implement the Source Management bounded context end-to-end - importing, organizi
 - [ ] Import from filesystem
 - [ ] Text extraction from PDF
 - [ ] File manager screen functional
-- [ ] MCP tools: list_sources, read_source, import_file
+- [ ] Agent tools: list_sources, read_source, import_file
 - [ ] Agent can read source content for coding suggestions

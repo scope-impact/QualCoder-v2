@@ -11,7 +11,7 @@ dependencies: [QC-022, QC-023]
 
 ## Description
 
-Implement the application layer for Collaboration with MCP tool registration.
+Implement the application layer for Collaboration with Agent tool registration.
 
 **Agent-First:** Agent can identify itself, compare its codings with human coders.
 
@@ -21,7 +21,7 @@ Implement the application layer for Collaboration with MCP tool registration.
 - [ ] Coder management commands
 - [ ] Merge commands with conflict handling
 - [ ] Comparison commands
-- [ ] MCP tools registered (set_coder, compare_codings)
+- [ ] Agent tools registered (set_coder, compare_codings)
 - [ ] Promote AI coding to human coding
 
 ## Implementation

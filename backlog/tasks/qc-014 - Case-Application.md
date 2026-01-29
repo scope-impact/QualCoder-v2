@@ -11,9 +11,9 @@ dependencies: [QC-012, QC-013]
 
 ## Description
 
-Implement the application layer for Case Management with MCP tool registration.
+Implement the application layer for Case Management with Agent tool registration.
 
-**Agent-First:** Controller serves both UI and agent. MCP tools registered.
+**Agent-First:** Controller serves both UI and agent. Agent tools registered.
 
 ## Acceptance Criteria
 
@@ -21,7 +21,7 @@ Implement the application layer for Case Management with MCP tool registration.
 - [ ] CRUD commands for cases
 - [ ] Membership commands (AddMember, RemoveMember)
 - [ ] Attribute commands
-- [ ] MCP tools registered
+- [ ] Agent tools registered
 - [ ] Trust level enforcement
 
 ## Implementation

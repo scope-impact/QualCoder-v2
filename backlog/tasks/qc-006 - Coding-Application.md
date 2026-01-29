@@ -11,9 +11,9 @@ dependencies: [QC-004, QC-005]
 
 ## Description
 
-Implement the application layer for Coding: controller, event bus, command handling, and MCP tool registration.
+Implement the application layer for Coding: controller, event bus, command handling, and agent tool registration.
 
-**Agent-First:** The controller serves both UI and agent. MCP tools are registered here.
+**Agent-First:** The controller serves both UI and agent. Agent tools are registered here.
 
 ## Acceptance Criteria
 
@@ -21,7 +21,7 @@ Implement the application layer for Coding: controller, event bus, command handl
 - [ ] CodingController implementation
 - [ ] All commands working (create, rename, delete, apply code, etc.)
 - [ ] Events published for state changes
-- [ ] MCP tools registered and functional
+- [ ] Agent tools registered and functional
 - [ ] Trust level enforcement on agent operations
 
 ## Subtasks
@@ -31,7 +31,7 @@ Implement the application layer for Coding: controller, event bus, command handl
 | QC-006.1 | Event Bus | To Do |
 | QC-006.2 | Controller Protocol | To Do |
 | QC-006.3 | CodingController | To Do |
-| QC-006.4 | MCP Tool Registration | To Do |
+| QC-006.4 | Agent Tool Registration | To Do |
 | QC-006.5 | Trust Enforcement | To Do |
 | QC-006.6 | Integration Tests | To Do |
 

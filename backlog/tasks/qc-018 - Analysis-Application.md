@@ -11,7 +11,7 @@ dependencies: [QC-016, QC-017]
 
 ## Description
 
-Implement the application layer for Analysis with MCP tool registration.
+Implement the application layer for Analysis with Agent tool registration.
 
 **Agent-First:** Controller serves both UI and agent. AI can answer analytical questions.
 
@@ -21,7 +21,7 @@ Implement the application layer for Analysis with MCP tool registration.
 - [ ] Report generation commands
 - [ ] Export commands
 - [ ] Query execution
-- [ ] MCP tools registered (query_codes, get_frequency)
+- [ ] Agent tools registered (query_codes, get_frequency)
 - [ ] AI can answer "How many segments coded with X?"
 
 ## Implementation

@@ -13,7 +13,7 @@ dependencies: [QC-001]
 
 Define the domain layer for Case Management: entities, events, invariants, derivers, and agent tool schemas.
 
-**Agent-First:** MCP tool schemas so AI can create cases and assign attributes.
+**Agent-First:** Agent tool schemas so AI can create cases and assign attributes.
 
 ## Acceptance Criteria
 

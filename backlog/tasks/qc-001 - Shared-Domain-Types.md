@@ -22,7 +22,7 @@ Define the shared types used across all bounded contexts, including agent infras
 - [x] Common value objects (Color, etc.)
 - [x] TrustLevel enum (Autonomous, Notify, Suggest, Require)
 - [x] AgentSession base type
-- [x] MCP tool schema base protocol
+- [x] Agent tool schema base protocol
 
 ## Implementation
 

@@ -13,7 +13,7 @@ dependencies: [QC-004, QC-008, QC-012]
 
 Define the domain layer for Analysis: query specifications, report definitions, graph structures, and agent tool schemas.
 
-**Agent-First:** MCP tools so AI can query patterns and answer analytical questions.
+**Agent-First:** Agent tools so AI can query patterns and answer analytical questions.
 
 ## Acceptance Criteria
 
