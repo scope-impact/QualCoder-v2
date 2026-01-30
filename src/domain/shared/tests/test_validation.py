@@ -4,28 +4,25 @@ Tests for shared validation utilities.
 These utilities provide common validation patterns used across all bounded contexts.
 """
 
-import pytest
-
 from src.domain.shared.validation import (
-    ValidationSuccess,
     ValidationFailure,
-    ValidationResult,
-    is_valid,
+    ValidationSuccess,
+    all_exist,
+    has_no_references,
+    is_acyclic_hierarchy,
+    is_in_range,
     is_invalid,
-    is_non_empty_string,
-    is_within_length,
-    is_unique_in_collection,
     is_name_unique,
+    is_non_empty_string,
+    is_non_negative,
+    is_positive,
+    is_unique_in_collection,
+    is_valid,
+    is_valid_hex_color,
     is_valid_range,
     is_within_bounds,
-    is_positive,
-    is_non_negative,
-    is_in_range,
-    is_valid_hex_color,
-    is_acyclic_hierarchy,
-    all_exist,
+    is_within_length,
     none_exist,
-    has_no_references,
     validate_all,
     validate_field,
 )
@@ -117,24 +114,18 @@ class TestUniquenessValidators:
     def test_is_unique_in_collection_with_key_function(self):
         """Key function should be used for comparison."""
         items = [{"name": "Alice"}, {"name": "Bob"}]
-        assert is_unique_in_collection(
-            {"name": "Alice"},
-            items,
-            key=lambda x: x["name"]
-        ) is False
-        assert is_unique_in_collection(
-            {"name": "Charlie"},
-            items,
-            key=lambda x: x["name"]
-        ) is True
+        assert (
+            is_unique_in_collection({"name": "Alice"}, items, key=lambda x: x["name"])
+            is False
+        )
+        assert (
+            is_unique_in_collection({"name": "Charlie"}, items, key=lambda x: x["name"])
+            is True
+        )
 
     def test_is_unique_in_collection_with_exclude(self):
         """Excluded item should be ignored."""
-        assert is_unique_in_collection(
-            "a",
-            ["a", "b", "c"],
-            exclude="a"
-        ) is True
+        assert is_unique_in_collection("a", ["a", "b", "c"], exclude="a") is True
 
     def test_is_name_unique_case_insensitive(self):
         """Default case-insensitive matching."""
@@ -236,19 +227,27 @@ class TestHierarchyValidation:
 
     def test_is_acyclic_hierarchy_root_always_valid(self):
         """Moving to root (None parent) should always be valid."""
-        get_parent = lambda x: None
+
+        def get_parent(_x):
+            return None
+
         assert is_acyclic_hierarchy("node1", None, get_parent) is True
 
     def test_is_acyclic_hierarchy_self_parent_invalid(self):
         """Node cannot be its own parent."""
-        get_parent = lambda x: None
+
+        def get_parent(_x):
+            return None
+
         assert is_acyclic_hierarchy("node1", "node1", get_parent) is False
 
     def test_is_acyclic_hierarchy_detects_cycle(self):
         """Should detect cycles in hierarchy."""
         # A -> B -> C, trying to make C parent of A
         parents = {"A": "B", "B": "C", "C": None}
-        get_parent = lambda x: parents.get(x)
+
+        def get_parent(x):
+            return parents.get(x)
 
         # Making A child of C is valid (no cycle)
         assert is_acyclic_hierarchy("A", "C", get_parent) is True
@@ -269,7 +268,9 @@ class TestHierarchyValidation:
         """Valid reparenting should be allowed."""
         # A -> B -> C, move C directly under A
         parents = {"A": None, "B": "A", "C": "B"}
-        get_parent = lambda x: parents.get(x)
+
+        def get_parent(x):
+            return parents.get(x)
 
         # Move C to be child of A directly
         # Walk from A: A -> None (no cycle)
@@ -281,35 +282,53 @@ class TestCollectionValidation:
 
     def test_all_exist_returns_true_when_all_exist(self):
         """Should return True when all IDs exist."""
-        exists_fn = lambda x: x in [1, 2, 3]
+
+        def exists_fn(x):
+            return x in [1, 2, 3]
+
         assert all_exist([1, 2, 3], exists_fn) is True
         assert all_exist([1, 2], exists_fn) is True
         assert all_exist([], exists_fn) is True  # Empty list
 
     def test_all_exist_returns_false_when_any_missing(self):
         """Should return False when any ID doesn't exist."""
-        exists_fn = lambda x: x in [1, 2, 3]
+
+        def exists_fn(x):
+            return x in [1, 2, 3]
+
         assert all_exist([1, 2, 4], exists_fn) is False
 
     def test_none_exist_returns_true_when_none_exist(self):
         """Should return True when no IDs exist."""
-        exists_fn = lambda x: x in [1, 2, 3]
+
+        def exists_fn(x):
+            return x in [1, 2, 3]
+
         assert none_exist([4, 5, 6], exists_fn) is True
         assert none_exist([], exists_fn) is True
 
     def test_none_exist_returns_false_when_any_exist(self):
         """Should return False when any ID exists."""
-        exists_fn = lambda x: x in [1, 2, 3]
+
+        def exists_fn(x):
+            return x in [1, 2, 3]
+
         assert none_exist([3, 4, 5], exists_fn) is False
 
     def test_has_no_references_returns_true_for_zero(self):
         """Should return True when count is zero."""
-        count_fn = lambda x: 0
+
+        def count_fn(_x):
+            return 0
+
         assert has_no_references("any_id", count_fn) is True
 
     def test_has_no_references_returns_false_for_nonzero(self):
         """Should return False when count is nonzero."""
-        count_fn = lambda x: 5
+
+        def count_fn(_x):
+            return 5
+
         assert has_no_references("any_id", count_fn) is False
 
 

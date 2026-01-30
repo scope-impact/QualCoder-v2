@@ -6,13 +6,16 @@ for Qt signal emission.
 """
 
 from __future__ import annotations
-from typing import Callable, Any, Optional
+
 import threading
+from collections.abc import Callable
+from typing import Any
 
 # Qt imports with fallback for testing without Qt
 try:
-    from PySide6.QtCore import QThread, QCoreApplication
+    from PySide6.QtCore import QCoreApplication, QThread
     from PySide6.QtWidgets import QApplication
+
     HAS_QT = True
 except ImportError:
     HAS_QT = False
@@ -80,26 +83,30 @@ def ensure_main_thread(func: Callable[..., Any]) -> Callable[..., Any]:
     Returns:
         Wrapped function that ensures main thread execution
     """
+
     def wrapper(*args: Any, **kwargs: Any) -> Any:
         if is_main_thread():
             return func(*args, **kwargs)
 
         if HAS_QT and QCoreApplication.instance() is not None:
-            from PySide6.QtCore import QMetaObject, Qt, Q_ARG
             # Queue for main thread execution
             # Note: For void functions, use invokeMethod
             # This is a simplified version - full implementation in base.py
             import warnings
+
             warnings.warn(
                 f"Cross-thread call to {func.__name__} - "
-                "use BaseSignalBridge._emit_threadsafe for signals"
+                "use BaseSignalBridge._emit_threadsafe for signals",
+                stacklevel=2,
             )
             return func(*args, **kwargs)
         else:
             # No Qt - execute directly with warning
             import warnings
+
             warnings.warn(
-                f"No Qt event loop - executing {func.__name__} synchronously"
+                f"No Qt event loop - executing {func.__name__} synchronously",
+                stacklevel=2,
             )
             return func(*args, **kwargs)
 
@@ -152,6 +159,7 @@ class ThreadChecker:
         """
         if not is_main_thread():
             import warnings
+
             thread_name = get_current_thread_name()
             msg = f"Not on main thread (current: '{thread_name}')"
             if context:

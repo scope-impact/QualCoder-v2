@@ -5,13 +5,16 @@ A panel displaying the list of files available for coding.
 Includes a header with filter and memo actions, and a scrollable file list.
 """
 
-from typing import List, Dict, Any
-from PySide6.QtWidgets import QFrame, QVBoxLayout
+from typing import Any
+
 from PySide6.QtCore import Signal
+from PySide6.QtWidgets import QFrame, QVBoxLayout
 
 from design_system import (
-    ColorPalette, get_colors,
-    FileList, PanelHeader,
+    ColorPalette,
+    FileList,
+    PanelHeader,
+    get_colors,
 )
 
 
@@ -35,7 +38,7 @@ class FilesPanel(QFrame):
         """
         super().__init__(parent)
         self._colors = colors or get_colors()
-        self._files: List[Dict[str, Any]] = []
+        self._files: list[dict[str, Any]] = []
         self._selected_index: int = -1
 
         self.setStyleSheet(f"background: {self._colors.transparent}; border: none;")
@@ -55,7 +58,7 @@ class FilesPanel(QFrame):
         self._file_list.item_clicked.connect(self._on_file_click)
         layout.addWidget(self._file_list)
 
-    def set_files(self, files: List[Dict[str, Any]]):
+    def set_files(self, files: list[dict[str, Any]]):
         """
         Set the list of files to display.
 
@@ -95,7 +98,7 @@ class FilesPanel(QFrame):
             # Log error for debugging but don't crash
             print(f"FilesPanel: Invalid file_id '{file_id}': {e}")
 
-    def get_selected_file(self) -> Dict[str, Any]:
+    def get_selected_file(self) -> dict[str, Any]:
         """Get the currently selected file data."""
         if 0 <= self._selected_index < len(self._files):
             return self._files[self._selected_index].copy()

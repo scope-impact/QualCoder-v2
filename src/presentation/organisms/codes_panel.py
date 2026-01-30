@@ -5,13 +5,20 @@ A panel displaying the hierarchical code tree for qualitative coding.
 Includes a header with add/search/expand actions, and navigation buttons.
 """
 
-from typing import List, Dict, Any
-from PySide6.QtWidgets import QFrame, QHBoxLayout, QVBoxLayout
+from typing import Any
+
 from PySide6.QtCore import Qt, Signal
+from PySide6.QtWidgets import QFrame, QHBoxLayout, QVBoxLayout
 
 from design_system import (
-    ColorPalette, get_colors, SPACING, RADIUS,
-    Icon, CodeTree, CodeItem, PanelHeader,
+    RADIUS,
+    SPACING,
+    CodeItem,
+    CodeTree,
+    ColorPalette,
+    Icon,
+    PanelHeader,
+    get_colors,
 )
 
 
@@ -37,7 +44,7 @@ class CodesPanel(QFrame):
         """
         super().__init__(parent)
         self._colors = colors or get_colors()
-        self._selected_code: Dict[str, Any] = {}
+        self._selected_code: dict[str, Any] = {}
 
         self.setStyleSheet(f"""
             CodesPanel {{
@@ -96,16 +103,23 @@ class CodesPanel(QFrame):
             """)
             btn_layout = QHBoxLayout(btn)
             btn_layout.setContentsMargins(SPACING.md, 0, SPACING.md, 0)
-            icon = Icon(icon_name, size=16, color=self._colors.text_secondary, colors=self._colors)
+            icon = Icon(
+                icon_name,
+                size=16,
+                color=self._colors.text_secondary,
+                colors=self._colors,
+            )
             btn_layout.addWidget(icon)
 
             # Capture action_id in closure
-            btn.mousePressEvent = lambda e, aid=action_id: self.navigation_clicked.emit(aid)
+            btn.mousePressEvent = (
+                lambda _e, aid=action_id: self.navigation_clicked.emit(aid)
+            )
             nav_layout.addWidget(btn, 1)
 
         return nav
 
-    def set_codes(self, categories: List[Dict[str, Any]]):
+    def set_codes(self, categories: list[dict[str, Any]]):
         """
         Set the code tree data.
 
@@ -133,19 +147,23 @@ class CodesPanel(QFrame):
                 code_name = code.get("name", "")
                 if not code_name:
                     continue
-                children.append(CodeItem(
-                    id=code_name,
-                    name=code_name,
-                    color=code.get("color", self._colors.fallback_code_color),
-                    count=code.get("count", 0),
-                ))
-            items.append(CodeItem(
-                id=cat_name,
-                name=cat_name,
-                color=self._colors.text_secondary,
-                count=len(children),
-                children=children,
-            ))
+                children.append(
+                    CodeItem(
+                        id=code_name,
+                        name=code_name,
+                        color=code.get("color", self._colors.fallback_code_color),
+                        count=code.get("count", 0),
+                    )
+                )
+            items.append(
+                CodeItem(
+                    id=cat_name,
+                    name=cat_name,
+                    color=self._colors.text_secondary,
+                    count=len(children),
+                    children=children,
+                )
+            )
         self._code_tree.set_items(items)
 
     def _on_code_click(self, code_id: str):
@@ -153,7 +171,7 @@ class CodesPanel(QFrame):
         self._selected_code = {"id": code_id}
         self.code_selected.emit(self._selected_code)
 
-    def get_selected_code(self) -> Dict[str, Any]:
+    def get_selected_code(self) -> dict[str, Any]:
         """Get the currently selected code data."""
         return self._selected_code.copy() if self._selected_code else {}
 

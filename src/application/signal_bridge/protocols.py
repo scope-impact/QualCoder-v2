@@ -5,15 +5,16 @@ These protocols define the interfaces that context-specific bridges implement.
 """
 
 from __future__ import annotations
-from typing import Protocol, TypeVar, Any, Optional, TYPE_CHECKING
+
+from typing import TYPE_CHECKING, Any, Protocol, TypeVar
 
 if TYPE_CHECKING:
+    from src.application.signal_bridge.payloads import ActivityItem, SignalPayload
     from src.domain.shared.types import DomainEvent
-    from src.application.signal_bridge.payloads import SignalPayload, ActivityItem
 
 
-T = TypeVar('T', bound='SignalPayload')
-E = TypeVar('E', bound='DomainEvent')
+T = TypeVar("T", bound="SignalPayload")
+E = TypeVar("E", bound="DomainEvent")
 
 
 class EventConverter(Protocol[E, T]):
@@ -61,7 +62,7 @@ class ActivityFormatter(Protocol):
     Used by bridges to generate human-readable activity feed entries.
     """
 
-    def format(self, event: Any) -> Optional[ActivityItem]:
+    def format(self, event: Any) -> ActivityItem | None:
         """
         Format a domain event into an activity item.
 

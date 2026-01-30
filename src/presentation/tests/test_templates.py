@@ -9,15 +9,11 @@ Tests cover:
 - Slot content management
 """
 
-import pytest
 from PySide6.QtWidgets import (
     QHBoxLayout,
-    QLabel,
     QPushButton,
-    QVBoxLayout,
     QWidget,
 )
-from PySide6.QtCore import Qt
 
 
 class TestAppShell:
@@ -173,10 +169,7 @@ class TestSidebarLayout:
         from src.presentation.templates import SidebarLayout
 
         layout = SidebarLayout(
-            sidebar_width=300,
-            sidebar_min=250,
-            sidebar_max=450,
-            colors=colors
+            sidebar_width=300, sidebar_min=250, sidebar_max=450, colors=colors
         )
 
         assert layout._sidebar.minimumWidth() == 250
@@ -250,7 +243,7 @@ class TestThreePanelLayout:
             left_max=400,
             right_min=150,
             right_max=350,
-            colors=colors
+            colors=colors,
         )
 
         assert layout._left.minimumWidth() == 200
@@ -474,11 +467,11 @@ class TestAppMenuBar:
 
     def test_menu_bar_has_all_items(self, qapp, colors):
         """AppMenuBar should have all QualCoder menu items"""
-        from src.presentation.templates.app_shell import AppMenuBar, MENU_ITEMS
+        from src.presentation.templates.app_shell import MENU_ITEMS, AppMenuBar
 
         menu_bar = AppMenuBar(colors=colors)
 
-        for menu_id, label in MENU_ITEMS:
+        for menu_id, _label in MENU_ITEMS:
             assert menu_id in menu_bar._buttons
 
     def test_menu_bar_signal_emission(self, qapp, colors):
@@ -509,11 +502,11 @@ class TestAppTabBar:
 
     def test_tab_bar_has_all_tabs(self, qapp, colors):
         """AppTabBar should have all QualCoder tabs"""
-        from src.presentation.templates.app_shell import AppTabBar, TAB_ITEMS
+        from src.presentation.templates.app_shell import TAB_ITEMS, AppTabBar
 
         tab_bar = AppTabBar(colors=colors)
 
-        for tab_id, label, icon in TAB_ITEMS:
+        for tab_id, _label, _icon in TAB_ITEMS:
             assert tab_id in tab_bar._buttons
 
     def test_tab_bar_signal_emission(self, qapp, colors):
@@ -621,7 +614,9 @@ class TestScreenIntegration:
 
     def test_screen_navigation(self, qapp, colors, placeholder_widget):
         """Test navigating between screens"""
-        from src.presentation.templates import AppShell, SidebarLayout, SinglePanelLayout
+        from src.presentation.templates import (
+            AppShell,
+        )
 
         shell = AppShell(colors=colors)
 

@@ -6,14 +6,16 @@ They are designed for thread-safe emission and UI consumption.
 """
 
 from __future__ import annotations
+
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
-from typing import Optional, Any
+from typing import Any
 
 
 class ActivityStatus(Enum):
     """Status for activity feed items."""
+
     COMPLETED = "completed"
     PENDING = "pending"
     QUEUED = "queued"
@@ -35,6 +37,7 @@ class SignalPayload:
         is_ai_action: True if triggered by an AI agent
         event_type: The domain event type string (e.g., "coding.code_created")
     """
+
     timestamp: datetime
     session_id: str
     is_ai_action: bool
@@ -46,7 +49,7 @@ class SignalPayload:
         event_type: str,
         occurred_at: datetime,
         session_id: str = "local",
-        **kwargs: Any
+        **kwargs: Any,
     ) -> SignalPayload:
         """Create a base payload from event metadata."""
         return cls(
@@ -54,7 +57,7 @@ class SignalPayload:
             session_id=session_id,
             is_ai_action=session_id != "local",
             event_type=event_type,
-            **kwargs
+            **kwargs,
         )
 
 
@@ -77,13 +80,14 @@ class ActivityItem:
         is_ai_action: True if triggered by an AI agent
         metadata: Additional context-specific information
     """
+
     timestamp: datetime
     session_id: str
     description: str
     status: ActivityStatus
     context: str
     entity_type: str
-    entity_id: Optional[str] = None
+    entity_id: str | None = None
     is_ai_action: bool = False
     metadata: dict[str, Any] = field(default_factory=dict)
 
@@ -93,9 +97,9 @@ class ActivityItem:
         description: str,
         context: str,
         entity_type: str,
-        entity_id: Optional[str] = None,
+        entity_id: str | None = None,
         session_id: str = "local",
-        metadata: Optional[dict[str, Any]] = None,
+        metadata: dict[str, Any] | None = None,
     ) -> ActivityItem:
         """Create a completed activity item."""
         return cls(
@@ -116,9 +120,9 @@ class ActivityItem:
         description: str,
         context: str,
         entity_type: str,
-        entity_id: Optional[str] = None,
+        entity_id: str | None = None,
         session_id: str = "local",
-        metadata: Optional[dict[str, Any]] = None,
+        metadata: dict[str, Any] | None = None,
     ) -> ActivityItem:
         """Create a pending activity item (awaiting approval)."""
         return cls(
@@ -139,10 +143,10 @@ class ActivityItem:
         description: str,
         context: str,
         entity_type: str,
-        entity_id: Optional[str] = None,
+        entity_id: str | None = None,
         session_id: str = "local",
-        error: Optional[str] = None,
-        metadata: Optional[dict[str, Any]] = None,
+        error: str | None = None,
+        metadata: dict[str, Any] | None = None,
     ) -> ActivityItem:
         """Create a failed activity item."""
         meta = metadata or {}

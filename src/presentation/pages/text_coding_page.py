@@ -19,20 +19,21 @@ Layout:
 └────────────┴─────────────────────────────┴──────────────────┘
 """
 
-from typing import List, Dict, Any, Optional
-from PySide6.QtWidgets import QFrame, QVBoxLayout, QWidget
+from typing import Any
+
 from PySide6.QtCore import Signal
+from PySide6.QtWidgets import QFrame, QVBoxLayout, QWidget
 
 from design_system import ColorPalette, get_colors
 
-from ..templates import ThreePanelLayout
 from ..organisms import (
-    CodingToolbar,
-    FilesPanel,
     CodesPanel,
-    TextEditorPanel,
+    CodingToolbar,
     DetailsPanel,
+    FilesPanel,
+    TextEditorPanel,
 )
+from ..templates import ThreePanelLayout
 
 
 class TextCodingPage(QWidget):
@@ -56,12 +57,12 @@ class TextCodingPage(QWidget):
 
     def __init__(
         self,
-        coders: List[str] = None,
+        coders: list[str] = None,
         selected_coder: str = None,
         left_width: int = 280,
         right_width: int = 300,
         colors: ColorPalette = None,
-        parent=None
+        parent=None,
     ):
         """
         Initialize the text coding page.
@@ -132,7 +133,7 @@ class TextCodingPage(QWidget):
     # Public API - Data setters
     # =========================================================================
 
-    def set_files(self, files: List[Dict[str, Any]]):
+    def set_files(self, files: list[dict[str, Any]]):
         """
         Set the list of files to display.
 
@@ -141,7 +142,7 @@ class TextCodingPage(QWidget):
         """
         self._files_panel.set_files(files)
 
-    def set_codes(self, categories: List[Dict[str, Any]]):
+    def set_codes(self, categories: list[dict[str, Any]]):
         """
         Set the code tree data.
 
@@ -161,7 +162,7 @@ class TextCodingPage(QWidget):
         """
         self._editor_panel.set_document(title, badge, text)
 
-    def set_document_stats(self, stats: List[tuple]):
+    def set_document_stats(self, stats: list[tuple]):
         """
         Set the document stats display.
 
@@ -182,7 +183,7 @@ class TextCodingPage(QWidget):
         """
         self._details_panel.set_selected_code(color, name, memo, example)
 
-    def set_overlapping_codes(self, segments: List[tuple]):
+    def set_overlapping_codes(self, segments: list[tuple]):
         """
         Update the overlapping codes display.
 
@@ -261,9 +262,11 @@ class TextCodingPage(QWidget):
 # DEMO
 # =============================================================================
 
+
 def main():
     """Run the text coding page demo."""
     import sys
+
     from PySide6.QtWidgets import QApplication, QMainWindow
 
     app = QApplication(sys.argv)
@@ -283,38 +286,58 @@ def main():
     )
 
     # Load sample data
-    page.set_files([
-        {"name": "Blur - Girls & Boys.mp3.transcribed", "type": "text", "meta": "Text • 2.4 KB • 3 codes"},
-        {"name": "ID1.docx", "type": "text", "meta": "Text • 3.1 KB • 7 codes"},
-        {"name": "ID2.odt", "type": "text", "meta": "Text • 1.2 KB • 5 codes"},
-        {"name": "ID3_interview.txt", "type": "text", "meta": "Text • 8.5 KB • 12 codes"},
-    ])
+    page.set_files(
+        [
+            {
+                "name": "Blur - Girls & Boys.mp3.transcribed",
+                "type": "text",
+                "meta": "Text • 2.4 KB • 3 codes",
+            },
+            {"name": "ID1.docx", "type": "text", "meta": "Text • 3.1 KB • 7 codes"},
+            {"name": "ID2.odt", "type": "text", "meta": "Text • 1.2 KB • 5 codes"},
+            {
+                "name": "ID3_interview.txt",
+                "type": "text",
+                "meta": "Text • 8.5 KB • 12 codes",
+            },
+        ]
+    )
 
-    page.set_codes([
-        {
-            "name": "Abilities",
-            "codes": [
-                {"name": "soccer playing", "color": colors.code_yellow, "count": 3},
-                {"name": "struggling", "color": colors.code_red, "count": 5},
-                {"name": "tactics", "color": colors.code_purple, "count": 2},
-            ]
-        },
-        {
-            "name": "Opinion of Club",
-            "codes": [
-                {"name": "club development", "color": colors.code_green, "count": 4},
-                {"name": "facilities", "color": colors.code_blue, "count": 1},
-            ]
-        },
-        {
-            "name": "Motivation",
-            "codes": [
-                {"name": "cost concerns", "color": colors.code_pink, "count": 2},
-                {"name": "learning enthusiasm", "color": colors.code_cyan, "count": 6},
-                {"name": "time pressure", "color": colors.code_orange, "count": 3},
-            ]
-        },
-    ])
+    page.set_codes(
+        [
+            {
+                "name": "Abilities",
+                "codes": [
+                    {"name": "soccer playing", "color": colors.code_yellow, "count": 3},
+                    {"name": "struggling", "color": colors.code_red, "count": 5},
+                    {"name": "tactics", "color": colors.code_purple, "count": 2},
+                ],
+            },
+            {
+                "name": "Opinion of Club",
+                "codes": [
+                    {
+                        "name": "club development",
+                        "color": colors.code_green,
+                        "count": 4,
+                    },
+                    {"name": "facilities", "color": colors.code_blue, "count": 1},
+                ],
+            },
+            {
+                "name": "Motivation",
+                "codes": [
+                    {"name": "cost concerns", "color": colors.code_pink, "count": 2},
+                    {
+                        "name": "learning enthusiasm",
+                        "color": colors.code_cyan,
+                        "count": 6,
+                    },
+                    {"name": "time pressure", "color": colors.code_orange, "count": 3},
+                ],
+            },
+        ]
+    )
 
     sample_text = """I have not studied much before. I know that I must get help as I have struggled understanding the lecture slides so far and searching the web did not help.
 
@@ -329,28 +352,32 @@ I get the feeling most students are having some problems with the coursework dea
 Overall, I am satisfied with the club's facilities and the quality of instruction. The new training ground has made a big difference. I feel like I am improving week by week, which keeps me motivated to continue."""
 
     page.set_document("ID2.odt", "Case: ID2", sample_text)
-    page.set_document_stats([
-        ("mdi6.layers", "2 overlapping"),
-        ("mdi6.label", "5 codes applied"),
-        ("mdi6.format-size", "324 words"),
-    ])
+    page.set_document_stats(
+        [
+            ("mdi6.layers", "2 overlapping"),
+            ("mdi6.label", "5 codes applied"),
+            ("mdi6.format-size", "324 words"),
+        ]
+    )
 
     page.set_selected_code(
         colors.code_yellow,
         "soccer playing",
         "Code for references to playing soccer, including training, matches, and general participation in the sport.",
-        "I have not studied much before..."
+        "I have not studied much before...",
     )
 
-    page.set_overlapping_codes([
-        ("Segment 1", [colors.code_green, colors.code_cyan]),
-        ("Segment 2", [colors.code_red, colors.code_orange]),
-    ])
+    page.set_overlapping_codes(
+        [
+            ("Segment 1", [colors.code_green, colors.code_cyan]),
+            ("Segment 2", [colors.code_red, colors.code_orange]),
+        ]
+    )
 
     page.set_file_memo(
         "Participant ID2 interview transcript. Student is positive about the "
         "course but expresses concerns about workload and cost.",
-        65
+        65,
     )
 
     page.set_navigation(2, 5)

@@ -23,25 +23,19 @@ Usage:
 """
 
 from __future__ import annotations
-from dataclasses import dataclass, field
+
+import warnings
+from collections.abc import Callable
+from dataclasses import dataclass
 from datetime import datetime
 from threading import RLock
 from typing import (
     Any,
-    Callable,
-    Dict,
-    List,
-    Optional,
-    Set,
-    Type,
     TypeVar,
-    Generic,
 )
-from weakref import WeakSet, ref, ReferenceType
-import warnings
+from weakref import ReferenceType, ref
 
-
-E = TypeVar('E')
+E = TypeVar("E")
 Handler = Callable[[Any], None]
 
 
@@ -53,7 +47,8 @@ class Subscription:
     Use cancel() to remove the subscription, or let it be
     garbage collected if using weak references.
     """
-    _event_bus: ReferenceType['EventBus']
+
+    _event_bus: ReferenceType[EventBus]
     _event_type: str
     _handler: Handler
     _is_active: bool = True
@@ -73,7 +68,7 @@ class Subscription:
         """Check if subscription is still active."""
         return self._is_active
 
-    def __enter__(self) -> 'Subscription':
+    def __enter__(self) -> Subscription:
         return self
 
     def __exit__(self, *args: Any) -> None:
@@ -83,6 +78,7 @@ class Subscription:
 @dataclass
 class EventRecord:
     """Record of a published event for debugging."""
+
     event: Any
     event_type: str
     timestamp: datetime
@@ -113,17 +109,17 @@ class EventBus:
         self._lock = RLock()
 
         # Handlers by event type string
-        self._handlers: Dict[str, List[Handler]] = {}
+        self._handlers: dict[str, list[Handler]] = {}
 
         # Handlers for all events
-        self._all_handlers: List[Handler] = []
+        self._all_handlers: list[Handler] = []
 
         # Class to string mapping cache
-        self._type_cache: Dict[Type, str] = {}
+        self._type_cache: dict[type, str] = {}
 
         # Event history (circular buffer)
         self._history_size = history_size
-        self._history: List[EventRecord] = []
+        self._history: list[EventRecord] = []
 
     def subscribe(
         self,
@@ -155,7 +151,7 @@ class EventBus:
 
     def subscribe_type(
         self,
-        event_class: Type[E],
+        event_class: type[E],
         handler: Callable[[E], None],
     ) -> Subscription:
         """
@@ -203,17 +199,15 @@ class EventBus:
             event_type: Event type string (use "*" for all-handlers)
             handler: The handler to remove
         """
+        import contextlib
+
         with self._lock:
             if event_type == "*":
-                try:
+                with contextlib.suppress(ValueError):
                     self._all_handlers.remove(handler)
-                except ValueError:
-                    pass
             elif event_type in self._handlers:
-                try:
+                with contextlib.suppress(ValueError):
                     self._handlers[event_type].remove(handler)
-                except ValueError:
-                    pass
 
     def publish(self, event: Any) -> None:
         """
@@ -290,7 +284,7 @@ class EventBus:
 
         return count
 
-    def handler_count(self, event_type: Optional[str] = None) -> int:
+    def handler_count(self, event_type: str | None = None) -> int:
         """
         Get the number of handlers.
 
@@ -302,16 +296,15 @@ class EventBus:
         """
         with self._lock:
             if event_type is None:
-                return (
-                    sum(len(h) for h in self._handlers.values())
-                    + len(self._all_handlers)
+                return sum(len(h) for h in self._handlers.values()) + len(
+                    self._all_handlers
                 )
             elif event_type == "*":
                 return len(self._all_handlers)
             else:
                 return len(self._handlers.get(event_type, []))
 
-    def event_types(self) -> List[str]:
+    def event_types(self) -> list[str]:
         """
         Get list of event types with active subscriptions.
 
@@ -321,7 +314,7 @@ class EventBus:
         with self._lock:
             return [t for t, h in self._handlers.items() if h]
 
-    def get_history(self) -> List[EventRecord]:
+    def get_history(self) -> list[EventRecord]:
         """
         Get the event history.
 
@@ -339,21 +332,21 @@ class EventBus:
     def _get_event_type(self, event: Any) -> str:
         """Get the event type string from an event instance."""
         # Check for event_type attribute
-        if hasattr(event, 'event_type'):
+        if hasattr(event, "event_type"):
             return event.event_type
 
         # Fall back to class-based type
         return self._get_type_string(type(event))
 
-    def _get_type_string(self, event_class: Type) -> str:
+    def _get_type_string(self, event_class: type) -> str:
         """Get the event type string from an event class."""
         # Check cache
         if event_class in self._type_cache:
             return self._type_cache[event_class]
 
         # Check for class-level event_type
-        if hasattr(event_class, 'event_type'):
-            type_str = getattr(event_class, 'event_type')
+        if hasattr(event_class, "event_type"):
+            type_str = event_class.event_type
             if isinstance(type_str, str):
                 self._type_cache[event_class] = type_str
                 return type_str
@@ -361,22 +354,18 @@ class EventBus:
         # Generate from module and class name
         module = event_class.__module__
         # Extract context from module path (e.g., "domain.coding.events" -> "coding")
-        parts = module.split('.')
-        if 'domain' in parts:
-            idx = parts.index('domain')
-            if idx + 1 < len(parts):
-                context = parts[idx + 1]
-            else:
-                context = parts[-1]
+        parts = module.split(".")
+        if "domain" in parts:
+            idx = parts.index("domain")
+            context = parts[idx + 1] if idx + 1 < len(parts) else parts[-1]
         else:
             context = parts[-1] if parts else "unknown"
 
         # Convert class name from CamelCase to snake_case
         class_name = event_class.__name__
-        snake_name = ''.join(
-            f'_{c.lower()}' if c.isupper() else c
-            for c in class_name
-        ).lstrip('_')
+        snake_name = "".join(
+            f"_{c.lower()}" if c.isupper() else c for c in class_name
+        ).lstrip("_")
 
         type_str = f"{context}.{snake_name}"
         self._type_cache[event_class] = type_str
@@ -404,7 +393,7 @@ class EventBus:
 
 
 # Singleton instance (optional usage pattern)
-_default_bus: Optional[EventBus] = None
+_default_bus: EventBus | None = None
 
 
 def get_event_bus() -> EventBus:

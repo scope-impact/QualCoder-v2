@@ -26,27 +26,26 @@ Usage:
             )
 """
 
-from src.application.signal_bridge.payloads import (
-    SignalPayload,
-    ActivityItem,
-    ActivityStatus,
-)
-from src.application.signal_bridge.protocols import (
-    EventConverter,
-    ActivityFormatter,
-    SignalBridge,
-)
-from src.application.signal_bridge.thread_utils import (
-    is_main_thread,
-    get_current_thread_name,
-    ensure_main_thread,
-    ThreadChecker,
-)
 from src.application.signal_bridge.base import (
     BaseSignalBridge,
     ConverterRegistration,
 )
-
+from src.application.signal_bridge.payloads import (
+    ActivityItem,
+    ActivityStatus,
+    SignalPayload,
+)
+from src.application.signal_bridge.protocols import (
+    ActivityFormatter,
+    EventConverter,
+    SignalBridge,
+)
+from src.application.signal_bridge.thread_utils import (
+    ThreadChecker,
+    ensure_main_thread,
+    get_current_thread_name,
+    is_main_thread,
+)
 
 __all__ = [
     # Payloads

@@ -1,13 +1,14 @@
 """Tests for thread utilities."""
 
-import pytest
 import threading
 from concurrent.futures import ThreadPoolExecutor
 
+import pytest
+
 from src.application.signal_bridge.thread_utils import (
-    is_main_thread,
-    get_current_thread_name,
     ThreadChecker,
+    get_current_thread_name,
+    is_main_thread,
 )
 
 

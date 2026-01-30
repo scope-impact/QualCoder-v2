@@ -11,39 +11,37 @@ Architecture:
 """
 
 from __future__ import annotations
+
+from collections.abc import Callable, Iterable, Sequence
 from dataclasses import dataclass
 from typing import (
     Any,
-    Callable,
-    Generic,
-    Iterable,
-    Optional,
     Protocol,
-    Sequence,
     TypeVar,
-    Union,
 )
 
-
-T = TypeVar('T')
-E = TypeVar('E')
+T = TypeVar("T")
+E = TypeVar("E")
 
 
 # ============================================================
 # Validation Result Types
 # ============================================================
 
+
 @dataclass(frozen=True)
 class ValidationSuccess:
     """Validation passed."""
+
     pass
 
 
 @dataclass(frozen=True)
 class ValidationFailure:
     """Validation failed with a reason."""
+
     reason: str
-    field: Optional[str] = None
+    field: str | None = None
     value: Any = None
 
     def __str__(self) -> str:
@@ -52,7 +50,7 @@ class ValidationFailure:
         return self.reason
 
 
-ValidationResult = Union[ValidationSuccess, ValidationFailure]
+ValidationResult = ValidationSuccess | ValidationFailure
 
 
 def is_valid(result: ValidationResult) -> bool:
@@ -69,6 +67,7 @@ def is_invalid(result: ValidationResult) -> bool:
 # Common Invariant Helpers
 # ============================================================
 
+
 def is_non_empty_string(value: str) -> bool:
     """Check that a string is not empty or whitespace-only."""
     return bool(value and value.strip())
@@ -83,8 +82,8 @@ def is_within_length(value: str, min_len: int = 0, max_len: int = 1000) -> bool:
 def is_unique_in_collection(
     value: T,
     collection: Iterable[T],
-    key: Optional[Callable[[T], Any]] = None,
-    exclude: Optional[T] = None,
+    key: Callable[[T], Any] | None = None,
+    exclude: T | None = None,
 ) -> bool:
     """
     Check that a value is unique within a collection.
@@ -99,7 +98,9 @@ def is_unique_in_collection(
         True if value is unique, False if duplicate exists
     """
     if key is None:
-        key = lambda x: x
+
+        def key(x):
+            return x
 
     target_key = key(value)
 
@@ -116,7 +117,7 @@ def is_name_unique(
     name: str,
     existing_names: Iterable[str],
     case_sensitive: bool = False,
-    exclude_name: Optional[str] = None,
+    exclude_name: str | None = None,
 ) -> bool:
     """
     Check that a name is unique (common pattern for entities).
@@ -174,7 +175,7 @@ def is_valid_hex_color(color: str) -> bool:
     """Check that a string is a valid hex color (#RRGGBB)."""
     if not color or len(color) != 7:
         return False
-    if color[0] != '#':
+    if color[0] != "#":
         return False
     try:
         int(color[1:], 16)
@@ -187,19 +188,21 @@ def is_valid_hex_color(color: str) -> bool:
 # Hierarchy Validation
 # ============================================================
 
+
 class HasParent(Protocol):
     """Protocol for entities with parent references."""
+
     @property
     def id(self) -> Any: ...
 
     @property
-    def parent_id(self) -> Optional[Any]: ...
+    def parent_id(self) -> Any | None: ...
 
 
 def is_acyclic_hierarchy(
     node_id: Any,
-    new_parent_id: Optional[Any],
-    get_parent: Callable[[Any], Optional[Any]],
+    new_parent_id: Any | None,
+    get_parent: Callable[[Any], Any | None],
     max_depth: int = 100,
 ) -> bool:
     """
@@ -239,6 +242,7 @@ def is_acyclic_hierarchy(
 # Collection Validation
 # ============================================================
 
+
 def all_exist(
     ids: Sequence[Any],
     exists_fn: Callable[[Any], bool],
@@ -266,6 +270,7 @@ def has_no_references(
 # ============================================================
 # Composite Validation
 # ============================================================
+
 
 def validate_all(*results: ValidationResult) -> ValidationResult:
     """

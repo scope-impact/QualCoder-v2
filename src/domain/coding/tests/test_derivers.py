@@ -7,60 +7,53 @@ failures for invalid operations.
 """
 
 import pytest
-from typing import List
 
-from src.domain.shared.types import (
-    CodeId,
-    CategoryId,
-    SourceId,
-    SegmentId,
-    Failure,
-    DuplicateName,
-    CodeNotFound,
-    SourceNotFound,
-    InvalidPosition,
-    EmptyName,
-)
-from src.domain.coding.entities import (
-    Code,
-    Category,
-    TextSegment,
-    Color,
-    TextPosition,
-)
-from src.domain.coding.events import (
-    CodeCreated,
-    CodeRenamed,
-    CodeColorChanged,
-    CodeMemoUpdated,
-    CodeDeleted,
-    CodesMerged,
-    CodeMovedToCategory,
-    CategoryCreated,
-    CategoryRenamed,
-    CategoryDeleted,
-    SegmentCoded,
-    SegmentUncoded,
-    SegmentMemoUpdated,
-)
 from src.domain.coding.derivers import (
-    CodingState,
     CategoryNotFound,
+    CodingState,
     HasReferences,
     SameEntity,
-    derive_create_code,
-    derive_rename_code,
+    derive_apply_code_to_text,
     derive_change_code_color,
-    derive_update_code_memo,
+    derive_create_category,
+    derive_create_code,
+    derive_delete_category,
     derive_delete_code,
     derive_merge_codes,
     derive_move_code_to_category,
-    derive_create_category,
-    derive_rename_category,
-    derive_delete_category,
-    derive_apply_code_to_text,
     derive_remove_segment,
+    derive_rename_category,
+    derive_rename_code,
     derive_update_segment_memo,
+)
+from src.domain.coding.entities import (
+    Color,
+)
+from src.domain.coding.events import (
+    CategoryCreated,
+    CategoryDeleted,
+    CategoryRenamed,
+    CodeColorChanged,
+    CodeCreated,
+    CodeDeleted,
+    CodeMovedToCategory,
+    CodeRenamed,
+    CodesMerged,
+    SegmentCoded,
+    SegmentMemoUpdated,
+    SegmentUncoded,
+)
+from src.domain.shared.types import (
+    CategoryId,
+    CodeId,
+    CodeNotFound,
+    DuplicateName,
+    EmptyName,
+    Failure,
+    InvalidPosition,
+    SegmentId,
+    SourceId,
+    SourceNotFound,
 )
 
 
@@ -248,8 +241,7 @@ class TestDeriveDeleteCode:
         assert result.code_id == CodeId(value=3)
 
     def test_fails_to_delete_code_with_segments_without_force(
-        self,
-        populated_state: CodingState
+        self, populated_state: CodingState
     ):
         """Should fail to delete code with segments unless forced."""
         # Code 1 has segments
@@ -262,10 +254,7 @@ class TestDeriveDeleteCode:
         assert isinstance(result, Failure)
         assert isinstance(result.error, HasReferences)
 
-    def test_deletes_code_with_segments_when_forced(
-        self,
-        populated_state: CodingState
-    ):
+    def test_deletes_code_with_segments_when_forced(self, populated_state: CodingState):
         """Should delete code with segments when forced."""
         result = derive_delete_code(
             code_id=CodeId(value=1),
@@ -406,10 +395,7 @@ class TestDeriveCategoryOperations:
         assert isinstance(result, CategoryCreated)
         assert result.parent_id == CategoryId(value=1)
 
-    def test_fails_to_create_with_duplicate_name(
-        self,
-        populated_state: CodingState
-    ):
+    def test_fails_to_create_with_duplicate_name(self, populated_state: CodingState):
         """Should fail with duplicate category name."""
         result = derive_create_category(
             name="Root Category",  # Already exists
@@ -541,10 +527,7 @@ class TestDeriveSegmentOperations:
         assert isinstance(result, SegmentUncoded)
         assert result.segment_id == SegmentId(value=1)
 
-    def test_fails_to_remove_nonexistent_segment(
-        self,
-        populated_state: CodingState
-    ):
+    def test_fails_to_remove_nonexistent_segment(self, populated_state: CodingState):
         """Should fail for nonexistent segment."""
         result = derive_remove_segment(
             segment_id=SegmentId(value=999),
@@ -581,7 +564,7 @@ class TestCodingStateImmutability:
 
     def test_state_is_frozen(self, populated_state: CodingState):
         """CodingState should be immutable."""
-        with pytest.raises(Exception):  # FrozenInstanceError
+        with pytest.raises(AttributeError):  # FrozenInstanceError
             populated_state.source_length = 9999
 
     def test_state_tuples_are_immutable(self, populated_state: CodingState):

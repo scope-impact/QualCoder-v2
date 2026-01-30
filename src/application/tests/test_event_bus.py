@@ -1,15 +1,14 @@
 """Tests for EventBus."""
 
-import pytest
 import threading
 from dataclasses import dataclass
-from datetime import datetime
-from typing import List, Any
+from typing import Any
+
+import pytest
 
 from src.application.event_bus import (
     EventBus,
     Subscription,
-    EventRecord,
     get_event_bus,
     reset_event_bus,
 )
@@ -18,6 +17,7 @@ from src.application.event_bus import (
 @dataclass(frozen=True)
 class TestEvent:
     """Test event for testing."""
+
     data: str
     event_type: str = "test.event"
 
@@ -25,6 +25,7 @@ class TestEvent:
 @dataclass(frozen=True)
 class CodeCreated:
     """Test event with event_type attribute."""
+
     event_type: str = "coding.code_created"
     name: str = ""
 
@@ -32,6 +33,7 @@ class CodeCreated:
 @dataclass(frozen=True)
 class SegmentCoded:
     """Another test event."""
+
     event_type: str = "coding.segment_coded"
     code_id: int = 0
 
@@ -42,7 +44,7 @@ class TestEventBusSubscribe:
     def test_subscribe_by_string_type(self) -> None:
         """Test subscribing by event type string."""
         bus = EventBus()
-        received: List = []
+        received: list = []
 
         sub = bus.subscribe("test.event", received.append)
 
@@ -53,7 +55,7 @@ class TestEventBusSubscribe:
         """Test that subscribe returns a Subscription."""
         bus = EventBus()
 
-        sub = bus.subscribe("test.event", lambda e: None)
+        sub = bus.subscribe("test.event", lambda _e: None)
 
         assert isinstance(sub, Subscription)
         assert sub.is_active
@@ -61,7 +63,7 @@ class TestEventBusSubscribe:
     def test_subscribe_type_by_class(self) -> None:
         """Test subscribing by event class."""
         bus = EventBus()
-        received: List = []
+        received: list = []
 
         sub = bus.subscribe_type(CodeCreated, received.append)
 
@@ -71,7 +73,7 @@ class TestEventBusSubscribe:
     def test_subscribe_all(self) -> None:
         """Test subscribing to all events."""
         bus = EventBus()
-        received: List = []
+        received: list = []
 
         sub = bus.subscribe_all(received.append)
 
@@ -81,7 +83,9 @@ class TestEventBusSubscribe:
     def test_duplicate_subscribe_ignored(self) -> None:
         """Test that duplicate subscriptions are ignored."""
         bus = EventBus()
-        handler = lambda e: None
+
+        def handler(_e):
+            return None
 
         bus.subscribe("test.event", handler)
         bus.subscribe("test.event", handler)
@@ -95,7 +99,7 @@ class TestEventBusPublish:
     def test_publish_to_string_subscriber(self) -> None:
         """Test publishing to string-type subscriber."""
         bus = EventBus()
-        received: List = []
+        received: list = []
 
         bus.subscribe("coding.code_created", received.append)
         event = CodeCreated(name="Anxiety")
@@ -107,7 +111,7 @@ class TestEventBusPublish:
     def test_publish_to_class_subscriber(self) -> None:
         """Test publishing to class-type subscriber."""
         bus = EventBus()
-        received: List = []
+        received: list = []
 
         bus.subscribe_type(CodeCreated, received.append)
         event = CodeCreated(name="Depression")
@@ -119,7 +123,7 @@ class TestEventBusPublish:
     def test_publish_to_all_subscriber(self) -> None:
         """Test publishing to all-events subscriber."""
         bus = EventBus()
-        received: List = []
+        received: list = []
 
         bus.subscribe_all(received.append)
         bus.publish(CodeCreated(name="Test1"))
@@ -130,8 +134,8 @@ class TestEventBusPublish:
     def test_publish_to_multiple_handlers(self) -> None:
         """Test publishing to multiple handlers."""
         bus = EventBus()
-        received1: List = []
-        received2: List = []
+        received1: list = []
+        received2: list = []
 
         bus.subscribe("coding.code_created", received1.append)
         bus.subscribe("coding.code_created", received2.append)
@@ -143,8 +147,8 @@ class TestEventBusPublish:
     def test_publish_only_to_matching_type(self) -> None:
         """Test that events only go to matching subscribers."""
         bus = EventBus()
-        code_events: List = []
-        segment_events: List = []
+        code_events: list = []
+        segment_events: list = []
 
         bus.subscribe("coding.code_created", code_events.append)
         bus.subscribe("coding.segment_coded", segment_events.append)
@@ -157,7 +161,7 @@ class TestEventBusPublish:
     def test_publish_derives_type_from_class(self) -> None:
         """Test that publish derives event type from class."""
         bus = EventBus()
-        received: List = []
+        received: list = []
 
         # TestEvent has no event_type, should derive from class
         bus.subscribe("test_event", received.append)
@@ -169,9 +173,9 @@ class TestEventBusPublish:
     def test_handler_exception_does_not_stop_others(self) -> None:
         """Test that one handler's exception doesn't stop others."""
         bus = EventBus()
-        received: List = []
+        received: list = []
 
-        def bad_handler(e: Any) -> None:
+        def bad_handler(_e: Any) -> None:
             raise ValueError("Handler error")
 
         bus.subscribe("coding.code_created", bad_handler)
@@ -190,7 +194,7 @@ class TestEventBusUnsubscribe:
     def test_unsubscribe_by_handler(self) -> None:
         """Test unsubscribing a handler."""
         bus = EventBus()
-        received: List = []
+        received: list = []
         handler = received.append
 
         bus.subscribe("test.event", handler)
@@ -201,7 +205,7 @@ class TestEventBusUnsubscribe:
     def test_subscription_cancel(self) -> None:
         """Test cancelling via Subscription handle."""
         bus = EventBus()
-        received: List = []
+        received: list = []
 
         sub = bus.subscribe("test.event", received.append)
         sub.cancel()
@@ -213,7 +217,7 @@ class TestEventBusUnsubscribe:
         """Test that cancel() can be called multiple times."""
         bus = EventBus()
 
-        sub = bus.subscribe("test.event", lambda e: None)
+        sub = bus.subscribe("test.event", lambda _e: None)
         sub.cancel()
         sub.cancel()  # Should not raise
 
@@ -222,7 +226,7 @@ class TestEventBusUnsubscribe:
     def test_subscription_context_manager(self) -> None:
         """Test Subscription as context manager."""
         bus = EventBus()
-        received: List = []
+        received: list = []
 
         with bus.subscribe("test.event", received.append) as sub:
             assert sub.is_active
@@ -238,9 +242,9 @@ class TestEventBusUnsubscribe:
         """Test clear() removes all subscriptions."""
         bus = EventBus()
 
-        bus.subscribe("event1", lambda e: None)
-        bus.subscribe("event2", lambda e: None)
-        bus.subscribe_all(lambda e: None)
+        bus.subscribe("event1", lambda _e: None)
+        bus.subscribe("event2", lambda _e: None)
+        bus.subscribe_all(lambda _e: None)
 
         bus.clear()
 
@@ -249,8 +253,12 @@ class TestEventBusUnsubscribe:
     def test_clear_for_handler(self) -> None:
         """Test clear_for_handler removes specific handler."""
         bus = EventBus()
-        handler1 = lambda e: None
-        handler2 = lambda e: None
+
+        def handler1(_e):
+            return None
+
+        def handler2(_e):
+            return None
 
         bus.subscribe("event1", handler1)
         bus.subscribe("event2", handler1)
@@ -269,7 +277,7 @@ class TestEventBusThreadSafety:
     def test_publish_from_background_thread(self) -> None:
         """Test publishing from a background thread."""
         bus = EventBus()
-        received: List = []
+        received: list = []
 
         bus.subscribe("test.event", received.append)
 
@@ -286,8 +294,8 @@ class TestEventBusThreadSafety:
     def test_concurrent_subscribe_publish(self) -> None:
         """Test concurrent subscribe and publish operations."""
         bus = EventBus()
-        received: List = []
-        errors: List = []
+        received: list = []
+        errors: list = []
 
         def subscriber() -> None:
             try:
@@ -331,7 +339,7 @@ class TestEventBusHistory:
     def test_history_records_events(self) -> None:
         """Test that history records published events."""
         bus = EventBus(history_size=10)
-        bus.subscribe("coding.code_created", lambda e: None)
+        bus.subscribe("coding.code_created", lambda _e: None)
 
         bus.publish(CodeCreated(name="Test"))
 
@@ -370,9 +378,9 @@ class TestEventBusIntrospection:
         """Test total handler count."""
         bus = EventBus()
 
-        bus.subscribe("event1", lambda e: None)
-        bus.subscribe("event2", lambda e: None)
-        bus.subscribe_all(lambda e: None)
+        bus.subscribe("event1", lambda _e: None)
+        bus.subscribe("event2", lambda _e: None)
+        bus.subscribe_all(lambda _e: None)
 
         assert bus.handler_count() == 3
 
@@ -380,9 +388,9 @@ class TestEventBusIntrospection:
         """Test handler count by event type."""
         bus = EventBus()
 
-        bus.subscribe("event1", lambda e: None)
-        bus.subscribe("event1", lambda e: None)
-        bus.subscribe("event2", lambda e: None)
+        bus.subscribe("event1", lambda _e: None)
+        bus.subscribe("event1", lambda _e: None)
+        bus.subscribe("event2", lambda _e: None)
 
         assert bus.handler_count("event1") == 2
         assert bus.handler_count("event2") == 1
@@ -392,8 +400,8 @@ class TestEventBusIntrospection:
         """Test listing event types."""
         bus = EventBus()
 
-        bus.subscribe("coding.code_created", lambda e: None)
-        bus.subscribe("sources.source_imported", lambda e: None)
+        bus.subscribe("coding.code_created", lambda _e: None)
+        bus.subscribe("sources.source_imported", lambda _e: None)
 
         types = bus.event_types()
 
@@ -420,7 +428,7 @@ class TestDefaultEventBus:
         reset_event_bus()
 
         bus = get_event_bus()
-        bus.subscribe("test", lambda e: None)
+        bus.subscribe("test", lambda _e: None)
 
         reset_event_bus()
 

@@ -4,17 +4,16 @@ Provides fixtures for testing invariants and derivers.
 """
 
 import pytest
-from typing import List
 
-from src.domain.shared.types import CodeId, CategoryId, SourceId, SegmentId
+from src.domain.coding.derivers import CodingState
 from src.domain.coding.entities import (
-    Code,
     Category,
-    TextSegment,
+    Code,
     Color,
     TextPosition,
+    TextSegment,
 )
-from src.domain.coding.derivers import CodingState
+from src.domain.shared.types import CategoryId, CodeId, SegmentId, SourceId
 
 
 @pytest.fixture
@@ -37,7 +36,7 @@ def sample_code(sample_color: Color) -> Code:
 
 
 @pytest.fixture
-def sample_codes(sample_color: Color) -> List[Code]:
+def sample_codes(sample_color: Color) -> list[Code]:
     """Multiple sample codes for testing."""
     return [
         Code(
@@ -80,7 +79,7 @@ def sample_category() -> Category:
 
 
 @pytest.fixture
-def sample_categories() -> List[Category]:
+def sample_categories() -> list[Category]:
     """Multiple sample categories for testing hierarchy."""
     return [
         Category(
@@ -123,7 +122,7 @@ def sample_text_segment() -> TextSegment:
 
 
 @pytest.fixture
-def sample_segments() -> List[TextSegment]:
+def sample_segments() -> list[TextSegment]:
     """Multiple sample segments for testing."""
     return [
         TextSegment(
@@ -167,9 +166,9 @@ def empty_state() -> CodingState:
 
 @pytest.fixture
 def populated_state(
-    sample_codes: List[Code],
-    sample_categories: List[Category],
-    sample_segments: List[TextSegment],
+    sample_codes: list[Code],
+    sample_categories: list[Category],
+    sample_segments: list[TextSegment],
 ) -> CodingState:
     """Populated coding state for modification tests."""
     return CodingState(

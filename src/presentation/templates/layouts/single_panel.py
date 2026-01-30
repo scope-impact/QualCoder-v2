@@ -12,6 +12,7 @@ A simple full-width content layout with optional padding.
 Good for settings pages, reports, charts, etc.
 """
 
+from PySide6.QtCore import Qt
 from PySide6.QtWidgets import (
     QFrame,
     QScrollArea,
@@ -19,9 +20,8 @@ from PySide6.QtWidgets import (
     QVBoxLayout,
     QWidget,
 )
-from PySide6.QtCore import Qt
 
-from design_system import ColorPalette, get_colors, SPACING, RADIUS
+from design_system import RADIUS, ColorPalette, get_colors
 
 
 class SinglePanelLayout(QWidget):
@@ -44,7 +44,7 @@ class SinglePanelLayout(QWidget):
         scrollable: bool = False,
         max_width: int = None,
         colors: ColorPalette = None,
-        parent=None
+        parent=None,
     ):
         super().__init__(parent)
         self._colors = colors or get_colors()
@@ -98,8 +98,7 @@ class SinglePanelLayout(QWidget):
             self._content_container = QWidget()
             self._content_layout = QVBoxLayout(self._content_container)
             self._content_layout.setContentsMargins(
-                self._padding, self._padding,
-                self._padding, self._padding
+                self._padding, self._padding, self._padding, self._padding
             )
             self._content_layout.setSpacing(0)
 
@@ -114,8 +113,7 @@ class SinglePanelLayout(QWidget):
             self._content_container = QWidget()
             self._content_layout = QVBoxLayout(self._content_container)
             self._content_layout.setContentsMargins(
-                self._padding, self._padding,
-                self._padding, self._padding
+                self._padding, self._padding, self._padding, self._padding
             )
             self._content_layout.setSpacing(0)
 
@@ -131,10 +129,7 @@ class SinglePanelLayout(QWidget):
         if self._max_width:
             widget.setMaximumWidth(self._max_width)
 
-        widget.setSizePolicy(
-            QSizePolicy.Policy.Expanding,
-            QSizePolicy.Policy.Expanding
-        )
+        widget.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
         self._content_layout.addWidget(widget)
 
     def _clear_layout(self, layout: QVBoxLayout):

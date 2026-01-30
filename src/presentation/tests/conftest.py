@@ -2,12 +2,13 @@
 Pytest configuration and fixtures for UI tests
 """
 
-import pytest
-from PySide6.QtWidgets import QApplication, QLabel, QWidget
-from PySide6.QtCore import QTimer
 import sys
-from pathlib import Path
 from datetime import datetime
+from pathlib import Path
+
+import pytest
+from PySide6.QtCore import QTimer
+from PySide6.QtWidgets import QApplication, QLabel, QWidget
 
 
 @pytest.fixture(scope="session")
@@ -23,6 +24,7 @@ def qapp():
 def colors():
     """Get dark theme colors"""
     from design_system import get_colors
+
     return get_colors()
 
 
@@ -30,6 +32,7 @@ def colors():
 def light_colors():
     """Get light theme colors"""
     from design_system import get_colors
+
     return get_colors()
 
 
@@ -47,6 +50,7 @@ def screenshot_dir():
 @pytest.fixture
 def take_screenshot(screenshot_dir, request):
     """Fixture to take screenshots of widgets"""
+
     def _take_screenshot(widget: QWidget, name: str = None, delay_ms: int = 100):
         if name is None:
             name = request.node.name
@@ -63,6 +67,7 @@ def take_screenshot(screenshot_dir, request):
 
         if delay_ms > 0:
             from PySide6.QtCore import QEventLoop
+
             loop = QEventLoop()
             QTimer.singleShot(delay_ms, loop.quit)
             loop.exec()
@@ -90,12 +95,14 @@ def placeholder_widget(colors):
                 border-radius: {RADIUS.xs}px;
             }}
         """)
-        from PySide6.QtWidgets import QVBoxLayout
         from PySide6.QtCore import Qt
+        from PySide6.QtWidgets import QVBoxLayout
+
         layout = QVBoxLayout(widget)
         label = QLabel(text)
         label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         label.setStyleSheet(f"color: {colors.text_secondary};")
         layout.addWidget(label)
         return widget
+
     return _create

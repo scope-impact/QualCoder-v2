@@ -11,14 +11,19 @@ The main toolbar for the text coding screen containing:
 - Search box
 """
 
-from typing import List
-from PySide6.QtWidgets import QFrame, QHBoxLayout, QLabel
 from PySide6.QtCore import Qt, Signal
+from PySide6.QtWidgets import QFrame, QHBoxLayout, QLabel
 
 from design_system import (
-    ColorPalette, get_colors, SPACING, TYPOGRAPHY,
-    SearchBox, Separator, ToolbarButton,
-    MediaTypeSelector, CoderSelector,
+    SPACING,
+    TYPOGRAPHY,
+    CoderSelector,
+    ColorPalette,
+    MediaTypeSelector,
+    SearchBox,
+    Separator,
+    ToolbarButton,
+    get_colors,
 )
 
 
@@ -42,10 +47,10 @@ class CodingToolbar(QFrame):
 
     def __init__(
         self,
-        coders: List[str] = None,
+        coders: list[str] = None,
         selected_coder: str = None,
         colors: ColorPalette = None,
-        parent=None
+        parent=None,
     ):
         """
         Initialize the coding toolbar.
@@ -108,7 +113,9 @@ class CodingToolbar(QFrame):
         ]:
             btn = ToolbarButton(icon=icon_name, colors=self._colors)
             btn.setToolTip(tooltip)
-            btn.clicked.connect(lambda checked, aid=action_id: self.action_triggered.emit(aid))
+            btn.clicked.connect(
+                lambda _checked, aid=action_id: self.action_triggered.emit(aid)
+            )
             layout.addWidget(btn)
 
         # Navigation
@@ -142,7 +149,9 @@ class CodingToolbar(QFrame):
         ]:
             btn = ToolbarButton(icon=icon_name, colors=self._colors)
             btn.setToolTip(tooltip)
-            btn.clicked.connect(lambda checked, aid=action_id: self.action_triggered.emit(aid))
+            btn.clicked.connect(
+                lambda _checked, aid=action_id: self.action_triggered.emit(aid)
+            )
             layout.addWidget(btn)
 
         # Memo/Annotate
@@ -153,7 +162,9 @@ class CodingToolbar(QFrame):
         ]:
             btn = ToolbarButton(icon=icon_name, colors=self._colors)
             btn.setToolTip(tooltip)
-            btn.clicked.connect(lambda checked, aid=action_id: self.action_triggered.emit(aid))
+            btn.clicked.connect(
+                lambda _checked, aid=action_id: self.action_triggered.emit(aid)
+            )
             layout.addWidget(btn)
 
         layout.addStretch()

@@ -1,12 +1,13 @@
 """Tests for Signal Bridge payloads."""
 
-import pytest
 from datetime import datetime
 
+import pytest
+
 from src.application.signal_bridge.payloads import (
-    SignalPayload,
     ActivityItem,
     ActivityStatus,
+    SignalPayload,
 )
 
 
@@ -47,7 +48,7 @@ class TestSignalPayload:
             is_ai_action=False,
             event_type="test",
         )
-        with pytest.raises(Exception):  # FrozenInstanceError
+        with pytest.raises(AttributeError):  # FrozenInstanceError
             payload.session_id = "modified"  # type: ignore
 
     def test_from_event_local_session(self) -> None:

@@ -1,20 +1,20 @@
 """Tests for BaseSignalBridge class."""
 
-import pytest
 from dataclasses import dataclass
-from datetime import datetime
-from typing import Any, Optional
+from typing import Any
+
+import pytest
 
 from src.application.signal_bridge.base import BaseSignalBridge
-from src.application.signal_bridge.payloads import SignalPayload, ActivityStatus
-from src.application.signal_bridge.protocols import EventConverter
-from src.application.signal_bridge.tests.conftest import MockEventBus, MockDomainEvent
+from src.application.signal_bridge.payloads import ActivityStatus, SignalPayload
+from src.application.signal_bridge.tests.conftest import MockDomainEvent, MockEventBus
 
 
 # Test payload type
 @dataclass(frozen=True)
 class TestPayload(SignalPayload):
     """Test payload with additional field."""
+
     data: str = ""
 
 
@@ -74,7 +74,7 @@ class MockSignal:
     def emit(self, payload: Any) -> None:
         self.emissions.append(payload)
 
-    def __call__(self, *args: Any) -> 'MockSignal':
+    def __call__(self, *args: Any) -> "MockSignal":
         return self
 
 

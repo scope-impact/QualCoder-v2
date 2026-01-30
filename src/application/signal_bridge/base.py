@@ -16,43 +16,44 @@ Architecture:
 """
 
 from __future__ import annotations
+
 from abc import ABCMeta, abstractmethod
-from dataclasses import dataclass, field
+from collections.abc import Callable
+from dataclasses import dataclass
 from datetime import datetime
 from typing import (
     Any,
-    Callable,
-    Dict,
-    Optional,
-    Type,
-    TypeVar,
-    Generic,
     ClassVar,
+    TypeVar,
 )
 from weakref import WeakValueDictionary
 
 # Qt imports with fallback for testing without Qt
 try:
-    from PySide6.QtCore import QObject, Signal, QMetaObject, Qt, Slot
+    from PySide6.QtCore import QMetaObject, QObject, Qt, Signal, Slot
+
     HAS_QT = True
 
     # Create combined metaclass for QObject + ABC compatibility
     class QObjectABCMeta(type(QObject), ABCMeta):
         """Combined metaclass for QObject and ABC."""
+
         pass
 except ImportError:
     HAS_QT = False
+
     # Mock for testing without Qt
     class QObject:  # type: ignore
         def __init__(self, parent: Any = None) -> None:
             pass
 
-    def Signal(*args: Any) -> Any:  # type: ignore
+    def Signal(*_args: Any) -> Any:  # type: ignore
         return None
 
-    def Slot(*args: Any) -> Callable:  # type: ignore
+    def Slot(*_args: Any) -> Callable:  # type: ignore
         def decorator(func: Callable) -> Callable:
             return func
+
         return decorator
 
     class Qt:  # type: ignore
@@ -61,28 +62,28 @@ except ImportError:
 
     class QMetaObject:  # type: ignore
         @staticmethod
-        def invokeMethod(*args: Any, **kwargs: Any) -> bool:
+        def invokeMethod(*_args: Any, **_kwargs: Any) -> bool:
             return True
 
     # For no-Qt case, ABCMeta is sufficient
     QObjectABCMeta = ABCMeta  # type: ignore
 
 from src.application.signal_bridge.payloads import (
-    SignalPayload,
     ActivityItem,
     ActivityStatus,
+    SignalPayload,
 )
 from src.application.signal_bridge.protocols import EventConverter
 from src.application.signal_bridge.thread_utils import is_main_thread
 
-
-T = TypeVar('T', bound=SignalPayload)
-E = TypeVar('E')
+T = TypeVar("T", bound=SignalPayload)
+E = TypeVar("E")
 
 
 @dataclass
 class ConverterRegistration:
     """Registration entry for an event converter."""
+
     event_type: str
     converter: EventConverter
     signal_name: str
@@ -122,12 +123,14 @@ class BaseSignalBridge(QObject, metaclass=QObjectABCMeta):
     """
 
     # Class-level registry for singleton instances
-    _instances: ClassVar[WeakValueDictionary[type, 'BaseSignalBridge']] = WeakValueDictionary()
+    _instances: ClassVar[WeakValueDictionary[type, BaseSignalBridge]] = (
+        WeakValueDictionary()
+    )
 
     # Common signal for activity feed (all bridges emit here)
     activity_logged = Signal(object)
 
-    def __init__(self, event_bus: Any, parent: Optional[QObject] = None) -> None:
+    def __init__(self, event_bus: Any, parent: QObject | None = None) -> None:
         """
         Initialize the signal bridge.
 
@@ -140,10 +143,10 @@ class BaseSignalBridge(QObject, metaclass=QObjectABCMeta):
         self._running = False
 
         # Converter registry: event_type → (converter, signal_name)
-        self._converters: Dict[str, tuple[EventConverter, str]] = {}
+        self._converters: dict[str, tuple[EventConverter, str]] = {}
 
         # Signal registry: signal_name → Signal
-        self._signals: Dict[str, Any] = {}
+        self._signals: dict[str, Any] = {}
 
         # Subscription handles for cleanup
         self._subscriptions: list[tuple[str, Callable]] = []
@@ -155,7 +158,7 @@ class BaseSignalBridge(QObject, metaclass=QObjectABCMeta):
         self._register_converters()
 
     @classmethod
-    def instance(cls, event_bus: Optional[Any] = None) -> 'BaseSignalBridge':
+    def instance(cls, event_bus: Any | None = None) -> BaseSignalBridge:
         """
         Get or create the singleton instance.
 
@@ -190,9 +193,8 @@ class BaseSignalBridge(QObject, metaclass=QObjectABCMeta):
         for name in dir(self.__class__):
             attr = getattr(self.__class__, name, None)
             # Check if it's a Signal (has 'emit' when bound)
-            if hasattr(attr, 'emit') or (
-                HAS_QT and hasattr(attr, '__class__') and
-                'Signal' in str(type(attr))
+            if hasattr(attr, "emit") or (
+                HAS_QT and hasattr(attr, "__class__") and "Signal" in str(type(attr))
             ):
                 # Get the bound signal from the instance
                 self._signals[name] = getattr(self, name)
@@ -225,10 +227,7 @@ class BaseSignalBridge(QObject, metaclass=QObjectABCMeta):
         pass
 
     def register_converter(
-        self,
-        event_type: str,
-        converter: EventConverter,
-        signal_name: str
+        self, event_type: str, converter: EventConverter, signal_name: str
     ) -> None:
         """
         Register a converter for an event type.
@@ -271,11 +270,11 @@ class BaseSignalBridge(QObject, metaclass=QObjectABCMeta):
         if not self._running:
             return
 
+        import contextlib
+
         for event_type, handler in self._subscriptions:
-            try:
+            with contextlib.suppress(Exception):
                 self._event_bus.unsubscribe(event_type, handler)
-            except Exception:
-                pass  # Ignore errors during cleanup
 
         self._subscriptions.clear()
         self._running = False
@@ -286,8 +285,10 @@ class BaseSignalBridge(QObject, metaclass=QObjectABCMeta):
 
     def _make_handler(self, event_type: str) -> Callable[[Any], None]:
         """Create an event handler for the given event type."""
+
         def handler(event: Any) -> None:
             self._dispatch_event(event_type, event)
+
         return handler
 
     def _dispatch_event(self, event_type: str, event: Any) -> None:
@@ -323,9 +324,9 @@ class BaseSignalBridge(QObject, metaclass=QObjectABCMeta):
         except Exception as e:
             # Log error but don't crash the event bus
             import warnings
+
             warnings.warn(
-                f"Error dispatching {event_type}: {e}",
-                RuntimeWarning
+                f"Error dispatching {event_type}: {e}", RuntimeWarning, stacklevel=2
             )
 
     def _emit_threadsafe(self, signal: Any, payload: Any) -> None:
@@ -359,16 +360,14 @@ class BaseSignalBridge(QObject, metaclass=QObjectABCMeta):
     @Slot()
     def _do_emit(self) -> None:
         """Slot for queued signal emission on main thread."""
-        if hasattr(self, '_pending_emission'):
+        if hasattr(self, "_pending_emission"):
             signal, payload = self._pending_emission
             signal.emit(payload)
             del self._pending_emission
 
     def _create_activity_item(
-        self,
-        event: Any,
-        payload: SignalPayload
-    ) -> Optional[ActivityItem]:
+        self, event: Any, payload: SignalPayload
+    ) -> ActivityItem | None:
         """
         Create an activity item from an event and payload.
 
@@ -382,14 +381,14 @@ class BaseSignalBridge(QObject, metaclass=QObjectABCMeta):
             ActivityItem for the activity feed, or None to skip
         """
         # Default implementation - subclasses can override for richer formatting
-        event_type = getattr(event, 'event_type', payload.event_type)
+        event_type = getattr(event, "event_type", payload.event_type)
         return ActivityItem(
             timestamp=payload.timestamp,
             session_id=payload.session_id,
             description=f"{event_type}",
             status=ActivityStatus.COMPLETED,
             context=self._get_context_name(),
-            entity_type=event_type.split('.')[-1] if '.' in event_type else event_type,
+            entity_type=event_type.split(".")[-1] if "." in event_type else event_type,
             is_ai_action=payload.is_ai_action,
         )
 
@@ -397,10 +396,10 @@ class BaseSignalBridge(QObject, metaclass=QObjectABCMeta):
         self,
         description: str,
         entity_type: str,
-        entity_id: Optional[str] = None,
+        entity_id: str | None = None,
         status: ActivityStatus = ActivityStatus.COMPLETED,
         session_id: str = "local",
-        metadata: Optional[Dict[str, Any]] = None,
+        metadata: dict[str, Any] | None = None,
     ) -> None:
         """
         Emit an activity item directly.
@@ -428,7 +427,7 @@ class BaseSignalBridge(QObject, metaclass=QObjectABCMeta):
         )
         self._emit_threadsafe(self.activity_logged, activity)
 
-    def __enter__(self) -> 'BaseSignalBridge':
+    def __enter__(self) -> BaseSignalBridge:
         """Context manager entry - start listening."""
         self.start()
         return self

@@ -1,14 +1,17 @@
 """Test fixtures for Signal Bridge tests."""
 
-import pytest
+from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Any, Callable, Dict, List
+from typing import Any
+
+import pytest
 
 
 @dataclass(frozen=True)
 class MockDomainEvent:
     """Mock domain event for testing."""
+
     event_id: str
     occurred_at: datetime
     event_type: str = "test.event"
@@ -19,8 +22,8 @@ class MockEventBus:
     """Mock event bus for testing signal bridge subscriptions."""
 
     def __init__(self) -> None:
-        self._handlers: Dict[str, List[Callable]] = {}
-        self._all_handlers: List[Callable] = []
+        self._handlers: dict[str, list[Callable]] = {}
+        self._all_handlers: list[Callable] = []
 
     def subscribe(self, event_type: str, handler: Callable) -> None:
         """Subscribe to events of a specific type."""
@@ -34,15 +37,15 @@ class MockEventBus:
 
     def unsubscribe(self, event_type: str, handler: Callable) -> None:
         """Unsubscribe from events of a specific type."""
+        import contextlib
+
         if event_type in self._handlers:
-            try:
+            with contextlib.suppress(ValueError):
                 self._handlers[event_type].remove(handler)
-            except ValueError:
-                pass
 
     def publish(self, event: Any) -> None:
         """Publish an event to subscribers."""
-        event_type = getattr(event, 'event_type', type(event).__name__)
+        event_type = getattr(event, "event_type", type(event).__name__)
         # Notify type-specific handlers
         for handler in self._handlers.get(event_type, []):
             handler(event)

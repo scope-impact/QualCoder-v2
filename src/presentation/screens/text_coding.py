@@ -22,15 +22,15 @@ Structure:
 └────────────┴─────────────────────────────────┴──────────────┘
 """
 
-from typing import List, Dict, Any, Optional
-from PySide6.QtWidgets import QVBoxLayout, QWidget
+from typing import Any
+
 from PySide6.QtCore import Signal
+from PySide6.QtWidgets import QVBoxLayout, QWidget
 
 from design_system import ColorPalette, get_colors
 
-from ..pages import TextCodingPage
-from ..organisms import CodingToolbar
 from ..dto import TextCodingDataDTO
+from ..pages import TextCodingPage
 from ..sample_data import create_sample_text_coding_data
 
 
@@ -56,9 +56,9 @@ class TextCodingScreen(QWidget):
 
     def __init__(
         self,
-        data: Optional[TextCodingDataDTO] = None,
+        data: TextCodingDataDTO | None = None,
         colors: ColorPalette = None,
-        parent=None
+        parent=None,
     ):
         """
         Initialize the text coding screen.
@@ -70,7 +70,7 @@ class TextCodingScreen(QWidget):
         """
         super().__init__(parent)
         self._colors = colors or get_colors()
-        self._data: Optional[TextCodingDataDTO] = None
+        self._data: TextCodingDataDTO | None = None
 
         # Initialize state variables
         self._current_file_index: int = 0
@@ -121,11 +121,13 @@ class TextCodingScreen(QWidget):
         if data.files:
             for f in data.files:
                 if f is not None:
-                    files.append({
-                        "name": getattr(f, 'name', '') or '',
-                        "type": getattr(f, 'file_type', 'text') or 'text',
-                        "meta": getattr(f, 'meta', '') or ''
-                    })
+                    files.append(
+                        {
+                            "name": getattr(f, "name", "") or "",
+                            "type": getattr(f, "file_type", "text") or "text",
+                            "meta": getattr(f, "meta", "") or "",
+                        }
+                    )
         self._page.set_files(files)
 
         # Codes - convert DTOs to nested dicts for Page
@@ -135,7 +137,7 @@ class TextCodingScreen(QWidget):
                 "codes": [
                     {"name": c.name, "color": c.color, "count": c.count}
                     for c in cat.codes
-                ]
+                ],
             }
             for cat in data.categories
         ]
@@ -144,19 +146,19 @@ class TextCodingScreen(QWidget):
         # Document
         if data.document:
             self._page.set_document(
-                data.document.title,
-                data.document.badge,
-                data.document.content
+                data.document.title, data.document.badge, data.document.content
             )
 
         # Document stats
         if data.document_stats:
             stats = data.document_stats
-            self._page.set_document_stats([
-                ("mdi6.layers", f"{stats.overlapping_count} overlapping"),
-                ("mdi6.label", f"{stats.codes_applied} codes applied"),
-                ("mdi6.format-size", f"{stats.word_count} words"),
-            ])
+            self._page.set_document_stats(
+                [
+                    ("mdi6.layers", f"{stats.overlapping_count} overlapping"),
+                    ("mdi6.label", f"{stats.codes_applied} codes applied"),
+                    ("mdi6.format-size", f"{stats.word_count} words"),
+                ]
+            )
 
         # Selected code details
         if data.selected_code:
@@ -166,8 +168,7 @@ class TextCodingScreen(QWidget):
         # Overlapping codes
         if data.overlapping_segments:
             overlaps = [
-                (seg.segment_label, seg.colors)
-                for seg in data.overlapping_segments
+                (seg.segment_label, seg.colors) for seg in data.overlapping_segments
             ]
             self._page.set_overlapping_codes(overlaps)
 
@@ -265,14 +266,14 @@ class TextCodingScreen(QWidget):
         self._page.set_document(
             file_data.get("name", ""),
             f"File {index + 1}",
-            f"Content of {file_data.get('name', '')}...\n\n(Load actual content here)"
+            f"Content of {file_data.get('name', '')}...\n\n(Load actual content here)",
         )
         print(f"Navigated to file: {file_data.get('name')}")
 
     def _get_selected_text(self) -> str:
         """Safely get selected text from editor panel."""
         try:
-            if self._page and hasattr(self._page, 'editor_panel'):
+            if self._page and hasattr(self._page, "editor_panel"):
                 return self._page.editor_panel.get_selected_text() or ""
         except Exception as e:
             print(f"TextCodingScreen: Error getting selected text: {e}")
@@ -344,11 +345,11 @@ class TextCodingScreen(QWidget):
     # Public API - Delegate to page
     # =========================================================================
 
-    def set_files(self, files: List[Dict[str, Any]]):
+    def set_files(self, files: list[dict[str, Any]]):
         """Set the list of files."""
         self._page.set_files(files)
 
-    def set_codes(self, categories: List[Dict[str, Any]]):
+    def set_codes(self, categories: list[dict[str, Any]]):
         """Set the code tree."""
         self._page.set_codes(categories)
 
@@ -366,9 +367,11 @@ class TextCodingScreen(QWidget):
 # DEMO
 # =============================================================================
 
+
 def main():
     """Run the text coding screen demo."""
     import sys
+
     from PySide6.QtWidgets import QApplication, QMainWindow
 
     app = QApplication(sys.argv)

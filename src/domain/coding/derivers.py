@@ -13,68 +13,60 @@ Architecture:
 """
 
 from __future__ import annotations
+
 from dataclasses import dataclass
-from datetime import datetime
-from typing import Iterable, Callable, Optional, Union
 from uuid import uuid4
 
-from src.domain.shared.types import (
-    CodeId,
-    CategoryId,
-    SourceId,
-    SegmentId,
-    Success,
-    Failure,
-    DuplicateName,
-    CodeNotFound,
-    SourceNotFound,
-    InvalidPosition,
-    EmptyName,
-)
 from src.domain.coding.entities import (
-    Code,
     Category,
-    TextSegment,
+    Code,
     Color,
-    TextPosition,
     Segment,
+    TextPosition,
 )
 from src.domain.coding.events import (
-    CodeCreated,
-    CodeRenamed,
-    CodeColorChanged,
-    CodeMemoUpdated,
-    CodeDeleted,
-    CodesMerged,
-    CodeMovedToCategory,
     CategoryCreated,
-    CategoryRenamed,
     CategoryDeleted,
+    CategoryRenamed,
+    CodeColorChanged,
+    CodeCreated,
+    CodeDeleted,
+    CodeMemoUpdated,
+    CodeMovedToCategory,
+    CodeRenamed,
+    CodesMerged,
     SegmentCoded,
-    SegmentUncoded,
     SegmentMemoUpdated,
+    SegmentUncoded,
 )
 from src.domain.coding.invariants import (
-    is_valid_code_name,
-    is_code_name_unique,
-    is_valid_color,
     can_code_be_deleted,
-    are_codes_mergeable,
-    is_valid_category_name,
-    is_category_name_unique,
-    is_category_hierarchy_valid,
-    can_category_be_deleted,
-    is_valid_text_position,
-    does_code_exist,
-    does_category_exist,
-    count_segments_for_code,
     count_codes_in_category,
+    count_segments_for_code,
+    does_category_exist,
+    is_category_name_unique,
+    is_code_name_unique,
+    is_valid_category_name,
+    is_valid_code_name,
+    is_valid_text_position,
 )
-
+from src.domain.shared.types import (
+    CategoryId,
+    CodeId,
+    CodeNotFound,
+    DuplicateName,
+    EmptyName,
+    Failure,
+    InvalidPosition,
+    SegmentId,
+    SourceId,
+    SourceNotFound,
+)
 
 # ============================================================
 # State Containers (Input to Derivers)
 # ============================================================
+
 
 @dataclass(frozen=True)
 class CodingState:
@@ -84,10 +76,11 @@ class CodingState:
     Contains all the context needed to validate operations.
     Passed to derivers along with the command.
     """
+
     existing_codes: tuple[Code, ...] = ()
     existing_categories: tuple[Category, ...] = ()
     existing_segments: tuple[Segment, ...] = ()
-    source_length: Optional[int] = None  # For text segment validation
+    source_length: int | None = None  # For text segment validation
     source_exists: bool = True
 
 
@@ -95,22 +88,24 @@ class CodingState:
 # Failure Reasons (Additional to shared types)
 # ============================================================
 
+
 @dataclass(frozen=True)
 class CategoryNotFound:
     """Category does not exist."""
+
     category_id: CategoryId
     message: str = ""
 
     def __post_init__(self) -> None:
         object.__setattr__(
-            self, 'message',
-            f"Category with id {self.category_id.value} not found"
+            self, "message", f"Category with id {self.category_id.value} not found"
         )
 
 
 @dataclass(frozen=True)
 class CyclicHierarchy:
     """Operation would create a cycle in category hierarchy."""
+
     category_id: CategoryId
     parent_id: CategoryId
     message: str = "Operation would create a cycle in category hierarchy"
@@ -119,6 +114,7 @@ class CyclicHierarchy:
 @dataclass(frozen=True)
 class HasReferences:
     """Entity has references and cannot be deleted."""
+
     entity_type: str
     entity_id: int
     reference_count: int
@@ -126,21 +122,20 @@ class HasReferences:
 
     def __post_init__(self) -> None:
         object.__setattr__(
-            self, 'message',
-            f"{self.entity_type} has {self.reference_count} references"
+            self, "message", f"{self.entity_type} has {self.reference_count} references"
         )
 
 
 @dataclass(frozen=True)
 class SameEntity:
     """Cannot perform operation on the same entity."""
+
     entity_type: str
     message: str = ""
 
     def __post_init__(self) -> None:
         object.__setattr__(
-            self, 'message',
-            f"Cannot merge {self.entity_type} with itself"
+            self, "message", f"Cannot merge {self.entity_type} with itself"
         )
 
 
@@ -148,12 +143,13 @@ class SameEntity:
 # Code Derivers
 # ============================================================
 
+
 def derive_create_code(
     name: str,
     color: Color,
-    memo: Optional[str],
-    category_id: Optional[CategoryId],
-    owner: Optional[str],
+    memo: str | None,
+    category_id: CategoryId | None,
+    owner: str | None,
     state: CodingState,
 ) -> CodeCreated | Failure:
     """
@@ -179,9 +175,10 @@ def derive_create_code(
         return Failure(DuplicateName(name))
 
     # Validate category exists if specified
-    if category_id is not None:
-        if not does_category_exist(category_id, state.existing_categories):
-            return Failure(CategoryNotFound(category_id))
+    if category_id is not None and not does_category_exist(
+        category_id, state.existing_categories
+    ):
+        return Failure(CategoryNotFound(category_id))
 
     # Generate new ID and create event
     new_id = CodeId.new()
@@ -262,7 +259,7 @@ def derive_change_code_color(
 
 def derive_update_code_memo(
     code_id: CodeId,
-    new_memo: Optional[str],
+    new_memo: str | None,
     state: CodingState,
 ) -> CodeMemoUpdated | Failure:
     """
@@ -312,7 +309,11 @@ def derive_delete_code(
         count = count_segments_for_code(code_id, state.existing_segments)
         return Failure(HasReferences("Code", code_id.value, count))
 
-    segments_removed = count_segments_for_code(code_id, state.existing_segments) if delete_segments else 0
+    segments_removed = (
+        count_segments_for_code(code_id, state.existing_segments)
+        if delete_segments
+        else 0
+    )
 
     return CodeDeleted.create(
         code_id=code_id,
@@ -340,11 +341,15 @@ def derive_merge_codes(
     if source_code_id == target_code_id:
         return Failure(SameEntity("code"))
 
-    source_code = next((c for c in state.existing_codes if c.id == source_code_id), None)
+    source_code = next(
+        (c for c in state.existing_codes if c.id == source_code_id), None
+    )
     if source_code is None:
         return Failure(CodeNotFound(source_code_id))
 
-    target_code = next((c for c in state.existing_codes if c.id == target_code_id), None)
+    target_code = next(
+        (c for c in state.existing_codes if c.id == target_code_id), None
+    )
     if target_code is None:
         return Failure(CodeNotFound(target_code_id))
 
@@ -361,7 +366,7 @@ def derive_merge_codes(
 
 def derive_move_code_to_category(
     code_id: CodeId,
-    new_category_id: Optional[CategoryId],
+    new_category_id: CategoryId | None,
     state: CodingState,
 ) -> CodeMovedToCategory | Failure:
     """
@@ -379,9 +384,10 @@ def derive_move_code_to_category(
     if code is None:
         return Failure(CodeNotFound(code_id))
 
-    if new_category_id is not None:
-        if not does_category_exist(new_category_id, state.existing_categories):
-            return Failure(CategoryNotFound(new_category_id))
+    if new_category_id is not None and not does_category_exist(
+        new_category_id, state.existing_categories
+    ):
+        return Failure(CategoryNotFound(new_category_id))
 
     return CodeMovedToCategory.create(
         code_id=code_id,
@@ -394,11 +400,12 @@ def derive_move_code_to_category(
 # Category Derivers
 # ============================================================
 
+
 def derive_create_category(
     name: str,
-    parent_id: Optional[CategoryId],
-    memo: Optional[str],
-    owner: Optional[str],
+    parent_id: CategoryId | None,
+    memo: str | None,
+    owner: str | None,  # noqa: ARG001 - reserved for audit trail
     state: CodingState,
 ) -> CategoryCreated | Failure:
     """
@@ -420,9 +427,10 @@ def derive_create_category(
     if not is_category_name_unique(name, state.existing_categories):
         return Failure(DuplicateName(name))
 
-    if parent_id is not None:
-        if not does_category_exist(parent_id, state.existing_categories):
-            return Failure(CategoryNotFound(parent_id))
+    if parent_id is not None and not does_category_exist(
+        parent_id, state.existing_categories
+    ):
+        return Failure(CategoryNotFound(parent_id))
 
     new_id = CategoryId(value=int(uuid4().int % 1_000_000))
 
@@ -449,7 +457,9 @@ def derive_rename_category(
     if not is_valid_category_name(new_name):
         return Failure(EmptyName())
 
-    if not is_category_name_unique(new_name, state.existing_categories, exclude_category_id=category_id):
+    if not is_category_name_unique(
+        new_name, state.existing_categories, exclude_category_id=category_id
+    ):
         return Failure(DuplicateName(new_name))
 
     return CategoryRenamed.create(
@@ -461,7 +471,7 @@ def derive_rename_category(
 
 def derive_delete_category(
     category_id: CategoryId,
-    orphan_strategy: str,  # "move_to_parent" | "delete_codes"
+    orphan_strategy: str,  # noqa: ARG001 - reserved for "move_to_parent" | "delete_codes"
     state: CodingState,
 ) -> CategoryDeleted | Failure:
     """
@@ -493,15 +503,16 @@ def derive_delete_category(
 # Segment Derivers
 # ============================================================
 
+
 def derive_apply_code_to_text(
     code_id: CodeId,
     source_id: SourceId,
     start: int,
     end: int,
     selected_text: str,
-    memo: Optional[str],
-    importance: int,
-    owner: Optional[str],
+    memo: str | None,
+    importance: int,  # noqa: ARG001 - reserved for importance levels
+    owner: str | None,  # noqa: ARG001 - reserved for audit trail
     state: CodingState,
 ) -> SegmentCoded | Failure:
     """
@@ -536,9 +547,10 @@ def derive_apply_code_to_text(
     except ValueError:
         return Failure(InvalidPosition(start, end, state.source_length or 0))
 
-    if state.source_length is not None:
-        if not is_valid_text_position(position, state.source_length):
-            return Failure(InvalidPosition(start, end, state.source_length))
+    if state.source_length is not None and not is_valid_text_position(
+        position, state.source_length
+    ):
+        return Failure(InvalidPosition(start, end, state.source_length))
 
     # Generate segment ID
     segment_id = SegmentId.new()
@@ -574,10 +586,7 @@ def derive_remove_segment(
         SegmentUncoded event or Failure with reason
     """
     # Find the segment
-    segment = next(
-        (s for s in state.existing_segments if s.id == segment_id),
-        None
-    )
+    segment = next((s for s in state.existing_segments if s.id == segment_id), None)
 
     if segment is None:
         # Segment not found - this is actually a no-op, return failure
@@ -588,8 +597,9 @@ def derive_remove_segment(
 
             def __post_init__(self) -> None:
                 object.__setattr__(
-                    self, 'message',
-                    f"Segment with id {self.segment_id.value} not found"
+                    self,
+                    "message",
+                    f"Segment with id {self.segment_id.value} not found",
                 )
 
         return Failure(SegmentNotFound(segment_id))
@@ -603,18 +613,16 @@ def derive_remove_segment(
 
 def derive_update_segment_memo(
     segment_id: SegmentId,
-    new_memo: Optional[str],
+    new_memo: str | None,
     state: CodingState,
 ) -> SegmentMemoUpdated | Failure:
     """
     Derive a SegmentMemoUpdated event or failure.
     """
-    segment = next(
-        (s for s in state.existing_segments if s.id == segment_id),
-        None
-    )
+    segment = next((s for s in state.existing_segments if s.id == segment_id), None)
 
     if segment is None:
+
         @dataclass(frozen=True)
         class SegmentNotFound:
             segment_id: SegmentId
@@ -622,13 +630,14 @@ def derive_update_segment_memo(
 
             def __post_init__(self) -> None:
                 object.__setattr__(
-                    self, 'message',
-                    f"Segment with id {self.segment_id.value} not found"
+                    self,
+                    "message",
+                    f"Segment with id {self.segment_id.value} not found",
                 )
 
         return Failure(SegmentNotFound(segment_id))
 
-    old_memo = getattr(segment, 'memo', None)
+    old_memo = getattr(segment, "memo", None)
 
     return SegmentMemoUpdated.create(
         segment_id=segment_id,

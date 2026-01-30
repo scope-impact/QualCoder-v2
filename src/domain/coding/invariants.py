@@ -12,35 +12,32 @@ Architecture:
 """
 
 from __future__ import annotations
-from typing import Iterable, Optional, Callable, Any
 
-from src.domain.shared.types import CodeId, CategoryId, SourceId, SegmentId
-from src.domain.shared.validation import (
-    is_non_empty_string,
-    is_within_length,
-    is_name_unique,
-    is_within_bounds,
-    is_acyclic_hierarchy,
-    is_valid_hex_color,
-    is_in_range,
-)
+from collections.abc import Callable, Iterable
+
 from src.domain.coding.entities import (
-    Code,
     Category,
-    TextSegment,
-    ImageSegment,
-    AVSegment,
-    Segment,
+    Code,
     Color,
-    TextPosition,
     ImageRegion,
+    Segment,
+    TextPosition,
+    TextSegment,
     TimeRange,
 )
-
+from src.domain.shared.types import CategoryId, CodeId, SourceId
+from src.domain.shared.validation import (
+    is_acyclic_hierarchy,
+    is_in_range,
+    is_non_empty_string,
+    is_within_bounds,
+    is_within_length,
+)
 
 # ============================================================
 # Code Invariants
 # ============================================================
+
 
 def is_valid_code_name(name: str) -> bool:
     """
@@ -56,7 +53,7 @@ def is_valid_code_name(name: str) -> bool:
 def is_code_name_unique(
     name: str,
     existing_codes: Iterable[Code],
-    exclude_code_id: Optional[CodeId] = None,
+    exclude_code_id: CodeId | None = None,
 ) -> bool:
     """
     Check that a code name is unique within the project.
@@ -85,9 +82,9 @@ def is_valid_color(color: Color) -> bool:
     - RGB values between 0-255 (enforced by Color class)
     """
     return (
-        is_in_range(color.red, 0, 255) and
-        is_in_range(color.green, 0, 255) and
-        is_in_range(color.blue, 0, 255)
+        is_in_range(color.red, 0, 255)
+        and is_in_range(color.green, 0, 255)
+        and is_in_range(color.blue, 0, 255)
     )
 
 
@@ -111,11 +108,7 @@ def can_code_be_deleted(
         return True
 
     # Check if any segments reference this code
-    for segment in segments:
-        if segment.code_id == code_id:
-            return False
-
-    return True
+    return all(segment.code_id != code_id for segment in segments)
 
 
 def are_codes_mergeable(
@@ -144,15 +137,13 @@ def are_codes_mergeable(
     if not code_exists(source_code_id):
         return False
 
-    if not code_exists(target_code_id):
-        return False
-
-    return True
+    return code_exists(target_code_id)
 
 
 # ============================================================
 # Category Invariants
 # ============================================================
+
 
 def is_valid_category_name(name: str) -> bool:
     """
@@ -168,7 +159,7 @@ def is_valid_category_name(name: str) -> bool:
 def is_category_name_unique(
     name: str,
     existing_categories: Iterable[Category],
-    exclude_category_id: Optional[CategoryId] = None,
+    exclude_category_id: CategoryId | None = None,
 ) -> bool:
     """
     Check that a category name is unique.
@@ -191,7 +182,7 @@ def is_category_name_unique(
 
 def is_category_hierarchy_valid(
     category_id: CategoryId,
-    new_parent_id: Optional[CategoryId],
+    new_parent_id: CategoryId | None,
     categories: Iterable[Category],
 ) -> bool:
     """
@@ -214,7 +205,7 @@ def is_category_hierarchy_valid(
     # Build parent lookup
     parent_map = {cat.id: cat.parent_id for cat in categories}
 
-    def get_parent(cat_id: CategoryId) -> Optional[CategoryId]:
+    def get_parent(cat_id: CategoryId) -> CategoryId | None:
         return parent_map.get(cat_id)
 
     return is_acyclic_hierarchy(
@@ -246,21 +237,17 @@ def can_category_be_deleted(
         return True
 
     # Check for codes in this category
-    for code in codes:
-        if code.category_id == category_id:
-            return False
+    if not all(code.category_id != category_id for code in codes):
+        return False
 
     # Check for child categories
-    for cat in categories:
-        if cat.parent_id == category_id:
-            return False
-
-    return True
+    return all(cat.parent_id != category_id for cat in categories)
 
 
 # ============================================================
 # Segment Invariants
 # ============================================================
+
 
 def is_valid_text_position(
     position: TextPosition,
@@ -296,10 +283,10 @@ def is_valid_image_region(
         True if region is within bounds
     """
     return (
-        region.x >= 0 and
-        region.y >= 0 and
-        region.x + region.width <= image_width and
-        region.y + region.height <= image_height
+        region.x >= 0
+        and region.y >= 0
+        and region.x + region.width <= image_width
+        and region.y + region.height <= image_height
     )
 
 
@@ -359,6 +346,7 @@ def does_segment_overlap(
 # ============================================================
 # Cross-Entity Invariants
 # ============================================================
+
 
 def does_code_exist(
     code_id: CodeId,
