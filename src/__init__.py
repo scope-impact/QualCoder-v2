@@ -7,5 +7,5 @@ Layers:
 - domain: Pure business logic (functional core)
 - application: I/O coordination, controllers, event bus (imperative shell)
 - infrastructure: Repositories and external services
-- presentation: PyQt6 UI components (Atomic Design)
+- presentation: PySide6 UI components (Atomic Design)
 """

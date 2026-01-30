@@ -11,32 +11,35 @@ For generic text display, use design_system.TextPanel instead.
 """
 
 from dataclasses import dataclass, field
-from typing import Any
-
-from PyQt6.QtCore import Qt, pyqtSignal
-from PyQt6.QtGui import QBrush, QColor, QFont, QTextCharFormat, QTextCursor
-from PyQt6.QtWidgets import (
+from typing import List, Optional, Tuple, Dict, Any
+from PySide6.QtWidgets import (
     QFrame,
     QHBoxLayout,
     QLabel,
+    QPushButton,
     QTextEdit,
     QVBoxLayout,
+    QWidget,
+)
+from PySide6.QtCore import Qt, Signal
+from PySide6.QtGui import (
+    QBrush,
+    QColor,
+    QFont,
+    QTextCharFormat,
+    QTextCursor,
 )
 
 from design_system import (
-    RADIUS,
-    SPACING,
-    TYPOGRAPHY,
-    ColorPalette,
-    SelectionPopup,
-    TextColor,
-    get_theme,
+    ColorPalette, get_colors,
+    SPACING, RADIUS, TYPOGRAPHY,
+    SelectionPopup, TextColor,
 )
+
 
 # =============================================================================
 # Domain Data Classes
 # =============================================================================
-
 
 @dataclass
 class CodeSegment:
@@ -56,11 +59,10 @@ class CodeSegment:
         owner: Who created this coding
         date: When this coding was created
     """
-
     segment_id: str = ""
     code_id: int = 0
     code_name: str = ""
-    code_color: str = "#777777"
+    code_color: str = ""  # Default empty, will use fallback_code_color from design system
     pos0: int = 0
     pos1: int = 0
     text: str = ""
@@ -70,7 +72,7 @@ class CodeSegment:
     date: str = ""
 
     # Additional metadata
-    metadata: dict[str, Any] = field(default_factory=dict)
+    metadata: Dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
@@ -86,7 +88,6 @@ class Annotation:
         owner: Who created it
         date: When created
     """
-
     annotation_id: str = ""
     pos0: int = 0
     pos1: int = 0
@@ -98,7 +99,6 @@ class Annotation:
 # =============================================================================
 # Text Highlighter Component
 # =============================================================================
-
 
 class TextHighlighter(QFrame):
     """
@@ -144,9 +144,9 @@ class TextHighlighter(QFrame):
     """
 
     # Signals
-    text_selected = pyqtSignal(str, int, int)  # text, start, end
-    segment_clicked = pyqtSignal(str)  # segment_id
-    selection_action = pyqtSignal(str, int, int)  # action_id, start, end
+    text_selected = Signal(str, int, int)  # text, start, end
+    segment_clicked = Signal(str)  # segment_id
+    selection_action = Signal(str, int, int)  # action_id, start, end
 
     def __init__(
         self,
@@ -156,7 +156,7 @@ class TextHighlighter(QFrame):
         show_selection_popup: bool = True,
         dark_mode: bool = True,
         colors: ColorPalette = None,
-        parent=None,
+        parent=None
     ):
         """
         Initialize the TextHighlighter.
@@ -171,7 +171,7 @@ class TextHighlighter(QFrame):
             parent: Parent widget
         """
         super().__init__(parent)
-        self._colors = colors or get_theme("dark")
+        self._colors = colors or get_colors()
         self._dark_mode = dark_mode
         self._editable = editable
         self._show_selection_popup = show_selection_popup
@@ -179,9 +179,9 @@ class TextHighlighter(QFrame):
 
         # Data storage
         self._text = ""
-        self._segments: list[CodeSegment] = []
-        self._annotations: list[Annotation] = []
-        self._codes: dict[int, dict] = {}  # code_id -> {name, color, ...}
+        self._segments: List[CodeSegment] = []
+        self._annotations: List[Annotation] = []
+        self._codes: Dict[int, Dict] = {}  # code_id -> {name, color, ...}
 
         # File offset (for partial file loading like QualCoder)
         self._file_start = 0
@@ -259,7 +259,7 @@ class TextHighlighter(QFrame):
             "mdi6.file-document-edit",
             size=16,
             color=self._colors.primary,
-            colors=self._colors,
+            colors=self._colors
         )
         title_layout.addWidget(self._title_icon)
 
@@ -304,17 +304,17 @@ class TextHighlighter(QFrame):
     def set_title(self, title: str):
         """Update the header title."""
         self._title = title
-        if hasattr(self, "_title_label"):
+        if hasattr(self, '_title_label'):
             self._title_label.setText(title)
 
-    def set_stats(self, stats: list[tuple[str, str]]):
+    def set_stats(self, stats: List[Tuple[str, str]]):
         """
         Set stats in header.
 
         Args:
             stats: List of (icon_name, text) tuples
         """
-        if not hasattr(self, "_stats_layout"):
+        if not hasattr(self, '_stats_layout'):
             return
 
         # Clear existing
@@ -324,7 +324,6 @@ class TextHighlighter(QFrame):
                 item.widget().deleteLater()
 
         from design_system import Icon
-
         for icon_name, text in stats:
             stat_widget = QFrame()
             stat_widget.setStyleSheet(f"""
@@ -335,17 +334,10 @@ class TextHighlighter(QFrame):
                 }}
             """)
             stat_layout = QHBoxLayout(stat_widget)
-            stat_layout.setContentsMargins(
-                SPACING.sm, SPACING.xs, SPACING.sm, SPACING.xs
-            )
+            stat_layout.setContentsMargins(SPACING.sm, SPACING.xs, SPACING.sm, SPACING.xs)
             stat_layout.setSpacing(SPACING.xs)
 
-            icon = Icon(
-                icon_name,
-                size=14,
-                color=self._colors.text_secondary,
-                colors=self._colors,
-            )
+            icon = Icon(icon_name, size=14, color=self._colors.text_secondary, colors=self._colors)
             stat_layout.addWidget(icon)
 
             label = QLabel(text)
@@ -365,7 +357,7 @@ class TextHighlighter(QFrame):
         """Add a coded segment."""
         self._segments.append(segment)
 
-    def add_segments(self, segments: list[CodeSegment]):
+    def add_segments(self, segments: List[CodeSegment]):
         """Add multiple coded segments."""
         self._segments.extend(segments)
 
@@ -373,11 +365,11 @@ class TextHighlighter(QFrame):
         """Remove all coded segments."""
         self._segments.clear()
 
-    def set_segments(self, segments: list[CodeSegment]):
+    def set_segments(self, segments: List[CodeSegment]):
         """Replace all segments."""
         self._segments = list(segments)
 
-    def get_segments(self) -> list[CodeSegment]:
+    def get_segments(self) -> List[CodeSegment]:
         """Get all coded segments."""
         return list(self._segments)
 
@@ -397,7 +389,7 @@ class TextHighlighter(QFrame):
         """Remove all annotations."""
         self._annotations.clear()
 
-    def set_annotations(self, annotations: list[Annotation]):
+    def set_annotations(self, annotations: List[Annotation]):
         """Replace all annotations."""
         self._annotations = list(annotations)
 
@@ -423,17 +415,26 @@ class TextHighlighter(QFrame):
 
         # Apply code highlights
         for segment in self._segments:
-            if show_important_only and not segment.important:
-                continue
-            self._apply_segment_highlight(segment)
+            try:
+                if show_important_only and not segment.important:
+                    continue
+                self._apply_segment_highlight(segment)
+            except Exception as e:
+                print(f"TextHighlighter: Error highlighting segment: {e}")
 
         # Apply annotation highlights (bold)
         for annotation in self._annotations:
-            self._apply_annotation_highlight(annotation)
+            try:
+                self._apply_annotation_highlight(annotation)
+            except Exception as e:
+                print(f"TextHighlighter: Error highlighting annotation: {e}")
 
         # Apply underline to overlapping regions
         if not show_important_only:
-            self._apply_overlap_underlines()
+            try:
+                self._apply_overlap_underlines()
+            except Exception as e:
+                print(f"TextHighlighter: Error applying overlaps: {e}")
 
     def unlight(self):
         """Remove all highlighting from the text."""
@@ -448,14 +449,28 @@ class TextHighlighter(QFrame):
 
     def _apply_segment_highlight(self, segment: CodeSegment):
         """Apply highlighting for a single segment."""
+        if segment is None:
+            return
+
+        # Validate segment positions
+        if segment.pos0 is None or segment.pos1 is None:
+            return
+        if segment.pos0 < 0 or segment.pos1 < 0:
+            return
+        if segment.pos0 >= segment.pos1:
+            return
+
         fmt = QTextCharFormat()
 
-        # Background color
-        color = QColor(segment.code_color)
+        # Background color (with fallback)
+        code_color = segment.code_color or self._colors.fallback_code_color
+        color = QColor(code_color)
+        if not color.isValid():
+            color = QColor(self._colors.fallback_code_color)
         fmt.setBackground(QBrush(color))
 
         # Contrasting text color
-        text_color = TextColor(segment.code_color).recommendation
+        text_color = TextColor(code_color).recommendation
         fmt.setForeground(QBrush(QColor(text_color)))
 
         # Memo indicator: italic
@@ -469,8 +484,9 @@ class TextHighlighter(QFrame):
         # Apply to text range (adjusted for file offset)
         pos0 = segment.pos0 - self._file_start
         pos1 = segment.pos1 - self._file_start
+        text_len = len(self._text) if self._text else 0
 
-        if 0 <= pos0 < pos1 <= len(self._text):
+        if 0 <= pos0 < pos1 <= text_len:
             cursor = self._text_edit.textCursor()
             cursor.setPosition(pos0, QTextCursor.MoveMode.MoveAnchor)
             cursor.setPosition(pos1, QTextCursor.MoveMode.KeepAnchor)
@@ -495,7 +511,7 @@ class TextHighlighter(QFrame):
         overlaps = self._detect_overlaps()
 
         # Underline color: white on dark, black on light
-        underline_color = QColor("#FFFFFF") if self._dark_mode else QColor("#000000")
+        underline_color = QColor(self._colors.text_on_dark) if self._dark_mode else QColor(self._colors.text_on_light)
 
         for start, end in overlaps:
             pos0 = start - self._file_start
@@ -511,7 +527,7 @@ class TextHighlighter(QFrame):
                 fmt.setUnderlineColor(underline_color)
                 cursor.mergeCharFormat(fmt)  # Merge to preserve background
 
-    def _detect_overlaps(self) -> list[tuple[int, int]]:
+    def _detect_overlaps(self) -> List[Tuple[int, int]]:
         """
         Detect overlapping coded regions.
 
@@ -527,10 +543,7 @@ class TextHighlighter(QFrame):
                     continue  # Avoid duplicate comparisons
 
                 # Check for overlap
-                if (
-                    seg_j.pos0 <= seg_i.pos0 < seg_j.pos1
-                    or seg_i.pos0 <= seg_j.pos0 < seg_i.pos1
-                ):
+                if seg_j.pos0 <= seg_i.pos0 < seg_j.pos1 or seg_i.pos0 <= seg_j.pos0 < seg_i.pos1:
                     # Calculate overlap region
                     overlap_start = max(seg_i.pos0, seg_j.pos0)
                     overlap_end = min(seg_i.pos1, seg_j.pos1)
@@ -541,7 +554,7 @@ class TextHighlighter(QFrame):
         # Remove duplicates and merge adjacent
         return self._merge_overlaps(overlaps)
 
-    def _merge_overlaps(self, overlaps: list[tuple[int, int]]) -> list[tuple[int, int]]:
+    def _merge_overlaps(self, overlaps: List[Tuple[int, int]]) -> List[Tuple[int, int]]:
         """Merge adjacent/overlapping ranges."""
         if not overlaps:
             return []
@@ -564,7 +577,7 @@ class TextHighlighter(QFrame):
     # Public API - Selection & Navigation
     # =========================================================================
 
-    def get_selection(self) -> tuple[int, int] | None:
+    def get_selection(self) -> Optional[Tuple[int, int]]:
         """Get current selection range (start, end) or None."""
         cursor = self._text_edit.textCursor()
         if cursor.hasSelection():
@@ -602,14 +615,14 @@ class TextHighlighter(QFrame):
         """Get total number of coded segments."""
         return len(self._segments)
 
-    def get_codes_at_position(self, pos: int) -> list[CodeSegment]:
+    def get_codes_at_position(self, pos: int) -> List[CodeSegment]:
         """Get all code segments that include the given position."""
         pos_adjusted = pos + self._file_start
         return [s for s in self._segments if s.pos0 <= pos_adjusted < s.pos1]
 
     def update_stats_display(self):
         """Update the header stats based on current data."""
-        if hasattr(self, "_stats_layout"):
+        if hasattr(self, '_stats_layout'):
             overlap_count = self.get_overlap_count()
             segment_count = self.get_segment_count()
 
@@ -665,7 +678,7 @@ class TextHighlighter(QFrame):
     # Popup Configuration
     # =========================================================================
 
-    def set_popup_actions(self, actions: list[tuple[str, str, str, bool]]):
+    def set_popup_actions(self, actions: List[Tuple[str, str, str, bool]]):
         """
         Configure custom actions for the selection popup.
 
@@ -695,7 +708,6 @@ class TextHighlighter(QFrame):
 # =============================================================================
 # Coded Text Highlight Component
 # =============================================================================
-
 
 class CodedTextHighlight(QFrame):
     """
@@ -727,33 +739,34 @@ class CodedTextHighlight(QFrame):
         )
     """
 
-    clicked = pyqtSignal(str)  # segment_id
+    clicked = Signal(str)  # segment_id
 
     def __init__(
         self,
         text: str,
         code_name: str = "",
-        code_color: str = "#009688",
+        code_color: str = "",
         segment_id: str = "",
         overlap_count: int = 0,
         inline: bool = False,
         colors: ColorPalette = None,
-        parent=None,
+        parent=None
     ):
         super().__init__(parent)
-        self._colors = colors or get_theme("dark")
+        self._colors = colors or get_colors()
         self._segment_id = segment_id
-        self._code_color = code_color
+        # Use fallback color from design system if not specified
+        self._code_color = code_color or self._colors.fallback_code_color
         self._overlap_count = overlap_count
 
         self.setCursor(Qt.CursorShape.PointingHandCursor)
 
         if inline:
             # Inline mode - like HTML span with highlight
-            self._setup_inline(text, code_color, overlap_count)
+            self._setup_inline(text, self._code_color, overlap_count)
         else:
             # Block mode - card-like display
-            self._setup_block(text, code_name, code_color, overlap_count)
+            self._setup_block(text, code_name, self._code_color, overlap_count)
 
     def _setup_inline(self, text: str, color: str, overlap_count: int):
         """Setup inline highlight (for use in text flow)"""
@@ -809,7 +822,7 @@ class CodedTextHighlight(QFrame):
             badge = QLabel(code_name)
             badge.setStyleSheet(f"""
                 background-color: {color};
-                color: white;
+                color: {self._colors.text_on_dark};
                 padding: 2px 8px;
                 border-radius: 10px;
                 font-size: {TYPOGRAPHY.text_xs}px;
@@ -844,7 +857,6 @@ class CodedTextHighlight(QFrame):
 # Indicator Components
 # =============================================================================
 
-
 class OverlapIndicator(QFrame):
     """
     Badge showing number of overlapping codes on a text segment.
@@ -853,9 +865,14 @@ class OverlapIndicator(QFrame):
         indicator = OverlapIndicator(count=3)
     """
 
-    def __init__(self, count: int = 2, colors: ColorPalette = None, parent=None):
+    def __init__(
+        self,
+        count: int = 2,
+        colors: ColorPalette = None,
+        parent=None
+    ):
         super().__init__(parent)
-        self._colors = colors or get_theme("dark")
+        self._colors = colors or get_colors()
         self._count = count
 
         self.setFixedSize(18, 18)
@@ -872,7 +889,7 @@ class OverlapIndicator(QFrame):
         label = QLabel(str(count))
         label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         label.setStyleSheet(f"""
-            color: white;
+            color: {self._colors.text_on_dark};
             font-size: 9px;
             font-weight: {TYPOGRAPHY.weight_medium};
         """)
@@ -890,26 +907,24 @@ class AnnotationIndicator(QFrame):
         )
     """
 
-    clicked = pyqtSignal()
+    clicked = Signal()
 
     def __init__(
         self,
         annotation_type: str = "memo",  # memo, comment, link
         count: int = 1,
         colors: ColorPalette = None,
-        parent=None,
+        parent=None
     ):
         super().__init__(parent)
-        self._colors = colors or get_theme("dark")
+        self._colors = colors or get_colors()
 
         type_config = {
             "memo": ("mdi6.note-edit", self._colors.info),
             "comment": ("mdi6.comment", self._colors.warning),
             "link": ("mdi6.link", self._colors.primary),
         }
-        icon_name, color = type_config.get(
-            annotation_type, ("mdi6.note-edit", self._colors.info)
-        )
+        icon_name, color = type_config.get(annotation_type, ("mdi6.note-edit", self._colors.info))
 
         self.setCursor(Qt.CursorShape.PointingHandCursor)
         self.setFixedSize(24, 24)
@@ -928,7 +943,6 @@ class AnnotationIndicator(QFrame):
 
         if count == 1:
             from design_system import Icon
-
             icon = Icon(icon_name, size=14, color=color, colors=self._colors)
             layout.addWidget(icon, alignment=Qt.AlignmentFlag.AlignCenter)
         else:

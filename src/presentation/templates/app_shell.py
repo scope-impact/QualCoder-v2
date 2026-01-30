@@ -28,10 +28,8 @@ Structure:
 └─────────────────────────────────────────────────────────┘
 """
 
-from typing import Protocol, runtime_checkable
-
-from PyQt6.QtCore import Qt, pyqtSignal
-from PyQt6.QtWidgets import (
+from typing import Optional, Protocol, runtime_checkable
+from PySide6.QtWidgets import (
     QFrame,
     QHBoxLayout,
     QLabel,
@@ -41,16 +39,22 @@ from PyQt6.QtWidgets import (
     QVBoxLayout,
     QWidget,
 )
+from PySide6.QtCore import Qt, Signal
 
 from design_system import (
-    RADIUS,
+    ColorPalette,
+    get_colors,
+    TitleBar,
+    MenuBar,
+    TabBar,
+    Toolbar,
+    StatusBar,
+    Icon,
     SPACING,
     TYPOGRAPHY,
-    ColorPalette,
-    Icon,
-    TitleBar,
-    get_theme,
+    RADIUS,
 )
+
 
 # QualCoder-specific menu items
 MENU_ITEMS = [
@@ -75,7 +79,7 @@ TAB_ITEMS = [
 class ScreenProtocol(Protocol):
     """Protocol that screens must implement to work with AppShell"""
 
-    def get_toolbar_content(self) -> QWidget | None:
+    def get_toolbar_content(self) -> Optional[QWidget]:
         """Return widget(s) for the toolbar slot, or None for empty toolbar"""
         ...
 
@@ -113,7 +117,7 @@ class ToolbarSlot(QFrame):
         # Default empty state - just spacing
         self.setMinimumHeight(52)
 
-    def set_content(self, widget: QWidget | None):
+    def set_content(self, widget: Optional[QWidget]):
         """Set toolbar content from screen"""
         # Clear existing
         if self._content:
@@ -157,7 +161,10 @@ class ContentSlot(QWidget):
         self._layout.setContentsMargins(0, 0, 0, 0)
         self._layout.setSpacing(0)
 
-        self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
+        self.setSizePolicy(
+            QSizePolicy.Policy.Expanding,
+            QSizePolicy.Policy.Expanding
+        )
 
     def set_content(self, widget: QWidget):
         """Set main content from screen"""
@@ -174,7 +181,10 @@ class ContentSlot(QWidget):
                 item.widget().setParent(None)
 
         self._content = widget
-        widget.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
+        widget.setSizePolicy(
+            QSizePolicy.Policy.Expanding,
+            QSizePolicy.Policy.Expanding
+        )
         self._layout.addWidget(widget)
 
     def clear(self):
@@ -191,7 +201,7 @@ class AppMenuBar(QFrame):
     Emits signals when menu items are clicked.
     """
 
-    item_clicked = pyqtSignal(str)  # menu_id
+    item_clicked = Signal(str)  # menu_id
 
     def __init__(self, colors: ColorPalette, parent=None):
         super().__init__(parent)
@@ -215,7 +225,7 @@ class AppMenuBar(QFrame):
         for menu_id, label in MENU_ITEMS:
             btn = QPushButton(label)
             btn.setCursor(Qt.CursorShape.PointingHandCursor)
-            btn.clicked.connect(lambda _checked, mid=menu_id: self._on_click(mid))
+            btn.clicked.connect(lambda checked, mid=menu_id: self._on_click(mid))
             self._buttons[menu_id] = btn
             layout.addWidget(btn)
             self._style_button(btn, False)
@@ -271,7 +281,7 @@ class TabButton(QFrame):
     Custom tab button with icon and label.
     """
 
-    clicked = pyqtSignal()
+    clicked = Signal()
 
     def __init__(self, label: str, icon_name: str, colors: ColorPalette, parent=None):
         super().__init__(parent)
@@ -288,9 +298,7 @@ class TabButton(QFrame):
         layout.setAlignment(Qt.AlignmentFlag.AlignVCenter)
 
         # Icon
-        self._icon = Icon(
-            icon_name, size=16, color=colors.text_secondary, colors=colors
-        )
+        self._icon = Icon(icon_name, size=16, color=colors.text_secondary, colors=colors)
         layout.addWidget(self._icon, alignment=Qt.AlignmentFlag.AlignVCenter)
 
         # Label
@@ -352,7 +360,7 @@ class AppTabBar(QFrame):
     QualCoder-specific tab bar with predefined tabs and icons.
     """
 
-    tab_clicked = pyqtSignal(str)  # tab_id
+    tab_clicked = Signal(str)  # tab_id
 
     def __init__(self, colors: ColorPalette, parent=None):
         super().__init__(parent)
@@ -425,7 +433,7 @@ class AppStatusBar(QFrame):
         # Left side - main message
         self._message_label = QLabel("Ready")
         self._message_label.setStyleSheet(f"""
-            color: white;
+            color: {self._colors.text_on_dark};
             font-size: {TYPOGRAPHY.text_sm}px;
         """)
         layout.addWidget(self._message_label)
@@ -476,7 +484,7 @@ class AppShell(QMainWindow):
     - Status bar
 
     Usage:
-        shell = AppShell(colors=get_theme("dark"))
+        shell = AppShell(colors=get_colors())
         shell.set_project("my_project.qda")
 
         # Set a screen
@@ -489,12 +497,12 @@ class AppShell(QMainWindow):
     """
 
     # Navigation signals
-    menu_clicked = pyqtSignal(str)  # menu_id
-    tab_clicked = pyqtSignal(str)  # tab_id
+    menu_clicked = Signal(str)  # menu_id
+    tab_clicked = Signal(str)   # tab_id
 
     def __init__(self, colors: ColorPalette = None, parent=None):
         super().__init__(parent)
-        self._colors = colors or get_theme("dark")
+        self._colors = colors or get_colors()
         self._current_screen = None
         self._project_name = "Untitled"
 
@@ -518,7 +526,7 @@ class AppShell(QMainWindow):
             title=f"QualCoder - {self._project_name}",
             show_logo=True,
             show_controls=True,
-            colors=self._colors,
+            colors=self._colors
         )
         layout.addWidget(self._title_bar)
 
@@ -595,7 +603,7 @@ class AppShell(QMainWindow):
         message = screen.get_status_message()
         self._status_bar.set_message(message)
 
-    def set_toolbar_content(self, widget: QWidget | None):
+    def set_toolbar_content(self, widget: Optional[QWidget]):
         """Directly set toolbar content"""
         self._toolbar_slot.set_content(widget)
 

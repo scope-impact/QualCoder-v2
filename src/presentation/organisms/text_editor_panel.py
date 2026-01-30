@@ -5,14 +5,13 @@ A panel for displaying and interacting with text documents for coding.
 Shows the document content with header, stats, and selection capabilities.
 """
 
-from PyQt6.QtCore import pyqtSignal
-from PyQt6.QtWidgets import QFrame, QVBoxLayout
+from typing import List, Optional, Tuple
+from PySide6.QtWidgets import QFrame, QVBoxLayout
+from PySide6.QtCore import Signal
 
 from design_system import (
-    ColorPalette,
-    SelectionPopup,
-    TextPanel,
-    get_theme,
+    ColorPalette, get_colors,
+    TextPanel, SelectionPopup,
 )
 
 
@@ -25,8 +24,8 @@ class TextEditorPanel(QFrame):
         code_applied(str, int, int): Emitted when a code is applied to selection
     """
 
-    text_selected = pyqtSignal(str, int, int)  # text, start, end
-    code_applied = pyqtSignal(str, int, int)  # code_id, start, end
+    text_selected = Signal(str, int, int)  # text, start, end
+    code_applied = Signal(str, int, int)   # code_id, start, end
 
     def __init__(self, colors: ColorPalette = None, parent=None):
         """
@@ -37,7 +36,7 @@ class TextEditorPanel(QFrame):
             parent: Parent widget
         """
         super().__init__(parent)
-        self._colors = colors or get_theme("dark")
+        self._colors = colors or get_colors()
 
         self.setStyleSheet(f"""
             TextEditorPanel {{
@@ -65,7 +64,7 @@ class TextEditorPanel(QFrame):
         self._selection_popup.action_clicked.connect(self._on_popup_action)
         self._selection_popup.hide()
 
-    def set_document(self, title: str, _badge: str = None, text: str = ""):
+    def set_document(self, title: str, badge: str = None, text: str = ""):
         """
         Set the document to display.
 
@@ -77,7 +76,7 @@ class TextEditorPanel(QFrame):
         self._text_panel.set_title(title)
         self._text_panel.set_text(text)
 
-    def set_stats(self, stats: list[tuple[str, str]]):
+    def set_stats(self, stats: List[Tuple[str, str]]):
         """
         Update the stats display in the header.
 
@@ -86,7 +85,7 @@ class TextEditorPanel(QFrame):
         """
         self._text_panel.set_stats(stats)
 
-    def get_selection(self) -> tuple[int, int] | None:
+    def get_selection(self) -> Optional[Tuple[int, int]]:
         """
         Get the current text selection.
 

@@ -8,8 +8,8 @@ A panel showing contextual details for the coding interface:
 - AI Assistant actions
 """
 
-from PyQt6.QtCore import Qt, pyqtSignal
-from PyQt6.QtWidgets import (
+from typing import List, Tuple
+from PySide6.QtWidgets import (
     QFrame,
     QHBoxLayout,
     QLabel,
@@ -17,18 +17,11 @@ from PyQt6.QtWidgets import (
     QVBoxLayout,
     QWidget,
 )
+from PySide6.QtCore import Qt, Signal
 
 from design_system import (
-    RADIUS,
-    SPACING,
-    TYPOGRAPHY,
-    Button,
-    CodeDetailCard,
-    ColorPalette,
-    Icon,
-    InfoCard,
-    ProgressBar,
-    get_theme,
+    ColorPalette, get_colors, SPACING, RADIUS, TYPOGRAPHY,
+    Icon, Button, InfoCard, CodeDetailCard, ProgressBar,
 )
 
 
@@ -41,8 +34,8 @@ class DetailsPanel(QFrame):
         ai_suggest_clicked: Emitted when suggest codes button is clicked
     """
 
-    ai_chat_clicked = pyqtSignal()
-    ai_suggest_clicked = pyqtSignal()
+    ai_chat_clicked = Signal()
+    ai_suggest_clicked = Signal()
 
     def __init__(self, colors: ColorPalette = None, parent=None):
         """
@@ -53,7 +46,7 @@ class DetailsPanel(QFrame):
             parent: Parent widget
         """
         super().__init__(parent)
-        self._colors = colors or get_theme("dark")
+        self._colors = colors or get_colors()
 
         self.setStyleSheet(f"""
             DetailsPanel {{
@@ -70,7 +63,7 @@ class DetailsPanel(QFrame):
         scroll = QScrollArea()
         scroll.setWidgetResizable(True)
         scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
-        scroll.setStyleSheet("QScrollArea { background: transparent; border: none; }")
+        scroll.setStyleSheet(f"QScrollArea {{ background: {self._colors.transparent}; border: none; }}")
 
         container = QWidget()
         container_layout = QVBoxLayout(container)
@@ -84,7 +77,7 @@ class DetailsPanel(QFrame):
             colors=self._colors,
         )
         self._code_detail = CodeDetailCard(
-            color="#808080",
+            color=self._colors.text_disabled,
             name="No code selected",
             memo="Select a code from the tree to see details.",
             colors=self._colors,
@@ -126,7 +119,7 @@ class DetailsPanel(QFrame):
         scroll.setWidget(container)
         layout.addWidget(scroll)
 
-    def _create_overlap_content(self, segments: list[tuple[str, list[str]]]) -> QWidget:
+    def _create_overlap_content(self, segments: List[Tuple[str, List[str]]]) -> QWidget:
         """
         Create the overlapping codes content.
 
@@ -134,7 +127,7 @@ class DetailsPanel(QFrame):
             segments: List of (segment_text, [color1, color2, ...]) tuples
         """
         widget = QFrame()
-        widget.setStyleSheet("background: transparent;")
+        widget.setStyleSheet(f"background: {self._colors.transparent};")
         layout = QVBoxLayout(widget)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(SPACING.sm)
@@ -142,9 +135,7 @@ class DetailsPanel(QFrame):
         if not segments:
             # No overlaps message
             label = QLabel("No overlapping codes detected")
-            label.setStyleSheet(
-                f"color: {self._colors.text_disabled}; font-size: {TYPOGRAPHY.text_xs}px;"
-            )
+            label.setStyleSheet(f"color: {self._colors.text_disabled}; font-size: {TYPOGRAPHY.text_xs}px;")
             layout.addWidget(label)
             return widget
 
@@ -158,18 +149,14 @@ class DetailsPanel(QFrame):
             }}
         """)
         warning_layout = QHBoxLayout(warning)
-        warning_layout.setContentsMargins(
-            SPACING.md, SPACING.sm, SPACING.md, SPACING.sm
-        )
+        warning_layout.setContentsMargins(SPACING.md, SPACING.sm, SPACING.md, SPACING.sm)
         warning_layout.setSpacing(SPACING.sm)
 
-        icon = Icon("mdi6.information", size=16, color="#FF9800", colors=self._colors)
+        icon = Icon("mdi6.information", size=16, color=self._colors.warning, colors=self._colors)
         warning_layout.addWidget(icon)
 
         label = QLabel(f"{len(segments)} segments have multiple codes")
-        label.setStyleSheet(
-            f"color: {self._colors.text_secondary}; font-size: {TYPOGRAPHY.text_xs}px;"
-        )
+        label.setStyleSheet(f"color: {self._colors.text_secondary}; font-size: {TYPOGRAPHY.text_xs}px;")
         warning_layout.addWidget(label)
         warning_layout.addStretch()
 
@@ -183,15 +170,11 @@ class DetailsPanel(QFrame):
                 border-radius: {RADIUS.sm}px;
             """)
             seg_layout = QVBoxLayout(seg)
-            seg_layout.setContentsMargins(
-                SPACING.sm, SPACING.sm, SPACING.sm, SPACING.sm
-            )
+            seg_layout.setContentsMargins(SPACING.sm, SPACING.sm, SPACING.sm, SPACING.sm)
             seg_layout.setSpacing(SPACING.xs)
 
             title = QLabel(f"Segment {i + 1}:")
-            title.setStyleSheet(
-                f"color: {self._colors.text_primary}; font-size: {TYPOGRAPHY.text_xs}px; font-weight: bold;"
-            )
+            title.setStyleSheet(f"color: {self._colors.text_primary}; font-size: {TYPOGRAPHY.text_xs}px; font-weight: bold;")
             seg_layout.addWidget(title)
 
             dots = QHBoxLayout()
@@ -217,7 +200,7 @@ class DetailsPanel(QFrame):
             progress: Coding progress percentage (0-100)
         """
         widget = QFrame()
-        widget.setStyleSheet("background: transparent;")
+        widget.setStyleSheet(f"background: {self._colors.transparent};")
         layout = QVBoxLayout(widget)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(SPACING.sm)
@@ -233,9 +216,7 @@ class DetailsPanel(QFrame):
             layout.addWidget(memo_label)
         else:
             no_memo = QLabel("No memo for this file")
-            no_memo.setStyleSheet(
-                f"color: {self._colors.text_disabled}; font-size: {TYPOGRAPHY.text_xs}px;"
-            )
+            no_memo.setStyleSheet(f"color: {self._colors.text_disabled}; font-size: {TYPOGRAPHY.text_xs}px;")
             layout.addWidget(no_memo)
 
         # Progress bar
@@ -244,9 +225,7 @@ class DetailsPanel(QFrame):
             layout.addWidget(progress_bar)
 
             progress_label = QLabel(f"Coding progress: {progress}%")
-            progress_label.setStyleSheet(
-                f"color: {self._colors.text_disabled}; font-size: {TYPOGRAPHY.text_xs}px;"
-            )
+            progress_label.setStyleSheet(f"color: {self._colors.text_disabled}; font-size: {TYPOGRAPHY.text_xs}px;")
             layout.addWidget(progress_label)
 
         return widget
@@ -254,7 +233,7 @@ class DetailsPanel(QFrame):
     def _create_ai_content(self) -> QWidget:
         """Create the AI assistant content."""
         widget = QFrame()
-        widget.setStyleSheet("background: transparent;")
+        widget.setStyleSheet(f"background: {self._colors.transparent};")
         layout = QVBoxLayout(widget)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(SPACING.sm)
@@ -291,7 +270,7 @@ class DetailsPanel(QFrame):
         self._code_card.set_content(self._code_detail)
         old_detail.deleteLater()
 
-    def set_overlapping_codes(self, segments: list[tuple[str, list[str]]]):
+    def set_overlapping_codes(self, segments: List[Tuple[str, List[str]]]):
         """
         Update the overlapping codes display.
 

@@ -12,16 +12,16 @@ A simple full-width content layout with optional padding.
 Good for settings pages, reports, charts, etc.
 """
 
-from PyQt6.QtCore import Qt
-from PyQt6.QtWidgets import (
+from PySide6.QtWidgets import (
     QFrame,
     QScrollArea,
     QSizePolicy,
     QVBoxLayout,
     QWidget,
 )
+from PySide6.QtCore import Qt
 
-from design_system import ColorPalette, get_theme
+from design_system import ColorPalette, get_colors, SPACING, RADIUS
 
 
 class SinglePanelLayout(QWidget):
@@ -44,10 +44,10 @@ class SinglePanelLayout(QWidget):
         scrollable: bool = False,
         max_width: int = None,
         colors: ColorPalette = None,
-        parent=None,
+        parent=None
     ):
         super().__init__(parent)
-        self._colors = colors or get_theme("dark")
+        self._colors = colors or get_colors()
         self._padding = padding
         self._scrollable = scrollable
         self._max_width = max_width
@@ -78,11 +78,11 @@ class SinglePanelLayout(QWidget):
                 QScrollBar:vertical {{
                     background-color: {self._colors.surface};
                     width: 10px;
-                    border-radius: 5px;
+                    border-radius: {RADIUS.sm}px;
                 }}
                 QScrollBar::handle:vertical {{
                     background-color: {self._colors.surface_light};
-                    border-radius: 5px;
+                    border-radius: {RADIUS.sm}px;
                     min-height: 30px;
                 }}
                 QScrollBar::handle:vertical:hover {{
@@ -98,7 +98,8 @@ class SinglePanelLayout(QWidget):
             self._content_container = QWidget()
             self._content_layout = QVBoxLayout(self._content_container)
             self._content_layout.setContentsMargins(
-                self._padding, self._padding, self._padding, self._padding
+                self._padding, self._padding,
+                self._padding, self._padding
             )
             self._content_layout.setSpacing(0)
 
@@ -113,7 +114,8 @@ class SinglePanelLayout(QWidget):
             self._content_container = QWidget()
             self._content_layout = QVBoxLayout(self._content_container)
             self._content_layout.setContentsMargins(
-                self._padding, self._padding, self._padding, self._padding
+                self._padding, self._padding,
+                self._padding, self._padding
             )
             self._content_layout.setSpacing(0)
 
@@ -129,7 +131,10 @@ class SinglePanelLayout(QWidget):
         if self._max_width:
             widget.setMaximumWidth(self._max_width)
 
-        widget.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
+        widget.setSizePolicy(
+            QSizePolicy.Policy.Expanding,
+            QSizePolicy.Policy.Expanding
+        )
         self._content_layout.addWidget(widget)
 
     def _clear_layout(self, layout: QVBoxLayout):

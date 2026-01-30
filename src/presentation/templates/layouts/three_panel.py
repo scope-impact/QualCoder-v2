@@ -13,8 +13,7 @@ A three-panel layout with left sidebar, center content, and right panel.
 This is the classic coding interface layout.
 """
 
-from PyQt6.QtCore import Qt
-from PyQt6.QtWidgets import (
+from PySide6.QtWidgets import (
     QFrame,
     QHBoxLayout,
     QSizePolicy,
@@ -22,8 +21,9 @@ from PyQt6.QtWidgets import (
     QVBoxLayout,
     QWidget,
 )
+from PySide6.QtCore import Qt
 
-from design_system import ColorPalette, get_theme
+from design_system import ColorPalette, get_colors
 
 
 class ThreePanelLayout(QWidget):
@@ -55,10 +55,10 @@ class ThreePanelLayout(QWidget):
         right_min: int = 200,
         right_max: int = 400,
         colors: ColorPalette = None,
-        parent=None,
+        parent=None
     ):
         super().__init__(parent)
-        self._colors = colors or get_theme("dark")
+        self._colors = colors or get_colors()
         self._left_width = left_width
         self._right_width = right_width
         self._left_min = left_min
@@ -110,7 +110,8 @@ class ThreePanelLayout(QWidget):
             }}
         """)
         self._center.setSizePolicy(
-            QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding
+            QSizePolicy.Policy.Expanding,
+            QSizePolicy.Policy.Expanding
         )
 
         self._center_layout = QVBoxLayout(self._center)
@@ -145,19 +146,28 @@ class ThreePanelLayout(QWidget):
     def set_left(self, widget: QWidget):
         """Set left panel content"""
         self._clear_layout(self._left_layout)
-        widget.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Expanding)
+        widget.setSizePolicy(
+            QSizePolicy.Policy.Preferred,
+            QSizePolicy.Policy.Expanding
+        )
         self._left_layout.addWidget(widget)
 
     def set_center(self, widget: QWidget):
         """Set center panel content"""
         self._clear_layout(self._center_layout)
-        widget.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
+        widget.setSizePolicy(
+            QSizePolicy.Policy.Expanding,
+            QSizePolicy.Policy.Expanding
+        )
         self._center_layout.addWidget(widget)
 
     def set_right(self, widget: QWidget):
         """Set right panel content"""
         self._clear_layout(self._right_layout)
-        widget.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Expanding)
+        widget.setSizePolicy(
+            QSizePolicy.Policy.Preferred,
+            QSizePolicy.Policy.Expanding
+        )
         self._right_layout.addWidget(widget)
 
     def _clear_layout(self, layout: QVBoxLayout):

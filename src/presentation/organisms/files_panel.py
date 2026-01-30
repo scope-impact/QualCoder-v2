@@ -5,19 +5,13 @@ A panel displaying the list of files available for coding.
 Includes a header with filter and memo actions, and a scrollable file list.
 """
 
-from typing import Any
-
-from PyQt6.QtCore import Qt, pyqtSignal
-from PyQt6.QtWidgets import QFrame, QHBoxLayout, QLabel, QVBoxLayout
+from typing import List, Dict, Any
+from PySide6.QtWidgets import QFrame, QVBoxLayout
+from PySide6.QtCore import Signal
 
 from design_system import (
-    RADIUS,
-    SPACING,
-    TYPOGRAPHY,
-    ColorPalette,
-    FileList,
-    Icon,
-    get_theme,
+    ColorPalette, get_colors,
+    FileList, PanelHeader,
 )
 
 
@@ -29,7 +23,7 @@ class FilesPanel(QFrame):
         file_selected(dict): Emitted when a file is selected, with file data
     """
 
-    file_selected = pyqtSignal(dict)
+    file_selected = Signal(dict)
 
     def __init__(self, colors: ColorPalette = None, parent=None):
         """
@@ -40,24 +34,20 @@ class FilesPanel(QFrame):
             parent: Parent widget
         """
         super().__init__(parent)
-        self._colors = colors or get_theme("dark")
-        self._files = []
+        self._colors = colors or get_colors()
+        self._files: List[Dict[str, Any]] = []
+        self._selected_index: int = -1
 
-        self.setStyleSheet("background: transparent; border: none;")
+        self.setStyleSheet(f"background: {self._colors.transparent}; border: none;")
 
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(0)
 
         # Header
-        header = self._create_header(
-            "Files",
-            "mdi6.folder-open",
-            [
-                ("mdi6.filter-variant", "Filter files"),
-                ("mdi6.note", "File memo"),
-            ],
-        )
+        header = PanelHeader("Files", icon="mdi6.folder-open", colors=self._colors)
+        header.add_action("mdi6.filter-variant", tooltip="Filter files")
+        header.add_action("mdi6.note", tooltip="File memo")
         layout.addWidget(header)
 
         # File list
@@ -65,65 +55,7 @@ class FilesPanel(QFrame):
         self._file_list.item_clicked.connect(self._on_file_click)
         layout.addWidget(self._file_list)
 
-    def _create_header(
-        self, title: str, icon_name: str, actions: list[tuple]
-    ) -> QFrame:
-        """Create a panel header with icon and actions."""
-        header = QFrame()
-        header.setStyleSheet(f"""
-            QFrame {{
-                background-color: {self._colors.surface_light};
-                border-bottom: 1px solid {self._colors.border};
-            }}
-        """)
-
-        h_layout = QHBoxLayout(header)
-        h_layout.setContentsMargins(SPACING.lg, SPACING.md, SPACING.lg, SPACING.md)
-        h_layout.setSpacing(SPACING.sm)
-
-        # Icon
-        icon = Icon(icon_name, size=16, color=self._colors.primary, colors=self._colors)
-        h_layout.addWidget(icon)
-
-        # Title
-        title_label = QLabel(title)
-        title_label.setStyleSheet(f"""
-            font-size: {TYPOGRAPHY.text_sm}px;
-            font-weight: {TYPOGRAPHY.weight_medium};
-            color: {self._colors.text_primary};
-        """)
-        h_layout.addWidget(title_label)
-        h_layout.addStretch()
-
-        # Actions
-        for action_icon, tooltip in actions:
-            btn = QFrame()
-            btn.setFixedSize(24, 24)
-            btn.setCursor(Qt.CursorShape.PointingHandCursor)
-            btn.setToolTip(tooltip)
-            btn.setStyleSheet(f"""
-                QFrame {{
-                    background-color: transparent;
-                    border-radius: {RADIUS.xs}px;
-                }}
-                QFrame:hover {{
-                    background-color: {self._colors.surface_lighter};
-                }}
-            """)
-            btn_layout = QHBoxLayout(btn)
-            btn_layout.setContentsMargins(0, 0, 0, 0)
-            action_i = Icon(
-                action_icon,
-                size=14,
-                color=self._colors.text_secondary,
-                colors=self._colors,
-            )
-            btn_layout.addWidget(action_i, alignment=Qt.AlignmentFlag.AlignCenter)
-            h_layout.addWidget(btn)
-
-        return header
-
-    def set_files(self, files: list[dict[str, Any]]):
+    def set_files(self, files: List[Dict[str, Any]]):
         """
         Set the list of files to display.
 
@@ -134,9 +66,13 @@ class FilesPanel(QFrame):
                 - meta: Additional metadata string
                 - selected (optional): Whether the file is selected
         """
-        self._files = files
+        self._files = files if files else []
+        self._selected_index = -1
         self._file_list.clear()
-        for i, f in enumerate(files):
+
+        for i, f in enumerate(self._files):
+            if not isinstance(f, dict):
+                continue
             self._file_list.add_file(
                 id=str(i),
                 name=f.get("name", ""),
@@ -144,19 +80,49 @@ class FilesPanel(QFrame):
                 size=f.get("meta", ""),
             )
 
+        # Auto-select first file if available
+        if self._files:
+            self._selected_index = 0
+
     def _on_file_click(self, file_id: str):
         """Handle file click event."""
         try:
             index = int(file_id)
             if 0 <= index < len(self._files):
+                self._selected_index = index
                 self.file_selected.emit(self._files[index])
-        except ValueError:
-            pass
+        except (ValueError, TypeError) as e:
+            # Log error for debugging but don't crash
+            print(f"FilesPanel: Invalid file_id '{file_id}': {e}")
 
-    def get_selected_file(self) -> dict[str, Any]:
+    def get_selected_file(self) -> Dict[str, Any]:
         """Get the currently selected file data."""
-        # TODO: Implement selection tracking in FileList
-        return self._files[0] if self._files else {}
+        if 0 <= self._selected_index < len(self._files):
+            return self._files[self._selected_index].copy()
+        return {}
+
+    def get_selected_index(self) -> int:
+        """Get the index of the currently selected file."""
+        return self._selected_index
+
+    def select_file(self, index: int) -> bool:
+        """
+        Select a file by index.
+
+        Args:
+            index: The file index to select
+
+        Returns:
+            True if selection was successful, False otherwise
+        """
+        if 0 <= index < len(self._files):
+            self._selected_index = index
+            return True
+        return False
+
+    def get_file_count(self) -> int:
+        """Get the total number of files."""
+        return len(self._files)
 
     def clear(self):
         """Clear all files from the list."""

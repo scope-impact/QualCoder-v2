@@ -2,13 +2,12 @@
 Pytest configuration and fixtures for UI tests
 """
 
-import sys
-from datetime import datetime
-from pathlib import Path
-
 import pytest
-from PyQt6.QtCore import QTimer
-from PyQt6.QtWidgets import QApplication, QLabel, QWidget
+from PySide6.QtWidgets import QApplication, QLabel, QWidget
+from PySide6.QtCore import QTimer
+import sys
+from pathlib import Path
+from datetime import datetime
 
 
 @pytest.fixture(scope="session")
@@ -23,17 +22,15 @@ def qapp():
 @pytest.fixture
 def colors():
     """Get dark theme colors"""
-    from design_system import get_theme
-
-    return get_theme("dark")
+    from design_system import get_colors
+    return get_colors()
 
 
 @pytest.fixture
 def light_colors():
     """Get light theme colors"""
-    from design_system import get_theme
-
-    return get_theme("light")
+    from design_system import get_colors
+    return get_colors()
 
 
 # Screenshot directory
@@ -50,7 +47,6 @@ def screenshot_dir():
 @pytest.fixture
 def take_screenshot(screenshot_dir, request):
     """Fixture to take screenshots of widgets"""
-
     def _take_screenshot(widget: QWidget, name: str = None, delay_ms: int = 100):
         if name is None:
             name = request.node.name
@@ -66,8 +62,7 @@ def take_screenshot(screenshot_dir, request):
         QApplication.processEvents()
 
         if delay_ms > 0:
-            from PyQt6.QtCore import QEventLoop
-
+            from PySide6.QtCore import QEventLoop
             loop = QEventLoop()
             QTimer.singleShot(delay_ms, loop.quit)
             loop.exec()
@@ -84,6 +79,7 @@ def take_screenshot(screenshot_dir, request):
 @pytest.fixture
 def placeholder_widget(colors):
     """Create a simple placeholder widget for testing layouts"""
+    from design_system import RADIUS
 
     def _create(text: str = "Placeholder", min_height: int = 100):
         widget = QWidget()
@@ -91,17 +87,15 @@ def placeholder_widget(colors):
         widget.setStyleSheet(f"""
             QWidget {{
                 background-color: {colors.surface_light};
-                border-radius: 4px;
+                border-radius: {RADIUS.xs}px;
             }}
         """)
-        from PyQt6.QtCore import Qt
-        from PyQt6.QtWidgets import QVBoxLayout
-
+        from PySide6.QtWidgets import QVBoxLayout
+        from PySide6.QtCore import Qt
         layout = QVBoxLayout(widget)
         label = QLabel(text)
         label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         label.setStyleSheet(f"color: {colors.text_secondary};")
         layout.addWidget(label)
         return widget
-
     return _create

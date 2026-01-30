@@ -1,5 +1,5 @@
 """
-Presentation Layer - PyQt6 UI Components
+Presentation Layer - PySide6 UI Components
 
 Part of the DDD architecture (Domain → Application → Infrastructure → Presentation).
 This layer handles all user interface concerns using Atomic Design methodology.

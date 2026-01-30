@@ -11,8 +11,7 @@ A two-panel layout with a sidebar and main content area.
 └──────────┴────────────────────────────┘
 """
 
-from PyQt6.QtCore import Qt
-from PyQt6.QtWidgets import (
+from PySide6.QtWidgets import (
     QFrame,
     QHBoxLayout,
     QSizePolicy,
@@ -20,8 +19,9 @@ from PyQt6.QtWidgets import (
     QVBoxLayout,
     QWidget,
 )
+from PySide6.QtCore import Qt
 
-from design_system import ColorPalette, get_theme
+from design_system import ColorPalette, get_colors, SPACING
 
 
 class SidebarLayout(QWidget):
@@ -49,10 +49,10 @@ class SidebarLayout(QWidget):
         sidebar_min: int = 200,
         sidebar_max: int = 400,
         colors: ColorPalette = None,
-        parent=None,
+        parent=None
     ):
         super().__init__(parent)
-        self._colors = colors or get_theme("dark")
+        self._colors = colors or get_colors()
         self._sidebar_width = sidebar_width
         self._sidebar_min = sidebar_min
         self._sidebar_max = sidebar_max
@@ -101,7 +101,8 @@ class SidebarLayout(QWidget):
             }}
         """)
         self._main.setSizePolicy(
-            QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding
+            QSizePolicy.Policy.Expanding,
+            QSizePolicy.Policy.Expanding
         )
 
         self._main_layout = QVBoxLayout(self._main)
@@ -118,13 +119,19 @@ class SidebarLayout(QWidget):
     def set_sidebar(self, widget: QWidget):
         """Set sidebar content"""
         self._clear_layout(self._sidebar_layout)
-        widget.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Expanding)
+        widget.setSizePolicy(
+            QSizePolicy.Policy.Preferred,
+            QSizePolicy.Policy.Expanding
+        )
         self._sidebar_layout.addWidget(widget)
 
     def set_content(self, widget: QWidget):
         """Set main content"""
         self._clear_layout(self._main_layout)
-        widget.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
+        widget.setSizePolicy(
+            QSizePolicy.Policy.Expanding,
+            QSizePolicy.Policy.Expanding
+        )
         self._main_layout.addWidget(widget)
 
     def _clear_layout(self, layout: QVBoxLayout):
