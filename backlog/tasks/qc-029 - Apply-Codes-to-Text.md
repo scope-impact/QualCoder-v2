@@ -1,9 +1,10 @@
 ---
 id: QC-029
 title: Apply Codes to Text
-status: To Do
+status: In Progress
 assignee: []
 created_date: '2026-01-30 20:27'
+updated_date: '2026-01-30 21:53'
 labels: []
 dependencies: []
 ---

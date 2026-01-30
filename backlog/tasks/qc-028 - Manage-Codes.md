@@ -1,9 +1,10 @@
 ---
 id: QC-028
 title: Manage Codes
-status: To Do
+status: In Progress
 assignee: []
 created_date: '2026-01-30 20:25'
+updated_date: '2026-01-30 21:53'
 labels: []
 dependencies: []
 ---
