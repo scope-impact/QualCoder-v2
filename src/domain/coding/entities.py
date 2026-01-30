@@ -306,3 +306,61 @@ class AVSegment:
 
 # Type alias for all segment types
 Segment = TextSegment | ImageSegment | AVSegment
+
+
+# ============================================================
+# Batch Operations
+# ============================================================
+
+
+@dataclass(frozen=True)
+class BatchId:
+    """
+    Unique identifier for an auto-code batch operation.
+
+    Used to track batches of coded segments for undo capability.
+    """
+
+    value: str
+
+    @classmethod
+    def new(cls) -> BatchId:
+        """Generate a new unique batch ID."""
+        import uuid
+
+        return cls(value=f"batch_{uuid.uuid4().hex[:12]}")
+
+
+@dataclass(frozen=True)
+class AutoCodeBatch:
+    """
+    Tracks a batch of auto-coded segments for undo capability.
+
+    An AutoCodeBatch represents a single auto-code operation that
+    created multiple segments at once. This allows the entire batch
+    to be undone as a single operation.
+
+    Attributes:
+        id: Unique identifier for this batch
+        code_id: ID of the code applied in this batch
+        pattern: The search pattern used to find matches
+        segment_ids: IDs of segments created in this batch
+        created_at: When the batch was created
+        owner: Who created this batch
+    """
+
+    id: BatchId
+    code_id: CodeId
+    pattern: str
+    segment_ids: tuple[SegmentId, ...] = ()
+    created_at: datetime = field(default_factory=lambda: datetime.now(UTC))
+    owner: str | None = None
+
+    def can_undo(self) -> bool:
+        """Check if this batch can be undone (has segments to remove)."""
+        return len(self.segment_ids) > 0
+
+    @property
+    def segment_count(self) -> int:
+        """Number of segments in this batch."""
+        return len(self.segment_ids)

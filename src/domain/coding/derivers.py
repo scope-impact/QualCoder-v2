@@ -18,6 +18,8 @@ from dataclasses import dataclass
 from uuid import uuid4
 
 from src.domain.coding.entities import (
+    AutoCodeBatch,
+    BatchId,
     Category,
     Code,
     Color,
@@ -25,6 +27,8 @@ from src.domain.coding.entities import (
     TextPosition,
 )
 from src.domain.coding.events import (
+    BatchCreated,
+    BatchUndone,
     CategoryCreated,
     CategoryDeleted,
     CategoryRenamed,
@@ -80,6 +84,7 @@ class CodingState:
     existing_codes: tuple[Code, ...] = ()
     existing_categories: tuple[Category, ...] = ()
     existing_segments: tuple[Segment, ...] = ()
+    existing_batches: tuple[AutoCodeBatch, ...] = ()
     source_length: int | None = None  # For text segment validation
     source_exists: bool = True
 
@@ -149,6 +154,19 @@ class SegmentNotFound:
     def __post_init__(self) -> None:
         object.__setattr__(
             self, "message", f"Segment with id {self.segment_id.value} not found"
+        )
+
+
+@dataclass(frozen=True)
+class BatchNotFound:
+    """Batch with given ID was not found."""
+
+    batch_id: BatchId
+    message: str = ""
+
+    def __post_init__(self) -> None:
+        object.__setattr__(
+            self, "message", f"Batch with id {self.batch_id.value} not found"
         )
 
 
@@ -630,4 +648,72 @@ def derive_update_segment_memo(
         segment_id=segment_id,
         old_memo=old_memo,
         new_memo=new_memo,
+    )
+
+
+# ============================================================
+# Batch Derivers (Auto-coding operations)
+# ============================================================
+
+
+def derive_create_batch(
+    code_id: CodeId,
+    pattern: str,
+    segment_ids: tuple[SegmentId, ...],
+    owner: str | None,
+    state: CodingState,
+) -> BatchCreated | Failure:
+    """
+    Derive a BatchCreated event or failure.
+
+    Args:
+        code_id: Code to apply in this batch
+        pattern: The search pattern used
+        segment_ids: IDs of segments created in this batch
+        owner: Owner identifier
+        state: Current coding state
+
+    Returns:
+        BatchCreated event or Failure with reason
+    """
+    # Verify code exists
+    code = next((c for c in state.existing_codes if c.id == code_id), None)
+    if code is None:
+        return Failure(CodeNotFound(code_id))
+
+    # Generate new batch ID
+    batch_id = BatchId.new()
+
+    return BatchCreated.create(
+        batch_id=batch_id,
+        code_id=code_id,
+        pattern=pattern,
+        segment_ids=segment_ids,
+        owner=owner,
+    )
+
+
+def derive_undo_batch(
+    batch_id: BatchId,
+    state: CodingState,
+) -> BatchUndone | Failure:
+    """
+    Derive a BatchUndone event or failure.
+
+    Args:
+        batch_id: ID of the batch to undo
+        state: Current coding state
+
+    Returns:
+        BatchUndone event or Failure with reason
+    """
+    # Find the batch
+    batch = next((b for b in state.existing_batches if b.id == batch_id), None)
+
+    if batch is None:
+        return Failure(BatchNotFound(batch_id))
+
+    return BatchUndone.create(
+        batch_id=batch_id,
+        segments_removed=len(batch.segment_ids),
     )
