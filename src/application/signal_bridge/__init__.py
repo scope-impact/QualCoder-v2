@@ -11,9 +11,10 @@ Usage:
         ActivityStatus,
         EventConverter,
     )
+    from PySide6.QtCore import Signal
 
     class CodingSignalBridge(BaseSignalBridge):
-        code_created = pyqtSignal(object)
+        code_created = Signal(object)
 
         def _get_context_name(self) -> str:
             return "coding"
@@ -45,6 +46,7 @@ from src.application.signal_bridge.thread_utils import (
     ensure_main_thread,
     get_current_thread_name,
     is_main_thread,
+    warn_if_not_main_thread,
 )
 
 __all__ = [
@@ -59,7 +61,8 @@ __all__ = [
     # Thread utilities
     "is_main_thread",
     "get_current_thread_name",
-    "ensure_main_thread",
+    "ensure_main_thread",  # deprecated alias for warn_if_not_main_thread
+    "warn_if_not_main_thread",
     "ThreadChecker",
     # Base class
     "BaseSignalBridge",

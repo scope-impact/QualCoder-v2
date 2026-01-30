@@ -139,6 +139,19 @@ class SameEntity:
         )
 
 
+@dataclass(frozen=True)
+class SegmentNotFound:
+    """Segment with given ID was not found."""
+
+    segment_id: SegmentId
+    message: str = ""
+
+    def __post_init__(self) -> None:
+        object.__setattr__(
+            self, "message", f"Segment with id {self.segment_id.value} not found"
+        )
+
+
 # ============================================================
 # Code Derivers
 # ============================================================
@@ -589,19 +602,6 @@ def derive_remove_segment(
     segment = next((s for s in state.existing_segments if s.id == segment_id), None)
 
     if segment is None:
-        # Segment not found - this is actually a no-op, return failure
-        @dataclass(frozen=True)
-        class SegmentNotFound:
-            segment_id: SegmentId
-            message: str = ""
-
-            def __post_init__(self) -> None:
-                object.__setattr__(
-                    self,
-                    "message",
-                    f"Segment with id {self.segment_id.value} not found",
-                )
-
         return Failure(SegmentNotFound(segment_id))
 
     return SegmentUncoded.create(
@@ -622,19 +622,6 @@ def derive_update_segment_memo(
     segment = next((s for s in state.existing_segments if s.id == segment_id), None)
 
     if segment is None:
-
-        @dataclass(frozen=True)
-        class SegmentNotFound:
-            segment_id: SegmentId
-            message: str = ""
-
-            def __post_init__(self) -> None:
-                object.__setattr__(
-                    self,
-                    "message",
-                    f"Segment with id {self.segment_id.value} not found",
-                )
-
         return Failure(SegmentNotFound(segment_id))
 
     old_memo = getattr(segment, "memo", None)

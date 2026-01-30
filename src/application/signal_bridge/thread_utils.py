@@ -67,50 +67,48 @@ def get_current_thread_name() -> str:
     return python_name
 
 
-def ensure_main_thread(func: Callable[..., Any]) -> Callable[..., Any]:
+def warn_if_not_main_thread(func: Callable[..., Any]) -> Callable[..., Any]:
     """
-    Decorator that ensures a function runs on the main thread.
+    Decorator that warns if a function is called from a non-main thread.
 
-    If called from a background thread, the function will be queued
-    for execution on the main thread.
+    This decorator does NOT dispatch to the main thread - it only emits
+    a warning. For actual thread-safe signal emission, use
+    BaseSignalBridge._emit_threadsafe().
 
-    Note: This decorator requires an active Qt event loop.
-    Without Qt, it will execute synchronously with a warning.
+    Use this decorator to flag functions that should ideally be called
+    from the main thread, helping identify threading issues during development.
 
     Args:
         func: The function to wrap
 
     Returns:
-        Wrapped function that ensures main thread execution
+        Wrapped function that warns on non-main-thread calls
     """
 
     def wrapper(*args: Any, **kwargs: Any) -> Any:
         if is_main_thread():
             return func(*args, **kwargs)
 
-        if HAS_QT and QCoreApplication.instance() is not None:
-            # Queue for main thread execution
-            # Note: For void functions, use invokeMethod
-            # This is a simplified version - full implementation in base.py
-            import warnings
+        import warnings
 
+        if HAS_QT and QCoreApplication.instance() is not None:
             warnings.warn(
                 f"Cross-thread call to {func.__name__} - "
                 "use BaseSignalBridge._emit_threadsafe for signals",
                 stacklevel=2,
             )
-            return func(*args, **kwargs)
         else:
-            # No Qt - execute directly with warning
-            import warnings
-
             warnings.warn(
                 f"No Qt event loop - executing {func.__name__} synchronously",
                 stacklevel=2,
             )
-            return func(*args, **kwargs)
+        return func(*args, **kwargs)
 
     return wrapper
+
+
+# Keep old name as alias for backwards compatibility
+ensure_main_thread = warn_if_not_main_thread
 
 
 class ThreadChecker:

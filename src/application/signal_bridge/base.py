@@ -17,6 +17,7 @@ Architecture:
 
 from __future__ import annotations
 
+import queue
 from abc import ABCMeta, abstractmethod
 from collections.abc import Callable
 from dataclasses import dataclass
@@ -150,6 +151,9 @@ class BaseSignalBridge(QObject, metaclass=QObjectABCMeta):
 
         # Subscription handles for cleanup
         self._subscriptions: list[tuple[str, Callable]] = []
+
+        # Thread-safe queue for cross-thread signal emissions
+        self._emission_queue: queue.Queue[tuple[Any, Any]] = queue.Queue()
 
         # Build signal registry from class attributes
         self._build_signal_registry()
@@ -334,36 +338,40 @@ class BaseSignalBridge(QObject, metaclass=QObjectABCMeta):
         Emit a signal in a thread-safe manner.
 
         If already on the main thread, emits directly.
-        Otherwise, queues the emission for the main thread.
+        Otherwise, queues the emission for the main thread using a thread-safe
+        queue to avoid race conditions with concurrent background threads.
 
         Args:
-            signal: The PyQt signal to emit
+            signal: The PySide6 signal to emit
             payload: The payload to emit
         """
         if is_main_thread():
             # Already on main thread - emit directly
             signal.emit(payload)
         elif HAS_QT:
-            # Queue for main thread via QueuedConnection
+            # Add to thread-safe queue and trigger main thread processing
+            self._emission_queue.put((signal, payload))
             QMetaObject.invokeMethod(
                 self,
                 "_do_emit",
                 Qt.ConnectionType.QueuedConnection,
-                payload,  # Will be passed to _do_emit
             )
-            # Store for the queued call
-            self._pending_emission = (signal, payload)
         else:
             # No Qt - emit directly (testing mode)
             signal.emit(payload)
 
     @Slot()
     def _do_emit(self) -> None:
-        """Slot for queued signal emission on main thread."""
-        if hasattr(self, "_pending_emission"):
-            signal, payload = self._pending_emission
-            signal.emit(payload)
-            del self._pending_emission
+        """Slot for queued signal emission on main thread.
+
+        Processes all pending emissions from the thread-safe queue.
+        """
+        while True:
+            try:
+                signal, payload = self._emission_queue.get_nowait()
+                signal.emit(payload)
+            except queue.Empty:
+                break
 
     def _create_activity_item(
         self, event: Any, payload: SignalPayload
