@@ -9,41 +9,11 @@ Tests the wiring between Presentation layer and Application layer:
 - Source document tracking
 """
 
-import pytest
-from PySide6.QtWidgets import QApplication
-
-from src.presentation.factory import CodingContext
 from src.presentation.organisms.text_editor_panel import TextEditorPanel
 from src.presentation.screens.text_coding import TextCodingScreen
 
 
-@pytest.fixture
-def qapp():
-    """Ensure QApplication exists."""
-    app = QApplication.instance()
-    if app is None:
-        app = QApplication([])
-    return app
-
-
-@pytest.fixture
-def colors():
-    """Get color palette."""
-    from design_system import get_colors
-
-    return get_colors()
-
-
-@pytest.fixture
-def coding_context():
-    """Create an in-memory coding context for testing."""
-    return CodingContext.create_in_memory()
-
-
-@pytest.fixture
-def viewmodel(coding_context):
-    """Create a viewmodel connected to the context."""
-    return coding_context.create_text_coding_viewmodel()
+# Note: qapp, colors, coding_context, viewmodel fixtures come from conftest.py
 
 
 # =============================================================================

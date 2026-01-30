@@ -1,5 +1,7 @@
 """
 Pytest fixtures for ViewModel tests.
+
+These fixtures are specific to the viewmodels subdirectory.
 """
 
 import sys

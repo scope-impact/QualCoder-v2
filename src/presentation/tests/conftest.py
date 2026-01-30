@@ -1,5 +1,8 @@
 """
-Pytest configuration and fixtures for UI tests
+Pytest configuration and fixtures for UI tests.
+
+This is the central location for all presentation test fixtures.
+DO NOT duplicate these fixtures in individual test files.
 """
 
 import sys
@@ -13,7 +16,7 @@ from PySide6.QtWidgets import QApplication, QLabel, QWidget
 
 @pytest.fixture(scope="session")
 def qapp():
-    """Create QApplication instance for the test session"""
+    """Create QApplication instance for the test session."""
     app = QApplication.instance()
     if app is None:
         app = QApplication(sys.argv)
@@ -22,18 +25,26 @@ def qapp():
 
 @pytest.fixture
 def colors():
-    """Get dark theme colors"""
+    """Get theme colors."""
     from design_system import get_colors
 
     return get_colors()
 
 
 @pytest.fixture
-def light_colors():
-    """Get light theme colors"""
-    from design_system import get_colors
+def coding_context():
+    """Create an in-memory CodingContext for testing."""
+    from src.presentation.factory import CodingContext
 
-    return get_colors()
+    ctx = CodingContext.create_in_memory()
+    yield ctx
+    ctx.close()
+
+
+@pytest.fixture
+def viewmodel(coding_context):
+    """Create a TextCodingViewModel connected to the test context."""
+    return coding_context.create_text_coding_viewmodel()
 
 
 # Screenshot directory
