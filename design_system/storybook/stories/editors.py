@@ -4,7 +4,7 @@ Editor component stories: codeeditor, richtext
 
 from typing import List, Tuple
 
-from ...qt_compat import QWidget
+from PySide6.QtWidgets import QWidget
 
 from ...tokens import ColorPalette
 from ...editors import CodeEditor, RichTextEditor, MemoEditor

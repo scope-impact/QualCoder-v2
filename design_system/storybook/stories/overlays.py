@@ -4,7 +4,8 @@ Overlays and Layout component stories: modals, toasts, contextmenu, panels, tool
 
 from typing import List, Tuple
 
-from ...qt_compat import QWidget, QFrame, QVBoxLayout, QLabel, Qt
+from PySide6.QtWidgets import QWidget, QFrame, QVBoxLayout, QLabel
+from PySide6.QtCore import Qt
 
 from ...tokens import SPACING, RADIUS, ColorPalette
 from ...components import Button

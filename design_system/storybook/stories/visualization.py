@@ -4,7 +4,8 @@ Visualization component stories: charts, graphs, word clouds, annotations
 
 from typing import List, Tuple
 
-from ...qt_compat import QWidget, QVBoxLayout, QHBoxLayout, QPixmap, QColor
+from PySide6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout
+from PySide6.QtGui import QPixmap, QColor
 
 from ...tokens import SPACING, ColorPalette
 from ...charts import ChartWidget, PieChart, ChartDataPoint, SparkLine

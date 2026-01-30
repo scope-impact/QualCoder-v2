@@ -538,7 +538,7 @@ class TestPickerScreenshots:
 
     def test_date_range_picker(self, qtbot, take_screenshot):
         """Screenshot date range picker"""
-        from design_system.calendar import DateRangePicker
+        from design_system.date_picker import DateRangePicker
 
         picker = DateRangePicker()
         picker.setFixedWidth(320)

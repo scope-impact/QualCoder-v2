@@ -222,7 +222,7 @@ from .upload import (
 )
 
 # Calendar Components
-from .calendar import (
+from .date_picker import (
     CalendarMini,
     CalendarDay,
     CalendarNavigation,

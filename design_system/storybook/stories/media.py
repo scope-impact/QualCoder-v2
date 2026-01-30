@@ -4,12 +4,12 @@ Media component stories: player, upload, calendar
 
 from typing import List, Tuple
 
-from ...qt_compat import QWidget
+from PySide6.QtWidgets import QWidget
 
 from ...tokens import ColorPalette
 from ...media import VideoContainer, Timeline, PlayerControls, ThumbnailStrip
 from ...upload import DropZone, UploadProgress
-from ...calendar import CalendarMini, DateRangePicker, QuickDateSelect
+from ...date_picker import CalendarMini, DateRangePicker, QuickDateSelect
 from ..page import StoryPage
 
 

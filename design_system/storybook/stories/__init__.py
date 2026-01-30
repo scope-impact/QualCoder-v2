@@ -4,7 +4,7 @@ Story registry - collects all stories from category modules
 
 from typing import List, Tuple, Callable
 
-from ...qt_compat import QWidget
+from PySide6.QtWidgets import QWidget
 
 from ...tokens import ColorPalette
 
