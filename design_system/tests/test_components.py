@@ -3,8 +3,8 @@ Tests for core components: Button, Input, Card, Badge, Alert, etc.
 """
 
 import pytest
-from PyQt6.QtCore import Qt
-from PyQt6.QtWidgets import QWidget
+from PySide6.QtCore import Qt
+from PySide6.QtWidgets import QWidget
 
 from design_system.components import (
     Button, Input, Label, Card, CardHeader, Badge,

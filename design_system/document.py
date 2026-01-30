@@ -2,17 +2,18 @@
 Document/Text components - Generic UI primitives for text display.
 
 This module provides reusable text display components that can be used
-in any PyQt6 application. For qualitative coding-specific components
+in any PySide6 application. For qualitative coding-specific components
 (highlighting, code segments, annotations), see:
     src/presentation/organisms/text_highlighter.py
 """
 
 from typing import List, Optional, Tuple
-from PyQt6.QtWidgets import (
+
+from .qt_compat import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
-    QFrame, QScrollArea, QPlainTextEdit
+    QFrame, QScrollArea, QPlainTextEdit,
+    Qt, Signal,
 )
-from PyQt6.QtCore import Qt, pyqtSignal
 
 from .tokens import SPACING, RADIUS, TYPOGRAPHY, ColorPalette, get_theme
 
@@ -108,7 +109,7 @@ class TextPanel(QFrame):
         ])
     """
 
-    text_selected = pyqtSignal(str, int, int)  # text, start, end
+    text_selected = Signal(str, int, int)  # text, start, end
 
     def __init__(
         self,
@@ -377,7 +378,7 @@ class SelectionPopup(QFrame):
         ])
     """
 
-    action_clicked = pyqtSignal(str)  # action_id
+    action_clicked = Signal(str)  # action_id
 
     # Default actions - generic text operations
     DEFAULT_ACTIONS = [
@@ -491,7 +492,7 @@ class TranscriptPanel(QFrame):
         panel.timestamp_clicked.connect(self.seek_to)
     """
 
-    timestamp_clicked = pyqtSignal(float)  # seconds
+    timestamp_clicked = Signal(float)  # seconds
 
     def __init__(
         self,
@@ -568,7 +569,7 @@ class TranscriptPanel(QFrame):
 class TranscriptSegment(QFrame):
     """Individual transcript segment with timestamp"""
 
-    timestamp_clicked = pyqtSignal(float)
+    timestamp_clicked = Signal(float)
 
     def __init__(
         self,

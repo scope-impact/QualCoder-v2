@@ -12,8 +12,7 @@ The main toolbar for the text coding screen containing:
 """
 
 from typing import List
-from PyQt6.QtWidgets import QFrame, QHBoxLayout, QLabel
-from PyQt6.QtCore import Qt, pyqtSignal
+from design_system.qt_compat import QFrame, QHBoxLayout, QLabel, Qt, Signal
 
 from design_system import (
     ColorPalette, get_theme, SPACING, RADIUS, TYPOGRAPHY,
@@ -35,10 +34,10 @@ class CodingToolbar(QFrame):
         search_changed(str): Emitted when search text changes
     """
 
-    media_type_changed = pyqtSignal(str)
-    coder_changed = pyqtSignal(str)
-    action_triggered = pyqtSignal(str)
-    search_changed = pyqtSignal(str)
+    media_type_changed = Signal(str)
+    coder_changed = Signal(str)
+    action_triggered = Signal(str)
+    search_changed = Signal(str)
 
     def __init__(
         self,

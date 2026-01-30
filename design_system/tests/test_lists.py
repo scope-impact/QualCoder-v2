@@ -3,7 +3,7 @@ Tests for list components: FileList, CaseList, QueueList, etc.
 """
 
 import pytest
-from PyQt6.QtCore import Qt
+from PySide6.QtCore import Qt
 
 from design_system.lists import (
     FileList, FileListItem, CaseList, CaseListItem,

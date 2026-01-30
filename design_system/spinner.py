@@ -3,9 +3,11 @@ Spinner/Loading components
 Material Design styled loading indicators
 """
 
-from PyQt6.QtWidgets import QWidget, QHBoxLayout, QLabel, QVBoxLayout
-from PyQt6.QtCore import Qt, QTimer, QPropertyAnimation, QEasingCurve
-from PyQt6.QtGui import QPainter, QColor, QPen, QConicalGradient
+from .qt_compat import (
+    QWidget, QHBoxLayout, QLabel, QVBoxLayout,
+    Qt, QTimer, QPropertyAnimation, QEasingCurve,
+    QPainter, QColor, QPen, QConicalGradient,
+)
 
 from .tokens import SPACING, TYPOGRAPHY, ColorPalette, get_theme
 

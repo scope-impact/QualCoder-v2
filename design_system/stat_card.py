@@ -3,12 +3,11 @@ Statistics Card component
 Material Design styled statistics display
 """
 
-from PyQt6.QtWidgets import (
+from .qt_compat import (
     QFrame, QVBoxLayout, QHBoxLayout, QLabel,
-    QGraphicsDropShadowEffect
+    QGraphicsDropShadowEffect,
+    Qt, QColor,
 )
-from PyQt6.QtCore import Qt
-from PyQt6.QtGui import QColor
 
 from .tokens import SPACING, RADIUS, TYPOGRAPHY, ColorPalette, get_theme
 from .icons import Icon

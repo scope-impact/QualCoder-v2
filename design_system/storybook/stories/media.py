@@ -3,7 +3,8 @@ Media component stories: player, upload, calendar
 """
 
 from typing import List, Tuple
-from PyQt6.QtWidgets import QWidget
+
+from ...qt_compat import QWidget
 
 from ...tokens import ColorPalette
 from ...media import VideoContainer, Timeline, PlayerControls, ThumbnailStrip

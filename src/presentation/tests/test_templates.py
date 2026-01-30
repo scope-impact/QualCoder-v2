@@ -10,8 +10,7 @@ Tests cover:
 """
 
 import pytest
-from PyQt6.QtWidgets import QWidget, QLabel, QPushButton, QVBoxLayout, QHBoxLayout
-from PyQt6.QtCore import Qt
+from design_system.qt_compat import QWidget, QLabel, QPushButton, QVBoxLayout, QHBoxLayout, Qt
 
 
 class TestAppShell:
@@ -19,7 +18,7 @@ class TestAppShell:
 
     def test_app_shell_creation(self, qapp, colors):
         """AppShell should create without errors"""
-        from ui.templates import AppShell
+        from src.presentation.templates import AppShell
 
         shell = AppShell(colors=colors)
         assert shell is not None
@@ -27,7 +26,7 @@ class TestAppShell:
 
     def test_app_shell_set_project(self, qapp, colors):
         """AppShell should update window title with project name"""
-        from ui.templates import AppShell
+        from src.presentation.templates import AppShell
 
         shell = AppShell(colors=colors)
         shell.set_project("my_research.qda")
@@ -36,7 +35,7 @@ class TestAppShell:
 
     def test_app_shell_has_all_components(self, qapp, colors):
         """AppShell should have all required components"""
-        from ui.templates import AppShell
+        from src.presentation.templates import AppShell
 
         shell = AppShell(colors=colors)
 
@@ -49,7 +48,7 @@ class TestAppShell:
 
     def test_app_shell_menu_signal(self, qapp, colors):
         """AppShell should emit menu_clicked signal"""
-        from ui.templates import AppShell
+        from src.presentation.templates import AppShell
 
         shell = AppShell(colors=colors)
 
@@ -64,7 +63,7 @@ class TestAppShell:
 
     def test_app_shell_tab_signal(self, qapp, colors):
         """AppShell should emit tab_clicked signal"""
-        from ui.templates import AppShell
+        from src.presentation.templates import AppShell
 
         shell = AppShell(colors=colors)
 
@@ -77,7 +76,7 @@ class TestAppShell:
 
     def test_app_shell_set_active_menu(self, qapp, colors):
         """AppShell should track active menu item"""
-        from ui.templates import AppShell
+        from src.presentation.templates import AppShell
 
         shell = AppShell(colors=colors)
         shell.set_active_menu("coding")
@@ -86,7 +85,7 @@ class TestAppShell:
 
     def test_app_shell_set_active_tab(self, qapp, colors):
         """AppShell should track active tab"""
-        from ui.templates import AppShell
+        from src.presentation.templates import AppShell
 
         shell = AppShell(colors=colors)
         shell.set_active_tab("reports")
@@ -95,7 +94,7 @@ class TestAppShell:
 
     def test_app_shell_set_toolbar_content(self, qapp, colors, placeholder_widget):
         """AppShell should accept toolbar content"""
-        from ui.templates import AppShell
+        from src.presentation.templates import AppShell
 
         shell = AppShell(colors=colors)
         toolbar = placeholder_widget("Toolbar Content")
@@ -106,7 +105,7 @@ class TestAppShell:
 
     def test_app_shell_set_content(self, qapp, colors, placeholder_widget):
         """AppShell should accept main content"""
-        from ui.templates import AppShell
+        from src.presentation.templates import AppShell
 
         shell = AppShell(colors=colors)
         content = placeholder_widget("Main Content")
@@ -117,7 +116,7 @@ class TestAppShell:
 
     def test_app_shell_set_status_message(self, qapp, colors):
         """AppShell should update status bar message"""
-        from ui.templates import AppShell
+        from src.presentation.templates import AppShell
 
         shell = AppShell(colors=colors)
         shell.set_status_message("Processing files...")
@@ -126,7 +125,7 @@ class TestAppShell:
 
     def test_app_shell_set_screen(self, qapp, colors):
         """AppShell should accept screen objects implementing ScreenProtocol"""
-        from ui.templates import AppShell
+        from src.presentation.templates import AppShell
 
         shell = AppShell(colors=colors)
 
@@ -157,14 +156,14 @@ class TestSidebarLayout:
 
     def test_sidebar_layout_creation(self, qapp, colors):
         """SidebarLayout should create without errors"""
-        from ui.templates import SidebarLayout
+        from src.presentation.templates import SidebarLayout
 
         layout = SidebarLayout(colors=colors)
         assert layout is not None
 
     def test_sidebar_layout_custom_width(self, qapp, colors):
         """SidebarLayout should accept custom sidebar width"""
-        from ui.templates import SidebarLayout
+        from src.presentation.templates import SidebarLayout
 
         layout = SidebarLayout(
             sidebar_width=300,
@@ -178,7 +177,7 @@ class TestSidebarLayout:
 
     def test_sidebar_layout_set_sidebar(self, qapp, colors, placeholder_widget):
         """SidebarLayout should accept sidebar content"""
-        from ui.templates import SidebarLayout
+        from src.presentation.templates import SidebarLayout
 
         layout = SidebarLayout(colors=colors)
         sidebar_content = placeholder_widget("Sidebar")
@@ -189,7 +188,7 @@ class TestSidebarLayout:
 
     def test_sidebar_layout_set_content(self, qapp, colors, placeholder_widget):
         """SidebarLayout should accept main content"""
-        from ui.templates import SidebarLayout
+        from src.presentation.templates import SidebarLayout
 
         layout = SidebarLayout(colors=colors)
         main_content = placeholder_widget("Main Content")
@@ -200,7 +199,7 @@ class TestSidebarLayout:
 
     def test_sidebar_layout_replace_content(self, qapp, colors, placeholder_widget):
         """SidebarLayout should replace existing content"""
-        from ui.templates import SidebarLayout
+        from src.presentation.templates import SidebarLayout
 
         layout = SidebarLayout(colors=colors)
 
@@ -214,7 +213,7 @@ class TestSidebarLayout:
 
     def test_sidebar_layout_splitter_access(self, qapp, colors):
         """SidebarLayout should provide splitter access"""
-        from ui.templates import SidebarLayout
+        from src.presentation.templates import SidebarLayout
 
         layout = SidebarLayout(colors=colors)
 
@@ -228,14 +227,14 @@ class TestThreePanelLayout:
 
     def test_three_panel_creation(self, qapp, colors):
         """ThreePanelLayout should create without errors"""
-        from ui.templates import ThreePanelLayout
+        from src.presentation.templates import ThreePanelLayout
 
         layout = ThreePanelLayout(colors=colors)
         assert layout is not None
 
     def test_three_panel_custom_widths(self, qapp, colors):
         """ThreePanelLayout should accept custom panel widths"""
-        from ui.templates import ThreePanelLayout
+        from src.presentation.templates import ThreePanelLayout
 
         layout = ThreePanelLayout(
             left_width=300,
@@ -254,7 +253,7 @@ class TestThreePanelLayout:
 
     def test_three_panel_set_left(self, qapp, colors, placeholder_widget):
         """ThreePanelLayout should accept left panel content"""
-        from ui.templates import ThreePanelLayout
+        from src.presentation.templates import ThreePanelLayout
 
         layout = ThreePanelLayout(colors=colors)
         layout.set_left(placeholder_widget("Left"))
@@ -263,7 +262,7 @@ class TestThreePanelLayout:
 
     def test_three_panel_set_center(self, qapp, colors, placeholder_widget):
         """ThreePanelLayout should accept center panel content"""
-        from ui.templates import ThreePanelLayout
+        from src.presentation.templates import ThreePanelLayout
 
         layout = ThreePanelLayout(colors=colors)
         layout.set_center(placeholder_widget("Center"))
@@ -272,7 +271,7 @@ class TestThreePanelLayout:
 
     def test_three_panel_set_right(self, qapp, colors, placeholder_widget):
         """ThreePanelLayout should accept right panel content"""
-        from ui.templates import ThreePanelLayout
+        from src.presentation.templates import ThreePanelLayout
 
         layout = ThreePanelLayout(colors=colors)
         layout.set_right(placeholder_widget("Right"))
@@ -281,7 +280,7 @@ class TestThreePanelLayout:
 
     def test_three_panel_set_all(self, qapp, colors, placeholder_widget):
         """ThreePanelLayout should accept all three panels"""
-        from ui.templates import ThreePanelLayout
+        from src.presentation.templates import ThreePanelLayout
 
         layout = ThreePanelLayout(colors=colors)
         layout.set_left(placeholder_widget("Left"))
@@ -294,7 +293,7 @@ class TestThreePanelLayout:
 
     def test_three_panel_hide_show_panels(self, qapp, colors, placeholder_widget):
         """ThreePanelLayout should hide/show side panels"""
-        from ui.templates import ThreePanelLayout
+        from src.presentation.templates import ThreePanelLayout
 
         layout = ThreePanelLayout(colors=colors)
         layout.set_left(placeholder_widget("Left"))
@@ -317,7 +316,7 @@ class TestThreePanelLayout:
 
     def test_three_panel_accessors(self, qapp, colors):
         """ThreePanelLayout should provide panel accessors"""
-        from ui.templates import ThreePanelLayout
+        from src.presentation.templates import ThreePanelLayout
 
         layout = ThreePanelLayout(colors=colors)
 
@@ -332,14 +331,14 @@ class TestSinglePanelLayout:
 
     def test_single_panel_creation(self, qapp, colors):
         """SinglePanelLayout should create without errors"""
-        from ui.templates import SinglePanelLayout
+        from src.presentation.templates import SinglePanelLayout
 
         layout = SinglePanelLayout(colors=colors)
         assert layout is not None
 
     def test_single_panel_with_padding(self, qapp, colors):
         """SinglePanelLayout should apply padding"""
-        from ui.templates import SinglePanelLayout
+        from src.presentation.templates import SinglePanelLayout
 
         layout = SinglePanelLayout(padding=24, colors=colors)
 
@@ -351,7 +350,7 @@ class TestSinglePanelLayout:
 
     def test_single_panel_scrollable(self, qapp, colors):
         """SinglePanelLayout should create scrollable container"""
-        from ui.templates import SinglePanelLayout
+        from src.presentation.templates import SinglePanelLayout
 
         layout = SinglePanelLayout(scrollable=True, colors=colors)
 
@@ -359,7 +358,7 @@ class TestSinglePanelLayout:
 
     def test_single_panel_max_width(self, qapp, colors, placeholder_widget):
         """SinglePanelLayout should respect max width"""
-        from ui.templates import SinglePanelLayout
+        from src.presentation.templates import SinglePanelLayout
 
         layout = SinglePanelLayout(max_width=800, colors=colors)
         content = placeholder_widget("Content")
@@ -369,7 +368,7 @@ class TestSinglePanelLayout:
 
     def test_single_panel_set_content(self, qapp, colors, placeholder_widget):
         """SinglePanelLayout should accept content"""
-        from ui.templates import SinglePanelLayout
+        from src.presentation.templates import SinglePanelLayout
 
         layout = SinglePanelLayout(colors=colors)
         layout.set_content(placeholder_widget("Content"))
@@ -378,7 +377,7 @@ class TestSinglePanelLayout:
 
     def test_single_panel_replace_content(self, qapp, colors, placeholder_widget):
         """SinglePanelLayout should replace existing content"""
-        from ui.templates import SinglePanelLayout
+        from src.presentation.templates import SinglePanelLayout
 
         layout = SinglePanelLayout(colors=colors)
 
@@ -393,7 +392,7 @@ class TestToolbarSlot:
 
     def test_toolbar_slot_creation(self, qapp, colors):
         """ToolbarSlot should create without errors"""
-        from ui.templates.app_shell import ToolbarSlot
+        from src.presentation.templates.app_shell import ToolbarSlot
 
         slot = ToolbarSlot(colors=colors)
         assert slot is not None
@@ -401,7 +400,7 @@ class TestToolbarSlot:
 
     def test_toolbar_slot_set_content(self, qapp, colors, placeholder_widget):
         """ToolbarSlot should accept content"""
-        from ui.templates.app_shell import ToolbarSlot
+        from src.presentation.templates.app_shell import ToolbarSlot
 
         slot = ToolbarSlot(colors=colors)
         content = placeholder_widget("Toolbar")
@@ -412,7 +411,7 @@ class TestToolbarSlot:
 
     def test_toolbar_slot_clear(self, qapp, colors, placeholder_widget):
         """ToolbarSlot should clear content"""
-        from ui.templates.app_shell import ToolbarSlot
+        from src.presentation.templates.app_shell import ToolbarSlot
 
         slot = ToolbarSlot(colors=colors)
         slot.set_content(placeholder_widget("Toolbar"))
@@ -422,7 +421,7 @@ class TestToolbarSlot:
 
     def test_toolbar_slot_replace_content(self, qapp, colors, placeholder_widget):
         """ToolbarSlot should replace existing content"""
-        from ui.templates.app_shell import ToolbarSlot
+        from src.presentation.templates.app_shell import ToolbarSlot
 
         slot = ToolbarSlot(colors=colors)
         slot.set_content(placeholder_widget("First"))
@@ -436,14 +435,14 @@ class TestContentSlot:
 
     def test_content_slot_creation(self, qapp, colors):
         """ContentSlot should create without errors"""
-        from ui.templates.app_shell import ContentSlot
+        from src.presentation.templates.app_shell import ContentSlot
 
         slot = ContentSlot(colors=colors)
         assert slot is not None
 
     def test_content_slot_set_content(self, qapp, colors, placeholder_widget):
         """ContentSlot should accept content"""
-        from ui.templates.app_shell import ContentSlot
+        from src.presentation.templates.app_shell import ContentSlot
 
         slot = ContentSlot(colors=colors)
         content = placeholder_widget("Content")
@@ -454,7 +453,7 @@ class TestContentSlot:
 
     def test_content_slot_clear(self, qapp, colors, placeholder_widget):
         """ContentSlot should clear content"""
-        from ui.templates.app_shell import ContentSlot
+        from src.presentation.templates.app_shell import ContentSlot
 
         slot = ContentSlot(colors=colors)
         slot.set_content(placeholder_widget("Content"))
@@ -468,7 +467,7 @@ class TestAppMenuBar:
 
     def test_menu_bar_has_all_items(self, qapp, colors):
         """AppMenuBar should have all QualCoder menu items"""
-        from ui.templates.app_shell import AppMenuBar, MENU_ITEMS
+        from src.presentation.templates.app_shell import AppMenuBar, MENU_ITEMS
 
         menu_bar = AppMenuBar(colors=colors)
 
@@ -477,7 +476,7 @@ class TestAppMenuBar:
 
     def test_menu_bar_signal_emission(self, qapp, colors):
         """AppMenuBar should emit item_clicked signal"""
-        from ui.templates.app_shell import AppMenuBar
+        from src.presentation.templates.app_shell import AppMenuBar
 
         menu_bar = AppMenuBar(colors=colors)
 
@@ -490,7 +489,7 @@ class TestAppMenuBar:
 
     def test_menu_bar_active_state(self, qapp, colors):
         """AppMenuBar should track active item"""
-        from ui.templates.app_shell import AppMenuBar
+        from src.presentation.templates.app_shell import AppMenuBar
 
         menu_bar = AppMenuBar(colors=colors)
         menu_bar.set_active("reports")
@@ -503,7 +502,7 @@ class TestAppTabBar:
 
     def test_tab_bar_has_all_tabs(self, qapp, colors):
         """AppTabBar should have all QualCoder tabs"""
-        from ui.templates.app_shell import AppTabBar, TAB_ITEMS
+        from src.presentation.templates.app_shell import AppTabBar, TAB_ITEMS
 
         tab_bar = AppTabBar(colors=colors)
 
@@ -512,7 +511,7 @@ class TestAppTabBar:
 
     def test_tab_bar_signal_emission(self, qapp, colors):
         """AppTabBar should emit tab_clicked signal"""
-        from ui.templates.app_shell import AppTabBar
+        from src.presentation.templates.app_shell import AppTabBar
 
         tab_bar = AppTabBar(colors=colors)
 
@@ -525,7 +524,7 @@ class TestAppTabBar:
 
     def test_tab_bar_active_state(self, qapp, colors):
         """AppTabBar should track active tab"""
-        from ui.templates.app_shell import AppTabBar
+        from src.presentation.templates.app_shell import AppTabBar
 
         tab_bar = AppTabBar(colors=colors)
         tab_bar.set_active("action_log")
@@ -538,14 +537,14 @@ class TestAppStatusBar:
 
     def test_status_bar_creation(self, qapp, colors):
         """AppStatusBar should create without errors"""
-        from ui.templates.app_shell import AppStatusBar
+        from src.presentation.templates.app_shell import AppStatusBar
 
         status_bar = AppStatusBar(colors=colors)
         assert status_bar is not None
 
     def test_status_bar_set_message(self, qapp, colors):
         """AppStatusBar should update message"""
-        from ui.templates.app_shell import AppStatusBar
+        from src.presentation.templates.app_shell import AppStatusBar
 
         status_bar = AppStatusBar(colors=colors)
         status_bar.set_message("Loading...")
@@ -554,7 +553,7 @@ class TestAppStatusBar:
 
     def test_status_bar_add_stat(self, qapp, colors):
         """AppStatusBar should add stats"""
-        from ui.templates.app_shell import AppStatusBar
+        from src.presentation.templates.app_shell import AppStatusBar
 
         status_bar = AppStatusBar(colors=colors)
         status_bar.add_stat("custom", "Custom Stat")
@@ -563,7 +562,7 @@ class TestAppStatusBar:
 
     def test_status_bar_set_stat(self, qapp, colors):
         """AppStatusBar should update stats"""
-        from ui.templates.app_shell import AppStatusBar
+        from src.presentation.templates.app_shell import AppStatusBar
 
         status_bar = AppStatusBar(colors=colors)
         status_bar.set_stat("files", "42 files")
@@ -576,7 +575,7 @@ class TestScreenIntegration:
 
     def test_full_screen_integration(self, qapp, colors, placeholder_widget):
         """Full integration test with AppShell and layouts"""
-        from ui.templates import AppShell, ThreePanelLayout
+        from src.presentation.templates import AppShell, ThreePanelLayout
 
         # Create shell
         shell = AppShell(colors=colors)
@@ -615,7 +614,7 @@ class TestScreenIntegration:
 
     def test_screen_navigation(self, qapp, colors, placeholder_widget):
         """Test navigating between screens"""
-        from ui.templates import AppShell, SidebarLayout, SinglePanelLayout
+        from src.presentation.templates import AppShell, SidebarLayout, SinglePanelLayout
 
         shell = AppShell(colors=colors)
 

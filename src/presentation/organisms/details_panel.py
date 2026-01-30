@@ -9,11 +9,10 @@ A panel showing contextual details for the coding interface:
 """
 
 from typing import List, Tuple
-from PyQt6.QtWidgets import (
+from design_system.qt_compat import (
     QFrame, QVBoxLayout, QHBoxLayout, QLabel,
-    QWidget, QScrollArea,
+    QWidget, QScrollArea, Qt, Signal,
 )
-from PyQt6.QtCore import Qt, pyqtSignal
 
 from design_system import (
     ColorPalette, get_theme, SPACING, RADIUS, TYPOGRAPHY,
@@ -30,8 +29,8 @@ class DetailsPanel(QFrame):
         ai_suggest_clicked: Emitted when suggest codes button is clicked
     """
 
-    ai_chat_clicked = pyqtSignal()
-    ai_suggest_clicked = pyqtSignal()
+    ai_chat_clicked = Signal()
+    ai_suggest_clicked = Signal()
 
     def __init__(self, colors: ColorPalette = None, parent=None):
         """

@@ -12,13 +12,10 @@ For generic text display, use design_system.TextPanel instead.
 
 from dataclasses import dataclass, field
 from typing import List, Optional, Tuple, Dict, Any
-from PyQt6.QtWidgets import (
+from design_system.qt_compat import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
-    QFrame, QTextEdit
-)
-from PyQt6.QtCore import Qt, pyqtSignal
-from PyQt6.QtGui import (
-    QTextCursor, QTextCharFormat, QColor, QFont, QBrush
+    QFrame, QTextEdit, Qt, Signal,
+    QTextCursor, QTextCharFormat, QColor, QFont, QBrush,
 )
 
 from design_system import (
@@ -135,9 +132,9 @@ class TextHighlighter(QFrame):
     """
 
     # Signals
-    text_selected = pyqtSignal(str, int, int)  # text, start, end
-    segment_clicked = pyqtSignal(str)  # segment_id
-    selection_action = pyqtSignal(str, int, int)  # action_id, start, end
+    text_selected = Signal(str, int, int)  # text, start, end
+    segment_clicked = Signal(str)  # segment_id
+    selection_action = Signal(str, int, int)  # action_id, start, end
 
     def __init__(
         self,
@@ -706,7 +703,7 @@ class CodedTextHighlight(QFrame):
         )
     """
 
-    clicked = pyqtSignal(str)  # segment_id
+    clicked = Signal(str)  # segment_id
 
     def __init__(
         self,
@@ -873,7 +870,7 @@ class AnnotationIndicator(QFrame):
         )
     """
 
-    clicked = pyqtSignal()
+    clicked = Signal()
 
     def __init__(
         self,

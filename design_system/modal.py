@@ -3,12 +3,11 @@ Modal/Dialog components
 Material Design styled modal dialogs
 """
 
-from PyQt6.QtWidgets import (
+from .qt_compat import (
     QDialog, QWidget, QVBoxLayout, QHBoxLayout, QLabel,
-    QPushButton, QFrame, QGraphicsDropShadowEffect
+    QPushButton, QFrame, QGraphicsDropShadowEffect,
+    Qt, Signal, QColor,
 )
-from PyQt6.QtCore import Qt, pyqtSignal
-from PyQt6.QtGui import QColor
 
 from .tokens import SPACING, RADIUS, TYPOGRAPHY, ColorPalette, get_theme
 
@@ -116,7 +115,7 @@ class Modal(QDialog):
 class ModalHeader(QFrame):
     """Modal header with title and close button"""
 
-    close_clicked = pyqtSignal()
+    close_clicked = Signal()
 
     def __init__(self, title: str = "", colors: ColorPalette = None, parent=None):
         super().__init__(parent)

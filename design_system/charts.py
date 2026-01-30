@@ -5,10 +5,15 @@ Material Design styled charts with theme support
 
 from typing import List, Dict, Any, Optional, Tuple
 from dataclasses import dataclass
+import os
 
-from PyQt6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QLabel, QFrame
-from PyQt6.QtCore import Qt, pyqtSignal
-from PyQt6.QtGui import QColor, QPainter, QPen, QBrush, QPainterPath
+# Force pyqtgraph to use PySide6 before importing
+os.environ.setdefault('PYQTGRAPH_QT_LIB', 'PySide6')
+
+from .qt_compat import (
+    QWidget, QVBoxLayout, QHBoxLayout, QLabel, QFrame,
+    Qt, Signal, QColor, QPainter, QPen, QBrush, QPainterPath,
+)
 
 import pyqtgraph as pg
 import numpy as np
@@ -44,7 +49,7 @@ class ChartWidget(QFrame):
         ])
     """
 
-    point_clicked = pyqtSignal(int, object)  # index, data
+    point_clicked = Signal(int, object)  # index, data
 
     def __init__(
         self,
@@ -303,7 +308,7 @@ class PieChart(QFrame):
         ])
     """
 
-    slice_clicked = pyqtSignal(int, object)  # index, data
+    slice_clicked = Signal(int, object)  # index, data
 
     def __init__(
         self,

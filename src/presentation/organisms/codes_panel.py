@@ -6,8 +6,7 @@ Includes a header with add/search/expand actions, and navigation buttons.
 """
 
 from typing import List, Dict, Any
-from PyQt6.QtWidgets import QFrame, QVBoxLayout, QHBoxLayout, QLabel
-from PyQt6.QtCore import Qt, pyqtSignal
+from design_system.qt_compat import QFrame, QVBoxLayout, QHBoxLayout, QLabel, Qt, Signal
 
 from design_system import (
     ColorPalette, get_theme, SPACING, RADIUS, TYPOGRAPHY,
@@ -24,8 +23,8 @@ class CodesPanel(QFrame):
         navigation_clicked(str): Emitted when navigation button is clicked (prev, next, all)
     """
 
-    code_selected = pyqtSignal(dict)
-    navigation_clicked = pyqtSignal(str)
+    code_selected = Signal(dict)
+    navigation_clicked = Signal(str)
 
     def __init__(self, colors: ColorPalette = None, parent=None):
         """

@@ -4,13 +4,13 @@ Tables, cells, and data presentation widgets
 """
 
 from typing import List, Dict, Any, Optional
-from PyQt6.QtWidgets import (
+
+from .qt_compat import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
     QFrame, QTableWidget, QTableWidgetItem, QHeaderView,
-    QAbstractItemView, QCheckBox
+    QAbstractItemView, QCheckBox, QGridLayout,
+    Qt, Signal, QColor,
 )
-from PyQt6.QtCore import Qt, pyqtSignal
-from PyQt6.QtGui import QColor
 
 from .tokens import SPACING, RADIUS, TYPOGRAPHY, ColorPalette, get_theme
 
@@ -31,9 +31,9 @@ class DataTable(QFrame):
         table.row_clicked.connect(self.on_row_click)
     """
 
-    row_clicked = pyqtSignal(int, dict)
-    row_double_clicked = pyqtSignal(int, dict)
-    selection_changed = pyqtSignal(list)
+    row_clicked = Signal(int, dict)
+    row_double_clicked = Signal(int, dict)
+    selection_changed = Signal(list)
 
     def __init__(
         self,
@@ -175,7 +175,7 @@ class FileCell(QFrame):
         )
     """
 
-    clicked = pyqtSignal()
+    clicked = Signal()
 
     def __init__(
         self,
@@ -270,7 +270,7 @@ class EntityCell(QFrame):
         )
     """
 
-    clicked = pyqtSignal()
+    clicked = Signal()
 
     def __init__(
         self,
@@ -361,7 +361,7 @@ class InfoCard(QFrame):
         card = InfoCard(title="Details", collapsible=True)
     """
 
-    collapsed_changed = pyqtSignal(bool)
+    collapsed_changed = Signal(bool)
 
     def __init__(
         self,
@@ -495,8 +495,8 @@ class CodeDetailCard(QFrame):
         )
     """
 
-    edit_clicked = pyqtSignal()
-    delete_clicked = pyqtSignal()
+    edit_clicked = Signal()
+    delete_clicked = Signal()
 
     def __init__(
         self,
@@ -677,7 +677,7 @@ class EmptyState(QFrame):
         )
     """
 
-    action_clicked = pyqtSignal()
+    action_clicked = Signal()
 
     def __init__(
         self,
@@ -765,7 +765,7 @@ class HeatMapCell(QFrame):
         - "diverging": Blue (-) to white (0) to red (+)
     """
 
-    clicked = pyqtSignal(float)
+    clicked = Signal(float)
 
     def __init__(
         self,
@@ -928,7 +928,7 @@ class HeatMapGrid(QFrame):
         grid.cell_clicked.connect(on_cell_click)
     """
 
-    cell_clicked = pyqtSignal(int, int, float)  # row, col, value
+    cell_clicked = Signal(int, int, float)  # row, col, value
 
     def __init__(
         self,
@@ -965,8 +965,6 @@ class HeatMapGrid(QFrame):
                 border: 1px solid {self._colors.border};
             }}
         """)
-
-        from PyQt6.QtWidgets import QGridLayout
 
         layout = QGridLayout(self)
         layout.setContentsMargins(SPACING.md, SPACING.md, SPACING.md, SPACING.md)

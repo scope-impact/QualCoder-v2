@@ -3,7 +3,8 @@ Editor component stories: codeeditor, richtext
 """
 
 from typing import List, Tuple
-from PyQt6.QtWidgets import QWidget
+
+from ...qt_compat import QWidget
 
 from ...tokens import ColorPalette
 from ...editors import CodeEditor, RichTextEditor, MemoEditor

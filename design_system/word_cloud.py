@@ -6,9 +6,10 @@ Wraps wordcloud library with design system theming
 from typing import Dict, List, Optional, Callable
 from io import BytesIO
 
-from PyQt6.QtWidgets import QWidget, QVBoxLayout, QLabel, QFrame
-from PyQt6.QtCore import Qt, pyqtSignal, QSize
-from PyQt6.QtGui import QPixmap, QImage, QColor
+from .qt_compat import (
+    QWidget, QVBoxLayout, QLabel, QFrame,
+    Qt, Signal, QSize, QPixmap, QImage, QColor,
+)
 
 from wordcloud import WordCloud
 import numpy as np
@@ -42,8 +43,8 @@ class WordCloudWidget(QFrame):
         generated(): Emitted when word cloud is generated
     """
 
-    word_clicked = pyqtSignal(str)
-    generated = pyqtSignal()
+    word_clicked = Signal(str)
+    generated = Signal()
 
     def __init__(
         self,

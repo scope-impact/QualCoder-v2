@@ -5,11 +5,12 @@ File lists, case lists, and other list widgets
 
 from typing import List, Optional, Any
 from dataclasses import dataclass
-from PyQt6.QtWidgets import (
+
+from .qt_compat import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
-    QFrame, QScrollArea, QSizePolicy
+    QFrame, QScrollArea, QSizePolicy,
+    Qt, Signal,
 )
-from PyQt6.QtCore import Qt, pyqtSignal
 
 from .tokens import SPACING, RADIUS, TYPOGRAPHY, ColorPalette, get_theme
 
@@ -29,8 +30,8 @@ class ListItem:
 class BaseList(QScrollArea):
     """Base class for list components"""
 
-    item_clicked = pyqtSignal(str)  # item_id
-    item_double_clicked = pyqtSignal(str)
+    item_clicked = Signal(str)  # item_id
+    item_double_clicked = Signal(str)
 
     def __init__(self, colors: ColorPalette = None, parent=None):
         super().__init__(parent)
@@ -114,8 +115,8 @@ class FileList(BaseList):
 class FileListItem(QFrame):
     """Individual file list item"""
 
-    clicked = pyqtSignal()
-    double_clicked = pyqtSignal()
+    clicked = Signal()
+    double_clicked = Signal()
 
     def __init__(
         self,
@@ -240,7 +241,7 @@ class CaseList(BaseList):
 class CaseListItem(QFrame):
     """Individual case list item"""
 
-    clicked = pyqtSignal()
+    clicked = Signal()
 
     def __init__(
         self,
@@ -335,7 +336,7 @@ class AttributeList(BaseList):
 class AttributeListItem(QFrame):
     """Individual attribute list item"""
 
-    clicked = pyqtSignal()
+    clicked = Signal()
 
     def __init__(
         self,
@@ -459,7 +460,7 @@ class QueueList(BaseList):
 class QueueListItem(QFrame):
     """Individual queue list item"""
 
-    clicked = pyqtSignal()
+    clicked = Signal()
 
     def __init__(
         self,

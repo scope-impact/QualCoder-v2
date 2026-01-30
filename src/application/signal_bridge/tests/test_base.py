@@ -36,14 +36,15 @@ class TestConverter:
 class TestSignalBridge(BaseSignalBridge):
     """Concrete implementation for testing."""
 
-    # Mock signals (without PyQt6)
+    # Mock signals (without PySide6)
     test_event_signal: Any = None
     _emitted_payloads: list
 
     def __init__(self, event_bus: Any) -> None:
         self._emitted_payloads = []
-        # Create mock signal
+        # Create mock signals
         self.test_event_signal = MockSignal()
+        self.activity_logged = MockSignal()  # Override class-level Signal
         super().__init__(event_bus)
 
     def _get_context_name(self) -> str:
@@ -60,7 +61,7 @@ class TestSignalBridge(BaseSignalBridge):
         """Override to add our mock signal."""
         self._signals = {
             "test_event_signal": self.test_event_signal,
-            "activity_logged": MockSignal(),
+            "activity_logged": self.activity_logged,
         }
 
 

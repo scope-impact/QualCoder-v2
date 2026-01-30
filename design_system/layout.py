@@ -3,12 +3,11 @@ Layout components
 App structure and container components
 """
 
-from PyQt6.QtWidgets import (
+from .qt_compat import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
-    QFrame, QSplitter, QSizePolicy, QMainWindow
+    QFrame, QSplitter, QSizePolicy, QMainWindow,
+    Qt, Signal, QColor,
 )
-from PyQt6.QtCore import Qt, pyqtSignal
-from PyQt6.QtGui import QColor
 
 from .tokens import SPACING, RADIUS, TYPOGRAPHY, LAYOUT, ColorPalette, get_theme
 
@@ -99,9 +98,9 @@ class TitleBar(QFrame):
         title_bar.close_clicked.connect(self.close)
     """
 
-    close_clicked = pyqtSignal()
-    minimize_clicked = pyqtSignal()
-    maximize_clicked = pyqtSignal()
+    close_clicked = Signal()
+    minimize_clicked = Signal()
+    maximize_clicked = Signal()
 
     def __init__(
         self,
@@ -193,7 +192,7 @@ class MenuBar(QFrame):
         menu_bar.add_item("Edit", on_click=self.show_edit_menu)
     """
 
-    item_clicked = pyqtSignal(str)
+    item_clicked = Signal(str)
 
     def __init__(self, colors: ColorPalette = None, parent=None):
         super().__init__(parent)
@@ -250,7 +249,7 @@ class TabBar(QFrame):
         tab_bar.tab_changed.connect(self.on_tab_change)
     """
 
-    tab_changed = pyqtSignal(str)
+    tab_changed = Signal(str)
 
     def __init__(self, colors: ColorPalette = None, parent=None):
         super().__init__(parent)
@@ -660,7 +659,7 @@ class Sidebar(Panel):
         sidebar.add_item("Interview_01.txt", icon="📄")
     """
 
-    item_clicked = pyqtSignal(str)
+    item_clicked = Signal(str)
 
     def __init__(self, width: int = 280, colors: ColorPalette = None, parent=None):
         super().__init__(width=width, position="left", colors=colors, parent=parent)

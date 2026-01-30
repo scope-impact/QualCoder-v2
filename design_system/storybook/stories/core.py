@@ -3,7 +3,8 @@ Core component stories: buttons, inputs, cards, badges
 """
 
 from typing import List, Tuple, Callable
-from PyQt6.QtWidgets import QWidget, QHBoxLayout, QLabel
+
+from ...qt_compat import QWidget, QHBoxLayout, QLabel
 
 from ...tokens import SPACING, ColorPalette
 from ...components import Button, Input, Card, Badge, Chip, FileIcon

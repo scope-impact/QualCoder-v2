@@ -3,12 +3,11 @@ Reusable UI components with Material Design styling
 Based on mockups/css/material-theme.css
 """
 
-from PyQt6.QtWidgets import (
+from .qt_compat import (
     QPushButton, QLineEdit, QLabel, QFrame, QVBoxLayout,
-    QHBoxLayout, QWidget, QGraphicsDropShadowEffect
+    QHBoxLayout, QWidget, QGraphicsDropShadowEffect,
+    Qt, Signal, QColor,
 )
-from PyQt6.QtCore import Qt, pyqtSignal
-from PyQt6.QtGui import QColor
 
 from .tokens import SPACING, RADIUS, TYPOGRAPHY, ColorPalette, get_theme
 
@@ -188,7 +187,7 @@ class Card(QFrame):
         """)
 
         if shadow:
-            effect = QGraphicsDropShadowEffect()
+            self._shadow_effect = QGraphicsDropShadowEffect(self)
             # Material Design shadow levels
             shadows = {
                 1: (4, 2, 30),   # blur, offset, opacity
@@ -197,11 +196,11 @@ class Card(QFrame):
                 4: (24, 12, 40),
             }
             blur, offset, opacity = shadows.get(elevation, shadows[1])
-            effect.setBlurRadius(blur)
-            effect.setXOffset(0)
-            effect.setYOffset(offset)
-            effect.setColor(QColor(0, 0, 0, opacity))
-            self.setGraphicsEffect(effect)
+            self._shadow_effect.setBlurRadius(blur)
+            self._shadow_effect.setXOffset(0)
+            self._shadow_effect.setYOffset(offset)
+            self._shadow_effect.setColor(QColor(0, 0, 0, opacity))
+            self.setGraphicsEffect(self._shadow_effect)
 
         self._layout = QVBoxLayout(self)
         self._layout.setContentsMargins(SPACING.xl, SPACING.xl, SPACING.xl, SPACING.xl)
@@ -384,7 +383,7 @@ class Chip(QFrame):
     Chip/tag component with optional close button
     """
 
-    close_clicked = pyqtSignal()
+    close_clicked = Signal()
 
     def __init__(
         self,

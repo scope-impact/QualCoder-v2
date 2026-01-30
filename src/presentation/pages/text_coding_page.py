@@ -20,8 +20,7 @@ Layout:
 """
 
 from typing import List, Dict, Any, Optional
-from PyQt6.QtWidgets import QWidget, QVBoxLayout, QFrame
-from PyQt6.QtCore import pyqtSignal
+from design_system.qt_compat import QWidget, QVBoxLayout, QFrame, Signal
 
 from design_system import ColorPalette, get_theme
 
@@ -49,10 +48,10 @@ class TextCodingPage(QWidget):
         action_triggered(str): A toolbar action was triggered
     """
 
-    file_selected = pyqtSignal(dict)
-    code_selected = pyqtSignal(dict)
-    text_selected = pyqtSignal(str, int, int)
-    action_triggered = pyqtSignal(str)
+    file_selected = Signal(dict)
+    code_selected = Signal(dict)
+    text_selected = Signal(str, int, int)
+    action_triggered = Signal(str)
 
     def __init__(
         self,
@@ -264,7 +263,7 @@ class TextCodingPage(QWidget):
 def main():
     """Run the text coding page demo."""
     import sys
-    from PyQt6.QtWidgets import QApplication, QMainWindow
+    from design_system.qt_compat import QApplication, QMainWindow
 
     app = QApplication(sys.argv)
 

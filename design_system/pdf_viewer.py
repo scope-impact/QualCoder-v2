@@ -7,16 +7,14 @@ from typing import List, Dict, Any, Optional, Tuple, Callable
 from dataclasses import dataclass, field
 from pathlib import Path
 
-from PyQt6.QtWidgets import (
+from .qt_compat import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QFrame,
     QGraphicsView, QGraphicsScene, QGraphicsPixmapItem,
     QGraphicsRectItem, QScrollArea, QPushButton, QSpinBox,
-    QGraphicsTextItem, QSizePolicy
-)
-from PyQt6.QtCore import Qt, pyqtSignal, QPointF, QRectF, QSize
-from PyQt6.QtGui import (
+    QGraphicsTextItem, QSizePolicy,
+    Qt, Signal, QPointF, QRectF, QSize,
     QColor, QPen, QBrush, QPixmap, QImage, QPainter,
-    QWheelEvent, QMouseEvent, QFont, QCursor
+    QFont, QWheelEvent, QMouseEvent, QCursor,
 )
 
 from .tokens import SPACING, RADIUS, TYPOGRAPHY, ColorPalette, get_theme
@@ -71,10 +69,10 @@ class PDFPageViewer(QFrame):
         zoom_changed(zoom): Emitted when zoom level changes
     """
 
-    page_changed = pyqtSignal(int)
-    text_selected = pyqtSignal(object)  # PDFSelection
-    document_loaded = pyqtSignal(int)  # page_count
-    zoom_changed = pyqtSignal(float)
+    page_changed = Signal(int)
+    text_selected = Signal(object)  # PDFSelection
+    document_loaded = Signal(int)  # page_count
+    zoom_changed = Signal(float)
 
     def __init__(
         self,
@@ -570,7 +568,7 @@ class PDFPageViewer(QFrame):
 class PDFGraphicsView(QGraphicsView):
     """Graphics view for rendering PDF pages with selection support"""
 
-    selection_made = pyqtSignal(QRectF)
+    selection_made = Signal(QRectF)
 
     def __init__(self, colors: ColorPalette = None, parent=None):
         super().__init__(parent)
@@ -699,7 +697,7 @@ class PDFGraphicsView(QGraphicsView):
 class PDFThumbnail(QFrame):
     """Thumbnail widget for PDF page"""
 
-    clicked = pyqtSignal()
+    clicked = Signal()
 
     def __init__(
         self,

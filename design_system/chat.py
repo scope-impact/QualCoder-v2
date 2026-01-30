@@ -4,11 +4,12 @@ Message bubbles, typing indicators, and AI interface widgets
 """
 
 from typing import List, Optional
-from PyQt6.QtWidgets import (
+
+from .qt_compat import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
-    QFrame, QScrollArea, QTextEdit, QSizePolicy
+    QFrame, QScrollArea, QTextEdit, QSizePolicy,
+    Qt, Signal, QTimer,
 )
-from PyQt6.QtCore import Qt, pyqtSignal, QTimer
 
 from .tokens import SPACING, RADIUS, TYPOGRAPHY, ColorPalette, get_theme
 
@@ -160,8 +161,8 @@ class CodeSuggestion(QFrame):
         suggestion.clicked.connect(self.apply_code)
     """
 
-    clicked = pyqtSignal()
-    rejected = pyqtSignal()
+    clicked = Signal()
+    rejected = Signal()
 
     def __init__(
         self,
@@ -258,7 +259,7 @@ class QuickPrompts(QFrame):
         prompts.prompt_clicked.connect(self.send_prompt)
     """
 
-    prompt_clicked = pyqtSignal(str)
+    prompt_clicked = Signal(str)
 
     def __init__(
         self,
@@ -305,7 +306,7 @@ class ChatInput(QFrame):
         chat_input.message_sent.connect(self.send_message)
     """
 
-    message_sent = pyqtSignal(str)
+    message_sent = Signal(str)
 
     def __init__(
         self,

@@ -78,7 +78,7 @@ class SignalBridge(Protocol):
     """
     Protocol for signal bridges.
 
-    Signal bridges connect domain events to PyQt6 signals,
+    Signal bridges connect domain events to PySide6 signals,
     enabling reactive UI updates from background operations.
     """
 

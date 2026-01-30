@@ -4,11 +4,12 @@ Video, audio, and timeline widgets
 """
 
 from typing import List, Optional
-from PyQt6.QtWidgets import (
+
+from .qt_compat import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
-    QFrame, QSlider, QSizePolicy
+    QFrame, QSlider, QSizePolicy,
+    Qt, Signal, QTimer,
 )
-from PyQt6.QtCore import Qt, pyqtSignal, QTimer
 
 from .tokens import SPACING, RADIUS, TYPOGRAPHY, ColorPalette, get_theme
 
@@ -66,7 +67,7 @@ class WaveformVisualization(QFrame):
         waveform.position_changed.connect(self.seek)
     """
 
-    position_changed = pyqtSignal(float)  # 0.0 to 1.0
+    position_changed = Signal(float)  # 0.0 to 1.0
 
     def __init__(
         self,
@@ -120,8 +121,8 @@ class Timeline(QFrame):
         timeline.add_segment(10.0, 25.0, "#FFC107", "Learning")
     """
 
-    position_changed = pyqtSignal(float)  # seconds
-    segment_clicked = pyqtSignal(str)  # segment_id
+    position_changed = Signal(float)  # seconds
+    segment_clicked = Signal(str)  # segment_id
 
     def __init__(
         self,
@@ -201,13 +202,13 @@ class PlayerControls(QFrame):
         controls.volume_changed.connect(self.set_volume)
     """
 
-    play_clicked = pyqtSignal()
-    pause_clicked = pyqtSignal()
-    stop_clicked = pyqtSignal()
-    rewind_clicked = pyqtSignal()
-    forward_clicked = pyqtSignal()
-    volume_changed = pyqtSignal(int)
-    rate_changed = pyqtSignal(float)
+    play_clicked = Signal()
+    pause_clicked = Signal()
+    stop_clicked = Signal()
+    rewind_clicked = Signal()
+    forward_clicked = Signal()
+    volume_changed = Signal(int)
+    rate_changed = Signal(float)
 
     def __init__(
         self,
@@ -367,7 +368,7 @@ class Thumbnail(QFrame):
         thumb.clicked.connect(self.select_page)
     """
 
-    clicked = pyqtSignal()
+    clicked = Signal()
 
     def __init__(
         self,
@@ -440,7 +441,7 @@ class ThumbnailStrip(QFrame):
         strip.thumbnail_selected.connect(self.on_select)
     """
 
-    thumbnail_selected = pyqtSignal(int)
+    thumbnail_selected = Signal(int)
 
     def __init__(self, colors: ColorPalette = None, parent=None):
         super().__init__(parent)

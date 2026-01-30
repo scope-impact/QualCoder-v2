@@ -1,10 +1,14 @@
 [project]
 name = "design-system"
-version = "0.1.0"
-description = "PyQt6 Design System - Material Design components for QualCoder"
+version = "0.2.0"
+description = "PySide6 Design System - Material Design components for QualCoder"
 requires-python = ">=3.11"
 dependencies = [
-    "pyqt6>=6.5.0",
+    # Qt binding (PySide6 preferred - LGPL license)
+    "pyside6>=6.5.0",
+    # Material Design theme
+    "qt-material>=2.14",
+    # Icons
     "qtawesome>=1.3.0",
     # Visualization libraries (ADR-001)
     "pyqtgraph>=0.13",

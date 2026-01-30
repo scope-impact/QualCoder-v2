@@ -3,9 +3,11 @@ Toggle/Switch component
 Material Design styled toggle for on/off states
 """
 
-from PyQt6.QtWidgets import QWidget, QHBoxLayout, QLabel
-from PyQt6.QtCore import Qt, pyqtSignal, pyqtProperty, QPropertyAnimation, QEasingCurve, QRect
-from PyQt6.QtGui import QPainter, QColor, QPainterPath
+from .qt_compat import (
+    QWidget, QHBoxLayout, QLabel,
+    Qt, Signal, Property, QPropertyAnimation, QEasingCurve, QRect,
+    QPainter, QColor, QPainterPath,
+)
 
 from .tokens import SPACING, RADIUS, TYPOGRAPHY, ColorPalette, get_theme
 
@@ -20,7 +22,7 @@ class Toggle(QWidget):
         toggle.setChecked(True)
     """
 
-    toggled = pyqtSignal(bool)
+    toggled = Signal(bool)
 
     def __init__(
         self,
@@ -58,7 +60,7 @@ class Toggle(QWidget):
         self._handle_position = pos
         self.update()
 
-    handle_position = pyqtProperty(int, _get_handle_position, _set_handle_position)
+    handle_position = Property(int, _get_handle_position, _set_handle_position)
 
     def isChecked(self) -> bool:
         return self._checked
@@ -110,7 +112,7 @@ class LabeledToggle(QWidget):
         toggle.toggled.connect(lambda checked: print(f"Toggled: {checked}"))
     """
 
-    toggled = pyqtSignal(bool)
+    toggled = Signal(bool)
 
     def __init__(
         self,

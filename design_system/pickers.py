@@ -4,11 +4,12 @@ Type selectors, color pickers, and option cards
 """
 
 from typing import List, Optional, Tuple
-from PyQt6.QtWidgets import (
+
+from .qt_compat import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
-    QFrame, QGridLayout, QSizePolicy
+    QFrame, QGridLayout, QSizePolicy,
+    Qt, Signal,
 )
-from PyQt6.QtCore import Qt, pyqtSignal
 
 from .tokens import SPACING, RADIUS, TYPOGRAPHY, ColorPalette, get_theme
 
@@ -24,7 +25,7 @@ class TypeSelector(QFrame):
         selector.selection_changed.connect(self.on_type_select)
     """
 
-    selection_changed = pyqtSignal(str)  # type_id
+    selection_changed = Signal(str)  # type_id
 
     def __init__(
         self,
@@ -113,7 +114,7 @@ class TypeOptionCard(QFrame):
         card.clicked.connect(self.select_type)
     """
 
-    clicked = pyqtSignal()
+    clicked = Signal()
 
     def __init__(
         self,
@@ -205,7 +206,7 @@ class ColorSchemeSelector(QFrame):
         selector.scheme_changed.connect(self.apply_scheme)
     """
 
-    scheme_changed = pyqtSignal(str)  # scheme_id
+    scheme_changed = Signal(str)  # scheme_id
 
     def __init__(
         self,
@@ -248,7 +249,7 @@ class ColorSchemeSelector(QFrame):
 class ColorSchemeOption(QFrame):
     """Individual color scheme option"""
 
-    clicked = pyqtSignal()
+    clicked = Signal()
 
     def __init__(
         self,
@@ -331,7 +332,7 @@ class ChartTypeSelector(QFrame):
         selector.chart_changed.connect(self.update_chart)
     """
 
-    chart_changed = pyqtSignal(str)
+    chart_changed = Signal(str)
 
     CHART_TYPES = [
         ("bar", "📊", "Bar Chart"),
@@ -432,7 +433,7 @@ class RadioCardGroup(QFrame):
         group.selection_changed.connect(self.on_select)
     """
 
-    selection_changed = pyqtSignal(str)
+    selection_changed = Signal(str)
 
     def __init__(
         self,
@@ -487,7 +488,7 @@ class RadioCardGroup(QFrame):
 class RadioCard(QFrame):
     """Individual radio card option"""
 
-    clicked = pyqtSignal()
+    clicked = Signal()
 
     def __init__(
         self,

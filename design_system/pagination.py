@@ -4,10 +4,11 @@ Page navigation and pagination controls
 """
 
 from typing import Optional
-from PyQt6.QtWidgets import (
-    QWidget, QHBoxLayout, QLabel, QPushButton, QFrame
+
+from .qt_compat import (
+    QWidget, QHBoxLayout, QLabel, QPushButton, QFrame,
+    Qt, Signal,
 )
-from PyQt6.QtCore import Qt, pyqtSignal
 
 from .tokens import SPACING, RADIUS, TYPOGRAPHY, ColorPalette, get_theme
 
@@ -21,7 +22,7 @@ class Pagination(QFrame):
         pagination.page_changed.connect(self.load_page)
     """
 
-    page_changed = pyqtSignal(int)
+    page_changed = Signal(int)
 
     def __init__(
         self,
@@ -286,7 +287,7 @@ class SimplePagination(QFrame):
         pagination.page_changed.connect(self.load_page)
     """
 
-    page_changed = pyqtSignal(int)
+    page_changed = Signal(int)
 
     def __init__(
         self,

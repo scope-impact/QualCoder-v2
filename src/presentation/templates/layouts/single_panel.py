@@ -12,14 +12,14 @@ A simple full-width content layout with optional padding.
 Good for settings pages, reports, charts, etc.
 """
 
-from PyQt6.QtWidgets import (
+from design_system.qt_compat import (
     QWidget,
     QVBoxLayout,
     QFrame,
     QScrollArea,
     QSizePolicy,
+    Qt,
 )
-from PyQt6.QtCore import Qt
 
 from design_system import ColorPalette, get_theme, SPACING
 

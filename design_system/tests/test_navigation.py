@@ -3,7 +3,7 @@ Tests for navigation components: TabGroup, Breadcrumb, NavList, StepIndicator, e
 """
 
 import pytest
-from PyQt6.QtCore import Qt
+from PySide6.QtCore import Qt
 
 from design_system.navigation import (
     MenuItem, Tab, TabGroup, Breadcrumb, NavList, StepIndicator, MediaTypeSelector

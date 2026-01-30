@@ -3,11 +3,11 @@ Progress Bar components
 Material Design styled progress indicators
 """
 
-from PyQt6.QtWidgets import (
-    QWidget, QVBoxLayout, QHBoxLayout, QLabel, QFrame
+from .qt_compat import (
+    QWidget, QVBoxLayout, QHBoxLayout, QLabel, QFrame,
+    Qt, QPropertyAnimation, QEasingCurve, Signal,
+    QPainter, QColor, QPainterPath,
 )
-from PyQt6.QtCore import Qt, QPropertyAnimation, QEasingCurve, pyqtSignal
-from PyQt6.QtGui import QPainter, QColor, QPainterPath
 
 from .tokens import SPACING, RADIUS, TYPOGRAPHY, ColorPalette, get_theme
 
@@ -253,7 +253,7 @@ class RelevanceScoreBar(QWidget):
         - "match": Blue gradient for search relevance
     """
 
-    clicked = pyqtSignal(float)
+    clicked = Signal(float)
 
     def __init__(
         self,

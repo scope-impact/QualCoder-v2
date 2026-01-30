@@ -7,8 +7,8 @@ Screenshots saved to: design_system/tests/screenshots/
 """
 
 import pytest
-from PyQt6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QLabel
-from PyQt6.QtCore import Qt
+from PySide6.QtCore import Qt
+from PySide6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QLabel
 
 
 class TestComponentScreenshots:

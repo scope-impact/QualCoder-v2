@@ -4,11 +4,12 @@ Menu items, tabs, and navigation elements
 """
 
 from typing import List, Optional
-from PyQt6.QtWidgets import (
+
+from .qt_compat import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
-    QFrame, QScrollArea, QSizePolicy
+    QFrame, QScrollArea, QSizePolicy,
+    Qt, Signal,
 )
-from PyQt6.QtCore import Qt, pyqtSignal
 
 from .tokens import SPACING, RADIUS, TYPOGRAPHY, ColorPalette, get_theme
 
@@ -153,7 +154,7 @@ class TabGroup(QFrame):
         tabs.tab_changed.connect(self.on_tab_change)
     """
 
-    tab_changed = pyqtSignal(str)
+    tab_changed = Signal(str)
 
     def __init__(self, colors: ColorPalette = None, parent=None):
         super().__init__(parent)
@@ -202,7 +203,7 @@ class Breadcrumb(QFrame):
         breadcrumb.item_clicked.connect(self.navigate_to)
     """
 
-    item_clicked = pyqtSignal(str, int)  # text, index
+    item_clicked = Signal(str, int)  # text, index
 
     def __init__(self, colors: ColorPalette = None, parent=None):
         super().__init__(parent)
@@ -271,7 +272,7 @@ class NavList(QScrollArea):
         nav.item_clicked.connect(self.navigate)
     """
 
-    item_clicked = pyqtSignal(str)
+    item_clicked = Signal(str)
 
     def __init__(self, colors: ColorPalette = None, parent=None):
         super().__init__(parent)
@@ -382,7 +383,7 @@ class StepIndicator(QFrame):
         steps.set_current(1)  # "Configure" is active
     """
 
-    step_clicked = pyqtSignal(int)
+    step_clicked = Signal(int)
 
     def __init__(
         self,
@@ -518,7 +519,7 @@ class MediaTypeSelector(QFrame):
         selector.selection_changed.connect(on_media_type_changed)
     """
 
-    selection_changed = pyqtSignal(str)  # option_id
+    selection_changed = Signal(str)  # option_id
 
     def __init__(
         self,

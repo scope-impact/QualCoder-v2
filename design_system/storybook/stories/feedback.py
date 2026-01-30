@@ -3,7 +3,8 @@ Feedback component stories: alerts, progress, spinners
 """
 
 from typing import List, Tuple
-from PyQt6.QtWidgets import QWidget
+
+from ...qt_compat import QWidget
 
 from ...tokens import ColorPalette
 from ...components import Alert

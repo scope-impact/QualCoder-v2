@@ -5,7 +5,7 @@ Handles side effects: database access, UI updates, external services.
 
 Submodules:
     - event_bus: Domain event pub/sub infrastructure
-    - signal_bridge: Thread-safe domain event → PyQt6 signal bridging
+    - signal_bridge: Thread-safe domain event → PySide6 signal bridging
     - protocols: Controller and EventBus contracts
 """
 

@@ -1,7 +1,7 @@
 """
 Signal Bridge Infrastructure
 
-Thread-safe bridging between domain events and PyQt6 signals.
+Thread-safe bridging between domain events and PySide6 signals.
 
 Usage:
     from src.application.signal_bridge import (

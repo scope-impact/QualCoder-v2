@@ -8,17 +8,17 @@ from dataclasses import dataclass, field
 from enum import Enum
 import math
 
-from PyQt6.QtWidgets import (
+from .qt_compat import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QFrame,
     QGraphicsView, QGraphicsScene, QGraphicsPixmapItem,
     QGraphicsRectItem, QGraphicsPolygonItem, QGraphicsItem,
-    QGraphicsPathItem, QPushButton, QButtonGroup
-)
-from PyQt6.QtCore import Qt, pyqtSignal, QPointF, QRectF
-from PyQt6.QtGui import (
+    QGraphicsPathItem, QPushButton,
+    Qt, Signal, QPointF, QRectF,
     QColor, QPen, QBrush, QPixmap, QImage, QPainter,
-    QPainterPath, QPolygonF, QCursor
+    QPainterPath, QPolygonF, QCursor,
 )
+# QButtonGroup is now in qt_compat
+from .qt_compat import QButtonGroup
 
 from .tokens import SPACING, RADIUS, TYPOGRAPHY, ColorPalette, get_theme
 
@@ -66,10 +66,10 @@ class ImageAnnotationLayer(QFrame):
         mode_changed(mode): Drawing mode changed
     """
 
-    annotation_created = pyqtSignal(object)  # ImageAnnotation
-    annotation_selected = pyqtSignal(str)
-    annotation_deleted = pyqtSignal(str)
-    mode_changed = pyqtSignal(str)
+    annotation_created = Signal(object)  # ImageAnnotation
+    annotation_selected = Signal(str)
+    annotation_deleted = Signal(str)
+    mode_changed = Signal(str)
 
     def __init__(
         self,
@@ -505,10 +505,10 @@ class ImageAnnotationLayer(QFrame):
 class AnnotationView(QGraphicsView):
     """Custom graphics view with mouse event signals"""
 
-    mouse_pressed = pyqtSignal(QPointF)
-    mouse_moved = pyqtSignal(QPointF)
-    mouse_released = pyqtSignal(QPointF)
-    mouse_double_clicked = pyqtSignal(QPointF)
+    mouse_pressed = Signal(QPointF)
+    mouse_moved = Signal(QPointF)
+    mouse_released = Signal(QPointF)
+    mouse_double_clicked = Signal(QPointF)
 
     def __init__(self, scene: QGraphicsScene, colors: ColorPalette = None, parent=None):
         super().__init__(scene, parent)
@@ -562,7 +562,7 @@ class AnnotationView(QGraphicsView):
 class AnnotationToolbar(QFrame):
     """Toolbar for annotation tools"""
 
-    mode_changed = pyqtSignal(str)
+    mode_changed = Signal(str)
 
     def __init__(self, colors: ColorPalette = None, parent=None):
         super().__init__(parent)

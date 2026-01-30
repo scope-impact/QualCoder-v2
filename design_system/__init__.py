@@ -1,6 +1,16 @@
 """
-PyQt6 Design System - Material Design Theme
+PySide6 Design System - Material Design Theme
 Based on QualCoder mockups/css/material-theme.css
+
+Uses qt-material for modern Material Design styling.
+Compatible with both PySide6 (preferred, LGPL) and PySide6 via qt_compat layer.
+
+Usage:
+    from design_system import setup_theme, Button, Card
+    from design_system.qt_compat import QApplication
+
+    app = QApplication(sys.argv)
+    setup_theme(app, theme='dark_teal')
 """
 
 # Tokens
@@ -270,6 +280,25 @@ from .pdf_viewer import (
     PDFSelection,
 )
 
+# Theme Integration (qt-material)
+from .theme import (
+    setup_theme,
+    get_material_palette,
+    get_current_theme,
+    available_themes,
+    is_dark_theme,
+    MaterialPalette,
+    HAS_QT_MATERIAL,
+)
+
+# Qt Compatibility Layer
+from .qt_compat import (
+    QT_BINDING,
+    USING_PYSIDE6,
+    get_qt_binding,
+    is_pyside6,
+)
+
 
 __all__ = [
     # Tokens
@@ -479,4 +508,17 @@ __all__ = [
     "PDFThumbnail",
     "PDFTextBlock",
     "PDFSelection",
+    # Theme
+    "setup_theme",
+    "get_material_palette",
+    "get_current_theme",
+    "available_themes",
+    "is_dark_theme",
+    "MaterialPalette",
+    "HAS_QT_MATERIAL",
+    # Qt Binding Info
+    "QT_BINDING",
+    "USING_PYSIDE6",
+    "get_qt_binding",
+    "is_pyside6",
 ]

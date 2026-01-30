@@ -3,12 +3,11 @@ Context menu components
 Material Design styled right-click menus
 """
 
-from PyQt6.QtWidgets import (
+from .qt_compat import (
     QMenu, QWidgetAction, QWidget, QHBoxLayout,
-    QLabel, QFrame, QVBoxLayout
+    QLabel, QFrame, QVBoxLayout,
+    Qt, Signal, QAction, QCursor,
 )
-from PyQt6.QtCore import Qt, pyqtSignal
-from PyQt6.QtGui import QAction, QCursor
 
 from .tokens import SPACING, RADIUS, TYPOGRAPHY, ColorPalette, get_theme
 
@@ -155,7 +154,7 @@ class ContextMenuWidget(QFrame):
         menu.show_at(QCursor.pos())
     """
 
-    item_clicked = pyqtSignal(str)
+    item_clicked = Signal(str)
 
     def __init__(self, colors: ColorPalette = None, parent=None):
         super().__init__(parent)
@@ -222,7 +221,7 @@ class ContextMenuWidget(QFrame):
 class ContextMenuItemWidget(QFrame):
     """Widget for custom context menu item"""
 
-    clicked = pyqtSignal()
+    clicked = Signal()
 
     def __init__(
         self,

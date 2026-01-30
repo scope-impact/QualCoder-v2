@@ -4,11 +4,12 @@ Filter panels, chips, search inputs, and view toggles
 """
 
 from typing import List, Optional, Dict, Any
-from PyQt6.QtWidgets import (
+
+from .qt_compat import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
-    QFrame, QLineEdit, QScrollArea, QSizePolicy, QCheckBox
+    QFrame, QLineEdit, QScrollArea, QSizePolicy, QCheckBox,
+    Qt, Signal,
 )
-from PyQt6.QtCore import Qt, pyqtSignal
 
 from .tokens import SPACING, RADIUS, TYPOGRAPHY, ColorPalette, get_theme
 
@@ -24,7 +25,7 @@ class FilterPanel(QFrame):
         panel.filters_changed.connect(self.apply_filters)
     """
 
-    filters_changed = pyqtSignal(dict)  # {section: [selected_values]}
+    filters_changed = Signal(dict)  # {section: [selected_values]}
 
     def __init__(
         self,
@@ -149,7 +150,7 @@ class FilterPanel(QFrame):
 class FilterSection(QFrame):
     """Individual filter section with checkboxes"""
 
-    selection_changed = pyqtSignal()
+    selection_changed = Signal()
 
     def __init__(
         self,
@@ -217,8 +218,8 @@ class FilterChip(QFrame):
         chip.removed.connect(self.remove_filter)
     """
 
-    removed = pyqtSignal()
-    clicked = pyqtSignal()
+    removed = Signal()
+    clicked = Signal()
 
     def __init__(
         self,
@@ -284,8 +285,8 @@ class FilterChipGroup(QFrame):
         group.chip_removed.connect(self.remove_filter)
     """
 
-    chip_removed = pyqtSignal(str)  # chip_id
-    clear_all = pyqtSignal()
+    chip_removed = Signal(str)  # chip_id
+    clear_all = Signal()
 
     def __init__(self, colors: ColorPalette = None, parent=None):
         super().__init__(parent)
@@ -354,8 +355,8 @@ class SearchInput(QFrame):
         search.search_changed.connect(self.filter_results)
     """
 
-    search_changed = pyqtSignal(str)
-    search_submitted = pyqtSignal(str)
+    search_changed = Signal(str)
+    search_submitted = Signal(str)
 
     def __init__(
         self,
@@ -452,7 +453,7 @@ class SearchOptions(QFrame):
         options.options_changed.connect(self.update_search)
     """
 
-    options_changed = pyqtSignal(dict)
+    options_changed = Signal(dict)
 
     def __init__(self, colors: ColorPalette = None, parent=None):
         super().__init__(parent)
@@ -511,7 +512,7 @@ class ViewToggle(QFrame):
         toggle.view_changed.connect(self.switch_view)
     """
 
-    view_changed = pyqtSignal(str)
+    view_changed = Signal(str)
 
     def __init__(
         self,

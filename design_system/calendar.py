@@ -5,11 +5,12 @@ Mini calendars, date pickers, and date navigation
 
 from typing import List, Optional
 from datetime import date, timedelta
-from PyQt6.QtWidgets import (
+
+from .qt_compat import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
-    QFrame, QGridLayout, QSizePolicy
+    QFrame, QGridLayout, QSizePolicy,
+    Qt, Signal,
 )
-from PyQt6.QtCore import Qt, pyqtSignal
 
 from .tokens import SPACING, RADIUS, TYPOGRAPHY, ColorPalette, get_theme
 
@@ -23,7 +24,7 @@ class CalendarMini(QFrame):
         calendar.date_selected.connect(self.on_date_select)
     """
 
-    date_selected = pyqtSignal(object)  # date object
+    date_selected = Signal(object)  # date object
 
     def __init__(
         self,
@@ -236,9 +237,9 @@ class CalendarNavigation(QFrame):
         nav.next_clicked.connect(self.next_month)
     """
 
-    prev_clicked = pyqtSignal()
-    next_clicked = pyqtSignal()
-    title_clicked = pyqtSignal()
+    prev_clicked = Signal()
+    next_clicked = Signal()
+    title_clicked = Signal()
 
     def __init__(
         self,
@@ -324,7 +325,7 @@ class DateRangePicker(QFrame):
         picker.range_changed.connect(self.filter_by_dates)
     """
 
-    range_changed = pyqtSignal(object, object)  # start_date, end_date
+    range_changed = Signal(object, object)  # start_date, end_date
 
     def __init__(
         self,
@@ -417,7 +418,7 @@ class QuickDateSelect(QFrame):
         quick.date_selected.connect(self.apply_preset)
     """
 
-    preset_selected = pyqtSignal(str)  # preset_id
+    preset_selected = Signal(str)  # preset_id
 
     PRESETS = [
         ("today", "Today"),

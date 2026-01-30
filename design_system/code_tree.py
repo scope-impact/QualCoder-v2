@@ -6,11 +6,11 @@ Hierarchical tree widget for qualitative codes
 from typing import List, Optional
 from dataclasses import dataclass
 
-from PyQt6.QtWidgets import (
+from .qt_compat import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel,
-    QFrame, QScrollArea, QSizePolicy
+    QFrame, QScrollArea, QSizePolicy,
+    Qt, Signal,
 )
-from PyQt6.QtCore import Qt, pyqtSignal
 
 from .tokens import SPACING, RADIUS, TYPOGRAPHY, ColorPalette, get_theme
 
@@ -45,9 +45,9 @@ class CodeTree(QScrollArea):
         tree.item_clicked.connect(lambda id: print(f"Clicked: {id}"))
     """
 
-    item_clicked = pyqtSignal(str)  # code_id
-    item_double_clicked = pyqtSignal(str)  # code_id
-    item_expanded = pyqtSignal(str, bool)  # code_id, is_expanded
+    item_clicked = Signal(str)  # code_id
+    item_double_clicked = Signal(str)  # code_id
+    item_expanded = Signal(str, bool)  # code_id, is_expanded
 
     def __init__(self, colors: ColorPalette = None, parent=None):
         super().__init__(parent)
@@ -168,9 +168,9 @@ class CodeTree(QScrollArea):
 class CodeTreeNode(QFrame):
     """Individual tree node widget"""
 
-    clicked = pyqtSignal()
-    double_clicked = pyqtSignal()
-    toggle_expanded = pyqtSignal()
+    clicked = Signal()
+    double_clicked = Signal()
+    toggle_expanded = Signal()
 
     def __init__(
         self,

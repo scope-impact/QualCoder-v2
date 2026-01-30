@@ -10,8 +10,7 @@ from pathlib import Path
 # Add parent directory to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from PyQt6.QtWidgets import QApplication
-from PyQt6.QtCore import QTimer
+from design_system.qt_compat import QApplication, QTimer
 
 from design_system.storybook import Storybook
 

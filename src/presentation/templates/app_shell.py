@@ -29,7 +29,7 @@ Structure:
 """
 
 from typing import Optional, Protocol, runtime_checkable
-from PyQt6.QtWidgets import (
+from design_system.qt_compat import (
     QMainWindow,
     QWidget,
     QVBoxLayout,
@@ -38,8 +38,8 @@ from PyQt6.QtWidgets import (
     QLabel,
     QPushButton,
     QSizePolicy,
+    Qt, Signal,
 )
-from PyQt6.QtCore import Qt, pyqtSignal
 
 from design_system import (
     ColorPalette,
@@ -201,7 +201,7 @@ class AppMenuBar(QFrame):
     Emits signals when menu items are clicked.
     """
 
-    item_clicked = pyqtSignal(str)  # menu_id
+    item_clicked = Signal(str)  # menu_id
 
     def __init__(self, colors: ColorPalette, parent=None):
         super().__init__(parent)
@@ -281,7 +281,7 @@ class TabButton(QFrame):
     Custom tab button with icon and label.
     """
 
-    clicked = pyqtSignal()
+    clicked = Signal()
 
     def __init__(self, label: str, icon_name: str, colors: ColorPalette, parent=None):
         super().__init__(parent)
@@ -360,7 +360,7 @@ class AppTabBar(QFrame):
     QualCoder-specific tab bar with predefined tabs and icons.
     """
 
-    tab_clicked = pyqtSignal(str)  # tab_id
+    tab_clicked = Signal(str)  # tab_id
 
     def __init__(self, colors: ColorPalette, parent=None):
         super().__init__(parent)
@@ -497,8 +497,8 @@ class AppShell(QMainWindow):
     """
 
     # Navigation signals
-    menu_clicked = pyqtSignal(str)  # menu_id
-    tab_clicked = pyqtSignal(str)   # tab_id
+    menu_clicked = Signal(str)  # menu_id
+    tab_clicked = Signal(str)   # tab_id
 
     def __init__(self, colors: ColorPalette = None, parent=None):
         super().__init__(parent)

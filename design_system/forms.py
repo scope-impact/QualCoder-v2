@@ -4,13 +4,13 @@ Input fields, selects, and form controls
 """
 
 from typing import List, Optional
-from PyQt6.QtWidgets import (
+
+from .qt_compat import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
     QLineEdit, QTextEdit, QComboBox, QSpinBox, QDoubleSpinBox,
-    QSlider, QFrame, QListWidget, QListWidgetItem, QAbstractItemView
+    QSlider, QFrame, QListWidget, QListWidgetItem, QAbstractItemView,
+    Qt, Signal, QColor,
 )
-from PyQt6.QtCore import Qt, pyqtSignal
-from PyQt6.QtGui import QColor
 
 from .tokens import SPACING, RADIUS, TYPOGRAPHY, ColorPalette, get_theme
 
@@ -25,8 +25,8 @@ class SearchBox(QFrame):
         search.search_submitted.connect(self.do_search)
     """
 
-    text_changed = pyqtSignal(str)
-    search_submitted = pyqtSignal(str)
+    text_changed = Signal(str)
+    search_submitted = Signal(str)
 
     def __init__(
         self,
@@ -93,7 +93,7 @@ class Select(QComboBox):
         select.value_changed.connect(self.on_change)
     """
 
-    value_changed = pyqtSignal(str)
+    value_changed = Signal(str)
 
     def __init__(
         self,
@@ -167,7 +167,7 @@ class MultiSelect(QFrame):
         multi.selection_changed.connect(self.on_change)
     """
 
-    selection_changed = pyqtSignal(list)
+    selection_changed = Signal(list)
 
     def __init__(
         self,
@@ -265,7 +265,7 @@ class Textarea(QTextEdit):
         textarea.text_changed.connect(self.on_change)
     """
 
-    text_changed = pyqtSignal(str)
+    text_changed = Signal(str)
 
     def __init__(
         self,
@@ -311,7 +311,7 @@ class NumberInput(QFrame):
         num_input.value_changed.connect(self.on_change)
     """
 
-    value_changed = pyqtSignal(float)
+    value_changed = Signal(float)
 
     def __init__(
         self,
@@ -381,7 +381,7 @@ class RangeSlider(QFrame):
         slider.value_changed.connect(self.on_change)
     """
 
-    value_changed = pyqtSignal(int)
+    value_changed = Signal(int)
 
     def __init__(
         self,
@@ -464,7 +464,7 @@ class ColorPicker(QFrame):
         picker.color_selected.connect(self.on_color_pick)
     """
 
-    color_selected = pyqtSignal(str)
+    color_selected = Signal(str)
 
     DEFAULT_COLORS = [
         "#FFC107", "#F44336", "#4CAF50", "#9C27B0",
@@ -632,7 +632,7 @@ class CoderSelector(QFrame):
         selector.coder_changed.connect(on_coder_changed)
     """
 
-    coder_changed = pyqtSignal(str)
+    coder_changed = Signal(str)
 
     def __init__(
         self,

@@ -5,15 +5,15 @@ Run with: python -m ui.templates.demo
 """
 
 import sys
-from PyQt6.QtWidgets import (
+from design_system.qt_compat import (
     QApplication,
     QWidget,
     QVBoxLayout,
     QHBoxLayout,
     QLabel,
     QPushButton,
+    Qt,
 )
-from PyQt6.QtCore import Qt
 
 from design_system import get_theme, Button, Card, SPACING
 

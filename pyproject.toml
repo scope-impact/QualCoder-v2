@@ -1,10 +1,12 @@
 [project]
 name = "qualcoder-v2"
-version = "0.1.0"
+version = "0.2.0"
 description = "QualCoder v2 - Qualitative Data Analysis"
 requires-python = ">=3.11"
 dependencies = [
     "design-system",
+    # Qt binding (PySide6 preferred - LGPL license)
+    "pyside6>=6.5.0",
 ]
 
 [tool.uv.workspace]
@@ -15,5 +17,6 @@ design-system = { workspace = true }
 
 [dependency-groups]
 dev = [
+    "pytest>=8.0.0",
     "pytest-qt>=4.5.0",
 ]

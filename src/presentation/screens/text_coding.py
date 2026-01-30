@@ -23,8 +23,7 @@ Structure:
 """
 
 from typing import List, Dict, Any, Optional
-from PyQt6.QtWidgets import QWidget, QVBoxLayout
-from PyQt6.QtCore import pyqtSignal
+from design_system.qt_compat import QWidget, QVBoxLayout, Signal
 
 from design_system import ColorPalette, get_theme
 
@@ -50,9 +49,9 @@ class TextCodingScreen(QWidget):
         text_selected(str, int, int): Text was selected
     """
 
-    file_selected = pyqtSignal(dict)
-    code_selected = pyqtSignal(dict)
-    text_selected = pyqtSignal(str, int, int)
+    file_selected = Signal(dict)
+    code_selected = Signal(dict)
+    text_selected = Signal(str, int, int)
 
     def __init__(
         self,
@@ -326,7 +325,7 @@ class TextCodingScreen(QWidget):
 def main():
     """Run the text coding screen demo."""
     import sys
-    from PyQt6.QtWidgets import QApplication, QMainWindow
+    from design_system.qt_compat import QApplication, QMainWindow
 
     app = QApplication(sys.argv)
 

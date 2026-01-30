@@ -3,8 +3,6 @@ Tests for the Icon component (using qtawesome)
 """
 
 import pytest
-from PyQt6.QtWidgets import QApplication
-from PyQt6.QtCore import Qt
 
 
 class TestIcon:
@@ -122,7 +120,7 @@ class TestHelperFunctions:
     def test_get_pixmap(self, qapp, dark_theme):
         """get_pixmap should return a QPixmap"""
         from design_system import get_pixmap
-        from PyQt6.QtGui import QPixmap
+        from PySide6.QtGui import QPixmap
 
         pixmap = get_pixmap("mdi6.folder", size=24, colors=dark_theme)
         assert isinstance(pixmap, QPixmap)
@@ -131,7 +129,7 @@ class TestHelperFunctions:
     def test_get_qicon(self, qapp, dark_theme):
         """get_qicon should return a QIcon"""
         from design_system import get_qicon
-        from PyQt6.QtGui import QIcon
+        from PySide6.QtGui import QIcon
 
         qicon = get_qicon("mdi6.folder", colors=dark_theme)
         assert isinstance(qicon, QIcon)

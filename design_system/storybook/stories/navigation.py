@@ -3,7 +3,8 @@ Navigation component stories: tabs, breadcrumbs, steps, pagination
 """
 
 from typing import List, Tuple
-from PyQt6.QtWidgets import QWidget
+
+from ...qt_compat import QWidget
 
 from ...tokens import ColorPalette
 from ...navigation import TabGroup, Breadcrumb, StepIndicator

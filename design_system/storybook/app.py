@@ -4,8 +4,8 @@ Storybook main application window
 
 import sys
 
-from PyQt6.QtWidgets import (
-    QApplication, QMainWindow, QWidget, QHBoxLayout, QStackedWidget
+from ..qt_compat import (
+    QApplication, QMainWindow, QWidget, QHBoxLayout, QStackedWidget,
 )
 
 from ..tokens import get_theme

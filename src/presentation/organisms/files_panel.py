@@ -6,8 +6,7 @@ Includes a header with filter and memo actions, and a scrollable file list.
 """
 
 from typing import List, Dict, Any
-from PyQt6.QtWidgets import QFrame, QVBoxLayout, QHBoxLayout, QLabel
-from PyQt6.QtCore import Qt, pyqtSignal
+from design_system.qt_compat import QFrame, QVBoxLayout, QHBoxLayout, QLabel, Qt, Signal
 
 from design_system import (
     ColorPalette, get_theme, SPACING, RADIUS, TYPOGRAPHY,
@@ -23,7 +22,7 @@ class FilesPanel(QFrame):
         file_selected(dict): Emitted when a file is selected, with file data
     """
 
-    file_selected = pyqtSignal(dict)
+    file_selected = Signal(dict)
 
     def __init__(self, colors: ColorPalette = None, parent=None):
         """

@@ -7,15 +7,13 @@ from typing import List, Dict, Any, Optional, Callable, Tuple
 from dataclasses import dataclass, field
 import math
 
-from PyQt6.QtWidgets import (
+from .qt_compat import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QFrame,
     QGraphicsView, QGraphicsScene, QGraphicsEllipseItem,
-    QGraphicsLineItem, QGraphicsTextItem, QGraphicsItem
-)
-from PyQt6.QtCore import Qt, pyqtSignal, QPointF, QRectF
-from PyQt6.QtGui import (
+    QGraphicsLineItem, QGraphicsTextItem, QGraphicsItem,
+    Qt, Signal, QPointF, QRectF,
     QColor, QPen, QBrush, QFont, QPainter,
-    QWheelEvent, QMouseEvent
+    QWheelEvent, QMouseEvent,
 )
 
 import networkx as nx
@@ -71,9 +69,9 @@ class NetworkGraphWidget(QFrame):
         edge_clicked(source_id, target_id)
     """
 
-    node_clicked = pyqtSignal(str, dict)
-    node_double_clicked = pyqtSignal(str, dict)
-    edge_clicked = pyqtSignal(str, str)
+    node_clicked = Signal(str, dict)
+    node_double_clicked = Signal(str, dict)
+    edge_clicked = Signal(str, str)
 
     def __init__(
         self,
@@ -392,8 +390,8 @@ class GraphicsView(QGraphicsView):
 class NodeItem(QGraphicsItem):
     """Interactive node graphics item"""
 
-    clicked = pyqtSignal()
-    double_clicked = pyqtSignal()
+    clicked = Signal()
+    double_clicked = Signal()
 
     def __init__(
         self,
@@ -534,7 +532,7 @@ class EdgeItem(QGraphicsLineItem):
 
 
 class SignalEmitter:
-    """Simple signal emitter for QGraphicsItem (which doesn't support pyqtSignal)"""
+    """Simple signal emitter for QGraphicsItem (which doesn't support Signal)"""
 
     def __init__(self):
         self._callbacks = []

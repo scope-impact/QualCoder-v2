@@ -2,17 +2,17 @@
 Thread Utilities for Signal Bridge.
 
 Provides thread detection and safe cross-thread invocation helpers
-for PyQt6 signal emission.
+for Qt signal emission.
 """
 
 from __future__ import annotations
 from typing import Callable, Any, Optional
 import threading
 
-# PyQt6 imports with fallback for testing without Qt
+# Qt imports with fallback for testing without Qt
 try:
-    from PyQt6.QtCore import QThread, QCoreApplication
-    from PyQt6.QtWidgets import QApplication
+    from PySide6.QtCore import QThread, QCoreApplication
+    from PySide6.QtWidgets import QApplication
     HAS_QT = True
 except ImportError:
     HAS_QT = False
@@ -25,7 +25,7 @@ def is_main_thread() -> bool:
     """
     Check if the current thread is the main/UI thread.
 
-    In a PyQt6 application, this checks if we're on the Qt main thread.
+    In a PySide6 application, this checks if we're on the Qt main thread.
     Falls back to Python's main thread check if Qt is not available.
 
     Returns:
@@ -46,11 +46,22 @@ def get_current_thread_name() -> str:
     Returns:
         Thread name string
     """
+    # First try Python thread name (works for both Python threads and QThreads)
+    python_name = threading.current_thread().name
+
+    # If it's not the MainThread and has a custom name, use that
+    if python_name != "MainThread":
+        return python_name
+
+    # For the main thread, try to get Qt's name if available
     if HAS_QT and QThread.currentThread() is not None:
         qt_thread = QThread.currentThread()
         if qt_thread is not None:
-            return qt_thread.objectName() or f"Qt-{id(qt_thread)}"
-    return threading.current_thread().name
+            qt_name = qt_thread.objectName()
+            if qt_name:
+                return qt_name
+
+    return python_name
 
 
 def ensure_main_thread(func: Callable[..., Any]) -> Callable[..., Any]:
@@ -74,7 +85,7 @@ def ensure_main_thread(func: Callable[..., Any]) -> Callable[..., Any]:
             return func(*args, **kwargs)
 
         if HAS_QT and QCoreApplication.instance() is not None:
-            from PyQt6.QtCore import QMetaObject, Qt, Q_ARG
+            from PySide6.QtCore import QMetaObject, Qt, Q_ARG
             # Queue for main thread execution
             # Note: For void functions, use invokeMethod
             # This is a simplified version - full implementation in base.py

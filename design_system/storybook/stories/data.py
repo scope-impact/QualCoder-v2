@@ -3,7 +3,8 @@ Data display component stories: tables, lists, stats, codetree
 """
 
 from typing import List, Tuple
-from PyQt6.QtWidgets import QWidget, QHBoxLayout
+
+from ...qt_compat import QWidget, QHBoxLayout
 
 from ...tokens import SPACING, ColorPalette
 from ...data_display import DataTable, KeyValueList, EmptyState

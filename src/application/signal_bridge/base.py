@@ -2,7 +2,7 @@
 Base Signal Bridge - Foundation for all context-specific signal bridges.
 
 Provides thread-safe event→signal bridging between the domain layer
-and PyQt6 UI components.
+and PySide6 UI components.
 
 Architecture:
     Domain Events (background thread)
@@ -10,13 +10,13 @@ Architecture:
     BaseSignalBridge
          ↓ Converter (event → payload)
          ↓ Thread-safe emission
-    PyQt6 Signals (main thread)
+    Qt Signals (main thread)
          ↓
     UI Widgets (slot connections)
 """
 
 from __future__ import annotations
-from abc import ABC, abstractmethod
+from abc import ABCMeta, abstractmethod
 from dataclasses import dataclass, field
 from datetime import datetime
 from typing import (
@@ -31,10 +31,15 @@ from typing import (
 )
 from weakref import WeakValueDictionary
 
-# PyQt6 imports with fallback for testing
+# Qt imports with fallback for testing without Qt
 try:
-    from PyQt6.QtCore import QObject, pyqtSignal, QMetaObject, Qt, pyqtSlot
+    from PySide6.QtCore import QObject, Signal, QMetaObject, Qt, Slot
     HAS_QT = True
+
+    # Create combined metaclass for QObject + ABC compatibility
+    class QObjectABCMeta(type(QObject), ABCMeta):
+        """Combined metaclass for QObject and ABC."""
+        pass
 except ImportError:
     HAS_QT = False
     # Mock for testing without Qt
@@ -42,10 +47,10 @@ except ImportError:
         def __init__(self, parent: Any = None) -> None:
             pass
 
-    def pyqtSignal(*args: Any) -> Any:  # type: ignore
+    def Signal(*args: Any) -> Any:  # type: ignore
         return None
 
-    def pyqtSlot(*args: Any) -> Callable:  # type: ignore
+    def Slot(*args: Any) -> Callable:  # type: ignore
         def decorator(func: Callable) -> Callable:
             return func
         return decorator
@@ -58,6 +63,9 @@ except ImportError:
         @staticmethod
         def invokeMethod(*args: Any, **kwargs: Any) -> bool:
             return True
+
+    # For no-Qt case, ABCMeta is sufficient
+    QObjectABCMeta = ABCMeta  # type: ignore
 
 from src.application.signal_bridge.payloads import (
     SignalPayload,
@@ -80,7 +88,7 @@ class ConverterRegistration:
     signal_name: str
 
 
-class BaseSignalBridge(QObject, ABC):
+class BaseSignalBridge(QObject, metaclass=QObjectABCMeta):
     """
     Abstract base class for all context-specific signal bridges.
 
@@ -93,14 +101,14 @@ class BaseSignalBridge(QObject, ABC):
     - Activity feed integration
 
     Subclasses must:
-    - Define context-specific pyqtSignals
+    - Define context-specific Signals
     - Implement _register_converters() to set up event handling
     - Implement _get_context_name() for activity logging
 
     Example subclass:
         class CodingSignalBridge(BaseSignalBridge):
-            code_created = pyqtSignal(object)
-            code_deleted = pyqtSignal(object)
+            code_created = Signal(object)
+            code_deleted = Signal(object)
 
             def _get_context_name(self) -> str:
                 return "coding"
@@ -117,7 +125,7 @@ class BaseSignalBridge(QObject, ABC):
     _instances: ClassVar[WeakValueDictionary[type, 'BaseSignalBridge']] = WeakValueDictionary()
 
     # Common signal for activity feed (all bridges emit here)
-    activity_logged = pyqtSignal(object)
+    activity_logged = Signal(object)
 
     def __init__(self, event_bus: Any, parent: Optional[QObject] = None) -> None:
         """
@@ -134,7 +142,7 @@ class BaseSignalBridge(QObject, ABC):
         # Converter registry: event_type → (converter, signal_name)
         self._converters: Dict[str, tuple[EventConverter, str]] = {}
 
-        # Signal registry: signal_name → pyqtSignal
+        # Signal registry: signal_name → Signal
         self._signals: Dict[str, Any] = {}
 
         # Subscription handles for cleanup
@@ -181,10 +189,10 @@ class BaseSignalBridge(QObject, ABC):
         """Build registry of available signals from class attributes."""
         for name in dir(self.__class__):
             attr = getattr(self.__class__, name, None)
-            # Check if it's a pyqtSignal (has 'emit' when bound)
+            # Check if it's a Signal (has 'emit' when bound)
             if hasattr(attr, 'emit') or (
                 HAS_QT and hasattr(attr, '__class__') and
-                'pyqtSignal' in str(type(attr))
+                'Signal' in str(type(attr))
             ):
                 # Get the bound signal from the instance
                 self._signals[name] = getattr(self, name)
@@ -348,7 +356,7 @@ class BaseSignalBridge(QObject, ABC):
             # No Qt - emit directly (testing mode)
             signal.emit(payload)
 
-    @pyqtSlot()
+    @Slot()
     def _do_emit(self) -> None:
         """Slot for queued signal emission on main thread."""
         if hasattr(self, '_pending_emission'):

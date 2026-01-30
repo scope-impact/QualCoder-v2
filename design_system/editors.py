@@ -4,14 +4,13 @@ Code editors, rich text editors, and related widgets
 """
 
 from typing import List, Optional
-from PyQt6.QtWidgets import (
+
+from .qt_compat import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
-    QFrame, QPlainTextEdit, QTextEdit, QScrollArea, QSizePolicy
-)
-from PyQt6.QtCore import Qt, pyqtSignal, QRect
-from PyQt6.QtGui import (
+    QFrame, QPlainTextEdit, QTextEdit, QScrollArea, QSizePolicy,
+    Qt, Signal, QRect,
     QFont, QTextCharFormat, QColor, QPainter, QTextFormat,
-    QSyntaxHighlighter, QTextDocument
+    QSyntaxHighlighter, QTextDocument,
 )
 
 from .tokens import SPACING, RADIUS, TYPOGRAPHY, ColorPalette, get_theme
@@ -27,7 +26,7 @@ class CodeEditor(QFrame):
         editor.code_changed.connect(self.on_change)
     """
 
-    code_changed = pyqtSignal(str)
+    code_changed = Signal(str)
 
     def __init__(
         self,
@@ -247,7 +246,7 @@ class RichTextEditor(QFrame):
         editor.content_changed.connect(self.on_change)
     """
 
-    content_changed = pyqtSignal(str)
+    content_changed = Signal(str)
 
     def __init__(
         self,
@@ -332,7 +331,7 @@ class EditorToolbar(QFrame):
         toolbar.format_clicked.connect(self.apply_format)
     """
 
-    format_clicked = pyqtSignal(str)
+    format_clicked = Signal(str)
 
     def __init__(self, colors: ColorPalette = None, parent=None):
         super().__init__(parent)
@@ -414,8 +413,8 @@ class MemoEditor(QFrame):
         memo.content_changed.connect(self.save_memo)
     """
 
-    content_changed = pyqtSignal(str)
-    save_clicked = pyqtSignal()
+    content_changed = Signal(str)
+    save_clicked = Signal()
 
     def __init__(
         self,

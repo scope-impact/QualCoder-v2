@@ -5,11 +5,10 @@ StoryPage component for displaying component stories with code examples
 import re
 from typing import List, Tuple
 
-from PyQt6.QtWidgets import (
+from ..qt_compat import (
     QFrame, QWidget, QVBoxLayout, QHBoxLayout,
-    QLabel, QScrollArea
+    QLabel, QScrollArea, Qt,
 )
-from PyQt6.QtCore import Qt
 
 from ..tokens import SPACING, RADIUS, TYPOGRAPHY, ColorPalette, get_theme
 

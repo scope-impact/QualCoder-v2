@@ -6,8 +6,7 @@ Shows the document content with header, stats, and selection capabilities.
 """
 
 from typing import List, Optional, Tuple
-from PyQt6.QtWidgets import QFrame, QVBoxLayout
-from PyQt6.QtCore import pyqtSignal
+from design_system.qt_compat import QFrame, QVBoxLayout, Signal
 
 from design_system import (
     ColorPalette, get_theme,
@@ -24,8 +23,8 @@ class TextEditorPanel(QFrame):
         code_applied(str, int, int): Emitted when a code is applied to selection
     """
 
-    text_selected = pyqtSignal(str, int, int)  # text, start, end
-    code_applied = pyqtSignal(str, int, int)   # code_id, start, end
+    text_selected = Signal(str, int, int)  # text, start, end
+    code_applied = Signal(str, int, int)   # code_id, start, end
 
     def __init__(self, colors: ColorPalette = None, parent=None):
         """

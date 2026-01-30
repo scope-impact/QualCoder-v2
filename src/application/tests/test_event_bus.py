@@ -4,7 +4,7 @@ import pytest
 import threading
 from dataclasses import dataclass
 from datetime import datetime
-from typing import List
+from typing import List, Any
 
 from src.application.event_bus import (
     EventBus,
@@ -17,8 +17,9 @@ from src.application.event_bus import (
 
 @dataclass(frozen=True)
 class TestEvent:
-    """Test event without event_type attribute."""
+    """Test event for testing."""
     data: str
+    event_type: str = "test.event"
 
 
 @dataclass(frozen=True)

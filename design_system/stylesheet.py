@@ -1,5 +1,5 @@
 """
-Stylesheet generator for PyQt6
+Stylesheet generator for PySide6
 Converts Material Design tokens to QSS (Qt Style Sheets)
 Based on mockups/css/material-theme.css
 """

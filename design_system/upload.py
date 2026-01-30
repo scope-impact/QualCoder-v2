@@ -4,11 +4,12 @@ File upload zones, drag-and-drop areas, and file type badges
 """
 
 from typing import List, Optional
-from PyQt6.QtWidgets import (
+
+from .qt_compat import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
-    QFrame, QProgressBar, QSizePolicy
+    QFrame, QProgressBar, QSizePolicy,
+    Qt, Signal,
 )
-from PyQt6.QtCore import Qt, pyqtSignal
 
 from .tokens import SPACING, RADIUS, TYPOGRAPHY, ColorPalette, get_theme
 
@@ -22,8 +23,8 @@ class DropZone(QFrame):
         drop.files_dropped.connect(self.handle_files)
     """
 
-    files_dropped = pyqtSignal(list)  # list of file paths
-    browse_clicked = pyqtSignal()
+    files_dropped = Signal(list)  # list of file paths
+    browse_clicked = Signal()
 
     def __init__(
         self,
@@ -241,7 +242,7 @@ class UploadProgress(QFrame):
         progress.cancel_clicked.connect(self.cancel_upload)
     """
 
-    cancel_clicked = pyqtSignal()
+    cancel_clicked = Signal()
 
     def __init__(
         self,
@@ -360,7 +361,7 @@ class UploadList(QFrame):
         list.add_file("audio.mp3", "5.2 MB")
     """
 
-    file_removed = pyqtSignal(str)  # filename
+    file_removed = Signal(str)  # filename
 
     def __init__(self, colors: ColorPalette = None, parent=None):
         super().__init__(parent)
@@ -411,8 +412,8 @@ class CompactDropZone(QFrame):
         drop.files_dropped.connect(self.handle_files)
     """
 
-    files_dropped = pyqtSignal(list)
-    browse_clicked = pyqtSignal()
+    files_dropped = Signal(list)
+    browse_clicked = Signal()
 
     def __init__(
         self,

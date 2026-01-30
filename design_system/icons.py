@@ -1,5 +1,5 @@
 """
-Material Icons support for PyQt6 using qtawesome.
+Material Icons support for PySide6 using qtawesome.
 
 This design system uses qtawesome for all icons. Use Material Design Icons 6
 with the 'mdi6.' prefix.
@@ -20,8 +20,8 @@ Usage:
 """
 
 import qtawesome as qta
-from PyQt6.QtWidgets import QLabel, QWidget, QHBoxLayout
-from PyQt6.QtCore import Qt
+
+from .qt_compat import QLabel, QWidget, QHBoxLayout, Qt
 
 from .tokens import ColorPalette, get_theme
 
