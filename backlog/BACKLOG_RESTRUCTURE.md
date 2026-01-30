@@ -51,6 +51,21 @@
 
 ## Feature Map (Skeleton)
 
+### F-000: Foundation (Architecture Setup)
+
+> Establishes the base architecture that enables all other features.
+> This is "done once" infrastructure - not user-facing, but enables everything.
+
+| Component | Purpose | Status |
+|-----------|---------|--------|
+| Event Bus | Pub/sub for domain events | Done |
+| Signal Bridge | Thread-safe domain → Qt signals | Done |
+| Design System | Reusable UI components | Done |
+| Result Type | Success/Failure pattern | Done |
+| Typed IDs | CodeId, SourceId, etc. | Done |
+
+---
+
 ### Core Features (What users DO)
 
 | ID | Feature | Researcher Actions | Agent Actions | Trust |
