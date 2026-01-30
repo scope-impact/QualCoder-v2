@@ -22,7 +22,7 @@ from PySide6.QtWidgets import (
 from PySide6.QtCore import Qt, Signal, QPropertyAnimation, QEasingCurve, Property
 from PySide6.QtGui import QColor
 
-from .tokens import SPACING, RADIUS, TYPOGRAPHY, GRADIENTS, SHADOWS, ANIMATION, ColorPalette, get_colors
+from .tokens import SPACING, RADIUS, TYPOGRAPHY, GRADIENTS, SHADOWS, ANIMATION, ColorPalette, get_colors, hex_to_rgba
 
 
 def _blend_color(color1: str, color2: str, ratio: float = 0.5) -> str:
@@ -521,11 +521,11 @@ class Badge(QLabel):
             "default": (colors.primary, colors.primary_foreground),
             "secondary": (colors.surface_light, colors.text_primary),
             "outline": ("transparent", colors.text_primary, colors.border),
-            "destructive": (f"rgba(244, 67, 54, 0.2)", colors.error),
-            "success": (f"rgba(76, 175, 80, 0.2)", colors.success),
-            "warning": (f"rgba(255, 152, 0, 0.2)", colors.warning),
-            "info": (f"rgba(33, 150, 243, 0.2)", colors.info),
-            "primary": (f"rgba(0, 150, 136, 0.2)", colors.primary),
+            "destructive": (hex_to_rgba(colors.error, 0.2), colors.error),
+            "success": (hex_to_rgba(colors.success, 0.2), colors.success),
+            "warning": (hex_to_rgba(colors.warning, 0.2), colors.warning),
+            "info": (hex_to_rgba(colors.info, 0.2), colors.info),
+            "primary": (hex_to_rgba(colors.primary, 0.2), colors.primary),
         }
 
         result = variants.get(variant, variants["default"])
@@ -732,11 +732,11 @@ class FileIcon(QFrame):
         self._file_type = file_type
 
         type_colors = {
-            "text": (colors.file_text, "rgba(59, 130, 246, 0.15)"),
-            "audio": (colors.file_audio, "rgba(139, 92, 246, 0.15)"),
-            "video": (colors.file_video, "rgba(236, 72, 153, 0.15)"),
-            "image": (colors.file_image, "rgba(16, 185, 129, 0.15)"),
-            "pdf": (colors.file_pdf, "rgba(245, 158, 11, 0.15)"),
+            "text": (colors.file_text, hex_to_rgba(colors.file_text, 0.15)),
+            "audio": (colors.file_audio, hex_to_rgba(colors.file_audio, 0.15)),
+            "video": (colors.file_video, hex_to_rgba(colors.file_video, 0.15)),
+            "image": (colors.file_image, hex_to_rgba(colors.file_image, 0.15)),
+            "pdf": (colors.file_pdf, hex_to_rgba(colors.file_pdf, 0.15)),
         }
 
         fg, bg = type_colors.get(file_type, type_colors["text"])

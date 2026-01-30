@@ -21,7 +21,7 @@ from PySide6.QtWidgets import (
 )
 from PySide6.QtCore import Qt, Signal
 
-from .tokens import SPACING, RADIUS, TYPOGRAPHY, ColorPalette, get_colors
+from .tokens import SPACING, RADIUS, TYPOGRAPHY, ColorPalette, get_colors, hex_to_rgba
 
 
 # =============================================================================
@@ -44,6 +44,7 @@ class TextColor:
     """
 
     # Colors that need white text for contrast
+    # Updated for Scholar's Desk palette
     DARK_COLORS = {
         "#EB7333", "#E65100", "#C54949", "#B71C1C", "#CB5E3C", "#BF360C",
         "#FA58F4", "#B76E95", "#9F3E72", "#880E4F", "#7D26CD", "#1B5E20",
@@ -51,6 +52,12 @@ class TextColor:
         "#3498DB", "#6D91C6", "#3D6CB3", "#0D47A1", "#5882FA", "#9651D7",
         "#673AB7", "#3F51B5", "#2196F3", "#4F46E5", "#00BCD4", "#4CAF50",
         "#8BC34A", "#795548", "#607D8B", "#9C27B0", "#E91E63", "#F44336",
+        # Scholar's Desk palette additions
+        "#1E3A5F", "#3B5998", "#152238",  # Prussian ink family
+        "#C84B31", "#9A3412",              # Vermilion family
+        "#2D6A4F", "#40916C",              # Forest green family
+        "#9B2226", "#AE2012",              # Carmine family
+        "#2A6F97", "#468FAF",              # Steel blue family
     }
 
     def __init__(self, hex_color: str):
@@ -653,7 +660,7 @@ class TranscriptSegment(QFrame):
         if self._highlighted:
             self.setStyleSheet(f"""
                 QFrame {{
-                    background-color: {self._colors.primary}26;
+                    background-color: {hex_to_rgba(self._colors.primary, 0.15)};
                     border-radius: {RADIUS.sm}px;
                 }}
             """)

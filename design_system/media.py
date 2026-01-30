@@ -41,7 +41,7 @@ class VideoContainer(QFrame):
 
         self.setStyleSheet(f"""
             QFrame {{
-                background-color: #000000;
+                background-color: {self._colors.text_primary};
                 border-radius: {RADIUS.md}px;
             }}
         """)

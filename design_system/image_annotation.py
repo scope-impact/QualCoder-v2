@@ -60,7 +60,7 @@ class ImageAnnotation:
     id: str
     annotation_type: str  # "rectangle", "polygon", "freehand"
     points: List[Tuple[float, float]]  # For rect: [(x, y, w, h)], for polygon: [(x1,y1), (x2,y2), ...]
-    color: str = "#4F46E5"
+    color: str = "#1E3A5F"  # Prussian ink (from tokens.COLORS_LIGHT.primary)
     label: str = ""
     code_id: Optional[str] = None
     metadata: Dict[str, Any] = field(default_factory=dict)
@@ -97,14 +97,14 @@ class ImageAnnotationLayer(QFrame):
     def __init__(
         self,
         show_toolbar: bool = True,
-        default_color: str = "#4F46E5",
+        default_color: str = None,
         colors: ColorPalette = None,
         parent=None
     ):
         super().__init__(parent)
         self._colors = colors or get_colors()
-        self._default_color = default_color
-        self._current_color = default_color
+        self._default_color = default_color or self._colors.primary
+        self._current_color = self._default_color
         self._mode = AnnotationMode.SELECT
         self._annotations: Dict[str, ImageAnnotation] = {}
         self._annotation_items: Dict[str, QGraphicsItem] = {}

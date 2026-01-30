@@ -5,6 +5,8 @@ These functions create mock DTOs for UI development without needing
 real data sources.
 """
 
+from design_system import get_colors
+
 from .dto import (
     FileDTO,
     CodeDTO,
@@ -21,6 +23,7 @@ from .dto import (
 
 def create_sample_text_coding_data() -> TextCodingDataDTO:
     """Create sample data for the text coding screen."""
+    colors = get_colors()
 
     files = [
         FileDTO(id="1", name="Blur - Girls & Boys.mp3.transcribed", file_type="text", meta="Text - 2.4 KB - 3 codes"),
@@ -34,26 +37,26 @@ def create_sample_text_coding_data() -> TextCodingDataDTO:
             id="cat1",
             name="Abilities",
             codes=[
-                CodeDTO(id="c1", name="soccer playing", color="#FFC107", count=3),
-                CodeDTO(id="c2", name="struggling", color="#F44336", count=5),
-                CodeDTO(id="c3", name="tactics", color="#9C27B0", count=2),
+                CodeDTO(id="c1", name="soccer playing", color=colors.code_yellow, count=3),
+                CodeDTO(id="c2", name="struggling", color=colors.code_red, count=5),
+                CodeDTO(id="c3", name="tactics", color=colors.code_purple, count=2),
             ]
         ),
         CodeCategoryDTO(
             id="cat2",
             name="Opinion of Club",
             codes=[
-                CodeDTO(id="c4", name="club development", color="#4CAF50", count=4),
-                CodeDTO(id="c5", name="facilities", color="#2196F3", count=1),
+                CodeDTO(id="c4", name="club development", color=colors.code_green, count=4),
+                CodeDTO(id="c5", name="facilities", color=colors.code_blue, count=1),
             ]
         ),
         CodeCategoryDTO(
             id="cat3",
             name="Motivation",
             codes=[
-                CodeDTO(id="c6", name="cost concerns", color="#E91E63", count=2),
-                CodeDTO(id="c7", name="learning enthusiasm", color="#00BCD4", count=6),
-                CodeDTO(id="c8", name="time pressure", color="#FF9800", count=3),
+                CodeDTO(id="c6", name="cost concerns", color=colors.code_pink, count=2),
+                CodeDTO(id="c7", name="learning enthusiasm", color=colors.code_cyan, count=6),
+                CodeDTO(id="c8", name="time pressure", color=colors.code_orange, count=3),
             ]
         ),
     ]
@@ -84,14 +87,14 @@ Overall, I am satisfied with the club's facilities and the quality of instructio
     selected_code = SelectedCodeDTO(
         id="c1",
         name="soccer playing",
-        color="#FFC107",
+        color=colors.code_yellow,
         memo="Code for references to playing soccer, including training, matches, and general participation in the sport.",
         example_text="I have not studied much before...",
     )
 
     overlapping_segments = [
-        OverlappingSegmentDTO(segment_label="Segment 1", colors=["#4CAF50", "#00BCD4"]),
-        OverlappingSegmentDTO(segment_label="Segment 2", colors=["#F44336", "#FF9800"]),
+        OverlappingSegmentDTO(segment_label="Segment 1", colors=[colors.code_green, colors.code_cyan]),
+        OverlappingSegmentDTO(segment_label="Segment 2", colors=[colors.code_red, colors.code_orange]),
     ]
 
     file_memo = FileMemoDTO(

@@ -15,7 +15,7 @@ from PySide6.QtWidgets import (
 )
 from PySide6.QtCore import Qt
 
-from design_system import get_theme, Button, Card, SPACING
+from design_system import get_colors, Button, Card, SPACING, RADIUS
 
 from .app_shell import AppShell
 from .layouts import SidebarLayout, ThreePanelLayout, SinglePanelLayout
@@ -25,13 +25,13 @@ from ..screens import TextCodingScreen
 def create_placeholder(text: str, color: str = None) -> QWidget:
     """Create a placeholder widget for testing"""
     widget = QWidget()
-    colors = get_theme("dark")
+    colors = get_colors()
 
     bg_color = color or colors.surface_light
     widget.setStyleSheet(f"""
         QWidget {{
             background-color: {bg_color};
-            border-radius: 8px;
+            border-radius: {RADIUS.md}px;
         }}
     """)
 
@@ -163,7 +163,7 @@ class DemoSinglePanelScreen:
 def main():
     app = QApplication(sys.argv)
 
-    colors = get_theme("dark")
+    colors = get_colors()
 
     # Create app shell
     shell = AppShell(colors=colors)

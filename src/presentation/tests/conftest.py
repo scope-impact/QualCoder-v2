@@ -22,15 +22,15 @@ def qapp():
 @pytest.fixture
 def colors():
     """Get dark theme colors"""
-    from design_system import get_theme
-    return get_theme("dark")
+    from design_system import get_colors
+    return get_colors()
 
 
 @pytest.fixture
 def light_colors():
     """Get light theme colors"""
-    from design_system import get_theme
-    return get_theme("light")
+    from design_system import get_colors
+    return get_colors()
 
 
 # Screenshot directory
@@ -79,13 +79,15 @@ def take_screenshot(screenshot_dir, request):
 @pytest.fixture
 def placeholder_widget(colors):
     """Create a simple placeholder widget for testing layouts"""
+    from design_system import RADIUS
+
     def _create(text: str = "Placeholder", min_height: int = 100):
         widget = QWidget()
         widget.setMinimumHeight(min_height)
         widget.setStyleSheet(f"""
             QWidget {{
                 background-color: {colors.surface_light};
-                border-radius: 4px;
+                border-radius: {RADIUS.xs}px;
             }}
         """)
         from PySide6.QtWidgets import QVBoxLayout

@@ -80,9 +80,9 @@ def create_lists_story(colors: ColorPalette) -> StoryPage:
 
     # Case list
     case_list = CaseList(colors=colors)
-    case_list.add_case("1", "Participant 01", "3 files", color="#4CAF50")
-    case_list.add_case("2", "Participant 02", "5 files", color="#2196F3")
-    case_list.add_case("3", "Participant 03", "2 files", color="#FF9800")
+    case_list.add_case("1", "Participant 01", "3 files", color=colors.code_green)
+    case_list.add_case("2", "Participant 02", "5 files", color=colors.code_blue)
+    case_list.add_case("3", "Participant 03", "2 files", color=colors.code_orange)
     case_list.setMaximumHeight(180)
     examples.append((
         "Case List",
@@ -156,21 +156,21 @@ def create_codetree_story(colors: ColorPalette) -> StoryPage:
     # Code tree
     tree = CodeTree(colors=colors)
     tree.set_items([
-        CodeItem("1", "Learning", "#FFC107", 24, children=[
-            CodeItem("1.1", "Formal Learning", "#FFC107", 12),
-            CodeItem("1.2", "Informal Learning", "#FFC107", 8),
+        CodeItem("1", "Learning", colors.code_yellow, 24, children=[
+            CodeItem("1.1", "Formal Learning", colors.code_yellow, 12),
+            CodeItem("1.2", "Informal Learning", colors.code_yellow, 8),
         ]),
-        CodeItem("2", "Experience", "#4CAF50", 18, children=[
-            CodeItem("2.1", "Work Experience", "#4CAF50", 10),
-            CodeItem("2.2", "Life Experience", "#4CAF50", 8),
+        CodeItem("2", "Experience", colors.code_green, 18, children=[
+            CodeItem("2.1", "Work Experience", colors.code_green, 10),
+            CodeItem("2.2", "Life Experience", colors.code_green, 8),
         ]),
-        CodeItem("3", "Emotions", "#E91E63", 15),
+        CodeItem("3", "Emotions", colors.code_pink, 15),
     ])
     tree.setMaximumHeight(250)
     examples.append((
         "Code Tree",
         tree,
-        'tree = CodeTree()\ntree.set_items([CodeItem("1", "Learning", "#FFC107", 24)])'
+        'tree = CodeTree()\ntree.set_items([CodeItem("1", "Learning", colors.code_yellow, 24)])'
     ))
 
     return StoryPage(

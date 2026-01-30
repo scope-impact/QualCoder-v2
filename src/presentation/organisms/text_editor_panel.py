@@ -10,7 +10,7 @@ from PySide6.QtWidgets import QFrame, QVBoxLayout
 from PySide6.QtCore import Signal
 
 from design_system import (
-    ColorPalette, get_theme,
+    ColorPalette, get_colors,
     TextPanel, SelectionPopup,
 )
 
@@ -36,7 +36,7 @@ class TextEditorPanel(QFrame):
             parent: Parent widget
         """
         super().__init__(parent)
-        self._colors = colors or get_theme("dark")
+        self._colors = colors or get_colors()
 
         self.setStyleSheet(f"""
             TextEditorPanel {{

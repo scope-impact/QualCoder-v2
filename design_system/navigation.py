@@ -19,7 +19,7 @@ from PySide6.QtWidgets import (
 )
 from PySide6.QtCore import Qt, Signal
 
-from .tokens import SPACING, RADIUS, TYPOGRAPHY, ColorPalette, get_colors
+from .tokens import SPACING, RADIUS, TYPOGRAPHY, ColorPalette, get_colors, hex_to_rgba
 
 
 class MenuItem(QPushButton):
@@ -382,7 +382,7 @@ class NavList(QScrollArea):
         if active:
             btn.setStyleSheet(f"""
                 QPushButton {{
-                    background-color: {self._colors.primary}1A;
+                    background-color: {hex_to_rgba(self._colors.primary, 0.10)};
                     color: {self._colors.primary};
                     border: none;
                     border-radius: {RADIUS.sm}px;
@@ -626,7 +626,7 @@ class MediaTypeSelector(QFrame):
             if is_selected:
                 btn.setStyleSheet(f"""
                     QFrame {{
-                        background-color: {self._colors.primary}1A;
+                        background-color: {hex_to_rgba(self._colors.primary, 0.10)};
                         border: 1px solid {self._colors.primary};
                         border-radius: {RADIUS.sm}px;
                     }}

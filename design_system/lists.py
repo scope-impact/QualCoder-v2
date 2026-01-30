@@ -30,7 +30,7 @@ from PySide6.QtCore import (
 
 import qtawesome as qta
 
-from .tokens import SPACING, RADIUS, TYPOGRAPHY, ANIMATION, ColorPalette, get_colors
+from .tokens import SPACING, RADIUS, TYPOGRAPHY, ANIMATION, ColorPalette, get_colors, hex_to_rgba
 
 
 class AnimatedListItemMixin:
@@ -68,6 +68,13 @@ class AnimatedListItemMixin:
 
     def _start_entrance_animation(self):
         """Start the entrance animation."""
+        # Safety check: ensure widget and effect still exist
+        try:
+            if not self._opacity_effect or not self.isVisible():
+                return
+        except RuntimeError:
+            # Widget was already deleted
+            return
         # Fade in animation
         self._fade_anim = QPropertyAnimation(self._opacity_effect, b"opacity")
         self._fade_anim.setDuration(ANIMATION.duration_normal)  # 200ms
@@ -281,7 +288,7 @@ class FileListItem(QFrame, AnimatedListItemMixin):
 
         icon_frame = QFrame()
         icon_frame.setFixedSize(36, 36)
-        icon_frame.setStyleSheet(f"background-color: {color}20; border-radius: {RADIUS.sm}px;")
+        icon_frame.setStyleSheet(f"background-color: {hex_to_rgba(color, 0.13)}; border-radius: {RADIUS.sm}px;")
         icon_layout = QVBoxLayout(icon_frame)
         icon_layout.setContentsMargins(0, 0, 0, 0)
         icon_label = QLabel()
@@ -307,9 +314,9 @@ class FileListItem(QFrame, AnimatedListItemMixin):
         if status:
             badge = QLabel(status)
             badge_colors = {
-                "coded": (self._colors.success, f"rgba(76, 175, 80, 0.2)"),
+                "coded": (self._colors.success, hex_to_rgba(self._colors.success, 0.2)),
                 "pending": (self._colors.text_secondary, self._colors.surface_light),
-                "in_progress": (self._colors.warning, f"rgba(255, 152, 0, 0.2)"),
+                "in_progress": (self._colors.warning, hex_to_rgba(self._colors.warning, 0.2)),
             }
             fg, bg = badge_colors.get(status.lower().replace(" ", "_"), badge_colors["pending"])
             badge.setStyleSheet(f"""

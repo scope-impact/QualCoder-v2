@@ -8,6 +8,8 @@ specific to the QualCoder application (not part of the generic design system).
 import pytest
 from PySide6.QtCore import Qt
 
+from design_system import get_colors
+
 from src.presentation.organisms.text_highlighter import (
     TextHighlighter,
     CodeSegment,
@@ -17,6 +19,9 @@ from src.presentation.organisms.text_highlighter import (
     AnnotationIndicator,
 )
 
+# Get design system colors for test data
+_colors = get_colors()
+
 
 class TestCodeSegment:
     """Tests for CodeSegment dataclass"""
@@ -25,7 +30,7 @@ class TestCodeSegment:
         """CodeSegment should have sensible defaults"""
         segment = CodeSegment()
         assert segment.segment_id == ""
-        assert segment.code_color == "#777777"
+        assert segment.code_color == ""  # Empty default, UI uses design system fallback
         assert segment.pos0 == 0
         assert segment.pos1 == 0
         assert segment.important is False
@@ -36,7 +41,7 @@ class TestCodeSegment:
             segment_id="seg-1",
             code_id=101,
             code_name="Learning",
-            code_color="#FFC107",
+            code_color=_colors.code_yellow,
             pos0=10,
             pos1=25,
             text="important passage",
@@ -47,7 +52,7 @@ class TestCodeSegment:
         assert segment.segment_id == "seg-1"
         assert segment.code_id == 101
         assert segment.code_name == "Learning"
-        assert segment.code_color == "#FFC107"
+        assert segment.code_color == _colors.code_yellow
         assert segment.pos0 == 10
         assert segment.pos1 == 25
         assert segment.important is True
@@ -87,7 +92,7 @@ class TestTextHighlighter:
 
         segment = CodeSegment(
             segment_id="1",
-            code_color="#FFC107",
+            code_color=_colors.code_yellow,
             pos0=0,
             pos1=5
         )
@@ -142,7 +147,7 @@ class TestTextHighlighter:
         highlighter.set_text("Hello World Test Document")
         highlighter.add_segment(CodeSegment(
             segment_id="1",
-            code_color="#FFC107",
+            code_color=_colors.code_yellow,
             pos0=0,
             pos1=5
         ))
@@ -156,7 +161,7 @@ class TestTextHighlighter:
         qtbot.addWidget(highlighter)
 
         highlighter.set_text("Hello World")
-        highlighter.add_segment(CodeSegment(pos0=0, pos1=5, code_color="#FFC107"))
+        highlighter.add_segment(CodeSegment(pos0=0, pos1=5, code_color=_colors.code_yellow))
         highlighter.highlight()
 
         # Should not raise
@@ -293,7 +298,7 @@ class TestCodedTextHighlight:
         highlight = CodedTextHighlight(
             text="Test text",
             code_name="Test Code",
-            code_color="#FFC107"
+            code_color=_colors.code_yellow
         )
         qtbot.addWidget(highlight)
         assert highlight is not None
@@ -302,7 +307,7 @@ class TestCodedTextHighlight:
         """CodedTextHighlight should support inline mode"""
         highlight = CodedTextHighlight(
             text="Inline text",
-            code_color="#FFC107",
+            code_color=_colors.code_yellow,
             inline=True
         )
         qtbot.addWidget(highlight)
@@ -313,7 +318,7 @@ class TestCodedTextHighlight:
         highlight = CodedTextHighlight(
             text="Overlapping text",
             code_name="Test",
-            code_color="#FFC107",
+            code_color=_colors.code_yellow,
             overlap_count=3
         )
         qtbot.addWidget(highlight)

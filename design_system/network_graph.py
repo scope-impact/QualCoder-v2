@@ -418,7 +418,7 @@ class NodeItem(QGraphicsItem):
         node_id: str,
         label: str,
         size: int = 30,
-        color: str = "#4F46E5",
+        color: str = None,
         colors: ColorPalette = None,
         interactive: bool = True,
         parent=None
@@ -428,7 +428,7 @@ class NodeItem(QGraphicsItem):
         self._node_id = node_id
         self._label = label
         self._size = size
-        self._color = color
+        self._color = color or self._colors.primary
         self._interactive = interactive
         self._highlighted = False
         self._hovered = False

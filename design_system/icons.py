@@ -9,9 +9,12 @@ Browse available icons: https://pictogrammers.com/library/mdi/
 Usage:
     from design_system import Icon
 
-    # Use any mdi6 icon name
-    icon = Icon("mdi6.folder", size=20, color="#4F46E5")
+    # Use any mdi6 icon name (color defaults to theme's text_secondary)
+    icon = Icon("mdi6.folder", size=20)
     layout.addWidget(icon)
+
+    # Or specify color from theme
+    icon = Icon("mdi6.folder", size=20, color=colors.primary)
 
     # Common icons:
     # mdi6.folder, mdi6.file-document, mdi6.code-tags
@@ -38,7 +41,7 @@ class Icon(QLabel):
         colors: ColorPalette for theming
 
     Usage:
-        icon = Icon("mdi6.code-tags", size=24, color="#4F46E5")
+        icon = Icon("mdi6.code-tags", size=24, color=colors.primary)
         icon = Icon("mdi6.folder")  # Uses default size and theme color
     """
 

@@ -14,7 +14,7 @@ from PySide6.QtWidgets import (
 )
 from PySide6.QtCore import Qt
 
-from ..tokens import SPACING, RADIUS, TYPOGRAPHY, ColorPalette, get_theme
+from ..tokens import SPACING, RADIUS, TYPOGRAPHY, ColorPalette, get_theme, hex_to_rgba
 
 
 class StorybookSidebar(QFrame):
@@ -120,7 +120,7 @@ class StorybookSidebar(QFrame):
         if active:
             btn.setStyleSheet(f"""
                 QPushButton {{
-                    background-color: {self._colors.primary}26;
+                    background-color: {hex_to_rgba(self._colors.primary, 0.15)};
                     color: {self._colors.primary};
                     border: none;
                     border-radius: {RADIUS.sm}px;

@@ -102,7 +102,7 @@ class Toggle(QWidget):
         painter.drawPath(track_path)
 
         # Draw handle
-        painter.setBrush(QColor("#FFFFFF"))
+        painter.setBrush(QColor(self._colors.surface))
         handle_path = QPainterPath()
         handle_path.addEllipse(self._handle_position, 2, 20, 20)
         painter.drawPath(handle_path)

@@ -18,7 +18,7 @@ from PySide6.QtWidgets import (
 )
 from PySide6.QtCore import Qt, Signal
 
-from .tokens import SPACING, RADIUS, TYPOGRAPHY, ColorPalette, get_colors
+from .tokens import SPACING, RADIUS, TYPOGRAPHY, ColorPalette, get_colors, hex_to_rgba
 
 
 class CalendarMini(QFrame):
@@ -201,20 +201,20 @@ class CalendarDay(QPushButton):
                     font-weight: {TYPOGRAPHY.weight_medium};
                 }}
                 QPushButton:hover {{
-                    background-color: {self._colors.primary}26;
+                    background-color: {hex_to_rgba(self._colors.primary, 0.15)};
                 }}
             """)
         elif is_highlighted:
             self.setStyleSheet(f"""
                 QPushButton {{
-                    background-color: {self._colors.primary}26;
+                    background-color: {hex_to_rgba(self._colors.primary, 0.15)};
                     color: {self._colors.text_primary if is_current_month else self._colors.text_disabled};
                     border: none;
                     border-radius: 16px;
                     font-size: {TYPOGRAPHY.text_sm}px;
                 }}
                 QPushButton:hover {{
-                    background-color: {self._colors.primary}40;
+                    background-color: {hex_to_rgba(self._colors.primary, 0.25)};
                 }}
             """)
         else:

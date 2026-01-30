@@ -179,7 +179,7 @@ class LoadingOverlay(QWidget):
 
         self.setStyleSheet(f"""
             QWidget {{
-                background-color: rgba(0, 0, 0, 0.5);
+                background-color: {self._colors.overlay_dark};
             }}
         """)
 

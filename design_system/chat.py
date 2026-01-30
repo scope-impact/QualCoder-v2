@@ -18,7 +18,7 @@ from PySide6.QtWidgets import (
 )
 from PySide6.QtCore import QTimer, Qt, Signal
 
-from .tokens import SPACING, RADIUS, TYPOGRAPHY, ColorPalette, get_colors
+from .tokens import SPACING, RADIUS, TYPOGRAPHY, ColorPalette, get_colors, hex_to_rgba
 
 
 class MessageBubble(QFrame):
@@ -91,7 +91,7 @@ class MessageBubble(QFrame):
         if timestamp:
             ts = QLabel(timestamp)
             ts.setStyleSheet(f"""
-                color: {"rgba(255,255,255,0.7)" if is_user else self._colors.text_secondary};
+                color: {hex_to_rgba(self._colors.primary_foreground, 0.70) if is_user else self._colors.text_secondary};
                 font-size: {TYPOGRAPHY.text_xs}px;
             """)
             ts.setAlignment(Qt.AlignmentFlag.AlignRight)

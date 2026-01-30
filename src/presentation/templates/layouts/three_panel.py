@@ -23,7 +23,7 @@ from PySide6.QtWidgets import (
 )
 from PySide6.QtCore import Qt
 
-from design_system import ColorPalette, get_theme
+from design_system import ColorPalette, get_colors
 
 
 class ThreePanelLayout(QWidget):
@@ -58,7 +58,7 @@ class ThreePanelLayout(QWidget):
         parent=None
     ):
         super().__init__(parent)
-        self._colors = colors or get_theme("dark")
+        self._colors = colors or get_colors()
         self._left_width = left_width
         self._right_width = right_width
         self._left_min = left_min

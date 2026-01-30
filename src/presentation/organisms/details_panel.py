@@ -20,7 +20,7 @@ from PySide6.QtWidgets import (
 from PySide6.QtCore import Qt, Signal
 
 from design_system import (
-    ColorPalette, get_theme, SPACING, RADIUS, TYPOGRAPHY,
+    ColorPalette, get_colors, SPACING, RADIUS, TYPOGRAPHY,
     Icon, Button, InfoCard, CodeDetailCard, ProgressBar,
 )
 
@@ -46,7 +46,7 @@ class DetailsPanel(QFrame):
             parent: Parent widget
         """
         super().__init__(parent)
-        self._colors = colors or get_theme("dark")
+        self._colors = colors or get_colors()
 
         self.setStyleSheet(f"""
             DetailsPanel {{
@@ -63,7 +63,7 @@ class DetailsPanel(QFrame):
         scroll = QScrollArea()
         scroll.setWidgetResizable(True)
         scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
-        scroll.setStyleSheet("QScrollArea { background: transparent; border: none; }")
+        scroll.setStyleSheet(f"QScrollArea {{ background: {self._colors.transparent}; border: none; }}")
 
         container = QWidget()
         container_layout = QVBoxLayout(container)
@@ -77,7 +77,7 @@ class DetailsPanel(QFrame):
             colors=self._colors,
         )
         self._code_detail = CodeDetailCard(
-            color="#808080",
+            color=self._colors.text_disabled,
             name="No code selected",
             memo="Select a code from the tree to see details.",
             colors=self._colors,
@@ -127,7 +127,7 @@ class DetailsPanel(QFrame):
             segments: List of (segment_text, [color1, color2, ...]) tuples
         """
         widget = QFrame()
-        widget.setStyleSheet("background: transparent;")
+        widget.setStyleSheet(f"background: {self._colors.transparent};")
         layout = QVBoxLayout(widget)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(SPACING.sm)
@@ -152,7 +152,7 @@ class DetailsPanel(QFrame):
         warning_layout.setContentsMargins(SPACING.md, SPACING.sm, SPACING.md, SPACING.sm)
         warning_layout.setSpacing(SPACING.sm)
 
-        icon = Icon("mdi6.information", size=16, color="#FF9800", colors=self._colors)
+        icon = Icon("mdi6.information", size=16, color=self._colors.warning, colors=self._colors)
         warning_layout.addWidget(icon)
 
         label = QLabel(f"{len(segments)} segments have multiple codes")
@@ -200,7 +200,7 @@ class DetailsPanel(QFrame):
             progress: Coding progress percentage (0-100)
         """
         widget = QFrame()
-        widget.setStyleSheet("background: transparent;")
+        widget.setStyleSheet(f"background: {self._colors.transparent};")
         layout = QVBoxLayout(widget)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(SPACING.sm)
@@ -233,7 +233,7 @@ class DetailsPanel(QFrame):
     def _create_ai_content(self) -> QWidget:
         """Create the AI assistant content."""
         widget = QFrame()
-        widget.setStyleSheet("background: transparent;")
+        widget.setStyleSheet(f"background: {self._colors.transparent};")
         layout = QVBoxLayout(widget)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(SPACING.sm)

@@ -171,8 +171,8 @@ class TestCodesPanel:
             {
                 "name": "Category A",
                 "codes": [
-                    {"name": "code1", "color": "#FF0000", "count": 3},
-                    {"name": "code2", "color": "#00FF00", "count": 5},
+                    {"name": "code1", "color": colors.code_red, "count": 3},
+                    {"name": "code2", "color": colors.code_green, "count": 5},
                 ]
             }
         ]
@@ -214,15 +214,15 @@ class TestCodesPanel:
             {
                 "name": "Abilities",
                 "codes": [
-                    {"name": "soccer playing", "color": "#FFC107", "count": 3},
-                    {"name": "struggling", "color": "#F44336", "count": 5},
+                    {"name": "soccer playing", "color": colors.code_yellow, "count": 3},
+                    {"name": "struggling", "color": colors.code_red, "count": 5},
                 ]
             },
             {
                 "name": "Motivation",
                 "codes": [
-                    {"name": "cost concerns", "color": "#E91E63", "count": 2},
-                    {"name": "enthusiasm", "color": "#00BCD4", "count": 6},
+                    {"name": "cost concerns", "color": colors.code_pink, "count": 2},
+                    {"name": "enthusiasm", "color": colors.code_cyan, "count": 6},
                 ]
             },
         ])
@@ -329,7 +329,7 @@ class TestDetailsPanel:
 
         panel = DetailsPanel(colors=colors)
         panel.set_selected_code(
-            "#FF5722",
+            colors.code_orange,
             "test code",
             "This is a test code memo",
             "Example text here"
@@ -343,8 +343,8 @@ class TestDetailsPanel:
 
         panel = DetailsPanel(colors=colors)
         panel.set_overlapping_codes([
-            ("Segment 1", ["#FF0000", "#00FF00"]),
-            ("Segment 2", ["#0000FF", "#FFFF00"]),
+            ("Segment 1", [colors.code_red, colors.code_green]),
+            ("Segment 2", [colors.code_blue, colors.code_yellow]),
         ])
 
         assert panel._overlap_content is not None
@@ -378,13 +378,13 @@ class TestDetailsPanel:
 
         panel = DetailsPanel(colors=colors)
         panel.set_selected_code(
-            "#FFC107",
+            colors.code_yellow,
             "soccer playing",
             "Code for references to playing soccer.",
             "I have been playing..."
         )
         panel.set_overlapping_codes([
-            ("Segment 1", ["#4CAF50", "#00BCD4"]),
+            ("Segment 1", [colors.code_green, colors.code_cyan]),
         ])
         panel.set_file_memo("Interview transcript about course experience.", 65)
         panel.setFixedSize(300, 600)
@@ -443,7 +443,7 @@ class TestTextCodingPage:
         page.set_codes([
             {
                 "name": "Category",
-                "codes": [{"name": "code1", "color": "#FF0000", "count": 1}]
+                "codes": [{"name": "code1", "color": colors.code_red, "count": 1}]
             }
         ])
 
@@ -516,15 +516,15 @@ class TestTextCodingPage:
             {
                 "name": "Abilities",
                 "codes": [
-                    {"name": "soccer playing", "color": "#FFC107", "count": 3},
-                    {"name": "struggling", "color": "#F44336", "count": 5},
+                    {"name": "soccer playing", "color": colors.code_yellow, "count": 3},
+                    {"name": "struggling", "color": colors.code_red, "count": 5},
                 ]
             },
             {
                 "name": "Motivation",
                 "codes": [
-                    {"name": "cost concerns", "color": "#E91E63", "count": 2},
-                    {"name": "enthusiasm", "color": "#00BCD4", "count": 6},
+                    {"name": "cost concerns", "color": colors.code_pink, "count": 2},
+                    {"name": "enthusiasm", "color": colors.code_cyan, "count": 6},
                 ]
             },
         ])
@@ -542,13 +542,13 @@ class TestTextCodingPage:
         ])
 
         page.set_selected_code(
-            "#FFC107",
+            colors.code_yellow,
             "soccer playing",
             "Code for soccer references.",
         )
 
         page.set_overlapping_codes([
-            ("Segment 1", ["#4CAF50", "#00BCD4"]),
+            ("Segment 1", [colors.code_green, colors.code_cyan]),
         ])
 
         page.set_file_memo("Interview transcript.", 65)
@@ -674,16 +674,16 @@ class TestTextCodingScreen:
 
         screen = TextCodingScreen(colors=colors)
 
-        # Should start as False
-        assert not getattr(screen, '_show_annotations', False)
-
-        # Toggle on
-        screen._on_action("annotations")
+        # Should start as True (annotations shown by default)
         assert screen._show_annotations == True
 
         # Toggle off
         screen._on_action("annotations")
         assert screen._show_annotations == False
+
+        # Toggle on
+        screen._on_action("annotations")
+        assert screen._show_annotations == True
 
 
 # =============================================================================
@@ -733,12 +733,14 @@ class TestActionHandlers:
 
         screen = TextCodingScreen(colors=colors)
 
+        # Annotations start as True (shown by default)
         states = []
         for _ in range(4):
             screen._on_action("annotations")
             states.append(screen._show_annotations)
 
-        assert states == [True, False, True, False]
+        # Starting from True, toggling gives: False, True, False, True
+        assert states == [False, True, False, True]
 
     def test_action_prev_at_start(self, qapp, colors):
         """Test prev action at start of file list does nothing."""

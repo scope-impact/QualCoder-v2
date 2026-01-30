@@ -23,7 +23,7 @@ from typing import List, Dict, Any, Optional
 from PySide6.QtWidgets import QFrame, QVBoxLayout, QWidget
 from PySide6.QtCore import Signal
 
-from design_system import ColorPalette, get_theme
+from design_system import ColorPalette, get_colors
 
 from ..templates import ThreePanelLayout
 from ..organisms import (
@@ -75,7 +75,7 @@ class TextCodingPage(QWidget):
             parent: Parent widget
         """
         super().__init__(parent)
-        self._colors = colors or get_theme("dark")
+        self._colors = colors or get_colors()
         self._coders = coders or ["default"]
         self._selected_coder = selected_coder
 
@@ -101,7 +101,7 @@ class TextCodingPage(QWidget):
 
         # Left panel - Files + Codes (stacked)
         left_container = QFrame()
-        left_container.setStyleSheet("background: transparent;")
+        left_container.setStyleSheet(f"background: {self._colors.transparent};")
         left_layout = QVBoxLayout(left_container)
         left_layout.setContentsMargins(0, 0, 0, 0)
         left_layout.setSpacing(0)
@@ -268,7 +268,7 @@ def main():
 
     app = QApplication(sys.argv)
 
-    colors = get_theme("dark")
+    colors = get_colors()
 
     window = QMainWindow()
     window.setWindowTitle("Text Coding Page Demo")
@@ -294,24 +294,24 @@ def main():
         {
             "name": "Abilities",
             "codes": [
-                {"name": "soccer playing", "color": "#FFC107", "count": 3},
-                {"name": "struggling", "color": "#F44336", "count": 5},
-                {"name": "tactics", "color": "#9C27B0", "count": 2},
+                {"name": "soccer playing", "color": colors.code_yellow, "count": 3},
+                {"name": "struggling", "color": colors.code_red, "count": 5},
+                {"name": "tactics", "color": colors.code_purple, "count": 2},
             ]
         },
         {
             "name": "Opinion of Club",
             "codes": [
-                {"name": "club development", "color": "#4CAF50", "count": 4},
-                {"name": "facilities", "color": "#2196F3", "count": 1},
+                {"name": "club development", "color": colors.code_green, "count": 4},
+                {"name": "facilities", "color": colors.code_blue, "count": 1},
             ]
         },
         {
             "name": "Motivation",
             "codes": [
-                {"name": "cost concerns", "color": "#E91E63", "count": 2},
-                {"name": "learning enthusiasm", "color": "#00BCD4", "count": 6},
-                {"name": "time pressure", "color": "#FF9800", "count": 3},
+                {"name": "cost concerns", "color": colors.code_pink, "count": 2},
+                {"name": "learning enthusiasm", "color": colors.code_cyan, "count": 6},
+                {"name": "time pressure", "color": colors.code_orange, "count": 3},
             ]
         },
     ])
@@ -336,15 +336,15 @@ Overall, I am satisfied with the club's facilities and the quality of instructio
     ])
 
     page.set_selected_code(
-        "#FFC107",
+        colors.code_yellow,
         "soccer playing",
         "Code for references to playing soccer, including training, matches, and general participation in the sport.",
         "I have not studied much before..."
     )
 
     page.set_overlapping_codes([
-        ("Segment 1", ["#4CAF50", "#00BCD4"]),
-        ("Segment 2", ["#F44336", "#FF9800"]),
+        ("Segment 1", [colors.code_green, colors.code_cyan]),
+        ("Segment 2", [colors.code_red, colors.code_orange]),
     ])
 
     page.set_file_memo(

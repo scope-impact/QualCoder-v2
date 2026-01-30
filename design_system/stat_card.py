@@ -183,7 +183,8 @@ class MiniStatCard(QFrame):
     Compact stat card for inline display.
 
     Usage:
-        stat = MiniStatCard("24", "codes", color="#4F46E5")
+        stat = MiniStatCard("24", "codes")  # Uses theme primary color
+        stat = MiniStatCard("24", "codes", color=colors.secondary)
     """
 
     def __init__(

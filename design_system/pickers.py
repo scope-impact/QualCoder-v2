@@ -19,7 +19,7 @@ from PySide6.QtWidgets import (
 )
 from PySide6.QtCore import Qt, Signal
 
-from .tokens import SPACING, RADIUS, TYPOGRAPHY, ColorPalette, get_colors
+from .tokens import SPACING, RADIUS, TYPOGRAPHY, ColorPalette, get_colors, hex_to_rgba
 
 
 class TypeSelector(QFrame):
@@ -180,7 +180,7 @@ class TypeOptionCard(QFrame):
         if self._selected:
             self.setStyleSheet(f"""
                 QFrame {{
-                    background-color: {self._colors.primary}15;
+                    background-color: {hex_to_rgba(self._colors.primary, 0.08)};
                     border: 2px solid {self._colors.primary};
                     border-radius: {RADIUS.lg}px;
                 }}
@@ -213,8 +213,8 @@ class ColorSchemeSelector(QFrame):
 
     Usage:
         selector = ColorSchemeSelector()
-        selector.add_scheme("warm", ["#FF5722", "#FFC107", "#FF9800"])
-        selector.add_scheme("cool", ["#2196F3", "#00BCD4", "#4F46E5"])
+        selector.add_scheme("warm", ["#C84B31", "#E9C46A", "#E76F51"])  # Vermilion palette
+        selector.add_scheme("cool", ["#2A6F97", "#468FAF", "#1E3A5F"])  # Prussian ink palette
         selector.scheme_changed.connect(self.apply_scheme)
     """
 
@@ -566,7 +566,7 @@ class RadioCard(QFrame):
         if self._selected:
             self.setStyleSheet(f"""
                 QFrame {{
-                    background-color: {self._colors.primary}15;
+                    background-color: {hex_to_rgba(self._colors.primary, 0.08)};
                     border: 2px solid {self._colors.primary};
                     border-radius: {RADIUS.md}px;
                 }}

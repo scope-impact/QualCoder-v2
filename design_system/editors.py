@@ -28,7 +28,7 @@ from PySide6.QtGui import (
     QTextFormat,
 )
 
-from .tokens import SPACING, RADIUS, TYPOGRAPHY, ColorPalette, get_colors
+from .tokens import SPACING, RADIUS, TYPOGRAPHY, ColorPalette, get_colors, hex_to_rgba
 
 
 class CodeEditor(QFrame):
@@ -82,7 +82,7 @@ class CodeEditor(QFrame):
                 color: {self._colors.text_primary};
                 border: none;
                 padding: {SPACING.sm}px;
-                selection-background-color: {self._colors.primary}40;
+                selection-background-color: {hex_to_rgba(self._colors.primary, 0.25)};
             }}
         """)
         self._editor.textChanged.connect(lambda: self.code_changed.emit(self._editor.toPlainText()))
@@ -412,7 +412,7 @@ class EditorToolbar(QFrame):
                 background-color: {self._colors.surface_lighter};
             }}
             QPushButton:pressed {{
-                background-color: {self._colors.primary}26;
+                background-color: {hex_to_rgba(self._colors.primary, 0.15)};
             }}
         """)
         btn.clicked.connect(lambda: self.format_clicked.emit(action))

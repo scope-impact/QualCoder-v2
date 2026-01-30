@@ -6,17 +6,12 @@ Includes a header with add/search/expand actions, and navigation buttons.
 """
 
 from typing import List, Dict, Any
-from PySide6.QtWidgets import (
-    QFrame,
-    QHBoxLayout,
-    QLabel,
-    QVBoxLayout,
-)
+from PySide6.QtWidgets import QFrame, QHBoxLayout, QVBoxLayout
 from PySide6.QtCore import Qt, Signal
 
 from design_system import (
-    ColorPalette, get_theme, SPACING, RADIUS, TYPOGRAPHY,
-    Icon, CodeTree, CodeItem,
+    ColorPalette, get_colors, SPACING, RADIUS,
+    Icon, CodeTree, CodeItem, PanelHeader,
 )
 
 
@@ -41,11 +36,12 @@ class CodesPanel(QFrame):
             parent: Parent widget
         """
         super().__init__(parent)
-        self._colors = colors or get_theme("dark")
+        self._colors = colors or get_colors()
+        self._selected_code: Dict[str, Any] = {}
 
         self.setStyleSheet(f"""
             CodesPanel {{
-                background: transparent;
+                background: {self._colors.transparent};
                 border-top: 1px solid {self._colors.border};
             }}
         """)
@@ -55,11 +51,10 @@ class CodesPanel(QFrame):
         layout.setSpacing(0)
 
         # Header
-        header = self._create_header("Codes", "mdi6.label", [
-            ("mdi6.plus", "Add code"),
-            ("mdi6.magnify", "Search codes"),
-            ("mdi6.unfold-more-horizontal", "Expand all"),
-        ])
+        header = PanelHeader("Codes", icon="mdi6.label", colors=self._colors)
+        header.add_action("mdi6.plus", tooltip="Add code")
+        header.add_action("mdi6.magnify", tooltip="Search codes")
+        header.add_action("mdi6.unfold-more-horizontal", tooltip="Expand all")
         layout.addWidget(header)
 
         # Code tree
@@ -70,57 +65,6 @@ class CodesPanel(QFrame):
         # Navigation buttons
         nav = self._create_navigation()
         layout.addWidget(nav)
-
-    def _create_header(self, title: str, icon_name: str, actions: List[tuple]) -> QFrame:
-        """Create a panel header with icon and actions."""
-        header = QFrame()
-        header.setStyleSheet(f"""
-            QFrame {{
-                background-color: {self._colors.surface_light};
-                border-bottom: 1px solid {self._colors.border};
-            }}
-        """)
-
-        h_layout = QHBoxLayout(header)
-        h_layout.setContentsMargins(SPACING.lg, SPACING.md, SPACING.lg, SPACING.md)
-        h_layout.setSpacing(SPACING.sm)
-
-        # Icon
-        icon = Icon(icon_name, size=16, color=self._colors.primary, colors=self._colors)
-        h_layout.addWidget(icon)
-
-        # Title
-        title_label = QLabel(title)
-        title_label.setStyleSheet(f"""
-            font-size: {TYPOGRAPHY.text_sm}px;
-            font-weight: {TYPOGRAPHY.weight_medium};
-            color: {self._colors.text_primary};
-        """)
-        h_layout.addWidget(title_label)
-        h_layout.addStretch()
-
-        # Actions
-        for action_icon, tooltip in actions:
-            btn = QFrame()
-            btn.setFixedSize(24, 24)
-            btn.setCursor(Qt.CursorShape.PointingHandCursor)
-            btn.setToolTip(tooltip)
-            btn.setStyleSheet(f"""
-                QFrame {{
-                    background-color: transparent;
-                    border-radius: {RADIUS.xs}px;
-                }}
-                QFrame:hover {{
-                    background-color: {self._colors.surface_lighter};
-                }}
-            """)
-            btn_layout = QHBoxLayout(btn)
-            btn_layout.setContentsMargins(0, 0, 0, 0)
-            action_i = Icon(action_icon, size=14, color=self._colors.text_secondary, colors=self._colors)
-            btn_layout.addWidget(action_i, alignment=Qt.AlignmentFlag.AlignCenter)
-            h_layout.addWidget(btn)
-
-        return header
 
     def _create_navigation(self) -> QFrame:
         """Create the navigation buttons bar."""
@@ -173,19 +117,31 @@ class CodesPanel(QFrame):
                     - color: Code color hex string
                     - count (optional): Number of instances
         """
+        if not categories:
+            self._code_tree.set_items([])
+            return
+
         items = []
         for cat in categories:
+            if not isinstance(cat, dict):
+                continue
+            cat_name = cat.get("name", "Unnamed")
             children = []
             for code in cat.get("codes", []):
+                if not isinstance(code, dict):
+                    continue
+                code_name = code.get("name", "")
+                if not code_name:
+                    continue
                 children.append(CodeItem(
-                    id=code["name"],
-                    name=code["name"],
-                    color=code["color"],
+                    id=code_name,
+                    name=code_name,
+                    color=code.get("color", self._colors.fallback_code_color),
                     count=code.get("count", 0),
                 ))
             items.append(CodeItem(
-                id=cat["name"],
-                name=cat["name"],
+                id=cat_name,
+                name=cat_name,
                 color=self._colors.text_secondary,
                 count=len(children),
                 children=children,
@@ -194,12 +150,12 @@ class CodesPanel(QFrame):
 
     def _on_code_click(self, code_id: str):
         """Handle code click event."""
-        self.code_selected.emit({"id": code_id})
+        self._selected_code = {"id": code_id}
+        self.code_selected.emit(self._selected_code)
 
     def get_selected_code(self) -> Dict[str, Any]:
         """Get the currently selected code data."""
-        # TODO: Implement selection tracking in CodeTree
-        return {}
+        return self._selected_code.copy() if self._selected_code else {}
 
     def expand_all(self):
         """Expand all code tree nodes."""

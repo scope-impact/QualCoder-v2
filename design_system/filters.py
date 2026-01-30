@@ -21,7 +21,7 @@ from PySide6.QtWidgets import (
 )
 from PySide6.QtCore import Qt, Signal
 
-from .tokens import SPACING, RADIUS, TYPOGRAPHY, ColorPalette, get_colors
+from .tokens import SPACING, RADIUS, TYPOGRAPHY, ColorPalette, get_colors, hex_to_rgba
 
 
 class FilterPanel(QFrame):
@@ -245,7 +245,7 @@ class FilterChip(QFrame):
         self.setCursor(Qt.CursorShape.PointingHandCursor)
         self.setStyleSheet(f"""
             QFrame {{
-                background-color: {self._colors.primary}26;
+                background-color: {hex_to_rgba(self._colors.primary, 0.15)};
                 border: 1px solid {self._colors.primary};
                 border-radius: {RADIUS.full}px;
             }}
@@ -273,7 +273,7 @@ class FilterChip(QFrame):
                     border: none;
                 }}
                 QPushButton:hover {{
-                    background-color: {self._colors.error}20;
+                    background-color: {hex_to_rgba(self._colors.error, 0.13)};
                     border-radius: 8px;
                 }}
             """)

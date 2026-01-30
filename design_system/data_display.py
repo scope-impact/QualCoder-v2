@@ -24,7 +24,7 @@ from PySide6.QtWidgets import (
 from PySide6.QtCore import Qt, Signal
 from PySide6.QtGui import QColor
 
-from .tokens import SPACING, RADIUS, TYPOGRAPHY, ColorPalette, get_colors
+from .tokens import SPACING, RADIUS, TYPOGRAPHY, ColorPalette, get_colors, hex_to_rgba
 
 
 class DataTable(QFrame):
@@ -114,7 +114,7 @@ class DataTable(QFrame):
                 color: {self._colors.text_primary};
             }}
             QTableWidget::item:selected {{
-                background-color: rgba(0, 150, 136, 0.1);
+                background-color: {hex_to_rgba(self._colors.primary, 0.10)};
             }}
             QTableWidget::item:hover {{
                 background-color: {self._colors.surface_light};
@@ -230,7 +230,7 @@ class FileCell(QFrame):
         icon_frame = QFrame()
         icon_frame.setFixedSize(36, 36)
         icon_frame.setStyleSheet(f"""
-            background-color: {color}26;
+            background-color: {hex_to_rgba(color, 0.15)};
             border-radius: {RADIUS.md}px;
         """)
         icon_layout = QVBoxLayout(icon_frame)
@@ -512,7 +512,7 @@ class CodeDetailCard(QFrame):
 
     def __init__(
         self,
-        color: str = "#4F46E5",
+        color: str = None,
         name: str = "",
         memo: str = "",
         example: str = None,
@@ -521,7 +521,7 @@ class CodeDetailCard(QFrame):
     ):
         super().__init__(parent)
         self._colors = colors or get_colors()
-        self._code_color = color
+        self._code_color = color or self._colors.primary
 
         self.setStyleSheet(f"""
             CodeDetailCard {{
@@ -832,20 +832,20 @@ class HeatMapCell(QFrame):
             return self._interpolate_color(base, target, normalized)
 
         elif self._color_scheme == "sequential":
-            # White to red
-            base = QColor("#FFFFFF")
-            target = QColor("#F44336")
+            # Surface to secondary (vermilion)
+            base = QColor(self._colors.surface)
+            target = QColor(self._colors.secondary)
             return self._interpolate_color(base, target, normalized)
 
         elif self._color_scheme == "diverging":
-            # Blue (-) to white (0) to red (+)
+            # Info (-) to surface (0) to error (+)
             if normalized < 0.5:
-                base = QColor("#2196F3")  # Blue
-                target = QColor("#FFFFFF")
+                base = QColor(self._colors.info)
+                target = QColor(self._colors.surface)
                 return self._interpolate_color(base, target, normalized * 2)
             else:
-                base = QColor("#FFFFFF")
-                target = QColor("#F44336")  # Red
+                base = QColor(self._colors.surface)
+                target = QColor(self._colors.error)
                 return self._interpolate_color(base, target, (normalized - 0.5) * 2)
 
         elif self._color_scheme == "success":
@@ -872,7 +872,7 @@ class HeatMapCell(QFrame):
         bg_color = QColor(self._get_color())
         # Calculate luminance
         luminance = (0.299 * bg_color.red() + 0.587 * bg_color.green() + 0.114 * bg_color.blue()) / 255
-        return self._colors.text_primary if luminance > 0.5 else "#FFFFFF"
+        return self._colors.text_primary if luminance > 0.5 else self._colors.primary_foreground
 
     def _update_display(self):
         """Update the cell appearance"""

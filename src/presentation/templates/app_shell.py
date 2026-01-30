@@ -43,7 +43,7 @@ from PySide6.QtCore import Qt, Signal
 
 from design_system import (
     ColorPalette,
-    get_theme,
+    get_colors,
     TitleBar,
     MenuBar,
     TabBar,
@@ -433,7 +433,7 @@ class AppStatusBar(QFrame):
         # Left side - main message
         self._message_label = QLabel("Ready")
         self._message_label.setStyleSheet(f"""
-            color: white;
+            color: {self._colors.text_on_dark};
             font-size: {TYPOGRAPHY.text_sm}px;
         """)
         layout.addWidget(self._message_label)
@@ -484,7 +484,7 @@ class AppShell(QMainWindow):
     - Status bar
 
     Usage:
-        shell = AppShell(colors=get_theme("dark"))
+        shell = AppShell(colors=get_colors())
         shell.set_project("my_project.qda")
 
         # Set a screen
@@ -502,7 +502,7 @@ class AppShell(QMainWindow):
 
     def __init__(self, colors: ColorPalette = None, parent=None):
         super().__init__(parent)
-        self._colors = colors or get_theme("dark")
+        self._colors = colors or get_colors()
         self._current_screen = None
         self._project_name = "Untitled"
 

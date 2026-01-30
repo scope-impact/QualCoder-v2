@@ -66,15 +66,15 @@ class ColorPalette:
     input: str
     ring: str
 
-    # Focus ring with glow effect
-    ring_glow: str = "rgba(79, 70, 229, 0.25)"
+    # Focus ring with glow effect (Prussian ink)
+    ring_glow: str = "rgba(30, 58, 95, 0.25)"
 
-    # File Type Colors (distinctive, accessible)
-    file_text: str = "#3B82F6"      # Blue
-    file_audio: str = "#8B5CF6"     # Violet
-    file_video: str = "#EC4899"     # Pink
-    file_image: str = "#10B981"     # Emerald
-    file_pdf: str = "#F59E0B"       # Amber
+    # File Type Colors (Scholar's Desk palette)
+    file_text: str = "#2A6F97"      # Steel blue (info)
+    file_audio: str = "#A78BFA"     # Lavender (code_purple)
+    file_video: str = "#E76F51"     # Terracotta (secondary_light)
+    file_image: str = "#40916C"     # Forest light (success_light)
+    file_pdf: str = "#E9C46A"       # Saffron (warning)
 
     # Code/Highlight Colors - Ink-inspired palette for annotations
     code_yellow: str = "#FBBF24"    # Highlighter yellow
@@ -86,6 +86,16 @@ class ColorPalette:
     code_orange: str = "#FB923C"    # Tangerine
     code_cyan: str = "#22D3EE"      # Cyan
 
+    # Syntax highlighting colors (for code blocks)
+    syntax_background: str = "#1A1918"   # Warm dark background
+    syntax_text: str = "#FAF8F5"         # Antique white
+    syntax_keyword: str = "#A78BFA"      # Lavender (code_purple)
+    syntax_string: str = "#34D399"       # Mint green (code_green)
+    syntax_function: str = "#60A5FA"     # Sky blue (code_blue)
+    syntax_class: str = "#FBBF24"        # Yellow (code_yellow)
+    syntax_number: str = "#FB923C"       # Tangerine (code_orange)
+    syntax_comment: str = "#78716C"      # Stone-500 (muted)
+
     # Gradient stops for advanced effects
     gradient_start: str = ""
     gradient_end: str = ""
@@ -93,6 +103,12 @@ class ColorPalette:
     # Overlay colors
     overlay_light: str = "rgba(255, 255, 255, 0.8)"
     overlay_dark: str = "rgba(0, 0, 0, 0.5)"
+
+    # Utility colors (for consistent usage outside design system)
+    fallback_code_color: str = "#888888"  # Default when code color is missing
+    text_on_dark: str = "#FFFFFF"         # White text on dark backgrounds
+    text_on_light: str = "#000000"        # Black text on light backgrounds
+    transparent: str = "transparent"      # Explicit transparent for stylesheets
 
     def __post_init__(self):
         if not self.gradient_start:
@@ -113,14 +129,15 @@ class Shadows:
     xl: str = "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1)"
 
     # Colored shadows for buttons (enhanced with glow)
-    primary: str = "0 4px 14px rgba(79, 70, 229, 0.4)"
-    primary_glow: str = "0 0 20px rgba(79, 70, 229, 0.3), 0 4px 14px rgba(79, 70, 229, 0.25)"
-    secondary: str = "0 4px 14px rgba(249, 115, 22, 0.4)"
-    secondary_glow: str = "0 0 20px rgba(249, 115, 22, 0.3), 0 4px 14px rgba(249, 115, 22, 0.25)"
-    error: str = "0 4px 14px rgba(239, 68, 68, 0.4)"
-    error_glow: str = "0 0 20px rgba(239, 68, 68, 0.3), 0 4px 14px rgba(239, 68, 68, 0.25)"
-    success: str = "0 4px 14px rgba(16, 185, 129, 0.4)"
-    success_glow: str = "0 0 20px rgba(16, 185, 129, 0.3), 0 4px 14px rgba(16, 185, 129, 0.25)"
+    # Updated for Scholar's Desk palette
+    primary: str = "0 4px 14px rgba(30, 58, 95, 0.4)"           # Prussian ink
+    primary_glow: str = "0 0 20px rgba(30, 58, 95, 0.3), 0 4px 14px rgba(30, 58, 95, 0.25)"
+    secondary: str = "0 4px 14px rgba(200, 75, 49, 0.4)"        # Vermilion
+    secondary_glow: str = "0 0 20px rgba(200, 75, 49, 0.3), 0 4px 14px rgba(200, 75, 49, 0.25)"
+    error: str = "0 4px 14px rgba(155, 34, 38, 0.4)"            # Carmine
+    error_glow: str = "0 0 20px rgba(155, 34, 38, 0.3), 0 4px 14px rgba(155, 34, 38, 0.25)"
+    success: str = "0 4px 14px rgba(45, 106, 79, 0.4)"          # Forest
+    success_glow: str = "0 0 20px rgba(45, 106, 79, 0.3), 0 4px 14px rgba(45, 106, 79, 0.25)"
 
     # Inset shadow for pressed states
     inset: str = "inset 0 2px 4px rgba(0, 0, 0, 0.1)"
@@ -135,132 +152,138 @@ class Gradients:
     """Gradient definitions for visual depth and emphasis."""
 
     # Button gradients - subtle top-to-bottom lighting effect
-    primary_button: str = "qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 #6366F1, stop:1 #4F46E5)"
-    primary_button_hover: str = "qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 #818CF8, stop:1 #6366F1)"
-    primary_button_pressed: str = "qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 #4338CA, stop:1 #3730A3)"
+    # Updated for Scholar's Desk palette (Prussian ink)
+    primary_button: str = "qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 #3B5998, stop:1 #1E3A5F)"
+    primary_button_hover: str = "qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 #4A6FA5, stop:1 #3B5998)"
+    primary_button_pressed: str = "qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 #152238, stop:1 #0D1520)"
 
-    secondary_button: str = "qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 #FB923C, stop:1 #F97316)"
-    secondary_button_hover: str = "qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 #FDBA74, stop:1 #FB923C)"
-    secondary_button_pressed: str = "qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 #EA580C, stop:1 #C2410C)"
+    # Vermilion secondary
+    secondary_button: str = "qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 #E76F51, stop:1 #C84B31)"
+    secondary_button_hover: str = "qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 #F4A261, stop:1 #E76F51)"
+    secondary_button_pressed: str = "qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 #9A3412, stop:1 #7C2D12)"
 
-    danger_button: str = "qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 #F87171, stop:1 #EF4444)"
-    danger_button_hover: str = "qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 #FCA5A5, stop:1 #F87171)"
-    danger_button_pressed: str = "qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 #DC2626, stop:1 #B91C1C)"
+    # Carmine danger
+    danger_button: str = "qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 #AE2012, stop:1 #9B2226)"
+    danger_button_hover: str = "qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 #C53030, stop:1 #AE2012)"
+    danger_button_pressed: str = "qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 #7F1D1D, stop:1 #691A1A)"
 
-    success_button: str = "qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 #34D399, stop:1 #10B981)"
-    success_button_hover: str = "qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 #6EE7B7, stop:1 #34D399)"
+    # Forest success
+    success_button: str = "qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 #40916C, stop:1 #2D6A4F)"
+    success_button_hover: str = "qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 #52B788, stop:1 #40916C)"
 
-    # Card/surface gradients - subtle warmth
-    surface_warm: str = "qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 #FFFFFF, stop:1 #FAFAF9)"
-    surface_elevated: str = "qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 #FFFFFF, stop:1 #F9FAFB)"
+    # Card/surface gradients - paper warmth
+    surface_warm: str = "qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 #FFFCF7, stop:1 #FAF8F5)"
+    surface_elevated: str = "qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 #FFFCF7, stop:1 #F5F0E8)"
 
-    # Featured/highlight gradients
-    featured: str = "qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #4F46E5, stop:1 #F97316)"
-    featured_subtle: str = "qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 rgba(79,70,229,0.1), stop:1 rgba(249,115,22,0.1))"
+    # Featured/highlight gradients - Prussian to Vermilion
+    featured: str = "qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #1E3A5F, stop:1 #C84B31)"
+    featured_subtle: str = "qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 rgba(30,58,95,0.1), stop:1 rgba(200,75,49,0.1))"
 
 
-# Light theme - Warm paper aesthetic
+# Light theme - Scholar's Desk aesthetic
+# Prussian ink + vermilion editorial marks + warm paper surfaces
 COLORS_LIGHT = ColorPalette(
-    # Primary - Deep Indigo (scholarly, authoritative)
-    primary="#4F46E5",
-    primary_light="#818CF8",
-    primary_dark="#3730A3",
+    # Primary - Prussian Ink (distinctive, scholarly)
+    primary="#1E3A5F",              # Prussian blue
+    primary_light="#3B5998",        # Slate ink
+    primary_dark="#152238",         # Deep ink
     primary_foreground="#FFFFFF",
 
-    # Secondary - Warm Coral (annotation, highlighting)
-    secondary="#F97316",
-    secondary_light="#FB923C",
-    secondary_dark="#EA580C",
+    # Secondary - Vermilion (editorial marks, annotation)
+    secondary="#C84B31",            # Vermilion
+    secondary_light="#E76F51",      # Terracotta
+    secondary_dark="#9A3412",       # Burnt sienna
     secondary_foreground="#FFFFFF",
 
-    # Semantic - Softer, more refined
-    success="#10B981",
-    success_light="#34D399",
+    # Semantic - Warmer, more refined
+    success="#2D6A4F",              # Forest green
+    success_light="#40916C",
     success_foreground="#FFFFFF",
-    warning="#F59E0B",
-    warning_light="#FBBF24",
-    warning_foreground="#1F2937",
-    error="#EF4444",
-    error_light="#F87171",
+    warning="#E9C46A",              # Saffron gold
+    warning_light="#F4D35E",
+    warning_foreground="#1C1917",
+    error="#9B2226",                # Carmine red
+    error_light="#AE2012",
     error_foreground="#FFFFFF",
-    info="#3B82F6",
-    info_light="#60A5FA",
+    info="#2A6F97",                 # Steel blue
+    info_light="#468FAF",
     info_foreground="#FFFFFF",
 
-    # Backgrounds & Surfaces - Warm paper tones
-    background="#F9FAFB",           # Slightly warm white
-    surface="#FFFFFF",
-    surface_light="#F3F4F6",        # Light gray with warmth
-    surface_lighter="#E5E7EB",
-    surface_elevated="#FFFFFF",
+    # Backgrounds & Surfaces - True paper warmth
+    background="#FAF8F5",           # Antique white
+    surface="#FFFCF7",              # Cream
+    surface_light="#F5F0E8",        # Parchment
+    surface_lighter="#E8E2D9",      # Aged paper
+    surface_elevated="#FFFCF7",
 
-    # Text - Softer blacks for readability
-    text_primary="#111827",         # Near black, not pure
-    text_secondary="#6B7280",       # Warm gray
-    text_disabled="#9CA3AF",
-    text_hint="#D1D5DB",
+    # Text - Sepia-tinted for bookish feel
+    text_primary="#1C1917",         # Stone-900
+    text_secondary="#78716C",       # Stone-500
+    text_disabled="#A8A29E",        # Stone-400
+    text_hint="#D6D3D1",            # Stone-300
 
-    # Borders - Subtle, refined
-    border="#E5E7EB",
-    border_light="#F3F4F6",
-    divider="#E5E7EB",
+    # Borders - Warm undertones
+    border="#E7E5E4",               # Stone-200
+    border_light="#F5F5F4",         # Stone-100
+    divider="#E7E5E4",
 
     # Input & Focus
-    input="#F9FAFB",
-    ring="#4F46E5",
-    ring_glow="rgba(79, 70, 229, 0.25)",
+    input="#FFFCF7",
+    ring="#1E3A5F",
+    ring_glow="rgba(30, 58, 95, 0.25)",
 )
 
-# Dark theme - Deep, focused aesthetic
+# Dark theme - Midnight Scholar aesthetic
+# Deep blue-black surfaces with luminous ink accents
 COLORS_DARK = ColorPalette(
-    # Primary - Lighter indigo for dark mode
-    primary="#818CF8",
-    primary_light="#A5B4FC",
-    primary_dark="#6366F1",
+    # Primary - Luminous ink for dark mode
+    primary="#6B8CAE",              # Lighter prussian
+    primary_light="#8FADC7",        # Sky ink
+    primary_dark="#3B5998",         # Slate ink
     primary_foreground="#FFFFFF",
 
-    # Secondary - Warmer orange
-    secondary="#FB923C",
-    secondary_light="#FDBA74",
-    secondary_dark="#F97316",
-    secondary_foreground="#1F2937",
+    # Secondary - Glowing vermilion
+    secondary="#E76F51",            # Terracotta
+    secondary_light="#F4A261",      # Sandy coral
+    secondary_dark="#C84B31",       # Vermilion
+    secondary_foreground="#1C1917",
 
-    # Semantic
-    success="#34D399",
-    success_light="#6EE7B7",
-    success_foreground="#1F2937",
-    warning="#FBBF24",
-    warning_light="#FCD34D",
-    warning_foreground="#1F2937",
-    error="#F87171",
-    error_light="#FCA5A5",
-    error_foreground="#1F2937",
-    info="#60A5FA",
-    info_light="#93C5FD",
-    info_foreground="#1F2937",
+    # Semantic - Luminous variants
+    success="#40916C",              # Forest light
+    success_light="#52B788",
+    success_foreground="#1C1917",
+    warning="#F4D35E",              # Bright saffron
+    warning_light="#FCE588",
+    warning_foreground="#1C1917",
+    error="#E63946",                # Bright carmine
+    error_light="#F07F87",
+    error_foreground="#1C1917",
+    info="#468FAF",                 # Steel blue light
+    info_light="#74B3CE",
+    info_foreground="#1C1917",
 
-    # Backgrounds & Surfaces - Deep, rich darks
-    background="#111827",
-    surface="#1F2937",
-    surface_light="#374151",
-    surface_lighter="#4B5563",
-    surface_elevated="#1F2937",
+    # Backgrounds & Surfaces - Warm charcoal (not pure gray)
+    background="#1A1918",           # Warm black
+    surface="#262322",              # Dark stone
+    surface_light="#3D3836",        # Charcoal
+    surface_lighter="#57504C",      # Warm gray
+    surface_elevated="#262322",
 
-    # Text - High contrast for dark mode
-    text_primary="#F9FAFB",
-    text_secondary="#D1D5DB",
-    text_disabled="#6B7280",
-    text_hint="#4B5563",
+    # Text - Cream tones for warmth
+    text_primary="#FAF8F5",         # Antique white
+    text_secondary="#D6D3D1",       # Stone-300
+    text_disabled="#78716C",        # Stone-500
+    text_hint="#57534E",            # Stone-600
 
-    # Borders
-    border="#374151",
-    border_light="#4B5563",
-    divider="#374151",
+    # Borders - Warm undertones
+    border="#3D3836",               # Charcoal
+    border_light="#57504C",         # Warm gray
+    divider="#3D3836",
 
     # Input & Focus
-    input="#1F2937",
-    ring="#818CF8",
-    ring_glow="rgba(129, 140, 248, 0.3)",
+    input="#262322",
+    ring="#6B8CAE",
+    ring_glow="rgba(107, 140, 174, 0.3)",
 )
 
 # Default to light theme
@@ -489,3 +512,27 @@ def register_theme(name: str, palette: ColorPalette) -> None:
         palette: ColorPalette instance
     """
     _themes[name] = palette
+
+
+def hex_to_rgba(hex_color: str, alpha: float) -> str:
+    """
+    Convert hex color to rgba string for Qt stylesheets.
+
+    Qt stylesheets don't support #RRGGBBAA format, so use this
+    function to create rgba() strings instead.
+
+    Args:
+        hex_color: Hex color string (e.g., "#1E3A5F")
+        alpha: Alpha value from 0.0 to 1.0
+
+    Returns:
+        rgba string (e.g., "rgba(30, 58, 95, 0.15)")
+
+    Usage:
+        background-color: {hex_to_rgba(colors.primary, 0.15)};
+    """
+    hex_color = hex_color.lstrip('#')
+    r = int(hex_color[0:2], 16)
+    g = int(hex_color[2:4], 16)
+    b = int(hex_color[4:6], 16)
+    return f"rgba({r}, {g}, {b}, {alpha})"

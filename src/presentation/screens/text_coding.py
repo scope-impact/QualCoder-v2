@@ -26,7 +26,7 @@ from typing import List, Dict, Any, Optional
 from PySide6.QtWidgets import QVBoxLayout, QWidget
 from PySide6.QtCore import Signal
 
-from design_system import ColorPalette, get_theme
+from design_system import ColorPalette, get_colors
 
 from ..pages import TextCodingPage
 from ..organisms import CodingToolbar
@@ -69,8 +69,13 @@ class TextCodingScreen(QWidget):
             parent: Parent widget
         """
         super().__init__(parent)
-        self._colors = colors or get_theme("dark")
+        self._colors = colors or get_colors()
         self._data: Optional[TextCodingDataDTO] = None
+
+        # Initialize state variables
+        self._current_file_index: int = 0
+        self._show_important_only: bool = False
+        self._show_annotations: bool = True
 
         # Use provided data or sample data
         data = data or create_sample_text_coding_data()
@@ -104,13 +109,23 @@ class TextCodingScreen(QWidget):
         Args:
             data: The data transfer object containing all display data
         """
+        if data is None:
+            print("TextCodingScreen: Cannot load None data")
+            return
+
         self._data = data
+        self._current_file_index = 0
 
         # Files - convert DTOs to dicts for Page
-        files = [
-            {"name": f.name, "type": f.file_type, "meta": f.meta}
-            for f in data.files
-        ]
+        files = []
+        if data.files:
+            for f in data.files:
+                if f is not None:
+                    files.append({
+                        "name": getattr(f, 'name', '') or '',
+                        "type": getattr(f, 'file_type', 'text') or 'text',
+                        "meta": getattr(f, 'meta', '') or ''
+                    })
         self._page.set_files(files)
 
         # Codes - convert DTOs to nested dicts for Page
@@ -184,9 +199,12 @@ class TextCodingScreen(QWidget):
 
         handler = handlers.get(action_id)
         if handler:
-            handler()
+            try:
+                handler()
+            except Exception as e:
+                print(f"TextCodingScreen: Error in action '{action_id}': {e}")
         else:
-            print(f"Unknown action: {action_id}")
+            print(f"TextCodingScreen: Unknown action: {action_id}")
 
     # =========================================================================
     # Action Handlers
@@ -202,56 +220,79 @@ class TextCodingScreen(QWidget):
 
     def _action_toggle_important(self):
         """Toggle showing only important codes."""
-        self._show_important_only = not getattr(self, '_show_important_only', False)
+        self._show_important_only = not self._show_important_only
         print(f"Important only: {self._show_important_only}")
 
     def _action_toggle_annotations(self):
         """Toggle showing annotations."""
-        self._show_annotations = not getattr(self, '_show_annotations', False)
+        self._show_annotations = not self._show_annotations
         print(f"Show annotations: {self._show_annotations}")
 
     def _action_prev_file(self):
         """Navigate to previous file."""
-        self._current_file_index = getattr(self, '_current_file_index', 0)
         if self._current_file_index > 0:
             self._current_file_index -= 1
             self._navigate_to_file(self._current_file_index)
 
     def _action_next_file(self):
         """Navigate to next file."""
-        self._current_file_index = getattr(self, '_current_file_index', 0)
-        total_files = len(self._page.files_panel._files)
-        if self._current_file_index < total_files - 1:
+        total_files = self._page.files_panel.get_file_count()
+        if total_files > 0 and self._current_file_index < total_files - 1:
             self._current_file_index += 1
             self._navigate_to_file(self._current_file_index)
 
     def _navigate_to_file(self, index: int):
         """Navigate to file at index and update navigation display."""
-        files = self._page.files_panel._files
-        if 0 <= index < len(files):
-            file_data = files[index]
-            self._page.set_navigation(index + 1, len(files))
-            # Update document display
-            self._page.set_document(
-                file_data.get("name", ""),
-                f"File {index + 1}",
-                f"Content of {file_data.get('name', '')}...\n\n(Load actual content here)"
-            )
-            print(f"Navigated to file: {file_data.get('name')}")
+        total_files = self._page.files_panel.get_file_count()
+        if total_files == 0:
+            return
+
+        # Bounds check
+        if not (0 <= index < total_files):
+            print(f"TextCodingScreen: Invalid file index {index}, total={total_files}")
+            return
+
+        # Update selection in files panel
+        if not self._page.files_panel.select_file(index):
+            return
+
+        file_data = self._page.files_panel.get_selected_file()
+        if not file_data:
+            return
+
+        self._page.set_navigation(index + 1, total_files)
+        # Update document display
+        self._page.set_document(
+            file_data.get("name", ""),
+            f"File {index + 1}",
+            f"Content of {file_data.get('name', '')}...\n\n(Load actual content here)"
+        )
+        print(f"Navigated to file: {file_data.get('name')}")
+
+    def _get_selected_text(self) -> str:
+        """Safely get selected text from editor panel."""
+        try:
+            if self._page and hasattr(self._page, 'editor_panel'):
+                return self._page.editor_panel.get_selected_text() or ""
+        except Exception as e:
+            print(f"TextCodingScreen: Error getting selected text: {e}")
+        return ""
 
     def _action_auto_exact(self):
         """Auto-code exact text matches."""
-        selection = self._page.editor_panel.get_selected_text()
+        selection = self._get_selected_text()
         if selection:
-            print(f"TODO: Auto-code exact matches for: '{selection[:50]}...'")
+            preview = selection[:50] + "..." if len(selection) > 50 else selection
+            print(f"TODO: Auto-code exact matches for: '{preview}'")
         else:
             print("Select text first to auto-code")
 
     def _action_auto_fragment(self):
         """Auto-code similar text fragments."""
-        selection = self._page.editor_panel.get_selected_text()
+        selection = self._get_selected_text()
         if selection:
-            print(f"TODO: Auto-code fragments similar to: '{selection[:50]}...'")
+            preview = selection[:50] + "..." if len(selection) > 50 else selection
+            print(f"TODO: Auto-code fragments similar to: '{preview}'")
         else:
             print("Select text first to auto-code")
 
@@ -265,17 +306,19 @@ class TextCodingScreen(QWidget):
 
     def _action_add_memo(self):
         """Add memo to current selection or file."""
-        selection = self._page.editor_panel.get_selected_text()
+        selection = self._get_selected_text()
         if selection:
-            print(f"TODO: Add memo to selection: '{selection[:50]}...'")
+            preview = selection[:50] + "..." if len(selection) > 50 else selection
+            print(f"TODO: Add memo to selection: '{preview}'")
         else:
             print("TODO: Add memo to file")
 
     def _action_annotate(self):
         """Add annotation to current selection."""
-        selection = self._page.editor_panel.get_selected_text()
+        selection = self._get_selected_text()
         if selection:
-            print(f"TODO: Annotate selection: '{selection[:50]}...'")
+            preview = selection[:50] + "..." if len(selection) > 50 else selection
+            print(f"TODO: Annotate selection: '{preview}'")
         else:
             print("Select text first to annotate")
 
@@ -330,7 +373,7 @@ def main():
 
     app = QApplication(sys.argv)
 
-    colors = get_theme("dark")
+    colors = get_colors()
 
     window = QMainWindow()
     window.setWindowTitle("Text Coding Screen")

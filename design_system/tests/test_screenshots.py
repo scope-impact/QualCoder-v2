@@ -853,8 +853,8 @@ class TestLayoutScreenshots:
 
         # Add header
         header = PanelHeader(title="Properties")
-        header.add_action("➕", lambda: None)
-        header.add_action("⋮", lambda: None)
+        header.add_action("➕", on_click=lambda: None)
+        header.add_action("⋮", on_click=lambda: None)
         container_layout.addWidget(header)
 
         # Add panel content

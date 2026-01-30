@@ -168,10 +168,11 @@ class TitleBar(QFrame):
             controls = QHBoxLayout()
             controls.setSpacing(SPACING.sm)
 
+            # macOS standard window control colors (intentionally not themed)
             for color, signal in [
-                ("#FF5F56", self.close_clicked),
-                ("#FFBD2E", self.minimize_clicked),
-                ("#27C93F", self.maximize_clicked),
+                ("#FF5F56", self.close_clicked),   # macOS close (red)
+                ("#FFBD2E", self.minimize_clicked), # macOS minimize (yellow)
+                ("#27C93F", self.maximize_clicked), # macOS maximize (green)
             ]:
                 btn = QPushButton()
                 btn.setFixedSize(12, 12)
@@ -620,9 +621,22 @@ class Panel(QFrame):
 
 
 class PanelHeader(QFrame):
-    """Panel header with title and actions"""
+    """
+    Panel header with optional icon, title, and action buttons.
 
-    def __init__(self, title: str, colors: ColorPalette = None, parent=None):
+    Usage:
+        header = PanelHeader("Codes", icon="mdi6.label")
+        header.add_action("mdi6.plus", on_click=self.add_code)
+        header.add_action("mdi6.magnify", on_click=self.search)
+    """
+
+    def __init__(
+        self,
+        title: str,
+        icon: str = None,
+        colors: ColorPalette = None,
+        parent=None
+    ):
         super().__init__(parent)
         self._colors = colors or get_colors()
 
@@ -635,6 +649,13 @@ class PanelHeader(QFrame):
 
         self._layout = QHBoxLayout(self)
         self._layout.setContentsMargins(SPACING.lg, SPACING.md, SPACING.lg, SPACING.md)
+        self._layout.setSpacing(SPACING.sm)
+
+        # Optional icon
+        if icon:
+            from .icons import Icon
+            icon_widget = Icon(icon, size=16, color=self._colors.primary, colors=self._colors)
+            self._layout.addWidget(icon_widget)
 
         # Title
         title_label = QLabel(title)
@@ -651,21 +672,33 @@ class PanelHeader(QFrame):
         self._actions.setSpacing(SPACING.xs)
         self._layout.addLayout(self._actions)
 
-    def add_action(self, icon: str, on_click=None) -> QPushButton:
+    def add_action(self, icon: str, tooltip: str = None, on_click=None) -> QPushButton:
+        """
+        Add an action button to the header.
+
+        Args:
+            icon: Icon name (mdi6.xxx) or text
+            tooltip: Optional tooltip text
+            on_click: Optional click handler
+
+        Returns:
+            The created QPushButton
+        """
         btn = QPushButton()
         if icon.startswith("mdi6."):
             btn.setIcon(qta.icon(icon, color=self._colors.text_secondary))
         else:
             btn.setText(icon)
-        btn.setFixedSize(28, 28)
+        btn.setFixedSize(24, 24)
         btn.setCursor(Qt.CursorShape.PointingHandCursor)
+        if tooltip:
+            btn.setToolTip(tooltip)
         btn.setStyleSheet(f"""
             QPushButton {{
                 background-color: transparent;
                 color: {self._colors.text_secondary};
                 border: none;
-                border-radius: {RADIUS.sm}px;
-                font-size: 16px;
+                border-radius: {RADIUS.xs}px;
             }}
             QPushButton:hover {{
                 background-color: {self._colors.surface_lighter};

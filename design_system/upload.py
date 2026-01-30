@@ -17,7 +17,7 @@ from PySide6.QtWidgets import (
 )
 from PySide6.QtCore import Qt, Signal
 
-from .tokens import SPACING, RADIUS, TYPOGRAPHY, ColorPalette, get_colors
+from .tokens import SPACING, RADIUS, TYPOGRAPHY, ColorPalette, get_colors, hex_to_rgba
 
 
 class DropZone(QFrame):
@@ -123,7 +123,7 @@ class DropZone(QFrame):
         if self._dragging:
             self.setStyleSheet(f"""
                 QFrame {{
-                    background-color: {self._colors.primary}15;
+                    background-color: {hex_to_rgba(self._colors.primary, 0.08)};
                     border: 2px dashed {self._colors.primary};
                     border-radius: {RADIUS.lg}px;
                 }}
@@ -214,9 +214,11 @@ class FileTypeBadge(QFrame):
         super().__init__(parent)
         self._colors = colors or get_colors()
 
+        # Convert hex to rgba (Qt doesn't support #RRGGBBAA format)
+        bg_color = hex_to_rgba(color, 0.15)
         self.setStyleSheet(f"""
             QFrame {{
-                background-color: {color}26;
+                background-color: {bg_color};
                 border-radius: {RADIUS.full}px;
             }}
         """)
@@ -454,7 +456,7 @@ class CompactDropZone(QFrame):
         if self._dragging:
             self.setStyleSheet(f"""
                 QFrame {{
-                    background-color: {self._colors.primary}15;
+                    background-color: {hex_to_rgba(self._colors.primary, 0.08)};
                     border: 1px dashed {self._colors.primary};
                     border-radius: {RADIUS.md}px;
                 }}
