@@ -3,6 +3,8 @@ Context menu components
 Material Design styled right-click menus
 """
 
+import qtawesome as qta
+
 from PySide6.QtWidgets import (
     QFrame,
     QHBoxLayout,
@@ -15,7 +17,7 @@ from PySide6.QtWidgets import (
 from PySide6.QtCore import Qt, Signal
 from PySide6.QtGui import QAction, QCursor
 
-from .tokens import SPACING, RADIUS, TYPOGRAPHY, ColorPalette, get_theme
+from .tokens import SPACING, RADIUS, TYPOGRAPHY, ColorPalette, get_colors
 
 
 class ContextMenu(QMenu):
@@ -33,7 +35,7 @@ class ContextMenu(QMenu):
 
     def __init__(self, colors: ColorPalette = None, parent=None):
         super().__init__(parent)
-        self._colors = colors or get_theme("dark")
+        self._colors = colors or get_colors()
 
         self.setStyleSheet(f"""
             QMenu {{
@@ -130,7 +132,7 @@ class ContextMenuItem(QAction):
         parent=None
     ):
         super().__init__(parent)
-        self._colors = colors or get_theme("dark")
+        self._colors = colors or get_colors()
         self._variant = variant
 
         # Build display text with icon
@@ -164,7 +166,7 @@ class ContextMenuWidget(QFrame):
 
     def __init__(self, colors: ColorPalette = None, parent=None):
         super().__init__(parent)
-        self._colors = colors or get_theme("dark")
+        self._colors = colors or get_colors()
 
         self.setWindowFlags(
             Qt.WindowType.Popup |
@@ -238,7 +240,7 @@ class ContextMenuItemWidget(QFrame):
         parent=None
     ):
         super().__init__(parent)
-        self._colors = colors or get_theme("dark")
+        self._colors = colors or get_colors()
         self._variant = variant
 
         self.setCursor(Qt.CursorShape.PointingHandCursor)
@@ -260,13 +262,17 @@ class ContextMenuItemWidget(QFrame):
         layout.setContentsMargins(SPACING.lg, SPACING.sm + 2, SPACING.lg, SPACING.sm + 2)
         layout.setSpacing(SPACING.md)
 
-        # Icon
+        # Icon - support both mdi6 icons and emoji fallback
         if icon:
-            icon_label = QLabel(icon)
-            icon_label.setStyleSheet(f"""
-                color: {icon_color};
-                font-size: 18px;
-            """)
+            icon_label = QLabel()
+            if icon.startswith("mdi6."):
+                icon_label.setPixmap(qta.icon(icon, color=icon_color).pixmap(18, 18))
+            else:
+                icon_label.setText(icon)
+                icon_label.setStyleSheet(f"""
+                    color: {icon_color};
+                    font-size: 18px;
+                """)
             icon_label.setFixedWidth(24)
             layout.addWidget(icon_label)
 

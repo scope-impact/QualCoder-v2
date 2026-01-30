@@ -44,7 +44,7 @@ def create_tables_story(colors: ColorPalette) -> StoryPage:
 
     # Empty state
     empty = EmptyState(
-        icon="📁",
+        icon="mdi6.folder-open",
         title="No files yet",
         message="Import files to get started with your analysis.",
         colors=colors
@@ -52,7 +52,7 @@ def create_tables_story(colors: ColorPalette) -> StoryPage:
     examples.append((
         "Empty State",
         empty,
-        'EmptyState(icon="📁", title="No files", message="...")'
+        'EmptyState(icon="mdi6.folder-open", title="No files", message="...")'
     ))
 
     return StoryPage(
@@ -119,13 +119,13 @@ def create_stats_story(colors: ColorPalette) -> StoryPage:
         label="Total Files",
         trend="+3 this week",
         trend_direction="up",
-        icon="📁",
+        icon="mdi6.folder",
         colors=colors
     )
     examples.append((
         "Stat Card",
         stat,
-        'StatCard(value="24", label="Total Files", icon="📁")'
+        'StatCard(value="24", label="Total Files", icon="mdi6.folder")'
     ))
 
     # Mini stat cards

@@ -3,6 +3,8 @@ Layout components
 App structure and container components
 """
 
+import qtawesome as qta
+
 from PySide6.QtWidgets import (
     QFrame,
     QHBoxLayout,
@@ -17,7 +19,7 @@ from PySide6.QtWidgets import (
 from PySide6.QtCore import Qt, Signal
 from PySide6.QtGui import QColor
 
-from .tokens import SPACING, RADIUS, TYPOGRAPHY, LAYOUT, ColorPalette, get_theme
+from .tokens import SPACING, RADIUS, TYPOGRAPHY, LAYOUT, ColorPalette, get_colors
 
 
 class AppContainer(QWidget):
@@ -34,7 +36,7 @@ class AppContainer(QWidget):
 
     def __init__(self, colors: ColorPalette = None, parent=None):
         super().__init__(parent)
-        self._colors = colors or get_theme("dark")
+        self._colors = colors or get_colors()
 
         self.setStyleSheet(f"""
             QWidget {{
@@ -119,7 +121,7 @@ class TitleBar(QFrame):
         parent=None
     ):
         super().__init__(parent)
-        self._colors = colors or get_theme("dark")
+        self._colors = colors or get_colors()
 
         self.setFixedHeight(LAYOUT.titlebar_height)
         self.setStyleSheet(f"""
@@ -204,7 +206,7 @@ class MenuBar(QFrame):
 
     def __init__(self, colors: ColorPalette = None, parent=None):
         super().__init__(parent)
-        self._colors = colors or get_theme("dark")
+        self._colors = colors or get_colors()
 
         self.setFixedHeight(LAYOUT.menubar_height)
         self.setStyleSheet(f"""
@@ -261,7 +263,7 @@ class TabBar(QFrame):
 
     def __init__(self, colors: ColorPalette = None, parent=None):
         super().__init__(parent)
-        self._colors = colors or get_theme("dark")
+        self._colors = colors or get_colors()
         self._tabs = []
         self._active_tab = None
 
@@ -339,16 +341,16 @@ class Toolbar(QFrame):
     Usage:
         toolbar = Toolbar()
         group1 = toolbar.add_group()
-        group1.add_button("Save", icon="💾", on_click=self.save)
-        group1.add_button("Undo", icon="↩")
+        group1.add_button("Save", icon="mdi6.content-save", on_click=self.save)
+        group1.add_button("Undo", icon="mdi6.undo")
         toolbar.add_divider()
         group2 = toolbar.add_group()
-        group2.add_button("Code", icon="🏷️", active=True)
+        group2.add_button("Code", icon="mdi6.tag", active=True)
     """
 
     def __init__(self, colors: ColorPalette = None, parent=None):
         super().__init__(parent)
-        self._colors = colors or get_theme("dark")
+        self._colors = colors or get_colors()
 
         self.setMinimumHeight(LAYOUT.toolbar_height)
         self.setStyleSheet(f"""
@@ -388,7 +390,7 @@ class ToolbarGroup(QFrame):
 
     def __init__(self, colors: ColorPalette = None, parent=None):
         super().__init__(parent)
-        self._colors = colors or get_theme("dark")
+        self._colors = colors or get_colors()
 
         self._layout = QHBoxLayout(self)
         self._layout.setContentsMargins(0, 0, 0, 0)
@@ -420,11 +422,21 @@ class ToolbarButton(QPushButton):
         parent=None
     ):
         super().__init__(parent)
-        self._colors = colors or get_theme("dark")
+        self._colors = colors or get_colors()
         self._active = active
+        self._icon_name = icon
+        self._text = text
 
-        display_text = f"{icon} {text}" if icon and text else (icon or text)
-        self.setText(display_text)
+        # Set icon if it's an mdi6 icon
+        if icon and icon.startswith("mdi6."):
+            icon_color = "white" if active else self._colors.text_secondary
+            self.setIcon(qta.icon(icon, color=icon_color))
+            if text:
+                self.setText(text)
+        else:
+            # Fallback to text-based display
+            display_text = f"{icon} {text}" if icon and text else (icon or text)
+            self.setText(display_text)
 
         self.setMinimumHeight(36)
         # If there's text, ensure button is wide enough
@@ -441,6 +453,11 @@ class ToolbarButton(QPushButton):
         self._apply_style()
 
     def _apply_style(self):
+        # Update icon color if using mdi6 icon
+        if self._icon_name and self._icon_name.startswith("mdi6."):
+            icon_color = "white" if self._active else self._colors.text_secondary
+            self.setIcon(qta.icon(self._icon_name, color=icon_color))
+
         if self._active:
             self.setStyleSheet(f"""
                 QPushButton {{
@@ -482,7 +499,7 @@ class StatusBar(QFrame):
 
     def __init__(self, colors: ColorPalette = None, parent=None):
         super().__init__(parent)
-        self._colors = colors or get_theme("dark")
+        self._colors = colors or get_colors()
         self._items = {}
 
         self.setFixedHeight(LAYOUT.statusbar_height)
@@ -557,7 +574,7 @@ class Panel(QFrame):
         parent=None
     ):
         super().__init__(parent)
-        self._colors = colors or get_theme("dark")
+        self._colors = colors or get_colors()
         self._position = position
 
         if width:
@@ -607,7 +624,7 @@ class PanelHeader(QFrame):
 
     def __init__(self, title: str, colors: ColorPalette = None, parent=None):
         super().__init__(parent)
-        self._colors = colors or get_theme("dark")
+        self._colors = colors or get_colors()
 
         self.setStyleSheet(f"""
             QFrame {{
@@ -635,7 +652,11 @@ class PanelHeader(QFrame):
         self._layout.addLayout(self._actions)
 
     def add_action(self, icon: str, on_click=None) -> QPushButton:
-        btn = QPushButton(icon)
+        btn = QPushButton()
+        if icon.startswith("mdi6."):
+            btn.setIcon(qta.icon(icon, color=self._colors.text_secondary))
+        else:
+            btn.setText(icon)
         btn.setFixedSize(28, 28)
         btn.setCursor(Qt.CursorShape.PointingHandCursor)
         btn.setStyleSheet(f"""
@@ -648,7 +669,6 @@ class PanelHeader(QFrame):
             }}
             QPushButton:hover {{
                 background-color: {self._colors.surface_lighter};
-                color: {self._colors.primary};
             }}
         """)
         if on_click:
@@ -664,14 +684,14 @@ class Sidebar(Panel):
     Usage:
         sidebar = Sidebar(width=280)
         sidebar.add_section("Files")
-        sidebar.add_item("Interview_01.txt", icon="📄")
+        sidebar.add_item("Interview_01.txt", icon="mdi6.file-document")
     """
 
     item_clicked = Signal(str)
 
     def __init__(self, width: int = 280, colors: ColorPalette = None, parent=None):
         super().__init__(width=width, position="left", colors=colors, parent=parent)
-        self._colors = colors or get_theme("dark")
+        self._colors = colors or get_colors()
 
         # Replace content layout
         self._items_layout = QVBoxLayout()
@@ -692,7 +712,12 @@ class Sidebar(Panel):
         self._items_layout.addWidget(label)
 
     def add_item(self, text: str, icon: str = None, on_click=None) -> QPushButton:
-        btn = QPushButton(f"{icon}  {text}" if icon else text)
+        btn = QPushButton()
+        if icon and icon.startswith("mdi6."):
+            btn.setIcon(qta.icon(icon, color=self._colors.text_primary))
+            btn.setText(text)
+        else:
+            btn.setText(f"{icon}  {text}" if icon else text)
         btn.setCursor(Qt.CursorShape.PointingHandCursor)
         btn.setStyleSheet(f"""
             QPushButton {{
@@ -728,7 +753,7 @@ class MainContent(QSplitter):
 
     def __init__(self, colors: ColorPalette = None, parent=None):
         super().__init__(Qt.Orientation.Horizontal, parent)
-        self._colors = colors or get_theme("dark")
+        self._colors = colors or get_colors()
 
         self.setStyleSheet(f"""
             QSplitter::handle {{

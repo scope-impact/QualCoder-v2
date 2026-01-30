@@ -5,6 +5,8 @@ Tables, cells, and data presentation widgets
 
 from typing import List, Dict, Any, Optional
 
+import qtawesome as qta
+
 from PySide6.QtWidgets import (
     QAbstractItemView,
     QCheckBox,
@@ -22,7 +24,7 @@ from PySide6.QtWidgets import (
 from PySide6.QtCore import Qt, Signal
 from PySide6.QtGui import QColor
 
-from .tokens import SPACING, RADIUS, TYPOGRAPHY, ColorPalette, get_theme
+from .tokens import SPACING, RADIUS, TYPOGRAPHY, ColorPalette, get_colors
 
 
 class DataTable(QFrame):
@@ -54,7 +56,7 @@ class DataTable(QFrame):
         parent=None
     ):
         super().__init__(parent)
-        self._colors = colors or get_theme("dark")
+        self._colors = colors or get_colors()
         self._columns = columns
         self._selectable = selectable
         self._data = []
@@ -197,7 +199,7 @@ class FileCell(QFrame):
         parent=None
     ):
         super().__init__(parent)
-        self._colors = colors or get_theme("dark")
+        self._colors = colors or get_colors()
 
         self.setCursor(Qt.CursorShape.PointingHandCursor)
         self.setStyleSheet(f"""
@@ -292,7 +294,7 @@ class EntityCell(QFrame):
         parent=None
     ):
         super().__init__(parent)
-        self._colors = colors or get_theme("dark")
+        self._colors = colors or get_colors()
 
         self.setCursor(Qt.CursorShape.PointingHandCursor)
         self.setStyleSheet(f"""
@@ -383,7 +385,7 @@ class InfoCard(QFrame):
         parent=None
     ):
         super().__init__(parent)
-        self._colors = colors or get_theme("dark")
+        self._colors = colors or get_colors()
         self._collapsible = collapsible
         self._collapsed = collapsed
         self._icon_name = icon
@@ -510,7 +512,7 @@ class CodeDetailCard(QFrame):
 
     def __init__(
         self,
-        color: str = "#009688",
+        color: str = "#4F46E5",
         name: str = "",
         memo: str = "",
         example: str = None,
@@ -518,7 +520,7 @@ class CodeDetailCard(QFrame):
         parent=None
     ):
         super().__init__(parent)
-        self._colors = colors or get_theme("dark")
+        self._colors = colors or get_colors()
         self._code_color = color
 
         self.setStyleSheet(f"""
@@ -616,7 +618,7 @@ class StatRow(QFrame):
         parent=None
     ):
         super().__init__(parent)
-        self._colors = colors or get_theme("dark")
+        self._colors = colors or get_colors()
 
         layout = QHBoxLayout(self)
         layout.setContentsMargins(0, SPACING.sm, 0, SPACING.sm)
@@ -655,7 +657,7 @@ class KeyValueList(QFrame):
 
     def __init__(self, colors: ColorPalette = None, parent=None):
         super().__init__(parent)
-        self._colors = colors or get_theme("dark")
+        self._colors = colors or get_colors()
 
         self._layout = QVBoxLayout(self)
         self._layout.setContentsMargins(0, 0, 0, 0)
@@ -700,17 +702,21 @@ class EmptyState(QFrame):
         parent=None
     ):
         super().__init__(parent)
-        self._colors = colors or get_theme("dark")
+        self._colors = colors or get_colors()
 
         layout = QVBoxLayout(self)
         layout.setContentsMargins(SPACING.xxxl, SPACING.xxxl, SPACING.xxxl, SPACING.xxxl)
         layout.setSpacing(SPACING.md)
         layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
-        # Icon
-        icon_label = QLabel(icon)
-        icon_label.setStyleSheet(f"font-size: 48px;")
+        # Icon - support both mdi6 icons and emoji fallback
+        icon_label = QLabel()
         icon_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        if icon.startswith("mdi6."):
+            icon_label.setPixmap(qta.icon(icon, color=self._colors.text_secondary).pixmap(48, 48))
+        else:
+            icon_label.setText(icon)
+            icon_label.setStyleSheet(f"font-size: 48px;")
         layout.addWidget(icon_label)
 
         # Title
@@ -789,7 +795,7 @@ class HeatMapCell(QFrame):
         parent=None
     ):
         super().__init__(parent)
-        self._colors = colors or get_theme("light")
+        self._colors = colors or get_colors()
         self._value = value
         self._min_value = min_value
         self._max_value = max_value
@@ -951,7 +957,7 @@ class HeatMapGrid(QFrame):
         parent=None
     ):
         super().__init__(parent)
-        self._colors = colors or get_theme("light")
+        self._colors = colors or get_colors()
         self._row_labels = row_labels
         self._col_labels = col_labels
         self._values = values

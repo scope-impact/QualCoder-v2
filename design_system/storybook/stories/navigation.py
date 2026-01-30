@@ -17,13 +17,13 @@ def create_tabs_story(colors: ColorPalette) -> StoryPage:
 
     # Tab group
     tabs = TabGroup(colors=colors)
-    tabs.add_tab("Coding", icon="🏷️", active=True)
-    tabs.add_tab("Reports", icon="📊")
-    tabs.add_tab("Settings", icon="⚙️")
+    tabs.add_tab("Coding", icon="mdi6.tag", active=True)
+    tabs.add_tab("Reports", icon="mdi6.chart-bar")
+    tabs.add_tab("Settings", icon="mdi6.cog")
     examples.append((
         "Tab Group",
         tabs,
-        'tabs = TabGroup()\ntabs.add_tab("Coding", icon="🏷️", active=True)'
+        'tabs = TabGroup()\ntabs.add_tab("Coding", icon="mdi6.tag", active=True)'
     ))
 
     return StoryPage(

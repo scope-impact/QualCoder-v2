@@ -119,11 +119,11 @@ def create_contextmenu_story(colors: ColorPalette) -> StoryPage:
     menu_layout.setSpacing(0)
 
     items = [
-        ("✂️", "Cut"),
-        ("📋", "Copy"),
-        ("📄", "Paste"),
+        ("mdi6.content-cut", "Cut"),
+        ("mdi6.content-copy", "Copy"),
+        ("mdi6.content-paste", "Paste"),
         None,  # Separator
-        ("🗑️", "Delete"),
+        ("mdi6.delete", "Delete"),
     ]
 
     for item in items:
@@ -145,7 +145,7 @@ def create_contextmenu_story(colors: ColorPalette) -> StoryPage:
     examples.append((
         "Context Menu",
         menu,
-        'menu = ContextMenu()\nmenu.add_item("Cut", icon="✂️", shortcut="Ctrl+X")'
+        'menu = ContextMenu()\nmenu.add_item("Cut", icon="mdi6.content-cut", shortcut="Ctrl+X")'
     ))
 
     return StoryPage(
@@ -183,15 +183,15 @@ def create_panels_story(colors: ColorPalette) -> StoryPage:
 
     nav = NavList(colors=colors)
     nav.add_section("Main")
-    nav.add_item("Dashboard", icon="📊", active=True)
-    nav.add_item("Files", icon="📁")
-    nav.add_item("Codes", icon="🏷️")
+    nav.add_item("Dashboard", icon="mdi6.view-dashboard", active=True)
+    nav.add_item("Files", icon="mdi6.folder")
+    nav.add_item("Codes", icon="mdi6.tag")
     sidebar.layout().addWidget(nav)
 
     examples.append((
         "Sidebar Navigation",
         sidebar,
-        'sidebar = Sidebar()\nnav = NavList()\nnav.add_item("Dashboard", icon="📊")'
+        'sidebar = Sidebar()\nnav = NavList()\nnav.add_item("Dashboard", icon="mdi6.view-dashboard")'
     ))
 
     return StoryPage(
@@ -210,18 +210,18 @@ def create_toolbar_story(colors: ColorPalette) -> StoryPage:
     toolbar.setFixedWidth(500)
 
     # Add tool buttons
-    for icon in ["📁", "💾", "↩️", "↪️"]:
+    for icon in ["mdi6.folder", "mdi6.content-save", "mdi6.undo", "mdi6.redo"]:
         toolbar.add_button(icon=icon)
 
     toolbar.add_divider()
 
-    for icon in ["✂️", "📋", "📄"]:
+    for icon in ["mdi6.content-cut", "mdi6.content-copy", "mdi6.content-paste"]:
         toolbar.add_button(icon=icon)
 
     examples.append((
         "Toolbar",
         toolbar,
-        'toolbar = Toolbar()\ntoolbar.add_button(icon="📁")\ntoolbar.add_divider()'
+        'toolbar = Toolbar()\ntoolbar.add_button(icon="mdi6.folder")\ntoolbar.add_divider()'
     ))
 
     # Status bar

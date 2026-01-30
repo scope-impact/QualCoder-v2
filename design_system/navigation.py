@@ -5,6 +5,8 @@ Menu items, tabs, and navigation elements
 
 from typing import List, Optional
 
+import qtawesome as qta
+
 from PySide6.QtWidgets import (
     QFrame,
     QHBoxLayout,
@@ -17,7 +19,7 @@ from PySide6.QtWidgets import (
 )
 from PySide6.QtCore import Qt, Signal
 
-from .tokens import SPACING, RADIUS, TYPOGRAPHY, ColorPalette, get_theme
+from .tokens import SPACING, RADIUS, TYPOGRAPHY, ColorPalette, get_colors
 
 
 class MenuItem(QPushButton):
@@ -39,11 +41,16 @@ class MenuItem(QPushButton):
         parent=None
     ):
         super().__init__(parent)
-        self._colors = colors or get_theme("dark")
+        self._colors = colors or get_colors()
         self._active = active
+        self._icon_name = icon
 
-        display = f"{icon}  {text}" if icon else text
-        self.setText(display)
+        if icon and icon.startswith("mdi6."):
+            self.setIcon(qta.icon(icon, color=self._colors.text_secondary))
+            self.setText(text)
+        else:
+            display = f"{icon}  {text}" if icon else text
+            self.setText(display)
 
         self.setCursor(Qt.CursorShape.PointingHandCursor)
         self._apply_style()
@@ -89,7 +96,7 @@ class Tab(QPushButton):
     Individual tab item.
 
     Usage:
-        tab = Tab("Coding", icon="🏷️", active=True)
+        tab = Tab("Coding", icon="mdi6.tag", active=True)
     """
 
     def __init__(
@@ -101,11 +108,16 @@ class Tab(QPushButton):
         parent=None
     ):
         super().__init__(parent)
-        self._colors = colors or get_theme("dark")
+        self._colors = colors or get_colors()
         self._active = active
+        self._icon_name = icon
 
-        display = f"{icon}  {text}" if icon else text
-        self.setText(display)
+        if icon and icon.startswith("mdi6."):
+            self.setIcon(qta.icon(icon, color=self._colors.primary if active else self._colors.text_secondary))
+            self.setText(text)
+        else:
+            display = f"{icon}  {text}" if icon else text
+            self.setText(display)
 
         self.setMinimumHeight(36)
         self.setCursor(Qt.CursorShape.PointingHandCursor)
@@ -119,6 +131,11 @@ class Tab(QPushButton):
         return self._active
 
     def _apply_style(self):
+        # Update icon color if using mdi6 icon
+        if hasattr(self, '_icon_name') and self._icon_name and self._icon_name.startswith("mdi6."):
+            icon_color = self._colors.primary if self._active else self._colors.text_secondary
+            self.setIcon(qta.icon(self._icon_name, color=icon_color))
+
         if self._active:
             self.setStyleSheet(f"""
                 QPushButton {{
@@ -155,8 +172,8 @@ class TabGroup(QFrame):
 
     Usage:
         tabs = TabGroup()
-        tabs.add_tab("Coding", icon="🏷️")
-        tabs.add_tab("Reports", icon="📊")
+        tabs.add_tab("Coding", icon="mdi6.tag")
+        tabs.add_tab("Reports", icon="mdi6.chart-bar")
         tabs.tab_changed.connect(self.on_tab_change)
     """
 
@@ -164,7 +181,7 @@ class TabGroup(QFrame):
 
     def __init__(self, colors: ColorPalette = None, parent=None):
         super().__init__(parent)
-        self._colors = colors or get_theme("dark")
+        self._colors = colors or get_colors()
         self._tabs = []
         self._active = None
 
@@ -213,7 +230,7 @@ class Breadcrumb(QFrame):
 
     def __init__(self, colors: ColorPalette = None, parent=None):
         super().__init__(parent)
-        self._colors = colors or get_theme("dark")
+        self._colors = colors or get_colors()
         self._items = []
 
         self._layout = QHBoxLayout(self)
@@ -273,8 +290,8 @@ class NavList(QScrollArea):
     Usage:
         nav = NavList()
         nav.add_section("Main")
-        nav.add_item("Dashboard", icon="📊", active=True)
-        nav.add_item("Settings", icon="⚙️")
+        nav.add_item("Dashboard", icon="mdi6.view-dashboard", active=True)
+        nav.add_item("Settings", icon="mdi6.cog")
         nav.item_clicked.connect(self.navigate)
     """
 
@@ -282,7 +299,7 @@ class NavList(QScrollArea):
 
     def __init__(self, colors: ColorPalette = None, parent=None):
         super().__init__(parent)
-        self._colors = colors or get_theme("dark")
+        self._colors = colors or get_colors()
         self._items = []
         self._active = None
 
@@ -321,8 +338,14 @@ class NavList(QScrollArea):
         active: bool = False,
         on_click=None
     ) -> QPushButton:
-        btn = QPushButton(f"{icon}  {text}" if icon else text)
+        btn = QPushButton()
+        if icon and icon.startswith("mdi6."):
+            btn.setIcon(qta.icon(icon, color=self._colors.primary if active else self._colors.text_primary))
+            btn.setText(text)
+        else:
+            btn.setText(f"{icon}  {text}" if icon else text)
         btn.setProperty("nav_item", text)
+        btn.setProperty("icon_name", icon)
         btn.setCursor(Qt.CursorShape.PointingHandCursor)
 
         self._items.append(btn)
@@ -350,10 +373,16 @@ class NavList(QScrollArea):
             self._style_item(btn, is_active)
 
     def _style_item(self, btn: QPushButton, active: bool):
+        # Update icon color if using mdi6 icon
+        icon_name = btn.property("icon_name")
+        if icon_name and icon_name.startswith("mdi6."):
+            icon_color = self._colors.primary if active else self._colors.text_primary
+            btn.setIcon(qta.icon(icon_name, color=icon_color))
+
         if active:
             btn.setStyleSheet(f"""
                 QPushButton {{
-                    background-color: rgba(0, 150, 136, 0.1);
+                    background-color: {self._colors.primary}1A;
                     color: {self._colors.primary};
                     border: none;
                     border-radius: {RADIUS.sm}px;
@@ -400,7 +429,7 @@ class StepIndicator(QFrame):
         parent=None
     ):
         super().__init__(parent)
-        self._colors = colors or get_theme("dark")
+        self._colors = colors or get_colors()
         self._steps = steps
         self._current = current
         self._clickable = clickable
@@ -441,7 +470,11 @@ class StepIndicator(QFrame):
         is_completed = index < self._current
         is_current = index == self._current
 
-        circle = QPushButton(str(index + 1) if not is_completed else "✓")
+        circle = QPushButton()
+        if is_completed:
+            circle.setIcon(qta.icon("mdi6.check", color="white"))
+        else:
+            circle.setText(str(index + 1))
         circle.setFixedSize(32, 32)
 
         if self._clickable and index <= self._current:
@@ -452,10 +485,8 @@ class StepIndicator(QFrame):
             circle.setStyleSheet(f"""
                 QPushButton {{
                     background-color: {self._colors.primary};
-                    color: white;
                     border: none;
                     border-radius: 16px;
-                    font-weight: bold;
                 }}
             """)
         elif is_current:
@@ -535,7 +566,7 @@ class MediaTypeSelector(QFrame):
         parent=None
     ):
         super().__init__(parent)
-        self._colors = colors or get_theme("dark")
+        self._colors = colors or get_colors()
         self._options = options
         self._selected = selected or (options[0][0] if options else None)
         self._buttons = {}
