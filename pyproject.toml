@@ -28,7 +28,8 @@ dev = [
     "pytest-qt>=4.5.0",
     "pre-commit>=4.0.0",
     "ruff>=0.9.0",
-    "returns>=0.22",  # Result monad for domain layer
+    "returns>=0.22", # Result monad for domain layer
+    "pytest-cov>=7.0.0",
 ]
 docs = [
     "mkdocs>=1.6",
