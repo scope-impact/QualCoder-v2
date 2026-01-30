@@ -1,7 +1,7 @@
 ---
 id: QC-006
 title: Coding Application
-status: To Do
+status: Done
 milestone: M-002
 layer: Application
 created_date: '2026-01-29'

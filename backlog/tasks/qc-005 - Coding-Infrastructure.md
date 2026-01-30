@@ -1,7 +1,7 @@
 ---
 id: QC-005
 title: Coding Infrastructure
-status: To Do
+status: Done
 milestone: M-002
 layer: Infrastructure
 created_date: '2026-01-29'
