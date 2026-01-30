@@ -31,11 +31,11 @@ This document provides a C4 model architecture overview of QualCoder v2. For han
 
 ```mermaid
 graph TD
-    Researcher(Researcher) -- "Codes data via Qt UI" --> QC(QualCoder v2)
-    Agent(AI Agent) -- "Suggests codes via MCP" --> QC
-    QC -- "Queries LLM via HTTPS" --> LLM(LLM Provider)
-    QC -- "Reads/Writes via File I/O" --> FS(File System)
-    QC -- "Persists data via SQLite" --> DB[(Project DB)]
+    Researcher(Researcher) -- "Mouse/Keyboard / Qt Events" --> QC(QualCoder v2)
+    Agent(AI Agent) -- "tool_call / MCP JSON-RPC" --> QC
+    QC -- "chat/completions / HTTPS" --> LLM(LLM Provider)
+    QC -- "open/read/write / File I/O" --> FS(File System)
+    QC -- "SELECT/INSERT / SQLite" --> DB[(Project DB)]
 ```
 
 ---
@@ -63,11 +63,11 @@ graph TB
         APP[Application Shell - EventBus + SignalBridge]
         AGENT[Agent Context - MCP Protocol]
 
-        UI -- Commands --> APP
-        APP -- Pure calls --> DOMAIN
-        DOMAIN -- Events --> APP
-        APP -- Qt Signals --> UI
-        AGENT -- Tool calls --> APP
+        UI -- "Command DTOs / Python" --> APP
+        APP -- "Function calls / Python" --> DOMAIN
+        DOMAIN -- "DomainEvent / Python" --> APP
+        APP -- "pyqtSignal / Qt" --> UI
+        AGENT -- "MCP tool_call / JSON-RPC" --> APP
     end
 
     subgraph Data Stores
@@ -75,11 +75,11 @@ graph TB
         VEC[(Vector Store - ChromaDB)]
     end
 
-    APP -- SQL --> DB
-    AGENT -- Embeddings --> VEC
+    APP -- "SQL / sqlite3" --> DB
+    AGENT -- "Embeddings / Python API" --> VEC
 
     LLM(LLM Provider)
-    AGENT -- HTTPS/API --> LLM
+    AGENT -- "Chat API / HTTPS" --> LLM
 ```
 
 ---
@@ -109,10 +109,10 @@ graph TB
         EXP[EXPORT<br>Reports, Charts<br>Output generation]
     end
 
-    COD -->|events| ANA
-    SRC -->|events| COD
-    CAS -->|events| COD
-    AI <-->|partnership| COD
+    COD -->|"SegmentCoded / DomainEvent"| ANA
+    SRC -->|"SourceImported / DomainEvent"| COD
+    CAS -->|"CaseLinked / DomainEvent"| COD
+    AI <-->|"SuggestionGenerated / Async"| COD
 ```
 
 ### Bounded Context Summary
@@ -139,9 +139,9 @@ graph LR
         QRY[Queries]
     end
 
-    CTRL -- publish --> EB
-    EB -- subscribe --> SB
-    SB -- emit --> UI[Qt Widgets]
+    CTRL -- "publish(DomainEvent)" --> EB
+    EB -- "callback(DomainEvent)" --> SB
+    SB -- "pyqtSignal.emit(Payload)" --> UI[Qt Widgets]
 ```
 
 ---
@@ -169,13 +169,13 @@ graph TB
         QT[Qt Widgets]
     end
 
-    INV --> DER
-    DER --> EVT
-    EVT --> CTRL
-    CTRL --> REPO
-    CTRL --> BUS
-    BUS --> SB
-    SB --> QT
+    INV -- "bool predicates" --> DER
+    DER -- "Result[Event, Failure]" --> EVT
+    EVT -- "DomainEvent" --> CTRL
+    CTRL -- "save() / SQL" --> REPO
+    CTRL -- "publish(event)" --> BUS
+    BUS -- "callback(event)" --> SB
+    SB -- "pyqtSignal.emit()" --> QT
 ```
 
 ### The 5 Building Blocks
