@@ -5,649 +5,415 @@ type: reference
 created_date: '2026-01-30'
 ---
 
-# QualCoder v2 Architecture
+# QualCoder v2 System Architecture
 
-This document explains the architectural patterns used in QualCoder v2 and why they exist.
+> **Status:** `DRAFT`
+> **Owner:** `QualCoder Core Team`
+> **Version:** `v2.0`
 
-## Table of Contents
-
-1. [Overview](#overview)
-2. [The Problem We're Solving](#the-problem-were-solving)
-3. [Architectural Layers](#architectural-layers)
-4. [Core Patterns](#core-patterns)
-5. [Data Flow](#data-flow)
-6. [Component Reference](#component-reference)
-7. [Bounded Contexts](#bounded-contexts)
-8. [Design Decisions](#design-decisions)
+This document provides a C4 model architecture overview of QualCoder v2. For hands-on learning with code examples, see the [Onboarding Tutorials](../tutorials/README.md).
 
 ---
 
-## Overview
+## 1. System Context (C4 Level 1)
 
-QualCoder v2 uses **Functional Domain-Driven Design (fDDD)** - an architectural approach that combines:
+**Scope:** QualCoder v2 is a desktop qualitative data analysis tool for researchers to apply semantic codes to research data and generate insights.
 
-- **Domain-Driven Design** for modeling complex business logic
-- **Functional Programming** for testability and composability
-- **Event-Driven Architecture** for loose coupling and real-time updates
+| Actor / System | Type | Description |
+|----------------|------|-------------|
+| **Researcher** | Person | Qualitative researcher applying codes to research data |
+| **AI Agent** | Person | Automated agent suggesting codes and generating insights |
+| **QualCoder v2** | System | The Scope - Desktop QDA tool with AI assistance |
+| **LLM Provider** | System | External AI service (OpenAI, Anthropic, local Ollama) |
+| **File System** | System | Local storage for project files, media, exports |
 
-### Key Principles
+### Context Diagram
 
-| Principle | Implementation |
-|-----------|----------------|
-| Pure domain logic | Invariants and Derivers have no side effects |
-| Immutable data | Frozen dataclasses, Value Objects |
-| Explicit effects | All state changes expressed as Events |
-| Type safety | Runtime validation + type hints |
-| Strict layering | Presentation → Application → Domain → Infrastructure |
+```mermaid
+graph TD
+    Researcher(Researcher) -- "Codes data via Qt UI" --> QC(QualCoder v2)
+    Agent(AI Agent) -- "Suggests codes via MCP" --> QC
+    QC -- "Queries LLM via HTTPS" --> LLM(LLM Provider)
+    QC -- "Reads/Writes via File I/O" --> FS(File System)
+    QC -- "Persists data via SQLite" --> DB[(Project DB)]
+```
 
 ---
 
-## The Problem We're Solving
+## 2. Container Inventory (C4 Level 2)
 
-QualCoder is a qualitative research tool where users apply semantic "codes" to research data. This presents several challenges:
+**Definition:** A "Container" is a runnable application or data store.
 
-### 1. Complex Business Rules
+| ID | Container Name | Technology | Responsibility | Type |
+|----|----------------|------------|----------------|------|
+| C1 | Desktop Application | Python 3.10+ / PySide6 | Main GUI, user interaction | Desktop App |
+| C2 | Domain Core | Python / Pure Functions | Business logic, invariants, derivers | Library |
+| C3 | Application Shell | Python / EventBus + SignalBridge | Orchestration, event routing | Library |
+| C4 | Project Database | SQLite 3 | Stores codes, segments, sources | Database |
+| C5 | Agent Context | Python / MCP Protocol | Exposes domain to AI agents | API |
+| C6 | Vector Store | ChromaDB (embedded) | Stores embeddings for search | Database |
 
+### Container Diagram
+
+```mermaid
+graph TB
+    subgraph QualCoder v2 System Boundary
+        UI[Desktop App - PySide6]
+        DOMAIN[Domain Core - Pure Python]
+        APP[Application Shell - EventBus + SignalBridge]
+        AGENT[Agent Context - MCP Protocol]
+
+        UI -- Commands --> APP
+        APP -- Pure calls --> DOMAIN
+        DOMAIN -- Events --> APP
+        APP -- Qt Signals --> UI
+        AGENT -- Tool calls --> APP
+    end
+
+    subgraph Data Stores
+        DB[(Project DB - SQLite)]
+        VEC[(Vector Store - ChromaDB)]
+    end
+
+    APP -- SQL --> DB
+    AGENT -- Embeddings --> VEC
+
+    LLM(LLM Provider)
+    AGENT -- HTTPS/API --> LLM
 ```
-- Code names must be unique (case-insensitive)
-- Category hierarchies cannot have cycles
-- Text positions must be within source bounds
-- Codes with segments require confirmation to delete
-- Merged codes must both exist and be different
-```
-
-### 2. Real-Time UI Updates
-
-When a code is applied, the UI must instantly:
-- Highlight the coded text
-- Update the code tree segment count
-- Show the action in the activity feed
-- Invalidate cached analysis reports
-
-### 3. Multi-Context Communication
-
-Nine bounded contexts need to react to each other's events:
-- Coding events trigger Analysis recalculation
-- Source changes affect Coding segments
-- AI actions must appear in the activity feed
-
-### 4. Testability
-
-Business rules must be testable without:
-- Database connections
-- PyQt6 UI components
-- File system access
 
 ---
 
-## Architectural Layers
+## 3. Component View (C4 Level 3)
 
-```
-┌─────────────────────────────────────────────────────────┐
-│                    Presentation                         │
-│              (PyQt6 Widgets, Screens)                   │
-├─────────────────────────────────────────────────────────┤
-│                    Application                          │
-│      (Controllers, EventBus, SignalBridge, Queries)     │
-├─────────────────────────────────────────────────────────┤
-│                      Domain                             │
-│    (Entities, Value Objects, Invariants, Derivers)      │
-├─────────────────────────────────────────────────────────┤
-│                   Infrastructure                        │
-│           (Repositories, SQLite, File I/O)              │
-└─────────────────────────────────────────────────────────┘
+### Domain Core Components (C2)
+
+Organized by **Bounded Contexts** - each context is a cohesive business capability.
+
+```mermaid
+graph TB
+    subgraph Core Domain
+        COD[CODING<br>Codes, Categories, Segments<br>Apply codes to research data]
+        ANA[ANALYSIS<br>Reports, Insights<br>Generate research findings]
+    end
+
+    subgraph Supporting Domain
+        SRC[SOURCES<br>Documents, Audio, Video<br>Manage research materials]
+        CAS[CASES<br>Grouping, Attributes<br>Organize by participant]
+        PRJ[PROJECTS<br>Settings, Lifecycle<br>Project management]
+        COL[COLLABORATION<br>Coders, Merging<br>Multi-coder workflows]
+    end
+
+    subgraph Generic Domain
+        AI[AI SERVICES<br>LLM, Embeddings<br>AI-assisted coding]
+        EXP[EXPORT<br>Reports, Charts<br>Output generation]
+    end
+
+    COD -->|events| ANA
+    SRC -->|events| COD
+    CAS -->|events| COD
+    AI <-->|partnership| COD
 ```
 
-### Layer Dependencies
+### Bounded Context Summary
 
-```
-Presentation  →  Application  →  Domain  ←  Infrastructure
-                     ↓
-              Infrastructure
-```
+| Context | Entities | Key Operations |
+|---------|----------|----------------|
+| **Coding** | Code, Category, Segment | Create code, apply to text, merge codes |
+| **Analysis** | Report, Insight, Matrix | Generate frequency, co-occurrence |
+| **Sources** | Source, Speaker, Transcript | Import files, detect speakers |
+| **Cases** | Case, CaseAttribute | Link sources, assign attributes |
+| **Projects** | Project, Settings | Open, save, export project |
+| **Collaboration** | Coder, CodingSession | Switch coder, compare, merge |
+| **AI Services** | Embedding, Suggestion | Generate suggestions, search |
+| **Export** | ExportJob, Chart | Export reports, generate charts |
 
-- **Domain** has no dependencies (pure Python)
-- **Application** depends on Domain
-- **Infrastructure** implements Domain interfaces
-- **Presentation** depends on Application
+### Application Shell Components (C3)
+
+```mermaid
+graph LR
+    subgraph Application Shell
+        EB[EventBus]
+        SB[SignalBridge]
+        CTRL[Controllers]
+        QRY[Queries]
+    end
+
+    CTRL -- publish --> EB
+    EB -- subscribe --> SB
+    SB -- emit --> UI[Qt Widgets]
+```
 
 ---
 
-## Core Patterns
+## 4. Functional Core / Imperative Shell
 
-### 1. Invariants (Business Rule Predicates)
+QualCoder v2 follows the **Functional Core / Imperative Shell** pattern:
 
-Pure functions that answer: **"Is this allowed?"**
+```mermaid
+graph TB
+    subgraph Functional Core - Pure
+        INV[Invariants]
+        DER[Derivers]
+        EVT[Events]
+    end
 
-```python
-# src/domain/coding/invariants.py
+    subgraph Imperative Shell - Side Effects
+        CTRL[Controllers]
+        REPO[Repositories]
+        BUS[EventBus]
+        SB[SignalBridge]
+    end
 
-def is_valid_code_name(name: str) -> bool:
-    """Check that a code name is valid."""
-    return is_non_empty_string(name) and is_within_length(name, 1, 100)
+    subgraph Presentation
+        QT[Qt Widgets]
+    end
 
-def is_code_name_unique(
-    name: str,
-    existing_codes: Iterable[Code],
-    exclude_code_id: Optional[CodeId] = None,
-) -> bool:
-    """Check that a code name is unique (case-insensitive)."""
-    for code in existing_codes:
-        if exclude_code_id and code.id == exclude_code_id:
-            continue
-        if code.name.lower() == name.lower():
-            return False
-    return True
-
-def is_category_hierarchy_valid(
-    category_id: CategoryId,
-    new_parent_id: Optional[CategoryId],
-    categories: Iterable[Category],
-) -> bool:
-    """Check that moving a category won't create a cycle."""
-    # ... cycle detection logic
+    INV --> DER
+    DER --> EVT
+    EVT --> CTRL
+    CTRL --> REPO
+    CTRL --> BUS
+    BUS --> SB
+    SB --> QT
 ```
 
-**Characteristics:**
-- Pure functions (no side effects)
-- Return `bool`
-- Named with `is_*` or `can_*` prefix
-- Composable into complex rules
+### The 5 Building Blocks
 
-### 2. Derivers (Event Derivation Functions)
+| Block | Layer | Purpose | Naming |
+|-------|-------|---------|--------|
+| Invariants | Domain | Pure predicates - "Is this allowed?" | `is_*`, `can_*` |
+| Derivers | Domain | Pure functions - "What happened?" | `derive_*` |
+| Events | Domain | Immutable records of changes | `*Created`, `*Deleted` |
+| EventBus | Application | Pub/sub event distribution | `subscribe`, `publish` |
+| SignalBridge | Application | Thread-safe domain to Qt bridge | `*_signal` |
 
-Pure functions that answer: **"What happened?"**
-
-```python
-# src/domain/coding/derivers.py
-
-def derive_create_code(
-    name: str,
-    color: Color,
-    category_id: Optional[CategoryId],
-    memo: Optional[str],
-    existing_codes: Iterable[Code],
-    existing_categories: Iterable[Category],
-) -> Result[CodeCreated, FailureReason]:
-    """
-    Derive a CodeCreated event from a create code command.
-
-    Composes invariants to validate, returns Success(event) or Failure(reason).
-    """
-    # Validate name
-    if not is_valid_code_name(name):
-        return Failure(EmptyName())
-
-    # Check uniqueness
-    if not is_code_name_unique(name, existing_codes):
-        return Failure(DuplicateName(name))
-
-    # Check category exists (if specified)
-    if category_id and not does_category_exist(category_id, existing_categories):
-        return Failure(CategoryNotFound(category_id))
-
-    # All invariants pass - derive the event
-    return Success(CodeCreated(
-        code_id=CodeId.new(),
-        name=name,
-        color=color,
-        category_id=category_id,
-        memo=memo,
-    ))
-```
-
-**Characteristics:**
-- Pure functions (no I/O, no side effects)
-- Compose invariants for validation
-- Return `Success[Event]` or `Failure[Reason]`
-- Contain all business logic for an operation
-
-### 3. Result Type (Success | Failure)
-
-Explicit success/failure handling without exceptions:
-
-```python
-# src/domain/shared/types.py
-
-@dataclass(frozen=True)
-class Success(Generic[T]):
-    value: T
-
-    def is_success(self) -> bool:
-        return True
-
-    def map(self, fn: Callable[[T], T]) -> Result[T, E]:
-        return Success(fn(self.value))
-
-@dataclass(frozen=True)
-class Failure(Generic[E]):
-    error: E
-
-    def is_success(self) -> bool:
-        return False
-
-Result = Union[Success[T], Failure[E]]
-```
-
-**Usage:**
-```python
-result = derive_create_code(name, color, ...)
-
-if result.is_success():
-    event = result.unwrap()
-    repository.save(event)
-    event_bus.publish(event)
-else:
-    error = result.error
-    show_error_to_user(error.message)
-```
-
-### 4. Domain Events
-
-Immutable records of what happened:
-
-```python
-@dataclass(frozen=True)
-class CodeCreated(DomainEvent):
-    code_id: CodeId
-    name: str
-    color: Color
-    category_id: Optional[CategoryId]
-    memo: Optional[str]
-
-    event_type: str = "coding.code_created"
-
-@dataclass(frozen=True)
-class SegmentCoded(DomainEvent):
-    segment_id: SegmentId
-    source_id: SourceId
-    code_id: CodeId
-    position: TextPosition
-    selected_text: str
-
-    event_type: str = "coding.segment_coded"
-```
-
-**Characteristics:**
-- Immutable (frozen dataclass)
-- Past tense naming (`Created`, `Deleted`, `Merged`)
-- Contains all data needed to understand what happened
-- Includes `event_type` for routing
-
-### 5. EventBus (Pub/Sub)
-
-Synchronous event distribution:
-
-```python
-# src/application/event_bus.py
-
-class EventBus:
-    def subscribe(self, event_type: str, handler: Callable) -> Subscription:
-        """Subscribe to events by type string."""
-
-    def subscribe_type(self, event_class: type, handler: Callable) -> Subscription:
-        """Subscribe to events by class."""
-
-    def subscribe_all(self, handler: Callable) -> Subscription:
-        """Subscribe to all events (for logging, audit)."""
-
-    def publish(self, event: DomainEvent) -> None:
-        """Publish event to all matching subscribers."""
-```
-
-**Usage:**
-```python
-bus = EventBus()
-
-# Subscribe to specific events
-bus.subscribe("coding.code_created", handle_code_created)
-bus.subscribe_type(SegmentCoded, update_segment_count)
-
-# Subscribe to everything (audit log)
-bus.subscribe_all(audit_logger.log)
-
-# Publish
-bus.publish(CodeCreated(...))
-```
-
-### 6. SignalBridge (Qt Integration)
-
-Thread-safe bridge from domain events to PyQt6 signals:
-
-```python
-# src/application/signal_bridge/base.py
-
-class BaseSignalBridge(QObject):
-    """
-    Bridges domain events to PyQt6 signals.
-
-    - Subscribes to EventBus
-    - Converts events to Qt-friendly payloads
-    - Emits signals thread-safely (for background operations)
-    - Records to activity feed
-    """
-
-    # Define Qt signals
-    code_created = pyqtSignal(CodeCreatedPayload)
-    segment_coded = pyqtSignal(SegmentCodedPayload)
-
-    def _on_event(self, event: DomainEvent) -> None:
-        """Convert domain event to signal emission."""
-        payload = self._convert_to_payload(event)
-
-        # Thread-safe emission to main thread
-        QMetaObject.invokeMethod(
-            self,
-            "_emit_signal",
-            Qt.ConnectionType.QueuedConnection,
-            Q_ARG(object, payload),
-        )
-```
-
-**Why it exists:**
-- Qt signals must be emitted from the main thread
-- Domain events can come from background threads (AI, imports)
-- Provides type-safe payloads for UI consumption
-- Centralizes activity feed recording
+See [Onboarding Tutorials](../tutorials/README.md) for hands-on examples.
 
 ---
 
-## Data Flow
+## 5. Data Flow
 
-### Complete Flow: Apply Code to Text
+### Success Flow: Apply Code to Text
 
-```
-┌──────────────────────────────────────────────────────────────────┐
-│ 1. USER ACTION                                                   │
-│    User selects text, clicks "Apply Code: Anxiety"               │
-└──────────────────────────────────────────────────────────────────┘
-                                 ↓
-┌──────────────────────────────────────────────────────────────────┐
-│ 2. CONTROLLER (Application Layer)                                │
-│                                                                  │
-│    def apply_code(code_id, source_id, start, end):               │
-│        # Load current state                                      │
-│        state = CodingState(                                      │
-│            codes=code_repo.get_all(),                            │
-│            sources=source_repo.get_all(),                        │
-│            segments=segment_repo.get_for_source(source_id),      │
-│        )                                                         │
-└──────────────────────────────────────────────────────────────────┘
-                                 ↓
-┌──────────────────────────────────────────────────────────────────┐
-│ 3. DERIVER (Domain Layer) - Pure Function                        │
-│                                                                  │
-│    result = derive_apply_code_to_text(                           │
-│        code_id=code_id,                                          │
-│        source_id=source_id,                                      │
-│        position=TextPosition(start, end),                        │
-│        state=state,                                              │
-│    )                                                             │
-│                                                                  │
-│    Internally composes INVARIANTS:                               │
-│    ├─ does_code_exist(code_id, state.codes)        → True ✓      │
-│    ├─ does_source_exist(source_id, state.sources)  → True ✓      │
-│    ├─ is_valid_text_position(position, source)     → True ✓      │
-│    └─ Returns Success(SegmentCoded event)                        │
-└──────────────────────────────────────────────────────────────────┘
-                                 ↓
-┌──────────────────────────────────────────────────────────────────┐
-│ 4. CONTROLLER HANDLES SUCCESS                                    │
-│                                                                  │
-│    if result.is_success():                                       │
-│        event = result.unwrap()                                   │
-│        segment_repo.save(event)          # Persist               │
-│        event_bus.publish(event)          # Notify                │
-│        return Success(event.segment_id)                          │
-└──────────────────────────────────────────────────────────────────┘
-                                 ↓
-┌──────────────────────────────────────────────────────────────────┐
-│ 5. EVENTBUS DISTRIBUTES                                          │
-│                                                                  │
-│    Subscribers notified synchronously:                           │
-│    ├─ SignalBridge._on_segment_coded(event)                      │
-│    ├─ AnalysisPolicy.invalidate_cache(event)                     │
-│    ├─ AuditLogger.log(event)                                     │
-│    └─ AIContext.update_embeddings(event)                         │
-└──────────────────────────────────────────────────────────────────┘
-                                 ↓
-┌──────────────────────────────────────────────────────────────────┐
-│ 6. SIGNALBRIDGE EMITS QT SIGNAL                                  │
-│                                                                  │
-│    payload = SegmentCodedPayload(                                │
-│        segment_id=event.segment_id,                              │
-│        code_name="Anxiety",                                      │
-│        selected_text="I felt worried about...",                  │
-│        source_name="Interview_P01.txt",                          │
-│    )                                                             │
-│    self.segment_coded.emit(payload)  # Thread-safe               │
-└──────────────────────────────────────────────────────────────────┘
-                                 ↓
-┌──────────────────────────────────────────────────────────────────┐
-│ 7. UI REACTS                                                     │
-│                                                                  │
-│    Connected slots update in real-time:                          │
-│    ├─ SourceView: Highlights text with code color                │
-│    ├─ CodeTree: Increments segment count badge                   │
-│    ├─ ActivityFeed: Shows "Applied Anxiety to Interview_P01"     │
-│    └─ StatusBar: Updates statistics                              │
-└──────────────────────────────────────────────────────────────────┘
+```mermaid
+sequenceDiagram
+    participant User
+    participant UI as Qt Widget
+    participant Ctrl as Controller
+    participant Der as Deriver
+    participant Repo as Repository
+    participant EB as EventBus
+    participant SB as SignalBridge
+
+    User->>UI: Select text, click Apply Code
+    UI->>Ctrl: apply_code(code_id, source_id, position)
+
+    Note over Ctrl,Repo: Build State
+    Ctrl->>Repo: get_all()
+    Repo-->>Ctrl: existing data
+
+    Note over Ctrl,Der: Pure Domain Logic
+    Ctrl->>Der: derive_apply_code(...)
+
+    Note over Der: Validates invariants
+    Der-->>Ctrl: Success(SegmentCoded)
+
+    Note over Ctrl,Repo: Persist
+    Ctrl->>Repo: save(event)
+
+    Note over Ctrl,SB: Notify
+    Ctrl->>EB: publish(event)
+    EB->>SB: handle(event)
+    SB->>UI: segment_coded.emit(payload)
+
+    Note over UI: Updates in real-time
 ```
 
 ### Failure Flow
 
-```
-User tries to create code "Anxiety" (already exists)
-                    ↓
-Controller calls: derive_create_code("Anxiety", ...)
-                    ↓
-Deriver checks: is_code_name_unique("Anxiety", existing_codes)
-                    ↓
-                Returns False
-                    ↓
-Deriver returns: Failure(DuplicateName("Anxiety"))
-                    ↓
-Controller handles failure:
-    - No database write
-    - No event published
-    - Returns error to UI
-                    ↓
-UI shows: "Code name 'Anxiety' already exists"
+```mermaid
+sequenceDiagram
+    participant UI as Qt Widget
+    participant Ctrl as Controller
+    participant Der as Deriver
+
+    UI->>Ctrl: create_code(Anxiety)
+    Ctrl->>Der: derive_create_code(Anxiety, state)
+
+    Note over Der: is_code_name_unique = False
+    Der-->>Ctrl: Failure(DuplicateName)
+
+    Note over Ctrl: No database write, No event published
+    Ctrl-->>UI: Show error message
 ```
 
 ---
 
-## Component Reference
+## 6. Perspectives Overlay
 
-### Directory Structure
+### Security Perspective
+
+| Container | Security Controls |
+|-----------|-------------------|
+| C1 Desktop App | Local execution, no network auth required |
+| C4 Project DB | File-level permissions, optional encryption |
+| C5 Agent Context | MCP protocol validation, tool schema enforcement |
+| LLM Provider | API key storage in OS keychain, HTTPS only |
+
+### Ownership Perspective
+
+| Team / Role | Owns |
+|-------------|------|
+| Core Team | Domain Core (C2), Application Shell (C3) |
+| UI Team | Desktop Application (C1), Presentation components |
+| AI Team | Agent Context (C5), AI Services bounded context |
+
+### Technology Perspective
+
+| Layer | Technology | Why |
+|-------|------------|-----|
+| UI Framework | PySide6 | Qt bindings, cross-platform, mature |
+| Database | SQLite | Embedded, portable projects, no server |
+| Vector Store | ChromaDB | Embedded, Python-native, simple API |
+| Event System | Custom EventBus | Need subscribe_all, history, type-based |
+| Result Type | Custom | Minimal (~50 lines), no dependency |
+
+---
+
+## 7. Deployment Mapping
+
+**Definition:** How Containers (Level 2) map to Infrastructure.
+
+| Container | Infrastructure | Environment |
+|-----------|----------------|-------------|
+| Desktop Application | Native executable (PyInstaller) | User's machine |
+| Project Database | SQLite file in project folder | User's file system |
+| Vector Store | ChromaDB files in project folder | User's file system |
+| LLM Provider | Cloud API or local (Ollama) | External / Local |
+
+### Distribution
+
+```
+QualCoder v2
+├── macOS: .dmg installer (arm64, x86_64)
+├── Windows: .msi installer
+├── Linux: .deb, .rpm, AppImage
+└── PyPI: pip install qualcoder-v2
+```
+
+---
+
+## 8. Directory Structure
 
 ```
 src/
-├── domain/                     # Pure business logic
-│   ├── coding/
+├── domain/                     # C2: Domain Core (Pure)
+│   ├── coding/                 # Bounded Context
 │   │   ├── entities.py         # Code, Category, Segment
-│   │   ├── invariants.py       # Business rule predicates
-│   │   ├── derivers.py         # Event derivation functions
-│   │   ├── events.py           # Domain events
-│   │   └── tests/              # Unit tests (no mocks needed)
+│   │   ├── invariants.py       # is_valid_*, can_*
+│   │   ├── derivers.py         # derive_*
+│   │   ├── events.py           # *Created, *Deleted
+│   │   └── tests/              # No mocks needed
+│   ├── sources/
+│   ├── cases/
+│   ├── analysis/
+│   ├── projects/
+│   ├── collaboration/
+│   ├── ai_services/
 │   └── shared/
 │       ├── types.py            # Result, DomainEvent, IDs
-│       └── validation.py       # Reusable validation helpers
+│       └── validation.py       # Reusable helpers
 │
-├── application/                # Orchestration
+├── application/                # C3: Application Shell
 │   ├── event_bus.py            # Pub/sub infrastructure
 │   ├── signal_bridge/
-│   │   ├── base.py             # Abstract bridge
-│   │   ├── payloads.py         # Qt-friendly data objects
-│   │   └── thread_utils.py     # Thread-safe helpers
+│   │   ├── base.py             # Thread-safe bridge
+│   │   └── payloads.py         # Qt-friendly DTOs
 │   ├── controllers/            # Command handlers
-│   └── queries/                # Read-side queries
+│   └── queries/                # Read-side
 │
-├── infrastructure/             # External concerns
-│   ├── repositories/           # Database access
-│   └── adapters/               # File I/O, external APIs
+├── infrastructure/             # Repositories, Adapters
+│   ├── repositories/           # SQLite access
+│   └── adapters/               # File I/O, LLM clients
 │
-└── presentation/               # PyQt6 UI
-    ├── organisms/              # Complex widgets
-    ├── pages/                  # Full page layouts
-    └── screens/                # Top-level windows
+├── presentation/               # C1: Desktop App (PySide6)
+│   ├── organisms/              # Complex widgets
+│   ├── pages/                  # Page layouts
+│   └── screens/                # Top-level windows
+│
+└── agent_context/              # C5: Agent Context (MCP)
+    └── schemas/                # Tool definitions
 ```
-
-### Key Files
-
-| File | Purpose | Lines |
-|------|---------|-------|
-| `domain/coding/invariants.py` | Business rule predicates | ~410 |
-| `domain/coding/derivers.py` | Event derivation logic | ~640 |
-| `domain/shared/types.py` | Result type, base event, IDs | ~160 |
-| `domain/shared/validation.py` | Reusable validation helpers | ~310 |
-| `application/event_bus.py` | Pub/sub infrastructure | ~430 |
-| `application/signal_bridge/base.py` | Qt signal bridging | ~430 |
 
 ---
 
-## Bounded Contexts
+## 9. Bounded Contexts
 
-QualCoder v2 is organized into 9 bounded contexts:
-
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                         CORE DOMAIN                             │
-│  ┌─────────────────┐              ┌─────────────────┐           │
-│  │     Coding      │──events───→  │    Analysis     │           │
-│  │  (apply codes)  │              │ (generate       │           │
-│  │                 │              │  insights)      │           │
-│  └────────┬────────┘              └─────────────────┘           │
-│           │                                                      │
-│           │ events                                               │
-│           ↓                                                      │
-├─────────────────────────────────────────────────────────────────┤
-│                      SUPPORTING DOMAIN                          │
-│  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐              │
-│  │   Sources   │  │    Cases    │  │  Projects   │              │
-│  │ (documents) │  │ (grouping)  │  │ (lifecycle) │              │
-│  └─────────────┘  └─────────────┘  └─────────────┘              │
-│                                                                  │
-│  ┌─────────────────────────────────────────────────┐            │
-│  │              Collaboration                       │            │
-│  │         (multi-coder workflows)                  │            │
-│  └─────────────────────────────────────────────────┘            │
-├─────────────────────────────────────────────────────────────────┤
-│                       GENERIC DOMAIN                            │
-│  ┌─────────────────┐              ┌─────────────────┐           │
-│  │   AI Services   │              │     Export      │           │
-│  │ (LLM, vectors)  │              │   (reports)     │           │
-│  └─────────────────┘              └─────────────────┘           │
-└─────────────────────────────────────────────────────────────────┘
-```
-
-### Context Integration Patterns
-
-| From → To | Pattern | Description |
-|-----------|---------|-------------|
-| Coding → Analysis | Published Language | Events define the contract |
-| Source → Coding | Open Host Service | Standard segment API |
-| Project → Coding | Conformist | Coding adapts to Project |
-| AI ↔ Coding | Partnership | Bidirectional collaboration |
-| External → Project | Anti-Corruption Layer | Translates formats |
+| Context | Purpose | Key Events | Integration Pattern |
+|---------|---------|------------|---------------------|
+| Coding | Apply semantic codes to data | CodeCreated, SegmentCoded | Core - others depend on it |
+| Sources | Manage documents, media | SourceImported, SourceDeleted | Open Host Service |
+| Cases | Group and categorize | CaseCreated, SourceLinked | Conformist to Coding |
+| Analysis | Generate insights | ReportGenerated | Subscribes to Coding events |
+| Projects | Lifecycle management | ProjectOpened, ProjectExported | Anti-Corruption Layer |
+| Collaboration | Multi-coder workflows | CoderSwitched, CodingsMerged | Published Language |
+| AI Services | LLM, embeddings | SuggestionGenerated | Partnership with Coding |
+| Export | Reports, charts | ReportExported | Downstream consumer |
 
 ---
 
-## Design Decisions
+## 10. Design Decisions
 
 ### Why Functional DDD?
 
 | Concern | Traditional OOP | Functional DDD |
-|---------|----------------|----------------|
+|---------|-----------------|----------------|
 | Testing | Mocks required | Pure functions, no mocks |
 | Side effects | Hidden in methods | Explicit via events |
 | State | Mutable objects | Immutable data |
-| Composition | Inheritance | Function composition |
 | Debugging | Stack traces | Event replay |
 
-### Why Custom EventBus?
+### Why Custom Components?
 
-Libraries like Blinker and PyPubSub lack:
-- `subscribe_all()` for global handlers (audit, logging)
-- Event history for debugging
-- Type-based subscription by event class
-- Tight integration with our event conventions
+| Component | Why Custom | Alternative |
+|-----------|------------|-------------|
+| EventBus | Need subscribe_all, history | Blinker, PyPubSub |
+| SignalBridge | No library for domain to Qt threading | None available |
+| Result Type | Minimal, no dependency | returns library |
 
-### Why Custom SignalBridge?
-
-No library exists for this use case:
-- Bridges domain events to PyQt6 signals
-- Handles Qt's thread-affinity requirements
-- Converts to UI-friendly payloads
-- Records to activity feed
-
-### Why Custom Result Type?
-
-The `returns` library is a good alternative (see `decision-002 library-alternatives-analysis.md`), but current implementation:
-- Is minimal (~50 lines)
-- Avoids external dependency
-- Sufficient for current needs
-
-Consider migrating to `returns` for richer composition.
+See [Decision: Library Alternatives](../decisions/decision-002%20library-alternatives-analysis.md) for details.
 
 ---
 
-## Testing Strategy
+## 11. Further Reading
 
-### Domain Layer (Pure Functions)
+### Tutorials (Hands-on Learning)
 
-```python
-# No mocks needed - just call functions with data
+Start with the [Onboarding Tutorial](../tutorials/README.md) - a progressive guide using a toy example (adding "priority" to Codes).
 
-def test_code_name_uniqueness():
-    existing = [Code(id=CodeId(1), name="Anxiety", ...)]
+| Part | Topic |
+|------|-------|
+| [Part 0](../tutorials/00-big-picture.md) | The Big Picture |
+| [Part 1](../tutorials/01-first-invariant.md) | Your First Invariant |
+| [Part 2](../tutorials/02-first-deriver.md) | Your First Deriver |
+| [Part 3](../tutorials/03-result-type.md) | The Result Type |
+| [Part 4](../tutorials/04-event-flow.md) | Events Flow Through |
+| [Part 5](../tutorials/05-signal-bridge.md) | SignalBridge Payloads |
+| [Part 6](../tutorials/06-testing.md) | Testing Without Mocks |
+| [Part 7](../tutorials/07-complete-flow.md) | Complete Flow Reference |
 
-    assert is_code_name_unique("Depression", existing) == True
-    assert is_code_name_unique("anxiety", existing) == False  # case-insensitive
-    assert is_code_name_unique("Anxiety", existing, exclude_code_id=CodeId(1)) == True
+### Reference Documents
 
-def test_derive_create_code_duplicate():
-    existing = [Code(id=CodeId(1), name="Anxiety", ...)]
+- [Common Patterns and Recipes](../tutorials/appendices/A-common-patterns.md)
+- [When to Create New Patterns](../tutorials/appendices/B-when-to-create.md)
+- [Library Alternatives Analysis](../decisions/decision-002%20library-alternatives-analysis.md)
 
-    result = derive_create_code("Anxiety", Color(255, 0, 0), None, None, existing, [])
+### C4 Model References
 
-    assert result.is_failure()
-    assert isinstance(result.error, DuplicateName)
-```
-
-### Application Layer (Integration)
-
-```python
-def test_event_bus_subscription():
-    bus = EventBus()
-    received = []
-
-    bus.subscribe("coding.code_created", lambda e: received.append(e))
-    bus.publish(CodeCreated(...))
-
-    assert len(received) == 1
-```
-
-### Presentation Layer (Qt)
-
-```python
-def test_signal_bridge_emission(qtbot):
-    bridge = CodingSignalBridge()
-
-    with qtbot.waitSignal(bridge.code_created) as blocker:
-        bridge._on_event(CodeCreated(...))
-
-    assert blocker.args[0].code_name == "Anxiety"
-```
+- [C4 Model Official](https://c4model.com/)
+- [Simon Brown - Software Architecture for Developers](https://softwarearchitecturefordevelopers.com/)
 
 ---
 
-## Further Reading
-
-- `FUNCTIONAL_DDD_DESIGN.md` - Complete DDD specification
-- `AGENT_CONTEXT_DESIGN.md` - AI integration architecture
-- `../decisions/decision-002 library-alternatives-analysis.md` - Library evaluation
-
----
-
-*Architecture documentation for QualCoder v2. Last updated: 2025.*
+*Architecture documentation for QualCoder v2. Last updated: 2026-01.*
