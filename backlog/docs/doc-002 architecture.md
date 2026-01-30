@@ -1,3 +1,10 @@
+---
+id: doc-002
+title: QualCoder v2 Architecture
+type: reference
+created_date: '2026-01-30'
+---
+
 # QualCoder v2 Architecture
 
 This document explains the architectural patterns used in QualCoder v2 and why they exist.
@@ -576,7 +583,7 @@ No library exists for this use case:
 
 ### Why Custom Result Type?
 
-The `returns` library is a good alternative (see `library-alternatives-analysis.md`), but current implementation:
+The `returns` library is a good alternative (see `decision-002 library-alternatives-analysis.md`), but current implementation:
 - Is minimal (~50 lines)
 - Avoids external dependency
 - Sufficient for current needs
@@ -639,7 +646,7 @@ def test_signal_bridge_emission(qtbot):
 
 - `FUNCTIONAL_DDD_DESIGN.md` - Complete DDD specification
 - `AGENT_CONTEXT_DESIGN.md` - AI integration architecture
-- `library-alternatives-analysis.md` - Library evaluation
+- `../decisions/decision-002 library-alternatives-analysis.md` - Library evaluation
 
 ---
 

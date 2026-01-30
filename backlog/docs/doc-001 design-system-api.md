@@ -1,4 +1,9 @@
-# QualCoder Design System API
+---
+id: doc-001
+title: QualCoder Design System API
+type: reference
+created_date: '2026-01-30 05:48'
+---
 
 A comprehensive PyQt6-based component library for QualCoder v2, featuring 100+ reusable, themeable components following Material Design principles.
 
@@ -169,10 +174,6 @@ LAYOUT.panel_min_width # 200px
 
 Styled button with multiple variants and sizes.
 
-![Button Variants](../design_system/assets/screenshots/buttons_all_variants.png)
-
-![Button Sizes](../design_system/assets/screenshots/buttons_all_sizes.png)
-
 ```python
 from design_system import Button
 
@@ -195,8 +196,6 @@ button.clicked.connect(lambda: print("Clicked!"))
 ### Input
 
 Text input field with validation support.
-
-![Input States](../design_system/assets/screenshots/inputs_all_states.png)
 
 ```python
 from design_system import Input
@@ -230,8 +229,6 @@ error = Label("Invalid input", variant="error")
 
 Container with elevation and shadow.
 
-![Card](../design_system/assets/screenshots/card_basic.png)
-
 ```python
 from design_system import Card, CardHeader
 
@@ -253,8 +250,6 @@ card = Card(elevation=2)
 
 Small tag/label for status or counts.
 
-![Badge Variants](../design_system/assets/screenshots/badges_all_variants.png)
-
 ```python
 from design_system import Badge
 
@@ -267,8 +262,6 @@ badge = Badge("Error", variant="destructive")
 ### Alert
 
 Callout component for messages.
-
-![Alert Variants](../design_system/assets/screenshots/alerts_all_variants.png)
 
 ```python
 from design_system import Alert
@@ -285,8 +278,6 @@ alert = Alert(
 
 Circular avatar with text or image.
 
-![Avatar Sizes](../design_system/assets/screenshots/avatars_all_sizes.png)
-
 ```python
 from design_system import Avatar
 
@@ -296,8 +287,6 @@ avatar = Avatar(text="JD", size=40)  # Shows initials
 ### Chip
 
 Tag with optional close button.
-
-![Chips](../design_system/assets/screenshots/chips_closable.png)
 
 ```python
 from design_system import Chip
@@ -309,8 +298,6 @@ chip.close_clicked.connect(lambda: print("Closed"))
 ### FileIcon
 
 File type icon with colored background.
-
-![File Icons](../design_system/assets/screenshots/file_icons_all_types.png)
 
 ```python
 from design_system import FileIcon
@@ -385,8 +372,6 @@ app.set_status_bar(StatusBar())
 
 Side panel with header.
 
-![Panel with Header](../design_system/assets/screenshots/panel_with_header.png)
-
 ```python
 from design_system import Panel, PanelHeader
 
@@ -400,8 +385,6 @@ panel.add_widget(content)
 
 Collapsible sidebar.
 
-![Sidebar](../design_system/assets/screenshots/sidebar.png)
-
 ```python
 from design_system import Sidebar
 
@@ -412,8 +395,6 @@ sidebar.add_widget(navigation)
 ### Toolbar
 
 Tool button container.
-
-![Toolbar](../design_system/assets/screenshots/toolbar.png)
 
 ```python
 from design_system import Toolbar, ToolbarGroup, ToolbarButton
@@ -446,8 +427,6 @@ status.add_widget(Label("Ready"))
 
 Search input with icon.
 
-![SearchBox States](../design_system/assets/screenshots/search_box_states.png)
-
 ```python
 from design_system import SearchBox
 
@@ -466,8 +445,6 @@ search.clear()
 ### Select
 
 Dropdown selection.
-
-![Select Dropdown](../design_system/assets/screenshots/select_dropdown.png)
 
 ```python
 from design_system import Select
@@ -492,8 +469,6 @@ multi.add_items(["Tag 1", "Tag 2", "Tag 3"])
 ### Textarea
 
 Multi-line text input.
-
-![Textarea](../design_system/assets/screenshots/textarea_with_content.png)
 
 ```python
 from design_system import Textarea
@@ -528,8 +503,6 @@ slider.valueChanged.connect(lambda value: print(f"Value: {value}"))
 
 Color selection widget.
 
-![Color Picker](../design_system/assets/screenshots/color_picker.png)
-
 ```python
 from design_system import ColorPicker
 
@@ -540,8 +513,6 @@ picker.color_changed.connect(lambda color: print(f"Color: {color}"))
 ### FormGroup
 
 Grouped form fields.
-
-![Form Groups](../design_system/assets/screenshots/form_groups.png)
 
 ```python
 from design_system import FormGroup
@@ -569,8 +540,6 @@ selector = CoderSelector()
 ### Tab / TabGroup
 
 Tab navigation.
-
-![Tab Group](../design_system/assets/screenshots/tab_group.png)
 
 ```python
 from design_system import Tab, TabGroup
@@ -600,8 +569,6 @@ item.clicked.connect(handler)
 
 Breadcrumb navigation path.
 
-![Breadcrumb](../design_system/assets/screenshots/breadcrumb_navigation.png)
-
 ```python
 from design_system import Breadcrumb
 
@@ -624,8 +591,6 @@ nav.add_item("Settings", icon="mdi6.cog")
 ### StepIndicator
 
 Progress steps display.
-
-![Step Indicator](../design_system/assets/screenshots/step_indicator.png)
 
 ```python
 from design_system import StepIndicator
@@ -654,8 +619,6 @@ selector = MediaTypeSelector()
 
 Data table with selection support.
 
-![Data Table](../design_system/assets/screenshots/data_table.png)
-
 ```python
 from design_system import DataTable
 
@@ -683,8 +646,6 @@ table.clear()
 ### CodeTree
 
 Hierarchical tree for qualitative codes.
-
-![Code Tree](../design_system/assets/screenshots/code_tree.png)
 
 ```python
 from design_system import CodeTree, CodeItem
@@ -735,8 +696,6 @@ card = InfoCard(
 
 Key-value pairs display.
 
-![Key Value List](../design_system/assets/screenshots/key_value_list.png)
-
 ```python
 from design_system import KeyValueList
 
@@ -751,8 +710,6 @@ kvlist.set_items([
 ### EmptyState
 
 Placeholder for empty content.
-
-![Empty State](../design_system/assets/screenshots/empty_state.png)
 
 ```python
 from design_system import EmptyState
@@ -783,8 +740,6 @@ grid = HeatMapGrid(rows=5, cols=5)
 
 File list with type icons.
 
-![File List](../design_system/assets/screenshots/file_list.png)
-
 ```python
 from design_system import FileList
 
@@ -804,8 +759,6 @@ files.item_double_clicked.connect(lambda id: print(f"Open: {id}"))
 ### CaseList
 
 Case/study list.
-
-![Case List](../design_system/assets/screenshots/case_list.png)
 
 ```python
 from design_system import CaseList
@@ -887,8 +840,6 @@ waveform.position_changed.connect(lambda pos: print(f"Position: {pos}"))
 
 Playback timeline.
 
-![Timeline](../design_system/assets/screenshots/timeline_with_segments.png)
-
 ```python
 from design_system import Timeline
 
@@ -900,8 +851,6 @@ timeline.set_position(60)   # 1 minute
 ### PlayerControls
 
 Media player controls.
-
-![Player Controls](../design_system/assets/screenshots/player_controls.png)
 
 ```python
 from design_system import PlayerControls
@@ -933,8 +882,6 @@ strip.add_thumbnail("/path/to/img2.jpg")
 
 Chat message display.
 
-![Message Bubbles](../design_system/assets/screenshots/message_bubbles.png)
-
 ```python
 from design_system import MessageBubble
 
@@ -955,8 +902,6 @@ assistant_msg = MessageBubble(
 
 Animated typing indicator.
 
-![Typing Indicator](../design_system/assets/screenshots/typing_indicator.png)
-
 ```python
 from design_system import TypingIndicator
 
@@ -970,8 +915,6 @@ indicator.stop()
 
 Message input with send button.
 
-![Chat Input](../design_system/assets/screenshots/chat_input.png)
-
 ```python
 from design_system import ChatInput
 
@@ -982,8 +925,6 @@ chat_input.message_submitted.connect(lambda text: send_message(text))
 ### CodeSuggestion
 
 AI code suggestion display.
-
-![Code Suggestions](../design_system/assets/screenshots/code_suggestions.png)
 
 ```python
 from design_system import CodeSuggestion
@@ -1025,8 +966,6 @@ score = ConfidenceScore(value=0.92, label="Confidence")
 
 Text document display with optional line numbers.
 
-![Text Panel](../design_system/assets/screenshots/text_panel.png)
-
 ```python
 from design_system import TextPanel
 
@@ -1048,8 +987,6 @@ panel.text_selected.connect(lambda text, start, end: print(f"Selected: {text}"))
 ### TranscriptPanel
 
 Transcript display with segments.
-
-![Transcript Panel](../design_system/assets/screenshots/transcript_panel.png)
 
 ```python
 from design_system import TranscriptPanel, TranscriptSegment
@@ -1082,8 +1019,6 @@ popup.show_at(x, y)
 ### Spinner / LoadingIndicator
 
 Loading spinners.
-
-![Loading Indicators](../design_system/assets/screenshots/loading_indicators.png)
 
 ```python
 from design_system import Spinner, LoadingIndicator, LoadingOverlay
@@ -1118,8 +1053,6 @@ skeleton = SkeletonLoader(width=200, height=20)
 
 Popup notifications.
 
-![Toast Variants](../design_system/assets/screenshots/toasts_all_variants.png)
-
 ```python
 from design_system import Toast, ToastManager
 
@@ -1140,8 +1073,6 @@ ToastManager.show("Operation complete", variant="success")
 
 Progress indicator.
 
-![Progress Bars](../design_system/assets/screenshots/progress_bars_values.png)
-
 ```python
 from design_system import ProgressBar, ProgressBarLabeled
 
@@ -1158,8 +1089,6 @@ labeled.setValue(75)
 ### StatCard
 
 Statistics display with trend.
-
-![Stat Cards](../design_system/assets/screenshots/stat_cards.png)
 
 ```python
 from design_system import StatCard, StatCardRow, MiniStatCard
@@ -1189,8 +1118,6 @@ mini = MiniStatCard(value="42", label="Files")
 ### ChartWidget
 
 Charts using PyQtGraph.
-
-![Bar Chart](../design_system/assets/screenshots/chart_bar.png)
 
 ```python
 from design_system import ChartWidget, ChartDataPoint
@@ -1247,8 +1174,6 @@ spark = SparkLine(data=[10, 15, 12, 18, 14, 20], color="#009688")
 
 Interactive network visualization.
 
-![Network Graph](../design_system/assets/screenshots/network_graph.png)
-
 ```python
 from design_system import NetworkGraphWidget, GraphNode, GraphEdge
 
@@ -1275,8 +1200,6 @@ graph.clear()
 ### WordCloudWidget
 
 Word cloud visualization.
-
-![Word Cloud](../design_system/assets/screenshots/word_cloud.png)
 
 ```python
 from design_system import WordCloudWidget
@@ -1306,8 +1229,6 @@ cloud.word_clicked.connect(lambda word: print(f"Word: {word}"))
 ### PDFPageViewer
 
 PDF document viewer with text selection overlay.
-
-![PDF Viewer](../design_system/assets/screenshots/pdf.png)
 
 ```python
 from design_system import PDFPageViewer, PDFSelection
@@ -1373,8 +1294,6 @@ viewer.close_document()
 
 Material Design dialog.
 
-![Modal Dialog](../design_system/assets/screenshots/modal_dialog.png)
-
 ```python
 from design_system import Modal, ModalHeader, ModalBody, ModalFooter
 
@@ -1398,8 +1317,6 @@ result = modal.exec()  # Returns QDialog.Accepted or QDialog.Rejected
 
 Switch component.
 
-![Toggle States](../design_system/assets/screenshots/toggle_states.png)
-
 ```python
 from design_system import Toggle, LabeledToggle
 
@@ -1414,8 +1331,6 @@ labeled = LabeledToggle(label="Enable feature")
 ### ContextMenu
 
 Right-click menu.
-
-![Context Menu](../design_system/assets/screenshots/context_menu.png)
 
 ```python
 from design_system import ContextMenu
@@ -1435,8 +1350,6 @@ menu.exec(QCursor.pos())
 
 Collapsible filter panel.
 
-![Filter Panel](../design_system/assets/screenshots/filter_panel.png)
-
 ```python
 from design_system import FilterPanel
 
@@ -1455,8 +1368,6 @@ filters.set_collapsed(True)
 ### ViewToggle
 
 Toggle between different view modes.
-
-![View Toggle](../design_system/assets/screenshots/view_toggle.png)
 
 ```python
 from design_system import ViewToggle
@@ -1500,8 +1411,6 @@ layer.delete_annotation("annotation-id")
 
 Code editor with syntax highlighting.
 
-![Code Editor](../design_system/assets/screenshots/code_editor.png)
-
 ```python
 from design_system import CodeEditor
 
@@ -1533,8 +1442,6 @@ diff.set_content("Original content...", "Modified content...")
 
 Rich text editor with formatting toolbar.
 
-![Rich Text Editor](../design_system/assets/screenshots/rich_text_editor.png)
-
 ```python
 from design_system import RichTextEditor
 
@@ -1556,8 +1463,6 @@ editor.content_changed.connect(lambda html: save_content(html))
 
 Memo/note editor for annotations.
 
-![Memo Editor](../design_system/assets/screenshots/memo_editor.png)
-
 ```python
 from design_system import MemoEditor
 
@@ -1575,10 +1480,6 @@ memo.save_clicked.connect(lambda: save_memo())
 ### Pagination
 
 Page navigation.
-
-![Pagination](../design_system/assets/screenshots/pagination.png)
-
-![Simple Pagination](../design_system/assets/screenshots/simple_pagination.png)
 
 ```python
 from design_system import Pagination, SimplePagination
@@ -1599,8 +1500,6 @@ simple.next_clicked.connect(next_handler)
 
 Date range selection.
 
-![Date Range Picker](../design_system/assets/screenshots/date_range_picker.png)
-
 ```python
 from design_system import DateRangePicker, QuickDateSelect
 
@@ -1614,8 +1513,6 @@ quick = QuickDateSelect()  # Today, Yesterday, This Week, etc.
 ### DropZone
 
 Drag-and-drop file upload.
-
-![Drop Zone](../design_system/assets/screenshots/drop_zone.png)
 
 ```python
 from design_system import DropZone

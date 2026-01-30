@@ -1,8 +1,14 @@
-# Library Alternatives Analysis
+---
+id: decision-002
+title: Library Alternatives Analysis for Custom Infrastructure
+date: '2026-01-30 05:51'
+status: proposed
+---
+## Context
 
 This document analyzes the custom implementations in the diff against `origin/main` and evaluates whether existing Python libraries could replace them.
 
-## Summary of Changes
+### Summary of Changes
 
 | File/Module | Lines | Purpose |
 |-------------|-------|---------|
@@ -17,18 +23,18 @@ This document analyzes the custom implementations in the diff against `origin/ma
 
 ---
 
-## 1. EventBus Implementation
+### 1. EventBus Implementation
 
-### Current Implementation
+#### Current Implementation
 - Synchronous pub/sub with thread-safety (RLock)
 - Subscription by string type or event class
 - `subscribe_all()` for global handlers
 - Event history for debugging
 - Subscription handles for cleanup
 
-### Library Alternatives
+#### Library Alternatives
 
-#### **Blinker** (Recommended for simplicity)
+##### **Blinker** (Recommended for simplicity)
 ```python
 from blinker import signal
 
@@ -52,7 +58,7 @@ code_created.send(sender=app, event=event)
 - No built-in event history
 - No subscribe_all() equivalent (need multiple connections)
 
-#### **PyPubSub**
+##### **PyPubSub**
 ```python
 from pubsub import pub
 
@@ -69,7 +75,7 @@ pub.sendMessage('coding.code_created', event=event)
 - API is more verbose
 - Less pythonic
 
-#### **PyDispatcher**
+##### **PyDispatcher**
 ```python
 from pydispatch import dispatcher
 
@@ -85,7 +91,7 @@ dispatcher.send(signal='code_created', sender=self, event=event)
 - API is verbose
 - Less modern design
 
-### Recommendation: **Keep Custom Implementation**
+#### EventBus Recommendation: **Keep Custom Implementation**
 
 **Rationale:**
 1. Current implementation is only ~400 lines, well-tested
@@ -97,15 +103,15 @@ dispatcher.send(signal='code_created', sender=self, event=event)
 
 ---
 
-## 2. Result Type (Success/Failure)
+### 2. Result Type (Success/Failure)
 
-### Current Implementation
+#### Current Implementation
 - Simple `Success[T]` and `Failure[E]` dataclasses
 - Basic `map()`, `unwrap()`, `is_success()`, `is_failure()`
 
-### Library Alternatives
+#### Library Alternatives
 
-#### **returns** by dry-python (Recommended)
+##### **returns** by dry-python (Recommended)
 ```python
 from returns.result import Result, Success, Failure
 
@@ -128,7 +134,7 @@ result.map(lambda x: x * 2).unwrap()
 - Heavier dependency
 - Learning curve for full API
 
-#### **result** (lighter alternative)
+##### **result** (lighter alternative)
 ```python
 from result import Result, Ok, Err
 
@@ -143,7 +149,7 @@ Err("boom").map(lambda x: x + 1)  # Err("boom")
 **Cons:**
 - Less feature-rich than `returns`
 
-### Recommendation: **Consider `returns` library**
+#### Result Type Recommendation: **Consider `returns` library**
 
 **Rationale:**
 1. Current implementation is minimal (~50 lines of core logic)
@@ -155,16 +161,16 @@ Err("boom").map(lambda x: x + 1)  # Err("boom")
 
 ---
 
-## 3. Validation Utilities
+### 3. Validation Utilities
 
-### Current Implementation
+#### Current Implementation
 - Predicates: `is_non_empty_string()`, `is_within_length()`, etc.
 - `ValidationResult = ValidationSuccess | ValidationFailure`
 - `validate_field()`, `validate_all()` composers
 
-### Library Alternatives
+#### Library Alternatives
 
-#### **Pydantic v2** (Most popular)
+##### **Pydantic v2** (Most popular)
 ```python
 from pydantic import BaseModel, field_validator, ValidationError
 
@@ -190,7 +196,7 @@ class CodeCreate(BaseModel):
 - Would require architectural changes
 - Overkill for pure predicate functions
 
-#### **Cerberus**
+##### **Cerberus**
 ```python
 from cerberus import Validator
 
@@ -207,7 +213,7 @@ v.validate({'name': 'Test'})
 - Schema-centric, not predicate-centric
 - Different paradigm
 
-#### **validators** (lightweight)
+##### **validators** (lightweight)
 ```python
 import validators
 
@@ -223,7 +229,7 @@ validators.uuid(some_uuid)
 - Limited scope (URLs, emails, etc.)
 - Doesn't cover domain-specific rules
 
-### Recommendation: **Keep Custom Implementation**
+#### Validation Recommendation: **Keep Custom Implementation**
 
 **Rationale:**
 1. Current predicates are domain-specific (hierarchy validation, uniqueness checks)
@@ -234,22 +240,22 @@ validators.uuid(some_uuid)
 
 ---
 
-## 4. Signal Bridge (Qt Integration)
+### 4. Signal Bridge (Qt Integration)
 
-### Current Implementation
+#### Current Implementation
 - Thread-safe signal emission from background threads to Qt main thread
 - Event → Payload converter pattern
 - Activity feed integration
 - Singleton pattern per context
 
-### Library Alternatives
+#### Library Alternatives
 
 **There are no direct alternatives.** This is highly specialized infrastructure that:
 1. Bridges domain events to PyQt6 signals
 2. Handles Qt's thread-affinity requirements
 3. Integrates with the application's activity feed
 
-### Recommendation: **Keep Custom Implementation**
+#### Signal Bridge Recommendation: **Keep Custom Implementation**
 
 **Rationale:**
 1. Qt-specific threading requirements
@@ -258,18 +264,18 @@ validators.uuid(some_uuid)
 
 ---
 
-## 5. Derivers and Invariants
+### 5. Derivers and Invariants
 
-### Current Implementation
+#### Current Implementation
 - Pure functions: `(command, state) → Event | Failure`
 - Compose invariants to validate operations
 - Domain-specific business rules
 
-### Library Alternatives
+#### Library Alternatives
 
 **None applicable.** These are domain-specific implementations that encode business rules. Libraries cannot replace domain logic.
 
-### Recommendation: **Keep Custom Implementation**
+#### Derivers/Invariants Recommendation: **Keep Custom Implementation**
 
 **Rationale:**
 1. Domain logic must be custom
@@ -277,7 +283,7 @@ validators.uuid(some_uuid)
 
 ---
 
-## Final Recommendations
+## Decision
 
 | Component | Recommendation | Rationale |
 |-----------|---------------|-----------|
@@ -308,17 +314,17 @@ ddd = [
 ]
 ```
 
----
+## Consequences
 
-## Conclusion
+### Positive
+- Custom implementations provide exactly what's needed without unnecessary abstractions
+- ~2,500 lines of well-documented, tested code following clean architecture principles
+- Tight integration with Qt and domain event patterns
+- No external dependencies for core infrastructure
 
-The custom implementations are appropriate for this project:
+### Negative
+- Maintenance burden for custom code
+- Missing advanced features that `returns` library provides (bind, do-notation, async support)
 
-1. **Functional DDD architecture** requires specific patterns (derivers, invariants)
-2. **Qt integration** has no library alternatives
-3. **Event Bus** provides features beyond standard libraries
-4. **Only `returns`** offers compelling value as a replacement for Result types
-
-The current ~2,500 lines of custom code provides exactly what's needed without unnecessary abstractions. The code is well-documented, tested, and follows clean architecture principles.
-
-**Recommended action:** Evaluate adopting `returns` for the Result type to gain better composition primitives, but keep all other custom implementations.
+### Recommended Action
+Evaluate adopting `returns` for the Result type to gain better composition primitives, but keep all other custom implementations.
