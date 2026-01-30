@@ -1,222 +1,212 @@
 ---
 name: c4-architecture
 description: |
-  Generate C4 Model architecture documentation following Simon Brown's principles.
-  Creates ARCHITECTURE.md files with proper Container (application) vs Infrastructure separation.
+  Understand and document QualCoder v2 system architecture using C4 diagrams.
+  Creates and updates architecture diagrams in Mermaid format.
 
   **Invoke when:**
-  - Creating system architecture documentation
-  - Documenting microservices or distributed systems
-  - Generating C4 diagrams (Context, Container, Component)
-  - Reviewing architecture for C4 compliance
+  - User asks "how does the system work" or "explain the architecture"
+  - Creating or updating architecture diagrams
+  - Understanding bounded contexts and data flow
+  - Documenting new components or containers
 
   **Provides:**
-  - ARCHITECTURE.md template with C4 Levels 1-2
-  - Technology choice enforcement (no "Docker" as container type)
-  - Perspectives overlay (Security, Ownership)
-  - Mermaid diagram templates
-  - Deployment mapping (where Docker/K8s belongs)
+  - QualCoder v2 specific container and component knowledge
+  - Mermaid diagram patterns for this codebase
+  - Reference to docs/ARCHITECTURE.md for full details
 ---
 
-# C4 System Architecture Blueprint
+# QualCoder v2 Architecture Understanding
 
-Generate architecture documentation following the C4 model by Simon Brown.
-This is a **Level 4 Tactical Readout** - not a generic README.
+Quick reference for understanding and documenting QualCoder v2 architecture.
 
-## Core Principles
+## Reference Document
 
-### 1. Containers are Applications, Not Docker Images
-A C4 "Container" is a **runnable application or data store** (API, Web App, Database, Queue).
-Docker, Kubernetes, and AWS are **deployment infrastructure** - they go in a separate section.
-
-### 2. Technology Choices are Mandatory
-Every container must specify its technology stack. "API" is insufficient.
-Correct: "API Gateway (Java / Spring Boot)"
-
-### 3. Perspectives Keep Diagrams Clean
-Security protocols, team ownership, and failover rules are **orthogonal data**.
-Layer them separately, don't clutter the structural diagram.
+Full architecture documentation: `docs/ARCHITECTURE.md`
 
 ---
 
-## Template: ARCHITECTURE.md
+## System Overview
 
-When the user requests architecture documentation, generate this structure:
+QualCoder v2 is a desktop qualitative data analysis tool following **Functional DDD**.
 
-````markdown
-# SYSTEM ARCHITECTURE: [SYSTEM_NAME]
-
-> **STATUS:** `[DRAFT | PROD-READY | DEPRECATED]`
-> **OWNER:** `[Team Name]`
-> **DOC VERSION:** `v1.0`
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    QualCoder v2 System                       │
+├─────────────────────────────────────────────────────────────┤
+│  Presentation (PySide6)  ←──pyqtSignal──  SignalBridge      │
+│           ↓ commands                           ↑ events     │
+│  Application (Controllers, EventBus)                        │
+│           ↓ function calls                     ↑ Result     │
+│  Domain (Pure: Entities, Derivers, Events)                  │
+│           ↓ data                               ↑ queries    │
+│  Infrastructure (SQLite Repositories)                       │
+└─────────────────────────────────────────────────────────────┘
+```
 
 ---
 
-## Chapter 1: System Context (Level 1)
+## Containers (C4 Level 2)
 
-**Scope:** Who is using this system and what is the mission?
+| ID | Container | Technology | Purpose |
+|----|-----------|------------|---------|
+| C1 | Desktop App | PySide6 | GUI, user interaction |
+| C2 | Domain Core | Pure Python | Business logic (no I/O) |
+| C3 | Application Shell | EventBus + SignalBridge | Orchestration |
+| C4 | Project Database | SQLite | Persistent storage |
+| C5 | Agent Context | MCP Protocol | AI agent interface |
+| C6 | Vector Store | ChromaDB | Semantic search |
 
-| Actor / System | Type | Description |
-| :--- | :--- | :--- |
-| **[User Persona]** | `Person` | [e.g., Retail Customer checking balance] |
-| **[SYSTEM_NAME]** | `System` | **[The Scope]** [e.g., Internet Banking System] |
-| **[External Sys A]** | `System` | [e.g., Mainframe / Email Service (SES)] |
+---
 
-### Context Diagram (Mermaid)
+## Bounded Contexts
+
+| Context | Directory | Key Entities |
+|---------|-----------|--------------|
+| **Coding** | `src/domain/coding/` | Code, Category, Segment |
+| **Sources** | `src/domain/sources/` | Source, Speaker |
+| **Cases** | `src/domain/cases/` | Case, CaseAttribute |
+| **Analysis** | `src/domain/analysis/` | Report, Insight |
+| **Projects** | `src/domain/projects/` | Project, Settings |
+| **Collaboration** | `src/domain/collaboration/` | Coder, Session |
+| **AI Services** | `src/domain/ai_services/` | Embedding, Suggestion |
+
+---
+
+## Mermaid Diagram Patterns
+
+### Context Diagram (Who uses the system)
+
 ```mermaid
 graph TD
-    User(Person Name) -- "Uses [HTTPS]" --> System(TARGET SYSTEM)
-    System -- "Sends email via [SMTP]" --> EmailSys(Email System)
+    Researcher(Researcher) -- "Qt Events" --> QC(QualCoder v2)
+    Agent(AI Agent) -- "MCP tool_call" --> QC
+    QC -- "HTTPS" --> LLM(LLM Provider)
+    QC -- "File I/O" --> FS(File System)
+    QC -- "SQLite" --> DB[(Project DB)]
 ```
 
----
+### Container Diagram (Major building blocks)
 
-## Chapter 2: Container Inventory (Level 2)
-
-**Definition:** A "Container" is a runnable application or data store.
-
-> **CRITICAL:** Do NOT list "Docker" or "Kubernetes" here. Those are deployment details.
-
-| ID | Container Name | Technology Choice (MANDATORY) | Responsibility | Type |
-| :--- | :--- | :--- | :--- | :--- |
-| **C1** | `Single Page App` | React / TypeScript | Delivers UI to customer browser | `Web App` |
-| **C2** | `API Gateway` | Java / Spring Boot | Handles auth & biz logic | `API` |
-| **C3** | `Primary DB` | PostgreSQL 14 | Stores user transactions | `Database` |
-| **C4** | `Audit Queue` | Kafka Topic | Buffers audit logs | `Queue` |
-
-> **ARCHITECT NOTE:** If you list "Docker" as a technology above, you are incorrect. Listing *what runs inside* the Docker container is correct.
-
-### Container Diagram (Mermaid)
 ```mermaid
 graph TB
-    subgraph "System Boundary"
-        SPA[Web App<br/>React] -- "JSON/HTTPS" --> API[API App<br/>Spring Boot]
-        API -- "JDBC" --> DB[(Database<br/>PostgreSQL)]
+    subgraph "QualCoder v2"
+        UI[Desktop App<br/>PySide6]
+        APP[Application Shell<br/>EventBus + SignalBridge]
+        DOMAIN[Domain Core<br/>Pure Python]
+        AGENT[Agent Context<br/>MCP]
     end
+
+    UI -- "commands" --> APP
+    APP -- "pure calls" --> DOMAIN
+    DOMAIN -- "events" --> APP
+    APP -- "pyqtSignal" --> UI
+    AGENT -- "tool_call" --> APP
+
+    DB[(SQLite)]
+    APP -- "SQL" --> DB
+```
+
+### Data Flow Diagram (How requests flow)
+
+```mermaid
+sequenceDiagram
+    participant UI as Qt Widget
+    participant Ctrl as Controller
+    participant Der as Deriver
+    participant Repo as Repository
+    participant SB as SignalBridge
+
+    UI->>Ctrl: command(dto)
+    Ctrl->>Repo: get_state()
+    Ctrl->>Der: derive_*(command, state)
+    Der-->>Ctrl: Success(Event) | Failure
+    Ctrl->>Repo: save(entity)
+    Ctrl->>SB: publish(event)
+    SB->>UI: signal.emit(payload)
+```
+
+### Bounded Context Diagram
+
+```mermaid
+graph TB
+    subgraph Core
+        COD[CODING<br/>Codes, Segments]
+    end
+
+    subgraph Supporting
+        SRC[SOURCES<br/>Documents, Media]
+        CAS[CASES<br/>Participants]
+    end
+
+    subgraph Generic
+        AI[AI SERVICES<br/>LLM, Embeddings]
+    end
+
+    SRC -->|"SourceImported"| COD
+    CAS -->|"CaseLinked"| COD
+    AI <-->|"SuggestionGenerated"| COD
 ```
 
 ---
 
-## Chapter 3: Perspectives Overlay
+## Directory to Architecture Mapping
 
-**Concept:** Orthogonal information layered onto the architecture without cluttering the main diagram.
-
-### Security Perspective
-- **C1 (Web App):** `TLS 1.3` / `OIDC Auth`
-- **C2 (API):** `OAuth 2.0 Scopes` / `Input Sanitization`
-- **C3 (Database):** `AES-256 At Rest`
-
-### Ownership Perspective
-- **Frontend Team:** Owns `C1`
-- **Core Backend Team:** Owns `C2`, `C3`
+```
+src/
+├── domain/           → C2: Domain Core (PURE - no I/O)
+│   ├── coding/       → Coding bounded context
+│   ├── sources/      → Sources bounded context
+│   └── shared/       → Cross-cutting types
+│
+├── application/      → C3: Application Shell
+│   ├── coding/       → Controllers for Coding
+│   ├── event_bus.py  → Event distribution
+│   └── signal_bridge/→ Domain → Qt bridge
+│
+├── infrastructure/   → Repositories, Adapters
+│   └── coding/       → SQLite repos for Coding
+│
+├── presentation/     → C1: Desktop App
+│   ├── organisms/    → Complex widgets
+│   ├── pages/        → Page layouts
+│   └── screens/      → Top-level windows
+│
+└── agent_context/    → C5: Agent Context
+    └── schemas/      → MCP tool definitions
+```
 
 ---
 
-## Chapter 4: Deployment Mapping
+## Creating New Architecture Diagrams
 
-**Definition:** How Containers (Level 2) map to Infrastructure. This is where Docker/AWS belongs.
+### When adding a new bounded context
 
-| Container (App) | Infrastructure Node | Environment |
-| :--- | :--- | :--- |
-| `API Application` | AWS Fargate (Docker) | Production |
-| `Primary DB` | AWS RDS Instance | Production |
-| `SPA Frontend` | AWS S3 + Cloudfront | Production |
-````
+1. Add to Bounded Contexts table
+2. Update container diagram if needed
+3. Show integration events with existing contexts
 
----
+### When adding a new container
 
-## Container Types Reference
+1. Add to Containers table with technology
+2. Update container diagram
+3. Document data flow
 
-Use these categories for the "Type" column:
+### Diagram Guidelines
 
-| Type | Examples |
-|------|----------|
-| `Web App` | SPA, Server-rendered app, Static site |
-| `API` | REST API, GraphQL, gRPC service |
-| `Service` | Background worker, Scheduled job |
-| `Database` | PostgreSQL, MongoDB, Redis |
-| `Queue` | Kafka Topic, RabbitMQ Queue, SQS |
-| `File Store` | S3 Bucket, Azure Blob, NFS |
-| `Cache` | Redis Cache, Memcached |
+- **Always label arrows** with protocol/data type
+- **Use subgraphs** for system boundaries
+- **Container names** include technology: `API<br/>FastAPI`
+- **Never use Docker** as technology (it's deployment)
 
 ---
 
-## Common Mistakes to Avoid
+## Quick Architecture Questions
 
-### Mistake 1: Docker as Technology
-```
-WRONG: | API | Docker | Handles requests |
-RIGHT: | API | Python / FastAPI | Handles requests |
-```
-Docker is deployment infrastructure, not application technology.
-
-### Mistake 2: Message Bus as Single Box
-```
-WRONG: One giant "Message Bus" container
-RIGHT: Individual queues as separate containers (Audit Queue, Order Queue, etc.)
-```
-
-### Mistake 3: Security in Main Diagram
-```
-WRONG: Box labeled "API (Spring Boot, OAuth 2.0, TLS 1.3)"
-RIGHT: Clean "API (Spring Boot)" with security in Perspectives section
-```
-
-### Mistake 4: Missing Protocols
-```
-WRONG: SPA --> API (arrow with no label)
-RIGHT: SPA -- "JSON/HTTPS" --> API
-```
-Always specify communication protocols on arrows.
-
----
-
-## Quick Reference
-
-### Level 1: System Context
-- **Audience:** Everyone (executives, architects, developers)
-- **Shows:** System + actors + external dependencies
-- **Question answered:** "What does this system do and who uses it?"
-
-### Level 2: Container
-- **Audience:** Architects, tech leads, developers
-- **Shows:** Applications and data stores inside the system
-- **Question answered:** "What are the major building blocks?"
-
-### Level 3: Component (Optional)
-- **Audience:** Developers on specific containers
-- **Shows:** Internal components of a single container
-- **Question answered:** "How is this container structured internally?"
-
-### Level 4: Code (Rare)
-- **Audience:** Developers debugging/extending
-- **Shows:** Class diagrams, sequence diagrams
-- **Usually:** Generated from code, not maintained manually
-
----
-
-## Usage Examples
-
-### Request: "Create architecture for a chat application"
-
-Generate ARCHITECTURE.md with:
-- Context: Users, Chat System, Push Notification Service
-- Containers: React SPA, WebSocket Server (Node.js), Message Store (MongoDB), Redis PubSub
-- Perspectives: E2E encryption, team ownership
-- Deployment: AWS ECS, DocumentDB, ElastiCache
-
-### Request: "Document our microservices"
-
-For each microservice:
-1. Add as separate container row
-2. Specify technology (Python/FastAPI, Go/Chi, etc.)
-3. Show inter-service communication protocols
-4. Map each to deployment infrastructure
-
----
-
-## References
-
-- [C4 Model Official](https://c4model.com/)
-- [Simon Brown - Software Architecture for Developers](https://softwarearchitecturefordevelopers.com/)
-- [Structurizr](https://structurizr.com/) - C4 tooling
+| Question | Answer Location |
+|----------|-----------------|
+| "How does coding work?" | `docs/ARCHITECTURE.md` Section 5 (Data Flow) |
+| "What bounded contexts exist?" | `docs/ARCHITECTURE.md` Section 9 |
+| "How do events flow?" | `docs/ARCHITECTURE.md` Section 5 + diagrams |
+| "What technology for X?" | `docs/ARCHITECTURE.md` Section 6 (Perspectives) |
+| "Directory structure?" | `docs/ARCHITECTURE.md` Section 8 |
