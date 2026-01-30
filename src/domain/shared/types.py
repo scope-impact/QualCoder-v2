@@ -1,14 +1,16 @@
 """
 Shared domain types: Result monad, base event, typed identifiers
+
+Result type provided by the 'returns' library.
 """
 
 from __future__ import annotations
 
-from collections.abc import Callable
 from dataclasses import dataclass
-from datetime import datetime
-from typing import Generic, TypeVar
+from datetime import UTC, datetime
 from uuid import uuid4
+
+from returns.result import Failure, Result, Success
 
 # ============================================================
 # Typed Identifiers
@@ -46,50 +48,12 @@ class CategoryId:
 # ============================================================
 # Result Type (Success | Failure)
 # ============================================================
+# Re-exported from 'returns' library for monadic composition.
+# Use: Success(value), Failure(error)
+# Access: result.unwrap() for success, result.failure() for error
+# Check: isinstance(result, Success) or isinstance(result, Failure)
 
-T = TypeVar("T")
-E = TypeVar("E")
-
-
-@dataclass(frozen=True)
-class Success(Generic[T]):
-    """Successful result containing a value"""
-
-    value: T
-
-    def is_success(self) -> bool:
-        return True
-
-    def is_failure(self) -> bool:
-        return False
-
-    def map(self, fn: Callable[[T], T]) -> Result[T, E]:
-        return Success(fn(self.value))
-
-    def unwrap(self) -> T:
-        return self.value
-
-
-@dataclass(frozen=True)
-class Failure(Generic[E]):
-    """Failed result containing an error"""
-
-    error: E
-
-    def is_success(self) -> bool:
-        return False
-
-    def is_failure(self) -> bool:
-        return True
-
-    def map(self, _fn: Callable) -> Result[T, E]:
-        return self
-
-    def unwrap(self) -> None:
-        raise ValueError(f"Cannot unwrap Failure: {self.error}")
-
-
-Result = Success[T] | Failure[E]
+__all__ = ["Success", "Failure", "Result"]
 
 
 # ============================================================
@@ -110,7 +74,7 @@ class DomainEvent:
 
     @classmethod
     def _now(cls) -> datetime:
-        return datetime.utcnow()
+        return datetime.now(UTC)
 
 
 # ============================================================

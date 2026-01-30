@@ -8,7 +8,7 @@ This file defines the CONTRACT for data shapes in the Coding context.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import UTC, datetime
 
 from src.domain.shared.types import CategoryId, CodeId, SegmentId, SourceId
 
@@ -143,7 +143,7 @@ class Code:
     memo: str | None = None
     category_id: CategoryId | None = None
     owner: str | None = None  # CoderId as string for now
-    created_at: datetime = field(default_factory=datetime.utcnow)
+    created_at: datetime = field(default_factory=lambda: datetime.now(UTC))
 
     def with_name(self, new_name: str) -> Code:
         """Return new Code with updated name"""
@@ -206,7 +206,7 @@ class Category:
     parent_id: CategoryId | None = None
     memo: str | None = None
     owner: str | None = None
-    created_at: datetime = field(default_factory=datetime.utcnow)
+    created_at: datetime = field(default_factory=lambda: datetime.now(UTC))
 
     def with_name(self, new_name: str) -> Category:
         return Category(
@@ -246,7 +246,7 @@ class TextSegment:
     memo: str | None = None
     importance: int = 0  # 0=normal, 1=important, 2=very important
     owner: str | None = None
-    created_at: datetime = field(default_factory=datetime.utcnow)
+    created_at: datetime = field(default_factory=lambda: datetime.now(UTC))
 
     def with_memo(self, new_memo: str | None) -> TextSegment:
         return TextSegment(
@@ -286,7 +286,7 @@ class ImageSegment:
     memo: str | None = None
     importance: int = 0
     owner: str | None = None
-    created_at: datetime = field(default_factory=datetime.utcnow)
+    created_at: datetime = field(default_factory=lambda: datetime.now(UTC))
 
 
 @dataclass(frozen=True)
@@ -301,7 +301,7 @@ class AVSegment:
     memo: str | None = None
     importance: int = 0
     owner: str | None = None
-    created_at: datetime = field(default_factory=datetime.utcnow)
+    created_at: datetime = field(default_factory=lambda: datetime.now(UTC))
 
 
 # Type alias for all segment types

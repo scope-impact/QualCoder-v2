@@ -8,7 +8,7 @@ They are designed for thread-safe emission and UI consumption.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import UTC, datetime
 from enum import Enum
 from typing import Any
 
@@ -103,7 +103,7 @@ class ActivityItem:
     ) -> ActivityItem:
         """Create a completed activity item."""
         return cls(
-            timestamp=datetime.utcnow(),
+            timestamp=datetime.now(UTC),
             session_id=session_id,
             description=description,
             status=ActivityStatus.COMPLETED,
@@ -126,7 +126,7 @@ class ActivityItem:
     ) -> ActivityItem:
         """Create a pending activity item (awaiting approval)."""
         return cls(
-            timestamp=datetime.utcnow(),
+            timestamp=datetime.now(UTC),
             session_id=session_id,
             description=description,
             status=ActivityStatus.PENDING,
@@ -153,7 +153,7 @@ class ActivityItem:
         if error:
             meta["error"] = error
         return cls(
-            timestamp=datetime.utcnow(),
+            timestamp=datetime.now(UTC),
             session_id=session_id,
             description=description,
             status=ActivityStatus.FAILED,

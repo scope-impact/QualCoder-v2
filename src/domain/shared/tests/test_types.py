@@ -2,9 +2,10 @@
 Tests for shared domain types - focusing on behavior and invariants.
 """
 
-from datetime import datetime
+from datetime import UTC, datetime
 
 import pytest
+from returns.primitives.exceptions import UnwrapFailedError
 
 from src.domain.shared.types import (
     CategoryId,
@@ -54,23 +55,23 @@ class TestTypedIds:
 
 
 class TestResultMonad:
-    """Tests for Result type (Success | Failure) behavior"""
+    """Tests for Result type (Success | Failure) behavior - using returns library"""
 
     def test_success_map_applies_transformation(self):
         """Success.map(fn) should apply fn and return new Success"""
-        result = Success(value=5)
+        result = Success(5)
         mapped = result.map(lambda x: x * 2)
 
         assert isinstance(mapped, Success)
-        assert mapped.value == 10
+        assert mapped.unwrap() == 10
 
     def test_success_map_chaining(self):
         """Multiple map calls should chain correctly"""
-        result = Success(value=2)
+        result = Success(2)
         chained = result.map(lambda x: x * 3).map(lambda x: x + 1)
 
         assert isinstance(chained, Success)
-        assert chained.value == 7  # (2 * 3) + 1
+        assert chained.unwrap() == 7  # (2 * 3) + 1
 
     def test_failure_map_short_circuits(self):
         """Failure.map(fn) should return same Failure without calling fn"""
@@ -81,26 +82,24 @@ class TestResultMonad:
             call_count += 1
             return x * 2
 
-        result = Failure(error="oops")
+        result = Failure("oops")
         mapped = result.map(should_not_be_called)
 
         assert isinstance(mapped, Failure)
-        assert mapped.error == "oops"
+        assert mapped.failure() == "oops"
         assert call_count == 0  # Function was never called
 
     def test_success_unwrap_returns_value(self):
         """Success.unwrap() should return the wrapped value"""
-        result = Success(value="hello")
+        result = Success("hello")
         assert result.unwrap() == "hello"
 
-    def test_failure_unwrap_raises_with_error_message(self):
-        """Failure.unwrap() should raise ValueError containing the error"""
-        result = Failure(error="something went wrong")
+    def test_failure_unwrap_raises(self):
+        """Failure.unwrap() should raise UnwrapFailedError"""
+        result = Failure("something went wrong")
 
-        with pytest.raises(ValueError) as exc_info:
+        with pytest.raises(UnwrapFailedError):
             result.unwrap()
-
-        assert "something went wrong" in str(exc_info.value)
 
 
 class TestDomainEvent:
@@ -116,9 +115,9 @@ class TestDomainEvent:
 
     def test_now_returns_current_timestamp(self):
         """_now() should return approximately current time"""
-        before = datetime.utcnow()
+        before = datetime.now(UTC)
         event_time = DomainEvent._now()
-        after = datetime.utcnow()
+        after = datetime.now(UTC)
 
         assert before <= event_time <= after
 

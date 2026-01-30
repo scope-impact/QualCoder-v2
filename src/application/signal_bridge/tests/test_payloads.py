@@ -1,6 +1,6 @@
 """Tests for Signal Bridge payloads."""
 
-from datetime import datetime
+from datetime import UTC, datetime
 
 import pytest
 
@@ -43,7 +43,7 @@ class TestSignalPayload:
     def test_payload_immutability(self) -> None:
         """Test that payload is immutable."""
         payload = SignalPayload(
-            timestamp=datetime.utcnow(),
+            timestamp=datetime.now(UTC),
             session_id="local",
             is_ai_action=False,
             event_type="test",

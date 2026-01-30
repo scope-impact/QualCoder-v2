@@ -15,12 +15,18 @@ members = ["design_system", "_template"]
 [tool.uv.sources]
 design-system = { workspace = true }
 
+[project.optional-dependencies]
+ddd = [
+    "returns>=0.22",  # Result/Maybe/IO monads
+]
+
 [dependency-groups]
 dev = [
     "pytest>=8.0.0",
     "pytest-qt>=4.5.0",
     "pre-commit>=4.0.0",
     "ruff>=0.9.0",
+    "returns>=0.22",  # Result monad for domain layer
 ]
 docs = [
     "mkdocs>=1.6",

@@ -27,7 +27,7 @@ from __future__ import annotations
 import warnings
 from collections.abc import Callable
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import UTC, datetime
 from threading import RLock
 from typing import (
     Any,
@@ -382,7 +382,7 @@ class EventBus:
             record = EventRecord(
                 event=event,
                 event_type=event_type,
-                timestamp=datetime.utcnow(),
+                timestamp=datetime.now(UTC),
                 handler_count=handler_count,
             )
             self._history.append(record)

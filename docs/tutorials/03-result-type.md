@@ -69,35 +69,22 @@ except DuplicateNameError:
 
 ## The Result Type Solution
 
-Look at `src/domain/shared/types.py`:
+We use the [`returns`](https://returns.readthedocs.io/) library for proper monadic Result types. See `src/domain/shared/types.py`:
 
 ```python
-@dataclass(frozen=True)
-class Success(Generic[T]):
-    """Successful result containing a value"""
-    value: T
+from returns.result import Failure, Result, Success
 
-    def is_success(self) -> bool:
-        return True
-
-    def is_failure(self) -> bool:
-        return False
-
-
-@dataclass(frozen=True)
-class Failure(Generic[E]):
-    """Failed result containing an error"""
-    error: E
-
-    def is_success(self) -> bool:
-        return False
-
-    def is_failure(self) -> bool:
-        return True
-
-
-Result = Union[Success[T], Failure[E]]
+# Re-exported for use throughout the codebase
+__all__ = ["Success", "Failure", "Result"]
 ```
+
+The `returns` library provides:
+- **`Success(value)`** - wraps a successful value
+- **`Failure(error)`** - wraps an error value
+- **`.unwrap()`** - extracts the success value (raises on failure)
+- **`.failure()`** - extracts the error value
+- **`.map(fn)`** - transforms the success value
+- **`.bind(fn)`** - chains operations that return Results
 
 Now our function signature is **honest**:
 
@@ -118,7 +105,7 @@ result = derive_create_code(name, color, state)
 
 if isinstance(result, Failure):
     # Handle error - can't accidentally ignore it
-    return handle_error(result.error)
+    return handle_error(result.failure())
 
 # result is CodeCreated here
 save_and_publish(result)
@@ -132,12 +119,12 @@ Each failure is a dataclass you can match:
 result = derive_create_code(name, color, state)
 
 if isinstance(result, Failure):
-    match result.error:
+    match result.failure():
         case EmptyName():
             show_error("Please enter a name")
-        case DuplicateName(name):
+        case DuplicateName(name=name):
             show_error(f"'{name}' already exists")
-        case InvalidPriority(value):
+        case InvalidPriority(value=value):
             show_error(f"Priority {value} must be 1-5")
         case _:
             show_error("Unknown error")
@@ -158,17 +145,38 @@ class DuplicateName:
 ```
 
 You can:
-- Access `error.name` for the conflicting name
-- Access `error.message` for user-friendly text
+- Access `failure.name` for the conflicting name
+- Access `failure.message` for user-friendly text
 - Serialize it for logging/API responses
 
 ### 4. No Hidden Control Flow
 
 The function signature tells the whole story. No surprise exceptions.
 
-### 5. Composition
+### 5. Composition with `returns`
 
-Operations that might fail can be chained cleanly:
+The `returns` library enables elegant composition:
+
+```python
+# Using map for simple transformations
+result = Success(5).map(lambda x: x * 2)  # Success(10)
+
+# Using bind for chaining operations that return Results
+def validate_name(name: str) -> Result[str, EmptyName]:
+    if not name:
+        return Failure(EmptyName())
+    return Success(name)
+
+def check_unique(name: str) -> Result[str, DuplicateName]:
+    if name in existing_names:
+        return Failure(DuplicateName(name))
+    return Success(name)
+
+# Chain validations - stops at first failure
+result = validate_name(name).bind(check_unique)
+```
+
+For simpler cases, explicit checking works well:
 
 ```python
 def create_and_apply(name, color, source_id, position, state):

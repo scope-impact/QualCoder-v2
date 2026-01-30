@@ -21,7 +21,7 @@ import queue
 from abc import ABCMeta, abstractmethod
 from collections.abc import Callable
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import (
     Any,
     ClassVar,
@@ -423,7 +423,7 @@ class BaseSignalBridge(QObject, metaclass=QObjectABCMeta):
             metadata: Additional context
         """
         activity = ActivityItem(
-            timestamp=datetime.utcnow(),
+            timestamp=datetime.now(UTC),
             session_id=session_id,
             description=description,
             status=status,

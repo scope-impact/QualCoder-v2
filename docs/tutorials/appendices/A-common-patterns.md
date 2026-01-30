@@ -83,11 +83,11 @@ def derive_create_code_with_all_errors(name, color, priority, state):
 
 ```python
 if isinstance(result, Failure):
-    if isinstance(result.error, ValidationErrors):
-        for error in result.error.errors:
+    if isinstance(result.failure(), ValidationErrors):
+        for error in result.failure().errors:
             self.show_field_error(error)
     else:
-        self.show_error(result.error.message)
+        self.show_error(result.failure().message)
 ```
 
 ## Pattern 2: Cross-Context Event Subscription
@@ -270,7 +270,7 @@ class CodebookTreeView:
         # 3. Rollback if failed
         if isinstance(result, Failure):
             item.setText(old_name)
-            self.show_error(result.error.message)
+            self.show_error(result.failure().message)
 ```
 
 ## Pattern 5: State Composition for Complex Validation

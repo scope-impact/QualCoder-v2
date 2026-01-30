@@ -91,7 +91,7 @@ class TestDeriveCreateCode:
         )
 
         assert isinstance(result, Failure)
-        assert isinstance(result.error, EmptyName)
+        assert isinstance(result.failure(), EmptyName)
 
     def test_fails_with_duplicate_name(self, populated_state: CodingState):
         """Should fail with DuplicateName for existing names."""
@@ -105,8 +105,8 @@ class TestDeriveCreateCode:
         )
 
         assert isinstance(result, Failure)
-        assert isinstance(result.error, DuplicateName)
-        assert result.error.name == "Theme A"
+        assert isinstance(result.failure(), DuplicateName)
+        assert result.failure().name == "Theme A"
 
     def test_fails_with_nonexistent_category(self, empty_state: CodingState):
         """Should fail with CategoryNotFound for invalid category."""
@@ -120,7 +120,7 @@ class TestDeriveCreateCode:
         )
 
         assert isinstance(result, Failure)
-        assert isinstance(result.error, CategoryNotFound)
+        assert isinstance(result.failure(), CategoryNotFound)
 
     def test_creates_code_in_existing_category(self, populated_state: CodingState):
         """Should create code in existing category."""
@@ -162,7 +162,7 @@ class TestDeriveRenameCode:
         )
 
         assert isinstance(result, Failure)
-        assert isinstance(result.error, CodeNotFound)
+        assert isinstance(result.failure(), CodeNotFound)
 
     def test_fails_with_empty_name(self, populated_state: CodingState):
         """Should fail with empty new name."""
@@ -173,7 +173,7 @@ class TestDeriveRenameCode:
         )
 
         assert isinstance(result, Failure)
-        assert isinstance(result.error, EmptyName)
+        assert isinstance(result.failure(), EmptyName)
 
     def test_fails_with_duplicate_name(self, populated_state: CodingState):
         """Should fail when renaming to existing name."""
@@ -184,7 +184,7 @@ class TestDeriveRenameCode:
         )
 
         assert isinstance(result, Failure)
-        assert isinstance(result.error, DuplicateName)
+        assert isinstance(result.failure(), DuplicateName)
 
     def test_allows_keeping_same_name(self, populated_state: CodingState):
         """Should allow keeping the same name (case-insensitive)."""
@@ -222,7 +222,7 @@ class TestDeriveChangeCodeColor:
         )
 
         assert isinstance(result, Failure)
-        assert isinstance(result.error, CodeNotFound)
+        assert isinstance(result.failure(), CodeNotFound)
 
 
 class TestDeriveDeleteCode:
@@ -252,7 +252,7 @@ class TestDeriveDeleteCode:
         )
 
         assert isinstance(result, Failure)
-        assert isinstance(result.error, HasReferences)
+        assert isinstance(result.failure(), HasReferences)
 
     def test_deletes_code_with_segments_when_forced(self, populated_state: CodingState):
         """Should delete code with segments when forced."""
@@ -274,7 +274,7 @@ class TestDeriveDeleteCode:
         )
 
         assert isinstance(result, Failure)
-        assert isinstance(result.error, CodeNotFound)
+        assert isinstance(result.failure(), CodeNotFound)
 
 
 class TestDeriveMergeCodes:
@@ -302,7 +302,7 @@ class TestDeriveMergeCodes:
         )
 
         assert isinstance(result, Failure)
-        assert isinstance(result.error, SameEntity)
+        assert isinstance(result.failure(), SameEntity)
 
     def test_fails_with_nonexistent_source(self, populated_state: CodingState):
         """Should fail when source code doesn't exist."""
@@ -313,7 +313,7 @@ class TestDeriveMergeCodes:
         )
 
         assert isinstance(result, Failure)
-        assert isinstance(result.error, CodeNotFound)
+        assert isinstance(result.failure(), CodeNotFound)
 
     def test_fails_with_nonexistent_target(self, populated_state: CodingState):
         """Should fail when target code doesn't exist."""
@@ -324,7 +324,7 @@ class TestDeriveMergeCodes:
         )
 
         assert isinstance(result, Failure)
-        assert isinstance(result.error, CodeNotFound)
+        assert isinstance(result.failure(), CodeNotFound)
 
 
 class TestDeriveMoveCodeToCategory:
@@ -362,7 +362,7 @@ class TestDeriveMoveCodeToCategory:
         )
 
         assert isinstance(result, Failure)
-        assert isinstance(result.error, CategoryNotFound)
+        assert isinstance(result.failure(), CategoryNotFound)
 
 
 class TestDeriveCategoryOperations:
@@ -406,7 +406,7 @@ class TestDeriveCategoryOperations:
         )
 
         assert isinstance(result, Failure)
-        assert isinstance(result.error, DuplicateName)
+        assert isinstance(result.failure(), DuplicateName)
 
     def test_renames_category(self, populated_state: CodingState):
         """Should rename existing category."""
@@ -469,7 +469,7 @@ class TestDeriveApplyCodeToText:
         )
 
         assert isinstance(result, Failure)
-        assert isinstance(result.error, CodeNotFound)
+        assert isinstance(result.failure(), CodeNotFound)
 
     def test_fails_with_invalid_position(self, populated_state: CodingState):
         """Should fail with position outside source bounds."""
@@ -486,7 +486,7 @@ class TestDeriveApplyCodeToText:
         )
 
         assert isinstance(result, Failure)
-        assert isinstance(result.error, InvalidPosition)
+        assert isinstance(result.failure(), InvalidPosition)
 
     def test_fails_with_nonexistent_source(self, populated_state: CodingState):
         """Should fail when source doesn't exist."""
@@ -511,7 +511,7 @@ class TestDeriveApplyCodeToText:
         )
 
         assert isinstance(result, Failure)
-        assert isinstance(result.error, SourceNotFound)
+        assert isinstance(result.failure(), SourceNotFound)
 
 
 class TestDeriveSegmentOperations:
