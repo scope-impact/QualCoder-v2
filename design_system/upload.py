@@ -4,13 +4,20 @@ File upload zones, drag-and-drop areas, and file type badges
 """
 
 from typing import List, Optional
-from PyQt6.QtWidgets import (
-    QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
-    QFrame, QProgressBar, QSizePolicy
-)
-from PyQt6.QtCore import Qt, pyqtSignal
 
-from .tokens import SPACING, RADIUS, TYPOGRAPHY, ColorPalette, get_theme
+from PySide6.QtWidgets import (
+    QFrame,
+    QHBoxLayout,
+    QLabel,
+    QProgressBar,
+    QPushButton,
+    QSizePolicy,
+    QVBoxLayout,
+    QWidget,
+)
+from PySide6.QtCore import Qt, Signal
+
+from .tokens import SPACING, RADIUS, TYPOGRAPHY, ColorPalette, get_colors, hex_to_rgba
 
 
 class DropZone(QFrame):
@@ -22,8 +29,8 @@ class DropZone(QFrame):
         drop.files_dropped.connect(self.handle_files)
     """
 
-    files_dropped = pyqtSignal(list)  # list of file paths
-    browse_clicked = pyqtSignal()
+    files_dropped = Signal(list)  # list of file paths
+    browse_clicked = Signal()
 
     def __init__(
         self,
@@ -34,7 +41,7 @@ class DropZone(QFrame):
         parent=None
     ):
         super().__init__(parent)
-        self._colors = colors or get_theme("dark")
+        self._colors = colors or get_colors()
         self._accepted_types = accepted_types or ["text", "audio", "video", "image", "pdf"]
         self._max_files = max_files
         self._max_size_mb = max_size_mb
@@ -116,7 +123,7 @@ class DropZone(QFrame):
         if self._dragging:
             self.setStyleSheet(f"""
                 QFrame {{
-                    background-color: {self._colors.primary}15;
+                    background-color: {hex_to_rgba(self._colors.primary, 0.08)};
                     border: 2px dashed {self._colors.primary};
                     border-radius: {RADIUS.lg}px;
                 }}
@@ -171,7 +178,7 @@ class FileTypeBadges(QFrame):
         parent=None
     ):
         super().__init__(parent)
-        self._colors = colors or get_theme("dark")
+        self._colors = colors or get_colors()
 
         type_config = {
             "text": ("📄", "Text", self._colors.file_text),
@@ -205,11 +212,13 @@ class FileTypeBadge(QFrame):
         parent=None
     ):
         super().__init__(parent)
-        self._colors = colors or get_theme("dark")
+        self._colors = colors or get_colors()
 
+        # Convert hex to rgba (Qt doesn't support #RRGGBBAA format)
+        bg_color = hex_to_rgba(color, 0.15)
         self.setStyleSheet(f"""
             QFrame {{
-                background-color: {color}26;
+                background-color: {bg_color};
                 border-radius: {RADIUS.full}px;
             }}
         """)
@@ -241,7 +250,7 @@ class UploadProgress(QFrame):
         progress.cancel_clicked.connect(self.cancel_upload)
     """
 
-    cancel_clicked = pyqtSignal()
+    cancel_clicked = Signal()
 
     def __init__(
         self,
@@ -251,7 +260,7 @@ class UploadProgress(QFrame):
         parent=None
     ):
         super().__init__(parent)
-        self._colors = colors or get_theme("dark")
+        self._colors = colors or get_colors()
 
         self.setStyleSheet(f"""
             QFrame {{
@@ -360,11 +369,11 @@ class UploadList(QFrame):
         list.add_file("audio.mp3", "5.2 MB")
     """
 
-    file_removed = pyqtSignal(str)  # filename
+    file_removed = Signal(str)  # filename
 
     def __init__(self, colors: ColorPalette = None, parent=None):
         super().__init__(parent)
-        self._colors = colors or get_theme("dark")
+        self._colors = colors or get_colors()
         self._items = {}
 
         self._layout = QVBoxLayout(self)
@@ -411,8 +420,8 @@ class CompactDropZone(QFrame):
         drop.files_dropped.connect(self.handle_files)
     """
 
-    files_dropped = pyqtSignal(list)
-    browse_clicked = pyqtSignal()
+    files_dropped = Signal(list)
+    browse_clicked = Signal()
 
     def __init__(
         self,
@@ -421,7 +430,7 @@ class CompactDropZone(QFrame):
         parent=None
     ):
         super().__init__(parent)
-        self._colors = colors or get_theme("dark")
+        self._colors = colors or get_colors()
         self._dragging = False
 
         self.setAcceptDrops(True)
@@ -447,7 +456,7 @@ class CompactDropZone(QFrame):
         if self._dragging:
             self.setStyleSheet(f"""
                 QFrame {{
-                    background-color: {self._colors.primary}15;
+                    background-color: {hex_to_rgba(self._colors.primary, 0.08)};
                     border: 1px dashed {self._colors.primary};
                     border-radius: {RADIUS.md}px;
                 }}

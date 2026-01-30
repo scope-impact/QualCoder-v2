@@ -4,13 +4,20 @@ Video, audio, and timeline widgets
 """
 
 from typing import List, Optional
-from PyQt6.QtWidgets import (
-    QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
-    QFrame, QSlider, QSizePolicy
-)
-from PyQt6.QtCore import Qt, pyqtSignal, QTimer
 
-from .tokens import SPACING, RADIUS, TYPOGRAPHY, ColorPalette, get_theme
+from PySide6.QtWidgets import (
+    QFrame,
+    QHBoxLayout,
+    QLabel,
+    QPushButton,
+    QSizePolicy,
+    QSlider,
+    QVBoxLayout,
+    QWidget,
+)
+from PySide6.QtCore import QTimer, Qt, Signal
+
+from .tokens import SPACING, RADIUS, TYPOGRAPHY, ColorPalette, get_colors
 
 
 class VideoContainer(QFrame):
@@ -29,12 +36,12 @@ class VideoContainer(QFrame):
         parent=None
     ):
         super().__init__(parent)
-        self._colors = colors or get_theme("dark")
+        self._colors = colors or get_colors()
         self._aspect_ratio = aspect_ratio
 
         self.setStyleSheet(f"""
             QFrame {{
-                background-color: #000000;
+                background-color: {self._colors.text_primary};
                 border-radius: {RADIUS.md}px;
             }}
         """)
@@ -66,7 +73,7 @@ class WaveformVisualization(QFrame):
         waveform.position_changed.connect(self.seek)
     """
 
-    position_changed = pyqtSignal(float)  # 0.0 to 1.0
+    position_changed = Signal(float)  # 0.0 to 1.0
 
     def __init__(
         self,
@@ -74,7 +81,7 @@ class WaveformVisualization(QFrame):
         parent=None
     ):
         super().__init__(parent)
-        self._colors = colors or get_theme("dark")
+        self._colors = colors or get_colors()
         self._position = 0.0
         self._segments = []
 
@@ -120,8 +127,8 @@ class Timeline(QFrame):
         timeline.add_segment(10.0, 25.0, "#FFC107", "Learning")
     """
 
-    position_changed = pyqtSignal(float)  # seconds
-    segment_clicked = pyqtSignal(str)  # segment_id
+    position_changed = Signal(float)  # seconds
+    segment_clicked = Signal(str)  # segment_id
 
     def __init__(
         self,
@@ -130,7 +137,7 @@ class Timeline(QFrame):
         parent=None
     ):
         super().__init__(parent)
-        self._colors = colors or get_theme("dark")
+        self._colors = colors or get_colors()
         self._duration = duration
         self._position = 0.0
         self._segments = []
@@ -201,13 +208,13 @@ class PlayerControls(QFrame):
         controls.volume_changed.connect(self.set_volume)
     """
 
-    play_clicked = pyqtSignal()
-    pause_clicked = pyqtSignal()
-    stop_clicked = pyqtSignal()
-    rewind_clicked = pyqtSignal()
-    forward_clicked = pyqtSignal()
-    volume_changed = pyqtSignal(int)
-    rate_changed = pyqtSignal(float)
+    play_clicked = Signal()
+    pause_clicked = Signal()
+    stop_clicked = Signal()
+    rewind_clicked = Signal()
+    forward_clicked = Signal()
+    volume_changed = Signal(int)
+    rate_changed = Signal(float)
 
     def __init__(
         self,
@@ -217,7 +224,7 @@ class PlayerControls(QFrame):
         parent=None
     ):
         super().__init__(parent)
-        self._colors = colors or get_theme("dark")
+        self._colors = colors or get_colors()
         self._playing = False
 
         self.setStyleSheet(f"""
@@ -367,7 +374,7 @@ class Thumbnail(QFrame):
         thumb.clicked.connect(self.select_page)
     """
 
-    clicked = pyqtSignal()
+    clicked = Signal()
 
     def __init__(
         self,
@@ -378,7 +385,7 @@ class Thumbnail(QFrame):
         parent=None
     ):
         super().__init__(parent)
-        self._colors = colors or get_theme("dark")
+        self._colors = colors or get_colors()
         self._selected = selected
 
         self.setCursor(Qt.CursorShape.PointingHandCursor)
@@ -440,11 +447,11 @@ class ThumbnailStrip(QFrame):
         strip.thumbnail_selected.connect(self.on_select)
     """
 
-    thumbnail_selected = pyqtSignal(int)
+    thumbnail_selected = Signal(int)
 
     def __init__(self, colors: ColorPalette = None, parent=None):
         super().__init__(parent)
-        self._colors = colors or get_theme("dark")
+        self._colors = colors or get_colors()
         self._thumbnails = []
         self._selected = 0
 

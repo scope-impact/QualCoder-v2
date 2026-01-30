@@ -3,14 +3,20 @@ Modal/Dialog components
 Material Design styled modal dialogs
 """
 
-from PyQt6.QtWidgets import (
-    QDialog, QWidget, QVBoxLayout, QHBoxLayout, QLabel,
-    QPushButton, QFrame, QGraphicsDropShadowEffect
+from PySide6.QtWidgets import (
+    QDialog,
+    QFrame,
+    QGraphicsDropShadowEffect,
+    QHBoxLayout,
+    QLabel,
+    QPushButton,
+    QVBoxLayout,
+    QWidget,
 )
-from PyQt6.QtCore import Qt, pyqtSignal
-from PyQt6.QtGui import QColor
+from PySide6.QtCore import Qt, Signal
+from PySide6.QtGui import QColor
 
-from .tokens import SPACING, RADIUS, TYPOGRAPHY, ColorPalette, get_theme
+from .tokens import SPACING, RADIUS, TYPOGRAPHY, ColorPalette, get_colors
 
 
 class Modal(QDialog):
@@ -33,7 +39,7 @@ class Modal(QDialog):
         parent=None
     ):
         super().__init__(parent)
-        self._colors = colors or get_theme("dark")
+        self._colors = colors or get_colors()
 
         # Dialog settings
         self.setWindowFlags(Qt.WindowType.Dialog | Qt.WindowType.FramelessWindowHint)
@@ -116,11 +122,11 @@ class Modal(QDialog):
 class ModalHeader(QFrame):
     """Modal header with title and close button"""
 
-    close_clicked = pyqtSignal()
+    close_clicked = Signal()
 
     def __init__(self, title: str = "", colors: ColorPalette = None, parent=None):
         super().__init__(parent)
-        self._colors = colors or get_theme("dark")
+        self._colors = colors or get_colors()
 
         self.setStyleSheet(f"""
             QFrame {{
@@ -133,11 +139,12 @@ class ModalHeader(QFrame):
         layout = QHBoxLayout(self)
         layout.setContentsMargins(SPACING.xl, SPACING.lg, SPACING.xl, SPACING.lg)
 
-        # Title
+        # Title - using display font for prominence
         self._title = QLabel(title)
         self._title.setStyleSheet(f"""
+            font-family: {TYPOGRAPHY.font_family_display};
             font-size: {TYPOGRAPHY.text_lg}px;
-            font-weight: {TYPOGRAPHY.weight_medium};
+            font-weight: {TYPOGRAPHY.weight_semibold};
             color: {self._colors.text_primary};
         """)
         layout.addWidget(self._title)
@@ -174,7 +181,7 @@ class ModalBody(QFrame):
 
     def __init__(self, colors: ColorPalette = None, parent=None):
         super().__init__(parent)
-        self._colors = colors or get_theme("dark")
+        self._colors = colors or get_colors()
 
         self._layout = QVBoxLayout(self)
         self._layout.setContentsMargins(SPACING.xl, SPACING.xl, SPACING.xl, SPACING.xl)
@@ -198,7 +205,7 @@ class ModalFooter(QFrame):
 
     def __init__(self, colors: ColorPalette = None, parent=None):
         super().__init__(parent)
-        self._colors = colors or get_theme("dark")
+        self._colors = colors or get_colors()
 
         self.setStyleSheet(f"""
             QFrame {{

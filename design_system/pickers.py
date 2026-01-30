@@ -4,13 +4,22 @@ Type selectors, color pickers, and option cards
 """
 
 from typing import List, Optional, Tuple
-from PyQt6.QtWidgets import (
-    QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
-    QFrame, QGridLayout, QSizePolicy
-)
-from PyQt6.QtCore import Qt, pyqtSignal
 
-from .tokens import SPACING, RADIUS, TYPOGRAPHY, ColorPalette, get_theme
+import qtawesome as qta
+
+from PySide6.QtWidgets import (
+    QFrame,
+    QGridLayout,
+    QHBoxLayout,
+    QLabel,
+    QPushButton,
+    QSizePolicy,
+    QVBoxLayout,
+    QWidget,
+)
+from PySide6.QtCore import Qt, Signal
+
+from .tokens import SPACING, RADIUS, TYPOGRAPHY, ColorPalette, get_colors, hex_to_rgba
 
 
 class TypeSelector(QFrame):
@@ -19,12 +28,12 @@ class TypeSelector(QFrame):
 
     Usage:
         selector = TypeSelector()
-        selector.add_option("text", "📄", "Text", "Plain text files")
-        selector.add_option("audio", "🎵", "Audio", "MP3, WAV files")
+        selector.add_option("text", "mdi6.file-document", "Text", "Plain text files")
+        selector.add_option("audio", "mdi6.music-note", "Audio", "MP3, WAV files")
         selector.selection_changed.connect(self.on_type_select)
     """
 
-    selection_changed = pyqtSignal(str)  # type_id
+    selection_changed = Signal(str)  # type_id
 
     def __init__(
         self,
@@ -34,7 +43,7 @@ class TypeSelector(QFrame):
         parent=None
     ):
         super().__init__(parent)
-        self._colors = colors or get_theme("dark")
+        self._colors = colors or get_colors()
         self._columns = columns
         self._multi_select = multi_select
         self._options = {}
@@ -109,11 +118,11 @@ class TypeOptionCard(QFrame):
     Individual type option card.
 
     Usage:
-        card = TypeOptionCard("📄", "Text Files", "Import plain text")
+        card = TypeOptionCard("mdi6.file-document", "Text Files", "Import plain text")
         card.clicked.connect(self.select_type)
     """
 
-    clicked = pyqtSignal()
+    clicked = Signal()
 
     def __init__(
         self,
@@ -125,7 +134,7 @@ class TypeOptionCard(QFrame):
         parent=None
     ):
         super().__init__(parent)
-        self._colors = colors or get_theme("dark")
+        self._colors = colors or get_colors()
         self._selected = selected
 
         self.setCursor(Qt.CursorShape.PointingHandCursor)
@@ -136,10 +145,14 @@ class TypeOptionCard(QFrame):
         layout.setSpacing(SPACING.sm)
         layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
-        # Icon
-        icon_label = QLabel(icon)
+        # Icon - support both mdi6 icons and emoji fallback
+        icon_label = QLabel()
         icon_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        icon_label.setStyleSheet(f"font-size: 32px;")
+        if icon.startswith("mdi6."):
+            icon_label.setPixmap(qta.icon(icon, color=self._colors.primary).pixmap(32, 32))
+        else:
+            icon_label.setText(icon)
+            icon_label.setStyleSheet(f"font-size: 32px;")
         layout.addWidget(icon_label)
 
         # Title
@@ -167,7 +180,7 @@ class TypeOptionCard(QFrame):
         if self._selected:
             self.setStyleSheet(f"""
                 QFrame {{
-                    background-color: {self._colors.primary}15;
+                    background-color: {hex_to_rgba(self._colors.primary, 0.08)};
                     border: 2px solid {self._colors.primary};
                     border-radius: {RADIUS.lg}px;
                 }}
@@ -200,12 +213,12 @@ class ColorSchemeSelector(QFrame):
 
     Usage:
         selector = ColorSchemeSelector()
-        selector.add_scheme("warm", ["#FF5722", "#FFC107", "#FF9800"])
-        selector.add_scheme("cool", ["#2196F3", "#00BCD4", "#009688"])
+        selector.add_scheme("warm", ["#C84B31", "#E9C46A", "#E76F51"])  # Vermilion palette
+        selector.add_scheme("cool", ["#2A6F97", "#468FAF", "#1E3A5F"])  # Prussian ink palette
         selector.scheme_changed.connect(self.apply_scheme)
     """
 
-    scheme_changed = pyqtSignal(str)  # scheme_id
+    scheme_changed = Signal(str)  # scheme_id
 
     def __init__(
         self,
@@ -213,7 +226,7 @@ class ColorSchemeSelector(QFrame):
         parent=None
     ):
         super().__init__(parent)
-        self._colors = colors or get_theme("dark")
+        self._colors = colors or get_colors()
         self._schemes = {}
         self._selected = None
 
@@ -248,7 +261,7 @@ class ColorSchemeSelector(QFrame):
 class ColorSchemeOption(QFrame):
     """Individual color scheme option"""
 
-    clicked = pyqtSignal()
+    clicked = Signal()
 
     def __init__(
         self,
@@ -259,7 +272,7 @@ class ColorSchemeOption(QFrame):
         parent=None
     ):
         super().__init__(parent)
-        self._palette = palette or get_theme("dark")
+        self._palette = palette or get_colors()
         self._selected = selected
 
         self.setCursor(Qt.CursorShape.PointingHandCursor)
@@ -331,15 +344,15 @@ class ChartTypeSelector(QFrame):
         selector.chart_changed.connect(self.update_chart)
     """
 
-    chart_changed = pyqtSignal(str)
+    chart_changed = Signal(str)
 
     CHART_TYPES = [
-        ("bar", "📊", "Bar Chart"),
-        ("line", "📈", "Line Chart"),
-        ("pie", "🥧", "Pie Chart"),
-        ("scatter", "⬡", "Scatter Plot"),
-        ("area", "▨", "Area Chart"),
-        ("heatmap", "🔲", "Heat Map"),
+        ("bar", "mdi6.chart-bar", "Bar Chart"),
+        ("line", "mdi6.chart-line", "Line Chart"),
+        ("pie", "mdi6.chart-pie", "Pie Chart"),
+        ("scatter", "mdi6.chart-scatter-plot", "Scatter Plot"),
+        ("area", "mdi6.chart-areaspline", "Area Chart"),
+        ("heatmap", "mdi6.grid", "Heat Map"),
     ]
 
     def __init__(
@@ -350,7 +363,7 @@ class ChartTypeSelector(QFrame):
         parent=None
     ):
         super().__init__(parent)
-        self._colors = colors or get_theme("dark")
+        self._colors = colors or get_colors()
         self._available = available or [t[0] for t in self.CHART_TYPES]
         self._current = current
         self._buttons = {}
@@ -367,14 +380,16 @@ class ChartTypeSelector(QFrame):
         layout.setContentsMargins(SPACING.xs, SPACING.xs, SPACING.xs, SPACING.xs)
         layout.setSpacing(SPACING.xs)
 
-        for chart_id, icon, tooltip in self.CHART_TYPES:
+        for chart_id, icon_name, tooltip in self.CHART_TYPES:
             if chart_id in self._available:
-                btn = QPushButton(icon)
+                btn = QPushButton()
+                btn.setIcon(qta.icon(icon_name, color=self._colors.text_secondary))
+                btn.setIconSize(btn.sizeHint())
                 btn.setFixedSize(36, 36)
                 btn.setCursor(Qt.CursorShape.PointingHandCursor)
                 btn.setToolTip(tooltip)
                 btn.clicked.connect(lambda checked, c=chart_id: self._select(c))
-                self._buttons[chart_id] = btn
+                self._buttons[chart_id] = (btn, icon_name)
                 layout.addWidget(btn)
 
         self._update_styles()
@@ -386,29 +401,26 @@ class ChartTypeSelector(QFrame):
             self.chart_changed.emit(chart_type)
 
     def _update_styles(self):
-        for chart_id, btn in self._buttons.items():
+        for chart_id, (btn, icon_name) in self._buttons.items():
             if chart_id == self._current:
+                btn.setIcon(qta.icon(icon_name, color="white"))
                 btn.setStyleSheet(f"""
                     QPushButton {{
                         background-color: {self._colors.primary};
-                        color: white;
                         border: none;
                         border-radius: {RADIUS.sm}px;
-                        font-size: 18px;
                     }}
                 """)
             else:
+                btn.setIcon(qta.icon(icon_name, color=self._colors.text_secondary))
                 btn.setStyleSheet(f"""
                     QPushButton {{
                         background-color: transparent;
-                        color: {self._colors.text_secondary};
                         border: none;
                         border-radius: {RADIUS.sm}px;
-                        font-size: 18px;
                     }}
                     QPushButton:hover {{
                         background-color: {self._colors.surface_lighter};
-                        color: {self._colors.text_primary};
                     }}
                 """)
 
@@ -432,7 +444,7 @@ class RadioCardGroup(QFrame):
         group.selection_changed.connect(self.on_select)
     """
 
-    selection_changed = pyqtSignal(str)
+    selection_changed = Signal(str)
 
     def __init__(
         self,
@@ -441,7 +453,7 @@ class RadioCardGroup(QFrame):
         parent=None
     ):
         super().__init__(parent)
-        self._colors = colors or get_theme("dark")
+        self._colors = colors or get_colors()
         self._cards = {}
         self._selected = None
 
@@ -487,7 +499,7 @@ class RadioCardGroup(QFrame):
 class RadioCard(QFrame):
     """Individual radio card option"""
 
-    clicked = pyqtSignal()
+    clicked = Signal()
 
     def __init__(
         self,
@@ -499,7 +511,7 @@ class RadioCard(QFrame):
         parent=None
     ):
         super().__init__(parent)
-        self._colors = colors or get_theme("dark")
+        self._colors = colors or get_colors()
         self._selected = selected
 
         self.setCursor(Qt.CursorShape.PointingHandCursor)
@@ -521,8 +533,12 @@ class RadioCard(QFrame):
 
         header = QHBoxLayout()
         if icon:
-            icon_label = QLabel(icon)
-            icon_label.setStyleSheet(f"font-size: 16px;")
+            icon_label = QLabel()
+            if icon.startswith("mdi6."):
+                icon_label.setPixmap(qta.icon(icon, color=self._colors.text_primary).pixmap(16, 16))
+            else:
+                icon_label.setText(icon)
+                icon_label.setStyleSheet(f"font-size: 16px;")
             header.addWidget(icon_label)
 
         title_label = QLabel(title)
@@ -550,7 +566,7 @@ class RadioCard(QFrame):
         if self._selected:
             self.setStyleSheet(f"""
                 QFrame {{
-                    background-color: {self._colors.primary}15;
+                    background-color: {hex_to_rgba(self._colors.primary, 0.08)};
                     border: 2px solid {self._colors.primary};
                     border-radius: {RADIUS.md}px;
                 }}

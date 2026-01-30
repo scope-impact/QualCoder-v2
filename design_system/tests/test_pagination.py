@@ -3,7 +3,7 @@ Tests for pagination components: Pagination, SimplePagination, etc.
 """
 
 import pytest
-from PyQt6.QtCore import Qt
+from PySide6.QtCore import Qt
 
 from design_system.pagination import (
     Pagination, PageButton, PaginationInfo, SimplePagination

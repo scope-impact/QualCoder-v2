@@ -3,9 +3,9 @@ Pytest configuration and fixtures for design system tests
 """
 
 import pytest
-from PyQt6.QtWidgets import QApplication, QWidget
-from PyQt6.QtCore import QTimer
-from PyQt6.QtGui import QPixmap
+from PySide6.QtWidgets import QApplication, QWidget
+from PySide6.QtCore import QTimer, QEventLoop
+from PySide6.QtGui import QPixmap
 import sys
 from pathlib import Path
 from datetime import datetime
@@ -93,7 +93,7 @@ def take_screenshot(screenshot_dir, request):
 
         # Use QTimer for delay if needed
         if delay_ms > 0:
-            loop = __import__('PyQt6.QtCore', fromlist=['QEventLoop']).QEventLoop()
+            loop = QEventLoop()
             QTimer.singleShot(delay_ms, loop.quit)
             loop.exec()
 
@@ -145,7 +145,7 @@ def screenshot_comparison(screenshot_dir):
         widget.show()
         QApplication.processEvents()
 
-        loop = __import__('PyQt6.QtCore', fromlist=['QEventLoop']).QEventLoop()
+        loop = QEventLoop()
         QTimer.singleShot(100, loop.quit)
         loop.exec()
 

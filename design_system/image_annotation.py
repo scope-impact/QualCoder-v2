@@ -8,19 +8,42 @@ from dataclasses import dataclass, field
 from enum import Enum
 import math
 
-from PyQt6.QtWidgets import (
-    QWidget, QVBoxLayout, QHBoxLayout, QLabel, QFrame,
-    QGraphicsView, QGraphicsScene, QGraphicsPixmapItem,
-    QGraphicsRectItem, QGraphicsPolygonItem, QGraphicsItem,
-    QGraphicsPathItem, QPushButton, QButtonGroup
+from PySide6.QtWidgets import (
+    QFrame,
+    QGraphicsItem,
+    QGraphicsPathItem,
+    QGraphicsPixmapItem,
+    QGraphicsPolygonItem,
+    QGraphicsRectItem,
+    QGraphicsScene,
+    QGraphicsView,
+    QHBoxLayout,
+    QLabel,
+    QPushButton,
+    QVBoxLayout,
+    QWidget,
 )
-from PyQt6.QtCore import Qt, pyqtSignal, QPointF, QRectF
-from PyQt6.QtGui import (
-    QColor, QPen, QBrush, QPixmap, QImage, QPainter,
-    QPainterPath, QPolygonF, QCursor
+from PySide6.QtCore import (
+    QPointF,
+    QRectF,
+    Qt,
+    Signal,
 )
+from PySide6.QtGui import (
+    QBrush,
+    QColor,
+    QCursor,
+    QImage,
+    QPainter,
+    QPainterPath,
+    QPen,
+    QPixmap,
+    QPolygonF,
+)
+# QButtonGroup is now in qt_compat
+from PySide6.QtWidgets import QButtonGroup
 
-from .tokens import SPACING, RADIUS, TYPOGRAPHY, ColorPalette, get_theme
+from .tokens import SPACING, RADIUS, TYPOGRAPHY, ColorPalette, get_colors
 
 
 class AnnotationMode(Enum):
@@ -37,7 +60,7 @@ class ImageAnnotation:
     id: str
     annotation_type: str  # "rectangle", "polygon", "freehand"
     points: List[Tuple[float, float]]  # For rect: [(x, y, w, h)], for polygon: [(x1,y1), (x2,y2), ...]
-    color: str = "#009688"
+    color: str = "#1E3A5F"  # Prussian ink (from tokens.COLORS_LIGHT.primary)
     label: str = ""
     code_id: Optional[str] = None
     metadata: Dict[str, Any] = field(default_factory=dict)
@@ -66,22 +89,22 @@ class ImageAnnotationLayer(QFrame):
         mode_changed(mode): Drawing mode changed
     """
 
-    annotation_created = pyqtSignal(object)  # ImageAnnotation
-    annotation_selected = pyqtSignal(str)
-    annotation_deleted = pyqtSignal(str)
-    mode_changed = pyqtSignal(str)
+    annotation_created = Signal(object)  # ImageAnnotation
+    annotation_selected = Signal(str)
+    annotation_deleted = Signal(str)
+    mode_changed = Signal(str)
 
     def __init__(
         self,
         show_toolbar: bool = True,
-        default_color: str = "#009688",
+        default_color: str = None,
         colors: ColorPalette = None,
         parent=None
     ):
         super().__init__(parent)
-        self._colors = colors or get_theme("light")
-        self._default_color = default_color
-        self._current_color = default_color
+        self._colors = colors or get_colors()
+        self._default_color = default_color or self._colors.primary
+        self._current_color = self._default_color
         self._mode = AnnotationMode.SELECT
         self._annotations: Dict[str, ImageAnnotation] = {}
         self._annotation_items: Dict[str, QGraphicsItem] = {}
@@ -505,14 +528,14 @@ class ImageAnnotationLayer(QFrame):
 class AnnotationView(QGraphicsView):
     """Custom graphics view with mouse event signals"""
 
-    mouse_pressed = pyqtSignal(QPointF)
-    mouse_moved = pyqtSignal(QPointF)
-    mouse_released = pyqtSignal(QPointF)
-    mouse_double_clicked = pyqtSignal(QPointF)
+    mouse_pressed = Signal(QPointF)
+    mouse_moved = Signal(QPointF)
+    mouse_released = Signal(QPointF)
+    mouse_double_clicked = Signal(QPointF)
 
     def __init__(self, scene: QGraphicsScene, colors: ColorPalette = None, parent=None):
         super().__init__(scene, parent)
-        self._colors = colors or get_theme("light")
+        self._colors = colors or get_colors()
 
         self.setRenderHint(QPainter.RenderHint.Antialiasing)
         self.setRenderHint(QPainter.RenderHint.SmoothPixmapTransform)
@@ -562,11 +585,11 @@ class AnnotationView(QGraphicsView):
 class AnnotationToolbar(QFrame):
     """Toolbar for annotation tools"""
 
-    mode_changed = pyqtSignal(str)
+    mode_changed = Signal(str)
 
     def __init__(self, colors: ColorPalette = None, parent=None):
         super().__init__(parent)
-        self._colors = colors or get_theme("light")
+        self._colors = colors or get_colors()
         self._current_mode = AnnotationMode.SELECT
 
         self.setStyleSheet(f"""

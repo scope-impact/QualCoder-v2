@@ -7,8 +7,8 @@ Screenshots saved to: design_system/tests/screenshots/
 """
 
 import pytest
-from PyQt6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QLabel
-from PyQt6.QtCore import Qt
+from PySide6.QtCore import Qt
+from PySide6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QLabel
 
 
 class TestComponentScreenshots:
@@ -538,7 +538,7 @@ class TestPickerScreenshots:
 
     def test_date_range_picker(self, qtbot, take_screenshot):
         """Screenshot date range picker"""
-        from design_system.calendar import DateRangePicker
+        from design_system.date_picker import DateRangePicker
 
         picker = DateRangePicker()
         picker.setFixedWidth(320)
@@ -808,7 +808,8 @@ class TestModalScreenshots:
         )
         modal.add_button("Cancel", variant="outline")
         modal.add_button("Delete", variant="destructive")
-        modal.setFixedSize(400, 200)
+        # Need extra height for centered container + shadow effects
+        modal.setFixedSize(400, 300)
 
         qtbot.addWidget(modal)
         take_screenshot(modal, "modal_dialog")
@@ -852,8 +853,8 @@ class TestLayoutScreenshots:
 
         # Add header
         header = PanelHeader(title="Properties")
-        header.add_action("➕", lambda: None)
-        header.add_action("⋮", lambda: None)
+        header.add_action("➕", on_click=lambda: None)
+        header.add_action("⋮", on_click=lambda: None)
         container_layout.addWidget(header)
 
         # Add panel content

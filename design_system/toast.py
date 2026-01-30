@@ -3,14 +3,25 @@ Toast notification components
 Material Design styled popup notifications
 """
 
-from PyQt6.QtWidgets import (
-    QWidget, QHBoxLayout, QLabel, QPushButton,
-    QVBoxLayout, QGraphicsDropShadowEffect, QApplication
+from PySide6.QtWidgets import (
+    QApplication,
+    QGraphicsDropShadowEffect,
+    QHBoxLayout,
+    QLabel,
+    QPushButton,
+    QVBoxLayout,
+    QWidget,
 )
-from PyQt6.QtCore import Qt, QTimer, QPropertyAnimation, QEasingCurve, pyqtSignal
-from PyQt6.QtGui import QColor
+from PySide6.QtCore import (
+    QEasingCurve,
+    QPropertyAnimation,
+    QTimer,
+    Qt,
+    Signal,
+)
+from PySide6.QtGui import QColor
 
-from .tokens import SPACING, RADIUS, TYPOGRAPHY, ColorPalette, get_theme
+from .tokens import SPACING, RADIUS, TYPOGRAPHY, ColorPalette, get_colors
 
 
 class Toast(QWidget):
@@ -25,7 +36,7 @@ class Toast(QWidget):
         ToastManager.show("Error occurred", variant="error")
     """
 
-    closed = pyqtSignal()
+    closed = Signal()
 
     def __init__(
         self,
@@ -37,7 +48,7 @@ class Toast(QWidget):
         parent=None
     ):
         super().__init__(parent)
-        self._colors = colors or get_theme("dark")
+        self._colors = colors or get_colors()
         self._duration = duration
         self._variant = variant
 

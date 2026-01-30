@@ -3,7 +3,7 @@ Tests for media components: VideoContainer, Timeline, PlayerControls, etc.
 """
 
 import pytest
-from PyQt6.QtCore import Qt
+from PySide6.QtCore import Qt
 
 from design_system.media import (
     VideoContainer, WaveformVisualization, Timeline,

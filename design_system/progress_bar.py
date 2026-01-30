@@ -3,13 +3,22 @@ Progress Bar components
 Material Design styled progress indicators
 """
 
-from PyQt6.QtWidgets import (
-    QWidget, QVBoxLayout, QHBoxLayout, QLabel, QFrame
+from PySide6.QtWidgets import (
+    QFrame,
+    QHBoxLayout,
+    QLabel,
+    QVBoxLayout,
+    QWidget,
 )
-from PyQt6.QtCore import Qt, QPropertyAnimation, QEasingCurve, pyqtSignal
-from PyQt6.QtGui import QPainter, QColor, QPainterPath
+from PySide6.QtCore import (
+    QEasingCurve,
+    QPropertyAnimation,
+    Qt,
+    Signal,
+)
+from PySide6.QtGui import QColor, QPainter, QPainterPath
 
-from .tokens import SPACING, RADIUS, TYPOGRAPHY, ColorPalette, get_theme
+from .tokens import SPACING, RADIUS, TYPOGRAPHY, ColorPalette, get_colors
 
 
 class ProgressBar(QWidget):
@@ -33,7 +42,7 @@ class ProgressBar(QWidget):
         parent=None
     ):
         super().__init__(parent)
-        self._colors = colors or get_theme("dark")
+        self._colors = colors or get_colors()
         self._value = value
         self._max_value = max_value
         self._variant = variant
@@ -111,7 +120,7 @@ class ProgressBarWidget(QWidget):
         parent=None
     ):
         super().__init__(parent)
-        self._colors = colors or get_theme("dark")
+        self._colors = colors or get_colors()
         self._value = value
         self._max_value = max_value
         self._variant = variant
@@ -186,7 +195,7 @@ class ProgressBarLabeled(QWidget):
         parent=None
     ):
         super().__init__(parent)
-        self._colors = colors or get_theme("dark")
+        self._colors = colors or get_colors()
         self._value = value
         self._max_value = max_value
 
@@ -253,7 +262,7 @@ class RelevanceScoreBar(QWidget):
         - "match": Blue gradient for search relevance
     """
 
-    clicked = pyqtSignal(float)
+    clicked = Signal(float)
 
     def __init__(
         self,
@@ -267,7 +276,7 @@ class RelevanceScoreBar(QWidget):
         parent=None
     ):
         super().__init__(parent)
-        self._colors = colors or get_theme("dark")
+        self._colors = colors or get_colors()
         self._score = max(0, min(1, score))
         self._label = label
         self._show_percentage = show_percentage
@@ -341,7 +350,7 @@ class RelevanceBarWidget(QWidget):
         parent=None
     ):
         super().__init__(parent)
-        self._colors = colors or get_theme("dark")
+        self._colors = colors or get_colors()
         self._score = max(0, min(1, score))
         self._variant = variant
 
@@ -431,7 +440,7 @@ class ScoreIndicator(QFrame):
         parent=None
     ):
         super().__init__(parent)
-        self._colors = colors or get_theme("dark")
+        self._colors = colors or get_colors()
 
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)

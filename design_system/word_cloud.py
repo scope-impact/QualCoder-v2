@@ -6,14 +6,19 @@ Wraps wordcloud library with design system theming
 from typing import Dict, List, Optional, Callable
 from io import BytesIO
 
-from PyQt6.QtWidgets import QWidget, QVBoxLayout, QLabel, QFrame
-from PyQt6.QtCore import Qt, pyqtSignal, QSize
-from PyQt6.QtGui import QPixmap, QImage, QColor
+from PySide6.QtWidgets import (
+    QFrame,
+    QLabel,
+    QVBoxLayout,
+    QWidget,
+)
+from PySide6.QtCore import QSize, Qt, Signal
+from PySide6.QtGui import QColor, QImage, QPixmap
 
 from wordcloud import WordCloud
 import numpy as np
 
-from .tokens import SPACING, RADIUS, TYPOGRAPHY, ColorPalette, get_theme
+from .tokens import SPACING, RADIUS, TYPOGRAPHY, ColorPalette, get_colors
 
 
 class WordCloudWidget(QFrame):
@@ -42,8 +47,8 @@ class WordCloudWidget(QFrame):
         generated(): Emitted when word cloud is generated
     """
 
-    word_clicked = pyqtSignal(str)
-    generated = pyqtSignal()
+    word_clicked = Signal(str)
+    generated = Signal()
 
     def __init__(
         self,
@@ -59,7 +64,7 @@ class WordCloudWidget(QFrame):
         parent=None
     ):
         super().__init__(parent)
-        self._colors = colors or get_theme("light")
+        self._colors = colors or get_colors()
         self._width = width
         self._height = height
         self._color_scheme = color_scheme
@@ -301,7 +306,7 @@ class WordCloudPreview(QLabel):
         parent=None
     ):
         super().__init__(parent)
-        self._colors = colors or get_theme("light")
+        self._colors = colors or get_colors()
         self._size = size
         self._color_scheme = color_scheme
 

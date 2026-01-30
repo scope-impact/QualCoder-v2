@@ -3,8 +3,6 @@ Tests for document components: TextPanel, SelectionPopup, TranscriptPanel, etc.
 """
 
 import pytest
-from PyQt6.QtCore import Qt
-from PyQt6.QtGui import QColor
 
 from design_system.document import (
     TextColor,

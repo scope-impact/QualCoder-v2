@@ -5,8 +5,8 @@ ImageAnnotationLayer, HeatMapCell, RelevanceScoreBar
 """
 
 import pytest
-from PyQt6.QtCore import Qt, QPointF
-from PyQt6.QtGui import QPixmap, QImage, QColor
+from PySide6.QtCore import Qt
+from PySide6.QtGui import QPixmap, QColor
 
 from design_system.charts import (
     ChartWidget, PieChart, ChartDataPoint, SparkLine, LegendItem

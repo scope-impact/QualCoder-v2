@@ -6,7 +6,7 @@ Usage (from QualCoder-v2 root):
     cd _template
     uv run python ../design_system/run_storybook.py
 
-Or if PyQt6 is installed globally:
+Or if PySide6 is installed globally:
     python design_system/run_storybook.py
 """
 

@@ -5,11 +5,15 @@ StoryPage component for displaying component stories with code examples
 import re
 from typing import List, Tuple
 
-from PyQt6.QtWidgets import (
-    QFrame, QWidget, QVBoxLayout, QHBoxLayout,
-    QLabel, QScrollArea
+from PySide6.QtWidgets import (
+    QFrame,
+    QHBoxLayout,
+    QLabel,
+    QScrollArea,
+    QVBoxLayout,
+    QWidget,
 )
-from PyQt6.QtCore import Qt
+from PySide6.QtCore import Qt
 
 from ..tokens import SPACING, RADIUS, TYPOGRAPHY, ColorPalette, get_theme
 
@@ -26,7 +30,7 @@ class StoryPage(QFrame):
         parent=None
     ):
         super().__init__(parent)
-        self._colors = colors or get_theme("dark")
+        self._colors = colors or get_colors()
 
         self.setStyleSheet(f"""
             QFrame {{
@@ -134,7 +138,7 @@ class StoryPage(QFrame):
         code_frame = QFrame()
         code_frame.setStyleSheet(f"""
             QFrame {{
-                background-color: #1e1e2e;
+                background-color: {self._colors.syntax_background};
                 border-top: 1px solid {self._colors.border};
                 border-radius: 0 0 {RADIUS.lg}px {RADIUS.lg}px;
             }}
@@ -162,14 +166,14 @@ class StoryPage(QFrame):
 
     def _highlight_code(self, code: str) -> str:
         """Apply syntax highlighting to Python code"""
-        # Colors for syntax highlighting
-        keyword_color = "#c678dd"  # Purple
-        string_color = "#98c379"   # Green
-        function_color = "#61afef"  # Blue
-        class_color = "#e5c07b"    # Yellow
-        number_color = "#d19a66"   # Orange
-        comment_color = "#5c6370"  # Gray
-        default_color = "#abb2bf"  # Light gray
+        # Colors for syntax highlighting (from design tokens)
+        keyword_color = self._colors.syntax_keyword
+        string_color = self._colors.syntax_string
+        function_color = self._colors.syntax_function
+        class_color = self._colors.syntax_class
+        number_color = self._colors.syntax_number
+        comment_color = self._colors.syntax_comment
+        default_color = self._colors.syntax_text
 
         # Escape HTML
         code = code.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")

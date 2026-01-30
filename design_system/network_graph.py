@@ -7,20 +7,38 @@ from typing import List, Dict, Any, Optional, Callable, Tuple
 from dataclasses import dataclass, field
 import math
 
-from PyQt6.QtWidgets import (
-    QWidget, QVBoxLayout, QHBoxLayout, QLabel, QFrame,
-    QGraphicsView, QGraphicsScene, QGraphicsEllipseItem,
-    QGraphicsLineItem, QGraphicsTextItem, QGraphicsItem
+from PySide6.QtWidgets import (
+    QFrame,
+    QGraphicsEllipseItem,
+    QGraphicsItem,
+    QGraphicsLineItem,
+    QGraphicsScene,
+    QGraphicsTextItem,
+    QGraphicsView,
+    QHBoxLayout,
+    QLabel,
+    QVBoxLayout,
+    QWidget,
 )
-from PyQt6.QtCore import Qt, pyqtSignal, QPointF, QRectF
-from PyQt6.QtGui import (
-    QColor, QPen, QBrush, QFont, QPainter,
-    QWheelEvent, QMouseEvent
+from PySide6.QtCore import (
+    QPointF,
+    QRectF,
+    Qt,
+    Signal,
+)
+from PySide6.QtGui import (
+    QBrush,
+    QColor,
+    QFont,
+    QMouseEvent,
+    QPainter,
+    QPen,
+    QWheelEvent,
 )
 
 import networkx as nx
 
-from .tokens import SPACING, RADIUS, TYPOGRAPHY, ColorPalette, get_theme
+from .tokens import SPACING, RADIUS, TYPOGRAPHY, ColorPalette, get_colors
 
 
 @dataclass
@@ -71,9 +89,9 @@ class NetworkGraphWidget(QFrame):
         edge_clicked(source_id, target_id)
     """
 
-    node_clicked = pyqtSignal(str, dict)
-    node_double_clicked = pyqtSignal(str, dict)
-    edge_clicked = pyqtSignal(str, str)
+    node_clicked = Signal(str, dict)
+    node_double_clicked = Signal(str, dict)
+    edge_clicked = Signal(str, str)
 
     def __init__(
         self,
@@ -84,7 +102,7 @@ class NetworkGraphWidget(QFrame):
         parent=None
     ):
         super().__init__(parent)
-        self._colors = colors or get_theme("light")
+        self._colors = colors or get_colors()
         self._height = height
         self._interactive = interactive
 
@@ -392,25 +410,25 @@ class GraphicsView(QGraphicsView):
 class NodeItem(QGraphicsItem):
     """Interactive node graphics item"""
 
-    clicked = pyqtSignal()
-    double_clicked = pyqtSignal()
+    clicked = Signal()
+    double_clicked = Signal()
 
     def __init__(
         self,
         node_id: str,
         label: str,
         size: int = 30,
-        color: str = "#009688",
+        color: str = None,
         colors: ColorPalette = None,
         interactive: bool = True,
         parent=None
     ):
         super().__init__(parent)
-        self._colors = colors or get_theme("light")
+        self._colors = colors or get_colors()
         self._node_id = node_id
         self._label = label
         self._size = size
-        self._color = color
+        self._color = color or self._colors.primary
         self._interactive = interactive
         self._highlighted = False
         self._hovered = False
@@ -503,7 +521,7 @@ class EdgeItem(QGraphicsLineItem):
         parent=None
     ):
         super().__init__(x1, y1, x2, y2, parent)
-        self._colors = colors or get_theme("light")
+        self._colors = colors or get_colors()
         self._label = label
 
         # Signals
@@ -534,7 +552,7 @@ class EdgeItem(QGraphicsLineItem):
 
 
 class SignalEmitter:
-    """Simple signal emitter for QGraphicsItem (which doesn't support pyqtSignal)"""
+    """Simple signal emitter for QGraphicsItem (which doesn't support Signal)"""
 
     def __init__(self):
         self._callbacks = []

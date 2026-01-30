@@ -3,11 +3,18 @@ Toggle/Switch component
 Material Design styled toggle for on/off states
 """
 
-from PyQt6.QtWidgets import QWidget, QHBoxLayout, QLabel
-from PyQt6.QtCore import Qt, pyqtSignal, pyqtProperty, QPropertyAnimation, QEasingCurve, QRect
-from PyQt6.QtGui import QPainter, QColor, QPainterPath
+from PySide6.QtWidgets import QHBoxLayout, QLabel, QWidget
+from PySide6.QtCore import (
+    Property,
+    QEasingCurve,
+    QPropertyAnimation,
+    QRect,
+    Qt,
+    Signal,
+)
+from PySide6.QtGui import QColor, QPainter, QPainterPath
 
-from .tokens import SPACING, RADIUS, TYPOGRAPHY, ColorPalette, get_theme
+from .tokens import SPACING, RADIUS, TYPOGRAPHY, ColorPalette, get_colors
 
 
 class Toggle(QWidget):
@@ -20,7 +27,7 @@ class Toggle(QWidget):
         toggle.setChecked(True)
     """
 
-    toggled = pyqtSignal(bool)
+    toggled = Signal(bool)
 
     def __init__(
         self,
@@ -30,7 +37,7 @@ class Toggle(QWidget):
         parent=None
     ):
         super().__init__(parent)
-        self._colors = colors or get_theme("dark")
+        self._colors = colors or get_colors()
         self._checked = checked
         self._handle_position = 22 if checked else 2
 
@@ -58,7 +65,7 @@ class Toggle(QWidget):
         self._handle_position = pos
         self.update()
 
-    handle_position = pyqtProperty(int, _get_handle_position, _set_handle_position)
+    handle_position = Property(int, _get_handle_position, _set_handle_position)
 
     def isChecked(self) -> bool:
         return self._checked
@@ -95,7 +102,7 @@ class Toggle(QWidget):
         painter.drawPath(track_path)
 
         # Draw handle
-        painter.setBrush(QColor("#FFFFFF"))
+        painter.setBrush(QColor(self._colors.surface))
         handle_path = QPainterPath()
         handle_path.addEllipse(self._handle_position, 2, 20, 20)
         painter.drawPath(handle_path)
@@ -110,7 +117,7 @@ class LabeledToggle(QWidget):
         toggle.toggled.connect(lambda checked: print(f"Toggled: {checked}"))
     """
 
-    toggled = pyqtSignal(bool)
+    toggled = Signal(bool)
 
     def __init__(
         self,
@@ -120,7 +127,7 @@ class LabeledToggle(QWidget):
         parent=None
     ):
         super().__init__(parent)
-        self._colors = colors or get_theme("dark")
+        self._colors = colors or get_colors()
 
         layout = QHBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)

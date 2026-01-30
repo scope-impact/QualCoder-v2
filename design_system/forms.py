@@ -4,15 +4,28 @@ Input fields, selects, and form controls
 """
 
 from typing import List, Optional
-from PyQt6.QtWidgets import (
-    QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
-    QLineEdit, QTextEdit, QComboBox, QSpinBox, QDoubleSpinBox,
-    QSlider, QFrame, QListWidget, QListWidgetItem, QAbstractItemView
-)
-from PyQt6.QtCore import Qt, pyqtSignal
-from PyQt6.QtGui import QColor
 
-from .tokens import SPACING, RADIUS, TYPOGRAPHY, ColorPalette, get_theme
+from PySide6.QtWidgets import (
+    QAbstractItemView,
+    QComboBox,
+    QDoubleSpinBox,
+    QFrame,
+    QHBoxLayout,
+    QLabel,
+    QLineEdit,
+    QListWidget,
+    QListWidgetItem,
+    QPushButton,
+    QSlider,
+    QSpinBox,
+    QTextEdit,
+    QVBoxLayout,
+    QWidget,
+)
+from PySide6.QtCore import Qt, Signal
+from PySide6.QtGui import QColor
+
+from .tokens import SPACING, RADIUS, TYPOGRAPHY, ColorPalette, get_colors
 
 
 class SearchBox(QFrame):
@@ -25,8 +38,8 @@ class SearchBox(QFrame):
         search.search_submitted.connect(self.do_search)
     """
 
-    text_changed = pyqtSignal(str)
-    search_submitted = pyqtSignal(str)
+    text_changed = Signal(str)
+    search_submitted = Signal(str)
 
     def __init__(
         self,
@@ -35,7 +48,7 @@ class SearchBox(QFrame):
         parent=None
     ):
         super().__init__(parent)
-        self._colors = colors or get_theme("dark")
+        self._colors = colors or get_colors()
 
         self.setStyleSheet(f"""
             QFrame {{
@@ -93,7 +106,7 @@ class Select(QComboBox):
         select.value_changed.connect(self.on_change)
     """
 
-    value_changed = pyqtSignal(str)
+    value_changed = Signal(str)
 
     def __init__(
         self,
@@ -102,7 +115,7 @@ class Select(QComboBox):
         parent=None
     ):
         super().__init__(parent)
-        self._colors = colors or get_theme("dark")
+        self._colors = colors or get_colors()
 
         if placeholder:
             self.addItem(placeholder)
@@ -167,7 +180,7 @@ class MultiSelect(QFrame):
         multi.selection_changed.connect(self.on_change)
     """
 
-    selection_changed = pyqtSignal(list)
+    selection_changed = Signal(list)
 
     def __init__(
         self,
@@ -176,7 +189,7 @@ class MultiSelect(QFrame):
         parent=None
     ):
         super().__init__(parent)
-        self._colors = colors or get_theme("dark")
+        self._colors = colors or get_colors()
         self._selected = []
         self._expanded = False
 
@@ -265,7 +278,7 @@ class Textarea(QTextEdit):
         textarea.text_changed.connect(self.on_change)
     """
 
-    text_changed = pyqtSignal(str)
+    text_changed = Signal(str)
 
     def __init__(
         self,
@@ -275,7 +288,7 @@ class Textarea(QTextEdit):
         parent=None
     ):
         super().__init__(parent)
-        self._colors = colors or get_theme("dark")
+        self._colors = colors or get_colors()
 
         self.setPlaceholderText(placeholder)
         self.setMinimumHeight(min_height)
@@ -311,7 +324,7 @@ class NumberInput(QFrame):
         num_input.value_changed.connect(self.on_change)
     """
 
-    value_changed = pyqtSignal(float)
+    value_changed = Signal(float)
 
     def __init__(
         self,
@@ -324,7 +337,7 @@ class NumberInput(QFrame):
         parent=None
     ):
         super().__init__(parent)
-        self._colors = colors or get_theme("dark")
+        self._colors = colors or get_colors()
 
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
@@ -381,7 +394,7 @@ class RangeSlider(QFrame):
         slider.value_changed.connect(self.on_change)
     """
 
-    value_changed = pyqtSignal(int)
+    value_changed = Signal(int)
 
     def __init__(
         self,
@@ -394,7 +407,7 @@ class RangeSlider(QFrame):
         parent=None
     ):
         super().__init__(parent)
-        self._colors = colors or get_theme("dark")
+        self._colors = colors or get_colors()
 
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
@@ -464,7 +477,7 @@ class ColorPicker(QFrame):
         picker.color_selected.connect(self.on_color_pick)
     """
 
-    color_selected = pyqtSignal(str)
+    color_selected = Signal(str)
 
     DEFAULT_COLORS = [
         "#FFC107", "#F44336", "#4CAF50", "#9C27B0",
@@ -480,7 +493,7 @@ class ColorPicker(QFrame):
         parent=None
     ):
         super().__init__(parent)
-        self._colors = colors or get_theme("dark")
+        self._colors = colors or get_colors()
         self._color_list = colors_list or self.DEFAULT_COLORS
         self._selected = selected
 
@@ -559,7 +572,7 @@ class FormGroup(QFrame):
         parent=None
     ):
         super().__init__(parent)
-        self._colors = colors or get_theme("dark")
+        self._colors = colors or get_colors()
 
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, SPACING.lg)
@@ -632,7 +645,7 @@ class CoderSelector(QFrame):
         selector.coder_changed.connect(on_coder_changed)
     """
 
-    coder_changed = pyqtSignal(str)
+    coder_changed = Signal(str)
 
     def __init__(
         self,
@@ -643,7 +656,7 @@ class CoderSelector(QFrame):
         parent=None
     ):
         super().__init__(parent)
-        self._colors = colors or get_theme("dark")
+        self._colors = colors or get_colors()
         self._coders = coders or []
 
         self.setStyleSheet("background: transparent; border: none;")

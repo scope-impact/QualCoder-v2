@@ -3,7 +3,7 @@ Tests for feedback components: Toast, Modal, ProgressBar, Spinner, etc.
 """
 
 import pytest
-from PyQt6.QtCore import Qt
+from PySide6.QtCore import Qt
 
 from design_system.toast import Toast, ToastContainer, ToastManager
 from design_system.modal import Modal, ModalHeader, ModalBody, ModalFooter

@@ -4,17 +4,31 @@ Code editors, rich text editors, and related widgets
 """
 
 from typing import List, Optional
-from PyQt6.QtWidgets import (
-    QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
-    QFrame, QPlainTextEdit, QTextEdit, QScrollArea, QSizePolicy
+
+from PySide6.QtWidgets import (
+    QFrame,
+    QHBoxLayout,
+    QLabel,
+    QPlainTextEdit,
+    QPushButton,
+    QScrollArea,
+    QSizePolicy,
+    QTextEdit,
+    QVBoxLayout,
+    QWidget,
 )
-from PyQt6.QtCore import Qt, pyqtSignal, QRect
-from PyQt6.QtGui import (
-    QFont, QTextCharFormat, QColor, QPainter, QTextFormat,
-    QSyntaxHighlighter, QTextDocument
+from PySide6.QtCore import QRect, Qt, Signal
+from PySide6.QtGui import (
+    QColor,
+    QFont,
+    QPainter,
+    QSyntaxHighlighter,
+    QTextCharFormat,
+    QTextDocument,
+    QTextFormat,
 )
 
-from .tokens import SPACING, RADIUS, TYPOGRAPHY, ColorPalette, get_theme
+from .tokens import SPACING, RADIUS, TYPOGRAPHY, ColorPalette, get_colors, hex_to_rgba
 
 
 class CodeEditor(QFrame):
@@ -27,7 +41,7 @@ class CodeEditor(QFrame):
         editor.code_changed.connect(self.on_change)
     """
 
-    code_changed = pyqtSignal(str)
+    code_changed = Signal(str)
 
     def __init__(
         self,
@@ -38,7 +52,7 @@ class CodeEditor(QFrame):
         parent=None
     ):
         super().__init__(parent)
-        self._colors = colors or get_theme("dark")
+        self._colors = colors or get_colors()
         self._language = language
 
         self.setStyleSheet(f"""
@@ -68,7 +82,7 @@ class CodeEditor(QFrame):
                 color: {self._colors.text_primary};
                 border: none;
                 padding: {SPACING.sm}px;
-                selection-background-color: {self._colors.primary}40;
+                selection-background-color: {hex_to_rgba(self._colors.primary, 0.25)};
             }}
         """)
         self._editor.textChanged.connect(lambda: self.code_changed.emit(self._editor.toPlainText()))
@@ -116,7 +130,7 @@ class LineNumbers(QFrame):
 
     def __init__(self, colors: ColorPalette = None, parent=None):
         super().__init__(parent)
-        self._colors = colors or get_theme("dark")
+        self._colors = colors or get_colors()
         self._line_count = 1
         self._current_line = 1
 
@@ -247,7 +261,7 @@ class RichTextEditor(QFrame):
         editor.content_changed.connect(self.on_change)
     """
 
-    content_changed = pyqtSignal(str)
+    content_changed = Signal(str)
 
     def __init__(
         self,
@@ -256,7 +270,7 @@ class RichTextEditor(QFrame):
         parent=None
     ):
         super().__init__(parent)
-        self._colors = colors or get_theme("dark")
+        self._colors = colors or get_colors()
 
         self.setStyleSheet(f"""
             QFrame {{
@@ -332,11 +346,11 @@ class EditorToolbar(QFrame):
         toolbar.format_clicked.connect(self.apply_format)
     """
 
-    format_clicked = pyqtSignal(str)
+    format_clicked = Signal(str)
 
     def __init__(self, colors: ColorPalette = None, parent=None):
         super().__init__(parent)
-        self._colors = colors or get_theme("dark")
+        self._colors = colors or get_colors()
 
         self.setStyleSheet(f"""
             QFrame {{
@@ -398,7 +412,7 @@ class EditorToolbar(QFrame):
                 background-color: {self._colors.surface_lighter};
             }}
             QPushButton:pressed {{
-                background-color: {self._colors.primary}26;
+                background-color: {hex_to_rgba(self._colors.primary, 0.15)};
             }}
         """)
         btn.clicked.connect(lambda: self.format_clicked.emit(action))
@@ -414,8 +428,8 @@ class MemoEditor(QFrame):
         memo.content_changed.connect(self.save_memo)
     """
 
-    content_changed = pyqtSignal(str)
-    save_clicked = pyqtSignal()
+    content_changed = Signal(str)
+    save_clicked = Signal()
 
     def __init__(
         self,
@@ -425,7 +439,7 @@ class MemoEditor(QFrame):
         parent=None
     ):
         super().__init__(parent)
-        self._colors = colors or get_theme("dark")
+        self._colors = colors or get_colors()
 
         self.setStyleSheet(f"""
             QFrame {{
@@ -514,7 +528,7 @@ class DiffViewer(QFrame):
 
     def __init__(self, colors: ColorPalette = None, parent=None):
         super().__init__(parent)
-        self._colors = colors or get_theme("dark")
+        self._colors = colors or get_colors()
 
         self.setStyleSheet(f"""
             QFrame {{

@@ -7,19 +7,43 @@ from typing import List, Dict, Any, Optional, Tuple, Callable
 from dataclasses import dataclass, field
 from pathlib import Path
 
-from PyQt6.QtWidgets import (
-    QWidget, QVBoxLayout, QHBoxLayout, QLabel, QFrame,
-    QGraphicsView, QGraphicsScene, QGraphicsPixmapItem,
-    QGraphicsRectItem, QScrollArea, QPushButton, QSpinBox,
-    QGraphicsTextItem, QSizePolicy
+from PySide6.QtWidgets import (
+    QFrame,
+    QGraphicsPixmapItem,
+    QGraphicsRectItem,
+    QGraphicsScene,
+    QGraphicsTextItem,
+    QGraphicsView,
+    QHBoxLayout,
+    QLabel,
+    QPushButton,
+    QScrollArea,
+    QSizePolicy,
+    QSpinBox,
+    QVBoxLayout,
+    QWidget,
 )
-from PyQt6.QtCore import Qt, pyqtSignal, QPointF, QRectF, QSize
-from PyQt6.QtGui import (
-    QColor, QPen, QBrush, QPixmap, QImage, QPainter,
-    QWheelEvent, QMouseEvent, QFont, QCursor
+from PySide6.QtCore import (
+    QPointF,
+    QRectF,
+    QSize,
+    Qt,
+    Signal,
+)
+from PySide6.QtGui import (
+    QBrush,
+    QColor,
+    QCursor,
+    QFont,
+    QImage,
+    QMouseEvent,
+    QPainter,
+    QPen,
+    QPixmap,
+    QWheelEvent,
 )
 
-from .tokens import SPACING, RADIUS, TYPOGRAPHY, ColorPalette, get_theme
+from .tokens import SPACING, RADIUS, TYPOGRAPHY, ColorPalette, get_colors
 
 # Try to import PyMuPDF
 try:
@@ -71,10 +95,10 @@ class PDFPageViewer(QFrame):
         zoom_changed(zoom): Emitted when zoom level changes
     """
 
-    page_changed = pyqtSignal(int)
-    text_selected = pyqtSignal(object)  # PDFSelection
-    document_loaded = pyqtSignal(int)  # page_count
-    zoom_changed = pyqtSignal(float)
+    page_changed = Signal(int)
+    text_selected = Signal(object)  # PDFSelection
+    document_loaded = Signal(int)  # page_count
+    zoom_changed = Signal(float)
 
     def __init__(
         self,
@@ -85,7 +109,7 @@ class PDFPageViewer(QFrame):
         parent=None
     ):
         super().__init__(parent)
-        self._colors = colors or get_theme("dark")
+        self._colors = colors or get_colors()
         self._doc = None
         self._current_page = 0
         self._page_count = 0
@@ -570,11 +594,11 @@ class PDFPageViewer(QFrame):
 class PDFGraphicsView(QGraphicsView):
     """Graphics view for rendering PDF pages with selection support"""
 
-    selection_made = pyqtSignal(QRectF)
+    selection_made = Signal(QRectF)
 
     def __init__(self, colors: ColorPalette = None, parent=None):
         super().__init__(parent)
-        self._colors = colors or get_theme("dark")
+        self._colors = colors or get_colors()
         self._pixmap_item = None
         self._selection_rect = None
         self._selection_start = None
@@ -699,7 +723,7 @@ class PDFGraphicsView(QGraphicsView):
 class PDFThumbnail(QFrame):
     """Thumbnail widget for PDF page"""
 
-    clicked = pyqtSignal()
+    clicked = Signal()
 
     def __init__(
         self,
@@ -711,7 +735,7 @@ class PDFThumbnail(QFrame):
         parent=None
     ):
         super().__init__(parent)
-        self._colors = colors or get_theme("dark")
+        self._colors = colors or get_colors()
         self._selected = selected
         self._page_number = page_number
 

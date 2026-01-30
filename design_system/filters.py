@@ -4,13 +4,24 @@ Filter panels, chips, search inputs, and view toggles
 """
 
 from typing import List, Optional, Dict, Any
-from PyQt6.QtWidgets import (
-    QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
-    QFrame, QLineEdit, QScrollArea, QSizePolicy, QCheckBox
-)
-from PyQt6.QtCore import Qt, pyqtSignal
 
-from .tokens import SPACING, RADIUS, TYPOGRAPHY, ColorPalette, get_theme
+import qtawesome as qta
+
+from PySide6.QtWidgets import (
+    QCheckBox,
+    QFrame,
+    QHBoxLayout,
+    QLabel,
+    QLineEdit,
+    QPushButton,
+    QScrollArea,
+    QSizePolicy,
+    QVBoxLayout,
+    QWidget,
+)
+from PySide6.QtCore import Qt, Signal
+
+from .tokens import SPACING, RADIUS, TYPOGRAPHY, ColorPalette, get_colors, hex_to_rgba
 
 
 class FilterPanel(QFrame):
@@ -24,7 +35,7 @@ class FilterPanel(QFrame):
         panel.filters_changed.connect(self.apply_filters)
     """
 
-    filters_changed = pyqtSignal(dict)  # {section: [selected_values]}
+    filters_changed = Signal(dict)  # {section: [selected_values]}
 
     def __init__(
         self,
@@ -34,7 +45,7 @@ class FilterPanel(QFrame):
         parent=None
     ):
         super().__init__(parent)
-        self._colors = colors or get_theme("dark")
+        self._colors = colors or get_colors()
         self._sections = {}
         self._collapsed = False
         self._collapsible = collapsible
@@ -73,13 +84,13 @@ class FilterPanel(QFrame):
         header_layout.addStretch()
 
         if collapsible:
-            self._toggle_btn = QPushButton("▼")
+            self._toggle_btn = QPushButton()
+            self._toggle_btn.setIcon(qta.icon("mdi6.chevron-down", color=self._colors.text_secondary))
             self._toggle_btn.setFixedSize(24, 24)
             self._toggle_btn.setCursor(Qt.CursorShape.PointingHandCursor)
             self._toggle_btn.setStyleSheet(f"""
                 QPushButton {{
                     background-color: transparent;
-                    color: {self._colors.text_secondary};
                     border: none;
                 }}
             """)
@@ -122,7 +133,8 @@ class FilterPanel(QFrame):
     def _toggle(self):
         self._collapsed = not self._collapsed
         self._content.setVisible(not self._collapsed)
-        self._toggle_btn.setText("▶" if self._collapsed else "▼")
+        icon_name = "mdi6.chevron-right" if self._collapsed else "mdi6.chevron-down"
+        self._toggle_btn.setIcon(qta.icon(icon_name, color=self._colors.text_secondary))
 
     def _emit_changes(self):
         filters = {}
@@ -149,7 +161,7 @@ class FilterPanel(QFrame):
 class FilterSection(QFrame):
     """Individual filter section with checkboxes"""
 
-    selection_changed = pyqtSignal()
+    selection_changed = Signal()
 
     def __init__(
         self,
@@ -159,7 +171,7 @@ class FilterSection(QFrame):
         parent=None
     ):
         super().__init__(parent)
-        self._colors = colors or get_theme("dark")
+        self._colors = colors or get_colors()
         self._checkboxes = []
 
         layout = QVBoxLayout(self)
@@ -217,8 +229,8 @@ class FilterChip(QFrame):
         chip.removed.connect(self.remove_filter)
     """
 
-    removed = pyqtSignal()
-    clicked = pyqtSignal()
+    removed = Signal()
+    clicked = Signal()
 
     def __init__(
         self,
@@ -228,12 +240,12 @@ class FilterChip(QFrame):
         parent=None
     ):
         super().__init__(parent)
-        self._colors = colors or get_theme("dark")
+        self._colors = colors or get_colors()
 
         self.setCursor(Qt.CursorShape.PointingHandCursor)
         self.setStyleSheet(f"""
             QFrame {{
-                background-color: {self._colors.primary}26;
+                background-color: {hex_to_rgba(self._colors.primary, 0.15)};
                 border: 1px solid {self._colors.primary};
                 border-radius: {RADIUS.full}px;
             }}
@@ -251,19 +263,18 @@ class FilterChip(QFrame):
         layout.addWidget(label)
 
         if removable:
-            remove_btn = QPushButton("×")
+            remove_btn = QPushButton()
+            remove_btn.setIcon(qta.icon("mdi6.close", color=self._colors.primary))
             remove_btn.setFixedSize(16, 16)
             remove_btn.setCursor(Qt.CursorShape.PointingHandCursor)
             remove_btn.setStyleSheet(f"""
                 QPushButton {{
                     background-color: transparent;
-                    color: {self._colors.primary};
                     border: none;
-                    font-size: 14px;
-                    font-weight: bold;
                 }}
                 QPushButton:hover {{
-                    color: {self._colors.error};
+                    background-color: {hex_to_rgba(self._colors.error, 0.13)};
+                    border-radius: 8px;
                 }}
             """)
             remove_btn.clicked.connect(self.removed.emit)
@@ -284,12 +295,12 @@ class FilterChipGroup(QFrame):
         group.chip_removed.connect(self.remove_filter)
     """
 
-    chip_removed = pyqtSignal(str)  # chip_id
-    clear_all = pyqtSignal()
+    chip_removed = Signal(str)  # chip_id
+    clear_all = Signal()
 
     def __init__(self, colors: ColorPalette = None, parent=None):
         super().__init__(parent)
-        self._colors = colors or get_theme("dark")
+        self._colors = colors or get_colors()
         self._chips = {}
 
         self._layout = QHBoxLayout(self)
@@ -354,8 +365,8 @@ class SearchInput(QFrame):
         search.search_changed.connect(self.filter_results)
     """
 
-    search_changed = pyqtSignal(str)
-    search_submitted = pyqtSignal(str)
+    search_changed = Signal(str)
+    search_submitted = Signal(str)
 
     def __init__(
         self,
@@ -365,7 +376,7 @@ class SearchInput(QFrame):
         parent=None
     ):
         super().__init__(parent)
-        self._colors = colors or get_theme("dark")
+        self._colors = colors or get_colors()
 
         self.setStyleSheet(f"""
             QFrame {{
@@ -384,8 +395,8 @@ class SearchInput(QFrame):
 
         # Search icon
         if show_icon:
-            icon = QLabel("🔍")
-            icon.setStyleSheet(f"font-size: 14px; color: {self._colors.text_secondary};")
+            icon = QLabel()
+            icon.setPixmap(qta.icon("mdi6.magnify", color=self._colors.text_secondary).pixmap(16, 16))
             layout.addWidget(icon)
 
         # Input
@@ -404,18 +415,18 @@ class SearchInput(QFrame):
         layout.addWidget(self._input, 1)
 
         # Clear button
-        self._clear_btn = QPushButton("×")
+        self._clear_btn = QPushButton()
+        self._clear_btn.setIcon(qta.icon("mdi6.close", color=self._colors.text_secondary))
         self._clear_btn.setFixedSize(20, 20)
         self._clear_btn.setCursor(Qt.CursorShape.PointingHandCursor)
         self._clear_btn.setStyleSheet(f"""
             QPushButton {{
                 background-color: transparent;
-                color: {self._colors.text_secondary};
                 border: none;
-                font-size: 16px;
             }}
             QPushButton:hover {{
-                color: {self._colors.text_primary};
+                background-color: {self._colors.surface_lighter};
+                border-radius: 10px;
             }}
         """)
         self._clear_btn.clicked.connect(self._clear)
@@ -452,11 +463,11 @@ class SearchOptions(QFrame):
         options.options_changed.connect(self.update_search)
     """
 
-    options_changed = pyqtSignal(dict)
+    options_changed = Signal(dict)
 
     def __init__(self, colors: ColorPalette = None, parent=None):
         super().__init__(parent)
-        self._colors = colors or get_theme("dark")
+        self._colors = colors or get_colors()
         self._options = {}
 
         self.setStyleSheet(f"""
@@ -511,7 +522,7 @@ class ViewToggle(QFrame):
         toggle.view_changed.connect(self.switch_view)
     """
 
-    view_changed = pyqtSignal(str)
+    view_changed = Signal(str)
 
     def __init__(
         self,
@@ -521,17 +532,17 @@ class ViewToggle(QFrame):
         parent=None
     ):
         super().__init__(parent)
-        self._colors = colors or get_theme("dark")
+        self._colors = colors or get_colors()
         self._views = views or ["grid", "list"]
         self._current = current or self._views[0]
         self._buttons = {}
 
         view_icons = {
-            "grid": "⊞",
-            "list": "☰",
-            "table": "▦",
-            "cards": "⊟",
-            "tree": "🌲",
+            "grid": "mdi6.view-grid",
+            "list": "mdi6.view-list",
+            "table": "mdi6.table",
+            "cards": "mdi6.card-outline",
+            "tree": "mdi6.file-tree",
         }
 
         self.setStyleSheet(f"""
@@ -547,12 +558,14 @@ class ViewToggle(QFrame):
         layout.setSpacing(0)
 
         for view in self._views:
-            btn = QPushButton(view_icons.get(view, view[0].upper()))
+            icon_name = view_icons.get(view, "mdi6.view-list")
+            btn = QPushButton()
+            btn.setIcon(qta.icon(icon_name, color=self._colors.text_secondary))
             btn.setFixedSize(32, 28)
             btn.setCursor(Qt.CursorShape.PointingHandCursor)
             btn.setToolTip(view.capitalize())
             btn.clicked.connect(lambda checked, v=view: self._select(v))
-            self._buttons[view] = btn
+            self._buttons[view] = (btn, icon_name)
             layout.addWidget(btn)
 
         self._update_styles()
@@ -564,29 +577,26 @@ class ViewToggle(QFrame):
             self.view_changed.emit(view)
 
     def _update_styles(self):
-        for view, btn in self._buttons.items():
+        for view, (btn, icon_name) in self._buttons.items():
             if view == self._current:
+                btn.setIcon(qta.icon(icon_name, color="white"))
                 btn.setStyleSheet(f"""
                     QPushButton {{
                         background-color: {self._colors.primary};
-                        color: white;
                         border: none;
                         border-radius: {RADIUS.sm}px;
-                        font-size: 14px;
                     }}
                 """)
             else:
+                btn.setIcon(qta.icon(icon_name, color=self._colors.text_secondary))
                 btn.setStyleSheet(f"""
                     QPushButton {{
                         background-color: transparent;
-                        color: {self._colors.text_secondary};
                         border: none;
                         border-radius: {RADIUS.sm}px;
-                        font-size: 14px;
                     }}
                     QPushButton:hover {{
                         background-color: {self._colors.surface_lighter};
-                        color: {self._colors.text_primary};
                     }}
                 """)
 

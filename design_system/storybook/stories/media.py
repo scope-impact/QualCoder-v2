@@ -3,12 +3,13 @@ Media component stories: player, upload, calendar
 """
 
 from typing import List, Tuple
-from PyQt6.QtWidgets import QWidget
+
+from PySide6.QtWidgets import QWidget
 
 from ...tokens import ColorPalette
 from ...media import VideoContainer, Timeline, PlayerControls, ThumbnailStrip
 from ...upload import DropZone, UploadProgress
-from ...calendar import CalendarMini, DateRangePicker, QuickDateSelect
+from ...date_picker import CalendarMini, DateRangePicker, QuickDateSelect
 from ..page import StoryPage
 
 
@@ -27,12 +28,12 @@ def create_player_story(colors: ColorPalette) -> StoryPage:
     # Timeline
     timeline = Timeline(duration=180.0, colors=colors)
     timeline.set_position(45.0)
-    timeline.add_segment(10.0, 30.0, "#FFC107", "Segment 1")
-    timeline.add_segment(60.0, 90.0, "#4CAF50", "Segment 2")
+    timeline.add_segment(10.0, 30.0, colors.code_yellow, "Segment 1")
+    timeline.add_segment(60.0, 90.0, colors.code_green, "Segment 2")
     examples.append((
         "Timeline",
         timeline,
-        'timeline = Timeline(duration=180.0)\ntimeline.add_segment(10, 30, "#FFC107")'
+        'timeline = Timeline(duration=180.0)\ntimeline.add_segment(10, 30, colors.code_yellow)'
     ))
 
     # Player controls

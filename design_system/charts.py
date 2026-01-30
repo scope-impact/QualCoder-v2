@@ -6,14 +6,26 @@ Material Design styled charts with theme support
 from typing import List, Dict, Any, Optional, Tuple
 from dataclasses import dataclass
 
-from PyQt6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QLabel, QFrame
-from PyQt6.QtCore import Qt, pyqtSignal
-from PyQt6.QtGui import QColor, QPainter, QPen, QBrush, QPainterPath
+from PySide6.QtWidgets import (
+    QFrame,
+    QHBoxLayout,
+    QLabel,
+    QVBoxLayout,
+    QWidget,
+)
+from PySide6.QtCore import Qt, Signal
+from PySide6.QtGui import (
+    QBrush,
+    QColor,
+    QPainter,
+    QPainterPath,
+    QPen,
+)
 
 import pyqtgraph as pg
 import numpy as np
 
-from .tokens import SPACING, RADIUS, TYPOGRAPHY, ColorPalette, get_theme
+from .tokens import SPACING, RADIUS, TYPOGRAPHY, ColorPalette, get_colors
 
 
 # Configure pyqtgraph defaults
@@ -44,7 +56,7 @@ class ChartWidget(QFrame):
         ])
     """
 
-    point_clicked = pyqtSignal(int, object)  # index, data
+    point_clicked = Signal(int, object)  # index, data
 
     def __init__(
         self,
@@ -56,7 +68,7 @@ class ChartWidget(QFrame):
         parent=None
     ):
         super().__init__(parent)
-        self._colors = colors or get_theme("light")
+        self._colors = colors or get_colors()
         self._title = title
         self._subtitle = subtitle
         self._show_legend = show_legend
@@ -303,7 +315,7 @@ class PieChart(QFrame):
         ])
     """
 
-    slice_clicked = pyqtSignal(int, object)  # index, data
+    slice_clicked = Signal(int, object)  # index, data
 
     def __init__(
         self,
@@ -316,7 +328,7 @@ class PieChart(QFrame):
         parent=None
     ):
         super().__init__(parent)
-        self._colors = colors or get_theme("light")
+        self._colors = colors or get_colors()
         self._data: List[ChartDataPoint] = []
         self._show_labels = show_labels
         self._donut = donut
@@ -416,7 +428,7 @@ class PieCanvas(QWidget):
         parent=None
     ):
         super().__init__(parent)
-        self._colors = colors or get_theme("light")
+        self._colors = colors or get_colors()
         self._data: List[ChartDataPoint] = []
         self._donut = donut
         self._show_labels = show_labels
@@ -480,7 +492,7 @@ class LegendItem(QFrame):
         parent=None
     ):
         super().__init__(parent)
-        self._colors = colors or get_theme("light")
+        self._colors = colors or get_colors()
 
         layout = QHBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
@@ -523,7 +535,7 @@ class SparkLine(QWidget):
         parent=None
     ):
         super().__init__(parent)
-        self._colors = colors or get_theme("light")
+        self._colors = colors or get_colors()
         self._values = values or []
         self._color = color or self._colors.primary
         self._show_endpoint = show_endpoint

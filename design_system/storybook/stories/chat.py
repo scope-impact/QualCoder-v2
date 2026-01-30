@@ -3,7 +3,8 @@ Chat / AI component stories: messages, chatinput
 """
 
 from typing import List, Tuple
-from PyQt6.QtWidgets import QWidget
+
+from PySide6.QtWidgets import QWidget
 
 from ...tokens import ColorPalette
 from ...chat import MessageBubble, QuickPrompts, ChatInput

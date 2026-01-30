@@ -3,7 +3,6 @@ Tests for data display components: DataTable, InfoCard, KeyValueList, EmptyState
 """
 
 import pytest
-from PyQt6.QtCore import Qt
 
 from design_system.data_display import (
     DataTable, FileCell, EntityCell, InfoCard, CodeDetailCard,
@@ -119,7 +118,7 @@ class TestInfoCard:
 
     def test_info_card_set_content_widget(self, qtbot):
         """InfoCard should accept widget content"""
-        from PyQt6.QtWidgets import QLabel
+        from PySide6.QtWidgets import QLabel
         card = InfoCard(title="Custom")
         qtbot.addWidget(card)
 
@@ -192,7 +191,7 @@ class TestCodeDetailCard:
 
     def test_code_detail_signals(self, qtbot):
         """CodeDetailCard should have edit/delete signals"""
-        card = CodeDetailCard(color="#009688", name="code")
+        card = CodeDetailCard(color="#4F46E5", name="code")
         qtbot.addWidget(card)
 
         assert hasattr(card, 'edit_clicked')

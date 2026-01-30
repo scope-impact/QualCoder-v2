@@ -3,7 +3,8 @@ Forms component stories: search, select, toggle, pickers
 """
 
 from typing import List, Tuple
-from PyQt6.QtWidgets import QWidget, QHBoxLayout
+
+from PySide6.QtWidgets import QWidget, QHBoxLayout
 
 from ...tokens import SPACING, ColorPalette
 from ...toggle import Toggle, LabeledToggle

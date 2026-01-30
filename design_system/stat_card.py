@@ -3,14 +3,17 @@ Statistics Card component
 Material Design styled statistics display
 """
 
-from PyQt6.QtWidgets import (
-    QFrame, QVBoxLayout, QHBoxLayout, QLabel,
-    QGraphicsDropShadowEffect
+from PySide6.QtWidgets import (
+    QFrame,
+    QGraphicsDropShadowEffect,
+    QHBoxLayout,
+    QLabel,
+    QVBoxLayout,
 )
-from PyQt6.QtCore import Qt
-from PyQt6.QtGui import QColor
+from PySide6.QtCore import Qt
+from PySide6.QtGui import QColor
 
-from .tokens import SPACING, RADIUS, TYPOGRAPHY, ColorPalette, get_theme
+from .tokens import SPACING, RADIUS, TYPOGRAPHY, ColorPalette, get_colors
 from .icons import Icon
 
 
@@ -39,7 +42,7 @@ class StatCard(QFrame):
         parent=None
     ):
         super().__init__(parent)
-        self._colors = colors or get_theme("dark")
+        self._colors = colors or get_colors()
         self._accent_color = color or self._colors.primary
 
         self.setStyleSheet(f"""
@@ -78,12 +81,13 @@ class StatCard(QFrame):
                 icon_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
                 layout.addWidget(icon_label)
 
-        # Value
+        # Value - using display font for impact
         value_label = QLabel(value)
         value_label.setStyleSheet(f"""
+            font-family: {TYPOGRAPHY.font_family_display};
             color: {self._accent_color};
             font-size: 36px;
-            font-weight: {TYPOGRAPHY.weight_medium};
+            font-weight: {TYPOGRAPHY.weight_bold};
         """)
         value_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         layout.addWidget(value_label)
@@ -145,7 +149,7 @@ class StatCardRow(QFrame):
 
     def __init__(self, colors: ColorPalette = None, parent=None):
         super().__init__(parent)
-        self._colors = colors or get_theme("dark")
+        self._colors = colors or get_colors()
 
         self._layout = QHBoxLayout(self)
         self._layout.setContentsMargins(0, 0, 0, 0)
@@ -179,7 +183,8 @@ class MiniStatCard(QFrame):
     Compact stat card for inline display.
 
     Usage:
-        stat = MiniStatCard("24", "codes", color="#009688")
+        stat = MiniStatCard("24", "codes")  # Uses theme primary color
+        stat = MiniStatCard("24", "codes", color=colors.secondary)
     """
 
     def __init__(
@@ -191,7 +196,7 @@ class MiniStatCard(QFrame):
         parent=None
     ):
         super().__init__(parent)
-        self._colors = colors or get_theme("dark")
+        self._colors = colors or get_colors()
         accent = color or self._colors.primary
 
         self.setStyleSheet(f"""
@@ -206,12 +211,13 @@ class MiniStatCard(QFrame):
         layout.setContentsMargins(SPACING.md, SPACING.sm, SPACING.md, SPACING.sm)
         layout.setSpacing(SPACING.sm)
 
-        # Value
+        # Value - using display font
         value_label = QLabel(value)
         value_label.setStyleSheet(f"""
+            font-family: {TYPOGRAPHY.font_family_display};
             color: {accent};
             font-size: {TYPOGRAPHY.text_lg}px;
-            font-weight: {TYPOGRAPHY.weight_medium};
+            font-weight: {TYPOGRAPHY.weight_semibold};
         """)
         layout.addWidget(value_label)
 

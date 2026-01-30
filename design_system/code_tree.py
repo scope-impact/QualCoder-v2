@@ -6,13 +6,18 @@ Hierarchical tree widget for qualitative codes
 from typing import List, Optional
 from dataclasses import dataclass
 
-from PyQt6.QtWidgets import (
-    QWidget, QVBoxLayout, QHBoxLayout, QLabel,
-    QFrame, QScrollArea, QSizePolicy
+from PySide6.QtWidgets import (
+    QFrame,
+    QHBoxLayout,
+    QLabel,
+    QScrollArea,
+    QSizePolicy,
+    QVBoxLayout,
+    QWidget,
 )
-from PyQt6.QtCore import Qt, pyqtSignal
+from PySide6.QtCore import Qt, Signal
 
-from .tokens import SPACING, RADIUS, TYPOGRAPHY, ColorPalette, get_theme
+from .tokens import SPACING, RADIUS, TYPOGRAPHY, ColorPalette, get_colors
 
 
 @dataclass
@@ -45,13 +50,13 @@ class CodeTree(QScrollArea):
         tree.item_clicked.connect(lambda id: print(f"Clicked: {id}"))
     """
 
-    item_clicked = pyqtSignal(str)  # code_id
-    item_double_clicked = pyqtSignal(str)  # code_id
-    item_expanded = pyqtSignal(str, bool)  # code_id, is_expanded
+    item_clicked = Signal(str)  # code_id
+    item_double_clicked = Signal(str)  # code_id
+    item_expanded = Signal(str, bool)  # code_id, is_expanded
 
     def __init__(self, colors: ColorPalette = None, parent=None):
         super().__init__(parent)
-        self._colors = colors or get_theme("dark")
+        self._colors = colors or get_colors()
         self._items = []
         self._expanded = set()  # Set of expanded item IDs
 
@@ -168,9 +173,9 @@ class CodeTree(QScrollArea):
 class CodeTreeNode(QFrame):
     """Individual tree node widget"""
 
-    clicked = pyqtSignal()
-    double_clicked = pyqtSignal()
-    toggle_expanded = pyqtSignal()
+    clicked = Signal()
+    double_clicked = Signal()
+    toggle_expanded = Signal()
 
     def __init__(
         self,
@@ -182,7 +187,7 @@ class CodeTreeNode(QFrame):
         parent=None
     ):
         super().__init__(parent)
-        self._colors = colors or get_theme("dark")
+        self._colors = colors or get_colors()
         self._item = item
         self._expanded = expanded
         self._has_children = has_children

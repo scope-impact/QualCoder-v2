@@ -3,11 +3,26 @@ Spinner/Loading components
 Material Design styled loading indicators
 """
 
-from PyQt6.QtWidgets import QWidget, QHBoxLayout, QLabel, QVBoxLayout
-from PyQt6.QtCore import Qt, QTimer, QPropertyAnimation, QEasingCurve
-from PyQt6.QtGui import QPainter, QColor, QPen, QConicalGradient
+from PySide6.QtWidgets import (
+    QHBoxLayout,
+    QLabel,
+    QVBoxLayout,
+    QWidget,
+)
+from PySide6.QtCore import (
+    QEasingCurve,
+    QPropertyAnimation,
+    QTimer,
+    Qt,
+)
+from PySide6.QtGui import (
+    QColor,
+    QConicalGradient,
+    QPainter,
+    QPen,
+)
 
-from .tokens import SPACING, TYPOGRAPHY, ColorPalette, get_theme
+from .tokens import SPACING, TYPOGRAPHY, ColorPalette, get_colors
 
 
 class Spinner(QWidget):
@@ -30,7 +45,7 @@ class Spinner(QWidget):
         parent=None
     ):
         super().__init__(parent)
-        self._colors = colors or get_theme("dark")
+        self._colors = colors or get_colors()
         self._size = size
         self._color = color or self._colors.primary
         self._stroke_width = stroke_width
@@ -112,7 +127,7 @@ class LoadingIndicator(QWidget):
         parent=None
     ):
         super().__init__(parent)
-        self._colors = colors or get_theme("dark")
+        self._colors = colors or get_colors()
 
         layout = QHBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
@@ -160,11 +175,11 @@ class LoadingOverlay(QWidget):
 
     def __init__(self, parent=None):
         super().__init__(parent)
-        self._colors = get_theme("dark")
+        self._colors = get_colors()
 
         self.setStyleSheet(f"""
             QWidget {{
-                background-color: rgba(0, 0, 0, 0.5);
+                background-color: {self._colors.overlay_dark};
             }}
         """)
 
@@ -241,7 +256,7 @@ class SkeletonLoader(QWidget):
         parent=None
     ):
         super().__init__(parent)
-        self._colors = colors or get_theme("dark")
+        self._colors = colors or get_colors()
 
         self.setFixedSize(width, height)
 
