@@ -3,11 +3,20 @@ Progress Bar components
 Material Design styled progress indicators
 """
 
-from .qt_compat import (
-    QWidget, QVBoxLayout, QHBoxLayout, QLabel, QFrame,
-    Qt, QPropertyAnimation, QEasingCurve, Signal,
-    QPainter, QColor, QPainterPath,
+from PySide6.QtWidgets import (
+    QFrame,
+    QHBoxLayout,
+    QLabel,
+    QVBoxLayout,
+    QWidget,
 )
+from PySide6.QtCore import (
+    QEasingCurve,
+    QPropertyAnimation,
+    Qt,
+    Signal,
+)
+from PySide6.QtGui import QColor, QPainter, QPainterPath
 
 from .tokens import SPACING, RADIUS, TYPOGRAPHY, ColorPalette, get_theme
 

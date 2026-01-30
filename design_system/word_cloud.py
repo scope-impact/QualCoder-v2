@@ -6,10 +6,14 @@ Wraps wordcloud library with design system theming
 from typing import Dict, List, Optional, Callable
 from io import BytesIO
 
-from .qt_compat import (
-    QWidget, QVBoxLayout, QLabel, QFrame,
-    Qt, Signal, QSize, QPixmap, QImage, QColor,
+from PySide6.QtWidgets import (
+    QFrame,
+    QLabel,
+    QVBoxLayout,
+    QWidget,
 )
+from PySide6.QtCore import QSize, Qt, Signal
+from PySide6.QtGui import QColor, QImage, QPixmap
 
 from wordcloud import WordCloud
 import numpy as np

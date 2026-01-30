@@ -23,7 +23,8 @@ Structure:
 """
 
 from typing import List, Dict, Any, Optional
-from design_system.qt_compat import QWidget, QVBoxLayout, Signal
+from PySide6.QtWidgets import QVBoxLayout, QWidget
+from PySide6.QtCore import Signal
 
 from design_system import ColorPalette, get_theme
 
@@ -325,7 +326,7 @@ class TextCodingScreen(QWidget):
 def main():
     """Run the text coding screen demo."""
     import sys
-    from design_system.qt_compat import QApplication, QMainWindow
+    from PySide6.QtWidgets import QApplication, QMainWindow
 
     app = QApplication(sys.argv)
 

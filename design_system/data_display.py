@@ -5,12 +5,22 @@ Tables, cells, and data presentation widgets
 
 from typing import List, Dict, Any, Optional
 
-from .qt_compat import (
-    QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
-    QFrame, QTableWidget, QTableWidgetItem, QHeaderView,
-    QAbstractItemView, QCheckBox, QGridLayout,
-    Qt, Signal, QColor,
+from PySide6.QtWidgets import (
+    QAbstractItemView,
+    QCheckBox,
+    QFrame,
+    QGridLayout,
+    QHBoxLayout,
+    QHeaderView,
+    QLabel,
+    QPushButton,
+    QTableWidget,
+    QTableWidgetItem,
+    QVBoxLayout,
+    QWidget,
 )
+from PySide6.QtCore import Qt, Signal
+from PySide6.QtGui import QColor
 
 from .tokens import SPACING, RADIUS, TYPOGRAPHY, ColorPalette, get_theme
 

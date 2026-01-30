@@ -3,11 +3,18 @@ Reusable UI components with Material Design styling
 Based on mockups/css/material-theme.css
 """
 
-from .qt_compat import (
-    QPushButton, QLineEdit, QLabel, QFrame, QVBoxLayout,
-    QHBoxLayout, QWidget, QGraphicsDropShadowEffect,
-    Qt, Signal, QColor,
+from PySide6.QtWidgets import (
+    QFrame,
+    QGraphicsDropShadowEffect,
+    QHBoxLayout,
+    QLabel,
+    QLineEdit,
+    QPushButton,
+    QVBoxLayout,
+    QWidget,
 )
+from PySide6.QtCore import Qt, Signal
+from PySide6.QtGui import QColor
 
 from .tokens import SPACING, RADIUS, TYPOGRAPHY, ColorPalette, get_theme
 

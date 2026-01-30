@@ -21,7 +21,8 @@ Usage:
 
 import qtawesome as qta
 
-from .qt_compat import QLabel, QWidget, QHBoxLayout, Qt
+from PySide6.QtWidgets import QHBoxLayout, QLabel, QWidget
+from PySide6.QtCore import Qt
 
 from .tokens import ColorPalette, get_theme
 

@@ -6,7 +6,7 @@ specific to the QualCoder application (not part of the generic design system).
 """
 
 import pytest
-from design_system.qt_compat import Qt
+from PySide6.QtCore import Qt
 
 from src.presentation.organisms.text_highlighter import (
     TextHighlighter,

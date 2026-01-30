@@ -8,17 +8,40 @@ from dataclasses import dataclass, field
 from enum import Enum
 import math
 
-from .qt_compat import (
-    QWidget, QVBoxLayout, QHBoxLayout, QLabel, QFrame,
-    QGraphicsView, QGraphicsScene, QGraphicsPixmapItem,
-    QGraphicsRectItem, QGraphicsPolygonItem, QGraphicsItem,
-    QGraphicsPathItem, QPushButton,
-    Qt, Signal, QPointF, QRectF,
-    QColor, QPen, QBrush, QPixmap, QImage, QPainter,
-    QPainterPath, QPolygonF, QCursor,
+from PySide6.QtWidgets import (
+    QFrame,
+    QGraphicsItem,
+    QGraphicsPathItem,
+    QGraphicsPixmapItem,
+    QGraphicsPolygonItem,
+    QGraphicsRectItem,
+    QGraphicsScene,
+    QGraphicsView,
+    QHBoxLayout,
+    QLabel,
+    QPushButton,
+    QVBoxLayout,
+    QWidget,
+)
+from PySide6.QtCore import (
+    QPointF,
+    QRectF,
+    Qt,
+    Signal,
+)
+from PySide6.QtGui import (
+    QBrush,
+    QColor,
+    QCursor,
+    QImage,
+    QPainter,
+    QPainterPath,
+    QPen,
+    QPixmap,
+    QPolygonF,
 )
 # QButtonGroup is now in qt_compat
-from .qt_compat import QButtonGroup
+from PySide6.QtWidgets import QButtonGroup
 
 from .tokens import SPACING, RADIUS, TYPOGRAPHY, ColorPalette, get_theme
 

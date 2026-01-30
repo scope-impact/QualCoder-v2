@@ -7,14 +7,40 @@ from typing import List, Dict, Any, Optional, Tuple, Callable
 from dataclasses import dataclass, field
 from pathlib import Path
 
-from .qt_compat import (
-    QWidget, QVBoxLayout, QHBoxLayout, QLabel, QFrame,
-    QGraphicsView, QGraphicsScene, QGraphicsPixmapItem,
-    QGraphicsRectItem, QScrollArea, QPushButton, QSpinBox,
-    QGraphicsTextItem, QSizePolicy,
-    Qt, Signal, QPointF, QRectF, QSize,
-    QColor, QPen, QBrush, QPixmap, QImage, QPainter,
-    QFont, QWheelEvent, QMouseEvent, QCursor,
+from PySide6.QtWidgets import (
+    QFrame,
+    QGraphicsPixmapItem,
+    QGraphicsRectItem,
+    QGraphicsScene,
+    QGraphicsTextItem,
+    QGraphicsView,
+    QHBoxLayout,
+    QLabel,
+    QPushButton,
+    QScrollArea,
+    QSizePolicy,
+    QSpinBox,
+    QVBoxLayout,
+    QWidget,
+)
+from PySide6.QtCore import (
+    QPointF,
+    QRectF,
+    QSize,
+    Qt,
+    Signal,
+)
+from PySide6.QtGui import (
+    QBrush,
+    QColor,
+    QCursor,
+    QFont,
+    QImage,
+    QMouseEvent,
+    QPainter,
+    QPen,
+    QPixmap,
+    QWheelEvent,
 )
 
 from .tokens import SPACING, RADIUS, TYPOGRAPHY, ColorPalette, get_theme

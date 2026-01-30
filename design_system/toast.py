@@ -3,11 +3,23 @@ Toast notification components
 Material Design styled popup notifications
 """
 
-from .qt_compat import (
-    QWidget, QHBoxLayout, QLabel, QPushButton,
-    QVBoxLayout, QGraphicsDropShadowEffect, QApplication,
-    Qt, QTimer, QPropertyAnimation, QEasingCurve, Signal, QColor,
+from PySide6.QtWidgets import (
+    QApplication,
+    QGraphicsDropShadowEffect,
+    QHBoxLayout,
+    QLabel,
+    QPushButton,
+    QVBoxLayout,
+    QWidget,
 )
+from PySide6.QtCore import (
+    QEasingCurve,
+    QPropertyAnimation,
+    QTimer,
+    Qt,
+    Signal,
+)
+from PySide6.QtGui import QColor
 
 from .tokens import SPACING, RADIUS, TYPOGRAPHY, ColorPalette, get_theme
 

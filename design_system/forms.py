@@ -5,12 +5,25 @@ Input fields, selects, and form controls
 
 from typing import List, Optional
 
-from .qt_compat import (
-    QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
-    QLineEdit, QTextEdit, QComboBox, QSpinBox, QDoubleSpinBox,
-    QSlider, QFrame, QListWidget, QListWidgetItem, QAbstractItemView,
-    Qt, Signal, QColor,
+from PySide6.QtWidgets import (
+    QAbstractItemView,
+    QComboBox,
+    QDoubleSpinBox,
+    QFrame,
+    QHBoxLayout,
+    QLabel,
+    QLineEdit,
+    QListWidget,
+    QListWidgetItem,
+    QPushButton,
+    QSlider,
+    QSpinBox,
+    QTextEdit,
+    QVBoxLayout,
+    QWidget,
 )
+from PySide6.QtCore import Qt, Signal
+from PySide6.QtGui import QColor
 
 from .tokens import SPACING, RADIUS, TYPOGRAPHY, ColorPalette, get_theme
 

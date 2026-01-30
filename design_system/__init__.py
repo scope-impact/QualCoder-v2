@@ -7,7 +7,7 @@ Compatible with both PySide6 (preferred, LGPL) and PySide6 via qt_compat layer.
 
 Usage:
     from design_system import setup_theme, Button, Card
-    from design_system.qt_compat import QApplication
+    from PySide6.QtWidgets import QApplication
 
     app = QApplication(sys.argv)
     setup_theme(app, theme='dark_teal')
@@ -291,13 +291,6 @@ from .theme import (
     HAS_QT_MATERIAL,
 )
 
-# Qt Compatibility Layer
-from .qt_compat import (
-    QT_BINDING,
-    USING_PYSIDE6,
-    get_qt_binding,
-    is_pyside6,
-)
 
 
 __all__ = [
@@ -516,9 +509,4 @@ __all__ = [
     "is_dark_theme",
     "MaterialPalette",
     "HAS_QT_MATERIAL",
-    # Qt Binding Info
-    "QT_BINDING",
-    "USING_PYSIDE6",
-    "get_qt_binding",
-    "is_pyside6",
 ]

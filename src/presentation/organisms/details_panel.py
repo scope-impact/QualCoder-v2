@@ -9,10 +9,15 @@ A panel showing contextual details for the coding interface:
 """
 
 from typing import List, Tuple
-from design_system.qt_compat import (
-    QFrame, QVBoxLayout, QHBoxLayout, QLabel,
-    QWidget, QScrollArea, Qt, Signal,
+from PySide6.QtWidgets import (
+    QFrame,
+    QHBoxLayout,
+    QLabel,
+    QScrollArea,
+    QVBoxLayout,
+    QWidget,
 )
+from PySide6.QtCore import Qt, Signal
 
 from design_system import (
     ColorPalette, get_theme, SPACING, RADIUS, TYPOGRAPHY,

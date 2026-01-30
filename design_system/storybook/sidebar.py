@@ -4,9 +4,15 @@ StorybookSidebar component for navigation
 
 from typing import Callable
 
-from ..qt_compat import (
-    QFrame, QWidget, QVBoxLayout, QLabel, QScrollArea, QPushButton, Qt,
+from PySide6.QtWidgets import (
+    QFrame,
+    QLabel,
+    QPushButton,
+    QScrollArea,
+    QVBoxLayout,
+    QWidget,
 )
+from PySide6.QtCore import Qt
 
 from ..tokens import SPACING, RADIUS, TYPOGRAPHY, ColorPalette, get_theme
 

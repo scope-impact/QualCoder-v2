@@ -10,7 +10,14 @@ Tests cover:
 """
 
 import pytest
-from design_system.qt_compat import QWidget, QLabel, QPushButton, QVBoxLayout, QHBoxLayout, Qt
+from PySide6.QtWidgets import (
+    QHBoxLayout,
+    QLabel,
+    QPushButton,
+    QVBoxLayout,
+    QWidget,
+)
+from PySide6.QtCore import Qt
 
 
 class TestAppShell:

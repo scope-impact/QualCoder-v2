@@ -5,12 +5,27 @@ Code editors, rich text editors, and related widgets
 
 from typing import List, Optional
 
-from .qt_compat import (
-    QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
-    QFrame, QPlainTextEdit, QTextEdit, QScrollArea, QSizePolicy,
-    Qt, Signal, QRect,
-    QFont, QTextCharFormat, QColor, QPainter, QTextFormat,
-    QSyntaxHighlighter, QTextDocument,
+from PySide6.QtWidgets import (
+    QFrame,
+    QHBoxLayout,
+    QLabel,
+    QPlainTextEdit,
+    QPushButton,
+    QScrollArea,
+    QSizePolicy,
+    QTextEdit,
+    QVBoxLayout,
+    QWidget,
+)
+from PySide6.QtCore import QRect, Qt, Signal
+from PySide6.QtGui import (
+    QColor,
+    QFont,
+    QPainter,
+    QSyntaxHighlighter,
+    QTextCharFormat,
+    QTextDocument,
+    QTextFormat,
 )
 
 from .tokens import SPACING, RADIUS, TYPOGRAPHY, ColorPalette, get_theme

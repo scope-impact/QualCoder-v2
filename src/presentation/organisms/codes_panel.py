@@ -6,7 +6,13 @@ Includes a header with add/search/expand actions, and navigation buttons.
 """
 
 from typing import List, Dict, Any
-from design_system.qt_compat import QFrame, QVBoxLayout, QHBoxLayout, QLabel, Qt, Signal
+from PySide6.QtWidgets import (
+    QFrame,
+    QHBoxLayout,
+    QLabel,
+    QVBoxLayout,
+)
+from PySide6.QtCore import Qt, Signal
 
 from design_system import (
     ColorPalette, get_theme, SPACING, RADIUS, TYPOGRAPHY,

@@ -29,17 +29,17 @@ Structure:
 """
 
 from typing import Optional, Protocol, runtime_checkable
-from design_system.qt_compat import (
-    QMainWindow,
-    QWidget,
-    QVBoxLayout,
-    QHBoxLayout,
+from PySide6.QtWidgets import (
     QFrame,
+    QHBoxLayout,
     QLabel,
+    QMainWindow,
     QPushButton,
     QSizePolicy,
-    Qt, Signal,
+    QVBoxLayout,
+    QWidget,
 )
+from PySide6.QtCore import Qt, Signal
 
 from design_system import (
     ColorPalette,

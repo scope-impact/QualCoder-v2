@@ -5,7 +5,8 @@ Tests each organism component individually and the composed TextCodingPage.
 """
 
 import pytest
-from design_system.qt_compat import Qt, QApplication
+from PySide6.QtWidgets import QApplication
+from PySide6.QtCore import Qt
 from PySide6.QtTest import QSignalSpy
 
 

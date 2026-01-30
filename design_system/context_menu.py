@@ -3,11 +3,17 @@ Context menu components
 Material Design styled right-click menus
 """
 
-from .qt_compat import (
-    QMenu, QWidgetAction, QWidget, QHBoxLayout,
-    QLabel, QFrame, QVBoxLayout,
-    Qt, Signal, QAction, QCursor,
+from PySide6.QtWidgets import (
+    QFrame,
+    QHBoxLayout,
+    QLabel,
+    QMenu,
+    QVBoxLayout,
+    QWidget,
+    QWidgetAction,
 )
+from PySide6.QtCore import Qt, Signal
+from PySide6.QtGui import QAction, QCursor
 
 from .tokens import SPACING, RADIUS, TYPOGRAPHY, ColorPalette, get_theme
 

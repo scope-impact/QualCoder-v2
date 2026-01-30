@@ -12,10 +12,22 @@ For generic text display, use design_system.TextPanel instead.
 
 from dataclasses import dataclass, field
 from typing import List, Optional, Tuple, Dict, Any
-from design_system.qt_compat import (
-    QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
-    QFrame, QTextEdit, Qt, Signal,
-    QTextCursor, QTextCharFormat, QColor, QFont, QBrush,
+from PySide6.QtWidgets import (
+    QFrame,
+    QHBoxLayout,
+    QLabel,
+    QPushButton,
+    QTextEdit,
+    QVBoxLayout,
+    QWidget,
+)
+from PySide6.QtCore import Qt, Signal
+from PySide6.QtGui import (
+    QBrush,
+    QColor,
+    QFont,
+    QTextCharFormat,
+    QTextCursor,
 )
 
 from design_system import (

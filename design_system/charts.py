@@ -5,14 +5,21 @@ Material Design styled charts with theme support
 
 from typing import List, Dict, Any, Optional, Tuple
 from dataclasses import dataclass
-import os
 
-# Force pyqtgraph to use PySide6 before importing
-os.environ.setdefault('PYQTGRAPH_QT_LIB', 'PySide6')
-
-from .qt_compat import (
-    QWidget, QVBoxLayout, QHBoxLayout, QLabel, QFrame,
-    Qt, Signal, QColor, QPainter, QPen, QBrush, QPainterPath,
+from PySide6.QtWidgets import (
+    QFrame,
+    QHBoxLayout,
+    QLabel,
+    QVBoxLayout,
+    QWidget,
+)
+from PySide6.QtCore import Qt, Signal
+from PySide6.QtGui import (
+    QBrush,
+    QColor,
+    QPainter,
+    QPainterPath,
+    QPen,
 )
 
 import pyqtgraph as pg

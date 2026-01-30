@@ -5,10 +5,14 @@ Page navigation and pagination controls
 
 from typing import Optional
 
-from .qt_compat import (
-    QWidget, QHBoxLayout, QLabel, QPushButton, QFrame,
-    Qt, Signal,
+from PySide6.QtWidgets import (
+    QFrame,
+    QHBoxLayout,
+    QLabel,
+    QPushButton,
+    QWidget,
 )
+from PySide6.QtCore import Qt, Signal
 
 from .tokens import SPACING, RADIUS, TYPOGRAPHY, ColorPalette, get_theme
 

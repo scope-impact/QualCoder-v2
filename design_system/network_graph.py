@@ -7,13 +7,33 @@ from typing import List, Dict, Any, Optional, Callable, Tuple
 from dataclasses import dataclass, field
 import math
 
-from .qt_compat import (
-    QWidget, QVBoxLayout, QHBoxLayout, QLabel, QFrame,
-    QGraphicsView, QGraphicsScene, QGraphicsEllipseItem,
-    QGraphicsLineItem, QGraphicsTextItem, QGraphicsItem,
-    Qt, Signal, QPointF, QRectF,
-    QColor, QPen, QBrush, QFont, QPainter,
-    QWheelEvent, QMouseEvent,
+from PySide6.QtWidgets import (
+    QFrame,
+    QGraphicsEllipseItem,
+    QGraphicsItem,
+    QGraphicsLineItem,
+    QGraphicsScene,
+    QGraphicsTextItem,
+    QGraphicsView,
+    QHBoxLayout,
+    QLabel,
+    QVBoxLayout,
+    QWidget,
+)
+from PySide6.QtCore import (
+    QPointF,
+    QRectF,
+    Qt,
+    Signal,
+)
+from PySide6.QtGui import (
+    QBrush,
+    QColor,
+    QFont,
+    QMouseEvent,
+    QPainter,
+    QPen,
+    QWheelEvent,
 )
 
 import networkx as nx

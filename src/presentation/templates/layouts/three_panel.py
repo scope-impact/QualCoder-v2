@@ -13,15 +13,15 @@ A three-panel layout with left sidebar, center content, and right panel.
 This is the classic coding interface layout.
 """
 
-from design_system.qt_compat import (
-    QWidget,
-    QVBoxLayout,
-    QHBoxLayout,
-    QSplitter,
+from PySide6.QtWidgets import (
     QFrame,
+    QHBoxLayout,
     QSizePolicy,
-    Qt,
+    QSplitter,
+    QVBoxLayout,
+    QWidget,
 )
+from PySide6.QtCore import Qt
 
 from design_system import ColorPalette, get_theme
 

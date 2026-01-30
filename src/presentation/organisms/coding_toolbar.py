@@ -12,7 +12,8 @@ The main toolbar for the text coding screen containing:
 """
 
 from typing import List
-from design_system.qt_compat import QFrame, QHBoxLayout, QLabel, Qt, Signal
+from PySide6.QtWidgets import QFrame, QHBoxLayout, QLabel
+from PySide6.QtCore import Qt, Signal
 
 from design_system import (
     ColorPalette, get_theme, SPACING, RADIUS, TYPOGRAPHY,

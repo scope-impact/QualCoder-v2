@@ -6,7 +6,8 @@ Shows the document content with header, stats, and selection capabilities.
 """
 
 from typing import List, Optional, Tuple
-from design_system.qt_compat import QFrame, QVBoxLayout, Signal
+from PySide6.QtWidgets import QFrame, QVBoxLayout
+from PySide6.QtCore import Signal
 
 from design_system import (
     ColorPalette, get_theme,

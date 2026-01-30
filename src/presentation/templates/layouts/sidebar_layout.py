@@ -11,15 +11,15 @@ A two-panel layout with a sidebar and main content area.
 └──────────┴────────────────────────────┘
 """
 
-from design_system.qt_compat import (
-    QWidget,
-    QVBoxLayout,
-    QHBoxLayout,
-    QSplitter,
+from PySide6.QtWidgets import (
     QFrame,
+    QHBoxLayout,
     QSizePolicy,
-    Qt,
+    QSplitter,
+    QVBoxLayout,
+    QWidget,
 )
+from PySide6.QtCore import Qt
 
 from design_system import ColorPalette, get_theme, SPACING
 

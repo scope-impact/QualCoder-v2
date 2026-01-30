@@ -3,11 +3,16 @@ Toggle/Switch component
 Material Design styled toggle for on/off states
 """
 
-from .qt_compat import (
-    QWidget, QHBoxLayout, QLabel,
-    Qt, Signal, Property, QPropertyAnimation, QEasingCurve, QRect,
-    QPainter, QColor, QPainterPath,
+from PySide6.QtWidgets import QHBoxLayout, QLabel, QWidget
+from PySide6.QtCore import (
+    Property,
+    QEasingCurve,
+    QPropertyAnimation,
+    QRect,
+    Qt,
+    Signal,
 )
+from PySide6.QtGui import QColor, QPainter, QPainterPath
 
 from .tokens import SPACING, RADIUS, TYPOGRAPHY, ColorPalette, get_theme
 

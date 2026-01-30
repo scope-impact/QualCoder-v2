@@ -22,7 +22,7 @@ from typing import Optional, Dict, Any, TYPE_CHECKING
 import warnings
 
 if TYPE_CHECKING:
-    from .qt_compat import QApplication
+    from PySide6.QtWidgets import QApplication
 
 # Try to import qt-material, fall back gracefully
 try:

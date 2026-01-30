@@ -3,7 +3,8 @@ Pytest configuration and fixtures for UI tests
 """
 
 import pytest
-from design_system.qt_compat import QApplication, QWidget, QLabel, QTimer
+from PySide6.QtWidgets import QApplication, QLabel, QWidget
+from PySide6.QtCore import QTimer
 import sys
 from pathlib import Path
 from datetime import datetime
@@ -61,7 +62,7 @@ def take_screenshot(screenshot_dir, request):
         QApplication.processEvents()
 
         if delay_ms > 0:
-            from design_system.qt_compat import QEventLoop
+            from PySide6.QtCore import QEventLoop
             loop = QEventLoop()
             QTimer.singleShot(delay_ms, loop.quit)
             loop.exec()
@@ -87,7 +88,8 @@ def placeholder_widget(colors):
                 border-radius: 4px;
             }}
         """)
-        from design_system.qt_compat import QVBoxLayout, Qt
+        from PySide6.QtWidgets import QVBoxLayout
+        from PySide6.QtCore import Qt
         layout = QVBoxLayout(widget)
         label = QLabel(text)
         label.setAlignment(Qt.AlignmentFlag.AlignCenter)
