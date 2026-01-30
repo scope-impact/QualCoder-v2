@@ -1,0 +1,132 @@
+site_name: QualCoder v2 Developer Guide
+site_description: Developer documentation for QualCoder v2 - architecture, tutorials, and component library
+site_url: https://qualcoder.dev/docs
+
+repo_url: https://github.com/scope-impact/qualcoder-v2
+repo_name: qualcoder-v2
+
+theme:
+  name: material
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: teal
+      accent: teal
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: teal
+      accent: teal
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  features:
+    - navigation.instant
+    - navigation.tracking
+    - navigation.tabs
+    - navigation.tabs.sticky
+    - navigation.sections
+    - navigation.expand
+    - navigation.indexes
+    - toc.follow
+    - search.suggest
+    - search.highlight
+    - content.code.copy
+    - content.code.annotate
+  icon:
+    repo: fontawesome/brands/github
+
+plugins:
+  - search
+
+markdown_extensions:
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.tabbed:
+      alternate_style: true
+  - tables
+  - attr_list
+  - md_in_html
+  - toc:
+      permalink: true
+
+nav:
+  - Home: index.md
+
+  - Architecture:
+      - Overview: ARCHITECTURE.md
+
+  - Tutorials:
+      - tutorials/README.md
+      - The Big Picture: tutorials/00-big-picture.md
+      - Your First Invariant: tutorials/01-first-invariant.md
+      - Your First Deriver: tutorials/02-first-deriver.md
+      - The Result Type: tutorials/03-result-type.md
+      - Events Flow Through: tutorials/04-event-flow.md
+      - SignalBridge Payloads: tutorials/05-signal-bridge.md
+      - Testing Without Mocks: tutorials/06-testing.md
+      - Complete Flow Reference: tutorials/07-complete-flow.md
+      - Appendices:
+          - Common Patterns: tutorials/appendices/A-common-patterns.md
+          - When to Create: tutorials/appendices/B-when-to-create.md
+
+  - Design System:
+      - api/index.md
+      - Getting Started:
+          - api/getting-started/index.md
+          - Installation: api/getting-started/installation.md
+          - Quick Start: api/getting-started/quick-start.md
+      - Design Tokens:
+          - api/tokens/index.md
+          - Colors: api/tokens/colors.md
+          - Spacing: api/tokens/spacing.md
+          - Typography: api/tokens/typography.md
+          - Layout & Animation: api/tokens/layout-animation.md
+      - Components:
+          - api/components/index.md
+          - Core: api/components/core.md
+          - Icons: api/components/icons.md
+          - Layout: api/components/layout.md
+          - Forms: api/components/forms.md
+          - Navigation: api/components/navigation.md
+          - Data Display: api/components/data-display.md
+          - Lists: api/components/lists.md
+          - Media: api/components/media.md
+          - Chat & AI: api/components/chat.md
+          - Document: api/components/document.md
+          - Feedback: api/components/feedback.md
+          - Visualization: api/components/visualization.md
+          - Pickers: api/components/pickers.md
+          - Advanced: api/components/advanced.md
+      - Patterns:
+          - api/patterns/index.md
+          - Signals: api/patterns/signals.md
+          - Theming: api/patterns/theming.md
+          - Composition: api/patterns/composition.md
+      - Reference:
+          - api/reference/index.md
+          - Module Index: api/reference/modules.md
+          - Dependencies: api/reference/dependencies.md
+
+  - Design Documents:
+      - Functional DDD: design/FUNCTIONAL_DDD_DESIGN.md
+      - Screen Stories: design/SCREEN_STORIES_PLAN.md
+      - Agent Context: design/AGENT_CONTEXT_DESIGN.md
+
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/scope-impact/qualcoder-v2

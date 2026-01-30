@@ -3,14 +3,19 @@ Context menu components
 Material Design styled right-click menus
 """
 
-from PyQt6.QtWidgets import (
-    QMenu, QWidgetAction, QWidget, QHBoxLayout,
-    QLabel, QFrame, QVBoxLayout
+import qtawesome as qta
+from PySide6.QtCore import Qt, Signal
+from PySide6.QtGui import QAction
+from PySide6.QtWidgets import (
+    QFrame,
+    QHBoxLayout,
+    QLabel,
+    QMenu,
+    QVBoxLayout,
+    QWidget,
 )
-from PyQt6.QtCore import Qt, pyqtSignal
-from PyQt6.QtGui import QAction, QCursor
 
-from .tokens import SPACING, RADIUS, TYPOGRAPHY, ColorPalette, get_theme
+from .tokens import RADIUS, SPACING, TYPOGRAPHY, ColorPalette, get_colors
 
 
 class ContextMenu(QMenu):
@@ -28,7 +33,7 @@ class ContextMenu(QMenu):
 
     def __init__(self, colors: ColorPalette = None, parent=None):
         super().__init__(parent)
-        self._colors = colors or get_theme("dark")
+        self._colors = colors or get_colors()
 
         self.setStyleSheet(f"""
             QMenu {{
@@ -67,7 +72,7 @@ class ContextMenu(QMenu):
         shortcut: str = None,
         variant: str = "default",
         on_click=None,
-        enabled: bool = True
+        enabled: bool = True,
     ) -> QAction:
         """
         Add a menu item.
@@ -86,7 +91,7 @@ class ContextMenu(QMenu):
             shortcut=shortcut,
             variant=variant,
             colors=self._colors,
-            parent=self
+            parent=self,
         )
 
         if on_click:
@@ -122,10 +127,10 @@ class ContextMenuItem(QAction):
         shortcut: str = None,
         variant: str = "default",
         colors: ColorPalette = None,
-        parent=None
+        parent=None,
     ):
         super().__init__(parent)
-        self._colors = colors or get_theme("dark")
+        self._colors = colors or get_colors()
         self._variant = variant
 
         # Build display text with icon
@@ -155,16 +160,13 @@ class ContextMenuWidget(QFrame):
         menu.show_at(QCursor.pos())
     """
 
-    item_clicked = pyqtSignal(str)
+    item_clicked = Signal(str)
 
     def __init__(self, colors: ColorPalette = None, parent=None):
         super().__init__(parent)
-        self._colors = colors or get_theme("dark")
+        self._colors = colors or get_colors()
 
-        self.setWindowFlags(
-            Qt.WindowType.Popup |
-            Qt.WindowType.FramelessWindowHint
-        )
+        self.setWindowFlags(Qt.WindowType.Popup | Qt.WindowType.FramelessWindowHint)
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
 
         self.setStyleSheet(f"""
@@ -180,18 +182,11 @@ class ContextMenuWidget(QFrame):
         self._layout.setSpacing(0)
 
     def add_item(
-        self,
-        text: str,
-        icon: str = None,
-        variant: str = "default",
-        on_click=None
+        self, text: str, icon: str = None, variant: str = "default", on_click=None
     ) -> QWidget:
         """Add a menu item widget"""
         item = ContextMenuItemWidget(
-            text,
-            icon=icon,
-            variant=variant,
-            colors=self._colors
+            text, icon=icon, variant=variant, colors=self._colors
         )
 
         def handle_click():
@@ -222,7 +217,7 @@ class ContextMenuWidget(QFrame):
 class ContextMenuItemWidget(QFrame):
     """Widget for custom context menu item"""
 
-    clicked = pyqtSignal()
+    clicked = Signal()
 
     def __init__(
         self,
@@ -230,16 +225,20 @@ class ContextMenuItemWidget(QFrame):
         icon: str = None,
         variant: str = "default",
         colors: ColorPalette = None,
-        parent=None
+        parent=None,
     ):
         super().__init__(parent)
-        self._colors = colors or get_theme("dark")
+        self._colors = colors or get_colors()
         self._variant = variant
 
         self.setCursor(Qt.CursorShape.PointingHandCursor)
 
-        text_color = self._colors.error if variant == "danger" else self._colors.text_primary
-        icon_color = self._colors.error if variant == "danger" else self._colors.text_secondary
+        text_color = (
+            self._colors.error if variant == "danger" else self._colors.text_primary
+        )
+        icon_color = (
+            self._colors.error if variant == "danger" else self._colors.text_secondary
+        )
 
         self.setStyleSheet(f"""
             QFrame {{
@@ -252,16 +251,22 @@ class ContextMenuItemWidget(QFrame):
         """)
 
         layout = QHBoxLayout(self)
-        layout.setContentsMargins(SPACING.lg, SPACING.sm + 2, SPACING.lg, SPACING.sm + 2)
+        layout.setContentsMargins(
+            SPACING.lg, SPACING.sm + 2, SPACING.lg, SPACING.sm + 2
+        )
         layout.setSpacing(SPACING.md)
 
-        # Icon
+        # Icon - support both mdi6 icons and emoji fallback
         if icon:
-            icon_label = QLabel(icon)
-            icon_label.setStyleSheet(f"""
-                color: {icon_color};
-                font-size: 18px;
-            """)
+            icon_label = QLabel()
+            if icon.startswith("mdi6."):
+                icon_label.setPixmap(qta.icon(icon, color=icon_color).pixmap(18, 18))
+            else:
+                icon_label.setText(icon)
+                icon_label.setStyleSheet(f"""
+                    color: {icon_color};
+                    font-size: 18px;
+                """)
             icon_label.setFixedWidth(24)
             layout.addWidget(icon_label)
 

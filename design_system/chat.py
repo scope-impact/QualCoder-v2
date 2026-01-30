@@ -3,14 +3,17 @@ Chat/AI components
 Message bubbles, typing indicators, and AI interface widgets
 """
 
-from typing import List, Optional
-from PyQt6.QtWidgets import (
-    QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
-    QFrame, QScrollArea, QTextEdit, QSizePolicy
+from PySide6.QtCore import Qt, QTimer, Signal
+from PySide6.QtWidgets import (
+    QFrame,
+    QHBoxLayout,
+    QLabel,
+    QPushButton,
+    QTextEdit,
+    QVBoxLayout,
 )
-from PyQt6.QtCore import Qt, pyqtSignal, QTimer
 
-from .tokens import SPACING, RADIUS, TYPOGRAPHY, ColorPalette, get_theme
+from .tokens import RADIUS, SPACING, TYPOGRAPHY, ColorPalette, get_colors, hex_to_rgba
 
 
 class MessageBubble(QFrame):
@@ -28,10 +31,10 @@ class MessageBubble(QFrame):
         role: str = "user",  # "user" or "assistant"
         timestamp: str = "",
         colors: ColorPalette = None,
-        parent=None
+        parent=None,
     ):
         super().__init__(parent)
-        self._colors = colors or get_theme("dark")
+        self._colors = colors or get_colors()
         self._role = role
 
         is_user = role == "user"
@@ -83,7 +86,7 @@ class MessageBubble(QFrame):
         if timestamp:
             ts = QLabel(timestamp)
             ts.setStyleSheet(f"""
-                color: {"rgba(255,255,255,0.7)" if is_user else self._colors.text_secondary};
+                color: {hex_to_rgba(self._colors.primary_foreground, 0.70) if is_user else self._colors.text_secondary};
                 font-size: {TYPOGRAPHY.text_xs}px;
             """)
             ts.setAlignment(Qt.AlignmentFlag.AlignRight)
@@ -108,7 +111,7 @@ class TypingIndicator(QFrame):
 
     def __init__(self, colors: ColorPalette = None, parent=None):
         super().__init__(parent)
-        self._colors = colors or get_theme("dark")
+        self._colors = colors or get_colors()
         self._dots = []
         self._current = 0
 
@@ -125,7 +128,7 @@ class TypingIndicator(QFrame):
         layout.setSpacing(SPACING.xs)
 
         # Three dots
-        for i in range(3):
+        for _ in range(3):
             dot = QLabel("●")
             dot.setStyleSheet(f"color: {self._colors.text_secondary}; font-size: 10px;")
             self._dots.append(dot)
@@ -147,7 +150,9 @@ class TypingIndicator(QFrame):
             if i == self._current:
                 dot.setStyleSheet(f"color: {self._colors.primary}; font-size: 10px;")
             else:
-                dot.setStyleSheet(f"color: {self._colors.text_secondary}; font-size: 10px;")
+                dot.setStyleSheet(
+                    f"color: {self._colors.text_secondary}; font-size: 10px;"
+                )
         self._current = (self._current + 1) % 3
 
 
@@ -160,8 +165,8 @@ class CodeSuggestion(QFrame):
         suggestion.clicked.connect(self.apply_code)
     """
 
-    clicked = pyqtSignal()
-    rejected = pyqtSignal()
+    clicked = Signal()
+    rejected = Signal()
 
     def __init__(
         self,
@@ -169,10 +174,10 @@ class CodeSuggestion(QFrame):
         color: str = None,
         confidence: float = None,
         colors: ColorPalette = None,
-        parent=None
+        parent=None,
     ):
         super().__init__(parent)
-        self._colors = colors or get_theme("dark")
+        self._colors = colors or get_colors()
 
         self.setCursor(Qt.CursorShape.PointingHandCursor)
         self.setStyleSheet(f"""
@@ -199,13 +204,17 @@ class CodeSuggestion(QFrame):
 
         # Code name
         name = QLabel(code_name)
-        name.setStyleSheet(f"color: {self._colors.text_primary}; font-size: {TYPOGRAPHY.text_sm}px;")
+        name.setStyleSheet(
+            f"color: {self._colors.text_primary}; font-size: {TYPOGRAPHY.text_sm}px;"
+        )
         layout.addWidget(name)
 
         # Confidence
         if confidence is not None:
             conf = QLabel(f"{int(confidence * 100)}%")
-            conf.setStyleSheet(f"color: {self._colors.text_secondary}; font-size: {TYPOGRAPHY.text_xs}px;")
+            conf.setStyleSheet(
+                f"color: {self._colors.text_secondary}; font-size: {TYPOGRAPHY.text_xs}px;"
+            )
             layout.addWidget(conf)
 
         # Accept button
@@ -258,16 +267,11 @@ class QuickPrompts(QFrame):
         prompts.prompt_clicked.connect(self.send_prompt)
     """
 
-    prompt_clicked = pyqtSignal(str)
+    prompt_clicked = Signal(str)
 
-    def __init__(
-        self,
-        prompts: List[str],
-        colors: ColorPalette = None,
-        parent=None
-    ):
+    def __init__(self, prompts: list[str], colors: ColorPalette = None, parent=None):
         super().__init__(parent)
-        self._colors = colors or get_theme("dark")
+        self._colors = colors or get_colors()
 
         layout = QHBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
@@ -290,7 +294,7 @@ class QuickPrompts(QFrame):
                     border-color: {self._colors.primary};
                 }}
             """)
-            btn.clicked.connect(lambda checked, p=prompt: self.prompt_clicked.emit(p))
+            btn.clicked.connect(lambda _checked, p=prompt: self.prompt_clicked.emit(p))
             layout.addWidget(btn)
 
         layout.addStretch()
@@ -305,16 +309,16 @@ class ChatInput(QFrame):
         chat_input.message_sent.connect(self.send_message)
     """
 
-    message_sent = pyqtSignal(str)
+    message_sent = Signal(str)
 
     def __init__(
         self,
         placeholder: str = "Type a message...",
         colors: ColorPalette = None,
-        parent=None
+        parent=None,
     ):
         super().__init__(parent)
-        self._colors = colors or get_theme("dark")
+        self._colors = colors or get_colors()
 
         self.setStyleSheet(f"""
             QFrame {{
@@ -391,10 +395,10 @@ class AIReasoningPanel(QFrame):
         title: str = "AI Reasoning",
         explanation: str = "",
         colors: ColorPalette = None,
-        parent=None
+        parent=None,
     ):
         super().__init__(parent)
-        self._colors = colors or get_theme("dark")
+        self._colors = colors or get_colors()
 
         self.setStyleSheet(f"""
             QFrame {{
@@ -412,7 +416,7 @@ class AIReasoningPanel(QFrame):
         # Header
         header = QHBoxLayout()
         icon = QLabel("💡")
-        icon.setStyleSheet(f"font-size: 16px;")
+        icon.setStyleSheet("font-size: 16px;")
         header.addWidget(icon)
 
         title_label = QLabel(title)
@@ -446,14 +450,10 @@ class ConfidenceScore(QFrame):
     """
 
     def __init__(
-        self,
-        value: float,
-        label: str = "",
-        colors: ColorPalette = None,
-        parent=None
+        self, value: float, label: str = "", colors: ColorPalette = None, parent=None
     ):
         super().__init__(parent)
-        self._colors = colors or get_theme("dark")
+        self._colors = colors or get_colors()
 
         layout = QHBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
@@ -461,7 +461,9 @@ class ConfidenceScore(QFrame):
 
         if label:
             lbl = QLabel(label)
-            lbl.setStyleSheet(f"color: {self._colors.text_secondary}; font-size: {TYPOGRAPHY.text_sm}px;")
+            lbl.setStyleSheet(
+                f"color: {self._colors.text_secondary}; font-size: {TYPOGRAPHY.text_sm}px;"
+            )
             layout.addWidget(lbl)
 
         # Score bar
@@ -488,5 +490,7 @@ class ConfidenceScore(QFrame):
 
         # Percentage
         pct = QLabel(f"{int(value * 100)}%")
-        pct.setStyleSheet(f"color: {self._colors.text_primary}; font-size: {TYPOGRAPHY.text_sm}px; font-weight: bold;")
+        pct.setStyleSheet(
+            f"color: {self._colors.text_primary}; font-size: {TYPOGRAPHY.text_sm}px; font-weight: bold;"
+        )
         layout.addWidget(pct)

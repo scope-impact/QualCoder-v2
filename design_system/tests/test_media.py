@@ -2,12 +2,15 @@
 Tests for media components: VideoContainer, Timeline, PlayerControls, etc.
 """
 
-import pytest
-from PyQt6.QtCore import Qt
+from PySide6.QtCore import Qt
 
 from design_system.media import (
-    VideoContainer, WaveformVisualization, Timeline,
-    PlayerControls, Thumbnail, ThumbnailStrip
+    PlayerControls,
+    Thumbnail,
+    ThumbnailStrip,
+    Timeline,
+    VideoContainer,
+    WaveformVisualization,
 )
 
 
@@ -23,10 +26,10 @@ class TestVideoContainer:
 
     def test_video_aspect_ratio(self, qtbot):
         """VideoContainer should respect aspect ratio"""
-        video = VideoContainer(aspect_ratio=16/9)
+        video = VideoContainer(aspect_ratio=16 / 9)
         qtbot.addWidget(video)
 
-        assert video._aspect_ratio == 16/9
+        assert video._aspect_ratio == 16 / 9
 
 
 class TestWaveformVisualization:
@@ -64,7 +67,7 @@ class TestWaveformVisualization:
         qtbot.addWidget(waveform)
 
         # Signal should exist
-        assert hasattr(waveform, 'position_changed')
+        assert hasattr(waveform, "position_changed")
 
 
 class TestTimeline:

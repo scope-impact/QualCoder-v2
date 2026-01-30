@@ -3,17 +3,18 @@ Word cloud visualization component
 Wraps wordcloud library with design system theming
 """
 
-from typing import Dict, List, Optional, Callable
-from io import BytesIO
+from collections.abc import Callable
 
-from PyQt6.QtWidgets import QWidget, QVBoxLayout, QLabel, QFrame
-from PyQt6.QtCore import Qt, pyqtSignal, QSize
-from PyQt6.QtGui import QPixmap, QImage, QColor
-
+from PySide6.QtCore import QSize, Qt, Signal
+from PySide6.QtGui import QColor, QImage, QPixmap
+from PySide6.QtWidgets import (
+    QFrame,
+    QLabel,
+    QVBoxLayout,
+)
 from wordcloud import WordCloud
-import numpy as np
 
-from .tokens import SPACING, RADIUS, TYPOGRAPHY, ColorPalette, get_theme
+from .tokens import RADIUS, SPACING, TYPOGRAPHY, ColorPalette, get_colors
 
 
 class WordCloudWidget(QFrame):
@@ -42,8 +43,8 @@ class WordCloudWidget(QFrame):
         generated(): Emitted when word cloud is generated
     """
 
-    word_clicked = pyqtSignal(str)
-    generated = pyqtSignal()
+    word_clicked = Signal(str)
+    generated = Signal()
 
     def __init__(
         self,
@@ -56,10 +57,10 @@ class WordCloudWidget(QFrame):
         max_font_size: int = 80,
         background_color: str = None,
         colors: ColorPalette = None,
-        parent=None
+        parent=None,
     ):
         super().__init__(parent)
-        self._colors = colors or get_theme("light")
+        self._colors = colors or get_colors()
         self._width = width
         self._height = height
         self._color_scheme = color_scheme
@@ -67,8 +68,8 @@ class WordCloudWidget(QFrame):
         self._min_font_size = min_font_size
         self._max_font_size = max_font_size
         self._background_color = background_color or self._colors.surface
-        self._frequencies: Dict[str, float] = {}
-        self._wordcloud: Optional[WordCloud] = None
+        self._frequencies: dict[str, float] = {}
+        self._wordcloud: WordCloud | None = None
 
         self._setup_ui(title)
 
@@ -119,8 +120,16 @@ class WordCloudWidget(QFrame):
     def _get_color_func(self) -> Callable:
         """Get color function based on color scheme"""
         schemes = {
-            "primary": [self._colors.primary, self._colors.primary_light, self._colors.primary_dark],
-            "secondary": [self._colors.secondary, self._colors.secondary_light, self._colors.secondary_dark],
+            "primary": [
+                self._colors.primary,
+                self._colors.primary_light,
+                self._colors.primary_dark,
+            ],
+            "secondary": [
+                self._colors.secondary,
+                self._colors.secondary_light,
+                self._colors.secondary_dark,
+            ],
             "rainbow": [
                 self._colors.code_red,
                 self._colors.code_orange,
@@ -152,14 +161,13 @@ class WordCloudWidget(QFrame):
 
         palette = schemes.get(self._color_scheme, schemes["primary"])
 
-        def color_func(word, font_size, position, orientation, random_state=None, **kwargs):
-            # Use random color from palette
-            idx = hash(word) % len(palette)
-            return palette[idx]
+        def color_func(word, **_):
+            # Use random color from palette (wordcloud passes font_size, position, etc.)
+            return palette[hash(word) % len(palette)]
 
         return color_func
 
-    def set_frequencies(self, frequencies: Dict[str, float]):
+    def set_frequencies(self, frequencies: dict[str, float]):
         """
         Set word frequencies and generate cloud.
 
@@ -169,7 +177,7 @@ class WordCloudWidget(QFrame):
         self._frequencies = frequencies
         self._generate()
 
-    def set_text(self, text: str, stopwords: List[str] = None):
+    def set_text(self, text: str, stopwords: list[str] = None):
         """
         Generate word cloud from raw text.
 
@@ -228,19 +236,18 @@ class WordCloudWidget(QFrame):
         height, width, channel = image_array.shape
         bytes_per_line = 3 * width
         qimage = QImage(
-            image_array.data,
-            width, height,
-            bytes_per_line,
-            QImage.Format.Format_RGB888
+            image_array.data, width, height, bytes_per_line, QImage.Format.Format_RGB888
         )
 
         # Convert to QPixmap and display
         pixmap = QPixmap.fromImage(qimage)
-        self._image_label.setPixmap(pixmap.scaled(
-            self._image_label.size(),
-            Qt.AspectRatioMode.KeepAspectRatio,
-            Qt.TransformationMode.SmoothTransformation
-        ))
+        self._image_label.setPixmap(
+            pixmap.scaled(
+                self._image_label.size(),
+                Qt.AspectRatioMode.KeepAspectRatio,
+                Qt.TransformationMode.SmoothTransformation,
+            )
+        )
 
     def set_color_scheme(self, scheme: str):
         """
@@ -263,7 +270,7 @@ class WordCloudWidget(QFrame):
         if self._wordcloud:
             self._wordcloud.to_file(filepath)
 
-    def get_pixmap(self) -> Optional[QPixmap]:
+    def get_pixmap(self) -> QPixmap | None:
         """Get the current word cloud as QPixmap"""
         return self._image_label.pixmap()
 
@@ -295,24 +302,24 @@ class WordCloudPreview(QLabel):
 
     def __init__(
         self,
-        size: QSize = QSize(150, 100),
+        size: QSize = None,
         color_scheme: str = "primary",
         colors: ColorPalette = None,
-        parent=None
+        parent=None,
     ):
         super().__init__(parent)
-        self._colors = colors or get_theme("light")
-        self._size = size
+        self._colors = colors or get_colors()
+        self._size = size if size is not None else QSize(150, 100)
         self._color_scheme = color_scheme
 
-        self.setFixedSize(size)
+        self.setFixedSize(self._size)
         self.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.setStyleSheet(f"""
             background-color: {self._colors.surface_light};
             border-radius: {RADIUS.sm}px;
         """)
 
-    def set_frequencies(self, frequencies: Dict[str, float]):
+    def set_frequencies(self, frequencies: dict[str, float]):
         """Generate and display word cloud from frequencies"""
         if not frequencies:
             return
@@ -324,7 +331,7 @@ class WordCloudPreview(QLabel):
         }
         palette = schemes.get(self._color_scheme, schemes["primary"])
 
-        def color_func(word, **kwargs):
+        def color_func(word, **_):
             return palette[hash(word) % len(palette)]
 
         bg_color = QColor(self._colors.surface_light)
@@ -345,9 +352,6 @@ class WordCloudPreview(QLabel):
         image_array = wc.to_array()
         height, width, _ = image_array.shape
         qimage = QImage(
-            image_array.data,
-            width, height,
-            3 * width,
-            QImage.Format.Format_RGB888
+            image_array.data, width, height, 3 * width, QImage.Format.Format_RGB888
         )
         self.setPixmap(QPixmap.fromImage(qimage))

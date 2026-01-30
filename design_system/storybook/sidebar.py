@@ -2,14 +2,19 @@
 StorybookSidebar component for navigation
 """
 
-from typing import Callable
+from collections.abc import Callable
 
-from PyQt6.QtWidgets import (
-    QFrame, QWidget, QVBoxLayout, QLabel, QScrollArea, QPushButton
+from PySide6.QtCore import Qt
+from PySide6.QtWidgets import (
+    QFrame,
+    QLabel,
+    QPushButton,
+    QScrollArea,
+    QVBoxLayout,
+    QWidget,
 )
-from PyQt6.QtCore import Qt
 
-from ..tokens import SPACING, RADIUS, TYPOGRAPHY, ColorPalette, get_theme
+from ..tokens import RADIUS, SPACING, TYPOGRAPHY, ColorPalette, get_colors, hex_to_rgba
 
 
 class StorybookSidebar(QFrame):
@@ -17,7 +22,7 @@ class StorybookSidebar(QFrame):
 
     def __init__(self, on_select: Callable, colors: ColorPalette = None, parent=None):
         super().__init__(parent)
-        self._colors = colors or get_theme()
+        self._colors = colors or get_colors()
         self._on_select = on_select
         self._buttons = {}
         self._active = None
@@ -75,7 +80,9 @@ class StorybookSidebar(QFrame):
 
         nav_container = QWidget()
         self._nav_layout = QVBoxLayout(nav_container)
-        self._nav_layout.setContentsMargins(SPACING.sm, SPACING.sm, SPACING.sm, SPACING.sm)
+        self._nav_layout.setContentsMargins(
+            SPACING.sm, SPACING.sm, SPACING.sm, SPACING.sm
+        )
         self._nav_layout.setSpacing(SPACING.xs)
         self._nav_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
 
@@ -115,7 +122,7 @@ class StorybookSidebar(QFrame):
         if active:
             btn.setStyleSheet(f"""
                 QPushButton {{
-                    background-color: {self._colors.primary}26;
+                    background-color: {hex_to_rgba(self._colors.primary, 0.15)};
                     color: {self._colors.primary};
                     border: none;
                     border-radius: {RADIUS.sm}px;

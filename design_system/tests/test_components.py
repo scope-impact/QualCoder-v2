@@ -2,15 +2,20 @@
 Tests for core components: Button, Input, Card, Badge, Alert, etc.
 """
 
-import pytest
-from PyQt6.QtCore import Qt
-from PyQt6.QtWidgets import QWidget
+from PySide6.QtCore import Qt
 
 from design_system.components import (
-    Button, Input, Label, Card, CardHeader, Badge,
-    Separator, Alert, Avatar, Chip, FileIcon
+    Alert,
+    Avatar,
+    Badge,
+    Button,
+    Card,
+    Chip,
+    FileIcon,
+    Input,
+    Label,
+    Separator,
 )
-from design_system.tokens import get_theme
 
 
 class TestButton:

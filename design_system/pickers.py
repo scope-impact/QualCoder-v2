@@ -3,14 +3,18 @@ Selection/Picker components
 Type selectors, color pickers, and option cards
 """
 
-from typing import List, Optional, Tuple
-from PyQt6.QtWidgets import (
-    QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
-    QFrame, QGridLayout, QSizePolicy
+import qtawesome as qta
+from PySide6.QtCore import Qt, Signal
+from PySide6.QtWidgets import (
+    QFrame,
+    QGridLayout,
+    QHBoxLayout,
+    QLabel,
+    QPushButton,
+    QVBoxLayout,
 )
-from PyQt6.QtCore import Qt, pyqtSignal
 
-from .tokens import SPACING, RADIUS, TYPOGRAPHY, ColorPalette, get_theme
+from .tokens import RADIUS, SPACING, TYPOGRAPHY, ColorPalette, get_colors, hex_to_rgba
 
 
 class TypeSelector(QFrame):
@@ -19,22 +23,22 @@ class TypeSelector(QFrame):
 
     Usage:
         selector = TypeSelector()
-        selector.add_option("text", "📄", "Text", "Plain text files")
-        selector.add_option("audio", "🎵", "Audio", "MP3, WAV files")
+        selector.add_option("text", "mdi6.file-document", "Text", "Plain text files")
+        selector.add_option("audio", "mdi6.music-note", "Audio", "MP3, WAV files")
         selector.selection_changed.connect(self.on_type_select)
     """
 
-    selection_changed = pyqtSignal(str)  # type_id
+    selection_changed = Signal(str)  # type_id
 
     def __init__(
         self,
         columns: int = 3,
         multi_select: bool = False,
         colors: ColorPalette = None,
-        parent=None
+        parent=None,
     ):
         super().__init__(parent)
-        self._colors = colors or get_theme("dark")
+        self._colors = colors or get_colors()
         self._columns = columns
         self._multi_select = multi_select
         self._options = {}
@@ -47,18 +51,9 @@ class TypeSelector(QFrame):
         self._row = 0
         self._col = 0
 
-    def add_option(
-        self,
-        type_id: str,
-        icon: str,
-        title: str,
-        description: str = ""
-    ):
+    def add_option(self, type_id: str, icon: str, title: str, description: str = ""):
         card = TypeOptionCard(
-            icon=icon,
-            title=title,
-            description=description,
-            colors=self._colors
+            icon=icon, title=title, description=description, colors=self._colors
         )
         card.clicked.connect(lambda: self._select(type_id))
         self._options[type_id] = card
@@ -109,11 +104,11 @@ class TypeOptionCard(QFrame):
     Individual type option card.
 
     Usage:
-        card = TypeOptionCard("📄", "Text Files", "Import plain text")
+        card = TypeOptionCard("mdi6.file-document", "Text Files", "Import plain text")
         card.clicked.connect(self.select_type)
     """
 
-    clicked = pyqtSignal()
+    clicked = Signal()
 
     def __init__(
         self,
@@ -122,10 +117,10 @@ class TypeOptionCard(QFrame):
         description: str = "",
         selected: bool = False,
         colors: ColorPalette = None,
-        parent=None
+        parent=None,
     ):
         super().__init__(parent)
-        self._colors = colors or get_theme("dark")
+        self._colors = colors or get_colors()
         self._selected = selected
 
         self.setCursor(Qt.CursorShape.PointingHandCursor)
@@ -136,10 +131,16 @@ class TypeOptionCard(QFrame):
         layout.setSpacing(SPACING.sm)
         layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
-        # Icon
-        icon_label = QLabel(icon)
+        # Icon - support both mdi6 icons and emoji fallback
+        icon_label = QLabel()
         icon_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        icon_label.setStyleSheet(f"font-size: 32px;")
+        if icon.startswith("mdi6."):
+            icon_label.setPixmap(
+                qta.icon(icon, color=self._colors.primary).pixmap(32, 32)
+            )
+        else:
+            icon_label.setText(icon)
+            icon_label.setStyleSheet("font-size: 32px;")
         layout.addWidget(icon_label)
 
         # Title
@@ -167,7 +168,7 @@ class TypeOptionCard(QFrame):
         if self._selected:
             self.setStyleSheet(f"""
                 QFrame {{
-                    background-color: {self._colors.primary}15;
+                    background-color: {hex_to_rgba(self._colors.primary, 0.08)};
                     border: 2px solid {self._colors.primary};
                     border-radius: {RADIUS.lg}px;
                 }}
@@ -200,20 +201,16 @@ class ColorSchemeSelector(QFrame):
 
     Usage:
         selector = ColorSchemeSelector()
-        selector.add_scheme("warm", ["#FF5722", "#FFC107", "#FF9800"])
-        selector.add_scheme("cool", ["#2196F3", "#00BCD4", "#009688"])
+        selector.add_scheme("warm", ["#C84B31", "#E9C46A", "#E76F51"])  # Vermilion palette
+        selector.add_scheme("cool", ["#2A6F97", "#468FAF", "#1E3A5F"])  # Prussian ink palette
         selector.scheme_changed.connect(self.apply_scheme)
     """
 
-    scheme_changed = pyqtSignal(str)  # scheme_id
+    scheme_changed = Signal(str)  # scheme_id
 
-    def __init__(
-        self,
-        colors: ColorPalette = None,
-        parent=None
-    ):
+    def __init__(self, colors: ColorPalette = None, parent=None):
         super().__init__(parent)
-        self._colors = colors or get_theme("dark")
+        self._colors = colors or get_colors()
         self._schemes = {}
         self._selected = None
 
@@ -221,11 +218,9 @@ class ColorSchemeSelector(QFrame):
         self._layout.setContentsMargins(0, 0, 0, 0)
         self._layout.setSpacing(SPACING.md)
 
-    def add_scheme(self, scheme_id: str, color_list: List[str], name: str = ""):
+    def add_scheme(self, scheme_id: str, color_list: list[str], name: str = ""):
         scheme = ColorSchemeOption(
-            colors_list=color_list,
-            name=name,
-            palette=self._colors
+            colors_list=color_list, name=name, palette=self._colors
         )
         scheme.clicked.connect(lambda: self._select(scheme_id))
         self._schemes[scheme_id] = scheme
@@ -237,7 +232,7 @@ class ColorSchemeSelector(QFrame):
             scheme.setSelected(sid == scheme_id)
         self.scheme_changed.emit(scheme_id)
 
-    def get_selected(self) -> Optional[str]:
+    def get_selected(self) -> str | None:
         return self._selected
 
     def set_selected(self, scheme_id: str):
@@ -248,18 +243,18 @@ class ColorSchemeSelector(QFrame):
 class ColorSchemeOption(QFrame):
     """Individual color scheme option"""
 
-    clicked = pyqtSignal()
+    clicked = Signal()
 
     def __init__(
         self,
-        colors_list: List[str],
+        colors_list: list[str],
         name: str = "",
         selected: bool = False,
         palette: ColorPalette = None,
-        parent=None
+        parent=None,
     ):
         super().__init__(parent)
-        self._palette = palette or get_theme("dark")
+        self._palette = palette or get_colors()
         self._selected = selected
 
         self.setCursor(Qt.CursorShape.PointingHandCursor)
@@ -331,26 +326,26 @@ class ChartTypeSelector(QFrame):
         selector.chart_changed.connect(self.update_chart)
     """
 
-    chart_changed = pyqtSignal(str)
+    chart_changed = Signal(str)
 
     CHART_TYPES = [
-        ("bar", "📊", "Bar Chart"),
-        ("line", "📈", "Line Chart"),
-        ("pie", "🥧", "Pie Chart"),
-        ("scatter", "⬡", "Scatter Plot"),
-        ("area", "▨", "Area Chart"),
-        ("heatmap", "🔲", "Heat Map"),
+        ("bar", "mdi6.chart-bar", "Bar Chart"),
+        ("line", "mdi6.chart-line", "Line Chart"),
+        ("pie", "mdi6.chart-pie", "Pie Chart"),
+        ("scatter", "mdi6.chart-scatter-plot", "Scatter Plot"),
+        ("area", "mdi6.chart-areaspline", "Area Chart"),
+        ("heatmap", "mdi6.grid", "Heat Map"),
     ]
 
     def __init__(
         self,
-        available: List[str] = None,
+        available: list[str] = None,
         current: str = "bar",
         colors: ColorPalette = None,
-        parent=None
+        parent=None,
     ):
         super().__init__(parent)
-        self._colors = colors or get_theme("dark")
+        self._colors = colors or get_colors()
         self._available = available or [t[0] for t in self.CHART_TYPES]
         self._current = current
         self._buttons = {}
@@ -367,14 +362,16 @@ class ChartTypeSelector(QFrame):
         layout.setContentsMargins(SPACING.xs, SPACING.xs, SPACING.xs, SPACING.xs)
         layout.setSpacing(SPACING.xs)
 
-        for chart_id, icon, tooltip in self.CHART_TYPES:
+        for chart_id, icon_name, tooltip in self.CHART_TYPES:
             if chart_id in self._available:
-                btn = QPushButton(icon)
+                btn = QPushButton()
+                btn.setIcon(qta.icon(icon_name, color=self._colors.text_secondary))
+                btn.setIconSize(btn.sizeHint())
                 btn.setFixedSize(36, 36)
                 btn.setCursor(Qt.CursorShape.PointingHandCursor)
                 btn.setToolTip(tooltip)
-                btn.clicked.connect(lambda checked, c=chart_id: self._select(c))
-                self._buttons[chart_id] = btn
+                btn.clicked.connect(lambda _checked, c=chart_id: self._select(c))
+                self._buttons[chart_id] = (btn, icon_name)
                 layout.addWidget(btn)
 
         self._update_styles()
@@ -386,29 +383,26 @@ class ChartTypeSelector(QFrame):
             self.chart_changed.emit(chart_type)
 
     def _update_styles(self):
-        for chart_id, btn in self._buttons.items():
+        for chart_id, (btn, icon_name) in self._buttons.items():
             if chart_id == self._current:
+                btn.setIcon(qta.icon(icon_name, color="white"))
                 btn.setStyleSheet(f"""
                     QPushButton {{
                         background-color: {self._colors.primary};
-                        color: white;
                         border: none;
                         border-radius: {RADIUS.sm}px;
-                        font-size: 18px;
                     }}
                 """)
             else:
+                btn.setIcon(qta.icon(icon_name, color=self._colors.text_secondary))
                 btn.setStyleSheet(f"""
                     QPushButton {{
                         background-color: transparent;
-                        color: {self._colors.text_secondary};
                         border: none;
                         border-radius: {RADIUS.sm}px;
-                        font-size: 18px;
                     }}
                     QPushButton:hover {{
                         background-color: {self._colors.surface_lighter};
-                        color: {self._colors.text_primary};
                     }}
                 """)
 
@@ -432,16 +426,16 @@ class RadioCardGroup(QFrame):
         group.selection_changed.connect(self.on_select)
     """
 
-    selection_changed = pyqtSignal(str)
+    selection_changed = Signal(str)
 
     def __init__(
         self,
         orientation: str = "vertical",  # "vertical" or "horizontal"
         colors: ColorPalette = None,
-        parent=None
+        parent=None,
     ):
         super().__init__(parent)
-        self._colors = colors or get_theme("dark")
+        self._colors = colors or get_colors()
         self._cards = {}
         self._selected = None
 
@@ -454,17 +448,10 @@ class RadioCardGroup(QFrame):
         self._layout.setSpacing(SPACING.sm)
 
     def add_card(
-        self,
-        card_id: str,
-        title: str,
-        description: str = "",
-        icon: str = None
+        self, card_id: str, title: str, description: str = "", icon: str = None
     ):
         card = RadioCard(
-            title=title,
-            description=description,
-            icon=icon,
-            colors=self._colors
+            title=title, description=description, icon=icon, colors=self._colors
         )
         card.clicked.connect(lambda: self._select(card_id))
         self._cards[card_id] = card
@@ -476,7 +463,7 @@ class RadioCardGroup(QFrame):
             card.setSelected(cid == card_id)
         self.selection_changed.emit(card_id)
 
-    def get_selected(self) -> Optional[str]:
+    def get_selected(self) -> str | None:
         return self._selected
 
     def set_selected(self, card_id: str):
@@ -487,7 +474,7 @@ class RadioCardGroup(QFrame):
 class RadioCard(QFrame):
     """Individual radio card option"""
 
-    clicked = pyqtSignal()
+    clicked = Signal()
 
     def __init__(
         self,
@@ -496,10 +483,10 @@ class RadioCard(QFrame):
         icon: str = None,
         selected: bool = False,
         colors: ColorPalette = None,
-        parent=None
+        parent=None,
     ):
         super().__init__(parent)
-        self._colors = colors or get_theme("dark")
+        self._colors = colors or get_colors()
         self._selected = selected
 
         self.setCursor(Qt.CursorShape.PointingHandCursor)
@@ -521,8 +508,14 @@ class RadioCard(QFrame):
 
         header = QHBoxLayout()
         if icon:
-            icon_label = QLabel(icon)
-            icon_label.setStyleSheet(f"font-size: 16px;")
+            icon_label = QLabel()
+            if icon.startswith("mdi6."):
+                icon_label.setPixmap(
+                    qta.icon(icon, color=self._colors.text_primary).pixmap(16, 16)
+                )
+            else:
+                icon_label.setText(icon)
+                icon_label.setStyleSheet("font-size: 16px;")
             header.addWidget(icon_label)
 
         title_label = QLabel(title)
@@ -550,7 +543,7 @@ class RadioCard(QFrame):
         if self._selected:
             self.setStyleSheet(f"""
                 QFrame {{
-                    background-color: {self._colors.primary}15;
+                    background-color: {hex_to_rgba(self._colors.primary, 0.08)};
                     border: 2px solid {self._colors.primary};
                     border-radius: {RADIUS.md}px;
                 }}

@@ -5,13 +5,20 @@ A panel displaying the hierarchical code tree for qualitative coding.
 Includes a header with add/search/expand actions, and navigation buttons.
 """
 
-from typing import List, Dict, Any
-from PyQt6.QtWidgets import QFrame, QVBoxLayout, QHBoxLayout, QLabel
+from typing import Any
+
 from PyQt6.QtCore import Qt, pyqtSignal
+from PyQt6.QtWidgets import QFrame, QHBoxLayout, QLabel, QVBoxLayout
 
 from design_system import (
-    ColorPalette, get_theme, SPACING, RADIUS, TYPOGRAPHY,
-    Icon, CodeTree, CodeItem,
+    RADIUS,
+    SPACING,
+    TYPOGRAPHY,
+    CodeItem,
+    CodeTree,
+    ColorPalette,
+    Icon,
+    get_theme,
 )
 
 
@@ -50,11 +57,15 @@ class CodesPanel(QFrame):
         layout.setSpacing(0)
 
         # Header
-        header = self._create_header("Codes", "mdi6.label", [
-            ("mdi6.plus", "Add code"),
-            ("mdi6.magnify", "Search codes"),
-            ("mdi6.unfold-more-horizontal", "Expand all"),
-        ])
+        header = self._create_header(
+            "Codes",
+            "mdi6.label",
+            [
+                ("mdi6.plus", "Add code"),
+                ("mdi6.magnify", "Search codes"),
+                ("mdi6.unfold-more-horizontal", "Expand all"),
+            ],
+        )
         layout.addWidget(header)
 
         # Code tree
@@ -66,7 +77,9 @@ class CodesPanel(QFrame):
         nav = self._create_navigation()
         layout.addWidget(nav)
 
-    def _create_header(self, title: str, icon_name: str, actions: List[tuple]) -> QFrame:
+    def _create_header(
+        self, title: str, icon_name: str, actions: list[tuple]
+    ) -> QFrame:
         """Create a panel header with icon and actions."""
         header = QFrame()
         header.setStyleSheet(f"""
@@ -111,7 +124,12 @@ class CodesPanel(QFrame):
             """)
             btn_layout = QHBoxLayout(btn)
             btn_layout.setContentsMargins(0, 0, 0, 0)
-            action_i = Icon(action_icon, size=14, color=self._colors.text_secondary, colors=self._colors)
+            action_i = Icon(
+                action_icon,
+                size=14,
+                color=self._colors.text_secondary,
+                colors=self._colors,
+            )
             btn_layout.addWidget(action_i, alignment=Qt.AlignmentFlag.AlignCenter)
             h_layout.addWidget(btn)
 
@@ -147,16 +165,23 @@ class CodesPanel(QFrame):
             """)
             btn_layout = QHBoxLayout(btn)
             btn_layout.setContentsMargins(SPACING.md, 0, SPACING.md, 0)
-            icon = Icon(icon_name, size=16, color=self._colors.text_secondary, colors=self._colors)
+            icon = Icon(
+                icon_name,
+                size=16,
+                color=self._colors.text_secondary,
+                colors=self._colors,
+            )
             btn_layout.addWidget(icon)
 
             # Capture action_id in closure
-            btn.mousePressEvent = lambda e, aid=action_id: self.navigation_clicked.emit(aid)
+            btn.mousePressEvent = (
+                lambda _e, aid=action_id: self.navigation_clicked.emit(aid)
+            )
             nav_layout.addWidget(btn, 1)
 
         return nav
 
-    def set_codes(self, categories: List[Dict[str, Any]]):
+    def set_codes(self, categories: list[dict[str, Any]]):
         """
         Set the code tree data.
 
@@ -172,26 +197,30 @@ class CodesPanel(QFrame):
         for cat in categories:
             children = []
             for code in cat.get("codes", []):
-                children.append(CodeItem(
-                    id=code["name"],
-                    name=code["name"],
-                    color=code["color"],
-                    count=code.get("count", 0),
-                ))
-            items.append(CodeItem(
-                id=cat["name"],
-                name=cat["name"],
-                color=self._colors.text_secondary,
-                count=len(children),
-                children=children,
-            ))
+                children.append(
+                    CodeItem(
+                        id=code["name"],
+                        name=code["name"],
+                        color=code["color"],
+                        count=code.get("count", 0),
+                    )
+                )
+            items.append(
+                CodeItem(
+                    id=cat["name"],
+                    name=cat["name"],
+                    color=self._colors.text_secondary,
+                    count=len(children),
+                    children=children,
+                )
+            )
         self._code_tree.set_items(items)
 
     def _on_code_click(self, code_id: str):
         """Handle code click event."""
         self.code_selected.emit({"id": code_id})
 
-    def get_selected_code(self) -> Dict[str, Any]:
+    def get_selected_code(self) -> dict[str, Any]:
         """Get the currently selected code data."""
         # TODO: Implement selection tracking in CodeTree
         return {}

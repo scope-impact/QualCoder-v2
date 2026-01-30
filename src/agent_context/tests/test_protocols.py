@@ -3,7 +3,6 @@ Tests for agent context protocols - MCPToolSchema.
 TDD RED phase: These tests verify runtime protocol checking.
 """
 
-import pytest
 from dataclasses import dataclass
 
 from src.agent_context.protocols import MCPToolSchema
@@ -87,7 +86,7 @@ class TestMCPToolSchemaProtocol:
             _name="create_code",
             _description="Create a new code",
             _input_schema={"type": "object", "required": ["name"]},
-            _trust_level=TrustLevel.SUGGEST
+            _trust_level=TrustLevel.SUGGEST,
         )
         assert isinstance(tool, MCPToolSchema)
         assert tool.name == "create_code"

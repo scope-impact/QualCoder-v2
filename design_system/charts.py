@@ -3,18 +3,28 @@ Chart components using PyQtGraph
 Material Design styled charts with theme support
 """
 
-from typing import List, Dict, Any, Optional, Tuple
 from dataclasses import dataclass
+from typing import Any
 
-from PyQt6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QLabel, QFrame
-from PyQt6.QtCore import Qt, pyqtSignal
-from PyQt6.QtGui import QColor, QPainter, QPen, QBrush, QPainterPath
-
-import pyqtgraph as pg
 import numpy as np
+import pyqtgraph as pg
+from PySide6.QtCore import Qt, Signal
+from PySide6.QtGui import (
+    QBrush,
+    QColor,
+    QPainter,
+    QPainterPath,
+    QPen,
+)
+from PySide6.QtWidgets import (
+    QFrame,
+    QHBoxLayout,
+    QLabel,
+    QVBoxLayout,
+    QWidget,
+)
 
-from .tokens import SPACING, RADIUS, TYPOGRAPHY, ColorPalette, get_theme
-
+from .tokens import RADIUS, SPACING, TYPOGRAPHY, ColorPalette, get_colors
 
 # Configure pyqtgraph defaults
 pg.setConfigOptions(antialias=True, background=None)
@@ -23,9 +33,10 @@ pg.setConfigOptions(antialias=True, background=None)
 @dataclass
 class ChartDataPoint:
     """Single data point for charts"""
+
     label: str
     value: float
-    color: Optional[str] = None
+    color: str | None = None
 
 
 class ChartWidget(QFrame):
@@ -44,7 +55,7 @@ class ChartWidget(QFrame):
         ])
     """
 
-    point_clicked = pyqtSignal(int, object)  # index, data
+    point_clicked = Signal(int, object)  # index, data
 
     def __init__(
         self,
@@ -53,10 +64,10 @@ class ChartWidget(QFrame):
         show_legend: bool = True,
         height: int = 300,
         colors: ColorPalette = None,
-        parent=None
+        parent=None,
     ):
         super().__init__(parent)
-        self._colors = colors or get_theme("light")
+        self._colors = colors or get_colors()
         self._title = title
         self._subtitle = subtitle
         self._show_legend = show_legend
@@ -121,7 +132,7 @@ class ChartWidget(QFrame):
         axis_pen = pg.mkPen(color=self._colors.border, width=1)
         text_color = self._colors.text_secondary
 
-        for axis in ['left', 'bottom']:
+        for axis in ["left", "bottom"]:
             ax = plot.getAxis(axis)
             ax.setPen(axis_pen)
             ax.setTextPen(pg.mkPen(color=text_color))
@@ -131,10 +142,10 @@ class ChartWidget(QFrame):
         plot.showGrid(x=True, y=True, alpha=0.1)
 
         # Remove top/right axes
-        plot.hideAxis('top')
-        plot.hideAxis('right')
+        plot.hideAxis("top")
+        plot.hideAxis("right")
 
-    def _get_chart_colors(self, count: int) -> List[str]:
+    def _get_chart_colors(self, count: int) -> list[str]:
         """Get color palette for chart series"""
         palette = [
             self._colors.primary,
@@ -151,9 +162,9 @@ class ChartWidget(QFrame):
 
     def set_bar_data(
         self,
-        data: List[ChartDataPoint],
+        data: list[ChartDataPoint],
         horizontal: bool = False,
-        bar_width: float = 0.6
+        bar_width: float = 0.6,
     ):
         """
         Set bar chart data.
@@ -177,25 +188,21 @@ class ChartWidget(QFrame):
 
         if horizontal:
             bar = pg.BarGraphItem(
-                x0=0, y=x, height=bar_width,
-                width=values, brushes=brushes
+                x0=0, y=x, height=bar_width, width=values, brushes=brushes
             )
-            self._plot.getAxis('left').setTicks([[(i, labels[i]) for i in range(len(labels))]])
+            self._plot.getAxis("left").setTicks(
+                [[(i, labels[i]) for i in range(len(labels))]]
+            )
         else:
-            bar = pg.BarGraphItem(
-                x=x, height=values, width=bar_width,
-                brushes=brushes
+            bar = pg.BarGraphItem(x=x, height=values, width=bar_width, brushes=brushes)
+            self._plot.getAxis("bottom").setTicks(
+                [[(i, labels[i]) for i in range(len(labels))]]
             )
-            self._plot.getAxis('bottom').setTicks([[(i, labels[i]) for i in range(len(labels))]])
 
         self._plot.addItem(bar)
         self._update_legend(data, colors)
 
-    def set_line_data(
-        self,
-        series: List[Dict[str, Any]],
-        show_points: bool = True
-    ):
+    def set_line_data(self, series: list[dict[str, Any]], show_points: bool = True):
         """
         Set line chart data.
 
@@ -219,25 +226,29 @@ class ChartWidget(QFrame):
             y = s["values"]
             x = np.arange(len(y))
 
-            self._plot.plot(x, y, pen=pen, name=s.get("name", f"Series {i+1}"))
+            self._plot.plot(x, y, pen=pen, name=s.get("name", f"Series {i + 1}"))
 
             if show_points:
                 scatter = pg.ScatterPlotItem(
-                    x=x, y=y, size=8,
+                    x=x,
+                    y=y,
+                    size=8,
                     brush=pg.mkBrush(color),
-                    pen=pg.mkPen(self._colors.surface, width=2)
+                    pen=pg.mkPen(self._colors.surface, width=2),
                 )
                 self._plot.addItem(scatter)
 
-            legend_data.append(ChartDataPoint(s.get("name", f"Series {i+1}"), 0, color))
+            legend_data.append(
+                ChartDataPoint(s.get("name", f"Series {i + 1}"), 0, color)
+            )
 
         self._update_legend(legend_data, colors)
 
     def set_scatter_data(
         self,
-        points: List[Tuple[float, float]],
-        labels: List[str] = None,
-        color: str = None
+        points: list[tuple[float, float]],
+        labels: list[str] = None,
+        color: str = None,
     ):
         """
         Set scatter plot data.
@@ -247,19 +258,22 @@ class ChartWidget(QFrame):
             labels: Optional labels for each point
             color: Optional single color for all points
         """
+        self._scatter_labels = labels  # Store for tooltip display
         self._plot.clear()
 
         x = [p[0] for p in points]
         y = [p[1] for p in points]
 
         scatter = pg.ScatterPlotItem(
-            x=x, y=y, size=10,
+            x=x,
+            y=y,
+            size=10,
             brush=pg.mkBrush(color or self._colors.primary),
-            pen=pg.mkPen(self._colors.surface, width=2)
+            pen=pg.mkPen(self._colors.surface, width=2),
         )
         self._plot.addItem(scatter)
 
-    def _update_legend(self, data: List[ChartDataPoint], colors: List[str]):
+    def _update_legend(self, data: list[ChartDataPoint], colors: list[str]):
         """Update legend items"""
         if not self._show_legend:
             return
@@ -279,7 +293,7 @@ class ChartWidget(QFrame):
 
     def set_title(self, title: str):
         """Update chart title"""
-        if hasattr(self, '_title_label'):
+        if hasattr(self, "_title_label"):
             self._title_label.setText(title)
 
     def clear(self):
@@ -303,7 +317,7 @@ class PieChart(QFrame):
         ])
     """
 
-    slice_clicked = pyqtSignal(int, object)  # index, data
+    slice_clicked = Signal(int, object)  # index, data
 
     def __init__(
         self,
@@ -313,11 +327,11 @@ class PieChart(QFrame):
         donut: bool = False,
         size: int = 200,
         colors: ColorPalette = None,
-        parent=None
+        parent=None,
     ):
         super().__init__(parent)
-        self._colors = colors or get_theme("light")
-        self._data: List[ChartDataPoint] = []
+        self._colors = colors or get_colors()
+        self._data: list[ChartDataPoint] = []
         self._show_labels = show_labels
         self._donut = donut
         self._size = size
@@ -346,10 +360,7 @@ class PieChart(QFrame):
 
         # Pie canvas
         self._canvas = PieCanvas(
-            size=size,
-            donut=donut,
-            show_labels=show_labels,
-            colors=self._colors
+            size=size, donut=donut, show_labels=show_labels, colors=self._colors
         )
         layout.addWidget(self._canvas, alignment=Qt.AlignmentFlag.AlignCenter)
 
@@ -359,7 +370,7 @@ class PieChart(QFrame):
             self._legend_container.setSpacing(SPACING.lg)
             layout.addLayout(self._legend_container)
 
-    def set_data(self, data: List[ChartDataPoint]):
+    def set_data(self, data: list[ChartDataPoint]):
         """Set pie chart data"""
         self._data = data
 
@@ -372,7 +383,7 @@ class PieChart(QFrame):
         self._canvas.set_data(data)
         self._update_legend(data)
 
-    def _get_chart_colors(self, count: int) -> List[str]:
+    def _get_chart_colors(self, count: int) -> list[str]:
         """Get color palette for chart slices"""
         palette = [
             self._colors.primary,
@@ -386,9 +397,9 @@ class PieChart(QFrame):
         ]
         return [palette[i % len(palette)] for i in range(count)]
 
-    def _update_legend(self, data: List[ChartDataPoint]):
+    def _update_legend(self, data: list[ChartDataPoint]):
         """Update legend items"""
-        if not hasattr(self, '_legend_container'):
+        if not hasattr(self, "_legend_container"):
             return
 
         # Clear existing legend
@@ -413,22 +424,22 @@ class PieCanvas(QWidget):
         donut: bool = False,
         show_labels: bool = True,
         colors: ColorPalette = None,
-        parent=None
+        parent=None,
     ):
         super().__init__(parent)
-        self._colors = colors or get_theme("light")
-        self._data: List[ChartDataPoint] = []
+        self._colors = colors or get_colors()
+        self._data: list[ChartDataPoint] = []
         self._donut = donut
         self._show_labels = show_labels
 
         self.setFixedSize(size, size)
 
-    def set_data(self, data: List[ChartDataPoint]):
+    def set_data(self, data: list[ChartDataPoint]):
         """Set pie data and redraw"""
         self._data = data
         self.update()
 
-    def paintEvent(self, event):
+    def paintEvent(self, _event):
         if not self._data:
             return
 
@@ -462,8 +473,7 @@ class PieCanvas(QWidget):
             hole_size = size * 0.5
             hole_margin = (self.width() - hole_size) / 2
             hole_rect = self.rect().adjusted(
-                int(hole_margin), int(hole_margin),
-                int(-hole_margin), int(-hole_margin)
+                int(hole_margin), int(hole_margin), int(-hole_margin), int(-hole_margin)
             )
             painter.setBrush(QBrush(QColor(self._colors.surface)))
             painter.drawEllipse(hole_rect)
@@ -473,14 +483,10 @@ class LegendItem(QFrame):
     """Legend item with color indicator and label"""
 
     def __init__(
-        self,
-        label: str,
-        color: str,
-        colors: ColorPalette = None,
-        parent=None
+        self, label: str, color: str, colors: ColorPalette = None, parent=None
     ):
         super().__init__(parent)
-        self._colors = colors or get_theme("light")
+        self._colors = colors or get_colors()
 
         layout = QHBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
@@ -514,28 +520,28 @@ class SparkLine(QWidget):
 
     def __init__(
         self,
-        values: List[float] = None,
+        values: list[float] = None,
         width: int = 80,
         height: int = 24,
         color: str = None,
         show_endpoint: bool = True,
         colors: ColorPalette = None,
-        parent=None
+        parent=None,
     ):
         super().__init__(parent)
-        self._colors = colors or get_theme("light")
+        self._colors = colors or get_colors()
         self._values = values or []
         self._color = color or self._colors.primary
         self._show_endpoint = show_endpoint
 
         self.setFixedSize(width, height)
 
-    def set_values(self, values: List[float]):
+    def set_values(self, values: list[float]):
         """Update sparkline values"""
         self._values = values
         self.update()
 
-    def paintEvent(self, event):
+    def paintEvent(self, _event):
         if len(self._values) < 2:
             return
 

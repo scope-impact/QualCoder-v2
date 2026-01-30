@@ -19,20 +19,20 @@ Organisms in this module:
 - DetailsPanel: Contextual info cards (selected code, overlaps, memo, AI)
 """
 
-from .coding_toolbar import CodingToolbar
-from .files_panel import FilesPanel
 from .codes_panel import CodesPanel
-from .text_editor_panel import TextEditorPanel
+from .coding_toolbar import CodingToolbar
 from .details_panel import DetailsPanel
+from .files_panel import FilesPanel
+from .text_editor_panel import TextEditorPanel
 
 # QualCoder-specific text highlighting (moved from design_system)
 from .text_highlighter import (
-    TextHighlighter,
-    CodeSegment,
     Annotation,
-    CodedTextHighlight,
-    OverlapIndicator,
     AnnotationIndicator,
+    CodedTextHighlight,
+    CodeSegment,
+    OverlapIndicator,
+    TextHighlighter,
 )
 
 __all__ = [

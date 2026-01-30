@@ -5,33 +5,36 @@ These interfaces define the CONTRACT between Presentation and Application layers
 Views implement these protocols; Controllers depend on them (Dependency Inversion).
 """
 
-from typing import Protocol, List, Optional, Callable
+from collections.abc import Callable
 from dataclasses import dataclass
-
+from typing import Protocol
 
 # ============================================================
 # View Model DTOs (Data for Display)
 # ============================================================
 
+
 @dataclass(frozen=True)
 class CodeViewModel:
     """Code data optimized for UI display"""
+
     id: int
     name: str
     color: str  # hex
-    memo: Optional[str]
-    category_id: Optional[int]
-    category_name: Optional[str]
+    memo: str | None
+    category_id: int | None
+    category_name: str | None
     segment_count: int = 0
 
 
 @dataclass(frozen=True)
 class CategoryViewModel:
     """Category data optimized for UI display"""
+
     id: int
     name: str
-    parent_id: Optional[int]
-    memo: Optional[str]
+    parent_id: int | None
+    memo: str | None
     code_count: int = 0
     children_count: int = 0
 
@@ -39,6 +42,7 @@ class CategoryViewModel:
 @dataclass(frozen=True)
 class SegmentViewModel:
     """Segment data optimized for UI display"""
+
     id: int
     code_id: int
     code_name: str
@@ -48,13 +52,14 @@ class SegmentViewModel:
     start: int
     end: int
     text: str
-    memo: Optional[str]
+    memo: str | None
     importance: int = 0
 
 
 @dataclass(frozen=True)
 class SourceViewModel:
     """Source data optimized for UI display"""
+
     id: int
     name: str
     content: str
@@ -66,18 +71,20 @@ class SourceViewModel:
 @dataclass(frozen=True)
 class ActivityViewModel:
     """Agent activity item for display"""
+
     id: str
     timestamp: str
     client_name: str
     action: str
     description: str
     status: str  # "completed" | "pending" | "rejected" | "failed"
-    payload: Optional[dict] = None
+    payload: dict | None = None
 
 
 # ============================================================
 # View Protocols (Interfaces)
 # ============================================================
+
 
 class ICodingView(Protocol):
     """
@@ -88,11 +95,11 @@ class ICodingView(Protocol):
 
     # --- Display Methods ---
 
-    def display_codes(self, codes: List[CodeViewModel]) -> None:
+    def display_codes(self, codes: list[CodeViewModel]) -> None:
         """Display the list of codes in the codebook"""
         ...
 
-    def display_categories(self, categories: List[CategoryViewModel]) -> None:
+    def display_categories(self, categories: list[CategoryViewModel]) -> None:
         """Display the category hierarchy"""
         ...
 
@@ -100,11 +107,13 @@ class ICodingView(Protocol):
         """Display a source document"""
         ...
 
-    def display_segments(self, segments: List[SegmentViewModel]) -> None:
+    def display_segments(self, segments: list[SegmentViewModel]) -> None:
         """Display coded segments (highlights on source)"""
         ...
 
-    def highlight_segment(self, start: int, end: int, color: str, flash: bool = False) -> None:
+    def highlight_segment(
+        self, start: int, end: int, color: str, flash: bool = False
+    ) -> None:
         """Highlight a segment of text with optional flash animation"""
         ...
 
@@ -130,66 +139,49 @@ class ICodingView(Protocol):
 
     # --- Input Capture ---
 
-    def get_selected_text_range(self) -> Optional[tuple[int, int]]:
+    def get_selected_text_range(self) -> tuple[int, int] | None:
         """Get currently selected text range (start, end)"""
         ...
 
-    def get_selected_code_id(self) -> Optional[int]:
+    def get_selected_code_id(self) -> int | None:
         """Get currently selected code ID from the code tree"""
         ...
 
-    def get_selected_source_id(self) -> Optional[int]:
+    def get_selected_source_id(self) -> int | None:
         """Get currently selected source ID"""
         ...
 
     # --- Event Callbacks (connected by Controller) ---
 
     def on_create_code_requested(
-        self,
-        handler: Callable[[str, str, Optional[str], Optional[int]], None]
+        self, handler: Callable[[str, str, str | None, int | None], None]
     ) -> None:
         """Register handler: (name, color, memo, category_id) -> None"""
         ...
 
     def on_apply_code_requested(
-        self,
-        handler: Callable[[int, int, int, int], None]
+        self, handler: Callable[[int, int, int, int], None]
     ) -> None:
         """Register handler: (code_id, source_id, start, end) -> None"""
         ...
 
-    def on_remove_code_requested(
-        self,
-        handler: Callable[[int], None]
-    ) -> None:
+    def on_remove_code_requested(self, handler: Callable[[int], None]) -> None:
         """Register handler: (segment_id) -> None"""
         ...
 
-    def on_delete_code_requested(
-        self,
-        handler: Callable[[int], None]
-    ) -> None:
+    def on_delete_code_requested(self, handler: Callable[[int], None]) -> None:
         """Register handler: (code_id) -> None"""
         ...
 
-    def on_rename_code_requested(
-        self,
-        handler: Callable[[int, str], None]
-    ) -> None:
+    def on_rename_code_requested(self, handler: Callable[[int, str], None]) -> None:
         """Register handler: (code_id, new_name) -> None"""
         ...
 
-    def on_source_selected(
-        self,
-        handler: Callable[[int], None]
-    ) -> None:
+    def on_source_selected(self, handler: Callable[[int], None]) -> None:
         """Register handler: (source_id) -> None"""
         ...
 
-    def on_code_selected(
-        self,
-        handler: Callable[[int], None]
-    ) -> None:
+    def on_code_selected(self, handler: Callable[[int], None]) -> None:
         """Register handler: (code_id) -> None"""
         ...
 
@@ -214,7 +206,7 @@ class IAgentActivityView(Protocol):
         action: str,
         description: str,
         on_approve: Callable[[], None],
-        on_reject: Callable[[Optional[str]], None]
+        on_reject: Callable[[str | None], None],
     ) -> None:
         """Show an inline approval request"""
         ...
@@ -226,8 +218,8 @@ class IAgentActivityView(Protocol):
     def set_agent_status(
         self,
         connected: bool,
-        agent_name: Optional[str] = None,
-        actions_per_minute: int = 0
+        agent_name: str | None = None,
+        actions_per_minute: int = 0,
     ) -> None:
         """Update agent connection status display"""
         ...
@@ -246,9 +238,9 @@ class IApprovalDialog(Protocol):
         self,
         title: str,
         description: str,
-        impact_items: List[str],
+        impact_items: list[str],
         on_approve: Callable[[], None],
-        on_reject: Callable[[Optional[str]], None]
+        on_reject: Callable[[str | None], None],
     ) -> None:
         """Show the approval dialog"""
         ...

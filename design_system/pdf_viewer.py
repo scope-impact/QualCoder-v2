@@ -3,27 +3,43 @@ PDF viewer component using PyMuPDF (fitz)
 Material Design styled PDF viewer with text selection overlay
 """
 
-from typing import List, Dict, Any, Optional, Tuple, Callable
-from dataclasses import dataclass, field
-from pathlib import Path
+from dataclasses import dataclass
 
-from PyQt6.QtWidgets import (
-    QWidget, QVBoxLayout, QHBoxLayout, QLabel, QFrame,
-    QGraphicsView, QGraphicsScene, QGraphicsPixmapItem,
-    QGraphicsRectItem, QScrollArea, QPushButton, QSpinBox,
-    QGraphicsTextItem, QSizePolicy
+from PySide6.QtCore import (
+    QRectF,
+    Qt,
+    Signal,
 )
-from PyQt6.QtCore import Qt, pyqtSignal, QPointF, QRectF, QSize
-from PyQt6.QtGui import (
-    QColor, QPen, QBrush, QPixmap, QImage, QPainter,
-    QWheelEvent, QMouseEvent, QFont, QCursor
+from PySide6.QtGui import (
+    QBrush,
+    QColor,
+    QFont,
+    QImage,
+    QMouseEvent,
+    QPainter,
+    QPen,
+    QPixmap,
+    QWheelEvent,
+)
+from PySide6.QtWidgets import (
+    QFrame,
+    QGraphicsScene,
+    QGraphicsView,
+    QHBoxLayout,
+    QLabel,
+    QPushButton,
+    QScrollArea,
+    QSpinBox,
+    QVBoxLayout,
+    QWidget,
 )
 
-from .tokens import SPACING, RADIUS, TYPOGRAPHY, ColorPalette, get_theme
+from .tokens import RADIUS, SPACING, TYPOGRAPHY, ColorPalette, get_colors
 
 # Try to import PyMuPDF
 try:
     import fitz  # PyMuPDF
+
     HAS_PYMUPDF = True
 except ImportError:
     HAS_PYMUPDF = False
@@ -32,16 +48,18 @@ except ImportError:
 @dataclass
 class PDFTextBlock:
     """Text block extracted from PDF page"""
+
     text: str
-    rect: Tuple[float, float, float, float]  # x0, y0, x1, y1
+    rect: tuple[float, float, float, float]  # x0, y0, x1, y1
     page: int
 
 
 @dataclass
 class PDFSelection:
     """Selection data for PDF text"""
+
     page: int
-    rect: Tuple[float, float, float, float]  # x0, y0, x1, y1
+    rect: tuple[float, float, float, float]  # x0, y0, x1, y1
     text: str = ""
 
 
@@ -71,10 +89,10 @@ class PDFPageViewer(QFrame):
         zoom_changed(zoom): Emitted when zoom level changes
     """
 
-    page_changed = pyqtSignal(int)
-    text_selected = pyqtSignal(object)  # PDFSelection
-    document_loaded = pyqtSignal(int)  # page_count
-    zoom_changed = pyqtSignal(float)
+    page_changed = Signal(int)
+    text_selected = Signal(object)  # PDFSelection
+    document_loaded = Signal(int)  # page_count
+    zoom_changed = Signal(float)
 
     def __init__(
         self,
@@ -82,10 +100,10 @@ class PDFPageViewer(QFrame):
         show_thumbnails: bool = False,
         initial_zoom: float = 1.0,
         colors: ColorPalette = None,
-        parent=None
+        parent=None,
     ):
         super().__init__(parent)
-        self._colors = colors or get_theme("dark")
+        self._colors = colors or get_colors()
         self._doc = None
         self._current_page = 0
         self._page_count = 0
@@ -93,7 +111,7 @@ class PDFPageViewer(QFrame):
         self._dpi = 150  # Render DPI
         self._selection_start = None
         self._selection_rect = None
-        self._text_blocks: List[PDFTextBlock] = []
+        self._text_blocks: list[PDFTextBlock] = []
 
         self._setup_ui(show_toolbar, show_thumbnails)
 
@@ -277,7 +295,9 @@ class PDFPageViewer(QFrame):
         # Add icon
         btn_layout = QHBoxLayout(btn)
         btn_layout.setContentsMargins(0, 0, 0, 0)
-        icon = Icon(icon_name, size=18, color=self._colors.text_secondary, colors=self._colors)
+        icon = Icon(
+            icon_name, size=18, color=self._colors.text_secondary, colors=self._colors
+        )
         btn_layout.addWidget(icon, alignment=Qt.AlignmentFlag.AlignCenter)
 
         return btn
@@ -322,7 +342,7 @@ class PDFPageViewer(QFrame):
             "PyMuPDF not installed.\n\n"
             "Install with: uv add pymupdf\n\n"
             "Or: pip install pymupdf",
-            QFont("Roboto", 12)
+            QFont("Roboto", 12),
         )
         text.setDefaultTextColor(QColor(self._colors.text_secondary))
         text.setPos(50, 50)
@@ -346,17 +366,17 @@ class PDFPageViewer(QFrame):
             self._current_page = 0
 
             # Update UI
-            if hasattr(self, '_page_input'):
+            if hasattr(self, "_page_input"):
                 self._page_input.setMaximum(self._page_count)
                 self._page_input.setValue(1)
-            if hasattr(self, '_page_label'):
+            if hasattr(self, "_page_label"):
                 self._page_label.setText(f"/ {self._page_count}")
 
             # Render first page
             self._render_current_page()
 
             # Generate thumbnails if panel exists
-            if hasattr(self, '_thumbnail_layout'):
+            if hasattr(self, "_thumbnail_layout"):
                 self._generate_thumbnails()
 
             self.document_loaded.emit(self._page_count)
@@ -383,7 +403,9 @@ class PDFPageViewer(QFrame):
             pix.width,
             pix.height,
             pix.stride,
-            QImage.Format.Format_RGB888 if pix.n == 3 else QImage.Format.Format_RGBA8888
+            QImage.Format.Format_RGB888
+            if pix.n == 3
+            else QImage.Format.Format_RGBA8888,
         )
 
         pixmap = QPixmap.fromImage(img)
@@ -402,11 +424,13 @@ class PDFPageViewer(QFrame):
 
         for block in blocks:
             if len(block) >= 5 and block[6] == 0:  # Text block (not image)
-                self._text_blocks.append(PDFTextBlock(
-                    text=block[4],
-                    rect=(block[0], block[1], block[2], block[3]),
-                    page=self._current_page
-                ))
+                self._text_blocks.append(
+                    PDFTextBlock(
+                        text=block[4],
+                        rect=(block[0], block[1], block[2], block[3]),
+                        page=self._current_page,
+                    )
+                )
 
     def _generate_thumbnails(self):
         """Generate page thumbnails"""
@@ -430,14 +454,16 @@ class PDFPageViewer(QFrame):
                 pix.width,
                 pix.height,
                 pix.stride,
-                QImage.Format.Format_RGB888 if pix.n == 3 else QImage.Format.Format_RGBA8888
+                QImage.Format.Format_RGB888
+                if pix.n == 3
+                else QImage.Format.Format_RGBA8888,
             )
 
             thumb = PDFThumbnail(
                 QPixmap.fromImage(img),
                 i + 1,
                 selected=(i == self._current_page),
-                colors=self._colors
+                colors=self._colors,
             )
             thumb.clicked.connect(lambda p=i: self.go_to_page(p))
             self._thumbnail_layout.addWidget(thumb)
@@ -452,13 +478,13 @@ class PDFPageViewer(QFrame):
             self._current_page = page
             self._render_current_page()
 
-            if hasattr(self, '_page_input'):
+            if hasattr(self, "_page_input"):
                 self._page_input.blockSignals(True)
                 self._page_input.setValue(page + 1)
                 self._page_input.blockSignals(False)
 
             # Update thumbnail selection
-            if hasattr(self, '_thumbnail_layout'):
+            if hasattr(self, "_thumbnail_layout"):
                 for i in range(self._thumbnail_layout.count()):
                     item = self._thumbnail_layout.itemAt(i)
                     if item and item.widget():
@@ -479,7 +505,7 @@ class PDFPageViewer(QFrame):
         self._zoom = max(0.25, min(4.0, zoom))
         self._render_current_page()
 
-        if hasattr(self, '_zoom_label'):
+        if hasattr(self, "_zoom_label"):
             self._zoom_label.setText(f"{int(self._zoom * 100)}%")
 
         self.zoom_changed.emit(self._zoom)
@@ -519,7 +545,7 @@ class PDFPageViewer(QFrame):
             rect.x() / scale,
             rect.y() / scale,
             rect.right() / scale,
-            rect.bottom() / scale
+            rect.bottom() / scale,
         )
 
         # Find text in selection
@@ -527,9 +553,7 @@ class PDFPageViewer(QFrame):
         selected_text = page.get_text("text", clip=fitz.Rect(*pdf_rect))
 
         selection = PDFSelection(
-            page=self._current_page,
-            rect=pdf_rect,
-            text=selected_text.strip()
+            page=self._current_page, rect=pdf_rect, text=selected_text.strip()
         )
 
         self.text_selected.emit(selection)
@@ -549,7 +573,7 @@ class PDFPageViewer(QFrame):
         """Get current zoom level"""
         return self._zoom
 
-    def get_page_size(self) -> Optional[Tuple[float, float]]:
+    def get_page_size(self) -> tuple[float, float] | None:
         """Get the size of the current page in points"""
         if not self._doc or not HAS_PYMUPDF:
             return None
@@ -570,11 +594,11 @@ class PDFPageViewer(QFrame):
 class PDFGraphicsView(QGraphicsView):
     """Graphics view for rendering PDF pages with selection support"""
 
-    selection_made = pyqtSignal(QRectF)
+    selection_made = Signal(QRectF)
 
     def __init__(self, colors: ColorPalette = None, parent=None):
         super().__init__(parent)
-        self._colors = colors or get_theme("dark")
+        self._colors = colors or get_colors()
         self._pixmap_item = None
         self._selection_rect = None
         self._selection_start = None
@@ -605,10 +629,13 @@ class PDFGraphicsView(QGraphicsView):
         self._scene.clear()
 
         # Add white background behind page
-        bg = self._scene.addRect(
-            0, 0, pixmap.width(), pixmap.height(),
+        self._scene.addRect(
+            0,
+            0,
+            pixmap.width(),
+            pixmap.height(),
             QPen(Qt.PenStyle.NoPen),
-            QBrush(QColor("white"))
+            QBrush(QColor("white")),
         )
 
         # Add page pixmap
@@ -616,9 +643,12 @@ class PDFGraphicsView(QGraphicsView):
 
         # Add shadow effect
         shadow = self._scene.addRect(
-            5, 5, pixmap.width(), pixmap.height(),
+            5,
+            5,
+            pixmap.width(),
+            pixmap.height(),
             QPen(Qt.PenStyle.NoPen),
-            QBrush(QColor(0, 0, 0, 30))
+            QBrush(QColor(0, 0, 0, 30)),
         )
         shadow.setZValue(-1)
 
@@ -648,7 +678,7 @@ class PDFGraphicsView(QGraphicsView):
                 min(self._selection_start.x(), current.x()),
                 min(self._selection_start.y(), current.y()),
                 abs(current.x() - self._selection_start.x()),
-                abs(current.y() - self._selection_start.y())
+                abs(current.y() - self._selection_start.y()),
             )
 
             if self._selection_rect:
@@ -657,7 +687,7 @@ class PDFGraphicsView(QGraphicsView):
                 self._selection_rect = self._scene.addRect(
                     rect,
                     QPen(QColor(self._colors.primary), 2),
-                    QBrush(QColor(self._colors.primary + "40"))
+                    QBrush(QColor(self._colors.primary + "40")),
                 )
         else:
             super().mouseMoveEvent(event)
@@ -699,7 +729,7 @@ class PDFGraphicsView(QGraphicsView):
 class PDFThumbnail(QFrame):
     """Thumbnail widget for PDF page"""
 
-    clicked = pyqtSignal()
+    clicked = Signal()
 
     def __init__(
         self,
@@ -708,10 +738,10 @@ class PDFThumbnail(QFrame):
         selected: bool = False,
         has_codes: bool = False,
         colors: ColorPalette = None,
-        parent=None
+        parent=None,
     ):
         super().__init__(parent)
-        self._colors = colors or get_theme("dark")
+        self._colors = colors or get_colors()
         self._selected = selected
         self._page_number = page_number
 
@@ -724,11 +754,14 @@ class PDFThumbnail(QFrame):
 
         # Image
         img_label = QLabel()
-        img_label.setPixmap(pixmap.scaled(
-            100, 130,
-            Qt.AspectRatioMode.KeepAspectRatio,
-            Qt.TransformationMode.SmoothTransformation
-        ))
+        img_label.setPixmap(
+            pixmap.scaled(
+                100,
+                130,
+                Qt.AspectRatioMode.KeepAspectRatio,
+                Qt.TransformationMode.SmoothTransformation,
+            )
+        )
         img_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         layout.addWidget(img_label)
 
@@ -753,7 +786,11 @@ class PDFThumbnail(QFrame):
 
     def _update_style(self):
         """Update visual style based on selection state"""
-        border = f"2px solid {self._colors.primary}" if self._selected else "2px solid transparent"
+        border = (
+            f"2px solid {self._colors.primary}"
+            if self._selected
+            else "2px solid transparent"
+        )
         self.setStyleSheet(f"""
             QFrame {{
                 background-color: {self._colors.surface_light};

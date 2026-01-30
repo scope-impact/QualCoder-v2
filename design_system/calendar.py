@@ -3,15 +3,20 @@ Calendar components
 Mini calendars, date pickers, and date navigation
 """
 
-from typing import List, Optional
 from datetime import date, timedelta
-from PyQt6.QtWidgets import (
-    QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
-    QFrame, QGridLayout, QSizePolicy
-)
-from PyQt6.QtCore import Qt, pyqtSignal
 
-from .tokens import SPACING, RADIUS, TYPOGRAPHY, ColorPalette, get_theme
+from PyQt6.QtCore import Qt, pyqtSignal
+from PyQt6.QtWidgets import (
+    QFrame,
+    QGridLayout,
+    QHBoxLayout,
+    QLabel,
+    QPushButton,
+    QVBoxLayout,
+    QWidget,
+)
+
+from .tokens import RADIUS, SPACING, TYPOGRAPHY, ColorPalette, get_theme
 
 
 class CalendarMini(QFrame):
@@ -28,9 +33,9 @@ class CalendarMini(QFrame):
     def __init__(
         self,
         selected_date: date = None,
-        highlight_dates: List[date] = None,
+        highlight_dates: list[date] = None,
         colors: ColorPalette = None,
-        parent=None
+        parent=None,
     ):
         super().__init__(parent)
         self._colors = colors or get_theme("dark")
@@ -51,10 +56,7 @@ class CalendarMini(QFrame):
         main_layout.setSpacing(SPACING.sm)
 
         # Navigation
-        nav = CalendarNavigation(
-            self._viewing.strftime("%B %Y"),
-            colors=self._colors
-        )
+        nav = CalendarNavigation(self._viewing.strftime("%B %Y"), colors=self._colors)
         nav.prev_clicked.connect(self._prev_month)
         nav.next_clicked.connect(self._next_month)
         main_layout.addWidget(nav)
@@ -107,7 +109,7 @@ class CalendarMini(QFrame):
                     is_selected=(current == self._selected),
                     is_today=(current == date.today()),
                     is_highlighted=(current in self._highlight_dates),
-                    colors=self._colors
+                    colors=self._colors,
                 )
                 day_widget.clicked.connect(lambda d=current: self._select_date(d))
                 self._grid.addWidget(day_widget, week, day)
@@ -140,7 +142,7 @@ class CalendarMini(QFrame):
         self._nav.set_title(self._viewing.strftime("%B %Y"))
         self._build_calendar()
 
-    def set_highlights(self, dates: List[date]):
+    def set_highlights(self, dates: list[date]):
         self._highlight_dates = dates
         self._build_calendar()
 
@@ -162,7 +164,7 @@ class CalendarDay(QPushButton):
         is_today: bool = False,
         is_highlighted: bool = False,
         colors: ColorPalette = None,
-        parent=None
+        parent=None,
     ):
         super().__init__(str(day_date.day), parent)
         self._colors = colors or get_theme("dark")
@@ -211,7 +213,11 @@ class CalendarDay(QPushButton):
                 }}
             """)
         else:
-            text_color = self._colors.text_primary if is_current_month else self._colors.text_disabled
+            text_color = (
+                self._colors.text_primary
+                if is_current_month
+                else self._colors.text_disabled
+            )
             self.setStyleSheet(f"""
                 QPushButton {{
                     background-color: transparent;
@@ -240,12 +246,7 @@ class CalendarNavigation(QFrame):
     next_clicked = pyqtSignal()
     title_clicked = pyqtSignal()
 
-    def __init__(
-        self,
-        title: str,
-        colors: ColorPalette = None,
-        parent=None
-    ):
+    def __init__(self, title: str, colors: ColorPalette = None, parent=None):
         super().__init__(parent)
         self._colors = colors or get_theme("dark")
 
@@ -331,7 +332,7 @@ class DateRangePicker(QFrame):
         start_date: date = None,
         end_date: date = None,
         colors: ColorPalette = None,
-        parent=None
+        parent=None,
     ):
         super().__init__(parent)
         self._colors = colors or get_theme("dark")
@@ -367,7 +368,7 @@ class DateRangePicker(QFrame):
         self._style_date_btn(self._end_btn, end_date is not None)
         layout.addWidget(self._end_btn)
 
-    def _format_date(self, d: date) -> Optional[str]:
+    def _format_date(self, d: date) -> str | None:
         if d:
             return d.strftime("%b %d, %Y")
         return None
@@ -428,11 +429,7 @@ class QuickDateSelect(QFrame):
         ("last_month", "Last month"),
     ]
 
-    def __init__(
-        self,
-        colors: ColorPalette = None,
-        parent=None
-    ):
+    def __init__(self, colors: ColorPalette = None, parent=None):
         super().__init__(parent)
         self._colors = colors or get_theme("dark")
         self._selected = None
@@ -458,7 +455,7 @@ class QuickDateSelect(QFrame):
                     background-color: {self._colors.surface_light};
                 }}
             """)
-            btn.clicked.connect(lambda checked, p=preset_id: self._select(p))
+            btn.clicked.connect(lambda _checked, p=preset_id: self._select(p))
             layout.addWidget(btn)
 
     def _select(self, preset_id: str):

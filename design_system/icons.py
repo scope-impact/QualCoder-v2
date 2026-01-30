@@ -1,5 +1,5 @@
 """
-Material Icons support for PyQt6 using qtawesome.
+Material Icons support for PySide6 using qtawesome.
 
 This design system uses qtawesome for all icons. Use Material Design Icons 6
 with the 'mdi6.' prefix.
@@ -9,9 +9,12 @@ Browse available icons: https://pictogrammers.com/library/mdi/
 Usage:
     from design_system import Icon
 
-    # Use any mdi6 icon name
-    icon = Icon("mdi6.folder", size=20, color="#009688")
+    # Use any mdi6 icon name (color defaults to theme's text_secondary)
+    icon = Icon("mdi6.folder", size=20)
     layout.addWidget(icon)
+
+    # Or specify color from theme
+    icon = Icon("mdi6.folder", size=20, color=colors.primary)
 
     # Common icons:
     # mdi6.folder, mdi6.file-document, mdi6.code-tags
@@ -20,10 +23,10 @@ Usage:
 """
 
 import qtawesome as qta
-from PyQt6.QtWidgets import QLabel, QWidget, QHBoxLayout
-from PyQt6.QtCore import Qt
+from PySide6.QtCore import Qt
+from PySide6.QtWidgets import QHBoxLayout, QLabel, QWidget
 
-from .tokens import ColorPalette, get_theme
+from .tokens import ColorPalette, get_colors
 
 
 class Icon(QLabel):
@@ -37,7 +40,7 @@ class Icon(QLabel):
         colors: ColorPalette for theming
 
     Usage:
-        icon = Icon("mdi6.code-tags", size=24, color="#009688")
+        icon = Icon("mdi6.code-tags", size=24, color=colors.primary)
         icon = Icon("mdi6.folder")  # Uses default size and theme color
     """
 
@@ -47,10 +50,10 @@ class Icon(QLabel):
         size: int = 20,
         color: str = None,
         colors: ColorPalette = None,
-        parent=None
+        parent=None,
     ):
         super().__init__(parent)
-        self._colors = colors or get_theme("dark")
+        self._colors = colors or get_colors()
         self._name = name
         self._size = size
         self._color = color or self._colors.text_secondary
@@ -66,7 +69,7 @@ class Icon(QLabel):
             icon = qta.icon(self._name, color=self._color)
             pixmap = icon.pixmap(self._size, self._size)
             self.setPixmap(pixmap)
-        except Exception as e:
+        except Exception:
             # Show icon name as text if icon not found
             self.setText(self._name.split(".")[-1][:3])
             font = self.font()
@@ -83,7 +86,9 @@ class Icon(QLabel):
             pixmap = icon.pixmap(self._size, self._size)
             self.setPixmap(pixmap)
         except Exception:
-            self.setStyleSheet(f"QLabel {{ color: {self._color}; background: transparent; }}")
+            self.setStyleSheet(
+                f"QLabel {{ color: {self._color}; background: transparent; }}"
+            )
 
     def set_size(self, size: int):
         """Update icon size"""
@@ -120,10 +125,10 @@ class IconText(QWidget):
         spacing: int = 8,
         color: str = None,
         colors: ColorPalette = None,
-        parent=None
+        parent=None,
     ):
         super().__init__(parent)
-        self._colors = colors or get_theme("dark")
+        self._colors = colors or get_colors()
         self._color = color or self._colors.text_primary
 
         layout = QHBoxLayout(self)
@@ -150,20 +155,24 @@ class IconText(QWidget):
         self._label.setText(text)
 
 
-def icon(name: str, size: int = 20, color: str = None, colors: ColorPalette = None) -> Icon:
+def icon(
+    name: str, size: int = 20, color: str = None, colors: ColorPalette = None
+) -> Icon:
     """Create an Icon widget"""
     return Icon(name, size=size, color=color, colors=colors)
 
 
-def get_pixmap(name: str, size: int = 20, color: str = None, colors: ColorPalette = None):
+def get_pixmap(
+    name: str, size: int = 20, color: str = None, colors: ColorPalette = None
+):
     """Get a QPixmap for an icon (useful for buttons, etc.)"""
-    colors = colors or get_theme("dark")
+    colors = colors or get_colors()
     color = color or colors.text_secondary
     return qta.icon(name, color=color).pixmap(size, size)
 
 
 def get_qicon(name: str, color: str = None, colors: ColorPalette = None):
     """Get a QIcon for use with Qt widgets that accept QIcon"""
-    colors = colors or get_theme("dark")
+    colors = colors or get_colors()
     color = color or colors.text_secondary
     return qta.icon(name, color=color)

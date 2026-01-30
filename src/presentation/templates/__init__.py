@@ -6,11 +6,10 @@ into the standard QualCoder application structure.
 """
 
 from .app_shell import AppShell, ScreenProtocol
-
 from .layouts import (
     SidebarLayout,
-    ThreePanelLayout,
     SinglePanelLayout,
+    ThreePanelLayout,
 )
 
 __all__ = [

@@ -5,32 +5,36 @@ These interfaces define the CONTRACT for data access.
 Implementations (SQLite, in-memory, etc.) must conform to these protocols.
 """
 
-from typing import Protocol, List, Optional
+from typing import Protocol
 
-from src.domain.shared.types import CodeId, SegmentId, SourceId, CategoryId
-from src.domain.coding.entities import Code, Category, TextSegment, ImageSegment, AVSegment
-
+from src.domain.coding.entities import (
+    Category,
+    Code,
+    TextSegment,
+)
+from src.domain.shared.types import CategoryId, CodeId, SegmentId, SourceId
 
 # ============================================================
 # Coding Context Repositories
 # ============================================================
 
+
 class CodeRepository(Protocol):
     """Interface for Code persistence"""
 
-    def get_all(self) -> List[Code]:
+    def get_all(self) -> list[Code]:
         """Get all codes in the project"""
         ...
 
-    def get_by_id(self, code_id: CodeId) -> Optional[Code]:
+    def get_by_id(self, code_id: CodeId) -> Code | None:
         """Get a code by its ID"""
         ...
 
-    def get_by_name(self, name: str) -> Optional[Code]:
+    def get_by_name(self, name: str) -> Code | None:
         """Get a code by its name (for uniqueness checks)"""
         ...
 
-    def get_by_category(self, category_id: CategoryId) -> List[Code]:
+    def get_by_category(self, category_id: CategoryId) -> list[Code]:
         """Get all codes in a category"""
         ...
 
@@ -46,7 +50,7 @@ class CodeRepository(Protocol):
         """Check if a code exists"""
         ...
 
-    def name_exists(self, name: str, exclude_id: Optional[CodeId] = None) -> bool:
+    def name_exists(self, name: str, exclude_id: CodeId | None = None) -> bool:
         """Check if a code name is already taken"""
         ...
 
@@ -54,15 +58,15 @@ class CodeRepository(Protocol):
 class CategoryRepository(Protocol):
     """Interface for Category persistence"""
 
-    def get_all(self) -> List[Category]:
+    def get_all(self) -> list[Category]:
         """Get all categories"""
         ...
 
-    def get_by_id(self, category_id: CategoryId) -> Optional[Category]:
+    def get_by_id(self, category_id: CategoryId) -> Category | None:
         """Get a category by ID"""
         ...
 
-    def get_by_parent(self, parent_id: Optional[CategoryId]) -> List[Category]:
+    def get_by_parent(self, parent_id: CategoryId | None) -> list[Category]:
         """Get child categories of a parent (None for root)"""
         ...
 
@@ -74,7 +78,7 @@ class CategoryRepository(Protocol):
         """Delete a category"""
         ...
 
-    def name_exists(self, name: str, exclude_id: Optional[CategoryId] = None) -> bool:
+    def name_exists(self, name: str, exclude_id: CategoryId | None = None) -> bool:
         """Check if a category name is already taken"""
         ...
 
@@ -82,23 +86,25 @@ class CategoryRepository(Protocol):
 class SegmentRepository(Protocol):
     """Interface for Segment persistence (text, image, AV)"""
 
-    def get_all(self) -> List[TextSegment]:
+    def get_all(self) -> list[TextSegment]:
         """Get all text segments"""
         ...
 
-    def get_by_id(self, segment_id: SegmentId) -> Optional[TextSegment]:
+    def get_by_id(self, segment_id: SegmentId) -> TextSegment | None:
         """Get a segment by ID"""
         ...
 
-    def get_by_source(self, source_id: SourceId) -> List[TextSegment]:
+    def get_by_source(self, source_id: SourceId) -> list[TextSegment]:
         """Get all segments for a source"""
         ...
 
-    def get_by_code(self, code_id: CodeId) -> List[TextSegment]:
+    def get_by_code(self, code_id: CodeId) -> list[TextSegment]:
         """Get all segments with a specific code"""
         ...
 
-    def get_by_source_and_code(self, source_id: SourceId, code_id: CodeId) -> List[TextSegment]:
+    def get_by_source_and_code(
+        self, source_id: SourceId, code_id: CodeId
+    ) -> list[TextSegment]:
         """Get segments for a source with a specific code"""
         ...
 
@@ -127,10 +133,11 @@ class SegmentRepository(Protocol):
 # Source Context Repositories (referenced by Coding)
 # ============================================================
 
+
 class SourceRepository(Protocol):
     """Interface for Source persistence (minimal for Coding context)"""
 
-    def get_by_id(self, source_id: SourceId) -> Optional[object]:
+    def get_by_id(self, source_id: SourceId) -> object | None:
         """Get a source by ID (returns Source entity)"""
         ...
 
@@ -138,10 +145,10 @@ class SourceRepository(Protocol):
         """Check if a source exists"""
         ...
 
-    def get_content(self, source_id: SourceId) -> Optional[str]:
+    def get_content(self, source_id: SourceId) -> str | None:
         """Get the text content of a source"""
         ...
 
-    def get_length(self, source_id: SourceId) -> Optional[int]:
+    def get_length(self, source_id: SourceId) -> int | None:
         """Get the length of a source's content"""
         ...

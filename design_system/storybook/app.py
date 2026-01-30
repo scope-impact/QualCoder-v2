@@ -4,13 +4,17 @@ Storybook main application window
 
 import sys
 
-from PyQt6.QtWidgets import (
-    QApplication, QMainWindow, QWidget, QHBoxLayout, QStackedWidget
+from PySide6.QtWidgets import (
+    QApplication,
+    QHBoxLayout,
+    QMainWindow,
+    QStackedWidget,
+    QWidget,
 )
 
-from ..tokens import get_theme
-from .sidebar import StorybookSidebar
+from ..tokens import get_colors
 from .page import StoryPage
+from .sidebar import StorybookSidebar
 from .stories import get_all_sections
 
 
@@ -19,7 +23,7 @@ class Storybook(QMainWindow):
 
     def __init__(self):
         super().__init__()
-        self._colors = get_theme()
+        self._colors = get_colors()
         self._pages = {}
         self._current_page_key = None
 
@@ -42,10 +46,7 @@ class Storybook(QMainWindow):
         main_layout.setSpacing(0)
 
         # Sidebar
-        self._sidebar = StorybookSidebar(
-            self._on_page_select,
-            colors=self._colors
-        )
+        self._sidebar = StorybookSidebar(self._on_page_select, colors=self._colors)
         main_layout.addWidget(self._sidebar)
 
         # Content

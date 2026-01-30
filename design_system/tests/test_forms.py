@@ -2,12 +2,14 @@
 Tests for form components: SearchBox, Select, Textarea, NumberInput, etc.
 """
 
-import pytest
-from PyQt6.QtCore import Qt
-
 from design_system.forms import (
-    SearchBox, Select, MultiSelect, Textarea,
-    NumberInput, RangeSlider, ColorPicker, FormGroup
+    ColorPicker,
+    FormGroup,
+    NumberInput,
+    RangeSlider,
+    SearchBox,
+    Select,
+    Textarea,
 )
 
 

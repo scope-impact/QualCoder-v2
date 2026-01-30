@@ -3,11 +3,23 @@ Spinner/Loading components
 Material Design styled loading indicators
 """
 
-from PyQt6.QtWidgets import QWidget, QHBoxLayout, QLabel, QVBoxLayout
-from PyQt6.QtCore import Qt, QTimer, QPropertyAnimation, QEasingCurve
-from PyQt6.QtGui import QPainter, QColor, QPen, QConicalGradient
+from PySide6.QtCore import (
+    Qt,
+    QTimer,
+)
+from PySide6.QtGui import (
+    QColor,
+    QPainter,
+    QPen,
+)
+from PySide6.QtWidgets import (
+    QHBoxLayout,
+    QLabel,
+    QVBoxLayout,
+    QWidget,
+)
 
-from .tokens import SPACING, TYPOGRAPHY, ColorPalette, get_theme
+from .tokens import SPACING, TYPOGRAPHY, ColorPalette, get_colors
 
 
 class Spinner(QWidget):
@@ -27,10 +39,10 @@ class Spinner(QWidget):
         color: str = None,
         stroke_width: int = 3,
         colors: ColorPalette = None,
-        parent=None
+        parent=None,
     ):
         super().__init__(parent)
-        self._colors = colors or get_theme("dark")
+        self._colors = colors or get_colors()
         self._size = size
         self._color = color or self._colors.primary
         self._stroke_width = stroke_width
@@ -61,7 +73,7 @@ class Spinner(QWidget):
         self._angle = (self._angle + 6) % 360
         self.update()
 
-    def paintEvent(self, event):
+    def paintEvent(self, _event):
         painter = QPainter(self)
         painter.setRenderHint(QPainter.RenderHint.Antialiasing)
 
@@ -71,27 +83,34 @@ class Spinner(QWidget):
         y = self._stroke_width / 2
 
         # Draw background circle (track)
-        painter.setPen(QPen(
-            QColor(self._colors.surface_light),
-            self._stroke_width,
-            Qt.PenStyle.SolidLine,
-            Qt.PenCapStyle.RoundCap
-        ))
+        painter.setPen(
+            QPen(
+                QColor(self._colors.surface_light),
+                self._stroke_width,
+                Qt.PenStyle.SolidLine,
+                Qt.PenCapStyle.RoundCap,
+            )
+        )
         painter.drawEllipse(int(x), int(y), size, size)
 
         # Draw spinning arc
-        painter.setPen(QPen(
-            QColor(self._color),
-            self._stroke_width,
-            Qt.PenStyle.SolidLine,
-            Qt.PenCapStyle.RoundCap
-        ))
+        painter.setPen(
+            QPen(
+                QColor(self._color),
+                self._stroke_width,
+                Qt.PenStyle.SolidLine,
+                Qt.PenCapStyle.RoundCap,
+            )
+        )
 
         # Draw arc (90 degrees)
         painter.drawArc(
-            int(x), int(y), size, size,
+            int(x),
+            int(y),
+            size,
+            size,
             self._angle * 16,  # Start angle (in 1/16th degrees)
-            90 * 16  # Span angle
+            90 * 16,  # Span angle
         )
 
 
@@ -109,10 +128,10 @@ class LoadingIndicator(QWidget):
         text: str = "Loading...",
         spinner_size: int = 24,
         colors: ColorPalette = None,
-        parent=None
+        parent=None,
     ):
         super().__init__(parent)
-        self._colors = colors or get_theme("dark")
+        self._colors = colors or get_colors()
 
         layout = QHBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
@@ -143,7 +162,7 @@ class LoadingIndicator(QWidget):
 
     def setText(self, text: str):
         """Update the loading text"""
-        if hasattr(self, '_label'):
+        if hasattr(self, "_label"):
             self._label.setText(text)
 
 
@@ -160,11 +179,11 @@ class LoadingOverlay(QWidget):
 
     def __init__(self, parent=None):
         super().__init__(parent)
-        self._colors = get_theme("dark")
+        self._colors = get_colors()
 
         self.setStyleSheet(f"""
             QWidget {{
-                background-color: rgba(0, 0, 0, 0.5);
+                background-color: {self._colors.overlay_dark};
             }}
         """)
 
@@ -187,7 +206,9 @@ class LoadingOverlay(QWidget):
 
         # Spinner
         self._spinner = Spinner(size=40, colors=self._colors)
-        container_layout.addWidget(self._spinner, alignment=Qt.AlignmentFlag.AlignCenter)
+        container_layout.addWidget(
+            self._spinner, alignment=Qt.AlignmentFlag.AlignCenter
+        )
 
         # Text
         self._label = QLabel("Loading...")
@@ -219,7 +240,7 @@ class LoadingOverlay(QWidget):
         self._spinner.stop()
         self.hide()
 
-    def resizeEvent(self, event):
+    def resizeEvent(self, _event):
         """Resize with parent"""
         if self.parent():
             self.setGeometry(self.parent().rect())
@@ -238,10 +259,10 @@ class SkeletonLoader(QWidget):
         width: int = 100,
         height: int = 20,
         colors: ColorPalette = None,
-        parent=None
+        parent=None,
     ):
         super().__init__(parent)
-        self._colors = colors or get_theme("dark")
+        self._colors = colors or get_colors()
 
         self.setFixedSize(width, height)
 
@@ -255,12 +276,9 @@ class SkeletonLoader(QWidget):
         self._offset = (self._offset + 5) % (self.width() * 2)
         self.update()
 
-    def paintEvent(self, event):
+    def paintEvent(self, _event):
         painter = QPainter(self)
         painter.setRenderHint(QPainter.RenderHint.Antialiasing)
-
-        # Create gradient
-        gradient = QConicalGradient(self.width() / 2, self.height() / 2, 0)
 
         base_color = QColor(self._colors.surface_light)
         highlight_color = QColor(self._colors.surface_lighter)
@@ -272,12 +290,12 @@ class SkeletonLoader(QWidget):
 
         # Shimmer highlight
         highlight_width = self.width() // 3
-        highlight_x = (self._offset - highlight_width) % (self.width() + highlight_width)
+        highlight_x = (self._offset - highlight_width) % (
+            self.width() + highlight_width
+        )
 
         painter.setBrush(highlight_color)
         painter.setOpacity(0.5)
         painter.drawRoundedRect(
-            int(highlight_x), 0,
-            highlight_width, self.height(),
-            4, 4
+            int(highlight_x), 0, highlight_width, self.height(), 4, 4
         )

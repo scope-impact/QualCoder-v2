@@ -2,13 +2,12 @@
 Core component stories: buttons, inputs, cards, badges
 """
 
-from typing import List, Tuple, Callable
-from PyQt6.QtWidgets import QWidget, QHBoxLayout, QLabel
+from PySide6.QtWidgets import QHBoxLayout, QLabel, QWidget
 
-from ...tokens import SPACING, ColorPalette
-from ...components import Button, Input, Card, Badge, Chip, FileIcon
-from ...forms import SearchBox, Textarea, NumberInput
+from ...components import Badge, Button, Card, Chip, FileIcon, Input
 from ...data_display import InfoCard
+from ...forms import NumberInput, SearchBox, Textarea
+from ...tokens import SPACING, ColorPalette
 from ..page import StoryPage
 
 
@@ -23,11 +22,13 @@ def create_buttons_story(colors: ColorPalette) -> StoryPage:
         btn = Button(variant.capitalize(), variant=variant, colors=colors)
         layout.addWidget(btn)
     layout.addStretch()
-    examples.append((
-        "Button Variants",
-        container,
-        'Button("Primary", variant="primary")\nButton("Secondary", variant="secondary")'
-    ))
+    examples.append(
+        (
+            "Button Variants",
+            container,
+            'Button("Primary", variant="primary")\nButton("Secondary", variant="secondary")',
+        )
+    )
 
     # Sizes
     container2 = QWidget()
@@ -37,17 +38,19 @@ def create_buttons_story(colors: ColorPalette) -> StoryPage:
         btn = Button(f"Size {size}", size=size, colors=colors)
         layout2.addWidget(btn)
     layout2.addStretch()
-    examples.append((
-        "Button Sizes",
-        container2,
-        'Button("Small", size="sm")\nButton("Large", size="lg")'
-    ))
+    examples.append(
+        (
+            "Button Sizes",
+            container2,
+            'Button("Small", size="sm")\nButton("Large", size="lg")',
+        )
+    )
 
     return StoryPage(
         "Buttons",
         "Buttons trigger actions or events. Use different variants to indicate importance and context.",
         examples,
-        colors=colors
+        colors=colors,
     )
 
 
@@ -56,42 +59,40 @@ def create_inputs_story(colors: ColorPalette) -> StoryPage:
 
     # Basic input
     inp = Input(placeholder="Enter text...", colors=colors)
-    examples.append((
-        "Basic Input",
-        inp,
-        'Input(placeholder="Enter text...")'
-    ))
+    examples.append(("Basic Input", inp, 'Input(placeholder="Enter text...")'))
 
     # Search box
     search = SearchBox(placeholder="Search files...", colors=colors)
-    examples.append((
-        "Search Box",
-        search,
-        'SearchBox(placeholder="Search files...")'
-    ))
+    examples.append(("Search Box", search, 'SearchBox(placeholder="Search files...")'))
 
     # Textarea
-    textarea = Textarea(placeholder="Enter description...", min_height=100, colors=colors)
-    examples.append((
-        "Textarea",
-        textarea,
-        'Textarea(placeholder="Enter description...", min_height=100)'
-    ))
+    textarea = Textarea(
+        placeholder="Enter description...", min_height=100, colors=colors
+    )
+    examples.append(
+        (
+            "Textarea",
+            textarea,
+            'Textarea(placeholder="Enter description...", min_height=100)',
+        )
+    )
 
     # Number input
     number = NumberInput(min_val=0, max_val=100, step=1, colors=colors)
     number.setValue(50)
-    examples.append((
-        "Number Input",
-        number,
-        'number = NumberInput(min_val=0, max_val=100)\nnumber.setValue(50)'
-    ))
+    examples.append(
+        (
+            "Number Input",
+            number,
+            "number = NumberInput(min_val=0, max_val=100)\nnumber.setValue(50)",
+        )
+    )
 
     return StoryPage(
         "Inputs",
         "Form inputs for collecting user data. Various types for different data formats.",
         examples,
-        colors=colors
+        colors=colors,
     )
 
 
@@ -104,30 +105,26 @@ def create_cards_story(colors: ColorPalette) -> StoryPage:
     content_label = QLabel("Card Content")
     content_label.setStyleSheet(f"color: {colors.text_primary}; padding: 20px;")
     card.layout().addWidget(content_label)
-    examples.append((
-        "Basic Card",
-        card,
-        'card = Card()\ncard.layout().addWidget(content)'
-    ))
+    examples.append(
+        ("Basic Card", card, "card = Card()\ncard.layout().addWidget(content)")
+    )
 
     # Info card
-    info = InfoCard(
-        title="Project Statistics",
-        icon="mdi6.chart-bar",
-        colors=colors
-    )
+    info = InfoCard(title="Project Statistics", icon="mdi6.chart-bar", colors=colors)
     info.set_text("This project contains 24 files, 156 codes, and 42 memos.")
-    examples.append((
-        "Info Card",
-        info,
-        'InfoCard(title="Stats", icon="mdi6.chart-bar")\ninfo.set_text("...")'
-    ))
+    examples.append(
+        (
+            "Info Card",
+            info,
+            'InfoCard(title="Stats", icon="mdi6.chart-bar")\ninfo.set_text("...")',
+        )
+    )
 
     return StoryPage(
         "Cards",
         "Cards group related content and actions. Use them to create visual hierarchy.",
         examples,
-        colors=colors
+        colors=colors,
     )
 
 
@@ -142,11 +139,9 @@ def create_badges_story(colors: ColorPalette) -> StoryPage:
         badge = Badge(variant.capitalize(), variant=variant, colors=colors)
         layout.addWidget(badge)
     layout.addStretch()
-    examples.append((
-        "Badge Variants",
-        container,
-        'Badge("Success", variant="success")'
-    ))
+    examples.append(
+        ("Badge Variants", container, 'Badge("Success", variant="success")')
+    )
 
     # Chips
     container2 = QWidget()
@@ -159,11 +154,9 @@ def create_badges_story(colors: ColorPalette) -> StoryPage:
     layout2.addWidget(chip2)
     layout2.addWidget(chip3)
     layout2.addStretch()
-    examples.append((
-        "Chips",
-        container2,
-        'Chip("Learning")\nChip("Experience", closable=True)'
-    ))
+    examples.append(
+        ("Chips", container2, 'Chip("Learning")\nChip("Experience", closable=True)')
+    )
 
     # File icons
     container3 = QWidget()
@@ -173,21 +166,17 @@ def create_badges_story(colors: ColorPalette) -> StoryPage:
         icon = FileIcon(ftype, colors=colors)
         layout3.addWidget(icon)
     layout3.addStretch()
-    examples.append((
-        "File Icons",
-        container3,
-        'FileIcon("audio")'
-    ))
+    examples.append(("File Icons", container3, 'FileIcon("audio")'))
 
     return StoryPage(
         "Badges & Chips",
         "Badges show status or counts. Chips represent tags, codes, or categories.",
         examples,
-        colors=colors
+        colors=colors,
     )
 
 
-def get_stories(colors: ColorPalette) -> List[Tuple[str, str, StoryPage]]:
+def get_stories(colors: ColorPalette) -> list[tuple[str, str, StoryPage]]:
     """Return all core stories"""
     return [
         ("buttons", "Buttons", create_buttons_story(colors)),

@@ -3,14 +3,17 @@ Media components
 Video, audio, and timeline widgets
 """
 
-from typing import List, Optional
-from PyQt6.QtWidgets import (
-    QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
-    QFrame, QSlider, QSizePolicy
+from PySide6.QtCore import Qt, Signal
+from PySide6.QtWidgets import (
+    QFrame,
+    QHBoxLayout,
+    QLabel,
+    QPushButton,
+    QSlider,
+    QVBoxLayout,
 )
-from PyQt6.QtCore import Qt, pyqtSignal, QTimer
 
-from .tokens import SPACING, RADIUS, TYPOGRAPHY, ColorPalette, get_theme
+from .tokens import RADIUS, SPACING, TYPOGRAPHY, ColorPalette, get_colors
 
 
 class VideoContainer(QFrame):
@@ -23,18 +26,15 @@ class VideoContainer(QFrame):
     """
 
     def __init__(
-        self,
-        aspect_ratio: float = 16/9,
-        colors: ColorPalette = None,
-        parent=None
+        self, aspect_ratio: float = 16 / 9, colors: ColorPalette = None, parent=None
     ):
         super().__init__(parent)
-        self._colors = colors or get_theme("dark")
+        self._colors = colors or get_colors()
         self._aspect_ratio = aspect_ratio
 
         self.setStyleSheet(f"""
             QFrame {{
-                background-color: #000000;
+                background-color: {self._colors.text_primary};
                 border-radius: {RADIUS.md}px;
             }}
         """)
@@ -47,11 +47,13 @@ class VideoContainer(QFrame):
 
         # Placeholder
         self._placeholder = QLabel("🎬")
-        self._placeholder.setStyleSheet(f"font-size: 48px; color: {self._colors.text_secondary};")
+        self._placeholder.setStyleSheet(
+            f"font-size: 48px; color: {self._colors.text_secondary};"
+        )
         self._placeholder.setAlignment(Qt.AlignmentFlag.AlignCenter)
         layout.addWidget(self._placeholder)
 
-    def set_source(self, path: str):
+    def set_source(self, _path: str):
         # In a real implementation, this would load the video
         self._placeholder.setText("▶")
 
@@ -66,15 +68,11 @@ class WaveformVisualization(QFrame):
         waveform.position_changed.connect(self.seek)
     """
 
-    position_changed = pyqtSignal(float)  # 0.0 to 1.0
+    position_changed = Signal(float)  # 0.0 to 1.0
 
-    def __init__(
-        self,
-        colors: ColorPalette = None,
-        parent=None
-    ):
+    def __init__(self, colors: ColorPalette = None, parent=None):
         super().__init__(parent)
-        self._colors = colors or get_theme("dark")
+        self._colors = colors or get_colors()
         self._position = 0.0
         self._segments = []
 
@@ -120,17 +118,14 @@ class Timeline(QFrame):
         timeline.add_segment(10.0, 25.0, "#FFC107", "Learning")
     """
 
-    position_changed = pyqtSignal(float)  # seconds
-    segment_clicked = pyqtSignal(str)  # segment_id
+    position_changed = Signal(float)  # seconds
+    segment_clicked = Signal(str)  # segment_id
 
     def __init__(
-        self,
-        duration: float = 100.0,
-        colors: ColorPalette = None,
-        parent=None
+        self, duration: float = 100.0, colors: ColorPalette = None, parent=None
     ):
         super().__init__(parent)
-        self._colors = colors or get_theme("dark")
+        self._colors = colors or get_colors()
         self._duration = duration
         self._position = 0.0
         self._segments = []
@@ -159,11 +154,15 @@ class Timeline(QFrame):
         # Time labels
         time_layout = QHBoxLayout()
         self._current_time = QLabel("0:00")
-        self._current_time.setStyleSheet(f"color: {self._colors.text_secondary}; font-size: {TYPOGRAPHY.text_xs}px;")
+        self._current_time.setStyleSheet(
+            f"color: {self._colors.text_secondary}; font-size: {TYPOGRAPHY.text_xs}px;"
+        )
         time_layout.addWidget(self._current_time)
         time_layout.addStretch()
         self._total_time = QLabel(self._format_time(duration))
-        self._total_time.setStyleSheet(f"color: {self._colors.text_secondary}; font-size: {TYPOGRAPHY.text_xs}px;")
+        self._total_time.setStyleSheet(
+            f"color: {self._colors.text_secondary}; font-size: {TYPOGRAPHY.text_xs}px;"
+        )
         time_layout.addWidget(self._total_time)
         layout.addLayout(time_layout)
 
@@ -177,12 +176,7 @@ class Timeline(QFrame):
         self._total_time.setText(self._format_time(seconds))
 
     def add_segment(self, start: float, end: float, color: str, id: str = ""):
-        self._segments.append({
-            "start": start,
-            "end": end,
-            "color": color,
-            "id": id
-        })
+        self._segments.append({"start": start, "end": end, "color": color, "id": id})
         self.update()
 
     def _format_time(self, seconds: float) -> str:
@@ -201,23 +195,23 @@ class PlayerControls(QFrame):
         controls.volume_changed.connect(self.set_volume)
     """
 
-    play_clicked = pyqtSignal()
-    pause_clicked = pyqtSignal()
-    stop_clicked = pyqtSignal()
-    rewind_clicked = pyqtSignal()
-    forward_clicked = pyqtSignal()
-    volume_changed = pyqtSignal(int)
-    rate_changed = pyqtSignal(float)
+    play_clicked = Signal()
+    pause_clicked = Signal()
+    stop_clicked = Signal()
+    rewind_clicked = Signal()
+    forward_clicked = Signal()
+    volume_changed = Signal(int)
+    rate_changed = Signal(float)
 
     def __init__(
         self,
         show_volume: bool = True,
         show_rate: bool = True,
         colors: ColorPalette = None,
-        parent=None
+        parent=None,
     ):
         super().__init__(parent)
-        self._colors = colors or get_theme("dark")
+        self._colors = colors or get_colors()
         self._playing = False
 
         self.setStyleSheet(f"""
@@ -264,7 +258,7 @@ class PlayerControls(QFrame):
             volume_layout.setSpacing(SPACING.sm)
 
             vol_icon = QLabel("🔊")
-            vol_icon.setStyleSheet(f"font-size: 16px;")
+            vol_icon.setStyleSheet("font-size: 16px;")
             volume_layout.addWidget(vol_icon)
 
             vol_slider = QSlider(Qt.Orientation.Horizontal)
@@ -367,7 +361,7 @@ class Thumbnail(QFrame):
         thumb.clicked.connect(self.select_page)
     """
 
-    clicked = pyqtSignal()
+    clicked = Signal()
 
     def __init__(
         self,
@@ -375,10 +369,11 @@ class Thumbnail(QFrame):
         label: str = "",
         selected: bool = False,
         colors: ColorPalette = None,
-        parent=None
+        parent=None,
     ):
         super().__init__(parent)
-        self._colors = colors or get_theme("dark")
+        self._image_path = image_path  # Store for future thumbnail display
+        self._colors = colors or get_colors()
         self._selected = selected
 
         self.setCursor(Qt.CursorShape.PointingHandCursor)
@@ -399,7 +394,9 @@ class Thumbnail(QFrame):
         img_layout.setContentsMargins(0, 0, 0, 0)
         img_label = QLabel("🖼️")
         img_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        img_label.setStyleSheet(f"font-size: 24px; color: {self._colors.text_secondary};")
+        img_label.setStyleSheet(
+            f"font-size: 24px; color: {self._colors.text_secondary};"
+        )
         img_layout.addWidget(img_label)
         layout.addWidget(img)
 
@@ -407,11 +404,17 @@ class Thumbnail(QFrame):
         if label:
             lbl = QLabel(label)
             lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
-            lbl.setStyleSheet(f"color: {self._colors.text_secondary}; font-size: {TYPOGRAPHY.text_xs}px;")
+            lbl.setStyleSheet(
+                f"color: {self._colors.text_secondary}; font-size: {TYPOGRAPHY.text_xs}px;"
+            )
             layout.addWidget(lbl)
 
     def _update_style(self):
-        border = f"2px solid {self._colors.primary}" if self._selected else "2px solid transparent"
+        border = (
+            f"2px solid {self._colors.primary}"
+            if self._selected
+            else "2px solid transparent"
+        )
         self.setStyleSheet(f"""
             QFrame {{
                 background-color: {self._colors.surface};
@@ -440,11 +443,11 @@ class ThumbnailStrip(QFrame):
         strip.thumbnail_selected.connect(self.on_select)
     """
 
-    thumbnail_selected = pyqtSignal(int)
+    thumbnail_selected = Signal(int)
 
     def __init__(self, colors: ColorPalette = None, parent=None):
         super().__init__(parent)
-        self._colors = colors or get_theme("dark")
+        self._colors = colors or get_colors()
         self._thumbnails = []
         self._selected = 0
 
@@ -462,7 +465,9 @@ class ThumbnailStrip(QFrame):
 
     def add_thumbnail(self, image_path: str = "", label: str = "") -> Thumbnail:
         idx = len(self._thumbnails)
-        thumb = Thumbnail(image_path, label, selected=(idx == self._selected), colors=self._colors)
+        thumb = Thumbnail(
+            image_path, label, selected=(idx == self._selected), colors=self._colors
+        )
         thumb.clicked.connect(lambda i=idx: self._select(i))
         self._thumbnails.append(thumb)
         self._layout.addWidget(thumb)

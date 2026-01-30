@@ -3,11 +3,10 @@ Tests for agent foundation types - TrustLevel and AgentSession.
 TDD RED phase: These tests will fail until agent.py is implemented.
 """
 
-import pytest
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from enum import Enum
 
-from src.domain.shared.agent import TrustLevel, AgentSession
+from src.domain.shared.agent import AgentSession, TrustLevel
 
 
 class TestTrustLevel:
@@ -34,18 +33,18 @@ class TestAgentSession:
 
     def test_sessions_with_same_values_are_equal(self):
         """AgentSessions with identical values should be equal"""
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         session1 = AgentSession(
             session_id="sess-123",
             agent_id="claude-code",
             trust_level=TrustLevel.SUGGEST,
-            created_at=now
+            created_at=now,
         )
         session2 = AgentSession(
             session_id="sess-123",
             agent_id="claude-code",
             trust_level=TrustLevel.SUGGEST,
-            created_at=now
+            created_at=now,
         )
         assert session1 == session2
 
@@ -55,7 +54,7 @@ class TestAgentSession:
             session_id="sess-1",
             agent_id="agent-1",
             trust_level=TrustLevel.AUTONOMOUS,
-            created_at=datetime.now(timezone.utc)
+            created_at=datetime.now(UTC),
         )
         session_set = {session}
         assert session in session_set
@@ -66,7 +65,7 @@ class TestAgentSession:
             session_id="sess-1",
             agent_id="agent-1",
             trust_level=TrustLevel.NOTIFY,
-            created_at=datetime.now(timezone.utc)
+            created_at=datetime.now(UTC),
         )
         assert session.metadata is None
 
@@ -77,8 +76,8 @@ class TestAgentSession:
             session_id="sess-1",
             agent_id="claude-code",
             trust_level=TrustLevel.SUGGEST,
-            created_at=datetime.now(timezone.utc),
-            metadata=metadata
+            created_at=datetime.now(UTC),
+            metadata=metadata,
         )
         assert session.metadata == metadata
         assert session.metadata["model"] == "claude-3"

@@ -3,13 +3,15 @@ Pagination components
 Page navigation and pagination controls
 """
 
-from typing import Optional
-from PyQt6.QtWidgets import (
-    QWidget, QHBoxLayout, QLabel, QPushButton, QFrame
+from PySide6.QtCore import Qt, Signal
+from PySide6.QtWidgets import (
+    QFrame,
+    QHBoxLayout,
+    QLabel,
+    QPushButton,
 )
-from PyQt6.QtCore import Qt, pyqtSignal
 
-from .tokens import SPACING, RADIUS, TYPOGRAPHY, ColorPalette, get_theme
+from .tokens import RADIUS, SPACING, TYPOGRAPHY, ColorPalette, get_colors
 
 
 class Pagination(QFrame):
@@ -21,7 +23,7 @@ class Pagination(QFrame):
         pagination.page_changed.connect(self.load_page)
     """
 
-    page_changed = pyqtSignal(int)
+    page_changed = Signal(int)
 
     def __init__(
         self,
@@ -30,10 +32,10 @@ class Pagination(QFrame):
         show_first_last: bool = True,
         max_visible: int = 5,
         colors: ColorPalette = None,
-        parent=None
+        parent=None,
     ):
         super().__init__(parent)
-        self._colors = colors or get_theme("dark")
+        self._colors = colors or get_colors()
         self._total_pages = total_pages
         self._current_page = current_page
         self._show_first_last = show_first_last
@@ -75,11 +77,9 @@ class Pagination(QFrame):
                 self._layout.addWidget(ellipsis)
             else:
                 btn = PageButton(
-                    page=page,
-                    active=(page == self._current_page),
-                    colors=self._colors
+                    page=page, active=(page == self._current_page), colors=self._colors
                 )
-                btn.clicked.connect(lambda checked, p=page: self._go_to_page(p))
+                btn.clicked.connect(lambda _checked, p=page: self._go_to_page(p))
                 self._layout.addWidget(btn)
 
         # Next button
@@ -97,7 +97,11 @@ class Pagination(QFrame):
         btn = QPushButton(text)
         btn.setFixedSize(32, 32)
         btn.setEnabled(enabled)
-        btn.setCursor(Qt.CursorShape.PointingHandCursor if enabled else Qt.CursorShape.ForbiddenCursor)
+        btn.setCursor(
+            Qt.CursorShape.PointingHandCursor
+            if enabled
+            else Qt.CursorShape.ForbiddenCursor
+        )
         btn.setStyleSheet(f"""
             QPushButton {{
                 background-color: transparent;
@@ -181,14 +185,10 @@ class PageButton(QPushButton):
     """
 
     def __init__(
-        self,
-        page: int,
-        active: bool = False,
-        colors: ColorPalette = None,
-        parent=None
+        self, page: int, active: bool = False, colors: ColorPalette = None, parent=None
     ):
         super().__init__(str(page), parent)
-        self._colors = colors or get_theme("dark")
+        self._colors = colors or get_colors()
         self._page = page
         self._active = active
 
@@ -247,10 +247,10 @@ class PaginationInfo(QFrame):
         total: int = 100,
         item_name: str = "items",
         colors: ColorPalette = None,
-        parent=None
+        parent=None,
     ):
         super().__init__(parent)
-        self._colors = colors or get_theme("dark")
+        self._colors = colors or get_colors()
 
         layout = QHBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
@@ -265,11 +265,7 @@ class PaginationInfo(QFrame):
         self.update_info(current_start, current_end, total, item_name)
 
     def update_info(
-        self,
-        current_start: int,
-        current_end: int,
-        total: int,
-        item_name: str = None
+        self, current_start: int, current_end: int, total: int, item_name: str = None
     ):
         if item_name:
             self._item_name = item_name
@@ -286,17 +282,13 @@ class SimplePagination(QFrame):
         pagination.page_changed.connect(self.load_page)
     """
 
-    page_changed = pyqtSignal(int)
+    page_changed = Signal(int)
 
     def __init__(
-        self,
-        current: int = 1,
-        total: int = 1,
-        colors: ColorPalette = None,
-        parent=None
+        self, current: int = 1, total: int = 1, colors: ColorPalette = None, parent=None
     ):
         super().__init__(parent)
-        self._colors = colors or get_theme("dark")
+        self._colors = colors or get_colors()
         self._current = current
         self._total = total
 

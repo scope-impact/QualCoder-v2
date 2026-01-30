@@ -2,14 +2,10 @@
 Tests for document components: TextPanel, SelectionPopup, TranscriptPanel, etc.
 """
 
-import pytest
-from PyQt6.QtCore import Qt
-from PyQt6.QtGui import QColor
-
 from design_system.document import (
+    SelectionPopup,
     TextColor,
     TextPanel,
-    SelectionPopup,
     TranscriptPanel,
 )
 
@@ -65,20 +61,17 @@ class TestTextPanel:
 
     def test_with_header(self, qtbot):
         """TextPanel should show header when enabled"""
-        panel = TextPanel(
-            title="Test Document",
-            show_header=True
-        )
+        panel = TextPanel(title="Test Document", show_header=True)
         qtbot.addWidget(panel)
-        assert hasattr(panel, '_header')
-        assert hasattr(panel, '_title_label')
+        assert hasattr(panel, "_header")
+        assert hasattr(panel, "_title_label")
 
     def test_text_selected_signal(self, qtbot):
         """TextPanel should have text_selected signal"""
         panel = TextPanel()
         qtbot.addWidget(panel)
 
-        assert hasattr(panel, 'text_selected')
+        assert hasattr(panel, "text_selected")
 
 
 class TestSelectionPopup:
@@ -114,7 +107,7 @@ class TestSelectionPopup:
         popup = SelectionPopup()
         qtbot.addWidget(popup)
 
-        assert hasattr(popup, 'action_clicked')
+        assert hasattr(popup, "action_clicked")
 
 
 class TestTranscriptPanel:
@@ -166,4 +159,4 @@ class TestTranscriptPanel:
         panel = TranscriptPanel()
         qtbot.addWidget(panel)
 
-        assert hasattr(panel, 'timestamp_clicked')
+        assert hasattr(panel, "timestamp_clicked")

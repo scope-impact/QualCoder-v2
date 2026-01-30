@@ -2,13 +2,15 @@
 Pytest configuration and fixtures for design system tests
 """
 
-import pytest
-from PyQt6.QtWidgets import QApplication, QWidget
-from PyQt6.QtCore import QTimer
-from PyQt6.QtGui import QPixmap
 import sys
-from pathlib import Path
 from datetime import datetime
+from pathlib import Path
+
+import pytest
+from PySide6.QtCore import QEventLoop, QTimer
+from PySide6.QtGui import QPixmap
+from PySide6.QtWidgets import QApplication, QWidget
+
 
 # Ensure we have a QApplication instance
 @pytest.fixture(scope="session")
@@ -28,6 +30,7 @@ def qapp():
 def dark_theme():
     """Get dark theme colors"""
     from design_system.tokens import get_theme
+
     return get_theme("dark")
 
 
@@ -35,6 +38,7 @@ def dark_theme():
 def light_theme():
     """Get light theme colors"""
     from design_system.tokens import get_theme
+
     return get_theme("light")
 
 
@@ -63,6 +67,7 @@ def take_screenshot(screenshot_dir, request):
             btn.show()
             take_screenshot(btn, "button_primary")
     """
+
     def _take_screenshot(widget: QWidget, name: str = None, delay_ms: int = 100):
         """
         Take a screenshot of a widget.
@@ -93,7 +98,7 @@ def take_screenshot(screenshot_dir, request):
 
         # Use QTimer for delay if needed
         if delay_ms > 0:
-            loop = __import__('PyQt6.QtCore', fromlist=['QEventLoop']).QEventLoop()
+            loop = QEventLoop()
             QTimer.singleShot(delay_ms, loop.quit)
             loop.exec()
 
@@ -126,6 +131,7 @@ def screenshot_comparison(screenshot_dir):
             btn.show()
             assert screenshot_comparison(btn, "button_baseline")
     """
+
     def _compare(widget: QWidget, baseline_name: str, threshold: float = 0.99):
         """
         Compare widget screenshot with baseline.
@@ -145,7 +151,7 @@ def screenshot_comparison(screenshot_dir):
         widget.show()
         QApplication.processEvents()
 
-        loop = __import__('PyQt6.QtCore', fromlist=['QEventLoop']).QEventLoop()
+        loop = QEventLoop()
         QTimer.singleShot(100, loop.quit)
         loop.exec()
 
@@ -162,7 +168,9 @@ def screenshot_comparison(screenshot_dir):
         baseline = QPixmap(str(baseline_path))
 
         if baseline.size() != pixmap.size():
-            print(f"\nSize mismatch: baseline={baseline.size()}, current={pixmap.size()}")
+            print(
+                f"\nSize mismatch: baseline={baseline.size()}, current={pixmap.size()}"
+            )
             return False
 
         # Simple pixel comparison
@@ -184,8 +192,9 @@ def screenshot_comparison(screenshot_dir):
             current_path.unlink(missing_ok=True)
             return True
         else:
-            print(f"\nVisual difference detected: {similarity:.2%} similarity (threshold: {threshold:.0%})")
-            diff_path = screenshot_dir / f"{baseline_name}_diff.png"
+            print(
+                f"\nVisual difference detected: {similarity:.2%} similarity (threshold: {threshold:.0%})"
+            )
             print(f"Current saved to: {current_path}")
             return False
 

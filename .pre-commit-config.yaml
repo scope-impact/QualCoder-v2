@@ -1,0 +1,14 @@
+# Pre-commit hooks for QualCoder v2
+# Install: uv tool install pre-commit && pre-commit install
+# Run manually: pre-commit run --all-files
+
+repos:
+  # Ruff - Fast Python linter and formatter
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.9.4
+    hooks:
+      # Linter
+      - id: ruff
+        args: [--fix]
+      # Formatter
+      - id: ruff-format

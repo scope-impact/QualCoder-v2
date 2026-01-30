@@ -3,26 +3,30 @@ Code Tree components
 Hierarchical tree widget for qualitative codes
 """
 
-from typing import List, Optional
 from dataclasses import dataclass
 
-from PyQt6.QtWidgets import (
-    QWidget, QVBoxLayout, QHBoxLayout, QLabel,
-    QFrame, QScrollArea, QSizePolicy
+from PySide6.QtCore import Qt, Signal
+from PySide6.QtWidgets import (
+    QFrame,
+    QHBoxLayout,
+    QLabel,
+    QScrollArea,
+    QVBoxLayout,
+    QWidget,
 )
-from PyQt6.QtCore import Qt, pyqtSignal
 
-from .tokens import SPACING, RADIUS, TYPOGRAPHY, ColorPalette, get_theme
+from .tokens import RADIUS, SPACING, TYPOGRAPHY, ColorPalette, get_colors
 
 
 @dataclass
 class CodeItem:
     """Data class for a code item"""
+
     id: str
     name: str
     color: str
     count: int = 0
-    children: List["CodeItem"] = None
+    children: list["CodeItem"] = None
 
     def __post_init__(self):
         if self.children is None:
@@ -45,13 +49,13 @@ class CodeTree(QScrollArea):
         tree.item_clicked.connect(lambda id: print(f"Clicked: {id}"))
     """
 
-    item_clicked = pyqtSignal(str)  # code_id
-    item_double_clicked = pyqtSignal(str)  # code_id
-    item_expanded = pyqtSignal(str, bool)  # code_id, is_expanded
+    item_clicked = Signal(str)  # code_id
+    item_double_clicked = Signal(str)  # code_id
+    item_expanded = Signal(str, bool)  # code_id, is_expanded
 
     def __init__(self, colors: ColorPalette = None, parent=None):
         super().__init__(parent)
-        self._colors = colors or get_theme("dark")
+        self._colors = colors or get_colors()
         self._items = []
         self._expanded = set()  # Set of expanded item IDs
 
@@ -73,7 +77,7 @@ class CodeTree(QScrollArea):
 
         self.setWidget(self._container)
 
-    def set_items(self, items: List[CodeItem]):
+    def set_items(self, items: list[CodeItem]):
         """Set the tree items"""
         self._items = items
         self._rebuild_tree()
@@ -121,7 +125,7 @@ class CodeTree(QScrollArea):
             depth=depth,
             expanded=item.id in self._expanded,
             has_children=len(item.children) > 0,
-            colors=self._colors
+            colors=self._colors,
         )
 
         node.clicked.connect(lambda: self.item_clicked.emit(item.id))
@@ -144,7 +148,7 @@ class CodeTree(QScrollArea):
         self._rebuild_tree()
         self.item_expanded.emit(item_id, item_id in self._expanded)
 
-    def _find_item(self, item_id: str, items: List[CodeItem]) -> Optional[CodeItem]:
+    def _find_item(self, item_id: str, items: list[CodeItem]) -> CodeItem | None:
         """Find an item by ID"""
         for item in items:
             if item.id == item_id:
@@ -154,7 +158,7 @@ class CodeTree(QScrollArea):
                 return found
         return None
 
-    def _remove_item_recursive(self, item_id: str, items: List[CodeItem]) -> bool:
+    def _remove_item_recursive(self, item_id: str, items: list[CodeItem]) -> bool:
         """Remove an item recursively"""
         for i, item in enumerate(items):
             if item.id == item_id:
@@ -168,9 +172,9 @@ class CodeTree(QScrollArea):
 class CodeTreeNode(QFrame):
     """Individual tree node widget"""
 
-    clicked = pyqtSignal()
-    double_clicked = pyqtSignal()
-    toggle_expanded = pyqtSignal()
+    clicked = Signal()
+    double_clicked = Signal()
+    toggle_expanded = Signal()
 
     def __init__(
         self,
@@ -179,10 +183,10 @@ class CodeTreeNode(QFrame):
         expanded: bool = False,
         has_children: bool = False,
         colors: ColorPalette = None,
-        parent=None
+        parent=None,
     ):
         super().__init__(parent)
-        self._colors = colors or get_theme("dark")
+        self._colors = colors or get_colors()
         self._item = item
         self._expanded = expanded
         self._has_children = has_children
@@ -204,7 +208,7 @@ class CodeTreeNode(QFrame):
             SPACING.lg + (depth * SPACING.xl),  # Indent based on depth
             SPACING.sm,
             SPACING.md,
-            SPACING.sm
+            SPACING.sm,
         )
         layout.setSpacing(SPACING.sm)
 
@@ -217,7 +221,7 @@ class CodeTreeNode(QFrame):
             """)
             toggle.setFixedWidth(16)
             toggle.setCursor(Qt.CursorShape.PointingHandCursor)
-            toggle.mousePressEvent = lambda e: self.toggle_expanded.emit()
+            toggle.mousePressEvent = lambda _e: self.toggle_expanded.emit()
             layout.addWidget(toggle)
         else:
             # Spacer for alignment

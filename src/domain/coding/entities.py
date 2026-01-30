@@ -6,26 +6,27 @@ This file defines the CONTRACT for data shapes in the Coding context.
 """
 
 from __future__ import annotations
+
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Optional
 
-from src.domain.shared.types import CodeId, SegmentId, SourceId, CategoryId
-
+from src.domain.shared.types import CategoryId, CodeId, SegmentId, SourceId
 
 # ============================================================
 # Value Objects
 # ============================================================
 
+
 @dataclass(frozen=True)
 class Color:
     """RGB color value object"""
+
     red: int
     green: int
     blue: int
 
     def __post_init__(self):
-        for c, name in [(self.red, 'red'), (self.green, 'green'), (self.blue, 'blue')]:
+        for c, name in [(self.red, "red"), (self.green, "green"), (self.blue, "blue")]:
             if not 0 <= c <= 255:
                 raise ValueError(f"{name} must be between 0 and 255, got {c}")
 
@@ -34,13 +35,13 @@ class Color:
 
     @classmethod
     def from_hex(cls, hex_color: str) -> Color:
-        hex_color = hex_color.lstrip('#')
+        hex_color = hex_color.lstrip("#")
         if len(hex_color) != 6:
             raise ValueError(f"Invalid hex color: {hex_color}")
         return cls(
             red=int(hex_color[0:2], 16),
             green=int(hex_color[2:4], 16),
-            blue=int(hex_color[4:6], 16)
+            blue=int(hex_color[4:6], 16),
         )
 
     def contrast_color(self) -> Color:
@@ -52,6 +53,7 @@ class Color:
 @dataclass(frozen=True)
 class TextPosition:
     """Position within a text source"""
+
     start: int
     end: int
 
@@ -75,6 +77,7 @@ class TextPosition:
 @dataclass(frozen=True)
 class ImageRegion:
     """Region within an image source"""
+
     x: int
     y: int
     width: int
@@ -90,16 +93,17 @@ class ImageRegion:
 
     def intersects(self, other: ImageRegion) -> bool:
         return not (
-            self.x + self.width <= other.x or
-            other.x + other.width <= self.x or
-            self.y + self.height <= other.y or
-            other.y + other.height <= self.y
+            self.x + self.width <= other.x
+            or other.x + other.width <= self.x
+            or self.y + self.height <= other.y
+            or other.y + other.height <= self.y
         )
 
 
 @dataclass(frozen=True)
 class TimeRange:
     """Time range within an audio/video source"""
+
     start_ms: int
     end_ms: int
 
@@ -107,7 +111,9 @@ class TimeRange:
         if self.start_ms < 0:
             raise ValueError(f"start_ms must be >= 0, got {self.start_ms}")
         if self.end_ms < self.start_ms:
-            raise ValueError(f"end_ms ({self.end_ms}) must be >= start_ms ({self.start_ms})")
+            raise ValueError(
+                f"end_ms ({self.end_ms}) must be >= start_ms ({self.start_ms})"
+            )
 
     @property
     def duration_ms(self) -> int:
@@ -121,6 +127,7 @@ class TimeRange:
 # Entities
 # ============================================================
 
+
 @dataclass(frozen=True)
 class Code:
     """
@@ -129,12 +136,13 @@ class Code:
 
     Aggregate Root for the Code aggregate.
     """
+
     id: CodeId
     name: str
     color: Color
-    memo: Optional[str] = None
-    category_id: Optional[CategoryId] = None
-    owner: Optional[str] = None  # CoderId as string for now
+    memo: str | None = None
+    category_id: CategoryId | None = None
+    owner: str | None = None  # CoderId as string for now
     created_at: datetime = field(default_factory=datetime.utcnow)
 
     def with_name(self, new_name: str) -> Code:
@@ -146,7 +154,7 @@ class Code:
             memo=self.memo,
             category_id=self.category_id,
             owner=self.owner,
-            created_at=self.created_at
+            created_at=self.created_at,
         )
 
     def with_color(self, new_color: Color) -> Code:
@@ -158,10 +166,10 @@ class Code:
             memo=self.memo,
             category_id=self.category_id,
             owner=self.owner,
-            created_at=self.created_at
+            created_at=self.created_at,
         )
 
-    def with_memo(self, new_memo: Optional[str]) -> Code:
+    def with_memo(self, new_memo: str | None) -> Code:
         """Return new Code with updated memo"""
         return Code(
             id=self.id,
@@ -170,10 +178,10 @@ class Code:
             memo=new_memo,
             category_id=self.category_id,
             owner=self.owner,
-            created_at=self.created_at
+            created_at=self.created_at,
         )
 
-    def with_category(self, new_category_id: Optional[CategoryId]) -> Code:
+    def with_category(self, new_category_id: CategoryId | None) -> Code:
         """Return new Code with updated category"""
         return Code(
             id=self.id,
@@ -182,7 +190,7 @@ class Code:
             memo=self.memo,
             category_id=new_category_id,
             owner=self.owner,
-            created_at=self.created_at
+            created_at=self.created_at,
         )
 
 
@@ -192,11 +200,12 @@ class Category:
     A hierarchical grouping of codes.
     Aggregate Root for the Category aggregate.
     """
+
     id: CategoryId
     name: str
-    parent_id: Optional[CategoryId] = None
-    memo: Optional[str] = None
-    owner: Optional[str] = None
+    parent_id: CategoryId | None = None
+    memo: str | None = None
+    owner: str | None = None
     created_at: datetime = field(default_factory=datetime.utcnow)
 
     def with_name(self, new_name: str) -> Category:
@@ -206,17 +215,17 @@ class Category:
             parent_id=self.parent_id,
             memo=self.memo,
             owner=self.owner,
-            created_at=self.created_at
+            created_at=self.created_at,
         )
 
-    def with_parent(self, new_parent_id: Optional[CategoryId]) -> Category:
+    def with_parent(self, new_parent_id: CategoryId | None) -> Category:
         return Category(
             id=self.id,
             name=self.name,
             parent_id=new_parent_id,
             memo=self.memo,
             owner=self.owner,
-            created_at=self.created_at
+            created_at=self.created_at,
         )
 
 
@@ -228,17 +237,18 @@ class TextSegment:
 
     Aggregate Root for the Segment aggregate.
     """
+
     id: SegmentId
     source_id: SourceId
     code_id: CodeId
     position: TextPosition
     selected_text: str
-    memo: Optional[str] = None
+    memo: str | None = None
     importance: int = 0  # 0=normal, 1=important, 2=very important
-    owner: Optional[str] = None
+    owner: str | None = None
     created_at: datetime = field(default_factory=datetime.utcnow)
 
-    def with_memo(self, new_memo: Optional[str]) -> TextSegment:
+    def with_memo(self, new_memo: str | None) -> TextSegment:
         return TextSegment(
             id=self.id,
             source_id=self.source_id,
@@ -248,7 +258,7 @@ class TextSegment:
             memo=new_memo,
             importance=self.importance,
             owner=self.owner,
-            created_at=self.created_at
+            created_at=self.created_at,
         )
 
     def with_importance(self, new_importance: int) -> TextSegment:
@@ -261,34 +271,36 @@ class TextSegment:
             memo=self.memo,
             importance=new_importance,
             owner=self.owner,
-            created_at=self.created_at
+            created_at=self.created_at,
         )
 
 
 @dataclass(frozen=True)
 class ImageSegment:
     """A coded region within an image source"""
+
     id: SegmentId
     source_id: SourceId
     code_id: CodeId
     region: ImageRegion
-    memo: Optional[str] = None
+    memo: str | None = None
     importance: int = 0
-    owner: Optional[str] = None
+    owner: str | None = None
     created_at: datetime = field(default_factory=datetime.utcnow)
 
 
 @dataclass(frozen=True)
 class AVSegment:
     """A coded time range within an audio/video source"""
+
     id: SegmentId
     source_id: SourceId
     code_id: CodeId
     time_range: TimeRange
-    transcript: Optional[str] = None
-    memo: Optional[str] = None
+    transcript: str | None = None
+    memo: str | None = None
     importance: int = 0
-    owner: Optional[str] = None
+    owner: str | None = None
     created_at: datetime = field(default_factory=datetime.utcnow)
 
 

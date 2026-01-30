@@ -6,9 +6,8 @@ Run with: pytest test_screenshots.py -v -s
 Screenshots saved to: design_system/tests/screenshots/
 """
 
-import pytest
-from PyQt6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QLabel
-from PyQt6.QtCore import Qt
+from PySide6.QtCore import Qt
+from PySide6.QtWidgets import QHBoxLayout, QLabel, QVBoxLayout, QWidget
 
 
 class TestComponentScreenshots:
@@ -198,7 +197,7 @@ class TestComponentScreenshots:
 
     def test_spinner(self, qtbot, take_screenshot):
         """Screenshot spinner/loading indicator"""
-        from design_system.spinner import Spinner, LoadingIndicator
+        from design_system.spinner import LoadingIndicator, Spinner
 
         container = QWidget()
         layout = QVBoxLayout(container)
@@ -278,7 +277,9 @@ class TestFormScreenshots:
         from design_system.forms import Textarea
 
         textarea = Textarea(placeholder="Enter your notes here...")
-        textarea.setText("This is a multi-line text area component.\n\nIt supports multiple lines of text input.")
+        textarea.setText(
+            "This is a multi-line text area component.\n\nIt supports multiple lines of text input."
+        )
         textarea.setFixedSize(350, 120)
 
         qtbot.addWidget(textarea)
@@ -286,8 +287,8 @@ class TestFormScreenshots:
 
     def test_form_group(self, qtbot, take_screenshot):
         """Screenshot form group with label"""
-        from design_system.forms import FormGroup
         from design_system.components import Input
+        from design_system.forms import FormGroup
 
         container = QWidget()
         layout = QVBoxLayout(container)
@@ -342,8 +343,7 @@ class TestNavigationScreenshots:
         from design_system.navigation import StepIndicator
 
         steps = StepIndicator(
-            steps=["Upload", "Configure", "Process", "Review"],
-            current=2
+            steps=["Upload", "Configure", "Process", "Review"], current=2
         )
 
         qtbot.addWidget(steps)
@@ -358,11 +358,28 @@ class TestDataDisplayScreenshots:
         from design_system.data_display import DataTable
 
         table = DataTable(columns=["Name", "Type", "Size", "Modified"])
-        table.set_data([
-            {"Name": "interview_01.txt", "Type": "Text", "Size": "24 KB", "Modified": "2024-01-15"},
-            {"Name": "audio_session.mp3", "Type": "Audio", "Size": "15 MB", "Modified": "2024-01-14"},
-            {"Name": "notes.pdf", "Type": "PDF", "Size": "2.3 MB", "Modified": "2024-01-13"},
-        ])
+        table.set_data(
+            [
+                {
+                    "Name": "interview_01.txt",
+                    "Type": "Text",
+                    "Size": "24 KB",
+                    "Modified": "2024-01-15",
+                },
+                {
+                    "Name": "audio_session.mp3",
+                    "Type": "Audio",
+                    "Size": "15 MB",
+                    "Modified": "2024-01-14",
+                },
+                {
+                    "Name": "notes.pdf",
+                    "Type": "PDF",
+                    "Size": "2.3 MB",
+                    "Modified": "2024-01-13",
+                },
+            ]
+        )
         table.setFixedSize(500, 200)
 
         qtbot.addWidget(table)
@@ -376,7 +393,7 @@ class TestDataDisplayScreenshots:
             icon="📁",
             title="No files yet",
             message="Upload your first file to get started with your research project.",
-            action_text="Upload Files"
+            action_text="Upload Files",
         )
         empty.setFixedWidth(400)
 
@@ -486,7 +503,7 @@ class TestToggleScreenshots:
 
     def test_toggle_states(self, qtbot, take_screenshot):
         """Screenshot toggle in different states"""
-        from design_system.toggle import Toggle, LabeledToggle
+        from design_system.toggle import LabeledToggle, Toggle
 
         container = QWidget()
         layout = QVBoxLayout(container)
@@ -538,7 +555,7 @@ class TestPickerScreenshots:
 
     def test_date_range_picker(self, qtbot, take_screenshot):
         """Screenshot date range picker"""
-        from design_system.calendar import DateRangePicker
+        from design_system.date_picker import DateRangePicker
 
         picker = DateRangePicker()
         picker.setFixedWidth(320)
@@ -552,7 +569,7 @@ class TestTreeScreenshots:
 
     def test_code_tree(self, qtbot, take_screenshot):
         """Screenshot code tree with hierarchy"""
-        from design_system.code_tree import CodeTree, CodeItem
+        from design_system.code_tree import CodeItem, CodeTree
 
         tree = CodeTree()
 
@@ -567,7 +584,7 @@ class TestTreeScreenshots:
                     CodeItem(id="1.1", name="Main Theme", color="#66BB6A", count=12),
                     CodeItem(id="1.2", name="Sub Theme", color="#81C784", count=8),
                     CodeItem(id="1.3", name="Minor Theme", color="#A5D6A7", count=5),
-                ]
+                ],
             ),
             CodeItem(
                 id="2",
@@ -577,7 +594,7 @@ class TestTreeScreenshots:
                 children=[
                     CodeItem(id="2.1", name="Category A", color="#42A5F5", count=10),
                     CodeItem(id="2.2", name="Category B", color="#64B5F6", count=8),
-                ]
+                ],
             ),
             CodeItem(id="3", name="Uncategorized", color="#FF9800", count=7),
         ]
@@ -597,7 +614,7 @@ class TestStatScreenshots:
 
     def test_stat_cards(self, qtbot, take_screenshot):
         """Screenshot stat card variants"""
-        from design_system.stat_card import StatCard, MiniStatCard
+        from design_system.stat_card import MiniStatCard, StatCard
 
         container = QWidget()
         layout = QVBoxLayout(container)
@@ -613,7 +630,7 @@ class TestStatScreenshots:
             label="Total Files",
             icon="mdi6.file-multiple",
             trend="+12%",
-            trend_direction="up"
+            trend_direction="up",
         )
         row1_layout.addWidget(card1)
 
@@ -622,7 +639,7 @@ class TestStatScreenshots:
             label="Codes Applied",
             icon="mdi6.tag-multiple",
             trend="+8%",
-            trend_direction="up"
+            trend_direction="up",
         )
         row1_layout.addWidget(card2)
 
@@ -655,8 +672,7 @@ class TestUploadScreenshots:
         from design_system.upload import DropZone
 
         zone = DropZone(
-            accepted_types=[".txt", ".pdf", ".docx", ".mp3", ".mp4"],
-            max_files=10
+            accepted_types=[".txt", ".pdf", ".docx", ".mp3", ".mp4"], max_files=10
         )
         zone.setFixedSize(400, 200)
 
@@ -679,7 +695,7 @@ class TestChatScreenshots:
         user_msg = MessageBubble(
             text="Can you help me find patterns in the interview data?",
             role="user",
-            timestamp="10:30 AM"
+            timestamp="10:30 AM",
         )
         layout.addWidget(user_msg)
 
@@ -687,7 +703,7 @@ class TestChatScreenshots:
         assistant_msg = MessageBubble(
             text="I found 3 recurring themes in your data:\n\n1. **Work-life balance** (mentioned 15 times)\n2. **Career growth** (mentioned 12 times)\n3. **Team collaboration** (mentioned 9 times)",
             role="assistant",
-            timestamp="10:31 AM"
+            timestamp="10:31 AM",
         )
         layout.addWidget(assistant_msg)
 
@@ -723,16 +739,12 @@ class TestChatScreenshots:
         layout.setSpacing(8)
 
         suggestion1 = CodeSuggestion(
-            code_name="Work-Life Balance",
-            color="#4CAF50",
-            confidence=0.92
+            code_name="Work-Life Balance", color="#4CAF50", confidence=0.92
         )
         layout.addWidget(suggestion1)
 
         suggestion2 = CodeSuggestion(
-            code_name="Career Growth",
-            color="#2196F3",
-            confidence=0.78
+            code_name="Career Growth", color="#2196F3", confidence=0.78
         )
         layout.addWidget(suggestion2)
 
@@ -787,7 +799,9 @@ class TestEditorScreenshots:
         from design_system.editors import MemoEditor
 
         editor = MemoEditor()
-        editor.set_content("This participant showed interesting patterns in their responses about work-life balance. Follow up on the connection to remote work policies.")
+        editor.set_content(
+            "This participant showed interesting patterns in their responses about work-life balance. Follow up on the connection to remote work policies."
+        )
         editor.setFixedSize(400, 180)
 
         qtbot.addWidget(editor)
@@ -799,16 +813,19 @@ class TestModalScreenshots:
 
     def test_modal_dialog(self, qtbot, take_screenshot):
         """Screenshot modal dialog"""
-        from design_system.modal import Modal
         from design_system.components import Label
+        from design_system.modal import Modal
 
         modal = Modal(title="Confirm Delete", size="sm")
         modal.body.layout().addWidget(
-            Label("Are you sure you want to delete this code?\nThis action cannot be undone.")
+            Label(
+                "Are you sure you want to delete this code?\nThis action cannot be undone."
+            )
         )
         modal.add_button("Cancel", variant="outline")
         modal.add_button("Delete", variant="destructive")
-        modal.setFixedSize(400, 200)
+        # Need extra height for centered container + shadow effects
+        modal.setFixedSize(400, 300)
 
         qtbot.addWidget(modal)
         take_screenshot(modal, "modal_dialog")
@@ -841,8 +858,8 @@ class TestLayoutScreenshots:
 
     def test_panel(self, qtbot, take_screenshot):
         """Screenshot panel with header"""
-        from design_system.layout import Panel, PanelHeader
         from design_system.components import Label
+        from design_system.layout import Panel, PanelHeader
 
         # Create container to hold header + panel
         container = QWidget()
@@ -852,8 +869,8 @@ class TestLayoutScreenshots:
 
         # Add header
         header = PanelHeader(title="Properties")
-        header.add_action("➕", lambda: None)
-        header.add_action("⋮", lambda: None)
+        header.add_action("➕", on_click=lambda: None)
+        header.add_action("⋮", on_click=lambda: None)
         container_layout.addWidget(header)
 
         # Add panel content
@@ -927,15 +944,17 @@ class TestVisualizationScreenshots:
 
     def test_chart_bar(self, qtbot, take_screenshot):
         """Screenshot bar chart"""
-        from design_system.charts import ChartWidget, ChartDataPoint
+        from design_system.charts import ChartDataPoint, ChartWidget
 
         chart = ChartWidget(title="Code Frequency")
-        chart.set_bar_data([
-            ChartDataPoint("Theme A", 25, "#4CAF50"),
-            ChartDataPoint("Theme B", 18, "#2196F3"),
-            ChartDataPoint("Theme C", 12, "#FF9800"),
-            ChartDataPoint("Theme D", 8, "#9C27B0"),
-        ])
+        chart.set_bar_data(
+            [
+                ChartDataPoint("Theme A", 25, "#4CAF50"),
+                ChartDataPoint("Theme B", 18, "#2196F3"),
+                ChartDataPoint("Theme C", 12, "#FF9800"),
+                ChartDataPoint("Theme D", 8, "#9C27B0"),
+            ]
+        )
         chart.setFixedSize(400, 300)
 
         qtbot.addWidget(chart)
@@ -943,7 +962,7 @@ class TestVisualizationScreenshots:
 
     def test_network_graph(self, qtbot, take_screenshot):
         """Screenshot network graph"""
-        from design_system.network_graph import NetworkGraphWidget, GraphNode, GraphEdge
+        from design_system.network_graph import GraphEdge, GraphNode, NetworkGraphWidget
 
         graph = NetworkGraphWidget()
 
@@ -970,18 +989,20 @@ class TestVisualizationScreenshots:
         from design_system.word_cloud import WordCloudWidget
 
         cloud = WordCloudWidget()
-        cloud.set_frequencies({
-            "qualitative": 50,
-            "research": 45,
-            "coding": 40,
-            "analysis": 35,
-            "themes": 30,
-            "patterns": 28,
-            "interviews": 25,
-            "data": 22,
-            "findings": 20,
-            "methodology": 18,
-        })
+        cloud.set_frequencies(
+            {
+                "qualitative": 50,
+                "research": 45,
+                "coding": 40,
+                "analysis": 35,
+                "themes": 30,
+                "patterns": 28,
+                "interviews": 25,
+                "data": 22,
+                "findings": 20,
+                "methodology": 18,
+            }
+        )
         # set_frequencies automatically generates the cloud
         cloud.setFixedSize(400, 300)
 
@@ -1031,9 +1052,7 @@ class TestDocumentScreenshots:
         from design_system.document import TextPanel
 
         panel = TextPanel(
-            title="Interview Transcript",
-            badge_text="Coded",
-            show_line_numbers=True
+            title="Interview Transcript", badge_text="Coded", show_line_numbers=True
         )
         panel.set_text("""Interviewer: Thank you for joining us today. Can you tell me about your experience with remote work?
 
@@ -1054,9 +1073,21 @@ Participant: I think the biggest benefit is the work-life balance. I can spend m
         panel = TranscriptPanel()
 
         # add_segment takes positional args: start_time, end_time, speaker, text
-        panel.add_segment(15.0, 25.0, "Interviewer", "Can you describe your typical workday?")
-        panel.add_segment(25.0, 65.0, "Participant", "I usually start around 8 AM. I check emails first, then move on to my main tasks for the day.")
-        panel.add_segment(65.0, 75.0, "Interviewer", "How do you handle distractions when working from home?")
+        panel.add_segment(
+            15.0, 25.0, "Interviewer", "Can you describe your typical workday?"
+        )
+        panel.add_segment(
+            25.0,
+            65.0,
+            "Participant",
+            "I usually start around 8 AM. I check emails first, then move on to my main tasks for the day.",
+        )
+        panel.add_segment(
+            65.0,
+            75.0,
+            "Interviewer",
+            "How do you handle distractions when working from home?",
+        )
 
         panel.setFixedSize(450, 280)
 

@@ -2,11 +2,16 @@
 Tests for navigation components: TabGroup, Breadcrumb, NavList, StepIndicator, etc.
 """
 
-import pytest
-from PyQt6.QtCore import Qt
+from PySide6.QtCore import Qt
 
 from design_system.navigation import (
-    MenuItem, Tab, TabGroup, Breadcrumb, NavList, StepIndicator, MediaTypeSelector
+    Breadcrumb,
+    MediaTypeSelector,
+    MenuItem,
+    NavList,
+    StepIndicator,
+    Tab,
+    TabGroup,
 )
 
 
@@ -219,7 +224,9 @@ class TestStepIndicator:
             # Click on first step (which should be clickable since current=1)
             step_widget = steps._step_widgets[0]
             # Find the button inside
-            circle = step_widget.findChild(type(step_widget.layout().itemAt(0).widget()))
+            circle = step_widget.findChild(
+                type(step_widget.layout().itemAt(0).widget())
+            )
             qtbot.mouseClick(circle, Qt.MouseButton.LeftButton)
 
 
@@ -258,7 +265,7 @@ class TestMediaTypeSelector:
                 ("text", "Text", "mdi6.file-document"),
                 ("image", "Image", "mdi6.image"),
             ],
-            selected="image"
+            selected="image",
         )
         qtbot.addWidget(selector)
 
@@ -288,7 +295,7 @@ class TestMediaTypeSelector:
         qtbot.addWidget(selector)
 
         # Signal should exist
-        assert hasattr(selector, 'selection_changed')
+        assert hasattr(selector, "selection_changed")
 
     def test_media_selector_all_types(self, qtbot):
         """MediaTypeSelector should work with all coding media types"""

@@ -8,16 +8,27 @@ A panel showing contextual details for the coding interface:
 - AI Assistant actions
 """
 
-from typing import List, Tuple
-from PyQt6.QtWidgets import (
-    QFrame, QVBoxLayout, QHBoxLayout, QLabel,
-    QWidget, QScrollArea,
-)
 from PyQt6.QtCore import Qt, pyqtSignal
+from PyQt6.QtWidgets import (
+    QFrame,
+    QHBoxLayout,
+    QLabel,
+    QScrollArea,
+    QVBoxLayout,
+    QWidget,
+)
 
 from design_system import (
-    ColorPalette, get_theme, SPACING, RADIUS, TYPOGRAPHY,
-    Icon, Button, InfoCard, CodeDetailCard, ProgressBar,
+    RADIUS,
+    SPACING,
+    TYPOGRAPHY,
+    Button,
+    CodeDetailCard,
+    ColorPalette,
+    Icon,
+    InfoCard,
+    ProgressBar,
+    get_theme,
 )
 
 
@@ -115,7 +126,7 @@ class DetailsPanel(QFrame):
         scroll.setWidget(container)
         layout.addWidget(scroll)
 
-    def _create_overlap_content(self, segments: List[Tuple[str, List[str]]]) -> QWidget:
+    def _create_overlap_content(self, segments: list[tuple[str, list[str]]]) -> QWidget:
         """
         Create the overlapping codes content.
 
@@ -131,7 +142,9 @@ class DetailsPanel(QFrame):
         if not segments:
             # No overlaps message
             label = QLabel("No overlapping codes detected")
-            label.setStyleSheet(f"color: {self._colors.text_disabled}; font-size: {TYPOGRAPHY.text_xs}px;")
+            label.setStyleSheet(
+                f"color: {self._colors.text_disabled}; font-size: {TYPOGRAPHY.text_xs}px;"
+            )
             layout.addWidget(label)
             return widget
 
@@ -145,14 +158,18 @@ class DetailsPanel(QFrame):
             }}
         """)
         warning_layout = QHBoxLayout(warning)
-        warning_layout.setContentsMargins(SPACING.md, SPACING.sm, SPACING.md, SPACING.sm)
+        warning_layout.setContentsMargins(
+            SPACING.md, SPACING.sm, SPACING.md, SPACING.sm
+        )
         warning_layout.setSpacing(SPACING.sm)
 
         icon = Icon("mdi6.information", size=16, color="#FF9800", colors=self._colors)
         warning_layout.addWidget(icon)
 
         label = QLabel(f"{len(segments)} segments have multiple codes")
-        label.setStyleSheet(f"color: {self._colors.text_secondary}; font-size: {TYPOGRAPHY.text_xs}px;")
+        label.setStyleSheet(
+            f"color: {self._colors.text_secondary}; font-size: {TYPOGRAPHY.text_xs}px;"
+        )
         warning_layout.addWidget(label)
         warning_layout.addStretch()
 
@@ -166,11 +183,15 @@ class DetailsPanel(QFrame):
                 border-radius: {RADIUS.sm}px;
             """)
             seg_layout = QVBoxLayout(seg)
-            seg_layout.setContentsMargins(SPACING.sm, SPACING.sm, SPACING.sm, SPACING.sm)
+            seg_layout.setContentsMargins(
+                SPACING.sm, SPACING.sm, SPACING.sm, SPACING.sm
+            )
             seg_layout.setSpacing(SPACING.xs)
 
             title = QLabel(f"Segment {i + 1}:")
-            title.setStyleSheet(f"color: {self._colors.text_primary}; font-size: {TYPOGRAPHY.text_xs}px; font-weight: bold;")
+            title.setStyleSheet(
+                f"color: {self._colors.text_primary}; font-size: {TYPOGRAPHY.text_xs}px; font-weight: bold;"
+            )
             seg_layout.addWidget(title)
 
             dots = QHBoxLayout()
@@ -212,7 +233,9 @@ class DetailsPanel(QFrame):
             layout.addWidget(memo_label)
         else:
             no_memo = QLabel("No memo for this file")
-            no_memo.setStyleSheet(f"color: {self._colors.text_disabled}; font-size: {TYPOGRAPHY.text_xs}px;")
+            no_memo.setStyleSheet(
+                f"color: {self._colors.text_disabled}; font-size: {TYPOGRAPHY.text_xs}px;"
+            )
             layout.addWidget(no_memo)
 
         # Progress bar
@@ -221,7 +244,9 @@ class DetailsPanel(QFrame):
             layout.addWidget(progress_bar)
 
             progress_label = QLabel(f"Coding progress: {progress}%")
-            progress_label.setStyleSheet(f"color: {self._colors.text_disabled}; font-size: {TYPOGRAPHY.text_xs}px;")
+            progress_label.setStyleSheet(
+                f"color: {self._colors.text_disabled}; font-size: {TYPOGRAPHY.text_xs}px;"
+            )
             layout.addWidget(progress_label)
 
         return widget
@@ -266,7 +291,7 @@ class DetailsPanel(QFrame):
         self._code_card.set_content(self._code_detail)
         old_detail.deleteLater()
 
-    def set_overlapping_codes(self, segments: List[Tuple[str, List[str]]]):
+    def set_overlapping_codes(self, segments: list[tuple[str, list[str]]]):
         """
         Update the overlapping codes display.
 
