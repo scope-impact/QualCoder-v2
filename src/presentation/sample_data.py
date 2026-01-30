@@ -91,17 +91,29 @@ def create_sample_text_coding_data() -> TextCodingDataDTO:
         id="doc1",
         title="ID2.odt",
         badge="Case: ID2",
-        content="""I have not studied much before. I know that I must get help as I have struggled understanding the lecture slides so far and searching the web did not help.
+        content="""INTERVIEWER: Thank you for joining us today. Can you tell me about your experience with the course so far?
 
-I really want someone to sit down with me and explain the course material. The tutors seem helpful but there are not enough of them to go around.
+PARTICIPANT: I have not studied much before. I know that I must get help as I have struggled understanding the lecture slides so far and searching the web did not help.
 
-The course cost €200.00 and I do not want to waste my money. I have to make the most of this opportunity.
+INTERVIEWER: What kind of support would be most helpful for you?
 
-I really like learning new things. I think this course is good for me as I have wanted to learn about world history for a while. The structured content, lecture slides and web links have been really good. I guess some less computer-savvy people would have some trouble accessing the internet-based material, but its like a duck to water for me – no problem at all.
+PARTICIPANT: I really want someone to sit down with me and explain the course material. The tutors seem helpful but there are not enough of them to go around.
 
-I get the feeling most students are having some problems with the coursework deadlines. There is much to learn and not many of us practice directed learning. We need more guidance on time management and prioritization.
+INTERVIEWER: I understand. How do you feel about the investment you've made?
 
-Overall, I am satisfied with the club's facilities and the quality of instruction. The new training ground has made a big difference. I feel like I am improving week by week, which keeps me motivated to continue.""",
+PARTICIPANT: The course cost €200.00 and I do not want to waste my money. I have to make the most of this opportunity.
+
+INTERVIEWER: What aspects of the course do you enjoy?
+
+PARTICIPANT: I really like learning new things. I think this course is good for me as I have wanted to learn about world history for a while. The structured content, lecture slides and web links have been really good. I guess some less computer-savvy people would have some trouble accessing the internet-based material, but its like a duck to water for me – no problem at all.
+
+INTERVIEWER: Have you noticed any common challenges among other students?
+
+PARTICIPANT: I get the feeling most students are having some problems with the coursework deadlines. There is much to learn and not many of us practice directed learning. We need more guidance on time management and prioritization.
+
+INTERVIEWER: Any final thoughts?
+
+PARTICIPANT: Overall, I am satisfied with the club's facilities and the quality of instruction. The new training ground has made a big difference. I feel like I am improving week by week, which keeps me motivated to continue.""",
     )
 
     document_stats = DocumentStatsDTO(

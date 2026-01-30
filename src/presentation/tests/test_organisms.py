@@ -360,7 +360,7 @@ class TestTextEditorPanel:
         panel = TextEditorPanel(colors=colors)
 
         assert panel is not None
-        assert panel._text_panel is not None
+        assert panel._text_edit is not None
 
     def test_set_document(self, qapp, colors):
         """Test setting document content."""
@@ -812,10 +812,11 @@ class TestTextCodingScreen:
         assert len(items[0].children) == 2  # Two codes
 
         # IDs should be numeric, not the code names
-        assert items[0].children[0].id == "12345"
-        assert items[0].children[0].name == "test_code"
-        assert items[0].children[1].id == "67890"
-        assert items[0].children[1].name == "another_code"
+        # Note: codes are sorted alphabetically, so "another_code" comes before "test_code"
+        assert items[0].children[0].id == "67890"
+        assert items[0].children[0].name == "another_code"
+        assert items[0].children[1].id == "12345"
+        assert items[0].children[1].name == "test_code"
 
     def test_screenshot(self, qapp, colors, take_screenshot):
         """Take screenshot of complete screen."""
@@ -1008,45 +1009,49 @@ class TestActionHandlers:
             screen._on_action("prev")
         assert screen._current_file_index == 0
 
-    def test_action_auto_exact_no_selection(self, qapp, colors, capsys):
-        """Test auto-exact with no text selected."""
+    def test_action_auto_exact_no_code_selected(self, qapp, colors, capsys):
+        """Test auto-exact with no code selected prints message."""
         from src.presentation.screens import TextCodingScreen
 
         screen = TextCodingScreen(colors=colors)
+        # No code selected
         screen._on_action("auto_exact")
 
         captured = capsys.readouterr()
         assert "select" in captured.out.lower()
 
-    def test_action_auto_fragment_no_selection(self, qapp, colors, capsys):
-        """Test auto-fragment with no text selected."""
+    def test_action_auto_fragment_no_code_selected(self, qapp, colors, capsys):
+        """Test auto-fragment with no code selected prints message."""
         from src.presentation.screens import TextCodingScreen
 
         screen = TextCodingScreen(colors=colors)
+        # No code selected
         screen._on_action("auto_fragment")
 
         captured = capsys.readouterr()
         assert "select" in captured.out.lower()
 
-    def test_action_mark_speakers(self, qapp, colors, capsys):
-        """Test mark speakers action."""
+    def test_action_mark_speakers_no_document(self, qapp, colors, capsys):
+        """Test mark speakers action with no document."""
         from src.presentation.screens import TextCodingScreen
 
         screen = TextCodingScreen(colors=colors)
+        # Clear the document
+        screen._page.set_document("", text="")
         screen._on_action("speakers")
 
         captured = capsys.readouterr()
-        assert "speaker" in captured.out.lower() or "TODO" in captured.out
+        assert "no document" in captured.out.lower()
 
-    def test_action_undo_auto(self, qapp, colors, capsys):
-        """Test undo auto-code action."""
+    def test_action_undo_auto_nothing_to_undo(self, qapp, colors, capsys):
+        """Test undo auto-code when nothing to undo."""
         from src.presentation.screens import TextCodingScreen
 
         screen = TextCodingScreen(colors=colors)
         screen._on_action("undo_auto")
 
         captured = capsys.readouterr()
-        assert "undo" in captured.out.lower() or "TODO" in captured.out
+        assert "nothing to undo" in captured.out.lower()
 
     def test_action_memo_no_selection(self, qapp, colors, capsys):
         """Test memo action with no selection falls back to file memo."""

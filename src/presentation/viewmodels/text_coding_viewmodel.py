@@ -367,6 +367,31 @@ class TextCodingViewModel(QObject):
             )
             self.code_selection_changed.emit(dto)
 
+    def find_segment_at_position(
+        self, source_id: int, start: int, end: int
+    ) -> int | None:
+        """
+        Find a segment that overlaps with the given position range.
+
+        Used for unmark operations to find the segment to remove.
+
+        Args:
+            source_id: The source document ID
+            start: Start position of range to check
+            end: End position of range to check
+
+        Returns:
+            Segment ID if found, None otherwise
+        """
+        segments = self._controller.get_segments_for_source(source_id)
+        for seg in segments:
+            # Check if segment overlaps with the query range
+            seg_start = seg.position.start
+            seg_end = seg.position.end
+            if seg_start < end and start < seg_end:
+                return seg.id.value
+        return None
+
     # =========================================================================
     # Signal Handlers - React to domain events
     # =========================================================================

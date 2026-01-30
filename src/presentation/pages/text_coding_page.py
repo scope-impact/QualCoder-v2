@@ -48,12 +48,27 @@ class TextCodingPage(QWidget):
         code_selected(dict): A code was selected
         text_selected(str, int, int): Text was selected
         action_triggered(str): A toolbar action was triggered
+        navigation_clicked(str): Navigation button clicked (prev/next)
+        editor_code_applied(str, int, int): Code applied in editor
+        ai_chat_clicked(): AI chat button clicked
+        ai_suggest_clicked(): AI suggest button clicked
+        media_type_changed(str): Media type filter changed
+        search_changed(str): Search query changed
     """
 
+    # Existing signals
     file_selected = Signal(dict)
     code_selected = Signal(dict)
     text_selected = Signal(str, int, int)
     action_triggered = Signal(str)
+
+    # Signal routing (QC-007.05)
+    navigation_clicked = Signal(str)  # prev/next
+    editor_code_applied = Signal(str, int, int)  # code_id, start, end
+    ai_chat_clicked = Signal()
+    ai_suggest_clicked = Signal()
+    media_type_changed = Signal(str)
+    search_changed = Signal(str)
 
     def __init__(
         self,
@@ -91,6 +106,8 @@ class TextCodingPage(QWidget):
             colors=self._colors,
         )
         self._toolbar.action_triggered.connect(self.action_triggered.emit)
+        self._toolbar.media_type_changed.connect(self.media_type_changed.emit)
+        self._toolbar.search_changed.connect(self.search_changed.emit)
         layout.addWidget(self._toolbar)
 
         # Main content - three panel layout
@@ -114,6 +131,7 @@ class TextCodingPage(QWidget):
 
         self._codes_panel = CodesPanel(colors=self._colors)
         self._codes_panel.code_selected.connect(self._on_code_selected)
+        self._codes_panel.navigation_clicked.connect(self.navigation_clicked.emit)
         left_layout.addWidget(self._codes_panel, 1)
 
         self._layout.set_left(left_container)
@@ -121,10 +139,13 @@ class TextCodingPage(QWidget):
         # Center panel - Text editor
         self._editor_panel = TextEditorPanel(colors=self._colors)
         self._editor_panel.text_selected.connect(self._on_text_selected)
+        self._editor_panel.code_applied.connect(self.editor_code_applied.emit)
         self._layout.set_center(self._editor_panel)
 
         # Right panel - Details
         self._details_panel = DetailsPanel(colors=self._colors)
+        self._details_panel.ai_chat_clicked.connect(self.ai_chat_clicked.emit)
+        self._details_panel.ai_suggest_clicked.connect(self.ai_suggest_clicked.emit)
         self._layout.set_right(self._details_panel)
 
         layout.addWidget(self._layout, 1)

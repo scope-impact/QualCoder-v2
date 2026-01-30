@@ -211,11 +211,11 @@ class TestE2ETextSelection:
 
         spy = QSignalSpy(screen.text_selected)
 
-        # Get the text panel
-        text_panel = screen.page.editor_panel._text_panel
+        # Get the editor panel (refactored: no longer wraps TextPanel)
+        editor_panel = screen.page.editor_panel
 
         # Emit selection signal directly (simulating user selection)
-        text_panel.text_selected.emit("test text", 0, 9)
+        editor_panel.text_selected.emit("test text", 0, 9)
         QApplication.processEvents()
 
         # Verify signal propagated to screen
@@ -252,7 +252,7 @@ class TestE2EApplyCodeWorkflow:
 
         # Step 1: Simulate text selection
         text_spy = QSignalSpy(screen.text_selected)
-        screen.page.editor_panel._text_panel.text_selected.emit("selected text", 0, 13)
+        screen.page.editor_panel.text_selected.emit("selected text", 0, 13)
         QApplication.processEvents()
 
         # Step 2: Simulate code selection
@@ -559,7 +559,7 @@ class TestE2EStatusDisplay:
         QApplication.processEvents()
 
         # Simulate text selection
-        screen.page.editor_panel._text_panel.text_selected.emit("sample text", 8, 19)
+        screen.page.editor_panel.text_selected.emit("sample text", 8, 19)
         QApplication.processEvents()
 
         # Verify status label updated
@@ -645,6 +645,626 @@ class TestE2EStatusDisplay:
         # Cleanup
         window.close()
         context.close()
+
+
+class TestE2EKeyboardWorkflow:
+    """E2E tests for keyboard-driven coding workflow."""
+
+    def test_quick_mark_workflow(self, qapp, colors):
+        """
+        E2E: Complete Q-key quick mark workflow
+        1. Select text in editor
+        2. Select a code in sidebar
+        3. Press Q to apply
+        4. Verify segment in database
+        5. Verify highlight in editor
+        """
+        from src.presentation.factory import CodingContext
+        from src.presentation.screens import TextCodingScreen
+
+        # Setup
+        context = CodingContext.create_in_memory()
+        vm = context.create_text_coding_viewmodel()
+        vm.create_code("important", "#ff5500")
+
+        codes = context.controller.get_all_codes()
+        code = codes[0]
+
+        screen = TextCodingScreen(viewmodel=vm, colors=colors)
+        screen.set_current_source(1)
+        screen.page.set_document(
+            "Test", text="The quick brown fox jumps over the lazy dog."
+        )
+        screen.show()
+        QApplication.processEvents()
+
+        # Step 1: Select text (simulates user dragging)
+        screen.set_text_selection(4, 9)  # "quick"
+        QApplication.processEvents()
+
+        # Step 2: Select code (simulates clicking in sidebar)
+        screen.set_active_code(str(code.id.value), code.name, code.color.to_hex())
+        QApplication.processEvents()
+
+        # Step 3: Press Q (quick mark)
+        screen.quick_mark()
+        QApplication.processEvents()
+
+        # Step 4: Verify segment in database
+        segments = context.controller.get_segments_for_source(1)
+        assert len(segments) == 1
+        assert segments[0].position.start == 4
+        assert segments[0].position.end == 9
+        assert segments[0].code_id.value == code.id.value
+
+        # Step 5: Verify highlight count increased
+        highlight_count = screen.page.editor_panel.get_highlight_count()
+        assert highlight_count >= 1
+
+        # Cleanup
+        screen.close()
+        context.close()
+
+    def test_unmark_workflow(self, qapp, colors):
+        """
+        E2E: Complete U-key unmark workflow
+        1. Apply a code
+        2. Select the coded range
+        3. Press U to unmark
+        4. Verify segment removed from database
+        """
+        from src.presentation.factory import CodingContext
+        from src.presentation.screens import TextCodingScreen
+
+        context = CodingContext.create_in_memory()
+        vm = context.create_text_coding_viewmodel()
+        vm.create_code("marker", "#ff0000")
+
+        codes = context.controller.get_all_codes()
+        code = codes[0]
+
+        screen = TextCodingScreen(viewmodel=vm, colors=colors)
+        screen.set_current_source(1)
+        screen.page.set_document("Test", text="Hello World")
+        screen.show()
+        QApplication.processEvents()
+
+        # Apply code first
+        screen.set_active_code(str(code.id.value), code.name, code.color.to_hex())
+        screen.set_text_selection(0, 5)  # "Hello"
+        screen.quick_mark()
+        QApplication.processEvents()
+
+        assert len(context.controller.get_segments_for_source(1)) == 1
+
+        # Now unmark
+        screen.set_text_selection(0, 5)
+        screen.unmark()
+        QApplication.processEvents()
+
+        # Verify removed
+        assert len(context.controller.get_segments_for_source(1)) == 0
+
+        screen.close()
+        context.close()
+
+    def test_undo_unmark_workflow(self, qapp, colors):
+        """
+        E2E: Complete Ctrl+Z undo workflow
+        1. Apply code
+        2. Unmark it
+        3. Press Ctrl+Z to undo
+        4. Verify segment restored
+        """
+        from src.presentation.factory import CodingContext
+        from src.presentation.screens import TextCodingScreen
+
+        context = CodingContext.create_in_memory()
+        vm = context.create_text_coding_viewmodel()
+        vm.create_code("marker", "#00ff00")
+
+        codes = context.controller.get_all_codes()
+        code = codes[0]
+
+        screen = TextCodingScreen(viewmodel=vm, colors=colors)
+        screen.set_current_source(1)
+        screen.page.set_document("Test", text="Test content here")
+        screen.show()
+        QApplication.processEvents()
+
+        # Apply
+        screen.set_active_code(str(code.id.value), code.name, code.color.to_hex())
+        screen.set_text_selection(0, 4)  # "Test"
+        screen.quick_mark()
+        QApplication.processEvents()
+
+        # Unmark
+        screen.set_text_selection(0, 4)
+        screen.unmark()
+        QApplication.processEvents()
+        assert len(context.controller.get_segments_for_source(1)) == 0
+
+        # Undo (Ctrl+Z)
+        screen.undo_unmark()
+        QApplication.processEvents()
+
+        # Verify restored
+        segments = context.controller.get_segments_for_source(1)
+        assert len(segments) == 1
+
+        screen.close()
+        context.close()
+
+    def test_in_vivo_workflow(self, qapp, colors):
+        """
+        E2E: Complete V-key in-vivo workflow
+        1. Select text
+        2. Press V to create code from selection
+        3. Verify code created in database
+        4. Verify segment applied
+        """
+        from src.presentation.factory import CodingContext
+        from src.presentation.screens import TextCodingScreen
+
+        context = CodingContext.create_in_memory()
+        vm = context.create_text_coding_viewmodel()
+
+        screen = TextCodingScreen(viewmodel=vm, colors=colors)
+        screen.set_current_source(1)
+        screen.page.set_document("Test", text="interesting finding here")
+        screen.show()
+        QApplication.processEvents()
+
+        # No codes initially
+        assert len(context.controller.get_all_codes()) == 0
+
+        # Select text and in-vivo code
+        screen.set_text_selection(0, 11)  # "interesting"
+        screen.in_vivo_code()
+        QApplication.processEvents()
+
+        # Verify code created
+        codes = context.controller.get_all_codes()
+        assert len(codes) == 1
+        assert codes[0].name == "interesting"
+
+        # Verify segment applied
+        segments = context.controller.get_segments_for_source(1)
+        assert len(segments) == 1
+        assert segments[0].position.start == 0
+        assert segments[0].position.end == 11
+
+        screen.close()
+        context.close()
+
+    def test_full_coding_session_e2e(self, qapp, colors):
+        """
+        E2E: Simulate a complete coding session
+        1. Create codes
+        2. Code multiple segments
+        3. Unmark one
+        4. Undo
+        5. In-vivo code
+        6. Verify final state
+        """
+        from src.presentation.factory import CodingContext
+        from src.presentation.screens import TextCodingScreen
+
+        context = CodingContext.create_in_memory()
+        vm = context.create_text_coding_viewmodel()
+
+        # Pre-create some codes
+        vm.create_code("positive", "#27ae60")
+        vm.create_code("negative", "#e74c3c")
+
+        codes = context.controller.get_all_codes()
+        positive = next(c for c in codes if c.name == "positive")
+        negative = next(c for c in codes if c.name == "negative")
+
+        screen = TextCodingScreen(viewmodel=vm, colors=colors)
+        screen.set_current_source(1)
+        text = "I loved it. Price too high. Satisfied overall."
+        screen.page.set_document("Interview", text=text)
+        screen.show()
+        QApplication.processEvents()
+
+        # Code "loved" as positive (positions 2-7)
+        screen.set_active_code(
+            str(positive.id.value), positive.name, positive.color.to_hex()
+        )
+        screen.set_text_selection(2, 7)  # "loved"
+        screen.quick_mark()
+        QApplication.processEvents()
+
+        # Code "too high" as negative (positions 18-26)
+        screen.set_active_code(
+            str(negative.id.value), negative.name, negative.color.to_hex()
+        )
+        screen.set_text_selection(18, 26)  # "too high"
+        screen.quick_mark()
+        QApplication.processEvents()
+
+        assert len(context.controller.get_segments_for_source(1)) == 2
+
+        # Unmark "too high"
+        screen.set_text_selection(18, 26)
+        screen.unmark()
+        QApplication.processEvents()
+
+        assert len(context.controller.get_segments_for_source(1)) == 1
+
+        # Undo - bring back "too high"
+        screen.undo_unmark()
+        QApplication.processEvents()
+
+        assert len(context.controller.get_segments_for_source(1)) == 2
+
+        # In-vivo code "Satisfied" (positions 28-37)
+        screen.set_text_selection(28, 37)  # "Satisfied"
+        screen.in_vivo_code()
+        QApplication.processEvents()
+
+        # Final state: 3 codes, 3 segments
+        final_codes = context.controller.get_all_codes()
+        final_segments = context.controller.get_segments_for_source(1)
+
+        assert len(final_codes) == 3  # positive, negative, Satisfied
+        assert len(final_segments) == 3
+
+        # Verify the new code exists
+        code_names = {c.name for c in final_codes}
+        assert "Satisfied" in code_names
+
+        screen.close()
+        context.close()
+
+
+class TestE2EAutoCoding:
+    """E2E tests for auto-coding features (QC-007.07)."""
+
+    def test_mark_speakers_detects_and_highlights(self, qapp, colors):
+        """
+        E2E: Mark Speakers workflow
+        1. Load document with speaker patterns
+        2. Click Mark Speakers
+        3. Verify speakers detected
+        4. Verify highlights applied
+        """
+        from src.presentation.screens import TextCodingScreen
+
+        screen = TextCodingScreen(colors=colors)
+        screen.show()
+        QApplication.processEvents()
+
+        # Sample data has speaker patterns (INTERVIEWER:, PARTICIPANT:)
+        editor = screen._page.editor_panel
+        text = editor.get_text() or ""
+
+        # Verify sample data has speaker patterns
+        assert "INTERVIEWER:" in text or "PARTICIPANT:" in text
+
+        # Get highlight count before
+        highlights_before = editor.get_highlight_count()
+
+        # Trigger Mark Speakers
+        screen._on_action("speakers")
+        QApplication.processEvents()
+
+        # Verify highlights were added
+        highlights_after = editor.get_highlight_count()
+        assert highlights_after > highlights_before
+
+        screen.close()
+
+    def test_mark_speakers_no_speakers_found(self, qapp, colors):
+        """
+        E2E: Mark Speakers with no speaker patterns
+        Expected: No highlights added, message printed
+        """
+        from src.presentation.screens import TextCodingScreen
+
+        screen = TextCodingScreen(colors=colors)
+        # Set document without speaker patterns
+        screen._page.set_document(
+            "Test", text="This is plain text without any speakers."
+        )
+        screen.show()
+        QApplication.processEvents()
+
+        editor = screen._page.editor_panel
+        highlights_before = editor.get_highlight_count()
+
+        # Trigger Mark Speakers
+        screen._on_action("speakers")
+        QApplication.processEvents()
+
+        # No highlights should be added
+        highlights_after = editor.get_highlight_count()
+        assert highlights_after == highlights_before
+
+        screen.close()
+
+    def test_auto_coding_controller_integration(self, qapp, colors):
+        """
+        E2E: Verify AutoCodingController is wired to screen
+        """
+        from src.application.coding.auto_coding_controller import AutoCodingController
+        from src.presentation.screens import TextCodingScreen
+
+        screen = TextCodingScreen(colors=colors)
+
+        # Verify controller exists
+        assert hasattr(screen, "_auto_coding_controller")
+        assert isinstance(screen._auto_coding_controller, AutoCodingController)
+
+        # Verify controller can find matches
+        from returns.result import Success
+
+        result = screen._auto_coding_controller.find_matches(
+            text="The cat sat on the mat",
+            pattern="the",
+        )
+        assert isinstance(result, Success)
+
+        screen.close()
+
+    def test_auto_code_dialog_signal_flow(self, qapp, colors):
+        """
+        E2E: Test dialog signal → screen handler → controller flow
+        1. Create dialog
+        2. Connect to screen handler
+        3. Emit signal
+        4. Verify controller was called
+        5. Verify results sent to dialog
+        """
+        from unittest.mock import MagicMock
+
+        from src.presentation.dialogs.auto_code_dialog import AutoCodeDialog
+        from src.presentation.screens import TextCodingScreen
+
+        screen = TextCodingScreen(colors=colors)
+        screen.show()
+        QApplication.processEvents()
+
+        # Create dialog and set it as active
+        dialog = AutoCodeDialog(colors=colors)
+        dialog.on_matches_found = MagicMock()
+        screen._auto_code_dialog = dialog
+
+        # Trigger find matches via screen handler
+        screen._on_find_matches_requested(
+            text="Hello world hello universe",
+            pattern="hello",
+            match_type="contains",
+            scope="all",
+            case_sensitive=False,
+        )
+        QApplication.processEvents()
+
+        # Verify dialog received matches
+        dialog.on_matches_found.assert_called_once()
+        matches = dialog.on_matches_found.call_args[0][0]
+        assert len(matches) == 2  # "Hello" and "hello"
+
+        screen.close()
+
+    def test_auto_exact_requires_code_selection(self, qapp, colors, capsys):
+        """
+        E2E: Auto-exact without code selected shows message
+        """
+        from src.presentation.screens import TextCodingScreen
+
+        screen = TextCodingScreen(colors=colors)
+        screen.show()
+        QApplication.processEvents()
+
+        # No code selected - trigger auto exact
+        screen._on_action("auto_exact")
+        QApplication.processEvents()
+
+        captured = capsys.readouterr()
+        assert "select" in captured.out.lower()
+
+        screen.close()
+
+    def test_auto_exact_with_code_selected(self, qapp, colors):
+        """
+        E2E: Auto-exact with code selected opens dialog
+        """
+        from src.presentation.screens import TextCodingScreen
+
+        screen = TextCodingScreen(colors=colors)
+        screen.show()
+        QApplication.processEvents()
+
+        # Select a code
+        screen.set_active_code("1", "Test Code", "#FF0000")
+
+        # Dialog should be None before
+        assert screen._auto_code_dialog is None
+
+        # Note: Can't fully test dialog.exec() flow in automated test
+        # but we can verify the method exists and prerequisites are met
+        assert hasattr(screen, "_show_auto_code_dialog")
+        assert screen._active_code.code_id == "1"
+
+        screen.close()
+
+    def test_undo_auto_nothing_to_undo(self, qapp, colors, capsys):
+        """
+        E2E: Undo auto-code when nothing to undo
+        """
+        from src.presentation.screens import TextCodingScreen
+
+        screen = TextCodingScreen(colors=colors)
+        screen.show()
+        QApplication.processEvents()
+
+        # Verify can_undo is False initially
+        assert screen._auto_coding_controller.can_undo() is False
+
+        # Trigger undo
+        screen._on_action("undo_auto")
+        QApplication.processEvents()
+
+        captured = capsys.readouterr()
+        assert "nothing to undo" in captured.out.lower()
+
+        screen.close()
+
+    def test_speaker_detection_colors_unique(self, qapp, colors):
+        """
+        E2E: Each speaker gets a unique highlight color
+        """
+        from returns.result import Success
+
+        from src.presentation.screens import TextCodingScreen
+
+        screen = TextCodingScreen(colors=colors)
+        screen.show()
+        QApplication.processEvents()
+
+        # Get speaker colors from controller
+        text = """ALICE: Hello there.
+BOB: Hi Alice.
+ALICE: How are you?
+BOB: I'm fine."""
+
+        result = screen._auto_coding_controller.detect_speakers(text)
+        assert isinstance(result, Success)
+
+        speakers = result.unwrap()
+        assert len(speakers) == 2
+        speaker_names = {s.name for s in speakers}
+        assert "ALICE" in speaker_names
+        assert "BOB" in speaker_names
+
+        screen.close()
+
+    def test_find_matches_exact_mode(self, qapp, colors):
+        """
+        E2E: Find matches in exact mode
+        """
+        from returns.result import Success
+
+        from src.domain.coding.services.text_matcher import MatchType
+        from src.presentation.screens import TextCodingScreen
+
+        screen = TextCodingScreen(colors=colors)
+
+        # Exact mode - only whole words
+        result = screen._auto_coding_controller.find_matches(
+            text="The cat sat on the mat",
+            pattern="the",
+            match_type=MatchType.EXACT,
+        )
+
+        assert isinstance(result, Success)
+        matches = result.unwrap()
+        # "the" appears twice as standalone word (at positions 0 and 15)
+        assert len(matches) >= 1
+
+        screen.close()
+
+    def test_find_matches_contains_mode(self, qapp, colors):
+        """
+        E2E: Find matches in contains mode
+        """
+        from returns.result import Success
+
+        from src.domain.coding.services.text_matcher import MatchType
+        from src.presentation.screens import TextCodingScreen
+
+        screen = TextCodingScreen(colors=colors)
+
+        # Contains mode - substring matches
+        result = screen._auto_coding_controller.find_matches(
+            text="The cat sat on the mat",
+            pattern="at",
+            match_type=MatchType.CONTAINS,
+        )
+
+        assert isinstance(result, Success)
+        matches = result.unwrap()
+        # "at" in "cat", "sat", "mat"
+        assert len(matches) == 3
+
+        screen.close()
+
+    def test_find_matches_regex_mode(self, qapp, colors):
+        """
+        E2E: Find matches in regex mode
+        """
+        from returns.result import Success
+
+        from src.domain.coding.services.text_matcher import MatchType
+        from src.presentation.screens import TextCodingScreen
+
+        screen = TextCodingScreen(colors=colors)
+
+        # Regex mode - pattern matching
+        result = screen._auto_coding_controller.find_matches(
+            text="cat bat rat mat",
+            pattern=r"\b[cbr]at\b",
+            match_type=MatchType.REGEX,
+        )
+
+        assert isinstance(result, Success)
+        matches = result.unwrap()
+        # "cat", "bat", "rat" (not "mat")
+        assert len(matches) == 3
+
+        screen.close()
+
+    def test_full_auto_coding_workflow(self, qapp, colors):
+        """
+        E2E: Complete auto-coding workflow
+        1. Select a code
+        2. Find matches via controller
+        3. Apply highlights for matches
+        4. Verify highlights in editor
+        """
+        from returns.result import Success
+
+        from src.domain.coding.services.text_matcher import MatchType
+        from src.presentation.screens import TextCodingScreen
+
+        screen = TextCodingScreen(colors=colors)
+        screen._page.set_document(
+            "Test",
+            text="The quick brown fox. The lazy dog. The end.",
+        )
+        screen.show()
+        QApplication.processEvents()
+
+        editor = screen._page.editor_panel
+        highlights_before = editor.get_highlight_count()
+
+        # Select a code
+        screen.set_active_code("1", "Theme", "#E91E63")
+
+        # Find matches
+        result = screen._auto_coding_controller.find_matches(
+            text="The quick brown fox. The lazy dog. The end.",
+            pattern="The",
+            match_type=MatchType.EXACT,
+        )
+
+        assert isinstance(result, Success)
+        matches = result.unwrap()
+        assert len(matches) >= 2
+
+        # Apply highlights
+        for match in matches:
+            editor.highlight_range(match.start, match.end, "#E91E63")
+
+        QApplication.processEvents()
+
+        # Verify highlights added
+        highlights_after = editor.get_highlight_count()
+        assert highlights_after > highlights_before
+
+        screen.close()
 
 
 class TestE2EDataPersistence:

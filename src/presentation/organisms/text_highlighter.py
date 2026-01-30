@@ -226,8 +226,8 @@ class TextHighlighter(QFrame):
                 border: none;
                 border-radius: {RADIUS.lg}px;
                 padding: {SPACING.xl}px {SPACING.xxl}px;
-                font-family: 'Roboto', 'Segoe UI', sans-serif;
-                font-size: 15px;
+                font-family: {TYPOGRAPHY.font_family};
+                font-size: {TYPOGRAPHY.text_lg}px;
                 selection-background-color: {self._colors.primary}40;
             }}
         """)
