@@ -12,25 +12,26 @@ from typing import Any
 
 from PySide6.QtCore import Qt, Signal
 from PySide6.QtWidgets import (
-    QFrame,
     QHBoxLayout,
     QLabel,
-    QVBoxLayout,
 )
 
 from design_system import (
-    RADIUS,
     SPACING,
     TYPOGRAPHY,
+    Card,
     ColorPalette,
     Icon,
     get_colors,
 )
 
 
-class MemoListItem(QFrame):
+class MemoListItem(Card):
     """
     Single memo item for display in a list or panel.
+
+    Extends design_system.Card to provide consistent styling with
+    clickable behavior and hover effects.
 
     Displays:
     - Type icon (file, code, segment)
@@ -75,8 +76,8 @@ class MemoListItem(QFrame):
             colors: Color palette for styling
             parent: Parent widget
         """
-        super().__init__(parent)
         self._colors = colors or get_colors()
+        super().__init__(colors=self._colors, parent=parent, shadow=False, elevation=1)
         self._memo_data = memo_data
         self._visible = True
 
@@ -84,22 +85,21 @@ class MemoListItem(QFrame):
         self._setup_ui()
 
     def _setup_ui(self):
-        """Build the item UI."""
-        self.setStyleSheet(f"""
-            MemoListItem {{
-                background-color: {self._colors.surface};
-                border: 1px solid {self._colors.border};
-                border-radius: {RADIUS.md}px;
-            }}
+        """Build the item UI using Card's layout."""
+        # Card provides base styling; add hover effect for interactivity
+        self.setStyleSheet(
+            self.styleSheet()
+            + f"""
             MemoListItem:hover {{
                 background-color: {self._colors.surface_light};
                 border-color: {self._colors.primary};
             }}
-        """)
+        """
+        )
 
-        layout = QVBoxLayout(self)
-        layout.setContentsMargins(SPACING.md, SPACING.sm, SPACING.md, SPACING.sm)
-        layout.setSpacing(SPACING.xs)
+        # Adjust Card's default margins for list item density
+        self._layout.setContentsMargins(SPACING.md, SPACING.sm, SPACING.md, SPACING.sm)
+        self._layout.setSpacing(SPACING.xs)
 
         # Header row
         header_layout = QHBoxLayout()
@@ -137,7 +137,7 @@ class MemoListItem(QFrame):
         """)
         header_layout.addWidget(timestamp_label)
 
-        layout.addLayout(header_layout)
+        self._layout.addLayout(header_layout)
 
         # Content preview
         content = self._memo_data.get("content", "")
@@ -149,7 +149,7 @@ class MemoListItem(QFrame):
                 color: {self._colors.text_secondary};
                 font-size: {TYPOGRAPHY.text_xs}px;
             """)
-            layout.addWidget(content_label)
+            self._layout.addWidget(content_label)
 
         # Author
         author = self._memo_data.get("author", "")
@@ -159,7 +159,7 @@ class MemoListItem(QFrame):
                 color: {self._colors.text_disabled};
                 font-size: {TYPOGRAPHY.text_xs}px;
             """)
-            layout.addWidget(author_label)
+            self._layout.addWidget(author_label)
 
     def mousePressEvent(self, event):
         """Handle click events."""

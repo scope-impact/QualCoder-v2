@@ -10,7 +10,6 @@ Pure presentation component - receives match data, displays preview cards.
 from typing import Any
 
 from PySide6.QtWidgets import (
-    QFrame,
     QHBoxLayout,
     QLabel,
     QScrollArea,
@@ -22,14 +21,17 @@ from design_system import (
     RADIUS,
     SPACING,
     TYPOGRAPHY,
+    Card,
     ColorPalette,
     get_colors,
 )
 
 
-class MatchPreviewItem(QFrame):
+class MatchPreviewItem(Card):
     """
     Single match preview item showing index, position, and context.
+
+    Extends design_system.Card for consistent styling.
 
     Displays:
     - Match index and position range
@@ -60,25 +62,27 @@ class MatchPreviewItem(QFrame):
             colors: Color palette for styling
             parent: Parent widget
         """
-        super().__init__(parent)
         self._colors = colors or get_colors()
+        super().__init__(colors=self._colors, parent=parent, shadow=False, elevation=1)
         self._index = index
         self._match = match
 
         self._setup_ui()
 
     def _setup_ui(self):
-        """Build the item UI."""
+        """Build the item UI using Card's layout."""
+        # Override Card's default styling for compact preview items
         self.setStyleSheet(f"""
             MatchPreviewItem {{
                 background-color: {self._colors.surface_light};
                 border-radius: {RADIUS.sm}px;
+                border: none;
             }}
         """)
 
-        layout = QVBoxLayout(self)
-        layout.setContentsMargins(SPACING.sm, SPACING.xs, SPACING.sm, SPACING.xs)
-        layout.setSpacing(2)
+        # Adjust Card's default margins for compact display
+        self._layout.setContentsMargins(SPACING.sm, SPACING.xs, SPACING.sm, SPACING.xs)
+        self._layout.setSpacing(2)
 
         # Index and position header
         start = self._match.get("start", 0)
@@ -88,7 +92,7 @@ class MatchPreviewItem(QFrame):
             color: {self._colors.text_disabled};
             font-size: {TYPOGRAPHY.text_xs}px;
         """)
-        layout.addWidget(header)
+        self._layout.addWidget(header)
 
         # Context with matched text
         context = self._match.get("context", self._match.get("text", ""))
@@ -98,7 +102,7 @@ class MatchPreviewItem(QFrame):
             color: {self._colors.text_primary};
             font-size: {TYPOGRAPHY.text_sm}px;
         """)
-        layout.addWidget(context_label)
+        self._layout.addWidget(context_label)
 
     def get_index(self) -> int:
         """Get the match index."""
@@ -109,9 +113,11 @@ class MatchPreviewItem(QFrame):
         return self._match
 
 
-class MatchPreviewPanel(QFrame):
+class MatchPreviewPanel(Card):
     """
     Scrollable panel showing match previews with summary header.
+
+    Extends design_system.Card for consistent styling.
 
     Displays:
     - Summary header with match count ("X matches found")
@@ -135,37 +141,32 @@ class MatchPreviewPanel(QFrame):
             colors: Color palette for styling
             parent: Parent widget
         """
-        super().__init__(parent)
         self._colors = colors or get_colors()
+        super().__init__(colors=self._colors, parent=parent, shadow=False, elevation=1)
         self._matches: list[dict[str, Any]] = []
         self._items: list[MatchPreviewItem] = []
 
         self._setup_ui()
 
     def _setup_ui(self):
-        """Build the panel UI."""
-        self.setStyleSheet(f"""
-            MatchPreviewPanel {{
-                background-color: {self._colors.surface};
-                border: 1px solid {self._colors.border};
-                border-radius: {RADIUS.md}px;
-            }}
-        """)
-
-        layout = QVBoxLayout(self)
-        layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(0)
+        """Build the panel UI using Card's base styling."""
+        # Card provides base styling; adjust margins for panel layout
+        self._layout.setContentsMargins(0, 0, 0, 0)
+        self._layout.setSpacing(0)
 
         # Header with summary
-        header = QFrame()
+        header = Card(colors=self._colors, shadow=False)
         header.setStyleSheet(f"""
-            QFrame {{
+            Card {{
                 background-color: {self._colors.surface_light};
+                border: none;
                 border-bottom: 1px solid {self._colors.border};
+                border-radius: 0;
             }}
         """)
-        header_layout = QHBoxLayout(header)
-        header_layout.setContentsMargins(SPACING.md, SPACING.sm, SPACING.md, SPACING.sm)
+        header._layout.setContentsMargins(
+            SPACING.md, SPACING.sm, SPACING.md, SPACING.sm
+        )
 
         self._summary_label = QLabel("No matches")
         self._summary_label.setStyleSheet(f"""
@@ -173,10 +174,12 @@ class MatchPreviewPanel(QFrame):
             font-size: {TYPOGRAPHY.text_sm}px;
             font-weight: {TYPOGRAPHY.weight_medium};
         """)
-        header_layout.addWidget(self._summary_label)
-        header_layout.addStretch()
+        header_inner = QHBoxLayout()
+        header_inner.addWidget(self._summary_label)
+        header_inner.addStretch()
+        header._layout.addLayout(header_inner)
 
-        layout.addWidget(header)
+        self._layout.addWidget(header)
 
         # Scrollable match list
         scroll = QScrollArea()
@@ -197,7 +200,7 @@ class MatchPreviewPanel(QFrame):
         self._list_layout.addStretch()
 
         scroll.setWidget(self._list_container)
-        layout.addWidget(scroll, 1)
+        self._layout.addWidget(scroll, 1)
 
     # =========================================================================
     # Public API

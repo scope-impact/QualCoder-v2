@@ -46,7 +46,7 @@ def viewmodel(coding_context):
 
 
 @pytest.fixture
-def screen_with_code(_qapp, qtbot, colors, coding_context, viewmodel):
+def screen_with_code(qapp, qtbot, colors, coding_context, viewmodel):  # noqa: ARG001
     """Create a screen with a code already created."""
     # Create a code
     viewmodel.create_code("TestCode", "#ff5500")
