@@ -3,26 +3,11 @@ Image annotation components using QGraphicsScene
 For region-based coding on images with rectangle and polygon annotations
 """
 
-from typing import List, Dict, Any, Optional, Tuple
+import math
 from dataclasses import dataclass, field
 from enum import Enum
-import math
+from typing import Any
 
-from PySide6.QtWidgets import (
-    QFrame,
-    QGraphicsItem,
-    QGraphicsPathItem,
-    QGraphicsPixmapItem,
-    QGraphicsPolygonItem,
-    QGraphicsRectItem,
-    QGraphicsScene,
-    QGraphicsView,
-    QHBoxLayout,
-    QLabel,
-    QPushButton,
-    QVBoxLayout,
-    QWidget,
-)
 from PySide6.QtCore import (
     QPointF,
     QRectF,
@@ -32,7 +17,6 @@ from PySide6.QtCore import (
 from PySide6.QtGui import (
     QBrush,
     QColor,
-    QCursor,
     QImage,
     QPainter,
     QPainterPath,
@@ -40,14 +24,29 @@ from PySide6.QtGui import (
     QPixmap,
     QPolygonF,
 )
-# QButtonGroup is now in qt_compat
-from PySide6.QtWidgets import QButtonGroup
 
-from .tokens import SPACING, RADIUS, TYPOGRAPHY, ColorPalette, get_colors
+# QButtonGroup is now in qt_compat
+from PySide6.QtWidgets import (
+    QButtonGroup,
+    QFrame,
+    QGraphicsItem,
+    QGraphicsPathItem,
+    QGraphicsPixmapItem,
+    QGraphicsPolygonItem,
+    QGraphicsRectItem,
+    QGraphicsScene,
+    QGraphicsView,
+    QHBoxLayout,
+    QPushButton,
+    QVBoxLayout,
+)
+
+from .tokens import RADIUS, SPACING, TYPOGRAPHY, ColorPalette, get_colors
 
 
 class AnnotationMode(Enum):
     """Annotation drawing modes"""
+
     SELECT = "select"
     RECTANGLE = "rectangle"
     POLYGON = "polygon"
@@ -57,13 +56,16 @@ class AnnotationMode(Enum):
 @dataclass
 class ImageAnnotation:
     """Data class for image annotations"""
+
     id: str
     annotation_type: str  # "rectangle", "polygon", "freehand"
-    points: List[Tuple[float, float]]  # For rect: [(x, y, w, h)], for polygon: [(x1,y1), (x2,y2), ...]
+    points: list[
+        tuple[float, float]
+    ]  # For rect: [(x, y, w, h)], for polygon: [(x1,y1), (x2,y2), ...]
     color: str = "#1E3A5F"  # Prussian ink (from tokens.COLORS_LIGHT.primary)
     label: str = ""
-    code_id: Optional[str] = None
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    code_id: str | None = None
+    metadata: dict[str, Any] = field(default_factory=dict)
 
 
 class ImageAnnotationLayer(QFrame):
@@ -99,21 +101,21 @@ class ImageAnnotationLayer(QFrame):
         show_toolbar: bool = True,
         default_color: str = None,
         colors: ColorPalette = None,
-        parent=None
+        parent=None,
     ):
         super().__init__(parent)
         self._colors = colors or get_colors()
         self._default_color = default_color or self._colors.primary
         self._current_color = self._default_color
         self._mode = AnnotationMode.SELECT
-        self._annotations: Dict[str, ImageAnnotation] = {}
-        self._annotation_items: Dict[str, QGraphicsItem] = {}
+        self._annotations: dict[str, ImageAnnotation] = {}
+        self._annotation_items: dict[str, QGraphicsItem] = {}
         self._next_id = 1
 
         # Drawing state
         self._drawing = False
-        self._current_points: List[QPointF] = []
-        self._temp_item: Optional[QGraphicsItem] = None
+        self._current_points: list[QPointF] = []
+        self._temp_item: QGraphicsItem | None = None
 
         self._setup_ui(show_toolbar)
 
@@ -151,7 +153,7 @@ class ImageAnnotationLayer(QFrame):
         layout.addWidget(self._view)
 
         # Image item
-        self._image_item: Optional[QGraphicsPixmapItem] = None
+        self._image_item: QGraphicsPixmapItem | None = None
 
     def load_image(self, path: str):
         """Load image from file path"""
@@ -175,14 +177,16 @@ class ImageAnnotationLayer(QFrame):
         self._image_item = QGraphicsPixmapItem(pixmap)
         self._scene.addItem(self._image_item)
         self._scene.setSceneRect(QRectF(pixmap.rect()))
-        self._view.fitInView(self._scene.sceneRect(), Qt.AspectRatioMode.KeepAspectRatio)
+        self._view.fitInView(
+            self._scene.sceneRect(), Qt.AspectRatioMode.KeepAspectRatio
+        )
 
     def set_mode(self, mode: AnnotationMode):
         """Set the annotation mode"""
         self._mode = mode
         self._cancel_drawing()
 
-        if hasattr(self, '_toolbar'):
+        if hasattr(self, "_toolbar"):
             self._toolbar.set_mode(mode)
 
         # Update cursor
@@ -232,7 +236,7 @@ class ImageAnnotationLayer(QFrame):
         elif self._mode == AnnotationMode.FREEHAND and self._drawing:
             self._finish_freehand()
 
-    def _on_mouse_double_click(self, pos: QPointF):
+    def _on_mouse_double_click(self, _pos: QPointF):
         """Handle mouse double click"""
         if self._mode == AnnotationMode.POLYGON and self._drawing:
             self._finish_polygon()
@@ -283,7 +287,7 @@ class ImageAnnotationLayer(QFrame):
             id=self._generate_id(),
             annotation_type="rectangle",
             points=[(rect.x(), rect.y(), rect.width(), rect.height())],
-            color=self._current_color
+            color=self._current_color,
         )
 
         self._finalize_annotation(annotation)
@@ -320,7 +324,7 @@ class ImageAnnotationLayer(QFrame):
             id=self._generate_id(),
             annotation_type="polygon",
             points=points,
-            color=self._current_color
+            color=self._current_color,
         )
 
         self._finalize_annotation(annotation)
@@ -361,12 +365,14 @@ class ImageAnnotationLayer(QFrame):
             id=self._generate_id(),
             annotation_type="freehand",
             points=points,
-            color=self._current_color
+            color=self._current_color,
         )
 
         self._finalize_annotation(annotation)
 
-    def _simplify_points(self, points: List[QPointF], tolerance: float) -> List[QPointF]:
+    def _simplify_points(
+        self, points: list[QPointF], tolerance: float
+    ) -> list[QPointF]:
         """Simplify point list using Douglas-Peucker algorithm"""
         if len(points) <= 2:
             return points
@@ -385,21 +391,27 @@ class ImageAnnotationLayer(QFrame):
 
         # If max distance > tolerance, recursively simplify
         if max_dist > tolerance:
-            left = self._simplify_points(points[:max_idx + 1], tolerance)
+            left = self._simplify_points(points[: max_idx + 1], tolerance)
             right = self._simplify_points(points[max_idx:], tolerance)
             return left[:-1] + right
         else:
             return [start, end]
 
-    def _point_line_distance(self, point: QPointF, line_start: QPointF, line_end: QPointF) -> float:
+    def _point_line_distance(
+        self, point: QPointF, line_start: QPointF, line_end: QPointF
+    ) -> float:
         """Calculate perpendicular distance from point to line"""
         dx = line_end.x() - line_start.x()
         dy = line_end.y() - line_start.y()
 
         if dx == 0 and dy == 0:
-            return math.sqrt((point.x() - line_start.x()) ** 2 + (point.y() - line_start.y()) ** 2)
+            return math.sqrt(
+                (point.x() - line_start.x()) ** 2 + (point.y() - line_start.y()) ** 2
+            )
 
-        t = ((point.x() - line_start.x()) * dx + (point.y() - line_start.y()) * dy) / (dx * dx + dy * dy)
+        t = ((point.x() - line_start.x()) * dx + (point.y() - line_start.y()) * dy) / (
+            dx * dx + dy * dy
+        )
         t = max(0, min(1, t))
 
         closest_x = line_start.x() + t * dx
@@ -493,11 +505,11 @@ class ImageAnnotationLayer(QFrame):
             del self._annotation_items[annotation_id]
         self.annotation_deleted.emit(annotation_id)
 
-    def get_annotation(self, annotation_id: str) -> Optional[ImageAnnotation]:
+    def get_annotation(self, annotation_id: str) -> ImageAnnotation | None:
         """Get annotation by ID"""
         return self._annotations.get(annotation_id)
 
-    def get_all_annotations(self) -> List[ImageAnnotation]:
+    def get_all_annotations(self) -> list[ImageAnnotation]:
         """Get all annotations"""
         return list(self._annotations.values())
 
@@ -522,7 +534,9 @@ class ImageAnnotationLayer(QFrame):
     def zoom_to_fit(self):
         """Fit view to image"""
         if self._scene.sceneRect():
-            self._view.fitInView(self._scene.sceneRect(), Qt.AspectRatioMode.KeepAspectRatio)
+            self._view.fitInView(
+                self._scene.sceneRect(), Qt.AspectRatioMode.KeepAspectRatio
+            )
 
 
 class AnnotationView(QGraphicsView):
@@ -623,7 +637,9 @@ class AnnotationToolbar(QFrame):
 
         self._button_group.buttonClicked.connect(self._on_button_clicked)
 
-    def _create_tool_button(self, label: str, icon: str, mode: AnnotationMode) -> QPushButton:
+    def _create_tool_button(
+        self, label: str, _icon: str, mode: AnnotationMode
+    ) -> QPushButton:
         """Create a tool button"""
         btn = QPushButton(label)
         btn.setCheckable(True)

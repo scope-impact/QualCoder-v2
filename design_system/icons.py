@@ -23,9 +23,8 @@ Usage:
 """
 
 import qtawesome as qta
-
-from PySide6.QtWidgets import QHBoxLayout, QLabel, QWidget
 from PySide6.QtCore import Qt
+from PySide6.QtWidgets import QHBoxLayout, QLabel, QWidget
 
 from .tokens import ColorPalette, get_colors
 
@@ -51,7 +50,7 @@ class Icon(QLabel):
         size: int = 20,
         color: str = None,
         colors: ColorPalette = None,
-        parent=None
+        parent=None,
     ):
         super().__init__(parent)
         self._colors = colors or get_colors()
@@ -70,7 +69,7 @@ class Icon(QLabel):
             icon = qta.icon(self._name, color=self._color)
             pixmap = icon.pixmap(self._size, self._size)
             self.setPixmap(pixmap)
-        except Exception as e:
+        except Exception:
             # Show icon name as text if icon not found
             self.setText(self._name.split(".")[-1][:3])
             font = self.font()
@@ -87,7 +86,9 @@ class Icon(QLabel):
             pixmap = icon.pixmap(self._size, self._size)
             self.setPixmap(pixmap)
         except Exception:
-            self.setStyleSheet(f"QLabel {{ color: {self._color}; background: transparent; }}")
+            self.setStyleSheet(
+                f"QLabel {{ color: {self._color}; background: transparent; }}"
+            )
 
     def set_size(self, size: int):
         """Update icon size"""
@@ -124,7 +125,7 @@ class IconText(QWidget):
         spacing: int = 8,
         color: str = None,
         colors: ColorPalette = None,
-        parent=None
+        parent=None,
     ):
         super().__init__(parent)
         self._colors = colors or get_colors()
@@ -154,12 +155,16 @@ class IconText(QWidget):
         self._label.setText(text)
 
 
-def icon(name: str, size: int = 20, color: str = None, colors: ColorPalette = None) -> Icon:
+def icon(
+    name: str, size: int = 20, color: str = None, colors: ColorPalette = None
+) -> Icon:
     """Create an Icon widget"""
     return Icon(name, size=size, color=color, colors=colors)
 
 
-def get_pixmap(name: str, size: int = 20, color: str = None, colors: ColorPalette = None):
+def get_pixmap(
+    name: str, size: int = 20, color: str = None, colors: ColorPalette = None
+):
     """Get a QPixmap for an icon (useful for buttons, etc.)"""
     colors = colors or get_colors()
     color = color or colors.text_secondary

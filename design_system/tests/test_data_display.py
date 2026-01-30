@@ -2,11 +2,15 @@
 Tests for data display components: DataTable, InfoCard, KeyValueList, EmptyState, etc.
 """
 
-import pytest
-
 from design_system.data_display import (
-    DataTable, FileCell, EntityCell, InfoCard, CodeDetailCard,
-    StatRow, KeyValueList, EmptyState
+    CodeDetailCard,
+    DataTable,
+    EmptyState,
+    EntityCell,
+    FileCell,
+    InfoCard,
+    KeyValueList,
+    StatRow,
 )
 
 
@@ -26,10 +30,12 @@ class TestDataTable:
         table = DataTable(columns=["Name", "Value"])
         qtbot.addWidget(table)
 
-        table.set_data([
-            {"Name": "Item 1", "Value": "100"},
-            {"Name": "Item 2", "Value": "200"},
-        ])
+        table.set_data(
+            [
+                {"Name": "Item 1", "Value": "100"},
+                {"Name": "Item 2", "Value": "200"},
+            ]
+        )
 
         assert len(table._data) == 2
 
@@ -41,7 +47,7 @@ class TestDataTable:
         table.set_data([{"Name": "Test"}])
 
         # Signal should exist
-        assert hasattr(table, 'row_clicked')
+        assert hasattr(table, "row_clicked")
 
     def test_table_selectable(self, qtbot):
         """DataTable should support selection"""
@@ -106,7 +112,7 @@ class TestInfoCard:
         qtbot.addWidget(card)
 
         assert card is not None
-        assert hasattr(card, '_icon_widget')
+        assert hasattr(card, "_icon_widget")
 
     def test_info_card_set_text(self, qtbot):
         """InfoCard should set text content"""
@@ -119,6 +125,7 @@ class TestInfoCard:
     def test_info_card_set_content_widget(self, qtbot):
         """InfoCard should accept widget content"""
         from PySide6.QtWidgets import QLabel
+
         card = InfoCard(title="Custom")
         qtbot.addWidget(card)
 
@@ -159,9 +166,7 @@ class TestCodeDetailCard:
     def test_code_detail_creation(self, qtbot):
         """CodeDetailCard should be created"""
         card = CodeDetailCard(
-            color="#FFC107",
-            name="test code",
-            memo="A test code description"
+            color="#FFC107", name="test code", memo="A test code description"
         )
         qtbot.addWidget(card)
 
@@ -174,7 +179,7 @@ class TestCodeDetailCard:
             color="#4CAF50",
             name="example code",
             memo="Description",
-            example="This is example text"
+            example="This is example text",
         )
         qtbot.addWidget(card)
 
@@ -194,8 +199,8 @@ class TestCodeDetailCard:
         card = CodeDetailCard(color="#4F46E5", name="code")
         qtbot.addWidget(card)
 
-        assert hasattr(card, 'edit_clicked')
-        assert hasattr(card, 'delete_clicked')
+        assert hasattr(card, "edit_clicked")
+        assert hasattr(card, "delete_clicked")
 
 
 class TestStatRow:
@@ -267,7 +272,7 @@ class TestEmptyState:
             title="No files",
             message="Upload to start",
             action_text="Upload",
-            on_action=lambda: clicked.append(True)
+            on_action=lambda: clicked.append(True),
         )
         qtbot.addWidget(empty)
 

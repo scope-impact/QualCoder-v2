@@ -5,29 +5,32 @@ These interfaces define the CONTRACT for application layer services.
 Controllers coordinate between the domain layer and infrastructure.
 """
 
-from typing import Protocol, List, Optional, Callable, Any
+from collections.abc import Callable
 from dataclasses import dataclass
+from typing import Any, Protocol
 
-from src.domain.shared.types import CodeId, SegmentId, SourceId, CategoryId, Result
 from src.domain.coding.events import CodingEvent
-
+from src.domain.shared.types import Result
 
 # ============================================================
 # Command DTOs (Input to Controllers)
 # ============================================================
 
+
 @dataclass(frozen=True)
 class CreateCodeCommand:
     """Command to create a new code"""
+
     name: str
     color: str  # hex color
-    memo: Optional[str] = None
-    category_id: Optional[int] = None
+    memo: str | None = None
+    category_id: int | None = None
 
 
 @dataclass(frozen=True)
 class RenameCodeCommand:
     """Command to rename an existing code"""
+
     code_id: int
     new_name: str
 
@@ -35,6 +38,7 @@ class RenameCodeCommand:
 @dataclass(frozen=True)
 class ChangeCodeColorCommand:
     """Command to change a code's color"""
+
     code_id: int
     new_color: str  # hex color
 
@@ -42,13 +46,17 @@ class ChangeCodeColorCommand:
 @dataclass(frozen=True)
 class DeleteCodeCommand:
     """Command to delete a code"""
+
     code_id: int
-    delete_segments: bool = False  # If true, delete segments; if false, fail if segments exist
+    delete_segments: bool = (
+        False  # If true, delete segments; if false, fail if segments exist
+    )
 
 
 @dataclass(frozen=True)
 class MergeCodesCommand:
     """Command to merge one code into another"""
+
     source_code_id: int
     target_code_id: int
 
@@ -56,31 +64,35 @@ class MergeCodesCommand:
 @dataclass(frozen=True)
 class ApplyCodeCommand:
     """Command to apply a code to a segment of text"""
+
     code_id: int
     source_id: int
     start_position: int
     end_position: int
-    memo: Optional[str] = None
+    memo: str | None = None
     importance: int = 0
 
 
 @dataclass(frozen=True)
 class RemoveCodeCommand:
     """Command to remove a code from a segment"""
+
     segment_id: int
 
 
 @dataclass(frozen=True)
 class CreateCategoryCommand:
     """Command to create a new category"""
+
     name: str
-    parent_id: Optional[int] = None
-    memo: Optional[str] = None
+    parent_id: int | None = None
+    memo: str | None = None
 
 
 @dataclass(frozen=True)
 class DeleteCategoryCommand:
     """Command to delete a category"""
+
     category_id: int
     orphan_strategy: str = "move_to_parent"  # "move_to_parent" | "delete_codes"
 
@@ -88,6 +100,7 @@ class DeleteCategoryCommand:
 # ============================================================
 # Controller Protocols
 # ============================================================
+
 
 class CodingController(Protocol):
     """
@@ -139,23 +152,23 @@ class CodingController(Protocol):
 
     # --- Queries ---
 
-    def get_all_codes(self) -> List[Any]:
+    def get_all_codes(self) -> list[Any]:
         """Get all codes in the project"""
         ...
 
-    def get_code(self, code_id: int) -> Optional[Any]:
+    def get_code(self, code_id: int) -> Any | None:
         """Get a specific code by ID"""
         ...
 
-    def get_segments_for_source(self, source_id: int) -> List[Any]:
+    def get_segments_for_source(self, source_id: int) -> list[Any]:
         """Get all segments for a source"""
         ...
 
-    def get_segments_for_code(self, code_id: int) -> List[Any]:
+    def get_segments_for_code(self, code_id: int) -> list[Any]:
         """Get all segments with a specific code"""
         ...
 
-    def get_all_categories(self) -> List[Any]:
+    def get_all_categories(self) -> list[Any]:
         """Get all categories"""
         ...
 

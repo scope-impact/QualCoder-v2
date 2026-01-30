@@ -3,6 +3,12 @@ Toast notification components
 Material Design styled popup notifications
 """
 
+from PySide6.QtCore import (
+    Qt,
+    QTimer,
+    Signal,
+)
+from PySide6.QtGui import QColor
 from PySide6.QtWidgets import (
     QApplication,
     QGraphicsDropShadowEffect,
@@ -12,16 +18,8 @@ from PySide6.QtWidgets import (
     QVBoxLayout,
     QWidget,
 )
-from PySide6.QtCore import (
-    QEasingCurve,
-    QPropertyAnimation,
-    QTimer,
-    Qt,
-    Signal,
-)
-from PySide6.QtGui import QColor
 
-from .tokens import SPACING, RADIUS, TYPOGRAPHY, ColorPalette, get_colors
+from .tokens import RADIUS, SPACING, TYPOGRAPHY, ColorPalette, get_colors
 
 
 class Toast(QWidget):
@@ -45,7 +43,7 @@ class Toast(QWidget):
         duration: int = 4000,
         closable: bool = True,
         colors: ColorPalette = None,
-        parent=None
+        parent=None,
     ):
         super().__init__(parent)
         self._colors = colors or get_colors()
@@ -53,9 +51,9 @@ class Toast(QWidget):
         self._variant = variant
 
         self.setWindowFlags(
-            Qt.WindowType.FramelessWindowHint |
-            Qt.WindowType.Tool |
-            Qt.WindowType.WindowStaysOnTopHint
+            Qt.WindowType.FramelessWindowHint
+            | Qt.WindowType.Tool
+            | Qt.WindowType.WindowStaysOnTopHint
         )
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
         self.setAttribute(Qt.WidgetAttribute.WA_ShowWithoutActivating)
@@ -101,7 +99,9 @@ class Toast(QWidget):
         container.setGraphicsEffect(shadow)
 
         container_layout = QHBoxLayout(container)
-        container_layout.setContentsMargins(SPACING.lg, SPACING.md, SPACING.lg, SPACING.md)
+        container_layout.setContentsMargins(
+            SPACING.lg, SPACING.md, SPACING.lg, SPACING.md
+        )
         container_layout.setSpacing(SPACING.md)
 
         # Icon
@@ -173,9 +173,9 @@ class ToastContainer(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setWindowFlags(
-            Qt.WindowType.FramelessWindowHint |
-            Qt.WindowType.Tool |
-            Qt.WindowType.WindowStaysOnTopHint
+            Qt.WindowType.FramelessWindowHint
+            | Qt.WindowType.Tool
+            | Qt.WindowType.WindowStaysOnTopHint
         )
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
         self.setAttribute(Qt.WidgetAttribute.WA_ShowWithoutActivating)
@@ -221,7 +221,9 @@ class ToastContainer(QWidget):
             geometry = screen.availableGeometry()
             self.adjustSize()
             x = geometry.center().x() - self.width() // 2
-            y = geometry.bottom() - self.height() - 60  # 60px from bottom for status bar
+            y = (
+                geometry.bottom() - self.height() - 60
+            )  # 60px from bottom for status bar
             self.move(x, y)
 
 

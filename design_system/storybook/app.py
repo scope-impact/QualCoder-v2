@@ -13,8 +13,8 @@ from PySide6.QtWidgets import (
 )
 
 from ..tokens import get_colors
-from .sidebar import StorybookSidebar
 from .page import StoryPage
+from .sidebar import StorybookSidebar
 from .stories import get_all_sections
 
 
@@ -46,10 +46,7 @@ class Storybook(QMainWindow):
         main_layout.setSpacing(0)
 
         # Sidebar
-        self._sidebar = StorybookSidebar(
-            self._on_page_select,
-            colors=self._colors
-        )
+        self._sidebar = StorybookSidebar(self._on_page_select, colors=self._colors)
         main_layout.addWidget(self._sidebar)
 
         # Content

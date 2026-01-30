@@ -3,9 +3,17 @@ List components
 File lists, case lists, and other list widgets with staggered animations.
 """
 
-from typing import List, Optional, Any
 from dataclasses import dataclass
+from typing import Any
 
+import qtawesome as qta
+from PySide6.QtCore import (
+    QEasingCurve,
+    QPropertyAnimation,
+    Qt,
+    QTimer,
+    Signal,
+)
 from PySide6.QtWidgets import (
     QFrame,
     QGraphicsOpacityEffect,
@@ -13,24 +21,19 @@ from PySide6.QtWidgets import (
     QLabel,
     QPushButton,
     QScrollArea,
-    QSizePolicy,
     QVBoxLayout,
     QWidget,
 )
-from PySide6.QtCore import (
-    Qt,
-    Signal,
-    QPropertyAnimation,
-    QEasingCurve,
-    QParallelAnimationGroup,
-    QTimer,
-    Property,
-    QPoint,
+
+from .tokens import (
+    ANIMATION,
+    RADIUS,
+    SPACING,
+    TYPOGRAPHY,
+    ColorPalette,
+    get_colors,
+    hex_to_rgba,
 )
-
-import qtawesome as qta
-
-from .tokens import SPACING, RADIUS, TYPOGRAPHY, ANIMATION, ColorPalette, get_colors, hex_to_rgba
 
 
 class AnimatedListItemMixin:
@@ -121,7 +124,7 @@ class AnimatedBaseList(QScrollArea):
 
     def _add_item_widget(self, widget):
         """Add item widget with animation setup."""
-        if hasattr(widget, 'setup_entrance_animation'):
+        if hasattr(widget, "setup_entrance_animation"):
             widget.setup_entrance_animation(self._item_count, self._animate)
         self._layout.addWidget(widget)
         self._item_count += 1
@@ -142,6 +145,7 @@ class AnimatedBaseList(QScrollArea):
 @dataclass
 class ListItem:
     """Generic list item data"""
+
     id: str
     text: str
     subtitle: str = ""
@@ -214,7 +218,7 @@ class FileList(AnimatedBaseList):
         name: str,
         file_type: str = "text",
         size: str = "",
-        status: str = None
+        status: str = None,
     ):
         item = FileListItem(
             id=id,
@@ -222,14 +226,14 @@ class FileList(AnimatedBaseList):
             file_type=file_type,
             size=size,
             status=status,
-            colors=self._colors
+            colors=self._colors,
         )
         item.clicked.connect(lambda: self.item_clicked.emit(id))
         item.double_clicked.connect(lambda: self.item_double_clicked.emit(id))
         self._items.append(item)
         self._add_item_widget(item)
 
-    def set_files(self, files: List[dict]):
+    def set_files(self, files: list[dict]):
         self.clear()
         for f in files:
             self.add_file(
@@ -237,7 +241,7 @@ class FileList(AnimatedBaseList):
                 name=f.get("name", ""),
                 file_type=f.get("type", "text"),
                 size=f.get("size", ""),
-                status=f.get("status")
+                status=f.get("status"),
             )
 
 
@@ -255,7 +259,7 @@ class FileListItem(QFrame, AnimatedListItemMixin):
         size: str,
         status: str = None,
         colors: ColorPalette = None,
-        parent=None
+        parent=None,
     ):
         super().__init__(parent)
         self._colors = colors or get_colors()
@@ -284,11 +288,15 @@ class FileListItem(QFrame, AnimatedListItemMixin):
             "image": ("mdi6.image-outline", self._colors.file_image),
             "pdf": ("mdi6.file-pdf-box", self._colors.file_pdf),
         }
-        icon_name, color = type_config.get(file_type, ("mdi6.file-outline", self._colors.file_text))
+        icon_name, color = type_config.get(
+            file_type, ("mdi6.file-outline", self._colors.file_text)
+        )
 
         icon_frame = QFrame()
         icon_frame.setFixedSize(36, 36)
-        icon_frame.setStyleSheet(f"background-color: {hex_to_rgba(color, 0.13)}; border-radius: {RADIUS.sm}px;")
+        icon_frame.setStyleSheet(
+            f"background-color: {hex_to_rgba(color, 0.13)}; border-radius: {RADIUS.sm}px;"
+        )
         icon_layout = QVBoxLayout(icon_frame)
         icon_layout.setContentsMargins(0, 0, 0, 0)
         icon_label = QLabel()
@@ -302,11 +310,15 @@ class FileListItem(QFrame, AnimatedListItemMixin):
         info = QVBoxLayout()
         info.setSpacing(2)
         name_label = QLabel(name)
-        name_label.setStyleSheet(f"color: {self._colors.text_primary}; font-size: {TYPOGRAPHY.text_sm}px;")
+        name_label.setStyleSheet(
+            f"color: {self._colors.text_primary}; font-size: {TYPOGRAPHY.text_sm}px;"
+        )
         info.addWidget(name_label)
         if size:
             size_label = QLabel(size)
-            size_label.setStyleSheet(f"color: {self._colors.text_secondary}; font-size: {TYPOGRAPHY.text_xs}px;")
+            size_label.setStyleSheet(
+                f"color: {self._colors.text_secondary}; font-size: {TYPOGRAPHY.text_xs}px;"
+            )
             info.addWidget(size_label)
         layout.addLayout(info, 1)
 
@@ -316,9 +328,14 @@ class FileListItem(QFrame, AnimatedListItemMixin):
             badge_colors = {
                 "coded": (self._colors.success, hex_to_rgba(self._colors.success, 0.2)),
                 "pending": (self._colors.text_secondary, self._colors.surface_light),
-                "in_progress": (self._colors.warning, hex_to_rgba(self._colors.warning, 0.2)),
+                "in_progress": (
+                    self._colors.warning,
+                    hex_to_rgba(self._colors.warning, 0.2),
+                ),
             }
-            fg, bg = badge_colors.get(status.lower().replace(" ", "_"), badge_colors["pending"])
+            fg, bg = badge_colors.get(
+                status.lower().replace(" ", "_"), badge_colors["pending"]
+            )
             badge.setStyleSheet(f"""
                 background-color: {bg};
                 color: {fg};
@@ -353,7 +370,7 @@ class CaseList(AnimatedBaseList):
         name: str,
         subtitle: str = "",
         avatar: str = None,
-        color: str = None
+        color: str = None,
     ):
         item = CaseListItem(
             id=id,
@@ -361,7 +378,7 @@ class CaseList(AnimatedBaseList):
             subtitle=subtitle,
             avatar=avatar or name[0].upper(),
             color=color,
-            colors=self._colors
+            colors=self._colors,
         )
         item.clicked.connect(lambda: self.item_clicked.emit(id))
         self._items.append(item)
@@ -381,9 +398,10 @@ class CaseListItem(QFrame, AnimatedListItemMixin):
         avatar: str,
         color: str = None,
         colors: ColorPalette = None,
-        parent=None
+        parent=None,
     ):
         super().__init__(parent)
+        self.id = id  # Store for parent list tracking
         self._colors = colors or get_colors()
 
         self.setCursor(Qt.CursorShape.PointingHandCursor)
@@ -419,11 +437,15 @@ class CaseListItem(QFrame, AnimatedListItemMixin):
         info = QVBoxLayout()
         info.setSpacing(2)
         name_label = QLabel(name)
-        name_label.setStyleSheet(f"color: {self._colors.text_primary}; font-size: {TYPOGRAPHY.text_sm}px;")
+        name_label.setStyleSheet(
+            f"color: {self._colors.text_primary}; font-size: {TYPOGRAPHY.text_sm}px;"
+        )
         info.addWidget(name_label)
         if subtitle:
             sub_label = QLabel(subtitle)
-            sub_label.setStyleSheet(f"color: {self._colors.text_secondary}; font-size: {TYPOGRAPHY.text_xs}px;")
+            sub_label.setStyleSheet(
+                f"color: {self._colors.text_secondary}; font-size: {TYPOGRAPHY.text_xs}px;"
+            )
             info.addWidget(sub_label)
         layout.addLayout(info, 1)
 
@@ -443,12 +465,7 @@ class AttributeList(AnimatedBaseList):
     """
 
     def add_attribute(
-        self,
-        id: str,
-        name: str,
-        attr_type: str = "text",
-        on_edit=None,
-        on_delete=None
+        self, id: str, name: str, attr_type: str = "text", on_edit=None, on_delete=None
     ):
         item = AttributeListItem(
             id=id,
@@ -456,7 +473,7 @@ class AttributeList(AnimatedBaseList):
             attr_type=attr_type,
             on_edit=on_edit,
             on_delete=on_delete,
-            colors=self._colors
+            colors=self._colors,
         )
         item.clicked.connect(lambda: self.item_clicked.emit(id))
         self._items.append(item)
@@ -476,9 +493,10 @@ class AttributeListItem(QFrame, AnimatedListItemMixin):
         on_edit=None,
         on_delete=None,
         colors: ColorPalette = None,
-        parent=None
+        parent=None,
     ):
         super().__init__(parent)
+        self.id = id  # Store for parent list tracking
         self._colors = colors or get_colors()
 
         self.setCursor(Qt.CursorShape.PointingHandCursor)
@@ -499,12 +517,14 @@ class AttributeListItem(QFrame, AnimatedListItemMixin):
         # Type badge
         type_icon = "🔢" if attr_type == "numeric" else "📝"
         type_label = QLabel(type_icon)
-        type_label.setStyleSheet(f"font-size: 16px;")
+        type_label.setStyleSheet("font-size: 16px;")
         layout.addWidget(type_label)
 
         # Name
         name_label = QLabel(name)
-        name_label.setStyleSheet(f"color: {self._colors.text_primary}; font-size: {TYPOGRAPHY.text_sm}px;")
+        name_label.setStyleSheet(
+            f"color: {self._colors.text_primary}; font-size: {TYPOGRAPHY.text_sm}px;"
+        )
         layout.addWidget(name_label, 1)
 
         # Type indicator
@@ -540,15 +560,15 @@ class AttributeListItem(QFrame, AnimatedListItemMixin):
             del_btn = QPushButton("🗑️")
             del_btn.setFixedSize(24, 24)
             del_btn.setCursor(Qt.CursorShape.PointingHandCursor)
-            del_btn.setStyleSheet(f"""
-                QPushButton {{
+            del_btn.setStyleSheet("""
+                QPushButton {
                     background: transparent;
                     border: none;
                     border-radius: 12px;
-                }}
-                QPushButton:hover {{
+                }
+                QPushButton:hover {
                     background-color: rgba(244, 67, 54, 0.1);
-                }}
+                }
             """)
             del_btn.clicked.connect(on_delete)
             layout.addWidget(del_btn)
@@ -569,18 +589,14 @@ class QueueList(AnimatedBaseList):
     """
 
     def add_item(
-        self,
-        id: str,
-        description: str,
-        status: str = "pending",
-        author: str = ""
+        self, id: str, description: str, status: str = "pending", author: str = ""
     ):
         item = QueueListItem(
             id=id,
             description=description,
             status=status,
             author=author,
-            colors=self._colors
+            colors=self._colors,
         )
         item.clicked.connect(lambda: self.item_clicked.emit(id))
         self._items.append(item)
@@ -599,9 +615,10 @@ class QueueListItem(QFrame, AnimatedListItemMixin):
         status: str,
         author: str,
         colors: ColorPalette = None,
-        parent=None
+        parent=None,
     ):
         super().__init__(parent)
+        self.id = id  # Store for parent list tracking
         self._colors = colors or get_colors()
 
         self.setCursor(Qt.CursorShape.PointingHandCursor)
@@ -634,13 +651,17 @@ class QueueListItem(QFrame, AnimatedListItemMixin):
 
         # Description
         desc_label = QLabel(description)
-        desc_label.setStyleSheet(f"color: {self._colors.text_primary}; font-size: {TYPOGRAPHY.text_sm}px;")
+        desc_label.setStyleSheet(
+            f"color: {self._colors.text_primary}; font-size: {TYPOGRAPHY.text_sm}px;"
+        )
         layout.addWidget(desc_label, 1)
 
         # Author
         if author:
             author_label = QLabel(author)
-            author_label.setStyleSheet(f"color: {self._colors.text_secondary}; font-size: {TYPOGRAPHY.text_xs}px;")
+            author_label.setStyleSheet(
+                f"color: {self._colors.text_secondary}; font-size: {TYPOGRAPHY.text_xs}px;"
+            )
             layout.addWidget(author_label)
 
     def mousePressEvent(self, event):

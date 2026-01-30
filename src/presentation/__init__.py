@@ -37,29 +37,29 @@ Usage:
     from src.presentation.sample_data import create_sample_text_coding_data
 """
 
-from .templates import AppShell, ThreePanelLayout
-from .screens import TextCodingScreen
-from .pages import TextCodingPage
-from .organisms import (
-    CodingToolbar,
-    FilesPanel,
-    CodesPanel,
-    TextEditorPanel,
-    DetailsPanel,
-)
 from .dto import (
-    FileDTO,
-    CodeDTO,
     CodeCategoryDTO,
+    CodeDTO,
     DocumentDTO,
     DocumentStatsDTO,
-    SelectedCodeDTO,
-    OverlappingSegmentDTO,
+    FileDTO,
     FileMemoDTO,
     NavigationDTO,
+    OverlappingSegmentDTO,
+    SelectedCodeDTO,
     TextCodingDataDTO,
 )
+from .organisms import (
+    CodesPanel,
+    CodingToolbar,
+    DetailsPanel,
+    FilesPanel,
+    TextEditorPanel,
+)
+from .pages import TextCodingPage
 from .sample_data import create_sample_text_coding_data
+from .screens import TextCodingScreen
+from .templates import AppShell, ThreePanelLayout
 
 __all__ = [
     # Templates

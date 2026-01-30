@@ -3,32 +3,25 @@ Editor components
 Code editors, rich text editors, and related widgets
 """
 
-from typing import List, Optional
-
+from PySide6.QtCore import Qt, Signal
+from PySide6.QtGui import (
+    QColor,
+    QFont,
+    QSyntaxHighlighter,
+    QTextCharFormat,
+    QTextDocument,
+)
 from PySide6.QtWidgets import (
     QFrame,
     QHBoxLayout,
     QLabel,
     QPlainTextEdit,
     QPushButton,
-    QScrollArea,
-    QSizePolicy,
     QTextEdit,
     QVBoxLayout,
-    QWidget,
-)
-from PySide6.QtCore import QRect, Qt, Signal
-from PySide6.QtGui import (
-    QColor,
-    QFont,
-    QPainter,
-    QSyntaxHighlighter,
-    QTextCharFormat,
-    QTextDocument,
-    QTextFormat,
 )
 
-from .tokens import SPACING, RADIUS, TYPOGRAPHY, ColorPalette, get_colors, hex_to_rgba
+from .tokens import RADIUS, SPACING, TYPOGRAPHY, ColorPalette, get_colors, hex_to_rgba
 
 
 class CodeEditor(QFrame):
@@ -49,7 +42,7 @@ class CodeEditor(QFrame):
         read_only: bool = False,
         show_line_numbers: bool = True,
         colors: ColorPalette = None,
-        parent=None
+        parent=None,
     ):
         super().__init__(parent)
         self._colors = colors or get_colors()
@@ -85,7 +78,9 @@ class CodeEditor(QFrame):
                 selection-background-color: {hex_to_rgba(self._colors.primary, 0.25)};
             }}
         """)
-        self._editor.textChanged.connect(lambda: self.code_changed.emit(self._editor.toPlainText()))
+        self._editor.textChanged.connect(
+            lambda: self.code_changed.emit(self._editor.toPlainText())
+        )
 
         if show_line_numbers:
             self._editor.blockCountChanged.connect(self._update_line_numbers)
@@ -96,13 +91,11 @@ class CodeEditor(QFrame):
         # Apply syntax highlighting
         if language != "text":
             self._highlighter = SimpleSyntaxHighlighter(
-                self._editor.document(),
-                language,
-                self._colors
+                self._editor.document(), language, self._colors
             )
 
     def _update_line_numbers(self):
-        if hasattr(self, '_line_numbers'):
+        if hasattr(self, "_line_numbers"):
             self._line_numbers.set_line_count(self._editor.blockCount())
 
     def _highlight_current_line(self):
@@ -155,7 +148,9 @@ class LineNumbers(QFrame):
         while len(self._labels) < self._line_count:
             num = len(self._labels) + 1
             label = QLabel(str(num))
-            label.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
+            label.setAlignment(
+                Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter
+            )
             label.setFixedHeight(19)  # Approximate line height
             self._style_label(label, num == self._current_line)
             self._labels.append(label)
@@ -206,12 +201,58 @@ class SimpleSyntaxHighlighter(QSyntaxHighlighter):
 
         # Common keywords by language
         keywords = {
-            "python": ["def", "class", "if", "else", "elif", "for", "while", "try",
-                      "except", "finally", "with", "import", "from", "as", "return",
-                      "yield", "lambda", "and", "or", "not", "in", "is", "True", "False", "None"],
-            "javascript": ["function", "const", "let", "var", "if", "else", "for", "while",
-                          "try", "catch", "finally", "return", "class", "extends", "import",
-                          "export", "from", "async", "await", "true", "false", "null", "undefined"],
+            "python": [
+                "def",
+                "class",
+                "if",
+                "else",
+                "elif",
+                "for",
+                "while",
+                "try",
+                "except",
+                "finally",
+                "with",
+                "import",
+                "from",
+                "as",
+                "return",
+                "yield",
+                "lambda",
+                "and",
+                "or",
+                "not",
+                "in",
+                "is",
+                "True",
+                "False",
+                "None",
+            ],
+            "javascript": [
+                "function",
+                "const",
+                "let",
+                "var",
+                "if",
+                "else",
+                "for",
+                "while",
+                "try",
+                "catch",
+                "finally",
+                "return",
+                "class",
+                "extends",
+                "import",
+                "export",
+                "from",
+                "async",
+                "await",
+                "true",
+                "false",
+                "null",
+                "undefined",
+            ],
         }
 
         lang_keywords = keywords.get(self._language, [])
@@ -246,6 +287,7 @@ class SimpleSyntaxHighlighter(QSyntaxHighlighter):
 
     def highlightBlock(self, text: str):
         import re
+
         for pattern, fmt in self._rules:
             for match in re.finditer(pattern, text):
                 self.setFormat(match.start(), match.end() - match.start(), fmt)
@@ -264,10 +306,7 @@ class RichTextEditor(QFrame):
     content_changed = Signal(str)
 
     def __init__(
-        self,
-        show_toolbar: bool = True,
-        colors: ColorPalette = None,
-        parent=None
+        self, show_toolbar: bool = True, colors: ColorPalette = None, parent=None
     ):
         super().__init__(parent)
         self._colors = colors or get_colors()
@@ -301,7 +340,9 @@ class RichTextEditor(QFrame):
                 font-size: {TYPOGRAPHY.text_sm}px;
             }}
         """)
-        self._editor.textChanged.connect(lambda: self.content_changed.emit(self._editor.toHtml()))
+        self._editor.textChanged.connect(
+            lambda: self.content_changed.emit(self._editor.toHtml())
+        )
         layout.addWidget(self._editor, 1)
 
     def _apply_format(self, format_type: str):
@@ -436,7 +477,7 @@ class MemoEditor(QFrame):
         title: str = "Memo",
         content: str = "",
         colors: ColorPalette = None,
-        parent=None
+        parent=None,
     ):
         super().__init__(parent)
         self._colors = colors or get_colors()
@@ -507,7 +548,9 @@ class MemoEditor(QFrame):
                 font-size: {TYPOGRAPHY.text_sm}px;
             }}
         """)
-        self._editor.textChanged.connect(lambda: self.content_changed.emit(self._editor.toPlainText()))
+        self._editor.textChanged.connect(
+            lambda: self.content_changed.emit(self._editor.toPlainText())
+        )
         layout.addWidget(self._editor, 1)
 
     def set_content(self, content: str):

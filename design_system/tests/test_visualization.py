@@ -4,24 +4,31 @@ ChartWidget, PieChart, NetworkGraphWidget, WordCloudWidget,
 ImageAnnotationLayer, HeatMapCell, RelevanceScoreBar
 """
 
-import pytest
-from PySide6.QtCore import Qt
-from PySide6.QtGui import QPixmap, QColor
+from PySide6.QtGui import QColor, QPixmap
 
 from design_system.charts import (
-    ChartWidget, PieChart, ChartDataPoint, SparkLine, LegendItem
-)
-from design_system.network_graph import (
-    NetworkGraphWidget, GraphNode, GraphEdge
-)
-from design_system.word_cloud import WordCloudWidget, WordCloudPreview
-from design_system.image_annotation import (
-    ImageAnnotationLayer, ImageAnnotation, AnnotationMode
+    ChartDataPoint,
+    ChartWidget,
+    LegendItem,
+    PieChart,
+    SparkLine,
 )
 from design_system.data_display import HeatMapCell, HeatMapGrid
-from design_system.progress_bar import (
-    RelevanceScoreBar, RelevanceBarWidget, ScoreIndicator
+from design_system.image_annotation import (
+    AnnotationMode,
+    ImageAnnotation,
+    ImageAnnotationLayer,
 )
+from design_system.network_graph import GraphEdge, GraphNode, NetworkGraphWidget
+from design_system.pdf_viewer import (
+    PDFGraphicsView,
+    PDFPageViewer,
+    PDFSelection,
+    PDFTextBlock,
+    PDFThumbnail,
+)
+from design_system.progress_bar import RelevanceScoreBar, ScoreIndicator
+from design_system.word_cloud import WordCloudPreview, WordCloudWidget
 
 
 class TestChartWidget:
@@ -240,11 +247,13 @@ class TestWordCloudWidget:
         wc = WordCloudWidget()
         qtbot.addWidget(wc)
 
-        wc.set_frequencies({
-            "test": 10,
-            "word": 8,
-            "cloud": 5,
-        })
+        wc.set_frequencies(
+            {
+                "test": 10,
+                "word": 8,
+                "cloud": 5,
+            }
+        )
 
         assert len(wc._frequencies) == 3
         assert wc._wordcloud is not None
@@ -330,7 +339,7 @@ class TestImageAnnotationLayer:
             id="test_1",
             annotation_type="rectangle",
             points=[(10, 10, 50, 50)],
-            color="#FF0000"
+            color="#FF0000",
         )
         layer.add_annotation(annotation)
 
@@ -343,9 +352,7 @@ class TestImageAnnotationLayer:
         qtbot.addWidget(layer)
 
         annotation = ImageAnnotation(
-            id="test_1",
-            annotation_type="rectangle",
-            points=[(10, 10, 50, 50)]
+            id="test_1", annotation_type="rectangle", points=[(10, 10, 50, 50)]
         )
         layer.add_annotation(annotation)
         layer.remove_annotation("test_1")
@@ -369,7 +376,9 @@ class TestImageAnnotationLayer:
         qtbot.addWidget(layer)
 
         layer.add_annotation(ImageAnnotation("a", "rectangle", [(0, 0, 10, 10)]))
-        layer.add_annotation(ImageAnnotation("b", "polygon", [(0, 0), (10, 0), (10, 10)]))
+        layer.add_annotation(
+            ImageAnnotation("b", "polygon", [(0, 0), (10, 0), (10, 10)])
+        )
 
         annotations = layer.get_all_annotations()
         assert len(annotations) == 2
@@ -379,7 +388,9 @@ class TestImageAnnotationLayer:
         layer = ImageAnnotationLayer()
         qtbot.addWidget(layer)
 
-        annotation = ImageAnnotation("test", "rectangle", [(0, 0, 10, 10)], color="#FF0000")
+        annotation = ImageAnnotation(
+            "test", "rectangle", [(0, 0, 10, 10)], color="#FF0000"
+        )
         layer.add_annotation(annotation)
         layer.set_annotation_color_by_id("test", "#00FF00")
 
@@ -431,7 +442,7 @@ class TestHeatMapGrid:
         grid = HeatMapGrid(
             row_labels=["A", "B"],
             col_labels=["X", "Y"],
-            values=[[0.5, 0.8], [0.3, 1.0]]
+            values=[[0.5, 0.8], [0.3, 1.0]],
         )
         qtbot.addWidget(grid)
 
@@ -440,11 +451,7 @@ class TestHeatMapGrid:
 
     def test_heatmap_grid_set_value(self, qtbot):
         """HeatMapGrid should update individual cells"""
-        grid = HeatMapGrid(
-            row_labels=["A"],
-            col_labels=["X"],
-            values=[[0.5]]
-        )
+        grid = HeatMapGrid(row_labels=["A"], col_labels=["X"], values=[[0.5]])
         qtbot.addWidget(grid)
 
         grid.set_value(0, 0, 0.9)
@@ -523,10 +530,6 @@ class TestLegendItem:
 
 
 # PDF Viewer tests
-from design_system.pdf_viewer import (
-    PDFPageViewer, PDFGraphicsView, PDFThumbnail,
-    PDFTextBlock, PDFSelection, HAS_PYMUPDF
-)
 
 
 class TestPDFPageViewer:
@@ -544,14 +547,14 @@ class TestPDFPageViewer:
         viewer = PDFPageViewer(show_toolbar=True)
         qtbot.addWidget(viewer)
 
-        assert hasattr(viewer, '_toolbar')
+        assert hasattr(viewer, "_toolbar")
 
     def test_viewer_with_thumbnails(self, qtbot):
         """PDFPageViewer should create with thumbnail panel"""
         viewer = PDFPageViewer(show_thumbnails=True)
         qtbot.addWidget(viewer)
 
-        assert hasattr(viewer, '_thumbnail_panel')
+        assert hasattr(viewer, "_thumbnail_panel")
 
     def test_viewer_initial_state(self, qtbot):
         """PDFPageViewer should have correct initial state"""
@@ -662,11 +665,7 @@ class TestPDFDataClasses:
 
     def test_pdf_text_block(self):
         """PDFTextBlock should hold text data"""
-        block = PDFTextBlock(
-            text="Sample text",
-            rect=(10, 20, 100, 50),
-            page=0
-        )
+        block = PDFTextBlock(text="Sample text", rect=(10, 20, 100, 50), page=0)
 
         assert block.text == "Sample text"
         assert block.rect == (10, 20, 100, 50)
@@ -674,11 +673,7 @@ class TestPDFDataClasses:
 
     def test_pdf_selection(self):
         """PDFSelection should hold selection data"""
-        selection = PDFSelection(
-            page=5,
-            rect=(0, 0, 100, 50),
-            text="Selected text"
-        )
+        selection = PDFSelection(page=5, rect=(0, 0, 100, 50), text="Selected text")
 
         assert selection.page == 5
         assert selection.text == "Selected text"

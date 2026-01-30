@@ -22,15 +22,15 @@ Structure:
 └────────────┴─────────────────────────────────┴──────────────┘
 """
 
-from typing import List, Dict, Any, Optional
-from PyQt6.QtWidgets import QWidget, QVBoxLayout
+from typing import Any
+
 from PyQt6.QtCore import pyqtSignal
+from PyQt6.QtWidgets import QVBoxLayout, QWidget
 
 from design_system import ColorPalette, get_theme
 
-from ..pages import TextCodingPage
-from ..organisms import CodingToolbar
 from ..dto import TextCodingDataDTO
+from ..pages import TextCodingPage
 from ..sample_data import create_sample_text_coding_data
 
 
@@ -56,9 +56,9 @@ class TextCodingScreen(QWidget):
 
     def __init__(
         self,
-        data: Optional[TextCodingDataDTO] = None,
+        data: TextCodingDataDTO | None = None,
         colors: ColorPalette = None,
-        parent=None
+        parent=None,
     ):
         """
         Initialize the text coding screen.
@@ -70,7 +70,7 @@ class TextCodingScreen(QWidget):
         """
         super().__init__(parent)
         self._colors = colors or get_theme("dark")
-        self._data: Optional[TextCodingDataDTO] = None
+        self._data: TextCodingDataDTO | None = None
 
         # Use provided data or sample data
         data = data or create_sample_text_coding_data()
@@ -108,8 +108,7 @@ class TextCodingScreen(QWidget):
 
         # Files - convert DTOs to dicts for Page
         files = [
-            {"name": f.name, "type": f.file_type, "meta": f.meta}
-            for f in data.files
+            {"name": f.name, "type": f.file_type, "meta": f.meta} for f in data.files
         ]
         self._page.set_files(files)
 
@@ -120,7 +119,7 @@ class TextCodingScreen(QWidget):
                 "codes": [
                     {"name": c.name, "color": c.color, "count": c.count}
                     for c in cat.codes
-                ]
+                ],
             }
             for cat in data.categories
         ]
@@ -129,19 +128,19 @@ class TextCodingScreen(QWidget):
         # Document
         if data.document:
             self._page.set_document(
-                data.document.title,
-                data.document.badge,
-                data.document.content
+                data.document.title, data.document.badge, data.document.content
             )
 
         # Document stats
         if data.document_stats:
             stats = data.document_stats
-            self._page.set_document_stats([
-                ("mdi6.layers", f"{stats.overlapping_count} overlapping"),
-                ("mdi6.label", f"{stats.codes_applied} codes applied"),
-                ("mdi6.format-size", f"{stats.word_count} words"),
-            ])
+            self._page.set_document_stats(
+                [
+                    ("mdi6.layers", f"{stats.overlapping_count} overlapping"),
+                    ("mdi6.label", f"{stats.codes_applied} codes applied"),
+                    ("mdi6.format-size", f"{stats.word_count} words"),
+                ]
+            )
 
         # Selected code details
         if data.selected_code:
@@ -151,8 +150,7 @@ class TextCodingScreen(QWidget):
         # Overlapping codes
         if data.overlapping_segments:
             overlaps = [
-                (seg.segment_label, seg.colors)
-                for seg in data.overlapping_segments
+                (seg.segment_label, seg.colors) for seg in data.overlapping_segments
             ]
             self._page.set_overlapping_codes(overlaps)
 
@@ -202,24 +200,24 @@ class TextCodingScreen(QWidget):
 
     def _action_toggle_important(self):
         """Toggle showing only important codes."""
-        self._show_important_only = not getattr(self, '_show_important_only', False)
+        self._show_important_only = not getattr(self, "_show_important_only", False)
         print(f"Important only: {self._show_important_only}")
 
     def _action_toggle_annotations(self):
         """Toggle showing annotations."""
-        self._show_annotations = not getattr(self, '_show_annotations', False)
+        self._show_annotations = not getattr(self, "_show_annotations", False)
         print(f"Show annotations: {self._show_annotations}")
 
     def _action_prev_file(self):
         """Navigate to previous file."""
-        self._current_file_index = getattr(self, '_current_file_index', 0)
+        self._current_file_index = getattr(self, "_current_file_index", 0)
         if self._current_file_index > 0:
             self._current_file_index -= 1
             self._navigate_to_file(self._current_file_index)
 
     def _action_next_file(self):
         """Navigate to next file."""
-        self._current_file_index = getattr(self, '_current_file_index', 0)
+        self._current_file_index = getattr(self, "_current_file_index", 0)
         total_files = len(self._page.files_panel._files)
         if self._current_file_index < total_files - 1:
             self._current_file_index += 1
@@ -235,7 +233,7 @@ class TextCodingScreen(QWidget):
             self._page.set_document(
                 file_data.get("name", ""),
                 f"File {index + 1}",
-                f"Content of {file_data.get('name', '')}...\n\n(Load actual content here)"
+                f"Content of {file_data.get('name', '')}...\n\n(Load actual content here)",
             )
             print(f"Navigated to file: {file_data.get('name')}")
 
@@ -301,11 +299,11 @@ class TextCodingScreen(QWidget):
     # Public API - Delegate to page
     # =========================================================================
 
-    def set_files(self, files: List[Dict[str, Any]]):
+    def set_files(self, files: list[dict[str, Any]]):
         """Set the list of files."""
         self._page.set_files(files)
 
-    def set_codes(self, categories: List[Dict[str, Any]]):
+    def set_codes(self, categories: list[dict[str, Any]]):
         """Set the code tree."""
         self._page.set_codes(categories)
 
@@ -323,9 +321,11 @@ class TextCodingScreen(QWidget):
 # DEMO
 # =============================================================================
 
+
 def main():
     """Run the text coding screen demo."""
     import sys
+
     from PyQt6.QtWidgets import QApplication, QMainWindow
 
     app = QApplication(sys.argv)

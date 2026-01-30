@@ -3,6 +3,11 @@ Progress Bar components
 Material Design styled progress indicators
 """
 
+from PySide6.QtCore import (
+    Qt,
+    Signal,
+)
+from PySide6.QtGui import QColor, QPainter, QPainterPath
 from PySide6.QtWidgets import (
     QFrame,
     QHBoxLayout,
@@ -10,15 +15,8 @@ from PySide6.QtWidgets import (
     QVBoxLayout,
     QWidget,
 )
-from PySide6.QtCore import (
-    QEasingCurve,
-    QPropertyAnimation,
-    Qt,
-    Signal,
-)
-from PySide6.QtGui import QColor, QPainter, QPainterPath
 
-from .tokens import SPACING, RADIUS, TYPOGRAPHY, ColorPalette, get_colors
+from .tokens import SPACING, TYPOGRAPHY, ColorPalette, get_colors
 
 
 class ProgressBar(QWidget):
@@ -39,7 +37,7 @@ class ProgressBar(QWidget):
         variant: str = "primary",
         height: int = 8,
         colors: ColorPalette = None,
-        parent=None
+        parent=None,
     ):
         super().__init__(parent)
         self._colors = colors or get_colors()
@@ -85,7 +83,7 @@ class ProgressBar(QWidget):
             max_value=max_value,
             variant=variant,
             height=height,
-            colors=self._colors
+            colors=self._colors,
         )
         layout.addWidget(self._bar)
 
@@ -117,7 +115,7 @@ class ProgressBarWidget(QWidget):
         variant: str = "primary",
         height: int = 8,
         colors: ColorPalette = None,
-        parent=None
+        parent=None,
     ):
         super().__init__(parent)
         self._colors = colors or get_colors()
@@ -146,7 +144,7 @@ class ProgressBarWidget(QWidget):
         self._max_value = max_value
         self.update()
 
-    def paintEvent(self, event):
+    def paintEvent(self, _event):
         painter = QPainter(self)
         painter.setRenderHint(QPainter.RenderHint.Antialiasing)
 
@@ -192,7 +190,7 @@ class ProgressBarLabeled(QWidget):
         label: str = "",
         variant: str = "primary",
         colors: ColorPalette = None,
-        parent=None
+        parent=None,
     ):
         super().__init__(parent)
         self._colors = colors or get_colors()
@@ -227,10 +225,7 @@ class ProgressBarLabeled(QWidget):
 
         # Progress bar
         self._bar = ProgressBarWidget(
-            value=value,
-            max_value=max_value,
-            variant=variant,
-            colors=self._colors
+            value=value, max_value=max_value, variant=variant, colors=self._colors
         )
         layout.addWidget(self._bar)
 
@@ -273,7 +268,7 @@ class RelevanceScoreBar(QWidget):
         width: int = 120,
         height: int = 6,
         colors: ColorPalette = None,
-        parent=None
+        parent=None,
     ):
         super().__init__(parent)
         self._colors = colors or get_colors()
@@ -303,7 +298,7 @@ class RelevanceScoreBar(QWidget):
             variant=variant,
             width=width,
             height=height,
-            colors=self._colors
+            colors=self._colors,
         )
         layout.addWidget(self._bar)
 
@@ -324,7 +319,7 @@ class RelevanceScoreBar(QWidget):
         """Update the score (0-1)"""
         self._score = max(0, min(1, score))
         self._bar.set_score(self._score)
-        if hasattr(self, '_percentage'):
+        if hasattr(self, "_percentage"):
             self._percentage.setText(f"{int(self._score * 100)}%")
 
     def score(self) -> float:
@@ -347,7 +342,7 @@ class RelevanceBarWidget(QWidget):
         width: int = 120,
         height: int = 6,
         colors: ColorPalette = None,
-        parent=None
+        parent=None,
     ):
         super().__init__(parent)
         self._colors = colors or get_colors()
@@ -390,7 +385,7 @@ class RelevanceBarWidget(QWidget):
         # Default: primary
         return self._colors.primary
 
-    def paintEvent(self, event):
+    def paintEvent(self, _event):
         painter = QPainter(self)
         painter.setRenderHint(QPainter.RenderHint.Antialiasing)
 
@@ -437,7 +432,7 @@ class ScoreIndicator(QFrame):
         score: float = 0,
         variant: str = "default",
         colors: ColorPalette = None,
-        parent=None
+        parent=None,
     ):
         super().__init__(parent)
         self._colors = colors or get_colors()
@@ -471,11 +466,7 @@ class ScoreIndicator(QFrame):
 
         # Bar
         self._bar = RelevanceBarWidget(
-            score=score,
-            variant=variant,
-            width=100,
-            height=4,
-            colors=self._colors
+            score=score, variant=variant, width=100, height=4, colors=self._colors
         )
         layout.addWidget(self._bar)
 

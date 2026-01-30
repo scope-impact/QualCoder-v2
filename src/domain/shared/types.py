@@ -3,15 +3,17 @@ Shared domain types: Result monad, base event, typed identifiers
 """
 
 from __future__ import annotations
+
+from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import datetime
-from typing import TypeVar, Generic, Union, Callable
+from typing import Generic, TypeVar
 from uuid import uuid4
-
 
 # ============================================================
 # Typed Identifiers
 # ============================================================
+
 
 @dataclass(frozen=True)
 class CodeId:
@@ -45,13 +47,14 @@ class CategoryId:
 # Result Type (Success | Failure)
 # ============================================================
 
-T = TypeVar('T')
-E = TypeVar('E')
+T = TypeVar("T")
+E = TypeVar("E")
 
 
 @dataclass(frozen=True)
 class Success(Generic[T]):
     """Successful result containing a value"""
+
     value: T
 
     def is_success(self) -> bool:
@@ -70,6 +73,7 @@ class Success(Generic[T]):
 @dataclass(frozen=True)
 class Failure(Generic[E]):
     """Failed result containing an error"""
+
     error: E
 
     def is_success(self) -> bool:
@@ -78,23 +82,25 @@ class Failure(Generic[E]):
     def is_failure(self) -> bool:
         return True
 
-    def map(self, fn: Callable) -> Result[T, E]:
+    def map(self, _fn: Callable) -> Result[T, E]:
         return self
 
     def unwrap(self) -> None:
         raise ValueError(f"Cannot unwrap Failure: {self.error}")
 
 
-Result = Union[Success[T], Failure[E]]
+Result = Success[T] | Failure[E]
 
 
 # ============================================================
 # Base Domain Event
 # ============================================================
 
+
 @dataclass(frozen=True)
 class DomainEvent:
     """Base class for all domain events"""
+
     event_id: str
     occurred_at: datetime
 
@@ -111,13 +117,14 @@ class DomainEvent:
 # Failure Reasons (Discriminated Union)
 # ============================================================
 
+
 @dataclass(frozen=True)
 class DuplicateName:
     name: str
     message: str = ""
 
     def __post_init__(self):
-        object.__setattr__(self, 'message', f"Code name '{self.name}' already exists")
+        object.__setattr__(self, "message", f"Code name '{self.name}' already exists")
 
 
 @dataclass(frozen=True)
@@ -126,7 +133,9 @@ class CodeNotFound:
     message: str = ""
 
     def __post_init__(self):
-        object.__setattr__(self, 'message', f"Code with id {self.code_id.value} not found")
+        object.__setattr__(
+            self, "message", f"Code with id {self.code_id.value} not found"
+        )
 
 
 @dataclass(frozen=True)
@@ -135,7 +144,9 @@ class SourceNotFound:
     message: str = ""
 
     def __post_init__(self):
-        object.__setattr__(self, 'message', f"Source with id {self.source_id.value} not found")
+        object.__setattr__(
+            self, "message", f"Source with id {self.source_id.value} not found"
+        )
 
 
 @dataclass(frozen=True)
@@ -147,8 +158,9 @@ class InvalidPosition:
 
     def __post_init__(self):
         object.__setattr__(
-            self, 'message',
-            f"Position [{self.start}:{self.end}] invalid for source of length {self.source_length}"
+            self,
+            "message",
+            f"Position [{self.start}:{self.end}] invalid for source of length {self.source_length}",
         )
 
 
@@ -157,4 +169,6 @@ class EmptyName:
     message: str = "Code name cannot be empty"
 
 
-FailureReason = Union[DuplicateName, CodeNotFound, SourceNotFound, InvalidPosition, EmptyName]
+FailureReason = (
+    DuplicateName | CodeNotFound | SourceNotFound | InvalidPosition | EmptyName
+)

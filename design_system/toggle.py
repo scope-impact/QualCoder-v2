@@ -3,18 +3,17 @@ Toggle/Switch component
 Material Design styled toggle for on/off states
 """
 
-from PySide6.QtWidgets import QHBoxLayout, QLabel, QWidget
 from PySide6.QtCore import (
     Property,
     QEasingCurve,
     QPropertyAnimation,
-    QRect,
     Qt,
     Signal,
 )
 from PySide6.QtGui import QColor, QPainter, QPainterPath
+from PySide6.QtWidgets import QHBoxLayout, QLabel, QWidget
 
-from .tokens import SPACING, RADIUS, TYPOGRAPHY, ColorPalette, get_colors
+from .tokens import SPACING, TYPOGRAPHY, ColorPalette, get_colors
 
 
 class Toggle(QWidget):
@@ -34,7 +33,7 @@ class Toggle(QWidget):
         checked: bool = False,
         label: str = "",
         colors: ColorPalette = None,
-        parent=None
+        parent=None,
     ):
         super().__init__(parent)
         self._colors = colors or get_colors()
@@ -88,12 +87,14 @@ class Toggle(QWidget):
         if event.button() == Qt.MouseButton.LeftButton:
             self.toggle()
 
-    def paintEvent(self, event):
+    def paintEvent(self, _event):
         painter = QPainter(self)
         painter.setRenderHint(QPainter.RenderHint.Antialiasing)
 
         # Draw track
-        track_color = QColor(self._colors.primary if self._checked else self._colors.surface_lighter)
+        track_color = QColor(
+            self._colors.primary if self._checked else self._colors.surface_lighter
+        )
         painter.setBrush(track_color)
         painter.setPen(Qt.PenStyle.NoPen)
 
@@ -124,7 +125,7 @@ class LabeledToggle(QWidget):
         label: str = "",
         checked: bool = False,
         colors: ColorPalette = None,
-        parent=None
+        parent=None,
     ):
         super().__init__(parent)
         self._colors = colors or get_colors()

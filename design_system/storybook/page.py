@@ -3,8 +3,8 @@ StoryPage component for displaying component stories with code examples
 """
 
 import re
-from typing import List, Tuple
 
+from PySide6.QtCore import Qt
 from PySide6.QtWidgets import (
     QFrame,
     QHBoxLayout,
@@ -13,9 +13,8 @@ from PySide6.QtWidgets import (
     QVBoxLayout,
     QWidget,
 )
-from PySide6.QtCore import Qt
 
-from ..tokens import SPACING, RADIUS, TYPOGRAPHY, ColorPalette, get_theme
+from ..tokens import RADIUS, SPACING, TYPOGRAPHY, ColorPalette, get_colors
 
 
 class StoryPage(QFrame):
@@ -25,9 +24,9 @@ class StoryPage(QFrame):
         self,
         title: str,
         description: str,
-        examples: List[Tuple[str, QWidget, str]],  # [(name, widget, code), ...]
+        examples: list[tuple[str, QWidget, str]],  # [(name, widget, code), ...]
         colors: ColorPalette = None,
-        parent=None
+        parent=None,
     ):
         super().__init__(parent)
         self._colors = colors or get_colors()
@@ -130,7 +129,9 @@ class StoryPage(QFrame):
             }}
         """)
         preview_layout = QVBoxLayout(preview)
-        preview_layout.setContentsMargins(SPACING.xl, SPACING.xl, SPACING.xl, SPACING.xl)
+        preview_layout.setContentsMargins(
+            SPACING.xl, SPACING.xl, SPACING.xl, SPACING.xl
+        )
         preview_layout.addWidget(widget)
         layout.addWidget(preview)
 
@@ -180,52 +181,71 @@ class StoryPage(QFrame):
 
         # Keywords
         keywords = [
-            "def", "class", "if", "else", "elif", "for", "while", "try", "except",
-            "finally", "with", "import", "from", "as", "return", "yield", "lambda",
-            "and", "or", "not", "in", "is", "True", "False", "None", "self"
+            "def",
+            "class",
+            "if",
+            "else",
+            "elif",
+            "for",
+            "while",
+            "try",
+            "except",
+            "finally",
+            "with",
+            "import",
+            "from",
+            "as",
+            "return",
+            "yield",
+            "lambda",
+            "and",
+            "or",
+            "not",
+            "in",
+            "is",
+            "True",
+            "False",
+            "None",
+            "self",
         ]
         for kw in keywords:
             code = re.sub(
-                rf'\b({kw})\b',
+                rf"\b({kw})\b",
                 f'<span style="color: {keyword_color};">\\1</span>',
-                code
+                code,
             )
 
         # Strings (single and double quotes)
         code = re.sub(
-            r'(".*?"|\'.*?\')',
-            f'<span style="color: {string_color};">\\1</span>',
-            code
+            r'(".*?"|\'.*?\')', f'<span style="color: {string_color};">\\1</span>', code
         )
 
         # Numbers
         code = re.sub(
-            r'\b(\d+\.?\d*)\b',
-            f'<span style="color: {number_color};">\\1</span>',
-            code
+            r"\b(\d+\.?\d*)\b", f'<span style="color: {number_color};">\\1</span>', code
         )
 
         # Function/method calls
         code = re.sub(
-            r'\.([a-zA-Z_]\w*)\(',
+            r"\.([a-zA-Z_]\w*)\(",
             f'.<span style="color: {function_color};">\\1</span>(',
-            code
+            code,
         )
 
         # Class names (capitalized words after 'class' or in type hints)
         code = re.sub(
-            r'\b([A-Z][a-zA-Z0-9_]*)\b(?!\s*=)',
+            r"\b([A-Z][a-zA-Z0-9_]*)\b(?!\s*=)",
             f'<span style="color: {class_color};">\\1</span>',
-            code
+            code,
         )
 
         # Comments
         code = re.sub(
-            r'(#.*?)($|\n)',
+            r"(#.*?)($|\n)",
             f'<span style="color: {comment_color}; font-style: italic;">\\1</span>\\2',
-            code
+            code,
         )
 
         # Wrap in pre-formatted span
-        code = code.replace('\n', '<br>')
+        code = code.replace("\n", "<br>")
         return f'<span style="color: {default_color};">{code}</span>'

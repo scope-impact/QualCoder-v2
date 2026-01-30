@@ -3,10 +3,11 @@ Data display components
 Tables, cells, and data presentation widgets
 """
 
-from typing import List, Dict, Any, Optional
+from typing import Any
 
 import qtawesome as qta
-
+from PySide6.QtCore import Qt, Signal
+from PySide6.QtGui import QColor
 from PySide6.QtWidgets import (
     QAbstractItemView,
     QCheckBox,
@@ -21,10 +22,8 @@ from PySide6.QtWidgets import (
     QVBoxLayout,
     QWidget,
 )
-from PySide6.QtCore import Qt, Signal
-from PySide6.QtGui import QColor
 
-from .tokens import SPACING, RADIUS, TYPOGRAPHY, ColorPalette, get_colors, hex_to_rgba
+from .tokens import RADIUS, SPACING, TYPOGRAPHY, ColorPalette, get_colors, hex_to_rgba
 
 
 class DataTable(QFrame):
@@ -49,11 +48,11 @@ class DataTable(QFrame):
 
     def __init__(
         self,
-        columns: List[str],
+        columns: list[str],
         selectable: bool = False,
         show_header: bool = True,
         colors: ColorPalette = None,
-        parent=None
+        parent=None,
     ):
         super().__init__(parent)
         self._colors = colors or get_colors()
@@ -80,7 +79,9 @@ class DataTable(QFrame):
         self._table.setHorizontalHeaderLabels(headers)
 
         self._table.horizontalHeader().setVisible(show_header)
-        self._table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
+        self._table.horizontalHeader().setSectionResizeMode(
+            QHeaderView.ResizeMode.Stretch
+        )
         self._table.horizontalHeader().setStyleSheet(f"""
             QHeaderView::section {{
                 background-color: {self._colors.surface_light};
@@ -98,7 +99,8 @@ class DataTable(QFrame):
         self._table.setShowGrid(False)
         self._table.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
         self._table.setSelectionMode(
-            QAbstractItemView.SelectionMode.MultiSelection if selectable
+            QAbstractItemView.SelectionMode.MultiSelection
+            if selectable
             else QAbstractItemView.SelectionMode.SingleSelection
         )
 
@@ -126,7 +128,7 @@ class DataTable(QFrame):
 
         layout.addWidget(self._table)
 
-    def set_data(self, data: List[Dict[str, Any]]):
+    def set_data(self, data: list[dict[str, Any]]):
         self._data = data
         self._table.setRowCount(len(data))
 
@@ -147,11 +149,11 @@ class DataTable(QFrame):
                 item.setFlags(item.flags() & ~Qt.ItemFlag.ItemIsEditable)
                 self._table.setItem(row_idx, col_idx + col_offset, item)
 
-    def _on_cell_click(self, row: int, col: int):
+    def _on_cell_click(self, row: int, _col: int):
         if row < len(self._data):
             self.row_clicked.emit(row, self._data[row])
 
-    def _on_cell_double_click(self, row: int, col: int):
+    def _on_cell_double_click(self, row: int, _col: int):
         if row < len(self._data):
             self.row_double_clicked.emit(row, self._data[row])
 
@@ -163,7 +165,7 @@ class DataTable(QFrame):
                 selected.append(self._data[row])
         self.selection_changed.emit(selected)
 
-    def selected_rows(self) -> List[Dict]:
+    def selected_rows(self) -> list[dict]:
         if not self._selectable:
             return []
         selected = []
@@ -196,7 +198,7 @@ class FileCell(QFrame):
         size: str = "",
         modified: str = "",
         colors: ColorPalette = None,
-        parent=None
+        parent=None,
     ):
         super().__init__(parent)
         self._colors = colors or get_colors()
@@ -291,7 +293,7 @@ class EntityCell(QFrame):
         avatar: str = "",
         avatar_color: str = None,
         colors: ColorPalette = None,
-        parent=None
+        parent=None,
     ):
         super().__init__(parent)
         self._colors = colors or get_colors()
@@ -382,7 +384,7 @@ class InfoCard(QFrame):
         collapsible: bool = False,
         collapsed: bool = False,
         colors: ColorPalette = None,
-        parent=None
+        parent=None,
     ):
         super().__init__(parent)
         self._colors = colors or get_colors()
@@ -399,7 +401,9 @@ class InfoCard(QFrame):
         """)
 
         self._main_layout = QVBoxLayout(self)
-        self._main_layout.setContentsMargins(SPACING.lg, SPACING.lg, SPACING.lg, SPACING.lg)
+        self._main_layout.setContentsMargins(
+            SPACING.lg, SPACING.lg, SPACING.lg, SPACING.lg
+        )
         self._main_layout.setSpacing(SPACING.md)
 
         # Header
@@ -411,7 +415,10 @@ class InfoCard(QFrame):
 
         if icon:
             from .icons import Icon
-            self._icon_widget = Icon(icon, size=16, color=self._colors.primary, colors=self._colors)
+
+            self._icon_widget = Icon(
+                icon, size=16, color=self._colors.primary, colors=self._colors
+            )
             header_layout.addWidget(self._icon_widget)
 
         self._title_label = QLabel(title)
@@ -427,11 +434,12 @@ class InfoCard(QFrame):
 
         if collapsible:
             from .icons import Icon
+
             self._collapse_icon = Icon(
                 "mdi6.chevron-down" if not collapsed else "mdi6.chevron-right",
                 size=16,
                 color=self._colors.text_secondary,
-                colors=self._colors
+                colors=self._colors,
             )
             header_layout.addWidget(self._collapse_icon)
             self._header.setCursor(Qt.CursorShape.PointingHandCursor)
@@ -450,16 +458,16 @@ class InfoCard(QFrame):
         if collapsed:
             self._content_container.hide()
 
-    def _toggle_collapse(self, event=None):
+    def _toggle_collapse(self, _event=None):
         self._collapsed = not self._collapsed
         if self._collapsed:
             self._content_container.hide()
-            if hasattr(self, '_collapse_icon'):
+            if hasattr(self, "_collapse_icon"):
                 self._collapse_icon._name = "mdi6.chevron-right"
                 self._collapse_icon._setup_icon()
         else:
             self._content_container.show()
-            if hasattr(self, '_collapse_icon'):
+            if hasattr(self, "_collapse_icon"):
                 self._collapse_icon._name = "mdi6.chevron-down"
                 self._collapse_icon._setup_icon()
         self.collapsed_changed.emit(self._collapsed)
@@ -517,7 +525,7 @@ class CodeDetailCard(QFrame):
         memo: str = "",
         example: str = None,
         colors: ColorPalette = None,
-        parent=None
+        parent=None,
     ):
         super().__init__(parent)
         self._colors = colors or get_colors()
@@ -578,16 +586,18 @@ class CodeDetailCard(QFrame):
                 border-left: 3px solid {color};
             """)
             example_layout = QVBoxLayout(example_frame)
-            example_layout.setContentsMargins(SPACING.md, SPACING.sm, SPACING.sm, SPACING.sm)
+            example_layout.setContentsMargins(
+                SPACING.md, SPACING.sm, SPACING.sm, SPACING.sm
+            )
 
-            example_label = QLabel(f'"{example}"')
-            example_label.setWordWrap(True)
-            example_label.setStyleSheet(f"""
+            self._example_label = QLabel(f'"{example}"')
+            self._example_label.setWordWrap(True)
+            self._example_label.setStyleSheet(f"""
                 color: {self._colors.text_secondary};
                 font-size: {TYPOGRAPHY.text_xs}px;
                 font-style: italic;
             """)
-            example_layout.addWidget(example_label)
+            example_layout.addWidget(self._example_label)
             layout.addWidget(example_frame)
 
     def set_code(self, color: str, name: str, memo: str = "", example: str = None):
@@ -598,8 +608,10 @@ class CodeDetailCard(QFrame):
             border-radius: {RADIUS.xs}px;
         """)
         self._name_label.setText(name)
-        if hasattr(self, '_memo_label'):
+        if hasattr(self, "_memo_label"):
             self._memo_label.setText(memo)
+        if hasattr(self, "_example_label") and example is not None:
+            self._example_label.setText(f'"{example}"')
 
 
 class StatRow(QFrame):
@@ -611,11 +623,7 @@ class StatRow(QFrame):
     """
 
     def __init__(
-        self,
-        label: str,
-        value: str,
-        colors: ColorPalette = None,
-        parent=None
+        self, label: str, value: str, colors: ColorPalette = None, parent=None
     ):
         super().__init__(parent)
         self._colors = colors or get_colors()
@@ -699,13 +707,15 @@ class EmptyState(QFrame):
         action_text: str = None,
         on_action=None,
         colors: ColorPalette = None,
-        parent=None
+        parent=None,
     ):
         super().__init__(parent)
         self._colors = colors or get_colors()
 
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(SPACING.xxxl, SPACING.xxxl, SPACING.xxxl, SPACING.xxxl)
+        layout.setContentsMargins(
+            SPACING.xxxl, SPACING.xxxl, SPACING.xxxl, SPACING.xxxl
+        )
         layout.setSpacing(SPACING.md)
         layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
@@ -713,10 +723,12 @@ class EmptyState(QFrame):
         icon_label = QLabel()
         icon_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         if icon.startswith("mdi6."):
-            icon_label.setPixmap(qta.icon(icon, color=self._colors.text_secondary).pixmap(48, 48))
+            icon_label.setPixmap(
+                qta.icon(icon, color=self._colors.text_secondary).pixmap(48, 48)
+            )
         else:
             icon_label.setText(icon)
-            icon_label.setStyleSheet(f"font-size: 48px;")
+            icon_label.setStyleSheet("font-size: 48px;")
         layout.addWidget(icon_label)
 
         # Title
@@ -792,7 +804,7 @@ class HeatMapCell(QFrame):
         color_scheme: str = "primary",
         size: int = 40,
         colors: ColorPalette = None,
-        parent=None
+        parent=None,
     ):
         super().__init__(parent)
         self._colors = colors or get_colors()
@@ -871,8 +883,14 @@ class HeatMapCell(QFrame):
         """Get appropriate text color for contrast"""
         bg_color = QColor(self._get_color())
         # Calculate luminance
-        luminance = (0.299 * bg_color.red() + 0.587 * bg_color.green() + 0.114 * bg_color.blue()) / 255
-        return self._colors.text_primary if luminance > 0.5 else self._colors.primary_foreground
+        luminance = (
+            0.299 * bg_color.red() + 0.587 * bg_color.green() + 0.114 * bg_color.blue()
+        ) / 255
+        return (
+            self._colors.text_primary
+            if luminance > 0.5
+            else self._colors.primary_foreground
+        )
 
     def _update_display(self):
         """Update the cell appearance"""
@@ -948,13 +966,13 @@ class HeatMapGrid(QFrame):
 
     def __init__(
         self,
-        row_labels: List[str],
-        col_labels: List[str],
-        values: List[List[float]],
+        row_labels: list[str],
+        col_labels: list[str],
+        values: list[list[float]],
         cell_size: int = 40,
         color_scheme: str = "primary",
         colors: ColorPalette = None,
-        parent=None
+        parent=None,
     ):
         super().__init__(parent)
         self._colors = colors or get_colors()
@@ -963,7 +981,7 @@ class HeatMapGrid(QFrame):
         self._values = values
         self._cell_size = cell_size
         self._color_scheme = color_scheme
-        self._cells: List[List[HeatMapCell]] = []
+        self._cells: list[list[HeatMapCell]] = []
 
         # Calculate min/max for normalization
         flat_values = [v for row in values for v in row]
@@ -1007,7 +1025,9 @@ class HeatMapGrid(QFrame):
                 font-size: {TYPOGRAPHY.text_xs}px;
                 font-weight: {TYPOGRAPHY.weight_medium};
             """)
-            header.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
+            header.setAlignment(
+                Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter
+            )
             layout.addWidget(header, i + 1, 0)
 
             # Cells
@@ -1019,9 +1039,11 @@ class HeatMapGrid(QFrame):
                     max_value=self._max_val,
                     color_scheme=self._color_scheme,
                     size=self._cell_size,
-                    colors=self._colors
+                    colors=self._colors,
                 )
-                cell.clicked.connect(lambda v, r=i, c=j: self.cell_clicked.emit(r, c, v))
+                cell.clicked.connect(
+                    lambda v, r=i, c=j: self.cell_clicked.emit(r, c, v)
+                )
                 layout.addWidget(cell, i + 1, j + 1)
                 row_cells.append(cell)
 

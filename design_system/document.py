@@ -7,8 +7,7 @@ in any PySide6 application. For qualitative coding-specific components
     src/presentation/organisms/text_highlighter.py
 """
 
-from typing import List, Optional, Tuple
-
+from PySide6.QtCore import Qt, Signal
 from PySide6.QtWidgets import (
     QFrame,
     QHBoxLayout,
@@ -19,14 +18,13 @@ from PySide6.QtWidgets import (
     QVBoxLayout,
     QWidget,
 )
-from PySide6.QtCore import Qt, Signal
 
-from .tokens import SPACING, RADIUS, TYPOGRAPHY, ColorPalette, get_colors, hex_to_rgba
-
+from .tokens import RADIUS, SPACING, TYPOGRAPHY, ColorPalette, get_colors, hex_to_rgba
 
 # =============================================================================
 # Text Color Helper
 # =============================================================================
+
 
 class TextColor:
     """
@@ -46,18 +44,54 @@ class TextColor:
     # Colors that need white text for contrast
     # Updated for Scholar's Desk palette
     DARK_COLORS = {
-        "#EB7333", "#E65100", "#C54949", "#B71C1C", "#CB5E3C", "#BF360C",
-        "#FA58F4", "#B76E95", "#9F3E72", "#880E4F", "#7D26CD", "#1B5E20",
-        "#487E4B", "#5E9179", "#AC58FA", "#9090E3", "#6B6BDA", "#4646D1",
-        "#3498DB", "#6D91C6", "#3D6CB3", "#0D47A1", "#5882FA", "#9651D7",
-        "#673AB7", "#3F51B5", "#2196F3", "#4F46E5", "#00BCD4", "#4CAF50",
-        "#8BC34A", "#795548", "#607D8B", "#9C27B0", "#E91E63", "#F44336",
+        "#EB7333",
+        "#E65100",
+        "#C54949",
+        "#B71C1C",
+        "#CB5E3C",
+        "#BF360C",
+        "#FA58F4",
+        "#B76E95",
+        "#9F3E72",
+        "#880E4F",
+        "#7D26CD",
+        "#1B5E20",
+        "#487E4B",
+        "#5E9179",
+        "#AC58FA",
+        "#9090E3",
+        "#6B6BDA",
+        "#4646D1",
+        "#3498DB",
+        "#6D91C6",
+        "#3D6CB3",
+        "#0D47A1",
+        "#5882FA",
+        "#9651D7",
+        "#673AB7",
+        "#3F51B5",
+        "#2196F3",
+        "#4F46E5",
+        "#00BCD4",
+        "#4CAF50",
+        "#8BC34A",
+        "#795548",
+        "#607D8B",
+        "#9C27B0",
+        "#E91E63",
+        "#F44336",
         # Scholar's Desk palette additions
-        "#1E3A5F", "#3B5998", "#152238",  # Prussian ink family
-        "#C84B31", "#9A3412",              # Vermilion family
-        "#2D6A4F", "#40916C",              # Forest green family
-        "#9B2226", "#AE2012",              # Carmine family
-        "#2A6F97", "#468FAF",              # Steel blue family
+        "#1E3A5F",
+        "#3B5998",
+        "#152238",  # Prussian ink family
+        "#C84B31",
+        "#9A3412",  # Vermilion family
+        "#2D6A4F",
+        "#40916C",  # Forest green family
+        "#9B2226",
+        "#AE2012",  # Carmine family
+        "#2A6F97",
+        "#468FAF",  # Steel blue family
     }
 
     def __init__(self, hex_color: str):
@@ -78,7 +112,7 @@ class TextColor:
 
         # Fallback: calculate luminance
         try:
-            hex_clean = self._color.lstrip('#')
+            hex_clean = self._color.lstrip("#")
             if len(hex_clean) == 6:
                 r = int(hex_clean[0:2], 16)
                 g = int(hex_clean[2:4], 16)
@@ -95,6 +129,7 @@ class TextColor:
 # =============================================================================
 # Text Panel Component
 # =============================================================================
+
 
 class TextPanel(QFrame):
     """
@@ -132,7 +167,7 @@ class TextPanel(QFrame):
         editable: bool = False,
         show_line_numbers: bool = False,
         colors: ColorPalette = None,
-        parent=None
+        parent=None,
     ):
         super().__init__(parent)
         self._colors = colors or get_colors()
@@ -160,7 +195,9 @@ class TextPanel(QFrame):
                 }}
             """)
             header_layout = QHBoxLayout(self._header)
-            header_layout.setContentsMargins(SPACING.lg, SPACING.md, SPACING.lg, SPACING.md)
+            header_layout.setContentsMargins(
+                SPACING.lg, SPACING.md, SPACING.lg, SPACING.md
+            )
             header_layout.setSpacing(SPACING.sm)
 
             # Title with icon
@@ -168,7 +205,13 @@ class TextPanel(QFrame):
             title_layout.setSpacing(SPACING.sm)
 
             from .icons import Icon
-            self._title_icon = Icon("mdi6.file-document-edit", size=16, color=self._colors.primary, colors=self._colors)
+
+            self._title_icon = Icon(
+                "mdi6.file-document-edit",
+                size=16,
+                color=self._colors.primary,
+                colors=self._colors,
+            )
             title_layout.addWidget(self._title_icon)
 
             self._title_label = QLabel(title)
@@ -182,6 +225,7 @@ class TextPanel(QFrame):
             # Badge
             if badge_text:
                 from .components import Badge
+
                 self._badge = Badge(badge_text, variant="info", colors=self._colors)
                 title_layout.addWidget(self._badge)
 
@@ -245,12 +289,12 @@ class TextPanel(QFrame):
     def set_title(self, title: str):
         """Update the header title"""
         self._title = title
-        if hasattr(self, '_title_label'):
+        if hasattr(self, "_title_label"):
             self._title_label.setText(title)
 
-    def set_stats(self, stats: List[Tuple[str, str]]):
+    def set_stats(self, stats: list[tuple[str, str]]):
         """Set stats in header. List of (icon_name, text) tuples."""
-        if not hasattr(self, '_stats_layout'):
+        if not hasattr(self, "_stats_layout"):
             return
 
         # Clear existing stats
@@ -261,6 +305,7 @@ class TextPanel(QFrame):
 
         # Add new stats as icon+text widgets
         from .icons import Icon
+
         for icon_name, text in stats:
             stat_widget = QFrame()
             stat_widget.setStyleSheet(f"""
@@ -271,10 +316,17 @@ class TextPanel(QFrame):
                 }}
             """)
             stat_layout = QHBoxLayout(stat_widget)
-            stat_layout.setContentsMargins(SPACING.sm, SPACING.xs, SPACING.sm, SPACING.xs)
+            stat_layout.setContentsMargins(
+                SPACING.sm, SPACING.xs, SPACING.sm, SPACING.xs
+            )
             stat_layout.setSpacing(SPACING.xs)
 
-            icon = Icon(icon_name, size=14, color=self._colors.text_secondary, colors=self._colors)
+            icon = Icon(
+                icon_name,
+                size=14,
+                color=self._colors.text_secondary,
+                colors=self._colors,
+            )
             stat_layout.addWidget(icon)
 
             label = QLabel(text)
@@ -286,7 +338,7 @@ class TextPanel(QFrame):
 
             self._stats_layout.addWidget(stat_widget)
 
-    def get_selection(self) -> Optional[Tuple[int, int]]:
+    def get_selection(self) -> tuple[int, int] | None:
         """Get current text selection range (start, end) or None if no selection"""
         cursor = self._text_edit.textCursor()
         if cursor.hasSelection():
@@ -309,7 +361,7 @@ class TextPanel(QFrame):
             self.text_selected.emit(text, start, end)
 
     def _update_line_numbers(self):
-        if hasattr(self, '_line_numbers'):
+        if hasattr(self, "_line_numbers"):
             count = self._text_edit.blockCount()
             self._line_numbers.set_line_count(count)
 
@@ -317,6 +369,7 @@ class TextPanel(QFrame):
 # =============================================================================
 # Line Number Area
 # =============================================================================
+
 
 class LineNumberArea(QFrame):
     """
@@ -358,7 +411,9 @@ class LineNumberArea(QFrame):
                 font-size: {TYPOGRAPHY.text_sm}px;
                 padding-right: {SPACING.sm}px;
             """)
-            label.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
+            label.setAlignment(
+                Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter
+            )
             label.setFixedHeight(22)  # Approximate line height
             self._labels.append(label)
             self._layout.addWidget(label)
@@ -371,6 +426,7 @@ class LineNumberArea(QFrame):
 # =============================================================================
 # Selection Popup
 # =============================================================================
+
 
 class SelectionPopup(QFrame):
     """
@@ -403,9 +459,9 @@ class SelectionPopup(QFrame):
 
     def __init__(
         self,
-        actions: List[Tuple[str, str, str]] = None,  # [(icon, tooltip, action_id), ...]
+        actions: list[tuple[str, str, str]] = None,  # [(icon, tooltip, action_id), ...]
         colors: ColorPalette = None,
-        parent=None
+        parent=None,
     ):
         super().__init__(parent)
         self._colors = colors or get_colors()
@@ -472,7 +528,7 @@ class SelectionPopup(QFrame):
 
             # Store action_id and connect click
             btn._action_id = action_id
-            btn.mousePressEvent = lambda e, aid=action_id: self._emit_action(aid)
+            btn.mousePressEvent = lambda _e, aid=action_id: self._emit_action(aid)
 
             layout.addWidget(btn)
 
@@ -487,13 +543,16 @@ class SelectionPopup(QFrame):
 
     def show_near_selection(self, global_pos):
         """Show popup near a selection point, offset slightly above"""
-        self.move(global_pos.x() - self.width() // 2, global_pos.y() - self.height() - 10)
+        self.move(
+            global_pos.x() - self.width() // 2, global_pos.y() - self.height() - 10
+        )
         self.show()
 
 
 # =============================================================================
 # Transcript Panel
 # =============================================================================
+
 
 class TranscriptPanel(QFrame):
     """
@@ -508,10 +567,7 @@ class TranscriptPanel(QFrame):
     timestamp_clicked = Signal(float)  # seconds
 
     def __init__(
-        self,
-        show_speakers: bool = True,
-        colors: ColorPalette = None,
-        parent=None
+        self, show_speakers: bool = True, colors: ColorPalette = None, parent=None
     ):
         super().__init__(parent)
         self._colors = colors or get_colors()
@@ -549,19 +605,13 @@ class TranscriptPanel(QFrame):
         scroll.setWidget(self._container)
         main_layout.addWidget(scroll)
 
-    def add_segment(
-        self,
-        start_time: float,
-        end_time: float,
-        speaker: str,
-        text: str
-    ):
+    def add_segment(self, start_time: float, end_time: float, speaker: str, text: str):
         segment = TranscriptSegment(
             start_time=start_time,
             end_time=end_time,
             speaker=speaker if self._show_speakers else None,
             text=text,
-            colors=self._colors
+            colors=self._colors,
         )
         segment.timestamp_clicked.connect(self.timestamp_clicked.emit)
         self._segments.append(segment)
@@ -591,7 +641,7 @@ class TranscriptSegment(QFrame):
         speaker: str = None,
         text: str = "",
         colors: ColorPalette = None,
-        parent=None
+        parent=None,
     ):
         super().__init__(parent)
         self._colors = colors or get_colors()

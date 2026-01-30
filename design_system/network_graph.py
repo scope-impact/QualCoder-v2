@@ -3,25 +3,12 @@ Network graph visualization using NetworkX + QGraphicsScene
 Material Design styled interactive network graphs
 """
 
-from typing import List, Dict, Any, Optional, Callable, Tuple
+from collections.abc import Callable
 from dataclasses import dataclass, field
-import math
+from typing import Any
 
-from PySide6.QtWidgets import (
-    QFrame,
-    QGraphicsEllipseItem,
-    QGraphicsItem,
-    QGraphicsLineItem,
-    QGraphicsScene,
-    QGraphicsTextItem,
-    QGraphicsView,
-    QHBoxLayout,
-    QLabel,
-    QVBoxLayout,
-    QWidget,
-)
+import networkx as nx
 from PySide6.QtCore import (
-    QPointF,
     QRectF,
     Qt,
     Signal,
@@ -35,30 +22,39 @@ from PySide6.QtGui import (
     QPen,
     QWheelEvent,
 )
+from PySide6.QtWidgets import (
+    QFrame,
+    QGraphicsItem,
+    QGraphicsLineItem,
+    QGraphicsScene,
+    QGraphicsView,
+    QLabel,
+    QVBoxLayout,
+)
 
-import networkx as nx
-
-from .tokens import SPACING, RADIUS, TYPOGRAPHY, ColorPalette, get_colors
+from .tokens import RADIUS, SPACING, TYPOGRAPHY, ColorPalette, get_colors
 
 
 @dataclass
 class GraphNode:
     """Node data for network graph"""
+
     id: str
     label: str
-    color: Optional[str] = None
+    color: str | None = None
     size: int = 30
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    metadata: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
 class GraphEdge:
     """Edge data for network graph"""
+
     source: str
     target: str
     weight: float = 1.0
     label: str = ""
-    color: Optional[str] = None
+    color: str | None = None
 
 
 class NetworkGraphWidget(QFrame):
@@ -99,7 +95,7 @@ class NetworkGraphWidget(QFrame):
         height: int = 400,
         interactive: bool = True,
         colors: ColorPalette = None,
-        parent=None
+        parent=None,
     ):
         super().__init__(parent)
         self._colors = colors or get_colors()
@@ -108,13 +104,13 @@ class NetworkGraphWidget(QFrame):
 
         # NetworkX graph
         self._graph = nx.Graph()
-        self._node_data: Dict[str, GraphNode] = {}
-        self._edge_data: Dict[Tuple[str, str], GraphEdge] = {}
+        self._node_data: dict[str, GraphNode] = {}
+        self._edge_data: dict[tuple[str, str], GraphEdge] = {}
 
         # Graphics items
-        self._node_items: Dict[str, NodeItem] = {}
-        self._edge_items: Dict[Tuple[str, str], EdgeItem] = {}
-        self._positions: Dict[str, Tuple[float, float]] = {}
+        self._node_items: dict[str, NodeItem] = {}
+        self._edge_items: dict[tuple[str, str], EdgeItem] = {}
+        self._positions: dict[str, tuple[float, float]] = {}
 
         self._setup_ui(title)
 
@@ -232,10 +228,7 @@ class NetworkGraphWidget(QFrame):
 
         self._positions = {}
         for node_id, (x, y) in positions.items():
-            self._positions[node_id] = (
-                center_x + x * scale,
-                center_y + y * scale
-            )
+            self._positions[node_id] = (center_x + x * scale, center_y + y * scale)
 
         self._render()
 
@@ -269,11 +262,13 @@ class NetworkGraphWidget(QFrame):
             size=node.size,
             color=color,
             colors=self._colors,
-            interactive=self._interactive
+            interactive=self._interactive,
         )
         item.setPos(x - node.size / 2, y - node.size / 2)
         item.clicked.connect(lambda: self.node_clicked.emit(node_id, node.metadata))
-        item.double_clicked.connect(lambda: self.node_double_clicked.emit(node_id, node.metadata))
+        item.double_clicked.connect(
+            lambda: self.node_double_clicked.emit(node_id, node.metadata)
+        )
 
         self._scene.addItem(item)
         self._node_items[node_id] = item
@@ -288,11 +283,14 @@ class NetworkGraphWidget(QFrame):
         width = max(1, min(edge.weight, 8))
 
         item = EdgeItem(
-            x1, y1, x2, y2,
+            x1,
+            y1,
+            x2,
+            y2,
             color=color,
             width=width,
             label=edge.label,
-            colors=self._colors
+            colors=self._colors,
         )
         item.clicked.connect(lambda: self.edge_clicked.emit(source, target))
 
@@ -319,13 +317,12 @@ class NetworkGraphWidget(QFrame):
 
     def zoom_to_fit(self):
         """Zoom view to fit all content"""
-        self._view.fitInView(self._scene.itemsBoundingRect(), Qt.AspectRatioMode.KeepAspectRatio)
+        self._view.fitInView(
+            self._scene.itemsBoundingRect(), Qt.AspectRatioMode.KeepAspectRatio
+        )
 
     def from_adjacency_matrix(
-        self,
-        matrix: List[List[float]],
-        labels: List[str],
-        threshold: float = 0
+        self, matrix: list[list[float]], labels: list[str], threshold: float = 0
     ):
         """
         Create graph from adjacency matrix.
@@ -421,7 +418,7 @@ class NodeItem(QGraphicsItem):
         color: str = None,
         colors: ColorPalette = None,
         interactive: bool = True,
-        parent=None
+        parent=None,
     ):
         super().__init__(parent)
         self._colors = colors or get_colors()
@@ -446,7 +443,7 @@ class NodeItem(QGraphicsItem):
     def boundingRect(self) -> QRectF:
         return QRectF(0, 0, self._size, self._size)
 
-    def paint(self, painter: QPainter, option, widget=None):
+    def paint(self, painter: QPainter, _option, _widget=None):
         painter.setRenderHint(QPainter.RenderHint.Antialiasing)
 
         # Draw shadow when highlighted
@@ -488,11 +485,11 @@ class NodeItem(QGraphicsItem):
         self._highlighted = highlighted
         self.update()
 
-    def hoverEnterEvent(self, event):
+    def hoverEnterEvent(self, _event):
         self._hovered = True
         self.update()
 
-    def hoverLeaveEvent(self, event):
+    def hoverLeaveEvent(self, _event):
         self._hovered = False
         self.update()
 
@@ -512,13 +509,15 @@ class EdgeItem(QGraphicsLineItem):
 
     def __init__(
         self,
-        x1: float, y1: float,
-        x2: float, y2: float,
+        x1: float,
+        y1: float,
+        x2: float,
+        y2: float,
         color: str = "#E0E0E0",
         width: float = 1,
         label: str = "",
         colors: ColorPalette = None,
-        parent=None
+        parent=None,
     ):
         super().__init__(x1, y1, x2, y2, parent)
         self._colors = colors or get_colors()

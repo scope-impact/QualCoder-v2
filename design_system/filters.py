@@ -3,10 +3,8 @@ Filter/Search components
 Filter panels, chips, search inputs, and view toggles
 """
 
-from typing import List, Optional, Dict, Any
-
 import qtawesome as qta
-
+from PySide6.QtCore import Qt, Signal
 from PySide6.QtWidgets import (
     QCheckBox,
     QFrame,
@@ -14,14 +12,11 @@ from PySide6.QtWidgets import (
     QLabel,
     QLineEdit,
     QPushButton,
-    QScrollArea,
-    QSizePolicy,
     QVBoxLayout,
     QWidget,
 )
-from PySide6.QtCore import Qt, Signal
 
-from .tokens import SPACING, RADIUS, TYPOGRAPHY, ColorPalette, get_colors, hex_to_rgba
+from .tokens import RADIUS, SPACING, TYPOGRAPHY, ColorPalette, get_colors, hex_to_rgba
 
 
 class FilterPanel(QFrame):
@@ -42,7 +37,7 @@ class FilterPanel(QFrame):
         title: str = "Filters",
         collapsible: bool = True,
         colors: ColorPalette = None,
-        parent=None
+        parent=None,
     ):
         super().__init__(parent)
         self._colors = colors or get_colors()
@@ -85,14 +80,16 @@ class FilterPanel(QFrame):
 
         if collapsible:
             self._toggle_btn = QPushButton()
-            self._toggle_btn.setIcon(qta.icon("mdi6.chevron-down", color=self._colors.text_secondary))
+            self._toggle_btn.setIcon(
+                qta.icon("mdi6.chevron-down", color=self._colors.text_secondary)
+            )
             self._toggle_btn.setFixedSize(24, 24)
             self._toggle_btn.setCursor(Qt.CursorShape.PointingHandCursor)
-            self._toggle_btn.setStyleSheet(f"""
-                QPushButton {{
+            self._toggle_btn.setStyleSheet("""
+                QPushButton {
                     background-color: transparent;
                     border: none;
-                }}
+                }
             """)
             self._toggle_btn.clicked.connect(self._toggle)
             header_layout.addWidget(self._toggle_btn)
@@ -119,12 +116,14 @@ class FilterPanel(QFrame):
         # Content
         self._content = QWidget()
         self._content_layout = QVBoxLayout(self._content)
-        self._content_layout.setContentsMargins(SPACING.md, SPACING.sm, SPACING.md, SPACING.md)
+        self._content_layout.setContentsMargins(
+            SPACING.md, SPACING.sm, SPACING.md, SPACING.md
+        )
         self._content_layout.setSpacing(SPACING.md)
 
         self._main_layout.addWidget(self._content)
 
-    def add_section(self, name: str, options: List[str]):
+    def add_section(self, name: str, options: list[str]):
         section = FilterSection(name, options, colors=self._colors)
         section.selection_changed.connect(lambda: self._emit_changes())
         self._sections[name] = section
@@ -149,7 +148,7 @@ class FilterPanel(QFrame):
             section.clear_selection()
         self.filters_changed.emit({})
 
-    def get_filters(self) -> Dict[str, List[str]]:
+    def get_filters(self) -> dict[str, list[str]]:
         filters = {}
         for name, section in self._sections.items():
             selected = section.get_selected()
@@ -164,11 +163,7 @@ class FilterSection(QFrame):
     selection_changed = Signal()
 
     def __init__(
-        self,
-        name: str,
-        options: List[str],
-        colors: ColorPalette = None,
-        parent=None
+        self, name: str, options: list[str], colors: ColorPalette = None, parent=None
     ):
         super().__init__(parent)
         self._colors = colors or get_colors()
@@ -212,7 +207,7 @@ class FilterSection(QFrame):
             self._checkboxes.append(cb)
             layout.addWidget(cb)
 
-    def get_selected(self) -> List[str]:
+    def get_selected(self) -> list[str]:
         return [cb.text() for cb in self._checkboxes if cb.isChecked()]
 
     def clear_selection(self):
@@ -237,7 +232,7 @@ class FilterChip(QFrame):
         text: str,
         removable: bool = True,
         colors: ColorPalette = None,
-        parent=None
+        parent=None,
     ):
         super().__init__(parent)
         self._colors = colors or get_colors()
@@ -373,7 +368,7 @@ class SearchInput(QFrame):
         placeholder: str = "Search...",
         show_icon: bool = True,
         colors: ColorPalette = None,
-        parent=None
+        parent=None,
     ):
         super().__init__(parent)
         self._colors = colors or get_colors()
@@ -396,7 +391,11 @@ class SearchInput(QFrame):
         # Search icon
         if show_icon:
             icon = QLabel()
-            icon.setPixmap(qta.icon("mdi6.magnify", color=self._colors.text_secondary).pixmap(16, 16))
+            icon.setPixmap(
+                qta.icon("mdi6.magnify", color=self._colors.text_secondary).pixmap(
+                    16, 16
+                )
+            )
             layout.addWidget(icon)
 
         # Input
@@ -411,12 +410,16 @@ class SearchInput(QFrame):
             }}
         """)
         self._input.textChanged.connect(self.search_changed.emit)
-        self._input.returnPressed.connect(lambda: self.search_submitted.emit(self._input.text()))
+        self._input.returnPressed.connect(
+            lambda: self.search_submitted.emit(self._input.text())
+        )
         layout.addWidget(self._input, 1)
 
         # Clear button
         self._clear_btn = QPushButton()
-        self._clear_btn.setIcon(qta.icon("mdi6.close", color=self._colors.text_secondary))
+        self._clear_btn.setIcon(
+            qta.icon("mdi6.close", color=self._colors.text_secondary)
+        )
         self._clear_btn.setFixedSize(20, 20)
         self._clear_btn.setCursor(Qt.CursorShape.PointingHandCursor)
         self._clear_btn.setStyleSheet(f"""
@@ -509,7 +512,7 @@ class SearchOptions(QFrame):
         values = {key: cb.isChecked() for key, cb in self._options.items()}
         self.options_changed.emit(values)
 
-    def get_options(self) -> Dict[str, bool]:
+    def get_options(self) -> dict[str, bool]:
         return {key: cb.isChecked() for key, cb in self._options.items()}
 
 
@@ -526,10 +529,10 @@ class ViewToggle(QFrame):
 
     def __init__(
         self,
-        views: List[str] = None,
+        views: list[str] = None,
         current: str = None,
         colors: ColorPalette = None,
-        parent=None
+        parent=None,
     ):
         super().__init__(parent)
         self._colors = colors or get_colors()
@@ -564,7 +567,7 @@ class ViewToggle(QFrame):
             btn.setFixedSize(32, 28)
             btn.setCursor(Qt.CursorShape.PointingHandCursor)
             btn.setToolTip(view.capitalize())
-            btn.clicked.connect(lambda checked, v=view: self._select(v))
+            btn.clicked.connect(lambda _checked, v=view: self._select(v))
             self._buttons[view] = (btn, icon_name)
             layout.addWidget(btn)
 

@@ -2,11 +2,13 @@
 Tests for pagination components: Pagination, SimplePagination, etc.
 """
 
-import pytest
 from PySide6.QtCore import Qt
 
 from design_system.pagination import (
-    Pagination, PageButton, PaginationInfo, SimplePagination
+    PageButton,
+    Pagination,
+    PaginationInfo,
+    SimplePagination,
 )
 
 
@@ -57,7 +59,7 @@ class TestPagination:
         qtbot.addWidget(pagination)
 
         # Signal should exist
-        assert hasattr(pagination, 'page_changed')
+        assert hasattr(pagination, "page_changed")
 
 
 class TestPageButton:

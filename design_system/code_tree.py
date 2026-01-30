@@ -3,31 +3,30 @@ Code Tree components
 Hierarchical tree widget for qualitative codes
 """
 
-from typing import List, Optional
 from dataclasses import dataclass
 
+from PySide6.QtCore import Qt, Signal
 from PySide6.QtWidgets import (
     QFrame,
     QHBoxLayout,
     QLabel,
     QScrollArea,
-    QSizePolicy,
     QVBoxLayout,
     QWidget,
 )
-from PySide6.QtCore import Qt, Signal
 
-from .tokens import SPACING, RADIUS, TYPOGRAPHY, ColorPalette, get_colors
+from .tokens import RADIUS, SPACING, TYPOGRAPHY, ColorPalette, get_colors
 
 
 @dataclass
 class CodeItem:
     """Data class for a code item"""
+
     id: str
     name: str
     color: str
     count: int = 0
-    children: List["CodeItem"] = None
+    children: list["CodeItem"] = None
 
     def __post_init__(self):
         if self.children is None:
@@ -78,7 +77,7 @@ class CodeTree(QScrollArea):
 
         self.setWidget(self._container)
 
-    def set_items(self, items: List[CodeItem]):
+    def set_items(self, items: list[CodeItem]):
         """Set the tree items"""
         self._items = items
         self._rebuild_tree()
@@ -126,7 +125,7 @@ class CodeTree(QScrollArea):
             depth=depth,
             expanded=item.id in self._expanded,
             has_children=len(item.children) > 0,
-            colors=self._colors
+            colors=self._colors,
         )
 
         node.clicked.connect(lambda: self.item_clicked.emit(item.id))
@@ -149,7 +148,7 @@ class CodeTree(QScrollArea):
         self._rebuild_tree()
         self.item_expanded.emit(item_id, item_id in self._expanded)
 
-    def _find_item(self, item_id: str, items: List[CodeItem]) -> Optional[CodeItem]:
+    def _find_item(self, item_id: str, items: list[CodeItem]) -> CodeItem | None:
         """Find an item by ID"""
         for item in items:
             if item.id == item_id:
@@ -159,7 +158,7 @@ class CodeTree(QScrollArea):
                 return found
         return None
 
-    def _remove_item_recursive(self, item_id: str, items: List[CodeItem]) -> bool:
+    def _remove_item_recursive(self, item_id: str, items: list[CodeItem]) -> bool:
         """Remove an item recursively"""
         for i, item in enumerate(items):
             if item.id == item_id:
@@ -184,7 +183,7 @@ class CodeTreeNode(QFrame):
         expanded: bool = False,
         has_children: bool = False,
         colors: ColorPalette = None,
-        parent=None
+        parent=None,
     ):
         super().__init__(parent)
         self._colors = colors or get_colors()
@@ -209,7 +208,7 @@ class CodeTreeNode(QFrame):
             SPACING.lg + (depth * SPACING.xl),  # Indent based on depth
             SPACING.sm,
             SPACING.md,
-            SPACING.sm
+            SPACING.sm,
         )
         layout.setSpacing(SPACING.sm)
 
@@ -222,7 +221,7 @@ class CodeTreeNode(QFrame):
             """)
             toggle.setFixedWidth(16)
             toggle.setCursor(Qt.CursorShape.PointingHandCursor)
-            toggle.mousePressEvent = lambda e: self.toggle_expanded.emit()
+            toggle.mousePressEvent = lambda _e: self.toggle_expanded.emit()
             layout.addWidget(toggle)
         else:
             # Spacer for alignment

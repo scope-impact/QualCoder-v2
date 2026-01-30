@@ -5,21 +5,21 @@ Run with: python -m ui.templates.demo
 """
 
 import sys
+
+from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import (
     QApplication,
-    QWidget,
-    QVBoxLayout,
     QHBoxLayout,
     QLabel,
-    QPushButton,
+    QVBoxLayout,
+    QWidget,
 )
-from PyQt6.QtCore import Qt
 
-from design_system import get_theme, Button, Card, SPACING
+from design_system import SPACING, Button, get_theme
 
-from .app_shell import AppShell
-from .layouts import SidebarLayout, ThreePanelLayout, SinglePanelLayout
 from ..screens import TextCodingScreen
+from .app_shell import AppShell
+from .layouts import SidebarLayout, SinglePanelLayout, ThreePanelLayout
 
 
 def create_placeholder(text: str, color: str = None) -> QWidget:
@@ -144,10 +144,7 @@ class DemoSinglePanelScreen:
 
     def get_content(self):
         layout = SinglePanelLayout(
-            padding=24,
-            scrollable=True,
-            max_width=800,
-            colors=self._colors
+            padding=24, scrollable=True, max_width=800, colors=self._colors
         )
 
         content = create_placeholder("Settings Form\n(Centered, Max Width 800px)")

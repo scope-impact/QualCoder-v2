@@ -2,12 +2,15 @@
 Tests for list components: FileList, CaseList, QueueList, etc.
 """
 
-import pytest
 from PySide6.QtCore import Qt
 
 from design_system.lists import (
-    FileList, FileListItem, CaseList, CaseListItem,
-    AttributeList, AttributeListItem, QueueList, QueueListItem
+    AttributeList,
+    CaseList,
+    CaseListItem,
+    FileList,
+    FileListItem,
+    QueueList,
 )
 
 
@@ -36,10 +39,12 @@ class TestFileList:
         lst = FileList()
         qtbot.addWidget(lst)
 
-        lst.set_files([
-            {"id": "1", "name": "file1.txt", "type": "text", "size": "1 KB"},
-            {"id": "2", "name": "file2.txt", "type": "text", "size": "2 KB"},
-        ])
+        lst.set_files(
+            [
+                {"id": "1", "name": "file1.txt", "type": "text", "size": "1 KB"},
+                {"id": "2", "name": "file2.txt", "type": "text", "size": "2 KB"},
+            ]
+        )
 
         assert len(lst._items) == 2
 
@@ -77,7 +82,9 @@ class TestFileListItem:
 
     def test_item_with_status(self, qtbot):
         """FileListItem should show status badge"""
-        item = FileListItem(id="1", name="test.txt", file_type="text", size="5 KB", status="coded")
+        item = FileListItem(
+            id="1", name="test.txt", file_type="text", size="5 KB", status="coded"
+        )
         qtbot.addWidget(item)
 
         assert item is not None

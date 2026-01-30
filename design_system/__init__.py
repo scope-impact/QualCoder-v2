@@ -27,287 +27,282 @@ Usage:
 """
 
 # Tokens
-from .tokens import (
-    # Core types
-    ColorPalette,
-
-    # Theme instances
-    COLORS,
-    COLORS_LIGHT,
-    COLORS_DARK,
-
-    # Scale tokens
-    SPACING,
-    RADIUS,
-    TYPOGRAPHY,
-    LAYOUT,
-    ANIMATION,
-    SHADOWS,
-    GRADIENTS,
-    ZINDEX,
-
-    # Theme functions
-    get_colors,
-    get_theme,
-    set_theme,
-    register_theme,
+# Chart/Visualization Components (ADR-001)
+from .charts import (
+    ChartDataPoint,
+    ChartWidget,
+    LegendItem,
+    PieChart,
+    SparkLine,
 )
 
-# Stylesheet
-from .stylesheet import generate_stylesheet
+# Chat/AI Components
+from .chat import (
+    AIReasoningPanel,
+    ChatInput,
+    CodeSuggestion,
+    ConfidenceScore,
+    MessageBubble,
+    QuickPrompts,
+    TypingIndicator,
+)
+
+# Code Tree
+from .code_tree import CodeItem, CodeTree, CodeTreeNode
 
 # Core Components
 from .components import (
-    Button,
-    Input,
-    Label,
-    Card,
-    CardHeader,
-    Badge,
-    Separator,
     Alert,
     Avatar,
+    Badge,
+    Button,
+    Card,
+    CardHeader,
     Chip,
     FileIcon,
+    Input,
+    Label,
+    Separator,
 )
-
-# Icons (uses qtawesome - browse icons at https://pictogrammers.com/library/mdi/)
-from .icons import Icon, IconText, icon, get_pixmap, get_qicon
-
-# Toggle
-from .toggle import Toggle, LabeledToggle
-
-# Modal
-from .modal import Modal, ModalHeader, ModalBody, ModalFooter
-
-# Toast
-from .toast import Toast, ToastContainer, ToastManager
 
 # Context Menu
 from .context_menu import (
     ContextMenu,
     ContextMenuItem,
-    ContextMenuWidget,
     ContextMenuItemWidget,
-)
-
-# Code Tree
-from .code_tree import CodeTree, CodeTreeNode, CodeItem
-
-# Stat Card
-from .stat_card import StatCard, StatCardRow, MiniStatCard
-
-# Progress Bar
-from .progress_bar import (
-    ProgressBar,
-    ProgressBarWidget,
-    ProgressBarLabeled,
-    RelevanceScoreBar,
-    RelevanceBarWidget,
-    ScoreIndicator,
-)
-
-# Spinner
-from .spinner import Spinner, LoadingIndicator, LoadingOverlay, SkeletonLoader
-
-# Layout Components
-from .layout import (
-    AppContainer,
-    TitleBar,
-    MenuBar,
-    TabBar,
-    Toolbar,
-    ToolbarGroup,
-    ToolbarButton,
-    StatusBar,
-    Panel,
-    PanelHeader,
-    Sidebar,
-    MainContent,
-)
-
-# Form Components
-from .forms import (
-    SearchBox,
-    Select,
-    MultiSelect,
-    Textarea,
-    NumberInput,
-    RangeSlider,
-    ColorPicker,
-    FormGroup,
-    CoderSelector,
-)
-
-# Navigation Components
-from .navigation import (
-    MenuItem,
-    Tab,
-    TabGroup,
-    Breadcrumb,
-    NavList,
-    StepIndicator,
-    MediaTypeSelector,
+    ContextMenuWidget,
 )
 
 # Data Display Components
 from .data_display import (
-    DataTable,
-    FileCell,
-    EntityCell,
-    InfoCard,
     CodeDetailCard,
-    StatRow,
-    KeyValueList,
+    DataTable,
     EmptyState,
+    EntityCell,
+    FileCell,
     HeatMapCell,
     HeatMapGrid,
+    InfoCard,
+    KeyValueList,
+    StatRow,
+)
+
+# Calendar Components
+from .date_picker import (
+    CalendarDay,
+    CalendarMini,
+    CalendarNavigation,
+    DateRangePicker,
+    QuickDateSelect,
+)
+
+# Document/Text Components
+from .document import (
+    LineNumberArea,
+    SelectionPopup,
+    TextColor,
+    TextPanel,
+    TranscriptPanel,
+    TranscriptSegment,
+)
+
+# Editor Components
+from .editors import (
+    CodeEditor,
+    DiffViewer,
+    EditorToolbar,
+    LineNumbers,
+    MemoEditor,
+    RichTextEditor,
+    SimpleSyntaxHighlighter,
+)
+
+# Filter/Search Components
+from .filters import (
+    FilterChip,
+    FilterChipGroup,
+    FilterPanel,
+    FilterSection,
+    SearchInput,
+    SearchOptions,
+    ViewToggle,
+)
+
+# Form Components
+from .forms import (
+    CoderSelector,
+    ColorPicker,
+    FormGroup,
+    MultiSelect,
+    NumberInput,
+    RangeSlider,
+    SearchBox,
+    Select,
+    Textarea,
+)
+
+# Icons (uses qtawesome - browse icons at https://pictogrammers.com/library/mdi/)
+from .icons import Icon, IconText, get_pixmap, get_qicon, icon
+
+# Image Annotation Components
+from .image_annotation import (
+    AnnotationMode,
+    AnnotationToolbar,
+    ImageAnnotation,
+    ImageAnnotationLayer,
+)
+
+# Layout Components
+from .layout import (
+    AppContainer,
+    MainContent,
+    MenuBar,
+    Panel,
+    PanelHeader,
+    Sidebar,
+    StatusBar,
+    TabBar,
+    TitleBar,
+    Toolbar,
+    ToolbarButton,
+    ToolbarGroup,
 )
 
 # List Components
 from .lists import (
-    ListItem,
-    BaseList,
-    FileList,
-    FileListItem,
-    CaseList,
-    CaseListItem,
     AttributeList,
     AttributeListItem,
+    BaseList,
+    CaseList,
+    CaseListItem,
+    FileList,
+    FileListItem,
+    ListItem,
     QueueList,
     QueueListItem,
 )
 
 # Media Components
 from .media import (
-    VideoContainer,
-    WaveformVisualization,
-    Timeline,
     PlayerControls,
     Thumbnail,
     ThumbnailStrip,
+    Timeline,
+    VideoContainer,
+    WaveformVisualization,
 )
 
-# Chat/AI Components
-from .chat import (
-    MessageBubble,
-    TypingIndicator,
-    CodeSuggestion,
-    QuickPrompts,
-    ChatInput,
-    AIReasoningPanel,
-    ConfidenceScore,
-)
+# Modal
+from .modal import Modal, ModalBody, ModalFooter, ModalHeader
 
-# Document/Text Components
-from .document import (
-    TextPanel,
-    LineNumberArea,
-    SelectionPopup,
-    TranscriptPanel,
-    TranscriptSegment,
-    TextColor,
-)
-
-# Pagination Components
-from .pagination import (
-    Pagination,
-    PageButton,
-    PaginationInfo,
-    SimplePagination,
-)
-
-# Filter/Search Components
-from .filters import (
-    FilterPanel,
-    FilterSection,
-    FilterChip,
-    FilterChipGroup,
-    SearchInput,
-    SearchOptions,
-    ViewToggle,
-)
-
-# Selection/Picker Components
-from .pickers import (
-    TypeSelector,
-    TypeOptionCard,
-    ColorSchemeSelector,
-    ColorSchemeOption,
-    ChartTypeSelector,
-    RadioCardGroup,
-    RadioCard,
-)
-
-# Upload Components
-from .upload import (
-    DropZone,
-    FileTypeBadges,
-    FileTypeBadge,
-    UploadProgress,
-    UploadList,
-    CompactDropZone,
-)
-
-# Calendar Components
-from .date_picker import (
-    CalendarMini,
-    CalendarDay,
-    CalendarNavigation,
-    DateRangePicker,
-    QuickDateSelect,
-)
-
-# Editor Components
-from .editors import (
-    CodeEditor,
-    LineNumbers,
-    SimpleSyntaxHighlighter,
-    RichTextEditor,
-    EditorToolbar,
-    MemoEditor,
-    DiffViewer,
-)
-
-# Chart/Visualization Components (ADR-001)
-from .charts import (
-    ChartWidget,
-    PieChart,
-    ChartDataPoint,
-    SparkLine,
-    LegendItem,
+# Navigation Components
+from .navigation import (
+    Breadcrumb,
+    MediaTypeSelector,
+    MenuItem,
+    NavList,
+    StepIndicator,
+    Tab,
+    TabGroup,
 )
 
 # Network Graph Components
 from .network_graph import (
-    NetworkGraphWidget,
-    GraphNode,
     GraphEdge,
+    GraphNode,
+    NetworkGraphWidget,
 )
 
-# Word Cloud Components
-from .word_cloud import (
-    WordCloudWidget,
-    WordCloudPreview,
-)
-
-# Image Annotation Components
-from .image_annotation import (
-    ImageAnnotationLayer,
-    ImageAnnotation,
-    AnnotationMode,
-    AnnotationToolbar,
+# Pagination Components
+from .pagination import (
+    PageButton,
+    Pagination,
+    PaginationInfo,
+    SimplePagination,
 )
 
 # PDF Viewer Components
 from .pdf_viewer import (
-    PDFPageViewer,
     PDFGraphicsView,
-    PDFThumbnail,
-    PDFTextBlock,
+    PDFPageViewer,
     PDFSelection,
+    PDFTextBlock,
+    PDFThumbnail,
 )
 
+# Selection/Picker Components
+from .pickers import (
+    ChartTypeSelector,
+    ColorSchemeOption,
+    ColorSchemeSelector,
+    RadioCard,
+    RadioCardGroup,
+    TypeOptionCard,
+    TypeSelector,
+)
+
+# Progress Bar
+from .progress_bar import (
+    ProgressBar,
+    ProgressBarLabeled,
+    ProgressBarWidget,
+    RelevanceBarWidget,
+    RelevanceScoreBar,
+    ScoreIndicator,
+)
+
+# Spinner
+from .spinner import LoadingIndicator, LoadingOverlay, SkeletonLoader, Spinner
+
+# Stat Card
+from .stat_card import MiniStatCard, StatCard, StatCardRow
+
+# Stylesheet
+from .stylesheet import generate_stylesheet
+
+# Toast
+from .toast import Toast, ToastContainer, ToastManager
+
+# Toggle
+from .toggle import LabeledToggle, Toggle
+from .tokens import (
+    ANIMATION,
+    # Theme instances
+    COLORS,
+    COLORS_DARK,
+    COLORS_LIGHT,
+    GRADIENTS,
+    LAYOUT,
+    RADIUS,
+    SHADOWS,
+    # Scale tokens
+    SPACING,
+    TYPOGRAPHY,
+    ZINDEX,
+    # Core types
+    ColorPalette,
+    # Theme functions
+    get_colors,
+    get_theme,
+    register_theme,
+    set_theme,
+)
+
+# Upload Components
+from .upload import (
+    CompactDropZone,
+    DropZone,
+    FileTypeBadge,
+    FileTypeBadges,
+    UploadList,
+    UploadProgress,
+)
+
+# Word Cloud Components
+from .word_cloud import (
+    WordCloudPreview,
+    WordCloudWidget,
+)
 
 __all__ = [
     # Tokens

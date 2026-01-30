@@ -6,15 +6,15 @@ real data sources.
 """
 
 from .dto import (
-    FileDTO,
-    CodeDTO,
     CodeCategoryDTO,
+    CodeDTO,
     DocumentDTO,
     DocumentStatsDTO,
-    SelectedCodeDTO,
-    OverlappingSegmentDTO,
+    FileDTO,
     FileMemoDTO,
     NavigationDTO,
+    OverlappingSegmentDTO,
+    SelectedCodeDTO,
     TextCodingDataDTO,
 )
 
@@ -23,10 +23,28 @@ def create_sample_text_coding_data() -> TextCodingDataDTO:
     """Create sample data for the text coding screen."""
 
     files = [
-        FileDTO(id="1", name="Blur - Girls & Boys.mp3.transcribed", file_type="text", meta="Text - 2.4 KB - 3 codes"),
-        FileDTO(id="2", name="ID1.docx", file_type="text", meta="Text - 3.1 KB - 7 codes"),
-        FileDTO(id="3", name="ID2.odt", file_type="text", meta="Text - 1.2 KB - 5 codes", selected=True),
-        FileDTO(id="4", name="ID3_interview.txt", file_type="text", meta="Text - 8.5 KB - 12 codes"),
+        FileDTO(
+            id="1",
+            name="Blur - Girls & Boys.mp3.transcribed",
+            file_type="text",
+            meta="Text - 2.4 KB - 3 codes",
+        ),
+        FileDTO(
+            id="2", name="ID1.docx", file_type="text", meta="Text - 3.1 KB - 7 codes"
+        ),
+        FileDTO(
+            id="3",
+            name="ID2.odt",
+            file_type="text",
+            meta="Text - 1.2 KB - 5 codes",
+            selected=True,
+        ),
+        FileDTO(
+            id="4",
+            name="ID3_interview.txt",
+            file_type="text",
+            meta="Text - 8.5 KB - 12 codes",
+        ),
     ]
 
     categories = [
@@ -37,7 +55,7 @@ def create_sample_text_coding_data() -> TextCodingDataDTO:
                 CodeDTO(id="c1", name="soccer playing", color="#FFC107", count=3),
                 CodeDTO(id="c2", name="struggling", color="#F44336", count=5),
                 CodeDTO(id="c3", name="tactics", color="#9C27B0", count=2),
-            ]
+            ],
         ),
         CodeCategoryDTO(
             id="cat2",
@@ -45,7 +63,7 @@ def create_sample_text_coding_data() -> TextCodingDataDTO:
             codes=[
                 CodeDTO(id="c4", name="club development", color="#4CAF50", count=4),
                 CodeDTO(id="c5", name="facilities", color="#2196F3", count=1),
-            ]
+            ],
         ),
         CodeCategoryDTO(
             id="cat3",
@@ -54,7 +72,7 @@ def create_sample_text_coding_data() -> TextCodingDataDTO:
                 CodeDTO(id="c6", name="cost concerns", color="#E91E63", count=2),
                 CodeDTO(id="c7", name="learning enthusiasm", color="#00BCD4", count=6),
                 CodeDTO(id="c8", name="time pressure", color="#FF9800", count=3),
-            ]
+            ],
         ),
     ]
 
@@ -72,7 +90,7 @@ I really like learning new things. I think this course is good for me as I have 
 
 I get the feeling most students are having some problems with the coursework deadlines. There is much to learn and not many of us practice directed learning. We need more guidance on time management and prioritization.
 
-Overall, I am satisfied with the club's facilities and the quality of instruction. The new training ground has made a big difference. I feel like I am improving week by week, which keeps me motivated to continue."""
+Overall, I am satisfied with the club's facilities and the quality of instruction. The new training ground has made a big difference. I feel like I am improving week by week, which keeps me motivated to continue.""",
     )
 
     document_stats = DocumentStatsDTO(

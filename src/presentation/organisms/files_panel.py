@@ -5,13 +5,19 @@ A panel displaying the list of files available for coding.
 Includes a header with filter and memo actions, and a scrollable file list.
 """
 
-from typing import List, Dict, Any
-from PyQt6.QtWidgets import QFrame, QVBoxLayout, QHBoxLayout, QLabel
+from typing import Any
+
 from PyQt6.QtCore import Qt, pyqtSignal
+from PyQt6.QtWidgets import QFrame, QHBoxLayout, QLabel, QVBoxLayout
 
 from design_system import (
-    ColorPalette, get_theme, SPACING, RADIUS, TYPOGRAPHY,
-    Icon, FileList,
+    RADIUS,
+    SPACING,
+    TYPOGRAPHY,
+    ColorPalette,
+    FileList,
+    Icon,
+    get_theme,
 )
 
 
@@ -44,10 +50,14 @@ class FilesPanel(QFrame):
         layout.setSpacing(0)
 
         # Header
-        header = self._create_header("Files", "mdi6.folder-open", [
-            ("mdi6.filter-variant", "Filter files"),
-            ("mdi6.note", "File memo"),
-        ])
+        header = self._create_header(
+            "Files",
+            "mdi6.folder-open",
+            [
+                ("mdi6.filter-variant", "Filter files"),
+                ("mdi6.note", "File memo"),
+            ],
+        )
         layout.addWidget(header)
 
         # File list
@@ -55,7 +65,9 @@ class FilesPanel(QFrame):
         self._file_list.item_clicked.connect(self._on_file_click)
         layout.addWidget(self._file_list)
 
-    def _create_header(self, title: str, icon_name: str, actions: List[tuple]) -> QFrame:
+    def _create_header(
+        self, title: str, icon_name: str, actions: list[tuple]
+    ) -> QFrame:
         """Create a panel header with icon and actions."""
         header = QFrame()
         header.setStyleSheet(f"""
@@ -100,13 +112,18 @@ class FilesPanel(QFrame):
             """)
             btn_layout = QHBoxLayout(btn)
             btn_layout.setContentsMargins(0, 0, 0, 0)
-            action_i = Icon(action_icon, size=14, color=self._colors.text_secondary, colors=self._colors)
+            action_i = Icon(
+                action_icon,
+                size=14,
+                color=self._colors.text_secondary,
+                colors=self._colors,
+            )
             btn_layout.addWidget(action_i, alignment=Qt.AlignmentFlag.AlignCenter)
             h_layout.addWidget(btn)
 
         return header
 
-    def set_files(self, files: List[Dict[str, Any]]):
+    def set_files(self, files: list[dict[str, Any]]):
         """
         Set the list of files to display.
 
@@ -136,7 +153,7 @@ class FilesPanel(QFrame):
         except ValueError:
             pass
 
-    def get_selected_file(self) -> Dict[str, Any]:
+    def get_selected_file(self) -> dict[str, Any]:
         """Get the currently selected file data."""
         # TODO: Implement selection tracking in FileList
         return self._files[0] if self._files else {}

@@ -12,76 +12,75 @@ Contracts exported:
 """
 
 from src.domain.coding.entities import (
-    # Value Objects
-    Color,
-    TextPosition,
-    ImageRegion,
-    TimeRange,
+    AVSegment,
+    Category,
     # Entities
     Code,
-    Category,
-    TextSegment,
+    # Value Objects
+    Color,
+    ImageRegion,
     ImageSegment,
-    AVSegment,
     Segment,
+    TextPosition,
+    TextSegment,
+    TimeRange,
 )
-
 from src.domain.coding.events import (
-    # Code Events
-    CodeCreated,
-    CodeRenamed,
-    CodeColorChanged,
-    CodeMemoUpdated,
-    CodeDeleted,
-    CodesMerged,
-    CodeMovedToCategory,
     # Category Events
     CategoryCreated,
-    CategoryRenamed,
     CategoryDeleted,
-    # Segment Events
-    SegmentCoded,
-    SegmentUncoded,
-    SegmentMemoUpdated,
+    CategoryEvent,
+    CategoryRenamed,
+    CodeColorChanged,
+    # Code Events
+    CodeCreated,
+    CodeDeleted,
     # Type Aliases
     CodeEvent,
-    CategoryEvent,
-    SegmentEvent,
+    CodeMemoUpdated,
+    CodeMovedToCategory,
+    CodeRenamed,
+    CodesMerged,
     CodingEvent,
+    # Segment Events
+    SegmentCoded,
+    SegmentEvent,
+    SegmentMemoUpdated,
+    SegmentUncoded,
 )
 
 __all__ = [
     # Value Objects
-    'Color',
-    'TextPosition',
-    'ImageRegion',
-    'TimeRange',
+    "Color",
+    "TextPosition",
+    "ImageRegion",
+    "TimeRange",
     # Entities
-    'Code',
-    'Category',
-    'TextSegment',
-    'ImageSegment',
-    'AVSegment',
-    'Segment',
+    "Code",
+    "Category",
+    "TextSegment",
+    "ImageSegment",
+    "AVSegment",
+    "Segment",
     # Code Events
-    'CodeCreated',
-    'CodeRenamed',
-    'CodeColorChanged',
-    'CodeMemoUpdated',
-    'CodeDeleted',
-    'CodesMerged',
-    'CodeMovedToCategory',
+    "CodeCreated",
+    "CodeRenamed",
+    "CodeColorChanged",
+    "CodeMemoUpdated",
+    "CodeDeleted",
+    "CodesMerged",
+    "CodeMovedToCategory",
     # Category Events
-    'CategoryCreated',
-    'CategoryRenamed',
-    'CategoryDeleted',
+    "CategoryCreated",
+    "CategoryRenamed",
+    "CategoryDeleted",
     # Segment Events
-    'SegmentCoded',
-    'SegmentUncoded',
-    'SegmentMemoUpdated',
+    "SegmentCoded",
+    "SegmentUncoded",
+    "SegmentMemoUpdated",
     # Type Aliases
-    'CodeEvent',
-    'CategoryEvent',
-    'SegmentEvent',
-    'CodingEvent',
+    "CodeEvent",
+    "CategoryEvent",
+    "SegmentEvent",
+    "CodingEvent",
 ]

@@ -3,6 +3,8 @@ Statistics Card component
 Material Design styled statistics display
 """
 
+from PySide6.QtCore import Qt
+from PySide6.QtGui import QColor
 from PySide6.QtWidgets import (
     QFrame,
     QGraphicsDropShadowEffect,
@@ -10,11 +12,9 @@ from PySide6.QtWidgets import (
     QLabel,
     QVBoxLayout,
 )
-from PySide6.QtCore import Qt
-from PySide6.QtGui import QColor
 
-from .tokens import SPACING, RADIUS, TYPOGRAPHY, ColorPalette, get_colors
 from .icons import Icon
+from .tokens import RADIUS, SPACING, TYPOGRAPHY, ColorPalette, get_colors
 
 
 class StatCard(QFrame):
@@ -39,7 +39,7 @@ class StatCard(QFrame):
         icon: str = None,
         color: str = None,
         colors: ColorPalette = None,
-        parent=None
+        parent=None,
     ):
         super().__init__(parent)
         self._colors = colors or get_colors()
@@ -69,7 +69,9 @@ class StatCard(QFrame):
         if icon:
             # Check if it's an MDI icon (mdi6.xxx) or emoji/text
             if icon.startswith("mdi6."):
-                icon_widget = Icon(icon, size=28, color=self._accent_color, colors=self._colors)
+                icon_widget = Icon(
+                    icon, size=28, color=self._accent_color, colors=self._colors
+                )
                 layout.addWidget(icon_widget, alignment=Qt.AlignmentFlag.AlignCenter)
             else:
                 # Emoji or text icon
@@ -162,7 +164,7 @@ class StatCardRow(QFrame):
         trend: str = None,
         trend_direction: str = None,
         icon: str = None,
-        color: str = None
+        color: str = None,
     ) -> StatCard:
         """Add a stat card to the row"""
         card = StatCard(
@@ -172,7 +174,7 @@ class StatCardRow(QFrame):
             trend_direction=trend_direction,
             icon=icon,
             color=color,
-            colors=self._colors
+            colors=self._colors,
         )
         self._layout.addWidget(card)
         return card
@@ -193,7 +195,7 @@ class MiniStatCard(QFrame):
         label: str,
         color: str = None,
         colors: ColorPalette = None,
-        parent=None
+        parent=None,
     ):
         super().__init__(parent)
         self._colors = colors or get_colors()

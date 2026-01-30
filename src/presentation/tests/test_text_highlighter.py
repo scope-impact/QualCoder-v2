@@ -5,16 +5,13 @@ These components implement qualitative coding functionality and are
 specific to the QualCoder application (not part of the generic design system).
 """
 
-import pytest
-from PyQt6.QtCore import Qt
-
 from src.presentation.organisms.text_highlighter import (
-    TextHighlighter,
-    CodeSegment,
     Annotation,
-    CodedTextHighlight,
-    OverlapIndicator,
     AnnotationIndicator,
+    CodedTextHighlight,
+    CodeSegment,
+    OverlapIndicator,
+    TextHighlighter,
 )
 
 
@@ -42,7 +39,7 @@ class TestCodeSegment:
             text="important passage",
             memo="This is a key insight",
             important=True,
-            owner="researcher1"
+            owner="researcher1",
         )
         assert segment.segment_id == "seg-1"
         assert segment.code_id == 101
@@ -72,25 +69,17 @@ class TestTextHighlighter:
 
     def test_with_header(self, qtbot):
         """TextHighlighter should show header when enabled"""
-        highlighter = TextHighlighter(
-            title="Test Document",
-            show_header=True
-        )
+        highlighter = TextHighlighter(title="Test Document", show_header=True)
         qtbot.addWidget(highlighter)
-        assert hasattr(highlighter, '_header')
-        assert hasattr(highlighter, '_title_label')
+        assert hasattr(highlighter, "_header")
+        assert hasattr(highlighter, "_title_label")
 
     def test_add_segment(self, qtbot):
         """TextHighlighter should store segments"""
         highlighter = TextHighlighter()
         qtbot.addWidget(highlighter)
 
-        segment = CodeSegment(
-            segment_id="1",
-            code_color="#FFC107",
-            pos0=0,
-            pos1=5
-        )
+        segment = CodeSegment(segment_id="1", code_color="#FFC107", pos0=0, pos1=5)
         highlighter.add_segment(segment)
 
         assert highlighter.get_segment_count() == 1
@@ -140,12 +129,9 @@ class TestTextHighlighter:
         qtbot.addWidget(highlighter)
 
         highlighter.set_text("Hello World Test Document")
-        highlighter.add_segment(CodeSegment(
-            segment_id="1",
-            code_color="#FFC107",
-            pos0=0,
-            pos1=5
-        ))
+        highlighter.add_segment(
+            CodeSegment(segment_id="1", code_color="#FFC107", pos0=0, pos1=5)
+        )
 
         # Should not raise
         highlighter.highlight()
@@ -222,14 +208,14 @@ class TestTextHighlighter:
         highlighter.set_text("Hello World")
 
         # Signal should exist
-        assert hasattr(highlighter, 'text_selected')
+        assert hasattr(highlighter, "text_selected")
 
     def test_segment_clicked_signal(self, qtbot):
         """TextHighlighter should have segment_clicked signal"""
         highlighter = TextHighlighter()
         qtbot.addWidget(highlighter)
 
-        assert hasattr(highlighter, 'segment_clicked')
+        assert hasattr(highlighter, "segment_clicked")
 
     def test_file_offset(self, qtbot):
         """TextHighlighter should handle file offset"""
@@ -240,11 +226,13 @@ class TestTextHighlighter:
         highlighter.set_text("This is partial text", file_start=100)
 
         # Segment positions are in absolute file coordinates
-        highlighter.add_segment(CodeSegment(
-            segment_id="1",
-            pos0=100,  # Absolute position
-            pos1=104   # Absolute position
-        ))
+        highlighter.add_segment(
+            CodeSegment(
+                segment_id="1",
+                pos0=100,  # Absolute position
+                pos1=104,  # Absolute position
+            )
+        )
 
         # Should apply correctly (positions 0-4 in the displayed text)
         highlighter.highlight()
@@ -255,12 +243,11 @@ class TestTextHighlighter:
         qtbot.addWidget(highlighter)
 
         highlighter.set_text("Hello World with annotations")
-        highlighter.add_annotation(Annotation(
-            annotation_id="ann-1",
-            pos0=6,
-            pos1=11,
-            text="A note about World"
-        ))
+        highlighter.add_annotation(
+            Annotation(
+                annotation_id="ann-1", pos0=6, pos1=11, text="A note about World"
+            )
+        )
 
         # Should highlight as bold without error
         highlighter.highlight()
@@ -291,9 +278,7 @@ class TestCodedTextHighlight:
     def test_creation(self, qtbot):
         """CodedTextHighlight should be created"""
         highlight = CodedTextHighlight(
-            text="Test text",
-            code_name="Test Code",
-            code_color="#FFC107"
+            text="Test text", code_name="Test Code", code_color="#FFC107"
         )
         qtbot.addWidget(highlight)
         assert highlight is not None
@@ -301,9 +286,7 @@ class TestCodedTextHighlight:
     def test_inline_mode(self, qtbot):
         """CodedTextHighlight should support inline mode"""
         highlight = CodedTextHighlight(
-            text="Inline text",
-            code_color="#FFC107",
-            inline=True
+            text="Inline text", code_color="#FFC107", inline=True
         )
         qtbot.addWidget(highlight)
         assert highlight is not None
@@ -314,7 +297,7 @@ class TestCodedTextHighlight:
             text="Overlapping text",
             code_name="Test",
             code_color="#FFC107",
-            overlap_count=3
+            overlap_count=3,
         )
         qtbot.addWidget(highlight)
         assert highlight._overlap_count == 3
@@ -360,4 +343,4 @@ class TestAnnotationIndicator:
         """AnnotationIndicator should have clicked signal"""
         indicator = AnnotationIndicator()
         qtbot.addWidget(indicator)
-        assert hasattr(indicator, 'clicked')
+        assert hasattr(indicator, "clicked")

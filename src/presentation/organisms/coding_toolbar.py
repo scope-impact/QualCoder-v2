@@ -11,14 +11,19 @@ The main toolbar for the text coding screen containing:
 - Search box
 """
 
-from typing import List
-from PyQt6.QtWidgets import QFrame, QHBoxLayout, QLabel
 from PyQt6.QtCore import Qt, pyqtSignal
+from PyQt6.QtWidgets import QFrame, QHBoxLayout, QLabel
 
 from design_system import (
-    ColorPalette, get_theme, SPACING, RADIUS, TYPOGRAPHY,
-    Icon, SearchBox,
-    MediaTypeSelector, CoderSelector,
+    RADIUS,
+    SPACING,
+    TYPOGRAPHY,
+    CoderSelector,
+    ColorPalette,
+    Icon,
+    MediaTypeSelector,
+    SearchBox,
+    get_theme,
 )
 
 
@@ -42,10 +47,10 @@ class CodingToolbar(QFrame):
 
     def __init__(
         self,
-        coders: List[str] = None,
+        coders: list[str] = None,
         selected_coder: str = None,
         colors: ColorPalette = None,
-        parent=None
+        parent=None,
     ):
         """
         Initialize the coding toolbar.
@@ -179,10 +184,12 @@ class CodingToolbar(QFrame):
 
         layout = QHBoxLayout(btn)
         layout.setContentsMargins(0, 0, 0, 0)
-        icon = Icon(icon_name, size=18, color=self._colors.text_secondary, colors=self._colors)
+        icon = Icon(
+            icon_name, size=18, color=self._colors.text_secondary, colors=self._colors
+        )
         layout.addWidget(icon, alignment=Qt.AlignmentFlag.AlignCenter)
 
-        btn.mousePressEvent = lambda e: self.action_triggered.emit(action_id)
+        btn.mousePressEvent = lambda _e: self.action_triggered.emit(action_id)
         return btn
 
     def set_navigation(self, current: int, total: int):

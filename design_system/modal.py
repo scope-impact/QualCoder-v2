@@ -3,6 +3,8 @@ Modal/Dialog components
 Material Design styled modal dialogs
 """
 
+from PySide6.QtCore import Qt, Signal
+from PySide6.QtGui import QColor
 from PySide6.QtWidgets import (
     QDialog,
     QFrame,
@@ -13,10 +15,8 @@ from PySide6.QtWidgets import (
     QVBoxLayout,
     QWidget,
 )
-from PySide6.QtCore import Qt, Signal
-from PySide6.QtGui import QColor
 
-from .tokens import SPACING, RADIUS, TYPOGRAPHY, ColorPalette, get_colors
+from .tokens import RADIUS, SPACING, TYPOGRAPHY, ColorPalette, get_colors
 
 
 class Modal(QDialog):
@@ -36,7 +36,7 @@ class Modal(QDialog):
         title: str = "",
         size: str = "default",
         colors: ColorPalette = None,
-        parent=None
+        parent=None,
     ):
         super().__init__(parent)
         self._colors = colors or get_colors()
@@ -106,10 +106,7 @@ class Modal(QDialog):
         return self._body.layout()
 
     def add_button(
-        self,
-        text: str,
-        variant: str = "primary",
-        on_click=None
+        self, text: str, variant: str = "primary", on_click=None
     ) -> QPushButton:
         """Add a button to the footer"""
         return self._footer.add_button(text, variant, on_click)
@@ -220,10 +217,7 @@ class ModalFooter(QFrame):
         self._layout.addStretch()
 
     def add_button(
-        self,
-        text: str,
-        variant: str = "primary",
-        on_click=None
+        self, text: str, variant: str = "primary", on_click=None
     ) -> QPushButton:
         """Add a button to the footer"""
         btn = QPushButton(text)

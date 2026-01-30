@@ -3,22 +3,17 @@ Chat/AI components
 Message bubbles, typing indicators, and AI interface widgets
 """
 
-from typing import List, Optional
-
+from PySide6.QtCore import Qt, QTimer, Signal
 from PySide6.QtWidgets import (
     QFrame,
     QHBoxLayout,
     QLabel,
     QPushButton,
-    QScrollArea,
-    QSizePolicy,
     QTextEdit,
     QVBoxLayout,
-    QWidget,
 )
-from PySide6.QtCore import QTimer, Qt, Signal
 
-from .tokens import SPACING, RADIUS, TYPOGRAPHY, ColorPalette, get_colors, hex_to_rgba
+from .tokens import RADIUS, SPACING, TYPOGRAPHY, ColorPalette, get_colors, hex_to_rgba
 
 
 class MessageBubble(QFrame):
@@ -36,7 +31,7 @@ class MessageBubble(QFrame):
         role: str = "user",  # "user" or "assistant"
         timestamp: str = "",
         colors: ColorPalette = None,
-        parent=None
+        parent=None,
     ):
         super().__init__(parent)
         self._colors = colors or get_colors()
@@ -133,7 +128,7 @@ class TypingIndicator(QFrame):
         layout.setSpacing(SPACING.xs)
 
         # Three dots
-        for i in range(3):
+        for _ in range(3):
             dot = QLabel("●")
             dot.setStyleSheet(f"color: {self._colors.text_secondary}; font-size: 10px;")
             self._dots.append(dot)
@@ -155,7 +150,9 @@ class TypingIndicator(QFrame):
             if i == self._current:
                 dot.setStyleSheet(f"color: {self._colors.primary}; font-size: 10px;")
             else:
-                dot.setStyleSheet(f"color: {self._colors.text_secondary}; font-size: 10px;")
+                dot.setStyleSheet(
+                    f"color: {self._colors.text_secondary}; font-size: 10px;"
+                )
         self._current = (self._current + 1) % 3
 
 
@@ -177,7 +174,7 @@ class CodeSuggestion(QFrame):
         color: str = None,
         confidence: float = None,
         colors: ColorPalette = None,
-        parent=None
+        parent=None,
     ):
         super().__init__(parent)
         self._colors = colors or get_colors()
@@ -207,13 +204,17 @@ class CodeSuggestion(QFrame):
 
         # Code name
         name = QLabel(code_name)
-        name.setStyleSheet(f"color: {self._colors.text_primary}; font-size: {TYPOGRAPHY.text_sm}px;")
+        name.setStyleSheet(
+            f"color: {self._colors.text_primary}; font-size: {TYPOGRAPHY.text_sm}px;"
+        )
         layout.addWidget(name)
 
         # Confidence
         if confidence is not None:
             conf = QLabel(f"{int(confidence * 100)}%")
-            conf.setStyleSheet(f"color: {self._colors.text_secondary}; font-size: {TYPOGRAPHY.text_xs}px;")
+            conf.setStyleSheet(
+                f"color: {self._colors.text_secondary}; font-size: {TYPOGRAPHY.text_xs}px;"
+            )
             layout.addWidget(conf)
 
         # Accept button
@@ -268,12 +269,7 @@ class QuickPrompts(QFrame):
 
     prompt_clicked = Signal(str)
 
-    def __init__(
-        self,
-        prompts: List[str],
-        colors: ColorPalette = None,
-        parent=None
-    ):
+    def __init__(self, prompts: list[str], colors: ColorPalette = None, parent=None):
         super().__init__(parent)
         self._colors = colors or get_colors()
 
@@ -298,7 +294,7 @@ class QuickPrompts(QFrame):
                     border-color: {self._colors.primary};
                 }}
             """)
-            btn.clicked.connect(lambda checked, p=prompt: self.prompt_clicked.emit(p))
+            btn.clicked.connect(lambda _checked, p=prompt: self.prompt_clicked.emit(p))
             layout.addWidget(btn)
 
         layout.addStretch()
@@ -319,7 +315,7 @@ class ChatInput(QFrame):
         self,
         placeholder: str = "Type a message...",
         colors: ColorPalette = None,
-        parent=None
+        parent=None,
     ):
         super().__init__(parent)
         self._colors = colors or get_colors()
@@ -399,7 +395,7 @@ class AIReasoningPanel(QFrame):
         title: str = "AI Reasoning",
         explanation: str = "",
         colors: ColorPalette = None,
-        parent=None
+        parent=None,
     ):
         super().__init__(parent)
         self._colors = colors or get_colors()
@@ -420,7 +416,7 @@ class AIReasoningPanel(QFrame):
         # Header
         header = QHBoxLayout()
         icon = QLabel("💡")
-        icon.setStyleSheet(f"font-size: 16px;")
+        icon.setStyleSheet("font-size: 16px;")
         header.addWidget(icon)
 
         title_label = QLabel(title)
@@ -454,11 +450,7 @@ class ConfidenceScore(QFrame):
     """
 
     def __init__(
-        self,
-        value: float,
-        label: str = "",
-        colors: ColorPalette = None,
-        parent=None
+        self, value: float, label: str = "", colors: ColorPalette = None, parent=None
     ):
         super().__init__(parent)
         self._colors = colors or get_colors()
@@ -469,7 +461,9 @@ class ConfidenceScore(QFrame):
 
         if label:
             lbl = QLabel(label)
-            lbl.setStyleSheet(f"color: {self._colors.text_secondary}; font-size: {TYPOGRAPHY.text_sm}px;")
+            lbl.setStyleSheet(
+                f"color: {self._colors.text_secondary}; font-size: {TYPOGRAPHY.text_sm}px;"
+            )
             layout.addWidget(lbl)
 
         # Score bar
@@ -496,5 +490,7 @@ class ConfidenceScore(QFrame):
 
         # Percentage
         pct = QLabel(f"{int(value * 100)}%")
-        pct.setStyleSheet(f"color: {self._colors.text_primary}; font-size: {TYPOGRAPHY.text_sm}px; font-weight: bold;")
+        pct.setStyleSheet(
+            f"color: {self._colors.text_primary}; font-size: {TYPOGRAPHY.text_sm}px; font-weight: bold;"
+        )
         layout.addWidget(pct)

@@ -4,7 +4,8 @@ Material Design styled right-click menus
 """
 
 import qtawesome as qta
-
+from PySide6.QtCore import Qt, Signal
+from PySide6.QtGui import QAction
 from PySide6.QtWidgets import (
     QFrame,
     QHBoxLayout,
@@ -12,12 +13,9 @@ from PySide6.QtWidgets import (
     QMenu,
     QVBoxLayout,
     QWidget,
-    QWidgetAction,
 )
-from PySide6.QtCore import Qt, Signal
-from PySide6.QtGui import QAction, QCursor
 
-from .tokens import SPACING, RADIUS, TYPOGRAPHY, ColorPalette, get_colors
+from .tokens import RADIUS, SPACING, TYPOGRAPHY, ColorPalette, get_colors
 
 
 class ContextMenu(QMenu):
@@ -74,7 +72,7 @@ class ContextMenu(QMenu):
         shortcut: str = None,
         variant: str = "default",
         on_click=None,
-        enabled: bool = True
+        enabled: bool = True,
     ) -> QAction:
         """
         Add a menu item.
@@ -93,7 +91,7 @@ class ContextMenu(QMenu):
             shortcut=shortcut,
             variant=variant,
             colors=self._colors,
-            parent=self
+            parent=self,
         )
 
         if on_click:
@@ -129,7 +127,7 @@ class ContextMenuItem(QAction):
         shortcut: str = None,
         variant: str = "default",
         colors: ColorPalette = None,
-        parent=None
+        parent=None,
     ):
         super().__init__(parent)
         self._colors = colors or get_colors()
@@ -168,10 +166,7 @@ class ContextMenuWidget(QFrame):
         super().__init__(parent)
         self._colors = colors or get_colors()
 
-        self.setWindowFlags(
-            Qt.WindowType.Popup |
-            Qt.WindowType.FramelessWindowHint
-        )
+        self.setWindowFlags(Qt.WindowType.Popup | Qt.WindowType.FramelessWindowHint)
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
 
         self.setStyleSheet(f"""
@@ -187,18 +182,11 @@ class ContextMenuWidget(QFrame):
         self._layout.setSpacing(0)
 
     def add_item(
-        self,
-        text: str,
-        icon: str = None,
-        variant: str = "default",
-        on_click=None
+        self, text: str, icon: str = None, variant: str = "default", on_click=None
     ) -> QWidget:
         """Add a menu item widget"""
         item = ContextMenuItemWidget(
-            text,
-            icon=icon,
-            variant=variant,
-            colors=self._colors
+            text, icon=icon, variant=variant, colors=self._colors
         )
 
         def handle_click():
@@ -237,7 +225,7 @@ class ContextMenuItemWidget(QFrame):
         icon: str = None,
         variant: str = "default",
         colors: ColorPalette = None,
-        parent=None
+        parent=None,
     ):
         super().__init__(parent)
         self._colors = colors or get_colors()
@@ -245,8 +233,12 @@ class ContextMenuItemWidget(QFrame):
 
         self.setCursor(Qt.CursorShape.PointingHandCursor)
 
-        text_color = self._colors.error if variant == "danger" else self._colors.text_primary
-        icon_color = self._colors.error if variant == "danger" else self._colors.text_secondary
+        text_color = (
+            self._colors.error if variant == "danger" else self._colors.text_primary
+        )
+        icon_color = (
+            self._colors.error if variant == "danger" else self._colors.text_secondary
+        )
 
         self.setStyleSheet(f"""
             QFrame {{
@@ -259,7 +251,9 @@ class ContextMenuItemWidget(QFrame):
         """)
 
         layout = QHBoxLayout(self)
-        layout.setContentsMargins(SPACING.lg, SPACING.sm + 2, SPACING.lg, SPACING.sm + 2)
+        layout.setContentsMargins(
+            SPACING.lg, SPACING.sm + 2, SPACING.lg, SPACING.sm + 2
+        )
         layout.setSpacing(SPACING.md)
 
         # Icon - support both mdi6 icons and emoji fallback

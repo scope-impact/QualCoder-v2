@@ -3,23 +3,18 @@ Selection/Picker components
 Type selectors, color pickers, and option cards
 """
 
-from typing import List, Optional, Tuple
-
 import qtawesome as qta
-
+from PySide6.QtCore import Qt, Signal
 from PySide6.QtWidgets import (
     QFrame,
     QGridLayout,
     QHBoxLayout,
     QLabel,
     QPushButton,
-    QSizePolicy,
     QVBoxLayout,
-    QWidget,
 )
-from PySide6.QtCore import Qt, Signal
 
-from .tokens import SPACING, RADIUS, TYPOGRAPHY, ColorPalette, get_colors, hex_to_rgba
+from .tokens import RADIUS, SPACING, TYPOGRAPHY, ColorPalette, get_colors, hex_to_rgba
 
 
 class TypeSelector(QFrame):
@@ -40,7 +35,7 @@ class TypeSelector(QFrame):
         columns: int = 3,
         multi_select: bool = False,
         colors: ColorPalette = None,
-        parent=None
+        parent=None,
     ):
         super().__init__(parent)
         self._colors = colors or get_colors()
@@ -56,18 +51,9 @@ class TypeSelector(QFrame):
         self._row = 0
         self._col = 0
 
-    def add_option(
-        self,
-        type_id: str,
-        icon: str,
-        title: str,
-        description: str = ""
-    ):
+    def add_option(self, type_id: str, icon: str, title: str, description: str = ""):
         card = TypeOptionCard(
-            icon=icon,
-            title=title,
-            description=description,
-            colors=self._colors
+            icon=icon, title=title, description=description, colors=self._colors
         )
         card.clicked.connect(lambda: self._select(type_id))
         self._options[type_id] = card
@@ -131,7 +117,7 @@ class TypeOptionCard(QFrame):
         description: str = "",
         selected: bool = False,
         colors: ColorPalette = None,
-        parent=None
+        parent=None,
     ):
         super().__init__(parent)
         self._colors = colors or get_colors()
@@ -149,10 +135,12 @@ class TypeOptionCard(QFrame):
         icon_label = QLabel()
         icon_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         if icon.startswith("mdi6."):
-            icon_label.setPixmap(qta.icon(icon, color=self._colors.primary).pixmap(32, 32))
+            icon_label.setPixmap(
+                qta.icon(icon, color=self._colors.primary).pixmap(32, 32)
+            )
         else:
             icon_label.setText(icon)
-            icon_label.setStyleSheet(f"font-size: 32px;")
+            icon_label.setStyleSheet("font-size: 32px;")
         layout.addWidget(icon_label)
 
         # Title
@@ -220,11 +208,7 @@ class ColorSchemeSelector(QFrame):
 
     scheme_changed = Signal(str)  # scheme_id
 
-    def __init__(
-        self,
-        colors: ColorPalette = None,
-        parent=None
-    ):
+    def __init__(self, colors: ColorPalette = None, parent=None):
         super().__init__(parent)
         self._colors = colors or get_colors()
         self._schemes = {}
@@ -234,11 +218,9 @@ class ColorSchemeSelector(QFrame):
         self._layout.setContentsMargins(0, 0, 0, 0)
         self._layout.setSpacing(SPACING.md)
 
-    def add_scheme(self, scheme_id: str, color_list: List[str], name: str = ""):
+    def add_scheme(self, scheme_id: str, color_list: list[str], name: str = ""):
         scheme = ColorSchemeOption(
-            colors_list=color_list,
-            name=name,
-            palette=self._colors
+            colors_list=color_list, name=name, palette=self._colors
         )
         scheme.clicked.connect(lambda: self._select(scheme_id))
         self._schemes[scheme_id] = scheme
@@ -250,7 +232,7 @@ class ColorSchemeSelector(QFrame):
             scheme.setSelected(sid == scheme_id)
         self.scheme_changed.emit(scheme_id)
 
-    def get_selected(self) -> Optional[str]:
+    def get_selected(self) -> str | None:
         return self._selected
 
     def set_selected(self, scheme_id: str):
@@ -265,11 +247,11 @@ class ColorSchemeOption(QFrame):
 
     def __init__(
         self,
-        colors_list: List[str],
+        colors_list: list[str],
         name: str = "",
         selected: bool = False,
         palette: ColorPalette = None,
-        parent=None
+        parent=None,
     ):
         super().__init__(parent)
         self._palette = palette or get_colors()
@@ -357,10 +339,10 @@ class ChartTypeSelector(QFrame):
 
     def __init__(
         self,
-        available: List[str] = None,
+        available: list[str] = None,
         current: str = "bar",
         colors: ColorPalette = None,
-        parent=None
+        parent=None,
     ):
         super().__init__(parent)
         self._colors = colors or get_colors()
@@ -388,7 +370,7 @@ class ChartTypeSelector(QFrame):
                 btn.setFixedSize(36, 36)
                 btn.setCursor(Qt.CursorShape.PointingHandCursor)
                 btn.setToolTip(tooltip)
-                btn.clicked.connect(lambda checked, c=chart_id: self._select(c))
+                btn.clicked.connect(lambda _checked, c=chart_id: self._select(c))
                 self._buttons[chart_id] = (btn, icon_name)
                 layout.addWidget(btn)
 
@@ -450,7 +432,7 @@ class RadioCardGroup(QFrame):
         self,
         orientation: str = "vertical",  # "vertical" or "horizontal"
         colors: ColorPalette = None,
-        parent=None
+        parent=None,
     ):
         super().__init__(parent)
         self._colors = colors or get_colors()
@@ -466,17 +448,10 @@ class RadioCardGroup(QFrame):
         self._layout.setSpacing(SPACING.sm)
 
     def add_card(
-        self,
-        card_id: str,
-        title: str,
-        description: str = "",
-        icon: str = None
+        self, card_id: str, title: str, description: str = "", icon: str = None
     ):
         card = RadioCard(
-            title=title,
-            description=description,
-            icon=icon,
-            colors=self._colors
+            title=title, description=description, icon=icon, colors=self._colors
         )
         card.clicked.connect(lambda: self._select(card_id))
         self._cards[card_id] = card
@@ -488,7 +463,7 @@ class RadioCardGroup(QFrame):
             card.setSelected(cid == card_id)
         self.selection_changed.emit(card_id)
 
-    def get_selected(self) -> Optional[str]:
+    def get_selected(self) -> str | None:
         return self._selected
 
     def set_selected(self, card_id: str):
@@ -508,7 +483,7 @@ class RadioCard(QFrame):
         icon: str = None,
         selected: bool = False,
         colors: ColorPalette = None,
-        parent=None
+        parent=None,
     ):
         super().__init__(parent)
         self._colors = colors or get_colors()
@@ -535,10 +510,12 @@ class RadioCard(QFrame):
         if icon:
             icon_label = QLabel()
             if icon.startswith("mdi6."):
-                icon_label.setPixmap(qta.icon(icon, color=self._colors.text_primary).pixmap(16, 16))
+                icon_label.setPixmap(
+                    qta.icon(icon, color=self._colors.text_primary).pixmap(16, 16)
+                )
             else:
                 icon_label.setText(icon)
-                icon_label.setStyleSheet(f"font-size: 16px;")
+                icon_label.setStyleSheet("font-size: 16px;")
             header.addWidget(icon_label)
 
         title_label = QLabel(title)

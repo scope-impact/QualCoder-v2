@@ -6,10 +6,11 @@ These types establish the trust and identity model for AI agent interactions.
 """
 
 from __future__ import annotations
+
 from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
-from typing import Optional, Any
+from typing import Any
 
 
 class TrustLevel(Enum):
@@ -22,6 +23,7 @@ class TrustLevel(Enum):
     - SUGGEST: Queue for user approval before execution
     - REQUIRE: Block until user explicitly approves
     """
+
     AUTONOMOUS = "auto"
     NOTIFY = "notify"
     SUGGEST = "suggest"
@@ -43,8 +45,9 @@ class AgentSession:
         created_at: When the session was established
         metadata: Optional additional session information
     """
+
     session_id: str
     agent_id: str
     trust_level: TrustLevel
     created_at: datetime
-    metadata: Optional[dict[str, Any]] = None
+    metadata: dict[str, Any] | None = None

@@ -2,8 +2,9 @@
 StorybookSidebar component for navigation
 """
 
-from typing import Callable
+from collections.abc import Callable
 
+from PySide6.QtCore import Qt
 from PySide6.QtWidgets import (
     QFrame,
     QLabel,
@@ -12,9 +13,8 @@ from PySide6.QtWidgets import (
     QVBoxLayout,
     QWidget,
 )
-from PySide6.QtCore import Qt
 
-from ..tokens import SPACING, RADIUS, TYPOGRAPHY, ColorPalette, get_theme, hex_to_rgba
+from ..tokens import RADIUS, SPACING, TYPOGRAPHY, ColorPalette, get_colors, hex_to_rgba
 
 
 class StorybookSidebar(QFrame):
@@ -80,7 +80,9 @@ class StorybookSidebar(QFrame):
 
         nav_container = QWidget()
         self._nav_layout = QVBoxLayout(nav_container)
-        self._nav_layout.setContentsMargins(SPACING.sm, SPACING.sm, SPACING.sm, SPACING.sm)
+        self._nav_layout.setContentsMargins(
+            SPACING.sm, SPACING.sm, SPACING.sm, SPACING.sm
+        )
         self._nav_layout.setSpacing(SPACING.xs)
         self._nav_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
 

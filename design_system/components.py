@@ -9,6 +9,8 @@ Design principles:
 - Gradient backgrounds for visual depth
 """
 
+from PySide6.QtCore import Property, QEasingCurve, QPropertyAnimation, Qt, Signal
+from PySide6.QtGui import QColor
 from PySide6.QtWidgets import (
     QFrame,
     QGraphicsDropShadowEffect,
@@ -19,16 +21,23 @@ from PySide6.QtWidgets import (
     QVBoxLayout,
     QWidget,
 )
-from PySide6.QtCore import Qt, Signal, QPropertyAnimation, QEasingCurve, Property
-from PySide6.QtGui import QColor
 
-from .tokens import SPACING, RADIUS, TYPOGRAPHY, GRADIENTS, SHADOWS, ANIMATION, ColorPalette, get_colors, hex_to_rgba
+from .tokens import (
+    ANIMATION,
+    GRADIENTS,
+    RADIUS,
+    SPACING,
+    TYPOGRAPHY,
+    ColorPalette,
+    get_colors,
+    hex_to_rgba,
+)
 
 
 def _blend_color(color1: str, color2: str, ratio: float = 0.5) -> str:
     """Blend two hex colors together."""
-    c1 = color1.lstrip('#')
-    c2 = color2.lstrip('#')
+    c1 = color1.lstrip("#")
+    c2 = color2.lstrip("#")
     r = int(int(c1[0:2], 16) * (1 - ratio) + int(c2[0:2], 16) * ratio)
     g = int(int(c1[2:4], 16) * (1 - ratio) + int(c2[2:4], 16) * ratio)
     b = int(int(c1[4:6], 16) * (1 - ratio) + int(c2[4:6], 16) * ratio)
@@ -71,7 +80,7 @@ class Button(QPushButton):
         variant: str = "primary",
         size: str = "md",
         colors: ColorPalette = None,
-        parent=None
+        parent=None,
     ):
         super().__init__(text, parent)
         self._colors = colors or get_colors()
@@ -94,10 +103,10 @@ class Button(QPushButton):
 
             # Set shadow color based on variant
             shadow_colors = {
-                "primary": QColor(79, 70, 229, 0),    # Indigo
-                "danger": QColor(239, 68, 68, 0),     # Red
-                "success": QColor(16, 185, 129, 0),   # Green
-                "secondary": QColor(0, 0, 0, 0),      # Neutral
+                "primary": QColor(79, 70, 229, 0),  # Indigo
+                "danger": QColor(239, 68, 68, 0),  # Red
+                "success": QColor(16, 185, 129, 0),  # Green
+                "secondary": QColor(0, 0, 0, 0),  # Neutral
             }
             self._shadow_color = shadow_colors.get(self._variant, QColor(0, 0, 0, 0))
             self._shadow_effect.setColor(self._shadow_color)
@@ -147,7 +156,9 @@ class Button(QPushButton):
             "md": (SPACING.sm, SPACING.lg, TYPOGRAPHY.text_sm, 36, 64),
             "lg": (SPACING.sm + 2, SPACING.xl, TYPOGRAPHY.text_base, 44, 80),
         }
-        v_pad, h_pad, font_size, min_height, min_width = sizes.get(self._size, sizes["md"])
+        v_pad, h_pad, font_size, min_height, min_width = sizes.get(
+            self._size, sizes["md"]
+        )
 
         # Special handling for link variant
         if self._variant == "link":
@@ -295,9 +306,6 @@ class Button(QPushButton):
             """)
             return
 
-        # Calculate hover colors for remaining variants
-        primary_hover = _blend_color(self._colors.primary, self._colors.primary_light, 0.3)
-
         # Variant configurations: (bg, fg, border, hover_bg, pressed_bg, focus_ring)
         variants = {
             "secondary": (
@@ -443,7 +451,13 @@ class Card(QFrame):
     Card container with optional shadow (Material Design elevation)
     """
 
-    def __init__(self, colors: ColorPalette = None, parent=None, shadow: bool = True, elevation: int = 1):
+    def __init__(
+        self,
+        colors: ColorPalette = None,
+        parent=None,
+        shadow: bool = True,
+        elevation: int = 1,
+    ):
         super().__init__(parent)
         self._colors = colors or get_colors()
         self.setProperty("variant", "card")
@@ -461,7 +475,7 @@ class Card(QFrame):
             self._shadow_effect = QGraphicsDropShadowEffect(self)
             # Material Design shadow levels
             shadows = {
-                1: (4, 2, 30),   # blur, offset, opacity
+                1: (4, 2, 30),  # blur, offset, opacity
                 2: (8, 4, 30),
                 3: (16, 8, 30),
                 4: (24, 12, 40),
@@ -512,7 +526,7 @@ class Badge(QLabel):
         text: str = "",
         variant: str = "default",
         colors: ColorPalette = None,
-        parent=None
+        parent=None,
     ):
         super().__init__(text, parent)
         colors = colors or get_colors()
@@ -550,7 +564,9 @@ class Badge(QLabel):
 class Separator(QFrame):
     """Horizontal or vertical separator line"""
 
-    def __init__(self, orientation: str = "horizontal", colors: ColorPalette = None, parent=None):
+    def __init__(
+        self, orientation: str = "horizontal", colors: ColorPalette = None, parent=None
+    ):
         super().__init__(parent)
         colors = colors or get_colors()
 
@@ -575,7 +591,7 @@ class Alert(QFrame):
         description: str = "",
         variant: str = "default",
         colors: ColorPalette = None,
-        parent=None
+        parent=None,
     ):
         super().__init__(parent)
         colors = colors or get_colors()
@@ -629,11 +645,7 @@ class Avatar(QLabel):
     """Circular avatar component"""
 
     def __init__(
-        self,
-        text: str = "",
-        size: int = 40,
-        colors: ColorPalette = None,
-        parent=None
+        self, text: str = "", size: int = 40, colors: ColorPalette = None, parent=None
     ):
         super().__init__(text, parent)
         colors = colors or get_colors()
@@ -661,13 +673,18 @@ class Chip(QFrame):
         text: str = "",
         closable: bool = False,
         colors: ColorPalette = None,
-        parent=None
+        parent=None,
     ):
         super().__init__(parent)
         colors = colors or get_colors()
 
         layout = QHBoxLayout(self)
-        layout.setContentsMargins(SPACING.md, SPACING.sm, SPACING.md if not closable else SPACING.sm, SPACING.sm)
+        layout.setContentsMargins(
+            SPACING.md,
+            SPACING.sm,
+            SPACING.md if not closable else SPACING.sm,
+            SPACING.sm,
+        )
         layout.setSpacing(SPACING.sm)
 
         label = QLabel(text)
@@ -725,7 +742,7 @@ class FileIcon(QFrame):
         icon_text: str = "",
         size: int = 36,
         colors: ColorPalette = None,
-        parent=None
+        parent=None,
     ):
         super().__init__(parent)
         colors = colors or get_colors()
@@ -768,16 +785,25 @@ class FileIcon(QFrame):
             # Use qtawesome icon
             try:
                 import qtawesome as qta
+
                 icon_name = self.DEFAULT_ICONS.get(file_type, "mdi6.file-outline")
                 icon_size = int(size * 0.55)
                 icon_label = QLabel()
                 icon_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-                icon_label.setPixmap(qta.icon(icon_name, color=fg).pixmap(icon_size, icon_size))
+                icon_label.setPixmap(
+                    qta.icon(icon_name, color=fg).pixmap(icon_size, icon_size)
+                )
                 icon_label.setStyleSheet("background: transparent;")
                 layout.addWidget(icon_label)
             except ImportError:
                 # Fallback to text abbreviation if qtawesome not available
-                abbrevs = {"text": "TXT", "audio": "MP3", "video": "VID", "image": "IMG", "pdf": "PDF"}
+                abbrevs = {
+                    "text": "TXT",
+                    "audio": "MP3",
+                    "video": "VID",
+                    "image": "IMG",
+                    "pdf": "PDF",
+                }
                 label = QLabel(abbrevs.get(file_type, "?"))
                 label.setAlignment(Qt.AlignmentFlag.AlignCenter)
                 label.setStyleSheet(f"""

@@ -10,27 +10,52 @@ from pathlib import Path
 # Add parent directory to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from PySide6.QtWidgets import QApplication
 from PySide6.QtCore import QTimer
+from PySide6.QtWidgets import QApplication
 
 from design_system.storybook import Storybook
 
-
 # All storybook page keys
 PAGES = [
-    "buttons", "inputs", "cards", "badges",
-    "alerts", "progress", "spinners",
-    "tabs", "breadcrumbs", "steps", "pagination",
-    "search", "select", "toggle", "pickers",
-    "tables", "lists", "stats", "codetree",
-    "player", "upload", "calendar",
-    "messages", "chatinput",
-    "codeeditor", "richtext",
-    "modals", "toasts", "contextmenu",
-    "panels", "toolbar",
+    "buttons",
+    "inputs",
+    "cards",
+    "badges",
+    "alerts",
+    "progress",
+    "spinners",
+    "tabs",
+    "breadcrumbs",
+    "steps",
+    "pagination",
+    "search",
+    "select",
+    "toggle",
+    "pickers",
+    "tables",
+    "lists",
+    "stats",
+    "codetree",
+    "player",
+    "upload",
+    "calendar",
+    "messages",
+    "chatinput",
+    "codeeditor",
+    "richtext",
+    "modals",
+    "toasts",
+    "contextmenu",
+    "panels",
+    "toolbar",
     # Visualization components
-    "charts", "network", "wordcloud", "annotation",
-    "pdf", "heatmap", "scores",
+    "charts",
+    "network",
+    "wordcloud",
+    "annotation",
+    "pdf",
+    "heatmap",
+    "scores",
 ]
 
 

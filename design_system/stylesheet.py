@@ -8,7 +8,7 @@ Converts design tokens to QSS (Qt Style Sheets) with:
 - Smooth visual hierarchy
 """
 
-from .tokens import ColorPalette, SPACING, RADIUS, TYPOGRAPHY, LAYOUT, SHADOWS
+from .tokens import LAYOUT, RADIUS, SPACING, TYPOGRAPHY, ColorPalette
 
 
 def generate_stylesheet(colors: ColorPalette) -> str:
@@ -23,7 +23,7 @@ def generate_stylesheet(colors: ColorPalette) -> str:
     """
     # Pre-compute some derived values
     primary_hover = _blend_colors(colors.primary, colors.primary_light, 0.5)
-    secondary_hover = _blend_colors(colors.secondary, colors.secondary_light, 0.5)
+    _secondary_hover = _blend_colors(colors.secondary, colors.secondary_light, 0.5)  # noqa: F841
 
     return f"""
 /* =============================================================================
@@ -968,7 +968,7 @@ QCalendarWidget QTableView {{
 
 def _hex_to_rgb(hex_color: str) -> str:
     """Convert hex color to RGB values string for rgba()."""
-    hex_color = hex_color.lstrip('#')
+    hex_color = hex_color.lstrip("#")
     r = int(hex_color[0:2], 16)
     g = int(hex_color[2:4], 16)
     b = int(hex_color[4:6], 16)
@@ -977,8 +977,8 @@ def _hex_to_rgb(hex_color: str) -> str:
 
 def _blend_colors(color1: str, color2: str, ratio: float = 0.5) -> str:
     """Blend two hex colors together."""
-    c1 = color1.lstrip('#')
-    c2 = color2.lstrip('#')
+    c1 = color1.lstrip("#")
+    c2 = color2.lstrip("#")
 
     r = int(int(c1[0:2], 16) * (1 - ratio) + int(c2[0:2], 16) * ratio)
     g = int(int(c1[2:4], 16) * (1 - ratio) + int(c2[2:4], 16) * ratio)
@@ -989,7 +989,7 @@ def _blend_colors(color1: str, color2: str, ratio: float = 0.5) -> str:
 
 def _adjust_color(hex_color: str, amount: int) -> str:
     """Lighten (positive) or darken (negative) a hex color."""
-    hex_color = hex_color.lstrip('#')
+    hex_color = hex_color.lstrip("#")
     r = max(0, min(255, int(hex_color[0:2], 16) + amount))
     g = max(0, min(255, int(hex_color[2:4], 16) + amount))
     b = max(0, min(255, int(hex_color[4:6], 16) + amount))

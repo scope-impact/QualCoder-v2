@@ -3,21 +3,17 @@ Upload components
 File upload zones, drag-and-drop areas, and file type badges
 """
 
-from typing import List, Optional
-
+from PySide6.QtCore import Qt, Signal
 from PySide6.QtWidgets import (
     QFrame,
     QHBoxLayout,
     QLabel,
     QProgressBar,
     QPushButton,
-    QSizePolicy,
     QVBoxLayout,
-    QWidget,
 )
-from PySide6.QtCore import Qt, Signal
 
-from .tokens import SPACING, RADIUS, TYPOGRAPHY, ColorPalette, get_colors, hex_to_rgba
+from .tokens import RADIUS, SPACING, TYPOGRAPHY, ColorPalette, get_colors, hex_to_rgba
 
 
 class DropZone(QFrame):
@@ -34,15 +30,21 @@ class DropZone(QFrame):
 
     def __init__(
         self,
-        accepted_types: List[str] = None,
+        accepted_types: list[str] = None,
         max_files: int = None,
         max_size_mb: int = None,
         colors: ColorPalette = None,
-        parent=None
+        parent=None,
     ):
         super().__init__(parent)
         self._colors = colors or get_colors()
-        self._accepted_types = accepted_types or ["text", "audio", "video", "image", "pdf"]
+        self._accepted_types = accepted_types or [
+            "text",
+            "audio",
+            "video",
+            "image",
+            "pdf",
+        ]
         self._max_files = max_files
         self._max_size_mb = max_size_mb
         self._dragging = False
@@ -58,7 +60,7 @@ class DropZone(QFrame):
 
         # Icon
         icon = QLabel("📁")
-        icon.setStyleSheet(f"font-size: 48px;")
+        icon.setStyleSheet("font-size: 48px;")
         icon.setAlignment(Qt.AlignmentFlag.AlignCenter)
         layout.addWidget(icon)
 
@@ -77,7 +79,9 @@ class DropZone(QFrame):
         or_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         or_label = QLabel("or")
-        or_label.setStyleSheet(f"color: {self._colors.text_secondary}; font-size: {TYPOGRAPHY.text_sm}px;")
+        or_label.setStyleSheet(
+            f"color: {self._colors.text_secondary}; font-size: {TYPOGRAPHY.text_sm}px;"
+        )
         or_layout.addWidget(or_label)
 
         browse_btn = QPushButton("browse files")
@@ -146,7 +150,7 @@ class DropZone(QFrame):
             self._dragging = True
             self._update_style()
 
-    def dragLeaveEvent(self, event):
+    def dragLeaveEvent(self, _event):
         self._dragging = False
         self._update_style()
 
@@ -171,12 +175,7 @@ class FileTypeBadges(QFrame):
         badges = FileTypeBadges(["text", "audio", "video"])
     """
 
-    def __init__(
-        self,
-        file_types: List[str],
-        colors: ColorPalette = None,
-        parent=None
-    ):
+    def __init__(self, file_types: list[str], colors: ColorPalette = None, parent=None):
         super().__init__(parent)
         self._colors = colors or get_colors()
 
@@ -209,7 +208,7 @@ class FileTypeBadge(QFrame):
         label: str,
         color: str,
         colors: ColorPalette = None,
-        parent=None
+        parent=None,
     ):
         super().__init__(parent)
         self._colors = colors or get_colors()
@@ -228,7 +227,7 @@ class FileTypeBadge(QFrame):
         layout.setSpacing(SPACING.xs)
 
         icon_label = QLabel(icon)
-        icon_label.setStyleSheet(f"font-size: 12px;")
+        icon_label.setStyleSheet("font-size: 12px;")
         layout.addWidget(icon_label)
 
         text_label = QLabel(label)
@@ -257,7 +256,7 @@ class UploadProgress(QFrame):
         filename: str,
         file_size: str = "",
         colors: ColorPalette = None,
-        parent=None
+        parent=None,
     ):
         super().__init__(parent)
         self._colors = colors or get_colors()
@@ -427,7 +426,7 @@ class CompactDropZone(QFrame):
         self,
         text: str = "Drop files or click to browse",
         colors: ColorPalette = None,
-        parent=None
+        parent=None,
     ):
         super().__init__(parent)
         self._colors = colors or get_colors()
@@ -442,7 +441,7 @@ class CompactDropZone(QFrame):
         layout.setSpacing(SPACING.sm)
 
         icon = QLabel("📎")
-        icon.setStyleSheet(f"font-size: 16px;")
+        icon.setStyleSheet("font-size: 16px;")
         layout.addWidget(icon)
 
         label = QLabel(text)
@@ -479,7 +478,7 @@ class CompactDropZone(QFrame):
             self._dragging = True
             self._update_style()
 
-    def dragLeaveEvent(self, event):
+    def dragLeaveEvent(self, _event):
         self._dragging = False
         self._update_style()
 

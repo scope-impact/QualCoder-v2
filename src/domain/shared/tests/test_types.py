@@ -2,14 +2,23 @@
 Tests for shared domain types - focusing on behavior and invariants.
 """
 
-import pytest
 from datetime import datetime
 
+import pytest
+
 from src.domain.shared.types import (
-    CodeId, SegmentId, SourceId, CategoryId,
-    Success, Failure,
+    CategoryId,
+    CodeId,
+    CodeNotFound,
     DomainEvent,
-    DuplicateName, CodeNotFound, SourceNotFound, InvalidPosition, EmptyName,
+    DuplicateName,
+    EmptyName,
+    Failure,
+    InvalidPosition,
+    SegmentId,
+    SourceId,
+    SourceNotFound,
+    Success,
 )
 
 
@@ -33,7 +42,7 @@ class TestTypedIds:
         code_id = CodeId(value=42)
         segment_id = SegmentId(value=42)
         source_id = SourceId(value=42)
-        category_id = CategoryId(value=42)
+        CategoryId(value=42)
 
         # Each can be added to a set
         code_set = {code_id, CodeId(value=42)}

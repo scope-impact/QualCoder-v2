@@ -3,18 +3,15 @@ Pagination components
 Page navigation and pagination controls
 """
 
-from typing import Optional
-
+from PySide6.QtCore import Qt, Signal
 from PySide6.QtWidgets import (
     QFrame,
     QHBoxLayout,
     QLabel,
     QPushButton,
-    QWidget,
 )
-from PySide6.QtCore import Qt, Signal
 
-from .tokens import SPACING, RADIUS, TYPOGRAPHY, ColorPalette, get_colors
+from .tokens import RADIUS, SPACING, TYPOGRAPHY, ColorPalette, get_colors
 
 
 class Pagination(QFrame):
@@ -35,7 +32,7 @@ class Pagination(QFrame):
         show_first_last: bool = True,
         max_visible: int = 5,
         colors: ColorPalette = None,
-        parent=None
+        parent=None,
     ):
         super().__init__(parent)
         self._colors = colors or get_colors()
@@ -80,11 +77,9 @@ class Pagination(QFrame):
                 self._layout.addWidget(ellipsis)
             else:
                 btn = PageButton(
-                    page=page,
-                    active=(page == self._current_page),
-                    colors=self._colors
+                    page=page, active=(page == self._current_page), colors=self._colors
                 )
-                btn.clicked.connect(lambda checked, p=page: self._go_to_page(p))
+                btn.clicked.connect(lambda _checked, p=page: self._go_to_page(p))
                 self._layout.addWidget(btn)
 
         # Next button
@@ -102,7 +97,11 @@ class Pagination(QFrame):
         btn = QPushButton(text)
         btn.setFixedSize(32, 32)
         btn.setEnabled(enabled)
-        btn.setCursor(Qt.CursorShape.PointingHandCursor if enabled else Qt.CursorShape.ForbiddenCursor)
+        btn.setCursor(
+            Qt.CursorShape.PointingHandCursor
+            if enabled
+            else Qt.CursorShape.ForbiddenCursor
+        )
         btn.setStyleSheet(f"""
             QPushButton {{
                 background-color: transparent;
@@ -186,11 +185,7 @@ class PageButton(QPushButton):
     """
 
     def __init__(
-        self,
-        page: int,
-        active: bool = False,
-        colors: ColorPalette = None,
-        parent=None
+        self, page: int, active: bool = False, colors: ColorPalette = None, parent=None
     ):
         super().__init__(str(page), parent)
         self._colors = colors or get_colors()
@@ -252,7 +247,7 @@ class PaginationInfo(QFrame):
         total: int = 100,
         item_name: str = "items",
         colors: ColorPalette = None,
-        parent=None
+        parent=None,
     ):
         super().__init__(parent)
         self._colors = colors or get_colors()
@@ -270,11 +265,7 @@ class PaginationInfo(QFrame):
         self.update_info(current_start, current_end, total, item_name)
 
     def update_info(
-        self,
-        current_start: int,
-        current_end: int,
-        total: int,
-        item_name: str = None
+        self, current_start: int, current_end: int, total: int, item_name: str = None
     ):
         if item_name:
             self._item_name = item_name
@@ -294,11 +285,7 @@ class SimplePagination(QFrame):
     page_changed = Signal(int)
 
     def __init__(
-        self,
-        current: int = 1,
-        total: int = 1,
-        colors: ColorPalette = None,
-        parent=None
+        self, current: int = 1, total: int = 1, colors: ColorPalette = None, parent=None
     ):
         super().__init__(parent)
         self._colors = colors or get_colors()

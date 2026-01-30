@@ -3,8 +3,7 @@ Form components
 Input fields, selects, and form controls
 """
 
-from typing import List, Optional
-
+from PySide6.QtCore import Qt, Signal
 from PySide6.QtWidgets import (
     QAbstractItemView,
     QComboBox,
@@ -14,7 +13,6 @@ from PySide6.QtWidgets import (
     QLabel,
     QLineEdit,
     QListWidget,
-    QListWidgetItem,
     QPushButton,
     QSlider,
     QSpinBox,
@@ -22,10 +20,8 @@ from PySide6.QtWidgets import (
     QVBoxLayout,
     QWidget,
 )
-from PySide6.QtCore import Qt, Signal
-from PySide6.QtGui import QColor
 
-from .tokens import SPACING, RADIUS, TYPOGRAPHY, ColorPalette, get_colors
+from .tokens import RADIUS, SPACING, TYPOGRAPHY, ColorPalette, get_colors
 
 
 class SearchBox(QFrame):
@@ -42,10 +38,7 @@ class SearchBox(QFrame):
     search_submitted = Signal(str)
 
     def __init__(
-        self,
-        placeholder: str = "Search...",
-        colors: ColorPalette = None,
-        parent=None
+        self, placeholder: str = "Search...", colors: ColorPalette = None, parent=None
     ):
         super().__init__(parent)
         self._colors = colors or get_colors()
@@ -83,7 +76,9 @@ class SearchBox(QFrame):
             }}
         """)
         self._input.textChanged.connect(self.text_changed.emit)
-        self._input.returnPressed.connect(lambda: self.search_submitted.emit(self._input.text()))
+        self._input.returnPressed.connect(
+            lambda: self.search_submitted.emit(self._input.text())
+        )
         layout.addWidget(self._input, 1)
 
     def text(self) -> str:
@@ -108,12 +103,7 @@ class Select(QComboBox):
 
     value_changed = Signal(str)
 
-    def __init__(
-        self,
-        placeholder: str = "",
-        colors: ColorPalette = None,
-        parent=None
-    ):
+    def __init__(self, placeholder: str = "", colors: ColorPalette = None, parent=None):
         super().__init__(parent)
         self._colors = colors or get_colors()
 
@@ -158,7 +148,7 @@ class Select(QComboBox):
 
         self.currentTextChanged.connect(self.value_changed.emit)
 
-    def add_items(self, items: List[str]):
+    def add_items(self, items: list[str]):
         self.addItems(items)
 
     def value(self) -> str:
@@ -183,10 +173,7 @@ class MultiSelect(QFrame):
     selection_changed = Signal(list)
 
     def __init__(
-        self,
-        placeholder: str = "Select...",
-        colors: ColorPalette = None,
-        parent=None
+        self, placeholder: str = "Select...", colors: ColorPalette = None, parent=None
     ):
         super().__init__(parent)
         self._colors = colors or get_colors()
@@ -242,7 +229,7 @@ class MultiSelect(QFrame):
         self._list.hide()
         layout.addWidget(self._list)
 
-    def add_items(self, items: List[str]):
+    def add_items(self, items: list[str]):
         for item in items:
             self._list.addItem(item)
 
@@ -261,11 +248,13 @@ class MultiSelect(QFrame):
             if len(self._selected) > 2:
                 text += f" +{len(self._selected) - 2}"
             self._header.setText(text)
-            self._header.setStyleSheet(self._header.styleSheet().replace(
-                self._colors.text_secondary, self._colors.text_primary
-            ))
+            self._header.setStyleSheet(
+                self._header.styleSheet().replace(
+                    self._colors.text_secondary, self._colors.text_primary
+                )
+            )
 
-    def selected_items(self) -> List[str]:
+    def selected_items(self) -> list[str]:
         return self._selected
 
 
@@ -285,7 +274,7 @@ class Textarea(QTextEdit):
         placeholder: str = "",
         min_height: int = 100,
         colors: ColorPalette = None,
-        parent=None
+        parent=None,
     ):
         super().__init__(parent)
         self._colors = colors or get_colors()
@@ -334,7 +323,7 @@ class NumberInput(QFrame):
         decimals: int = 0,
         label: str = "",
         colors: ColorPalette = None,
-        parent=None
+        parent=None,
     ):
         super().__init__(parent)
         self._colors = colors or get_colors()
@@ -404,7 +393,7 @@ class RangeSlider(QFrame):
         label: str = "",
         show_value: bool = True,
         colors: ColorPalette = None,
-        parent=None
+        parent=None,
     ):
         super().__init__(parent)
         self._colors = colors or get_colors()
@@ -418,12 +407,16 @@ class RangeSlider(QFrame):
             header = QHBoxLayout()
             if label:
                 lbl = QLabel(label)
-                lbl.setStyleSheet(f"color: {self._colors.text_primary}; font-size: {TYPOGRAPHY.text_sm}px;")
+                lbl.setStyleSheet(
+                    f"color: {self._colors.text_primary}; font-size: {TYPOGRAPHY.text_sm}px;"
+                )
                 header.addWidget(lbl)
             header.addStretch()
             if show_value:
                 self._value_label = QLabel(str(value))
-                self._value_label.setStyleSheet(f"color: {self._colors.text_secondary}; font-size: {TYPOGRAPHY.text_sm}px;")
+                self._value_label.setStyleSheet(
+                    f"color: {self._colors.text_secondary}; font-size: {TYPOGRAPHY.text_sm}px;"
+                )
                 header.addWidget(self._value_label)
             layout.addLayout(header)
 
@@ -457,7 +450,7 @@ class RangeSlider(QFrame):
         layout.addWidget(self._slider)
 
     def _on_change(self, value: int):
-        if hasattr(self, '_value_label'):
+        if hasattr(self, "_value_label"):
             self._value_label.setText(str(value))
         self.value_changed.emit(value)
 
@@ -480,17 +473,26 @@ class ColorPicker(QFrame):
     color_selected = Signal(str)
 
     DEFAULT_COLORS = [
-        "#FFC107", "#F44336", "#4CAF50", "#9C27B0",
-        "#2196F3", "#E91E63", "#FF5722", "#00BCD4",
-        "#FFEB3B", "#8BC34A", "#673AB7", "#3F51B5",
+        "#FFC107",
+        "#F44336",
+        "#4CAF50",
+        "#9C27B0",
+        "#2196F3",
+        "#E91E63",
+        "#FF5722",
+        "#00BCD4",
+        "#FFEB3B",
+        "#8BC34A",
+        "#673AB7",
+        "#3F51B5",
     ]
 
     def __init__(
         self,
-        colors_list: List[str] = None,
+        colors_list: list[str] = None,
         selected: str = None,
         colors: ColorPalette = None,
-        parent=None
+        parent=None,
     ):
         super().__init__(parent)
         self._colors = colors or get_colors()
@@ -549,7 +551,7 @@ class ColorPicker(QFrame):
             """)
         self.color_selected.emit(color)
 
-    def selected_color(self) -> Optional[str]:
+    def selected_color(self) -> str | None:
         return self._selected
 
 
@@ -569,7 +571,7 @@ class FormGroup(QFrame):
         required: bool = False,
         hint: str = "",
         colors: ColorPalette = None,
-        parent=None
+        parent=None,
     ):
         super().__init__(parent)
         self._colors = colors or get_colors()
@@ -593,7 +595,9 @@ class FormGroup(QFrame):
 
         if required:
             req = QLabel("*")
-            req.setStyleSheet(f"color: {self._colors.error}; font-size: {TYPOGRAPHY.text_sm}px;")
+            req.setStyleSheet(
+                f"color: {self._colors.error}; font-size: {TYPOGRAPHY.text_sm}px;"
+            )
             label_layout.addWidget(req)
 
         label_layout.addStretch()
@@ -605,7 +609,9 @@ class FormGroup(QFrame):
 
         # Hint/Error
         self._message = QLabel(hint)
-        self._message.setStyleSheet(f"color: {self._colors.text_hint}; font-size: {TYPOGRAPHY.text_sm}px;")
+        self._message.setStyleSheet(
+            f"color: {self._colors.text_hint}; font-size: {TYPOGRAPHY.text_sm}px;"
+        )
         self._message.setVisible(bool(hint))
         layout.addWidget(self._message)
 
@@ -619,12 +625,16 @@ class FormGroup(QFrame):
 
     def set_error(self, message: str):
         self._message.setText(message)
-        self._message.setStyleSheet(f"color: {self._colors.error}; font-size: {TYPOGRAPHY.text_sm}px;")
+        self._message.setStyleSheet(
+            f"color: {self._colors.error}; font-size: {TYPOGRAPHY.text_sm}px;"
+        )
         self._message.setVisible(True)
 
     def set_hint(self, message: str):
         self._message.setText(message)
-        self._message.setStyleSheet(f"color: {self._colors.text_hint}; font-size: {TYPOGRAPHY.text_sm}px;")
+        self._message.setStyleSheet(
+            f"color: {self._colors.text_hint}; font-size: {TYPOGRAPHY.text_sm}px;"
+        )
         self._message.setVisible(True)
 
     def clear_message(self):
@@ -649,11 +659,11 @@ class CoderSelector(QFrame):
 
     def __init__(
         self,
-        coders: List[str] = None,
+        coders: list[str] = None,
         selected: str = None,
         label: str = "Coder:",
         colors: ColorPalette = None,
-        parent=None
+        parent=None,
     ):
         super().__init__(parent)
         self._colors = colors or get_colors()
@@ -681,7 +691,7 @@ class CoderSelector(QFrame):
         self._select.value_changed.connect(self.coder_changed.emit)
         layout.addWidget(self._select)
 
-    def set_coders(self, coders: List[str]):
+    def set_coders(self, coders: list[str]):
         """Update the list of coders"""
         self._coders = coders
         self._select._combo.clear()

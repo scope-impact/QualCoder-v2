@@ -2,18 +2,16 @@
 Overlays and Layout component stories: modals, toasts, contextmenu, panels, toolbar
 """
 
-from typing import List, Tuple
-
-from PySide6.QtWidgets import QWidget, QFrame, QVBoxLayout, QLabel
 from PySide6.QtCore import Qt
+from PySide6.QtWidgets import QFrame, QLabel, QVBoxLayout, QWidget
 
-from ...tokens import SPACING, RADIUS, ColorPalette
 from ...components import Button
-from ...modal import ModalHeader, ModalBody, ModalFooter
-from ...toast import Toast
 from ...context_menu import ContextMenuItemWidget
-from ...layout import Panel, PanelHeader, Sidebar, Toolbar, StatusBar
+from ...layout import Panel, PanelHeader, Sidebar, StatusBar, Toolbar
+from ...modal import ModalBody, ModalFooter, ModalHeader
 from ...navigation import NavList
+from ...toast import Toast
+from ...tokens import RADIUS, SPACING, ColorPalette
 from ..page import StoryPage
 
 
@@ -41,7 +39,9 @@ def create_modals_story(colors: ColorPalette) -> StoryPage:
 
     # Body
     body = ModalBody(colors=colors)
-    body_label = QLabel("Are you sure you want to delete this item?\nThis action cannot be undone.")
+    body_label = QLabel(
+        "Are you sure you want to delete this item?\nThis action cannot be undone."
+    )
     body_label.setStyleSheet(f"color: {colors.text_secondary}; font-size: 14px;")
     body_label.setWordWrap(True)
     body.layout().addWidget(body_label)
@@ -56,17 +56,19 @@ def create_modals_story(colors: ColorPalette) -> StoryPage:
     footer.layout().addWidget(delete_btn)
     modal_layout.addWidget(footer)
 
-    examples.append((
-        "Modal Dialog",
-        modal_preview,
-        'modal = Modal(title="Confirm")\nmodal.add_content(widget)\nmodal.show()'
-    ))
+    examples.append(
+        (
+            "Modal Dialog",
+            modal_preview,
+            'modal = Modal(title="Confirm")\nmodal.add_content(widget)\nmodal.show()',
+        )
+    )
 
     return StoryPage(
         "Modals",
         "Modal dialogs for confirmations, forms, and focused interactions.",
         examples,
-        colors=colors
+        colors=colors,
     )
 
 
@@ -80,23 +82,19 @@ def create_toasts_story(colors: ColorPalette) -> StoryPage:
 
     for variant in ["info", "success", "warning", "error"]:
         toast = Toast(
-            message=f"This is a {variant} notification",
-            variant=variant,
-            colors=colors
+            message=f"This is a {variant} notification", variant=variant, colors=colors
         )
         layout.addWidget(toast)
 
-    examples.append((
-        "Toast Variants",
-        container,
-        'Toast(message="Success!", variant="success")'
-    ))
+    examples.append(
+        ("Toast Variants", container, 'Toast(message="Success!", variant="success")')
+    )
 
     return StoryPage(
         "Toasts",
         "Toast notifications for non-blocking feedback messages.",
         examples,
-        colors=colors
+        colors=colors,
     )
 
 
@@ -138,21 +136,23 @@ def create_contextmenu_story(colors: ColorPalette) -> StoryPage:
                 text=text,
                 icon=icon,
                 variant="danger" if text == "Delete" else "default",
-                colors=colors
+                colors=colors,
             )
             menu_layout.addWidget(item_widget)
 
-    examples.append((
-        "Context Menu",
-        menu,
-        'menu = ContextMenu()\nmenu.add_item("Cut", icon="mdi6.content-cut", shortcut="Ctrl+X")'
-    ))
+    examples.append(
+        (
+            "Context Menu",
+            menu,
+            'menu = ContextMenu()\nmenu.add_item("Cut", icon="mdi6.content-cut", shortcut="Ctrl+X")',
+        )
+    )
 
     return StoryPage(
         "Context Menu",
         "Right-click context menus for contextual actions.",
         examples,
-        colors=colors
+        colors=colors,
     )
 
 
@@ -171,11 +171,13 @@ def create_panels_story(colors: ColorPalette) -> StoryPage:
     content.setAlignment(Qt.AlignmentFlag.AlignCenter)
     panel.layout().addWidget(content)
 
-    examples.append((
-        "Panel with Header",
-        panel,
-        'panel = Panel()\nheader = PanelHeader(title="Files")'
-    ))
+    examples.append(
+        (
+            "Panel with Header",
+            panel,
+            'panel = Panel()\nheader = PanelHeader(title="Files")',
+        )
+    )
 
     # Sidebar
     sidebar = Sidebar(colors=colors)
@@ -188,17 +190,19 @@ def create_panels_story(colors: ColorPalette) -> StoryPage:
     nav.add_item("Codes", icon="mdi6.tag")
     sidebar.layout().addWidget(nav)
 
-    examples.append((
-        "Sidebar Navigation",
-        sidebar,
-        'sidebar = Sidebar()\nnav = NavList()\nnav.add_item("Dashboard", icon="mdi6.view-dashboard")'
-    ))
+    examples.append(
+        (
+            "Sidebar Navigation",
+            sidebar,
+            'sidebar = Sidebar()\nnav = NavList()\nnav.add_item("Dashboard", icon="mdi6.view-dashboard")',
+        )
+    )
 
     return StoryPage(
         "Panels",
         "Panel and sidebar containers for organizing content.",
         examples,
-        colors=colors
+        colors=colors,
     )
 
 
@@ -218,11 +222,13 @@ def create_toolbar_story(colors: ColorPalette) -> StoryPage:
     for icon in ["mdi6.content-cut", "mdi6.content-copy", "mdi6.content-paste"]:
         toolbar.add_button(icon=icon)
 
-    examples.append((
-        "Toolbar",
-        toolbar,
-        'toolbar = Toolbar()\ntoolbar.add_button(icon="mdi6.folder")\ntoolbar.add_divider()'
-    ))
+    examples.append(
+        (
+            "Toolbar",
+            toolbar,
+            'toolbar = Toolbar()\ntoolbar.add_button(icon="mdi6.folder")\ntoolbar.add_divider()',
+        )
+    )
 
     # Status bar
     status = StatusBar(colors=colors)
@@ -232,21 +238,25 @@ def create_toolbar_story(colors: ColorPalette) -> StoryPage:
     status.add_item("UTF-8", align="right")
     status.add_item("Python", align="right")
 
-    examples.append((
-        "Status Bar",
-        status,
-        'status = StatusBar()\nstatus.add_item("Ready", key="status")\nstatus.add_item("UTF-8", align="right")'
-    ))
+    examples.append(
+        (
+            "Status Bar",
+            status,
+            'status = StatusBar()\nstatus.add_item("Ready", key="status")\nstatus.add_item("UTF-8", align="right")',
+        )
+    )
 
     return StoryPage(
         "Toolbar",
         "Toolbar and status bar components for application chrome.",
         examples,
-        colors=colors
+        colors=colors,
     )
 
 
-def get_stories(colors: ColorPalette, layout_only: bool = False) -> List[Tuple[str, str, StoryPage]]:
+def get_stories(
+    colors: ColorPalette, layout_only: bool = False
+) -> list[tuple[str, str, StoryPage]]:
     """Return overlay or layout stories based on layout_only flag"""
     if layout_only:
         return [

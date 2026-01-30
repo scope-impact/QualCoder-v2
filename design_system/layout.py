@@ -4,22 +4,19 @@ App structure and container components
 """
 
 import qtawesome as qta
-
+from PySide6.QtCore import Qt, Signal
 from PySide6.QtWidgets import (
     QFrame,
     QHBoxLayout,
     QLabel,
-    QMainWindow,
     QPushButton,
     QSizePolicy,
     QSplitter,
     QVBoxLayout,
     QWidget,
 )
-from PySide6.QtCore import Qt, Signal
-from PySide6.QtGui import QColor
 
-from .tokens import SPACING, RADIUS, TYPOGRAPHY, LAYOUT, ColorPalette, get_colors
+from .tokens import LAYOUT, RADIUS, SPACING, TYPOGRAPHY, ColorPalette, get_colors
 
 
 class AppContainer(QWidget):
@@ -89,7 +86,13 @@ class AppContainer(QWidget):
             self._layout.removeWidget(self._content)
         self._content = widget
         widget.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
-        idx = sum([1 for w in [self._title_bar, self._menu_bar, self._tab_bar, self._toolbar] if w])
+        idx = sum(
+            [
+                1
+                for w in [self._title_bar, self._menu_bar, self._tab_bar, self._toolbar]
+                if w
+            ]
+        )
         self._layout.insertWidget(idx, widget)
 
     def set_status_bar(self, widget: QWidget):
@@ -118,7 +121,7 @@ class TitleBar(QFrame):
         show_logo: bool = True,
         show_controls: bool = True,
         colors: ColorPalette = None,
-        parent=None
+        parent=None,
     ):
         super().__init__(parent)
         self._colors = colors or get_colors()
@@ -170,9 +173,9 @@ class TitleBar(QFrame):
 
             # macOS standard window control colors (intentionally not themed)
             for color, signal in [
-                ("#FF5F56", self.close_clicked),   # macOS close (red)
-                ("#FFBD2E", self.minimize_clicked), # macOS minimize (yellow)
-                ("#27C93F", self.maximize_clicked), # macOS maximize (green)
+                ("#FF5F56", self.close_clicked),  # macOS close (red)
+                ("#FFBD2E", self.minimize_clicked),  # macOS minimize (yellow)
+                ("#27C93F", self.maximize_clicked),  # macOS maximize (green)
             ]:
                 btn = QPushButton()
                 btn.setFixedSize(12, 12)
@@ -281,9 +284,15 @@ class TabBar(QFrame):
         self._layout.setSpacing(0)
         self._layout.addStretch()
 
-    def add_tab(self, text: str, icon: str = None, active: bool = False) -> QPushButton:
+    def add_tab(
+        self,
+        text: str,
+        icon: str = None,
+        active: bool = False,
+    ) -> QPushButton:
         btn = QPushButton(text)
         btn.setProperty("tab_name", text)
+        btn.setProperty("tab_icon", icon)  # Store for future icon support
         btn.setCursor(Qt.CursorShape.PointingHandCursor)
         btn.clicked.connect(lambda: self._set_active(text))
 
@@ -377,7 +386,9 @@ class Toolbar(QFrame):
         divider.setStyleSheet(f"background-color: {self._colors.border};")
         self._layout.insertWidget(self._layout.count() - 1, divider)
 
-    def add_button(self, text: str = "", icon: str = None, on_click=None) -> QPushButton:
+    def add_button(
+        self, text: str = "", icon: str = None, on_click=None
+    ) -> QPushButton:
         """Convenience method to add a button directly"""
         btn = ToolbarButton(text, icon=icon, colors=self._colors)
         if on_click:
@@ -398,11 +409,7 @@ class ToolbarGroup(QFrame):
         self._layout.setSpacing(SPACING.xs)
 
     def add_button(
-        self,
-        text: str = "",
-        icon: str = None,
-        active: bool = False,
-        on_click=None
+        self, text: str = "", icon: str = None, active: bool = False, on_click=None
     ) -> "ToolbarButton":
         btn = ToolbarButton(text, icon=icon, active=active, colors=self._colors)
         if on_click:
@@ -420,7 +427,7 @@ class ToolbarButton(QPushButton):
         icon: str = None,
         active: bool = False,
         colors: ColorPalette = None,
-        parent=None
+        parent=None,
     ):
         super().__init__(parent)
         self._colors = colors or get_colors()
@@ -524,7 +531,9 @@ class StatusBar(QFrame):
         self._layout.addStretch()
         self._layout.addLayout(self._right)
 
-    def add_item(self, text: str, key: str = None, icon: str = None, align: str = "left") -> QLabel:
+    def add_item(
+        self, text: str, key: str = None, icon: str = None, align: str = "left"
+    ) -> QLabel:
         container = QWidget()
         container_layout = QHBoxLayout(container)
         container_layout.setContentsMargins(0, 0, 0, 0)
@@ -532,7 +541,7 @@ class StatusBar(QFrame):
 
         if icon:
             icon_label = QLabel(icon)
-            icon_label.setStyleSheet(f"color: white; font-size: 14px;")
+            icon_label.setStyleSheet("color: white; font-size: 14px;")
             container_layout.addWidget(icon_label)
 
         label = QLabel(text)
@@ -572,7 +581,7 @@ class Panel(QFrame):
         width: int = None,
         position: str = "left",  # left, center, right
         colors: ColorPalette = None,
-        parent=None
+        parent=None,
     ):
         super().__init__(parent)
         self._colors = colors or get_colors()
@@ -581,8 +590,14 @@ class Panel(QFrame):
         if width:
             self.setFixedWidth(width)
 
-        border_side = "right" if position == "left" else "left" if position == "right" else "none"
-        border_style = f"border-{border_side}: 1px solid {self._colors.border};" if border_side != "none" else ""
+        border_side = (
+            "right" if position == "left" else "left" if position == "right" else "none"
+        )
+        border_style = (
+            f"border-{border_side}: 1px solid {self._colors.border};"
+            if border_side != "none"
+            else ""
+        )
 
         self.setStyleSheet(f"""
             QFrame {{
@@ -603,7 +618,9 @@ class Panel(QFrame):
         # Content container
         self._content_container = QWidget()
         self._content_layout = QVBoxLayout(self._content_container)
-        self._content_layout.setContentsMargins(SPACING.sm, SPACING.sm, SPACING.sm, SPACING.sm)
+        self._content_layout.setContentsMargins(
+            SPACING.sm, SPACING.sm, SPACING.sm, SPACING.sm
+        )
         self._layout.addWidget(self._content_container, 1)
 
     def set_content(self, widget: QWidget):
@@ -616,7 +633,7 @@ class Panel(QFrame):
         self._content_layout.addWidget(widget)
 
     def add_header_action(self, icon: str, on_click=None) -> QPushButton:
-        if hasattr(self, '_header'):
+        if hasattr(self, "_header"):
             return self._header.add_action(icon, on_click)
 
 
@@ -631,11 +648,7 @@ class PanelHeader(QFrame):
     """
 
     def __init__(
-        self,
-        title: str,
-        icon: str = None,
-        colors: ColorPalette = None,
-        parent=None
+        self, title: str, icon: str = None, colors: ColorPalette = None, parent=None
     ):
         super().__init__(parent)
         self._colors = colors or get_colors()
@@ -654,7 +667,10 @@ class PanelHeader(QFrame):
         # Optional icon
         if icon:
             from .icons import Icon
-            icon_widget = Icon(icon, size=16, color=self._colors.primary, colors=self._colors)
+
+            icon_widget = Icon(
+                icon, size=16, color=self._colors.primary, colors=self._colors
+            )
             self._layout.addWidget(icon_widget)
 
         # Title
@@ -798,4 +814,5 @@ class MainContent(QSplitter):
         """)
 
     def add_panel(self, widget: QWidget, position: str = "center"):
+        widget.setProperty("panel_position", position)  # Store for layout hints
         self.addWidget(widget)
