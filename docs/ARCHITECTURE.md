@@ -11,7 +11,7 @@ created_date: '2026-01-30'
 > **Owner:** `QualCoder Core Team`
 > **Version:** `v2.0`
 
-This document provides a C4 model architecture overview of QualCoder v2. For hands-on learning with code examples, see the [Onboarding Tutorials](../tutorials/README.md).
+This document provides a C4 model architecture overview of QualCoder v2. For hands-on learning with code examples, see the [Onboarding Tutorials](./tutorials/README.md).
 
 ---
 
@@ -188,7 +188,7 @@ graph TB
 | EventBus | Application | Pub/sub event distribution | `subscribe`, `publish` |
 | SignalBridge | Application | Thread-safe domain to Qt bridge | `*_signal` |
 
-See [Onboarding Tutorials](../tutorials/README.md) for hands-on examples.
+See [Onboarding Tutorials](./tutorials/README.md) for hands-on examples.
 
 ---
 
@@ -390,23 +390,23 @@ See [Decision: Library Alternatives](../decisions/decision-002%20library-alterna
 
 ### Tutorials (Hands-on Learning)
 
-Start with the [Onboarding Tutorial](../tutorials/README.md) - a progressive guide using a toy example (adding "priority" to Codes).
+Start with the [Onboarding Tutorial](./tutorials/README.md) - a progressive guide using a toy example (adding "priority" to Codes).
 
 | Part | Topic |
 |------|-------|
-| [Part 0](../tutorials/00-big-picture.md) | The Big Picture |
-| [Part 1](../tutorials/01-first-invariant.md) | Your First Invariant |
-| [Part 2](../tutorials/02-first-deriver.md) | Your First Deriver |
-| [Part 3](../tutorials/03-result-type.md) | The Result Type |
-| [Part 4](../tutorials/04-event-flow.md) | Events Flow Through |
-| [Part 5](../tutorials/05-signal-bridge.md) | SignalBridge Payloads |
-| [Part 6](../tutorials/06-testing.md) | Testing Without Mocks |
-| [Part 7](../tutorials/07-complete-flow.md) | Complete Flow Reference |
+| [Part 0](./tutorials/00-big-picture.md) | The Big Picture |
+| [Part 1](./tutorials/01-first-invariant.md) | Your First Invariant |
+| [Part 2](./tutorials/02-first-deriver.md) | Your First Deriver |
+| [Part 3](./tutorials/03-result-type.md) | The Result Type |
+| [Part 4](./tutorials/04-event-flow.md) | Events Flow Through |
+| [Part 5](./tutorials/05-signal-bridge.md) | SignalBridge Payloads |
+| [Part 6](./tutorials/06-testing.md) | Testing Without Mocks |
+| [Part 7](./tutorials/07-complete-flow.md) | Complete Flow Reference |
 
 ### Reference Documents
 
-- [Common Patterns and Recipes](../tutorials/appendices/A-common-patterns.md)
-- [When to Create New Patterns](../tutorials/appendices/B-when-to-create.md)
+- [Common Patterns and Recipes](./tutorials/appendices/A-common-patterns.md)
+- [When to Create New Patterns](./tutorials/appendices/B-when-to-create.md)
 - [Library Alternatives Analysis](../decisions/decision-002%20library-alternatives-analysis.md)
 
 ### C4 Model References
