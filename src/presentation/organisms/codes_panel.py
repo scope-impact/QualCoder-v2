@@ -149,7 +149,7 @@ class CodesPanel(QFrame):
                     continue
                 children.append(
                     CodeItem(
-                        id=code_name,
+                        id=code.get("id", code_name),
                         name=code_name,
                         color=code.get("color", self._colors.fallback_code_color),
                         count=code.get("count", 0),

@@ -24,6 +24,7 @@ Usage:
 
 from __future__ import annotations
 
+import contextlib
 import warnings
 from collections.abc import Callable
 from dataclasses import dataclass
@@ -199,8 +200,6 @@ class EventBus:
             event_type: Event type string (use "*" for all-handlers)
             handler: The handler to remove
         """
-        import contextlib
-
         with self._lock:
             if event_type == "*":
                 with contextlib.suppress(ValueError):

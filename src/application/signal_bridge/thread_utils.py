@@ -8,20 +8,11 @@ for Qt signal emission.
 from __future__ import annotations
 
 import threading
+import warnings
 from collections.abc import Callable
 from typing import Any
 
-# Qt imports with fallback for testing without Qt
-try:
-    from PySide6.QtCore import QCoreApplication, QThread
-    from PySide6.QtWidgets import QApplication
-
-    HAS_QT = True
-except ImportError:
-    HAS_QT = False
-    QThread = None  # type: ignore
-    QCoreApplication = None  # type: ignore
-    QApplication = None  # type: ignore
+from PySide6.QtCore import QCoreApplication, QThread
 
 
 def is_main_thread() -> bool:
@@ -29,16 +20,14 @@ def is_main_thread() -> bool:
     Check if the current thread is the main/UI thread.
 
     In a PySide6 application, this checks if we're on the Qt main thread.
-    Falls back to Python's main thread check if Qt is not available.
+    Falls back to Python's main thread check if no QApplication exists yet.
 
     Returns:
         True if on the main thread, False otherwise
     """
-    if HAS_QT and QCoreApplication.instance() is not None:
-        app = QCoreApplication.instance()
-        if app is not None:
-            return QThread.currentThread() == app.thread()
-    # Fallback: check Python main thread
+    app = QCoreApplication.instance()
+    if app is not None:
+        return QThread.currentThread() == app.thread()
     return threading.current_thread() is threading.main_thread()
 
 
@@ -57,12 +46,11 @@ def get_current_thread_name() -> str:
         return python_name
 
     # For the main thread, try to get Qt's name if available
-    if HAS_QT and QThread.currentThread() is not None:
-        qt_thread = QThread.currentThread()
-        if qt_thread is not None:
-            qt_name = qt_thread.objectName()
-            if qt_name:
-                return qt_name
+    qt_thread = QThread.currentThread()
+    if qt_thread is not None:
+        qt_name = qt_thread.objectName()
+        if qt_name:
+            return qt_name
 
     return python_name
 
@@ -89,9 +77,7 @@ def warn_if_not_main_thread(func: Callable[..., Any]) -> Callable[..., Any]:
         if is_main_thread():
             return func(*args, **kwargs)
 
-        import warnings
-
-        if HAS_QT and QCoreApplication.instance() is not None:
+        if QCoreApplication.instance() is not None:
             warnings.warn(
                 f"Cross-thread call to {func.__name__} - "
                 "use BaseSignalBridge._emit_threadsafe for signals",
@@ -156,8 +142,6 @@ class ThreadChecker:
             True if on main thread, False otherwise
         """
         if not is_main_thread():
-            import warnings
-
             thread_name = get_current_thread_name()
             msg = f"Not on main thread (current: '{thread_name}')"
             if context:

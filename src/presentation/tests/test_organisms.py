@@ -218,6 +218,97 @@ class TestCodesPanel:
         assert spy.count() == 1
         assert spy.at(0)[0] == "next"
 
+    def test_set_codes_with_numeric_ids(self, qapp, colors):
+        """Test that numeric IDs from set_codes are preserved."""
+        from src.presentation.organisms import CodesPanel
+
+        panel = CodesPanel(colors=colors)
+        categories = [
+            {
+                "name": "Category A",
+                "codes": [
+                    {
+                        "id": "12345",
+                        "name": "code1",
+                        "color": colors.code_red,
+                        "count": 3,
+                    },
+                    {
+                        "id": "67890",
+                        "name": "code2",
+                        "color": colors.code_green,
+                        "count": 5,
+                    },
+                ],
+            }
+        ]
+        panel.set_codes(categories)
+
+        # Verify the tree items have the correct IDs
+        items = panel._code_tree._items
+        assert len(items) == 1  # One category
+        assert len(items[0].children) == 2  # Two codes
+        assert items[0].children[0].id == "12345"
+        assert items[0].children[0].name == "code1"
+        assert items[0].children[1].id == "67890"
+        assert items[0].children[1].name == "code2"
+
+    def test_code_selected_emits_id_not_name(self, qapp, colors):
+        """Test that code selection emits the numeric ID, not the name.
+
+        This test would have caught the bug where CodeItem was created with
+        id=code_name instead of id=code.get("id").
+        """
+        from src.presentation.organisms import CodesPanel
+
+        panel = CodesPanel(colors=colors)
+        spy = QSignalSpy(panel.code_selected)
+
+        # Set codes with numeric IDs different from names
+        categories = [
+            {
+                "name": "Emotions",
+                "codes": [
+                    {
+                        "id": "999",
+                        "name": "happy",
+                        "color": colors.code_green,
+                        "count": 1,
+                    },
+                ],
+            }
+        ]
+        panel.set_codes(categories)
+
+        # Simulate clicking the code (which should use the ID from the tree item)
+        panel._on_code_click("999")
+
+        assert spy.count() == 1
+        emitted_data = spy.at(0)[0]
+        assert emitted_data["id"] == "999"
+        # The ID should NOT be the code name
+        assert emitted_data["id"] != "happy"
+
+    def test_set_codes_fallback_to_name_when_no_id(self, qapp, colors):
+        """Test that when no ID is provided, the code name is used as fallback."""
+        from src.presentation.organisms import CodesPanel
+
+        panel = CodesPanel(colors=colors)
+        categories = [
+            {
+                "name": "Category A",
+                "codes": [
+                    {"name": "fallback_code", "color": colors.code_red, "count": 1},
+                ],
+            }
+        ]
+        panel.set_codes(categories)
+
+        # When no ID is provided, name should be used as ID
+        items = panel._code_tree._items
+        assert items[0].children[0].id == "fallback_code"
+        assert items[0].children[0].name == "fallback_code"
+
     def test_screenshot(self, qapp, colors, take_screenshot):
         """Take screenshot of codes panel."""
         from src.presentation.organisms import CodesPanel
@@ -670,6 +761,61 @@ class TestTextCodingScreen:
         screen.page.files_panel._on_file_click(0)
 
         assert spy.count() == 1
+
+    def test_initial_data_includes_code_ids(self, qapp, colors):
+        """Test that codes in initial data have their IDs preserved.
+
+        This test ensures the DTO-to-dict conversion includes the 'id' field,
+        which is critical for apply code operations.
+        """
+        from src.presentation.dto import (
+            CodeCategoryDTO,
+            CodeDTO,
+            DocumentDTO,
+            NavigationDTO,
+            TextCodingDataDTO,
+        )
+        from src.presentation.screens import TextCodingScreen
+
+        # Create data with numeric code IDs
+        data = TextCodingDataDTO(
+            files=[],
+            categories=[
+                CodeCategoryDTO(
+                    id="cat1",
+                    name="Test Category",
+                    codes=[
+                        CodeDTO(id="12345", name="test_code", color="#ff0000", count=0),
+                        CodeDTO(
+                            id="67890", name="another_code", color="#00ff00", count=0
+                        ),
+                    ],
+                )
+            ],
+            document=DocumentDTO(
+                id="1", title="Test", badge="", content="Test content"
+            ),
+            document_stats=None,
+            selected_code=None,
+            overlapping_segments=[],
+            file_memo=None,
+            navigation=NavigationDTO(current=1, total=1),
+            coders=["user"],
+            selected_coder="user",
+        )
+
+        screen = TextCodingScreen(data=data, colors=colors)
+
+        # Verify the codes panel tree items have the correct IDs
+        items = screen.page.codes_panel._code_tree._items
+        assert len(items) == 1  # One category
+        assert len(items[0].children) == 2  # Two codes
+
+        # IDs should be numeric, not the code names
+        assert items[0].children[0].id == "12345"
+        assert items[0].children[0].name == "test_code"
+        assert items[0].children[1].id == "67890"
+        assert items[0].children[1].name == "another_code"
 
     def test_screenshot(self, qapp, colors, take_screenshot):
         """Take screenshot of complete screen."""

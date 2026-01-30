@@ -135,7 +135,7 @@ class TextCodingScreen(QWidget):
             {
                 "name": cat.name,
                 "codes": [
-                    {"name": c.name, "color": c.color, "count": c.count}
+                    {"id": c.id, "name": c.name, "color": c.color, "count": c.count}
                     for c in cat.codes
                 ],
             }

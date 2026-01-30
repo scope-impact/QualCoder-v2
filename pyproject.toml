@@ -7,6 +7,8 @@ dependencies = [
     "design-system",
     # Qt binding (PySide6 preferred - LGPL license)
     "pyside6>=6.5.0",
+    # Database
+    "sqlalchemy>=2.0",
 ]
 
 [tool.uv.workspace]

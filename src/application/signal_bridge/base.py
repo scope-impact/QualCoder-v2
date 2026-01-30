@@ -17,7 +17,9 @@ Architecture:
 
 from __future__ import annotations
 
+import contextlib
 import queue
+import warnings
 from abc import ABCMeta, abstractmethod
 from collections.abc import Callable
 from dataclasses import dataclass
@@ -29,45 +31,7 @@ from typing import (
 )
 from weakref import WeakValueDictionary
 
-# Qt imports with fallback for testing without Qt
-try:
-    from PySide6.QtCore import QMetaObject, QObject, Qt, Signal, Slot
-
-    HAS_QT = True
-
-    # Create combined metaclass for QObject + ABC compatibility
-    class QObjectABCMeta(type(QObject), ABCMeta):
-        """Combined metaclass for QObject and ABC."""
-
-        pass
-except ImportError:
-    HAS_QT = False
-
-    # Mock for testing without Qt
-    class QObject:  # type: ignore
-        def __init__(self, parent: Any = None) -> None:
-            pass
-
-    def Signal(*_args: Any) -> Any:  # type: ignore
-        return None
-
-    def Slot(*_args: Any) -> Callable:  # type: ignore
-        def decorator(func: Callable) -> Callable:
-            return func
-
-        return decorator
-
-    class Qt:  # type: ignore
-        class ConnectionType:
-            QueuedConnection = 0
-
-    class QMetaObject:  # type: ignore
-        @staticmethod
-        def invokeMethod(*_args: Any, **_kwargs: Any) -> bool:
-            return True
-
-    # For no-Qt case, ABCMeta is sufficient
-    QObjectABCMeta = ABCMeta  # type: ignore
+from PySide6.QtCore import QMetaObject, QObject, Qt, Signal, Slot
 
 from src.application.signal_bridge.payloads import (
     ActivityItem,
@@ -76,6 +40,14 @@ from src.application.signal_bridge.payloads import (
 )
 from src.application.signal_bridge.protocols import EventConverter
 from src.application.signal_bridge.thread_utils import is_main_thread
+
+
+# Combined metaclass for QObject + ABC compatibility
+class QObjectABCMeta(type(QObject), ABCMeta):
+    """Metaclass combining QObject and ABC for abstract signal bridges."""
+
+    pass
+
 
 T = TypeVar("T", bound=SignalPayload)
 E = TypeVar("E")
@@ -196,11 +168,7 @@ class BaseSignalBridge(QObject, metaclass=QObjectABCMeta):
         """Build registry of available signals from class attributes."""
         for name in dir(self.__class__):
             attr = getattr(self.__class__, name, None)
-            # Check if it's a Signal (has 'emit' when bound)
-            if hasattr(attr, "emit") or (
-                HAS_QT and hasattr(attr, "__class__") and "Signal" in str(type(attr))
-            ):
-                # Get the bound signal from the instance
+            if isinstance(attr, Signal):
                 self._signals[name] = getattr(self, name)
 
     @abstractmethod
@@ -218,7 +186,6 @@ class BaseSignalBridge(QObject, metaclass=QObjectABCMeta):
                     "code_created"
                 )
         """
-        pass
 
     @abstractmethod
     def _get_context_name(self) -> str:
@@ -228,7 +195,6 @@ class BaseSignalBridge(QObject, metaclass=QObjectABCMeta):
         Returns:
             Context name (e.g., "coding", "sources", "cases")
         """
-        pass
 
     def register_converter(
         self, event_type: str, converter: EventConverter, signal_name: str
@@ -273,8 +239,6 @@ class BaseSignalBridge(QObject, metaclass=QObjectABCMeta):
         """
         if not self._running:
             return
-
-        import contextlib
 
         for event_type, handler in self._subscriptions:
             with contextlib.suppress(Exception):
@@ -326,9 +290,6 @@ class BaseSignalBridge(QObject, metaclass=QObjectABCMeta):
                 self._emit_threadsafe(self.activity_logged, activity)
 
         except Exception as e:
-            # Log error but don't crash the event bus
-            import warnings
-
             warnings.warn(
                 f"Error dispatching {event_type}: {e}", RuntimeWarning, stacklevel=2
             )
@@ -348,7 +309,7 @@ class BaseSignalBridge(QObject, metaclass=QObjectABCMeta):
         if is_main_thread():
             # Already on main thread - emit directly
             signal.emit(payload)
-        elif HAS_QT:
+        else:
             # Add to thread-safe queue and trigger main thread processing
             self._emission_queue.put((signal, payload))
             QMetaObject.invokeMethod(
@@ -356,9 +317,6 @@ class BaseSignalBridge(QObject, metaclass=QObjectABCMeta):
                 "_do_emit",
                 Qt.ConnectionType.QueuedConnection,
             )
-        else:
-            # No Qt - emit directly (testing mode)
-            signal.emit(payload)
 
     @Slot()
     def _do_emit(self) -> None:
