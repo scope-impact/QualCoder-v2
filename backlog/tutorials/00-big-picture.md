@@ -67,7 +67,7 @@ The architecture separates **pure logic** from **side effects**:
 
 ```mermaid
 graph TB
-    subgraph Presentation ["Presentation Layer (PyQt6 Widgets)"]
+    subgraph Presentation ["Presentation Layer (PySide6 Widgets)"]
         UI[UI Widgets]
         UI_DESC["• Receives SignalPayloads<br/>• Renders UI<br/>• Captures user input"]
     end
@@ -89,7 +89,7 @@ graph TB
 
     INFRA -->|Data| Domain
     Domain -->|Domain Events| Application
-    Application -->|PyQt Signals| Presentation
+    Application -->|Qt Signals| Presentation
 ```
 
 **Key insight:** The Domain Layer is a "pure functional core" - given the same inputs, it always produces the same outputs. Side effects (database writes, UI updates) happen at the edges.
@@ -185,11 +185,11 @@ Properties:
 
 ### 5. SignalBridge
 
-Converts domain events to PyQt signals.
+Converts domain events to Qt signals.
 
 ```python
 class CodingSignalBridge(BaseSignalBridge):
-    code_created = pyqtSignal(object)  # Emits CodeCreatedPayload
+    code_created = Signal(object)  # Emits CodeCreatedPayload
 
     def _register_converters(self):
         self.register_converter(

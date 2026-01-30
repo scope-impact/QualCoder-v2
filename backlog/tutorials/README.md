@@ -19,7 +19,7 @@ Work through these parts in order. Each builds on the previous.
 | [Part 2](./02-first-deriver.md) | Your First Deriver | Compose invariants into events |
 | [Part 3](./03-result-type.md) | The Result Type | Why `Success \| Failure` beats exceptions |
 | [Part 4](./04-event-flow.md) | Events Flow Through | Trace events from domain to UI |
-| [Part 5](./05-signal-bridge.md) | SignalBridge Payloads | Connect domain to PyQt6 |
+| [Part 5](./05-signal-bridge.md) | SignalBridge Payloads | Connect domain to PySide6 |
 | [Part 6](./06-testing.md) | Testing Without Mocks | Appreciate pure function testability |
 | [Part 7](./07-complete-flow.md) | Complete Flow Reference | Full diagram of Code creation |
 

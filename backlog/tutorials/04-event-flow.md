@@ -127,9 +127,9 @@ A context-specific bridge might look like:
 ```python
 class CodingSignalBridge(BaseSignalBridge):
     # Define Qt signals
-    code_created = pyqtSignal(object)
-    code_deleted = pyqtSignal(object)
-    code_renamed = pyqtSignal(object)
+    code_created = Signal(object)
+    code_deleted = Signal(object)
+    code_renamed = Signal(object)
 
     def _get_context_name(self) -> str:
         return "coding"

@@ -84,7 +84,7 @@ In a context-specific SignalBridge:
 ```python
 class CodingSignalBridge(BaseSignalBridge):
     # Define the Qt signal
-    code_created = pyqtSignal(object)
+    code_created = Signal(object)
 
     def _register_converters(self) -> None:
         self.register_converter(
