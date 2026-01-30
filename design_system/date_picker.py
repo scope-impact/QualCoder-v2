@@ -18,7 +18,7 @@ from PySide6.QtWidgets import (
 )
 from PySide6.QtCore import Qt, Signal
 
-from .tokens import SPACING, RADIUS, TYPOGRAPHY, ColorPalette, get_theme
+from .tokens import SPACING, RADIUS, TYPOGRAPHY, ColorPalette, get_colors
 
 
 class CalendarMini(QFrame):
@@ -40,7 +40,7 @@ class CalendarMini(QFrame):
         parent=None
     ):
         super().__init__(parent)
-        self._colors = colors or get_theme("dark")
+        self._colors = colors or get_colors()
         self._selected = selected_date or date.today()
         self._viewing = date(self._selected.year, self._selected.month, 1)
         self._highlight_dates = highlight_dates or []
@@ -172,7 +172,7 @@ class CalendarDay(QPushButton):
         parent=None
     ):
         super().__init__(str(day_date.day), parent)
-        self._colors = colors or get_theme("dark")
+        self._colors = colors or get_colors()
         self._date = day_date
 
         self.setFixedSize(32, 32)
@@ -254,7 +254,7 @@ class CalendarNavigation(QFrame):
         parent=None
     ):
         super().__init__(parent)
-        self._colors = colors or get_theme("dark")
+        self._colors = colors or get_colors()
 
         layout = QHBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
@@ -341,7 +341,7 @@ class DateRangePicker(QFrame):
         parent=None
     ):
         super().__init__(parent)
-        self._colors = colors or get_theme("dark")
+        self._colors = colors or get_colors()
         self._start = start_date
         self._end = end_date
 
@@ -441,7 +441,7 @@ class QuickDateSelect(QFrame):
         parent=None
     ):
         super().__init__(parent)
-        self._colors = colors or get_theme("dark")
+        self._colors = colors or get_colors()
         self._selected = None
 
         layout = QVBoxLayout(self)

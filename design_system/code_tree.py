@@ -17,7 +17,7 @@ from PySide6.QtWidgets import (
 )
 from PySide6.QtCore import Qt, Signal
 
-from .tokens import SPACING, RADIUS, TYPOGRAPHY, ColorPalette, get_theme
+from .tokens import SPACING, RADIUS, TYPOGRAPHY, ColorPalette, get_colors
 
 
 @dataclass
@@ -56,7 +56,7 @@ class CodeTree(QScrollArea):
 
     def __init__(self, colors: ColorPalette = None, parent=None):
         super().__init__(parent)
-        self._colors = colors or get_theme("dark")
+        self._colors = colors or get_colors()
         self._items = []
         self._expanded = set()  # Set of expanded item IDs
 
@@ -187,7 +187,7 @@ class CodeTreeNode(QFrame):
         parent=None
     ):
         super().__init__(parent)
-        self._colors = colors or get_theme("dark")
+        self._colors = colors or get_colors()
         self._item = item
         self._expanded = expanded
         self._has_children = has_children

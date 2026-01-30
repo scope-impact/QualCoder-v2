@@ -18,7 +18,7 @@ from PySide6.QtCore import (
 )
 from PySide6.QtGui import QColor, QPainter, QPainterPath
 
-from .tokens import SPACING, RADIUS, TYPOGRAPHY, ColorPalette, get_theme
+from .tokens import SPACING, RADIUS, TYPOGRAPHY, ColorPalette, get_colors
 
 
 class ProgressBar(QWidget):
@@ -42,7 +42,7 @@ class ProgressBar(QWidget):
         parent=None
     ):
         super().__init__(parent)
-        self._colors = colors or get_theme("dark")
+        self._colors = colors or get_colors()
         self._value = value
         self._max_value = max_value
         self._variant = variant
@@ -120,7 +120,7 @@ class ProgressBarWidget(QWidget):
         parent=None
     ):
         super().__init__(parent)
-        self._colors = colors or get_theme("dark")
+        self._colors = colors or get_colors()
         self._value = value
         self._max_value = max_value
         self._variant = variant
@@ -195,7 +195,7 @@ class ProgressBarLabeled(QWidget):
         parent=None
     ):
         super().__init__(parent)
-        self._colors = colors or get_theme("dark")
+        self._colors = colors or get_colors()
         self._value = value
         self._max_value = max_value
 
@@ -276,7 +276,7 @@ class RelevanceScoreBar(QWidget):
         parent=None
     ):
         super().__init__(parent)
-        self._colors = colors or get_theme("dark")
+        self._colors = colors or get_colors()
         self._score = max(0, min(1, score))
         self._label = label
         self._show_percentage = show_percentage
@@ -350,7 +350,7 @@ class RelevanceBarWidget(QWidget):
         parent=None
     ):
         super().__init__(parent)
-        self._colors = colors or get_theme("dark")
+        self._colors = colors or get_colors()
         self._score = max(0, min(1, score))
         self._variant = variant
 
@@ -440,7 +440,7 @@ class ScoreIndicator(QFrame):
         parent=None
     ):
         super().__init__(parent)
-        self._colors = colors or get_theme("dark")
+        self._colors = colors or get_colors()
 
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)

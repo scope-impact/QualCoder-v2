@@ -191,7 +191,7 @@ class TestCodeDetailCard:
 
     def test_code_detail_signals(self, qtbot):
         """CodeDetailCard should have edit/delete signals"""
-        card = CodeDetailCard(color="#009688", name="code")
+        card = CodeDetailCard(color="#4F46E5", name="code")
         qtbot.addWidget(card)
 
         assert hasattr(card, 'edit_clicked')

@@ -17,7 +17,7 @@ from PySide6.QtWidgets import (
 )
 from PySide6.QtCore import Qt, Signal
 
-from .tokens import SPACING, RADIUS, TYPOGRAPHY, ColorPalette, get_theme
+from .tokens import SPACING, RADIUS, TYPOGRAPHY, ColorPalette, get_colors
 
 
 class DropZone(QFrame):
@@ -41,7 +41,7 @@ class DropZone(QFrame):
         parent=None
     ):
         super().__init__(parent)
-        self._colors = colors or get_theme("dark")
+        self._colors = colors or get_colors()
         self._accepted_types = accepted_types or ["text", "audio", "video", "image", "pdf"]
         self._max_files = max_files
         self._max_size_mb = max_size_mb
@@ -178,7 +178,7 @@ class FileTypeBadges(QFrame):
         parent=None
     ):
         super().__init__(parent)
-        self._colors = colors or get_theme("dark")
+        self._colors = colors or get_colors()
 
         type_config = {
             "text": ("📄", "Text", self._colors.file_text),
@@ -212,7 +212,7 @@ class FileTypeBadge(QFrame):
         parent=None
     ):
         super().__init__(parent)
-        self._colors = colors or get_theme("dark")
+        self._colors = colors or get_colors()
 
         self.setStyleSheet(f"""
             QFrame {{
@@ -258,7 +258,7 @@ class UploadProgress(QFrame):
         parent=None
     ):
         super().__init__(parent)
-        self._colors = colors or get_theme("dark")
+        self._colors = colors or get_colors()
 
         self.setStyleSheet(f"""
             QFrame {{
@@ -371,7 +371,7 @@ class UploadList(QFrame):
 
     def __init__(self, colors: ColorPalette = None, parent=None):
         super().__init__(parent)
-        self._colors = colors or get_theme("dark")
+        self._colors = colors or get_colors()
         self._items = {}
 
         self._layout = QVBoxLayout(self)
@@ -428,7 +428,7 @@ class CompactDropZone(QFrame):
         parent=None
     ):
         super().__init__(parent)
-        self._colors = colors or get_theme("dark")
+        self._colors = colors or get_colors()
         self._dragging = False
 
         self.setAcceptDrops(True)

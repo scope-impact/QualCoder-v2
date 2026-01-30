@@ -22,7 +22,7 @@ from PySide6.QtGui import (
     QPen,
 )
 
-from .tokens import SPACING, TYPOGRAPHY, ColorPalette, get_theme
+from .tokens import SPACING, TYPOGRAPHY, ColorPalette, get_colors
 
 
 class Spinner(QWidget):
@@ -45,7 +45,7 @@ class Spinner(QWidget):
         parent=None
     ):
         super().__init__(parent)
-        self._colors = colors or get_theme("dark")
+        self._colors = colors or get_colors()
         self._size = size
         self._color = color or self._colors.primary
         self._stroke_width = stroke_width
@@ -127,7 +127,7 @@ class LoadingIndicator(QWidget):
         parent=None
     ):
         super().__init__(parent)
-        self._colors = colors or get_theme("dark")
+        self._colors = colors or get_colors()
 
         layout = QHBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
@@ -175,7 +175,7 @@ class LoadingOverlay(QWidget):
 
     def __init__(self, parent=None):
         super().__init__(parent)
-        self._colors = get_theme("dark")
+        self._colors = get_colors()
 
         self.setStyleSheet(f"""
             QWidget {{
@@ -256,7 +256,7 @@ class SkeletonLoader(QWidget):
         parent=None
     ):
         super().__init__(parent)
-        self._colors = colors or get_theme("dark")
+        self._colors = colors or get_colors()
 
         self.setFixedSize(width, height)
 

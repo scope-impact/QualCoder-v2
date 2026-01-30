@@ -30,7 +30,7 @@ class StoryPage(QFrame):
         parent=None
     ):
         super().__init__(parent)
-        self._colors = colors or get_theme("dark")
+        self._colors = colors or get_colors()
 
         self.setStyleSheet(f"""
             QFrame {{

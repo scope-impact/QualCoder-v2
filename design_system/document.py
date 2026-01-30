@@ -21,7 +21,7 @@ from PySide6.QtWidgets import (
 )
 from PySide6.QtCore import Qt, Signal
 
-from .tokens import SPACING, RADIUS, TYPOGRAPHY, ColorPalette, get_theme
+from .tokens import SPACING, RADIUS, TYPOGRAPHY, ColorPalette, get_colors
 
 
 # =============================================================================
@@ -49,7 +49,7 @@ class TextColor:
         "#FA58F4", "#B76E95", "#9F3E72", "#880E4F", "#7D26CD", "#1B5E20",
         "#487E4B", "#5E9179", "#AC58FA", "#9090E3", "#6B6BDA", "#4646D1",
         "#3498DB", "#6D91C6", "#3D6CB3", "#0D47A1", "#5882FA", "#9651D7",
-        "#673AB7", "#3F51B5", "#2196F3", "#009688", "#00BCD4", "#4CAF50",
+        "#673AB7", "#3F51B5", "#2196F3", "#4F46E5", "#00BCD4", "#4CAF50",
         "#8BC34A", "#795548", "#607D8B", "#9C27B0", "#E91E63", "#F44336",
     }
 
@@ -128,7 +128,7 @@ class TextPanel(QFrame):
         parent=None
     ):
         super().__init__(parent)
-        self._colors = colors or get_theme("dark")
+        self._colors = colors or get_colors()
         self._editable = editable
         self._title = title
 
@@ -322,7 +322,7 @@ class LineNumberArea(QFrame):
 
     def __init__(self, colors: ColorPalette = None, parent=None):
         super().__init__(parent)
-        self._colors = colors or get_theme("dark")
+        self._colors = colors or get_colors()
         self._line_count = 1
 
         self.setFixedWidth(50)
@@ -401,7 +401,7 @@ class SelectionPopup(QFrame):
         parent=None
     ):
         super().__init__(parent)
-        self._colors = colors or get_theme("dark")
+        self._colors = colors or get_colors()
 
         self.setWindowFlags(Qt.WindowType.Popup | Qt.WindowType.FramelessWindowHint)
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
@@ -507,7 +507,7 @@ class TranscriptPanel(QFrame):
         parent=None
     ):
         super().__init__(parent)
-        self._colors = colors or get_theme("dark")
+        self._colors = colors or get_colors()
         self._show_speakers = show_speakers
         self._segments = []
 
@@ -587,7 +587,7 @@ class TranscriptSegment(QFrame):
         parent=None
     ):
         super().__init__(parent)
-        self._colors = colors or get_theme("dark")
+        self._colors = colors or get_colors()
         self._start_time = start_time
         self._end_time = end_time
         self._highlighted = False

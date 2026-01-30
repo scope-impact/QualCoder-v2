@@ -808,7 +808,8 @@ class TestModalScreenshots:
         )
         modal.add_button("Cancel", variant="outline")
         modal.add_button("Delete", variant="destructive")
-        modal.setFixedSize(400, 200)
+        # Need extra height for centered container + shadow effects
+        modal.setFixedSize(400, 300)
 
         qtbot.addWidget(modal)
         take_screenshot(modal, "modal_dialog")

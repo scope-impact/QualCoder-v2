@@ -22,7 +22,7 @@ class StorybookSidebar(QFrame):
 
     def __init__(self, on_select: Callable, colors: ColorPalette = None, parent=None):
         super().__init__(parent)
-        self._colors = colors or get_theme()
+        self._colors = colors or get_colors()
         self._on_select = on_select
         self._buttons = {}
         self._active = None

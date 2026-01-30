@@ -17,7 +17,7 @@ from PySide6.QtWidgets import (
 )
 from PySide6.QtCore import QTimer, Qt, Signal
 
-from .tokens import SPACING, RADIUS, TYPOGRAPHY, ColorPalette, get_theme
+from .tokens import SPACING, RADIUS, TYPOGRAPHY, ColorPalette, get_colors
 
 
 class VideoContainer(QFrame):
@@ -36,7 +36,7 @@ class VideoContainer(QFrame):
         parent=None
     ):
         super().__init__(parent)
-        self._colors = colors or get_theme("dark")
+        self._colors = colors or get_colors()
         self._aspect_ratio = aspect_ratio
 
         self.setStyleSheet(f"""
@@ -81,7 +81,7 @@ class WaveformVisualization(QFrame):
         parent=None
     ):
         super().__init__(parent)
-        self._colors = colors or get_theme("dark")
+        self._colors = colors or get_colors()
         self._position = 0.0
         self._segments = []
 
@@ -137,7 +137,7 @@ class Timeline(QFrame):
         parent=None
     ):
         super().__init__(parent)
-        self._colors = colors or get_theme("dark")
+        self._colors = colors or get_colors()
         self._duration = duration
         self._position = 0.0
         self._segments = []
@@ -224,7 +224,7 @@ class PlayerControls(QFrame):
         parent=None
     ):
         super().__init__(parent)
-        self._colors = colors or get_theme("dark")
+        self._colors = colors or get_colors()
         self._playing = False
 
         self.setStyleSheet(f"""
@@ -385,7 +385,7 @@ class Thumbnail(QFrame):
         parent=None
     ):
         super().__init__(parent)
-        self._colors = colors or get_theme("dark")
+        self._colors = colors or get_colors()
         self._selected = selected
 
         self.setCursor(Qt.CursorShape.PointingHandCursor)
@@ -451,7 +451,7 @@ class ThumbnailStrip(QFrame):
 
     def __init__(self, colors: ColorPalette = None, parent=None):
         super().__init__(parent)
-        self._colors = colors or get_theme("dark")
+        self._colors = colors or get_colors()
         self._thumbnails = []
         self._selected = 0
 

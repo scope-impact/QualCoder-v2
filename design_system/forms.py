@@ -25,7 +25,7 @@ from PySide6.QtWidgets import (
 from PySide6.QtCore import Qt, Signal
 from PySide6.QtGui import QColor
 
-from .tokens import SPACING, RADIUS, TYPOGRAPHY, ColorPalette, get_theme
+from .tokens import SPACING, RADIUS, TYPOGRAPHY, ColorPalette, get_colors
 
 
 class SearchBox(QFrame):
@@ -48,7 +48,7 @@ class SearchBox(QFrame):
         parent=None
     ):
         super().__init__(parent)
-        self._colors = colors or get_theme("dark")
+        self._colors = colors or get_colors()
 
         self.setStyleSheet(f"""
             QFrame {{
@@ -115,7 +115,7 @@ class Select(QComboBox):
         parent=None
     ):
         super().__init__(parent)
-        self._colors = colors or get_theme("dark")
+        self._colors = colors or get_colors()
 
         if placeholder:
             self.addItem(placeholder)
@@ -189,7 +189,7 @@ class MultiSelect(QFrame):
         parent=None
     ):
         super().__init__(parent)
-        self._colors = colors or get_theme("dark")
+        self._colors = colors or get_colors()
         self._selected = []
         self._expanded = False
 
@@ -288,7 +288,7 @@ class Textarea(QTextEdit):
         parent=None
     ):
         super().__init__(parent)
-        self._colors = colors or get_theme("dark")
+        self._colors = colors or get_colors()
 
         self.setPlaceholderText(placeholder)
         self.setMinimumHeight(min_height)
@@ -337,7 +337,7 @@ class NumberInput(QFrame):
         parent=None
     ):
         super().__init__(parent)
-        self._colors = colors or get_theme("dark")
+        self._colors = colors or get_colors()
 
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
@@ -407,7 +407,7 @@ class RangeSlider(QFrame):
         parent=None
     ):
         super().__init__(parent)
-        self._colors = colors or get_theme("dark")
+        self._colors = colors or get_colors()
 
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
@@ -493,7 +493,7 @@ class ColorPicker(QFrame):
         parent=None
     ):
         super().__init__(parent)
-        self._colors = colors or get_theme("dark")
+        self._colors = colors or get_colors()
         self._color_list = colors_list or self.DEFAULT_COLORS
         self._selected = selected
 
@@ -572,7 +572,7 @@ class FormGroup(QFrame):
         parent=None
     ):
         super().__init__(parent)
-        self._colors = colors or get_theme("dark")
+        self._colors = colors or get_colors()
 
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, SPACING.lg)
@@ -656,7 +656,7 @@ class CoderSelector(QFrame):
         parent=None
     ):
         super().__init__(parent)
-        self._colors = colors or get_theme("dark")
+        self._colors = colors or get_colors()
         self._coders = coders or []
 
         self.setStyleSheet("background: transparent; border: none;")

@@ -1,26 +1,56 @@
 """
 PySide6 Design System for QualCoder.
 
-Material Design inspired components and tokens.
+A scholarly, refined design system for qualitative research applications.
+
+Features:
+- Distinctive indigo/coral color palette
+- Inter typography for excellent readability
+- Light and dark theme support
+- Comprehensive component library
+- Animation and shadow tokens
 
 Usage:
-    from design_system import Button, Card, COLORS
+    from design_system import Button, Card, COLORS, set_theme
     from PySide6.QtWidgets import QApplication
 
     app = QApplication(sys.argv)
-    # Components use COLORS automatically
+
+    # Use light theme (default)
+    set_theme("light")
+
+    # Or switch to dark theme
+    set_theme("dark")
+
+    # Components automatically use the current theme
+    btn = Button("Click me")
 """
 
 # Tokens
 from .tokens import (
+    # Core types
     ColorPalette,
+
+    # Theme instances
     COLORS,
+    COLORS_LIGHT,
+    COLORS_DARK,
+
+    # Scale tokens
     SPACING,
     RADIUS,
     TYPOGRAPHY,
     LAYOUT,
+    ANIMATION,
+    SHADOWS,
+    GRADIENTS,
+    ZINDEX,
+
+    # Theme functions
     get_colors,
-    get_theme,  # Compatibility wrapper
+    get_theme,
+    set_theme,
+    register_theme,
 )
 
 # Stylesheet

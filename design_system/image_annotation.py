@@ -43,7 +43,7 @@ from PySide6.QtGui import (
 # QButtonGroup is now in qt_compat
 from PySide6.QtWidgets import QButtonGroup
 
-from .tokens import SPACING, RADIUS, TYPOGRAPHY, ColorPalette, get_theme
+from .tokens import SPACING, RADIUS, TYPOGRAPHY, ColorPalette, get_colors
 
 
 class AnnotationMode(Enum):
@@ -60,7 +60,7 @@ class ImageAnnotation:
     id: str
     annotation_type: str  # "rectangle", "polygon", "freehand"
     points: List[Tuple[float, float]]  # For rect: [(x, y, w, h)], for polygon: [(x1,y1), (x2,y2), ...]
-    color: str = "#009688"
+    color: str = "#4F46E5"
     label: str = ""
     code_id: Optional[str] = None
     metadata: Dict[str, Any] = field(default_factory=dict)
@@ -97,12 +97,12 @@ class ImageAnnotationLayer(QFrame):
     def __init__(
         self,
         show_toolbar: bool = True,
-        default_color: str = "#009688",
+        default_color: str = "#4F46E5",
         colors: ColorPalette = None,
         parent=None
     ):
         super().__init__(parent)
-        self._colors = colors or get_theme("light")
+        self._colors = colors or get_colors()
         self._default_color = default_color
         self._current_color = default_color
         self._mode = AnnotationMode.SELECT
@@ -535,7 +535,7 @@ class AnnotationView(QGraphicsView):
 
     def __init__(self, scene: QGraphicsScene, colors: ColorPalette = None, parent=None):
         super().__init__(scene, parent)
-        self._colors = colors or get_theme("light")
+        self._colors = colors or get_colors()
 
         self.setRenderHint(QPainter.RenderHint.Antialiasing)
         self.setRenderHint(QPainter.RenderHint.SmoothPixmapTransform)
@@ -589,7 +589,7 @@ class AnnotationToolbar(QFrame):
 
     def __init__(self, colors: ColorPalette = None, parent=None):
         super().__init__(parent)
-        self._colors = colors or get_theme("light")
+        self._colors = colors or get_colors()
         self._current_mode = AnnotationMode.SELECT
 
         self.setStyleSheet(f"""

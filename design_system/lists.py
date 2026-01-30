@@ -1,6 +1,6 @@
 """
 List components
-File lists, case lists, and other list widgets
+File lists, case lists, and other list widgets with staggered animations.
 """
 
 from typing import List, Optional, Any
@@ -8,6 +8,7 @@ from dataclasses import dataclass
 
 from PySide6.QtWidgets import (
     QFrame,
+    QGraphicsOpacityEffect,
     QHBoxLayout,
     QLabel,
     QPushButton,
@@ -16,9 +17,119 @@ from PySide6.QtWidgets import (
     QVBoxLayout,
     QWidget,
 )
-from PySide6.QtCore import Qt, Signal
+from PySide6.QtCore import (
+    Qt,
+    Signal,
+    QPropertyAnimation,
+    QEasingCurve,
+    QParallelAnimationGroup,
+    QTimer,
+    Property,
+    QPoint,
+)
 
-from .tokens import SPACING, RADIUS, TYPOGRAPHY, ColorPalette, get_theme
+import qtawesome as qta
+
+from .tokens import SPACING, RADIUS, TYPOGRAPHY, ANIMATION, ColorPalette, get_colors
+
+
+class AnimatedListItemMixin:
+    """
+    Mixin to add entrance animations to list items.
+
+    Provides fade-in and slide-in effects with configurable stagger delay.
+    """
+
+    def setup_entrance_animation(self, index: int = 0, animate: bool = True):
+        """
+        Setup entrance animation for this list item.
+
+        Args:
+            index: Item index for stagger delay calculation
+            animate: Whether to animate (False = instant appearance)
+        """
+        if not animate:
+            return
+
+        # Setup opacity effect for fade-in
+        self._opacity_effect = QGraphicsOpacityEffect(self)
+        self._opacity_effect.setOpacity(0.0)
+        self.setGraphicsEffect(self._opacity_effect)
+
+        # Store original position for slide animation
+        self._original_pos = None
+        self._slide_offset = 20  # pixels to slide from
+
+        # Calculate stagger delay
+        stagger_delay = index * ANIMATION.duration_fast  # 100ms between items
+
+        # Use timer to start animation after delay
+        QTimer.singleShot(stagger_delay, self._start_entrance_animation)
+
+    def _start_entrance_animation(self):
+        """Start the entrance animation."""
+        # Fade in animation
+        self._fade_anim = QPropertyAnimation(self._opacity_effect, b"opacity")
+        self._fade_anim.setDuration(ANIMATION.duration_normal)  # 200ms
+        self._fade_anim.setStartValue(0.0)
+        self._fade_anim.setEndValue(1.0)
+        self._fade_anim.setEasingCurve(QEasingCurve.Type.OutCubic)
+        self._fade_anim.start()
+
+
+class AnimatedBaseList(QScrollArea):
+    """
+    Base class for animated list components.
+
+    Items fade in with a stagger effect when added.
+    """
+
+    item_clicked = Signal(str)  # item_id
+    item_double_clicked = Signal(str)
+
+    def __init__(self, colors: ColorPalette = None, animate: bool = True, parent=None):
+        super().__init__(parent)
+        self._colors = colors or get_colors()
+        self._items = []
+        self._selected = None
+        self._animate = animate
+        self._item_count = 0
+
+        self.setWidgetResizable(True)
+        self.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        self.setStyleSheet(f"""
+            QScrollArea {{
+                background-color: {self._colors.surface};
+                border: none;
+            }}
+        """)
+
+        self._container = QWidget()
+        self._layout = QVBoxLayout(self._container)
+        self._layout.setContentsMargins(SPACING.sm, SPACING.sm, SPACING.sm, SPACING.sm)
+        self._layout.setSpacing(SPACING.xs)
+        self._layout.setAlignment(Qt.AlignmentFlag.AlignTop)
+
+        self.setWidget(self._container)
+
+    def _add_item_widget(self, widget):
+        """Add item widget with animation setup."""
+        if hasattr(widget, 'setup_entrance_animation'):
+            widget.setup_entrance_animation(self._item_count, self._animate)
+        self._layout.addWidget(widget)
+        self._item_count += 1
+
+    def clear(self):
+        while self._layout.count():
+            item = self._layout.takeAt(0)
+            if item.widget():
+                item.widget().deleteLater()
+        self._items = []
+        self._item_count = 0
+
+    def set_selected(self, item_id: str):
+        self._selected = item_id
+        # Subclasses should override to update visual selection
 
 
 @dataclass
@@ -41,7 +152,7 @@ class BaseList(QScrollArea):
 
     def __init__(self, colors: ColorPalette = None, parent=None):
         super().__init__(parent)
-        self._colors = colors or get_theme("dark")
+        self._colors = colors or get_colors()
         self._items = []
         self._selected = None
 
@@ -74,15 +185,20 @@ class BaseList(QScrollArea):
         # Subclasses should override to update visual selection
 
 
-class FileList(BaseList):
+class FileList(AnimatedBaseList):
     """
     List of files with type icons and metadata.
+
+    Features entrance animations with stagger effect.
 
     Usage:
         file_list = FileList()
         file_list.add_file("1", "Interview_01.txt", "text", "12.4 KB")
         file_list.add_file("2", "Focus_group.mp3", "audio", "45.2 MB")
         file_list.item_clicked.connect(self.on_file_click)
+
+        # Disable animations:
+        file_list = FileList(animate=False)
     """
 
     def add_file(
@@ -104,7 +220,7 @@ class FileList(BaseList):
         item.clicked.connect(lambda: self.item_clicked.emit(id))
         item.double_clicked.connect(lambda: self.item_double_clicked.emit(id))
         self._items.append(item)
-        self._layout.addWidget(item)
+        self._add_item_widget(item)
 
     def set_files(self, files: List[dict]):
         self.clear()
@@ -118,8 +234,8 @@ class FileList(BaseList):
             )
 
 
-class FileListItem(QFrame):
-    """Individual file list item"""
+class FileListItem(QFrame, AnimatedListItemMixin):
+    """Individual file list item with entrance animation."""
 
     clicked = Signal()
     double_clicked = Signal()
@@ -135,7 +251,7 @@ class FileListItem(QFrame):
         parent=None
     ):
         super().__init__(parent)
-        self._colors = colors or get_theme("dark")
+        self._colors = colors or get_colors()
         self._id = id
 
         self.setCursor(Qt.CursorShape.PointingHandCursor)
@@ -153,24 +269,25 @@ class FileListItem(QFrame):
         layout.setContentsMargins(SPACING.sm, SPACING.sm, SPACING.sm, SPACING.sm)
         layout.setSpacing(SPACING.md)
 
-        # File type icon
+        # File type icon - using qtawesome Material Design icons
         type_config = {
-            "text": ("📄", self._colors.file_text),
-            "audio": ("🎵", self._colors.file_audio),
-            "video": ("🎬", self._colors.file_video),
-            "image": ("🖼️", self._colors.file_image),
-            "pdf": ("📕", self._colors.file_pdf),
+            "text": ("mdi6.file-document-outline", self._colors.file_text),
+            "audio": ("mdi6.music-note", self._colors.file_audio),
+            "video": ("mdi6.video-outline", self._colors.file_video),
+            "image": ("mdi6.image-outline", self._colors.file_image),
+            "pdf": ("mdi6.file-pdf-box", self._colors.file_pdf),
         }
-        icon, color = type_config.get(file_type, ("📄", self._colors.file_text))
+        icon_name, color = type_config.get(file_type, ("mdi6.file-outline", self._colors.file_text))
 
         icon_frame = QFrame()
-        icon_frame.setFixedSize(32, 32)
-        icon_frame.setStyleSheet(f"background-color: {color}26; border-radius: {RADIUS.sm}px;")
+        icon_frame.setFixedSize(36, 36)
+        icon_frame.setStyleSheet(f"background-color: {color}20; border-radius: {RADIUS.sm}px;")
         icon_layout = QVBoxLayout(icon_frame)
         icon_layout.setContentsMargins(0, 0, 0, 0)
-        icon_label = QLabel(icon)
+        icon_label = QLabel()
         icon_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        icon_label.setStyleSheet(f"font-size: 16px;")
+        icon_label.setPixmap(qta.icon(icon_name, color=color).pixmap(20, 20))
+        icon_label.setStyleSheet("background: transparent;")
         icon_layout.addWidget(icon_label)
         layout.addWidget(icon_frame)
 
@@ -213,9 +330,9 @@ class FileListItem(QFrame):
             self.double_clicked.emit()
 
 
-class CaseList(BaseList):
+class CaseList(AnimatedBaseList):
     """
-    List of cases/participants.
+    List of cases/participants with entrance animations.
 
     Usage:
         case_list = CaseList()
@@ -241,11 +358,11 @@ class CaseList(BaseList):
         )
         item.clicked.connect(lambda: self.item_clicked.emit(id))
         self._items.append(item)
-        self._layout.addWidget(item)
+        self._add_item_widget(item)
 
 
-class CaseListItem(QFrame):
-    """Individual case list item"""
+class CaseListItem(QFrame, AnimatedListItemMixin):
+    """Individual case list item with entrance animation."""
 
     clicked = Signal()
 
@@ -260,7 +377,7 @@ class CaseListItem(QFrame):
         parent=None
     ):
         super().__init__(parent)
-        self._colors = colors or get_theme("dark")
+        self._colors = colors or get_colors()
 
         self.setCursor(Qt.CursorShape.PointingHandCursor)
         self.setStyleSheet(f"""
@@ -308,9 +425,9 @@ class CaseListItem(QFrame):
             self.clicked.emit()
 
 
-class AttributeList(BaseList):
+class AttributeList(AnimatedBaseList):
     """
-    List of attributes with type indicators.
+    List of attributes with type indicators and entrance animations.
 
     Usage:
         attr_list = AttributeList()
@@ -336,11 +453,11 @@ class AttributeList(BaseList):
         )
         item.clicked.connect(lambda: self.item_clicked.emit(id))
         self._items.append(item)
-        self._layout.addWidget(item)
+        self._add_item_widget(item)
 
 
-class AttributeListItem(QFrame):
-    """Individual attribute list item"""
+class AttributeListItem(QFrame, AnimatedListItemMixin):
+    """Individual attribute list item with entrance animation."""
 
     clicked = Signal()
 
@@ -355,7 +472,7 @@ class AttributeListItem(QFrame):
         parent=None
     ):
         super().__init__(parent)
-        self._colors = colors or get_theme("dark")
+        self._colors = colors or get_colors()
 
         self.setCursor(Qt.CursorShape.PointingHandCursor)
         self.setStyleSheet(f"""
@@ -434,9 +551,9 @@ class AttributeListItem(QFrame):
             self.clicked.emit()
 
 
-class QueueList(BaseList):
+class QueueList(AnimatedBaseList):
     """
-    Review queue list with action items.
+    Review queue list with action items and entrance animations.
 
     Usage:
         queue = QueueList()
@@ -460,11 +577,11 @@ class QueueList(BaseList):
         )
         item.clicked.connect(lambda: self.item_clicked.emit(id))
         self._items.append(item)
-        self._layout.addWidget(item)
+        self._add_item_widget(item)
 
 
-class QueueListItem(QFrame):
-    """Individual queue list item"""
+class QueueListItem(QFrame, AnimatedListItemMixin):
+    """Individual queue list item with entrance animation."""
 
     clicked = Signal()
 
@@ -478,7 +595,7 @@ class QueueListItem(QFrame):
         parent=None
     ):
         super().__init__(parent)
-        self._colors = colors or get_theme("dark")
+        self._colors = colors or get_colors()
 
         self.setCursor(Qt.CursorShape.PointingHandCursor)
         self.setStyleSheet(f"""

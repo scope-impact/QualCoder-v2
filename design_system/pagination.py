@@ -14,7 +14,7 @@ from PySide6.QtWidgets import (
 )
 from PySide6.QtCore import Qt, Signal
 
-from .tokens import SPACING, RADIUS, TYPOGRAPHY, ColorPalette, get_theme
+from .tokens import SPACING, RADIUS, TYPOGRAPHY, ColorPalette, get_colors
 
 
 class Pagination(QFrame):
@@ -38,7 +38,7 @@ class Pagination(QFrame):
         parent=None
     ):
         super().__init__(parent)
-        self._colors = colors or get_theme("dark")
+        self._colors = colors or get_colors()
         self._total_pages = total_pages
         self._current_page = current_page
         self._show_first_last = show_first_last
@@ -193,7 +193,7 @@ class PageButton(QPushButton):
         parent=None
     ):
         super().__init__(str(page), parent)
-        self._colors = colors or get_theme("dark")
+        self._colors = colors or get_colors()
         self._page = page
         self._active = active
 
@@ -255,7 +255,7 @@ class PaginationInfo(QFrame):
         parent=None
     ):
         super().__init__(parent)
-        self._colors = colors or get_theme("dark")
+        self._colors = colors or get_colors()
 
         layout = QHBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
@@ -301,7 +301,7 @@ class SimplePagination(QFrame):
         parent=None
     ):
         super().__init__(parent)
-        self._colors = colors or get_theme("dark")
+        self._colors = colors or get_colors()
         self._current = current
         self._total = total
 

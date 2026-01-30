@@ -12,7 +12,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from ..tokens import get_theme
+from ..tokens import get_colors
 from .sidebar import StorybookSidebar
 from .page import StoryPage
 from .stories import get_all_sections
@@ -23,7 +23,7 @@ class Storybook(QMainWindow):
 
     def __init__(self):
         super().__init__()
-        self._colors = get_theme()
+        self._colors = get_colors()
         self._pages = {}
         self._current_page_key = None
 

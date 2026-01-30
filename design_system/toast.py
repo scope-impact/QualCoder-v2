@@ -21,7 +21,7 @@ from PySide6.QtCore import (
 )
 from PySide6.QtGui import QColor
 
-from .tokens import SPACING, RADIUS, TYPOGRAPHY, ColorPalette, get_theme
+from .tokens import SPACING, RADIUS, TYPOGRAPHY, ColorPalette, get_colors
 
 
 class Toast(QWidget):
@@ -48,7 +48,7 @@ class Toast(QWidget):
         parent=None
     ):
         super().__init__(parent)
-        self._colors = colors or get_theme("dark")
+        self._colors = colors or get_colors()
         self._duration = duration
         self._variant = variant
 

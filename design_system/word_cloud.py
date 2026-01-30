@@ -18,7 +18,7 @@ from PySide6.QtGui import QColor, QImage, QPixmap
 from wordcloud import WordCloud
 import numpy as np
 
-from .tokens import SPACING, RADIUS, TYPOGRAPHY, ColorPalette, get_theme
+from .tokens import SPACING, RADIUS, TYPOGRAPHY, ColorPalette, get_colors
 
 
 class WordCloudWidget(QFrame):
@@ -64,7 +64,7 @@ class WordCloudWidget(QFrame):
         parent=None
     ):
         super().__init__(parent)
-        self._colors = colors or get_theme("light")
+        self._colors = colors or get_colors()
         self._width = width
         self._height = height
         self._color_scheme = color_scheme
@@ -306,7 +306,7 @@ class WordCloudPreview(QLabel):
         parent=None
     ):
         super().__init__(parent)
-        self._colors = colors or get_theme("light")
+        self._colors = colors or get_colors()
         self._size = size
         self._color_scheme = color_scheme
 

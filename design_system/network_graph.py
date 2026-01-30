@@ -38,7 +38,7 @@ from PySide6.QtGui import (
 
 import networkx as nx
 
-from .tokens import SPACING, RADIUS, TYPOGRAPHY, ColorPalette, get_theme
+from .tokens import SPACING, RADIUS, TYPOGRAPHY, ColorPalette, get_colors
 
 
 @dataclass
@@ -102,7 +102,7 @@ class NetworkGraphWidget(QFrame):
         parent=None
     ):
         super().__init__(parent)
-        self._colors = colors or get_theme("light")
+        self._colors = colors or get_colors()
         self._height = height
         self._interactive = interactive
 
@@ -418,13 +418,13 @@ class NodeItem(QGraphicsItem):
         node_id: str,
         label: str,
         size: int = 30,
-        color: str = "#009688",
+        color: str = "#4F46E5",
         colors: ColorPalette = None,
         interactive: bool = True,
         parent=None
     ):
         super().__init__(parent)
-        self._colors = colors or get_theme("light")
+        self._colors = colors or get_colors()
         self._node_id = node_id
         self._label = label
         self._size = size
@@ -521,7 +521,7 @@ class EdgeItem(QGraphicsLineItem):
         parent=None
     ):
         super().__init__(x1, y1, x2, y2, parent)
-        self._colors = colors or get_theme("light")
+        self._colors = colors or get_colors()
         self._label = label
 
         # Signals

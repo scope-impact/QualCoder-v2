@@ -43,7 +43,7 @@ from PySide6.QtGui import (
     QWheelEvent,
 )
 
-from .tokens import SPACING, RADIUS, TYPOGRAPHY, ColorPalette, get_theme
+from .tokens import SPACING, RADIUS, TYPOGRAPHY, ColorPalette, get_colors
 
 # Try to import PyMuPDF
 try:
@@ -109,7 +109,7 @@ class PDFPageViewer(QFrame):
         parent=None
     ):
         super().__init__(parent)
-        self._colors = colors or get_theme("dark")
+        self._colors = colors or get_colors()
         self._doc = None
         self._current_page = 0
         self._page_count = 0
@@ -598,7 +598,7 @@ class PDFGraphicsView(QGraphicsView):
 
     def __init__(self, colors: ColorPalette = None, parent=None):
         super().__init__(parent)
-        self._colors = colors or get_theme("dark")
+        self._colors = colors or get_colors()
         self._pixmap_item = None
         self._selection_rect = None
         self._selection_start = None
@@ -735,7 +735,7 @@ class PDFThumbnail(QFrame):
         parent=None
     ):
         super().__init__(parent)
-        self._colors = colors or get_theme("dark")
+        self._colors = colors or get_colors()
         self._selected = selected
         self._page_number = page_number
 
