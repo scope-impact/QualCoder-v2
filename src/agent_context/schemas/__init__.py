@@ -1,1 +1,61 @@
 """Agent Context Schemas - Tool and Resource definitions for AI integration"""
+
+from src.agent_context.schemas.cases_tools import (
+    CASES_RESOURCES,
+    CASES_TOOLS,
+    CaseSummaryOutput,
+    CaseWithSourcesOutput,
+    CreateCaseInput,
+    CreateCaseOutput,
+    DeleteCaseInput,
+    LinkSourceToCaseInput,
+    ListCasesOutput,
+    SetCaseAttributeInput,
+    UnlinkSourceFromCaseInput,
+    UpdateCaseInput,
+)
+from src.agent_context.schemas.coding_tools import (
+    CODING_RESOURCES,
+    CODING_TOOLS,
+    ApplyCodeInput,
+    ApplyCodeOutput,
+    CreateCategoryInput,
+    CreateCodeInput,
+    CreateCodeOutput,
+    DeleteCodeInput,
+    MergeCodesInput,
+    MergeCodesOutput,
+    MoveCategoryInput,
+    RemoveCodeInput,
+    RenameCodeInput,
+)
+
+__all__ = [
+    # Coding tools
+    "CODING_TOOLS",
+    "CODING_RESOURCES",
+    "CreateCodeInput",
+    "CreateCodeOutput",
+    "RenameCodeInput",
+    "DeleteCodeInput",
+    "MergeCodesInput",
+    "MergeCodesOutput",
+    "ApplyCodeInput",
+    "ApplyCodeOutput",
+    "RemoveCodeInput",
+    "CreateCategoryInput",
+    "MoveCategoryInput",
+    # Cases tools
+    "CASES_TOOLS",
+    "CASES_RESOURCES",
+    "CreateCaseInput",
+    "CreateCaseOutput",
+    "UpdateCaseInput",
+    "DeleteCaseInput",
+    "LinkSourceToCaseInput",
+    "UnlinkSourceFromCaseInput",
+    "SetCaseAttributeInput",
+    "CaseWithSourcesOutput",
+    "CaseSummaryOutput",
+    "ListCasesOutput",
+]
