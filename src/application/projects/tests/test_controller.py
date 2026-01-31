@@ -372,3 +372,223 @@ class TestNavigation:
         # Verify event was published
         history = event_bus.get_history()
         assert any("screen_changed" in h.event_type for h in history)
+
+
+class TestCaseCommands:
+    """Tests for case commands."""
+
+    def test_create_case_successfully(
+        self,
+        project_controller,
+        event_bus,
+        existing_project_path: Path,
+    ):
+        """Test creating a case in the project."""
+        from src.application.projects.controller import (
+            CreateCaseCommand,
+            OpenProjectCommand,
+        )
+
+        # First open a project
+        project_controller.open_project(
+            OpenProjectCommand(path=str(existing_project_path))
+        )
+
+        # Create case
+        command = CreateCaseCommand(
+            name="Participant A",
+            description="First interview subject",
+            memo="Recruited from university",
+        )
+
+        result = project_controller.create_case(command)
+
+        assert isinstance(result, Success)
+        case = result.unwrap()
+        assert case.name == "Participant A"
+        assert case.description == "First interview subject"
+
+        # Verify event was published
+        history = event_bus.get_history()
+        assert any("case_created" in h.event_type for h in history)
+
+    def test_create_case_fails_without_open_project(
+        self,
+        project_controller,
+    ):
+        """Test failure when no project is open."""
+        from src.application.projects.controller import CreateCaseCommand
+
+        command = CreateCaseCommand(name="Participant A")
+
+        result = project_controller.create_case(command)
+
+        assert isinstance(result, Failure)
+
+    def test_create_case_fails_with_empty_name(
+        self,
+        project_controller,
+        existing_project_path: Path,
+    ):
+        """Test failure with empty case name."""
+        from src.application.projects.controller import (
+            CreateCaseCommand,
+            OpenProjectCommand,
+        )
+
+        project_controller.open_project(
+            OpenProjectCommand(path=str(existing_project_path))
+        )
+
+        command = CreateCaseCommand(name="")
+
+        result = project_controller.create_case(command)
+
+        assert isinstance(result, Failure)
+
+    def test_create_case_fails_with_duplicate_name(
+        self,
+        project_controller,
+        existing_project_path: Path,
+    ):
+        """Test failure with duplicate case name."""
+        from src.application.projects.controller import (
+            CreateCaseCommand,
+            OpenProjectCommand,
+        )
+
+        project_controller.open_project(
+            OpenProjectCommand(path=str(existing_project_path))
+        )
+
+        # Create first case
+        project_controller.create_case(CreateCaseCommand(name="Participant A"))
+
+        # Try to create duplicate
+        result = project_controller.create_case(CreateCaseCommand(name="Participant A"))
+
+        assert isinstance(result, Failure)
+
+    def test_update_case_successfully(
+        self,
+        project_controller,
+        event_bus,
+        existing_project_path: Path,
+    ):
+        """Test updating an existing case."""
+        from src.application.projects.controller import (
+            CreateCaseCommand,
+            OpenProjectCommand,
+            UpdateCaseCommand,
+        )
+
+        project_controller.open_project(
+            OpenProjectCommand(path=str(existing_project_path))
+        )
+
+        # Create case
+        create_result = project_controller.create_case(
+            CreateCaseCommand(name="Original Name")
+        )
+        case = create_result.unwrap()
+
+        # Update case
+        command = UpdateCaseCommand(
+            case_id=case.id.value,
+            name="Updated Name",
+            description="New description",
+        )
+
+        result = project_controller.update_case(command)
+
+        assert isinstance(result, Success)
+        updated = result.unwrap()
+        assert updated.name == "Updated Name"
+        assert updated.description == "New description"
+
+        # Verify event was published
+        history = event_bus.get_history()
+        assert any("case_updated" in h.event_type for h in history)
+
+    def test_remove_case_successfully(
+        self,
+        project_controller,
+        event_bus,
+        existing_project_path: Path,
+    ):
+        """Test removing a case."""
+        from src.application.projects.controller import (
+            CreateCaseCommand,
+            OpenProjectCommand,
+            RemoveCaseCommand,
+        )
+
+        project_controller.open_project(
+            OpenProjectCommand(path=str(existing_project_path))
+        )
+
+        # Create case
+        create_result = project_controller.create_case(
+            CreateCaseCommand(name="To Delete")
+        )
+        case = create_result.unwrap()
+
+        # Remove case
+        command = RemoveCaseCommand(case_id=case.id.value)
+
+        result = project_controller.remove_case(command)
+
+        assert isinstance(result, Success)
+
+        # Verify case is removed
+        assert project_controller.get_case(case.id.value) is None
+
+        # Verify event was published
+        history = event_bus.get_history()
+        assert any("case_removed" in h.event_type for h in history)
+
+    def test_get_cases_returns_all_cases(
+        self,
+        project_controller,
+        existing_project_path: Path,
+    ):
+        """Test getting all cases."""
+        from src.application.projects.controller import (
+            CreateCaseCommand,
+            OpenProjectCommand,
+        )
+
+        project_controller.open_project(
+            OpenProjectCommand(path=str(existing_project_path))
+        )
+
+        project_controller.create_case(CreateCaseCommand(name="Participant A"))
+        project_controller.create_case(CreateCaseCommand(name="Participant B"))
+
+        cases = project_controller.get_cases()
+
+        assert len(cases) == 2
+
+    def test_get_project_context_includes_cases(
+        self,
+        project_controller,
+        existing_project_path: Path,
+    ):
+        """Test that project context includes case information."""
+        from src.application.projects.controller import (
+            CreateCaseCommand,
+            OpenProjectCommand,
+        )
+
+        project_controller.open_project(
+            OpenProjectCommand(path=str(existing_project_path))
+        )
+        project_controller.create_case(
+            CreateCaseCommand(name="Participant A", description="First subject")
+        )
+
+        context = project_controller.get_project_context()
+
+        assert context["case_count"] == 1
+        assert len(context["cases"]) == 1
+        assert context["cases"][0]["name"] == "Participant A"

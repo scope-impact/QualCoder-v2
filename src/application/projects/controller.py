@@ -18,6 +18,14 @@ from typing import TYPE_CHECKING, Any
 
 from returns.result import Failure, Result, Success
 
+from src.domain.cases.derivers import (
+    CaseState,
+    derive_create_case,
+    derive_remove_case,
+    derive_update_case,
+)
+from src.domain.cases.entities import Case
+from src.domain.cases.events import CaseCreated, CaseRemoved, CaseUpdated
 from src.domain.projects.derivers import (
     ProjectState,
     derive_add_source,
@@ -43,7 +51,7 @@ from src.domain.projects.events import (
     SourceOpened,
     SourceRemoved,
 )
-from src.domain.shared.types import SourceId
+from src.domain.shared.types import CaseId, SourceId
 
 if TYPE_CHECKING:
     from src.application.event_bus import EventBus
@@ -110,6 +118,32 @@ class NavigateToSegmentCommand:
     highlight: bool = True
 
 
+@dataclass(frozen=True)
+class CreateCaseCommand:
+    """Command to create a new case."""
+
+    name: str
+    description: str | None = None
+    memo: str | None = None
+
+
+@dataclass(frozen=True)
+class UpdateCaseCommand:
+    """Command to update an existing case."""
+
+    case_id: int
+    name: str
+    description: str | None = None
+    memo: str | None = None
+
+
+@dataclass(frozen=True)
+class RemoveCaseCommand:
+    """Command to remove a case."""
+
+    case_id: int
+
+
 # ============================================================
 # Controller Implementation
 # ============================================================
@@ -131,6 +165,7 @@ class ProjectControllerImpl:
         event_bus: EventBus,
         source_repo: Any | None = None,
         project_repo: Any | None = None,
+        case_repo: Any | None = None,
     ) -> None:
         """
         Initialize the controller with dependencies.
@@ -139,16 +174,19 @@ class ProjectControllerImpl:
             event_bus: Event bus for publishing domain events
             source_repo: Optional repository for Source entities
             project_repo: Optional repository for Project metadata
+            case_repo: Optional repository for Case entities
         """
         self._event_bus = event_bus
         self._source_repo = source_repo
         self._project_repo = project_repo
+        self._case_repo = case_repo
 
         # Current project state
         self._current_project: Project | None = None
         self._current_screen: str | None = None
         self._current_source: Source | None = None
         self._sources: list[Source] = []
+        self._cases: list[Case] = []
         self._recent_projects: list[RecentProject] = []
 
     # =========================================================================
@@ -238,6 +276,7 @@ class ProjectControllerImpl:
         # Update internal state
         self._current_project = project.touch()
         self._load_sources()
+        self._load_cases()
 
         # Add to recent projects
         self._add_to_recent(project)
@@ -257,6 +296,7 @@ class ProjectControllerImpl:
         # Clear state
         self._current_project = None
         self._sources = []
+        self._cases = []
 
         # Publish event
         event = ProjectClosed.create(path=path)
@@ -468,6 +508,128 @@ class ProjectControllerImpl:
         return Success(nav_event)
 
     # =========================================================================
+    # Case Commands
+    # =========================================================================
+
+    def create_case(self, command: CreateCaseCommand) -> Result:
+        """Create a new case in the current project."""
+        if self._current_project is None:
+            return Failure("No project is currently open")
+
+        # Build state
+        state = CaseState(existing_cases=tuple(self._cases))
+
+        # Derive event or failure
+        result = derive_create_case(
+            name=command.name,
+            description=command.description,
+            memo=command.memo,
+            state=state,
+        )
+
+        if isinstance(result, Failure):
+            return result
+
+        event: CaseCreated = result
+
+        # Create case entity
+        case = Case(
+            id=event.case_id,
+            name=event.name,
+            description=event.description,
+            memo=event.memo,
+        )
+
+        # Persist case
+        if self._case_repo:
+            self._case_repo.save(case)
+
+        # Update internal state
+        self._cases.append(case)
+
+        # Publish event
+        self._event_bus.publish(event)
+
+        return Success(case)
+
+    def update_case(self, command: UpdateCaseCommand) -> Result:
+        """Update an existing case."""
+        if self._current_project is None:
+            return Failure("No project is currently open")
+
+        case_id = CaseId(value=command.case_id)
+
+        # Build state
+        state = CaseState(existing_cases=tuple(self._cases))
+
+        # Derive event or failure
+        result = derive_update_case(
+            case_id=case_id,
+            name=command.name,
+            description=command.description,
+            memo=command.memo,
+            state=state,
+        )
+
+        if isinstance(result, Failure):
+            return result
+
+        event: CaseUpdated = result
+
+        # Update case entity
+        updated_case = Case(
+            id=event.case_id,
+            name=event.name,
+            description=event.description,
+            memo=event.memo,
+        )
+
+        # Persist case
+        if self._case_repo:
+            self._case_repo.save(updated_case)
+
+        # Update internal state
+        self._cases = [c if c.id != case_id else updated_case for c in self._cases]
+
+        # Publish event
+        self._event_bus.publish(event)
+
+        return Success(updated_case)
+
+    def remove_case(self, command: RemoveCaseCommand) -> Result:
+        """Remove a case from the current project."""
+        if self._current_project is None:
+            return Failure("No project is currently open")
+
+        case_id = CaseId(value=command.case_id)
+
+        # Build state
+        state = CaseState(existing_cases=tuple(self._cases))
+
+        # Derive event or failure
+        result = derive_remove_case(
+            case_id=case_id,
+            state=state,
+        )
+
+        if isinstance(result, Failure):
+            return result
+
+        event: CaseRemoved = result
+
+        # Delete from repository
+        if self._case_repo:
+            self._case_repo.delete(case_id)
+
+        # Update internal state
+        self._cases = [c for c in self._cases if c.id != case_id]
+
+        # Publish event
+        self._event_bus.publish(event)
+
+        return Success(event)
+
+    # =========================================================================
     # Queries
     # =========================================================================
 
@@ -491,6 +653,15 @@ class ProjectControllerImpl:
     def get_sources_by_type(self, source_type: str) -> list[Source]:
         """Get sources filtered by type."""
         return [s for s in self._sources if s.source_type.value == source_type]
+
+    def get_cases(self) -> list[Case]:
+        """Get all cases in the current project."""
+        return list(self._cases)
+
+    def get_case(self, case_id: int) -> Case | None:
+        """Get a specific case by ID."""
+        cid = CaseId(value=case_id)
+        return next((c for c in self._cases if c.id == cid), None)
 
     def get_project_summary(self) -> ProjectSummary | None:
         """Get summary statistics for the current project."""
@@ -556,6 +727,15 @@ class ProjectControllerImpl:
                 }
                 for s in self._sources
             ],
+            "case_count": len(self._cases),
+            "cases": [
+                {
+                    "id": c.id.value,
+                    "name": c.name,
+                    "description": c.description,
+                }
+                for c in self._cases
+            ],
             "current_screen": self._current_screen,
         }
 
@@ -569,6 +749,13 @@ class ProjectControllerImpl:
             self._sources = self._source_repo.get_all()
         else:
             self._sources = []
+
+    def _load_cases(self) -> None:
+        """Load cases from repository for current project."""
+        if self._case_repo:
+            self._cases = self._case_repo.get_all()
+        else:
+            self._cases = []
 
     def _add_to_recent(self, project: Project) -> None:
         """Add project to recent projects list."""
