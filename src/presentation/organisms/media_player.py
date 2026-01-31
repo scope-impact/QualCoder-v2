@@ -15,7 +15,7 @@ import sys
 from abc import ABC, abstractmethod
 from pathlib import Path
 
-from PySide6.QtCore import Qt, QTimer, QUrl, Signal
+from PySide6.QtCore import Qt, QTimer, Signal
 from PySide6.QtWidgets import (
     QFrame,
     QHBoxLayout,
@@ -35,25 +35,13 @@ from design_system import (
     get_colors,
 )
 
-# Try to import VLC, fall back to Qt if unavailable
+# Try to import VLC - falls back to Noop if unavailable
 try:
     import vlc
 
     HAS_VLC = True
 except (ImportError, OSError):
     HAS_VLC = False
-
-# Check if Qt Multimedia is available (may fail in headless environments)
-try:
-    from PySide6.QtMultimedia import QAudioOutput, QMediaPlayer
-    from PySide6.QtMultimediaWidgets import QVideoWidget
-
-    HAS_QT_MULTIMEDIA = True
-except (ImportError, OSError):
-    HAS_QT_MULTIMEDIA = False
-    QAudioOutput = None
-    QMediaPlayer = None
-    QVideoWidget = None
 
 
 class MediaBackend(ABC):
@@ -199,73 +187,6 @@ class VLCBackend(MediaBackend):
             self._player.set_nsobject(int(self._video_frame.winId()))
 
 
-class QtBackend(MediaBackend):
-    """Qt QMediaPlayer backend (fallback when VLC unavailable)."""
-
-    def __init__(self):
-        self._player = QMediaPlayer()
-        self._audio_output = QAudioOutput()
-        self._player.setAudioOutput(self._audio_output)
-        self._audio_output.setVolume(0.7)
-
-        self._video_widget = QVideoWidget()
-        self._player.setVideoOutput(self._video_widget)
-        self._video_frame: QFrame | None = None
-
-    def setup(self, video_frame: QFrame) -> None:
-        self._video_frame = video_frame
-        # Add video widget to frame
-        if video_frame.layout() is None:
-            layout = QVBoxLayout(video_frame)
-            layout.setContentsMargins(0, 0, 0, 0)
-        video_frame.layout().addWidget(self._video_widget)
-
-    def load(self, path: Path) -> bool:
-        try:
-            self._player.setSource(QUrl.fromLocalFile(str(path)))
-            return True
-        except Exception:
-            return False
-
-    def play(self) -> None:
-        self._player.play()
-
-    def pause(self) -> None:
-        self._player.pause()
-
-    def stop(self) -> None:
-        self._player.stop()
-
-    def seek(self, position_ms: int) -> None:
-        self._player.setPosition(position_ms)
-
-    def get_position(self) -> int:
-        return self._player.position()
-
-    def get_duration(self) -> int:
-        return self._player.duration()
-
-    def is_playing(self) -> bool:
-        return self._player.playbackState() == QMediaPlayer.PlaybackState.PlayingState
-
-    def set_volume(self, volume: int) -> None:
-        self._audio_output.setVolume(volume / 100.0)
-
-    def clear(self) -> None:
-        self._player.stop()
-        self._player.setSource(QUrl())
-
-    def cleanup(self) -> None:
-        self._player.stop()
-
-    def is_ended(self) -> bool:
-        return self._player.playbackState() == QMediaPlayer.PlaybackState.StoppedState
-
-    def attach_video_output(self) -> None:
-        # Qt handles this automatically
-        pass
-
-
 class NoopBackend(MediaBackend):
     """
     No-operation backend for headless/testing environments.
@@ -374,12 +295,10 @@ class MediaPlayer(QWidget):
     def _setup_backend(self):
         """Initialize the appropriate media backend.
 
-        Priority: VLC > Qt Multimedia > Noop (for testing)
+        Priority: VLC > Noop (for headless/testing)
         """
         if HAS_VLC:
             self._backend: MediaBackend = VLCBackend()
-        elif HAS_QT_MULTIMEDIA:
-            self._backend = QtBackend()
         else:
             self._backend = NoopBackend()
 
@@ -598,23 +517,15 @@ class MediaPlayer(QWidget):
         """Check if VLC backend is available."""
         return HAS_VLC
 
-    @staticmethod
-    def has_qt_multimedia() -> bool:
-        """Check if Qt Multimedia backend is available."""
-        return HAS_QT_MULTIMEDIA
-
     def get_backend_name(self) -> str:
         """Get the name of the current backend."""
         if isinstance(self._backend, VLCBackend):
             return "VLC"
-        elif isinstance(self._backend, QtBackend):
-            return "Qt"
-        else:
-            return "Noop"
+        return "Noop"
 
     def is_functional(self) -> bool:
         """Check if the player has a functional backend (not Noop)."""
-        return not isinstance(self._backend, NoopBackend)
+        return isinstance(self._backend, VLCBackend)
 
     def load_media(self, path: str | Path):
         """
