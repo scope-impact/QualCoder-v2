@@ -1,0 +1,34 @@
+project_name: "QualCoder v2"
+task_prefix: "qc"
+zero_padded_ids: 3
+
+statuses:
+  - "To Do"
+  - "In Progress"
+  - "Done"
+  - "Blocked"
+
+labels:
+  # Layers
+  - "design-system"
+  - "presentation"
+  - "domain"
+  - "application"
+  - "infrastructure"
+  - "agent-context"
+  # Types
+  - "feature"
+  - "architecture"
+  - "documentation"
+  - "testing"
+  - "refactor"
+  # Contexts
+  - "coding"
+  - "sources"
+  - "cases"
+  - "analysis"
+  - "projects"
+  # Priority
+  - "P0"
+  - "P1"
+  - "P2"
