@@ -14,8 +14,10 @@ Structure:
     Screen (Template) → Page → Organisms → Design System Components
 """
 
+from .file_manager_page import FileManagerPage
 from .text_coding_page import TextCodingPage
 
 __all__ = [
     "TextCodingPage",
+    "FileManagerPage",
 ]

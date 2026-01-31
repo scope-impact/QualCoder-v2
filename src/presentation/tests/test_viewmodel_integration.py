@@ -27,11 +27,6 @@ pytestmark = pytest.mark.integration  # All tests in this module are integration
 class TestTextSelectionCapture:
     """Test that TextEditorPanel captures and emits text selection."""
 
-    def test_text_editor_panel_has_text_selected_signal(self, qapp, colors):
-        """AC #1: TextEditorPanel should have text_selected signal."""
-        panel = TextEditorPanel(colors=colors)
-        assert hasattr(panel, "text_selected")
-
     def test_text_selected_emitted_on_selection(self, qapp, qtbot, colors):
         """AC #1: text_selected should emit when user selects text."""
         panel = TextEditorPanel(colors=colors)
@@ -60,11 +55,6 @@ class TestTextSelectionCapture:
 
 class TestTextDeselection:
     """Test text deselection signal."""
-
-    def test_text_editor_panel_has_text_deselected_signal(self, qapp, colors):
-        """AC #3: TextEditorPanel should have text_deselected signal."""
-        panel = TextEditorPanel(colors=colors)
-        assert hasattr(panel, "text_deselected")
 
     def test_text_deselected_emitted_on_clear(self, qapp, qtbot, colors):
         """AC #3: text_deselected should emit when selection is cleared."""

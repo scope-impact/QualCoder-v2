@@ -26,6 +26,10 @@ from .memo_dialog import (
     MemosPanel,
     SegmentMemoDialog,
 )
+from .project_dialog import (
+    CreateProjectDialog,
+    OpenProjectDialog,
+)
 
 __all__ = [
     "MemoDialog",
@@ -37,4 +41,6 @@ __all__ = [
     "ColorPickerDialog",
     "AutoCodeDialog",
     "AutoCodePreview",
+    "OpenProjectDialog",
+    "CreateProjectDialog",
 ]

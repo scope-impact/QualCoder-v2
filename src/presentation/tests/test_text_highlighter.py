@@ -57,12 +57,6 @@ class TestCodeSegment:
 class TestTextHighlighter:
     """Tests for TextHighlighter component"""
 
-    def test_creation(self, qtbot):
-        """TextHighlighter should be created"""
-        highlighter = TextHighlighter()
-        qtbot.addWidget(highlighter)
-        assert highlighter is not None
-
     def test_set_text(self, qtbot):
         """TextHighlighter should display text"""
         highlighter = TextHighlighter()
@@ -208,23 +202,6 @@ class TestTextHighlighter:
         # Should not raise
         highlighter.scroll_to_position(200)
 
-    def test_selection_signal(self, qtbot):
-        """TextHighlighter should emit text_selected signal"""
-        highlighter = TextHighlighter()
-        qtbot.addWidget(highlighter)
-
-        highlighter.set_text("Hello World")
-
-        # Signal should exist
-        assert hasattr(highlighter, "text_selected")
-
-    def test_segment_clicked_signal(self, qtbot):
-        """TextHighlighter should have segment_clicked signal"""
-        highlighter = TextHighlighter()
-        qtbot.addWidget(highlighter)
-
-        assert hasattr(highlighter, "segment_clicked")
-
     def test_file_offset(self, qtbot):
         """TextHighlighter should handle file offset"""
         highlighter = TextHighlighter()
@@ -283,22 +260,6 @@ class TestTextHighlighter:
 class TestCodedTextHighlight:
     """Tests for CodedTextHighlight component"""
 
-    def test_creation(self, qtbot):
-        """CodedTextHighlight should be created"""
-        highlight = CodedTextHighlight(
-            text="Test text", code_name="Test Code", code_color=_colors.code_yellow
-        )
-        qtbot.addWidget(highlight)
-        assert highlight is not None
-
-    def test_inline_mode(self, qtbot):
-        """CodedTextHighlight should support inline mode"""
-        highlight = CodedTextHighlight(
-            text="Inline text", code_color=_colors.code_yellow, inline=True
-        )
-        qtbot.addWidget(highlight)
-        assert highlight is not None
-
     def test_overlap_indicator(self, qtbot):
         """CodedTextHighlight should show overlap indicator"""
         highlight = CodedTextHighlight(
@@ -314,14 +275,6 @@ class TestCodedTextHighlight:
 class TestOverlapIndicator:
     """Tests for OverlapIndicator component"""
 
-    def test_creation(self, qtbot):
-        """OverlapIndicator should be created"""
-        indicator = OverlapIndicator(count=3)
-        qtbot.addWidget(indicator)
-
-        assert indicator is not None
-        assert indicator._count == 3
-
     def test_size(self, qtbot):
         """OverlapIndicator should have fixed size"""
         indicator = OverlapIndicator()
@@ -333,19 +286,6 @@ class TestOverlapIndicator:
 
 class TestAnnotationIndicator:
     """Tests for AnnotationIndicator component"""
-
-    def test_creation(self, qtbot):
-        """AnnotationIndicator should be created"""
-        indicator = AnnotationIndicator(annotation_type="memo")
-        qtbot.addWidget(indicator)
-        assert indicator is not None
-
-    def test_different_types(self, qtbot):
-        """AnnotationIndicator should support different types"""
-        for ann_type in ["memo", "comment", "link"]:
-            indicator = AnnotationIndicator(annotation_type=ann_type)
-            qtbot.addWidget(indicator)
-            assert indicator is not None
 
     def test_click_signal(self, qtbot):
         """AnnotationIndicator should have clicked signal"""

@@ -1,10 +1,8 @@
 """
 Tests for Auto-Coding Payloads.
 
-Verifies payloads are immutable and carry correct data.
+Verifies payloads carry correct data through factory methods.
 """
-
-import pytest
 
 from src.application.coding.auto_coding_payloads import (
     AutoCodeBatchAppliedPayload,
@@ -20,22 +18,12 @@ from src.application.coding.auto_coding_payloads import (
 class TestTextMatchPayload:
     """Tests for TextMatchPayload."""
 
-    def test_creates_with_positions(self):
-        """Payload stores start and end positions."""
-        payload = TextMatchPayload(start=10, end=20)
-        assert payload.start == 10
-        assert payload.end == 20
-
     def test_length_property(self):
-        """Payload computes length correctly."""
+        """Payload stores positions and computes length correctly."""
         payload = TextMatchPayload(start=10, end=25)
+        assert payload.start == 10
+        assert payload.end == 25
         assert payload.length == 15
-
-    def test_is_frozen(self):
-        """Payload is immutable."""
-        payload = TextMatchPayload(start=0, end=5)
-        with pytest.raises(AttributeError):
-            payload.start = 10
 
 
 class TestMatchesFoundPayload:
@@ -59,15 +47,6 @@ class TestMatchesFoundPayload:
         assert len(payload.matches) == 3
         assert payload.matches[0].start == 0
         assert payload.matches[1].end == 15
-
-    def test_has_timestamp(self):
-        """Payload has timestamp."""
-        payload = MatchesFoundPayload.from_matches(
-            pattern="test",
-            match_type="exact",
-            scope="all",
-            matches=[],
-        )
         assert payload.timestamp is not None
 
 

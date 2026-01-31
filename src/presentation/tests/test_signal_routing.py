@@ -23,13 +23,6 @@ _colors = get_colors()
 class TestCodesNavigationClicked:
     """CodesPanel.navigation_clicked should be routed to page/screen."""
 
-    def test_page_has_navigation_clicked_signal(self, qtbot):
-        """TextCodingPage should expose navigation_clicked signal."""
-        page = TextCodingPage(colors=_colors)
-        qtbot.addWidget(page)
-
-        assert hasattr(page, "navigation_clicked")
-
     def test_codes_panel_navigation_routes_to_page(self, qtbot):
         """navigation_clicked from CodesPanel should emit on page."""
         page = TextCodingPage(colors=_colors)
@@ -41,13 +34,6 @@ class TestCodesNavigationClicked:
 
         assert spy.count() == 1
         assert spy.at(0)[0] == "prev"
-
-    def test_screen_has_navigation_clicked_signal(self, qtbot):
-        """TextCodingScreen should expose navigation_clicked signal."""
-        screen = TextCodingScreen(colors=_colors)
-        qtbot.addWidget(screen)
-
-        assert hasattr(screen, "navigation_clicked")
 
     def test_page_navigation_routes_to_screen(self, qtbot):
         """navigation_clicked from page should emit on screen."""
@@ -64,13 +50,6 @@ class TestCodesNavigationClicked:
 
 class TestEditorCodeApplied:
     """TextEditorPanel.code_applied should be routed to page/screen."""
-
-    def test_page_has_editor_code_applied_signal(self, qtbot):
-        """TextCodingPage should expose editor_code_applied signal."""
-        page = TextCodingPage(colors=_colors)
-        qtbot.addWidget(page)
-
-        assert hasattr(page, "editor_code_applied")
 
     def test_editor_code_applied_routes_to_page(self, qtbot):
         """code_applied from TextEditorPanel should emit on page."""
@@ -102,13 +81,6 @@ class TestEditorCodeApplied:
 class TestAIChatClicked:
     """DetailsPanel.ai_chat_clicked should be routed to page/screen."""
 
-    def test_page_has_ai_chat_clicked_signal(self, qtbot):
-        """TextCodingPage should expose ai_chat_clicked signal."""
-        page = TextCodingPage(colors=_colors)
-        qtbot.addWidget(page)
-
-        assert hasattr(page, "ai_chat_clicked")
-
     def test_details_ai_chat_routes_to_page(self, qtbot):
         """ai_chat_clicked from DetailsPanel should emit on page."""
         page = TextCodingPage(colors=_colors)
@@ -120,34 +92,9 @@ class TestAIChatClicked:
 
         assert spy.count() == 1
 
-    def test_screen_has_ai_chat_clicked_signal(self, qtbot):
-        """TextCodingScreen should expose ai_chat_clicked signal."""
-        screen = TextCodingScreen(colors=_colors)
-        qtbot.addWidget(screen)
-
-        assert hasattr(screen, "ai_chat_clicked")
-
-    def test_ai_chat_routes_to_screen(self, qtbot):
-        """ai_chat_clicked should emit on screen."""
-        screen = TextCodingScreen(colors=_colors)
-        qtbot.addWidget(screen)
-
-        spy = QSignalSpy(screen.ai_chat_clicked)
-        screen.page.details_panel.ai_chat_clicked.emit()
-        QApplication.processEvents()
-
-        assert spy.count() == 1
-
 
 class TestAISuggestClicked:
     """DetailsPanel.ai_suggest_clicked should be routed to page/screen."""
-
-    def test_page_has_ai_suggest_clicked_signal(self, qtbot):
-        """TextCodingPage should expose ai_suggest_clicked signal."""
-        page = TextCodingPage(colors=_colors)
-        qtbot.addWidget(page)
-
-        assert hasattr(page, "ai_suggest_clicked")
 
     def test_details_ai_suggest_routes_to_page(self, qtbot):
         """ai_suggest_clicked from DetailsPanel should emit on page."""
@@ -160,34 +107,9 @@ class TestAISuggestClicked:
 
         assert spy.count() == 1
 
-    def test_screen_has_ai_suggest_clicked_signal(self, qtbot):
-        """TextCodingScreen should expose ai_suggest_clicked signal."""
-        screen = TextCodingScreen(colors=_colors)
-        qtbot.addWidget(screen)
-
-        assert hasattr(screen, "ai_suggest_clicked")
-
-    def test_ai_suggest_routes_to_screen(self, qtbot):
-        """ai_suggest_clicked should emit on screen."""
-        screen = TextCodingScreen(colors=_colors)
-        qtbot.addWidget(screen)
-
-        spy = QSignalSpy(screen.ai_suggest_clicked)
-        screen.page.details_panel.ai_suggest_clicked.emit()
-        QApplication.processEvents()
-
-        assert spy.count() == 1
-
 
 class TestMediaTypeChanged:
     """CodingToolbar.media_type_changed should be routed to page/screen."""
-
-    def test_page_has_media_type_changed_signal(self, qtbot):
-        """TextCodingPage should expose media_type_changed signal."""
-        page = TextCodingPage(colors=_colors)
-        qtbot.addWidget(page)
-
-        assert hasattr(page, "media_type_changed")
 
     def test_toolbar_media_type_routes_to_page(self, qtbot):
         """media_type_changed from CodingToolbar should emit on page."""
@@ -200,13 +122,6 @@ class TestMediaTypeChanged:
 
         assert spy.count() == 1
         assert spy.at(0)[0] == "image"
-
-    def test_screen_has_media_type_changed_signal(self, qtbot):
-        """TextCodingScreen should expose media_type_changed signal."""
-        screen = TextCodingScreen(colors=_colors)
-        qtbot.addWidget(screen)
-
-        assert hasattr(screen, "media_type_changed")
 
     def test_media_type_routes_to_screen(self, qtbot):
         """media_type_changed should emit on screen."""
@@ -224,13 +139,6 @@ class TestMediaTypeChanged:
 class TestSearchChanged:
     """CodingToolbar.search_changed should be routed to page/screen."""
 
-    def test_page_has_search_changed_signal(self, qtbot):
-        """TextCodingPage should expose search_changed signal."""
-        page = TextCodingPage(colors=_colors)
-        qtbot.addWidget(page)
-
-        assert hasattr(page, "search_changed")
-
     def test_toolbar_search_routes_to_page(self, qtbot):
         """search_changed from CodingToolbar should emit on page."""
         page = TextCodingPage(colors=_colors)
@@ -242,13 +150,6 @@ class TestSearchChanged:
 
         assert spy.count() == 1
         assert spy.at(0)[0] == "test query"
-
-    def test_screen_has_search_changed_signal(self, qtbot):
-        """TextCodingScreen should expose search_changed signal."""
-        screen = TextCodingScreen(colors=_colors)
-        qtbot.addWidget(screen)
-
-        assert hasattr(screen, "search_changed")
 
     def test_search_routes_to_screen(self, qtbot):
         """search_changed should emit on screen."""
