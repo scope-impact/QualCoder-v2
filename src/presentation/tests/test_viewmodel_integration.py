@@ -7,13 +7,16 @@ Tests the wiring between Presentation layer and Application layer:
 - Screen-to-ViewModel signal routing
 - ViewModel-to-Screen signal routing
 - Source document tracking
+
+Note: qapp, colors, coding_context, viewmodel fixtures from root conftest.py.
 """
+
+import pytest
 
 from src.presentation.organisms.text_editor_panel import TextEditorPanel
 from src.presentation.screens.text_coding import TextCodingScreen
 
-
-# Note: qapp, colors, coding_context, viewmodel fixtures come from conftest.py
+pytestmark = pytest.mark.integration  # All tests in this module are integration tests
 
 
 # =============================================================================

@@ -2,7 +2,10 @@
 Tests for core components: Button, Input, Card, Badge, Alert, etc.
 """
 
+import pytest
 from PySide6.QtCore import Qt
+
+pytestmark = pytest.mark.unit  # All tests in this module are unit tests
 
 from design_system.components import (
     Alert,
@@ -19,36 +22,35 @@ from design_system.components import (
 
 
 class TestButton:
-    """Tests for Button component"""
+    """Tests for Button component."""
 
     def test_button_creation(self, qtbot):
-        """Button should be created with default settings"""
+        """Button should be created with default settings."""
         btn = Button("Click me")
         qtbot.addWidget(btn)
 
         assert btn.text() == "Click me"
         assert btn.cursor().shape() == Qt.CursorShape.PointingHandCursor
 
-    def test_button_variants(self, qtbot):
-        """Button should support different variants"""
-        variants = ["primary", "secondary", "outline", "ghost", "danger", "success"]
+    @pytest.mark.parametrize(
+        "variant",
+        ["primary", "secondary", "outline", "ghost", "danger", "success"],
+    )
+    def test_button_variant(self, qtbot, variant):
+        """Button should support different variants."""
+        btn = Button("Test", variant=variant)
+        qtbot.addWidget(btn)
+        assert btn._variant == variant
 
-        for variant in variants:
-            btn = Button("Test", variant=variant)
-            qtbot.addWidget(btn)
-            assert btn._variant == variant
-
-    def test_button_sizes(self, qtbot):
-        """Button should support different sizes"""
-        sizes = ["sm", "md", "lg"]
-
-        for size in sizes:
-            btn = Button("Test", size=size)
-            qtbot.addWidget(btn)
-            assert btn._size == size
+    @pytest.mark.parametrize("size", ["sm", "md", "lg"])
+    def test_button_size(self, qtbot, size):
+        """Button should support different sizes."""
+        btn = Button("Test", size=size)
+        qtbot.addWidget(btn)
+        assert btn._size == size
 
     def test_button_click(self, qtbot):
-        """Button should emit clicked signal"""
+        """Button should emit clicked signal."""
         btn = Button("Click me")
         qtbot.addWidget(btn)
 
@@ -57,108 +59,107 @@ class TestButton:
 
 
 class TestInput:
-    """Tests for Input component"""
+    """Tests for Input component."""
 
     def test_input_creation(self, qtbot):
-        """Input should be created with placeholder"""
+        """Input should be created with placeholder."""
         inp = Input(placeholder="Enter text...")
         qtbot.addWidget(inp)
 
         assert inp.placeholderText() == "Enter text..."
 
     def test_input_text(self, qtbot):
-        """Input should accept and return text"""
+        """Input should accept and return text."""
         inp = Input()
         qtbot.addWidget(inp)
 
         qtbot.keyClicks(inp, "Hello World")
         assert inp.text() == "Hello World"
 
-    def test_input_error_state(self, qtbot):
-        """Input should support error state"""
+    @pytest.mark.parametrize("error_state", [True, False])
+    def test_input_error_state(self, qtbot, error_state):
+        """Input should support error state."""
         inp = Input()
         qtbot.addWidget(inp)
 
-        assert not inp.is_error()
-        inp.set_error(True)
-        assert inp.is_error()
-        inp.set_error(False)
-        assert not inp.is_error()
+        inp.set_error(error_state)
+        assert inp.is_error() == error_state
 
 
 class TestLabel:
-    """Tests for Label component"""
+    """Tests for Label component."""
 
     def test_label_creation(self, qtbot):
-        """Label should display text"""
+        """Label should display text."""
         label = Label("Test Label")
         qtbot.addWidget(label)
 
         assert label.text() == "Test Label"
 
-    def test_label_variants(self, qtbot):
-        """Label should support variants"""
-        variants = ["default", "muted", "secondary", "title", "description"]
-
-        for variant in variants:
-            label = Label("Test", variant=variant)
-            qtbot.addWidget(label)
-            # Variant is set as property for non-default
-            if variant != "default":
-                assert label.property("variant") == variant
+    @pytest.mark.parametrize(
+        "variant", ["default", "muted", "secondary", "title", "description"]
+    )
+    def test_label_variant(self, qtbot, variant):
+        """Label should support variants."""
+        label = Label("Test", variant=variant)
+        qtbot.addWidget(label)
+        # Variant is set as property for non-default
+        if variant != "default":
+            assert label.property("variant") == variant
 
 
 class TestCard:
-    """Tests for Card component"""
+    """Tests for Card component."""
 
     def test_card_creation(self, qtbot):
-        """Card should be created"""
+        """Card should be created."""
         card = Card()
         qtbot.addWidget(card)
 
         assert card.layout() is not None
 
-    def test_card_with_shadow(self, qtbot):
-        """Card should have shadow effect by default"""
-        card = Card(shadow=True)
+    @pytest.mark.parametrize(
+        "shadow,has_effect",
+        [(True, True), (False, False)],
+    )
+    def test_card_shadow(self, qtbot, shadow, has_effect):
+        """Card shadow effect should be configurable."""
+        card = Card(shadow=shadow)
         qtbot.addWidget(card)
 
-        assert card.graphicsEffect() is not None
-
-    def test_card_without_shadow(self, qtbot):
-        """Card can be created without shadow"""
-        card = Card(shadow=False)
-        qtbot.addWidget(card)
-
-        assert card.graphicsEffect() is None
+        if has_effect:
+            assert card.graphicsEffect() is not None
+        else:
+            assert card.graphicsEffect() is None
 
 
 class TestBadge:
-    """Tests for Badge component"""
+    """Tests for Badge component."""
 
     def test_badge_creation(self, qtbot):
-        """Badge should display text"""
+        """Badge should display text."""
         badge = Badge("New")
         qtbot.addWidget(badge)
 
         assert badge.text() == "New"
 
-    def test_badge_variants(self, qtbot):
-        """Badge should support different variants"""
-        variants = ["default", "secondary", "success", "warning", "error", "info"]
-
-        for variant in variants:
-            badge = Badge("Test", variant=variant)
-            qtbot.addWidget(badge)
-            # Badge should be visible
-            assert badge.isVisible() or True  # Just check it doesn't crash
+    @pytest.mark.parametrize(
+        "variant",
+        ["default", "secondary", "success", "warning", "error", "info"],
+    )
+    def test_badge_variant(self, qtbot, variant):
+        """Badge should support different variants."""
+        badge = Badge("Test", variant=variant)
+        qtbot.addWidget(badge)
+        # Badge should be created without error
+        assert badge is not None
 
 
 class TestAlert:
-    """Tests for Alert component"""
+    """Tests for Alert component."""
 
     def test_alert_creation(self, qtbot):
-        """Alert should be created with title and description"""
+        """Alert should be created with title and description."""
         alert = Alert(title="Warning", description="This is a warning message")
         qtbot.addWidget(alert)
 
@@ -166,41 +167,43 @@ class TestAlert:
         assert alert.layout() is not None
         assert alert.layout().count() > 0
 
-    def test_alert_variants(self, qtbot):
-        """Alert should support different variants"""
-        variants = ["default", "destructive", "success", "warning", "info"]
-
-        for variant in variants:
-            alert = Alert(title="Test", description="Test message", variant=variant)
-            qtbot.addWidget(alert)
-            # Should not crash
-            assert alert is not None
+    @pytest.mark.parametrize(
+        "variant",
+        ["default", "destructive", "success", "warning", "info"],
+    )
+    def test_alert_variant(self, qtbot, variant):
+        """Alert should support different variants."""
+        alert = Alert(title="Test", description="Test message", variant=variant)
+        qtbot.addWidget(alert)
+        # Should not crash
+        assert alert is not None
 
 
 class TestAvatar:
-    """Tests for Avatar component"""
+    """Tests for Avatar component."""
 
     def test_avatar_creation(self, qtbot):
-        """Avatar should display initials"""
+        """Avatar should display initials."""
         avatar = Avatar("JD")
         qtbot.addWidget(avatar)
 
         assert avatar.text() == "JD"
 
-    def test_avatar_size(self, qtbot):
-        """Avatar should respect size parameter"""
-        avatar = Avatar("A", size=60)
+    @pytest.mark.parametrize("size", [32, 48, 60, 80])
+    def test_avatar_size(self, qtbot, size):
+        """Avatar should respect size parameter."""
+        avatar = Avatar("A", size=size)
         qtbot.addWidget(avatar)
 
-        assert avatar.width() == 60
-        assert avatar.height() == 60
+        assert avatar.width() == size
+        assert avatar.height() == size
 
 
 class TestChip:
-    """Tests for Chip component"""
+    """Tests for Chip component."""
 
     def test_chip_creation(self, qtbot):
-        """Chip should display text"""
+        """Chip should display text."""
         chip = Chip("Category")
         qtbot.addWidget(chip)
 
@@ -208,7 +211,7 @@ class TestChip:
         assert chip.layout().count() > 0
 
     def test_chip_closable(self, qtbot):
-        """Closable chip should have close button"""
+        """Closable chip should have close button."""
         chip = Chip("Tag", closable=True)
         qtbot.addWidget(chip)
 
@@ -216,7 +219,7 @@ class TestChip:
         assert chip.layout().count() >= 2
 
     def test_chip_close_signal(self, qtbot):
-        """Closable chip should emit close_clicked signal"""
+        """Closable chip should emit close_clicked signal."""
         chip = Chip("Tag", closable=True)
         qtbot.addWidget(chip)
 
@@ -228,40 +231,39 @@ class TestChip:
 
 
 class TestFileIcon:
-    """Tests for FileIcon component"""
+    """Tests for FileIcon component."""
 
-    def test_file_icon_types(self, qtbot):
-        """FileIcon should support different file types"""
-        types = ["text", "audio", "video", "image", "pdf"]
+    @pytest.mark.parametrize("file_type", ["text", "audio", "video", "image", "pdf"])
+    def test_file_icon_type(self, qtbot, file_type):
+        """FileIcon should support different file types."""
+        icon = FileIcon(file_type)
+        qtbot.addWidget(icon)
+        # Should not crash
+        assert icon is not None
 
-        for file_type in types:
-            icon = FileIcon(file_type)
-            qtbot.addWidget(icon)
-            # Should not crash
-            assert icon is not None
-
-    def test_file_icon_size(self, qtbot):
-        """FileIcon should respect size parameter"""
-        icon = FileIcon("text", size=48)
+    @pytest.mark.parametrize("size", [24, 32, 48, 64])
+    def test_file_icon_size(self, qtbot, size):
+        """FileIcon should respect size parameter."""
+        icon = FileIcon("text", size=size)
         qtbot.addWidget(icon)
 
-        assert icon.width() == 48
-        assert icon.height() == 48
+        assert icon.width() == size
+        assert icon.height() == size
 
 
 class TestSeparator:
-    """Tests for Separator component"""
+    """Tests for Separator component."""
 
-    def test_horizontal_separator(self, qtbot):
-        """Horizontal separator should have height of 1"""
-        sep = Separator(orientation="horizontal")
+    @pytest.mark.parametrize(
+        "orientation,expected_dim",
+        [("horizontal", "height"), ("vertical", "width")],
+    )
+    def test_separator_orientation(self, qtbot, orientation, expected_dim):
+        """Separator should have correct dimension based on orientation."""
+        sep = Separator(orientation=orientation)
         qtbot.addWidget(sep)
 
-        assert sep.height() == 1
-
-    def test_vertical_separator(self, qtbot):
-        """Vertical separator should have width of 1"""
-        sep = Separator(orientation="vertical")
-        qtbot.addWidget(sep)
-
-        assert sep.width() == 1
+        if expected_dim == "height":
+            assert sep.height() == 1
+        else:
+            assert sep.width() == 1

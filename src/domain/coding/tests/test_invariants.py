@@ -5,6 +5,10 @@ Invariants are pure predicate functions that validate business rules.
 Tests verify they correctly identify valid and invalid states.
 """
 
+import pytest
+
+pytestmark = pytest.mark.unit  # All tests in this module are unit tests
+
 from src.domain.coding.entities import (
     Category,
     Code,

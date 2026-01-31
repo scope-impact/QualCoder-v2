@@ -1,8 +1,11 @@
 """
-Pytest configuration and fixtures for design system tests
+Pytest fixtures for design system tests.
+
+Note: qapp and colors fixtures are inherited from root conftest.py.
+This file contains design-system-specific fixtures for screenshots
+and visual regression testing.
 """
 
-import sys
 from datetime import datetime
 from pathlib import Path
 
@@ -12,18 +15,9 @@ from PySide6.QtGui import QPixmap
 from PySide6.QtWidgets import QApplication, QWidget
 
 
-# Ensure we have a QApplication instance
-@pytest.fixture(scope="session")
-def qapp():
-    """Create QApplication instance for the test session"""
-    app = QApplication.instance()
-    if app is None:
-        app = QApplication(sys.argv)
-    yield app
-
-
-# Note: pytest-qt provides its own qtbot fixture, no need to redefine it
-# The qapp fixture ensures QApplication exists before tests run
+# =============================================================================
+# Theme Fixtures
+# =============================================================================
 
 
 @pytest.fixture
