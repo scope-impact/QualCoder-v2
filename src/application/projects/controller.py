@@ -100,6 +100,16 @@ class NavigateToScreenCommand:
     screen_name: str
 
 
+@dataclass(frozen=True)
+class NavigateToSegmentCommand:
+    """Command to navigate to a specific segment position in a source."""
+
+    source_id: int
+    start_pos: int
+    end_pos: int
+    highlight: bool = True
+
+
 # ============================================================
 # Controller Implementation
 # ============================================================
@@ -137,6 +147,7 @@ class ProjectControllerImpl:
         # Current project state
         self._current_project: Project | None = None
         self._current_screen: str | None = None
+        self._current_source: Source | None = None
         self._sources: list[Source] = []
         self._recent_projects: list[RecentProject] = []
 
@@ -371,8 +382,24 @@ class ProjectControllerImpl:
 
         event: SourceOpened = result
 
-        # Publish event
+        # Update current source
+        source = next((s for s in self._sources if s.id == source_id), None)
+        if source:
+            self._current_source = source
+
+        # Publish source opened event
         self._event_bus.publish(event)
+
+        # Navigate to coding screen
+        old_screen = self._current_screen
+        self._current_screen = "coding"
+
+        # Publish screen changed event
+        screen_event = ScreenChanged.create(
+            from_screen=old_screen,
+            to_screen="coding",
+        )
+        self._event_bus.publish(screen_event)
 
         return Success(event)
 
@@ -397,6 +424,49 @@ class ProjectControllerImpl:
 
         return Success(event)
 
+    def navigate_to_segment(self, command: NavigateToSegmentCommand) -> Result:
+        """
+        Navigate to a specific segment position in a source.
+
+        This command:
+        1. Opens the specified source
+        2. Navigates to the coding screen
+        3. Scrolls to and highlights the specified position
+        """
+        from src.domain.projects.events import NavigatedToSegment
+
+        # Step 1: Validate - find the source
+        source_id = SourceId(value=command.source_id)
+        source = next((s for s in self._sources if s.id == source_id), None)
+
+        if source is None:
+            return Failure(f"Source {command.source_id} not found")
+
+        # Step 2: Open the source
+        self._current_source = source
+
+        # Step 3: Navigate to coding screen
+        old_screen = self._current_screen
+        self._current_screen = "coding"
+
+        # Publish screen changed event
+        screen_event = ScreenChanged.create(
+            from_screen=old_screen,
+            to_screen="coding",
+        )
+        self._event_bus.publish(screen_event)
+
+        # Step 4: Publish navigation event
+        nav_event = NavigatedToSegment.create(
+            source_id=source_id,
+            position_start=command.start_pos,
+            position_end=command.end_pos,
+            highlight=command.highlight,
+        )
+        self._event_bus.publish(nav_event)
+
+        return Success(nav_event)
+
     # =========================================================================
     # Queries
     # =========================================================================
@@ -404,6 +474,10 @@ class ProjectControllerImpl:
     def get_current_project(self) -> Project | None:
         """Get the currently open project."""
         return self._current_project
+
+    def get_current_source(self) -> Source | None:
+        """Get the currently open source."""
+        return self._current_source
 
     def get_sources(self) -> list[Source]:
         """Get all sources in the current project."""
