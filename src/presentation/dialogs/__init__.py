@@ -23,6 +23,11 @@ from .delete_source_dialog import (
     DeleteSourceDialog,
     DeleteSourceInfo,
 )
+from .folder_dialog import (
+    FolderDialog,
+    FolderFormData,
+    RenameFolderDialog,
+)
 from .memo_dialog import (
     CodeMemoDialog,
     FileMemoDialog,
@@ -53,6 +58,9 @@ __all__ = [
     "CreateProjectDialog",
     "DeleteSourceDialog",
     "DeleteSourceInfo",
+    "FolderDialog",
+    "FolderFormData",
+    "RenameFolderDialog",
     "SourceMetadata",
     "SourceMetadataDialog",
 ]

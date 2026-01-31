@@ -11,7 +11,7 @@ from datetime import UTC, datetime
 from enum import Enum
 from pathlib import Path
 
-from src.domain.shared.types import SourceId
+from src.domain.shared.types import FolderId, SourceId
 
 # ============================================================
 # Enums
@@ -96,6 +96,7 @@ class Source:
     file_size: int = 0
     memo: str | None = None
     origin: str | None = None  # Where the source came from
+    folder_id: FolderId | None = None  # Folder containing this source
     case_ids: tuple[int, ...] = ()  # Associated cases
     code_count: int = 0  # Number of codes applied
     fulltext: str | None = None  # Text content for text sources
@@ -113,6 +114,7 @@ class Source:
             file_size=self.file_size,
             memo=self.memo,
             origin=self.origin,
+            folder_id=self.folder_id,
             case_ids=self.case_ids,
             code_count=self.code_count,
             fulltext=self.fulltext,
@@ -131,6 +133,26 @@ class Source:
             file_size=self.file_size,
             memo=new_memo,
             origin=self.origin,
+            folder_id=self.folder_id,
+            case_ids=self.case_ids,
+            code_count=self.code_count,
+            fulltext=self.fulltext,
+            created_at=self.created_at,
+            modified_at=datetime.now(UTC),
+        )
+
+    def with_folder(self, new_folder_id: FolderId | None) -> Source:
+        """Return new Source with updated folder."""
+        return Source(
+            id=self.id,
+            name=self.name,
+            source_type=self.source_type,
+            status=self.status,
+            file_path=self.file_path,
+            file_size=self.file_size,
+            memo=self.memo,
+            origin=self.origin,
+            folder_id=new_folder_id,
             case_ids=self.case_ids,
             code_count=self.code_count,
             fulltext=self.fulltext,
@@ -149,11 +171,44 @@ class Source:
             file_size=self.file_size,
             memo=self.memo,
             origin=self.origin,
+            folder_id=self.folder_id,
             case_ids=self.case_ids,
             code_count=new_count,
             fulltext=self.fulltext,
             created_at=self.created_at,
             modified_at=datetime.now(UTC),
+        )
+
+
+@dataclass(frozen=True)
+class Folder:
+    """
+    A folder for organizing sources in a project.
+
+    Folders can contain sources and be nested within other folders.
+    """
+
+    id: FolderId
+    name: str
+    parent_id: FolderId | None = None  # None means root level
+    created_at: datetime = field(default_factory=lambda: datetime.now(UTC))
+
+    def with_name(self, new_name: str) -> Folder:
+        """Return new Folder with updated name."""
+        return Folder(
+            id=self.id,
+            name=new_name,
+            parent_id=self.parent_id,
+            created_at=self.created_at,
+        )
+
+    def with_parent(self, new_parent_id: FolderId | None) -> Folder:
+        """Return new Folder with updated parent."""
+        return Folder(
+            id=self.id,
+            name=self.name,
+            parent_id=new_parent_id,
+            created_at=self.created_at,
         )
 
 
