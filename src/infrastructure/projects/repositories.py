@@ -20,7 +20,12 @@ from src.domain.projects.entities import (
     SourceType,
 )
 from src.domain.shared.types import CaseId, SourceId
-from src.infrastructure.projects.schema import cases, project_settings, source
+from src.infrastructure.projects.schema import (
+    case_source,
+    cases,
+    project_settings,
+    source,
+)
 
 if TYPE_CHECKING:
     from sqlalchemy import Connection
@@ -253,17 +258,27 @@ class SQLiteCaseRepository:
         self._conn = connection
 
     def get_all(self) -> list[Case]:
-        """Get all cases in the project."""
+        """Get all cases in the project, including linked source IDs."""
         stmt = select(cases).order_by(cases.c.name)
         result = self._conn.execute(stmt)
-        return [self._row_to_case(row) for row in result]
+        case_list = []
+        for row in result:
+            case_id = CaseId(value=row.id)
+            source_ids = tuple(self.get_source_ids(case_id))
+            case_list.append(self._row_to_case(row, source_ids=source_ids))
+        return case_list
 
     def get_by_id(self, case_id: CaseId) -> Case | None:
-        """Get a case by its ID."""
+        """Get a case by its ID, including linked source IDs."""
         stmt = select(cases).where(cases.c.id == case_id.value)
         result = self._conn.execute(stmt)
         row = result.fetchone()
-        return self._row_to_case(row) if row else None
+        if not row:
+            return None
+
+        # Fetch linked source IDs
+        source_ids = tuple(self.get_source_ids(case_id))
+        return self._row_to_case(row, source_ids=source_ids)
 
     def get_by_name(self, name: str) -> Case | None:
         """Get a case by its name (case-insensitive)."""
@@ -301,7 +316,12 @@ class SQLiteCaseRepository:
         self._conn.commit()
 
     def delete(self, case_id: CaseId) -> None:
-        """Delete a case by ID."""
+        """Delete a case by ID, including all source links."""
+        # First delete all source links
+        delete_links = delete(case_source).where(case_source.c.case_id == case_id.value)
+        self._conn.execute(delete_links)
+
+        # Then delete the case
         stmt = delete(cases).where(cases.c.id == case_id.value)
         self._conn.execute(stmt)
         self._conn.commit()
@@ -326,13 +346,58 @@ class SQLiteCaseRepository:
         result = self._conn.execute(stmt)
         return result.scalar()
 
-    def _row_to_case(self, row) -> Case:
+    # ==========================================================================
+    # Source Linking Methods
+    # ==========================================================================
+
+    def link_source(self, case_id: CaseId, source_id: SourceId) -> None:
+        """Link a source to a case (idempotent)."""
+        # Check if link already exists
+        if self.is_source_linked(case_id, source_id):
+            return
+
+        stmt = case_source.insert().values(
+            case_id=case_id.value,
+            source_id=source_id.value,
+            date=datetime.now(UTC).isoformat(),
+        )
+        self._conn.execute(stmt)
+        self._conn.commit()
+
+    def unlink_source(self, case_id: CaseId, source_id: SourceId) -> None:
+        """Unlink a source from a case (no-op if not linked)."""
+        stmt = delete(case_source).where(
+            (case_source.c.case_id == case_id.value)
+            & (case_source.c.source_id == source_id.value)
+        )
+        self._conn.execute(stmt)
+        self._conn.commit()
+
+    def get_source_ids(self, case_id: CaseId) -> list[int]:
+        """Get all source IDs linked to a case."""
+        stmt = select(case_source.c.source_id).where(
+            case_source.c.case_id == case_id.value
+        )
+        result = self._conn.execute(stmt)
+        return [row.source_id for row in result]
+
+    def is_source_linked(self, case_id: CaseId, source_id: SourceId) -> bool:
+        """Check if a source is linked to a case."""
+        stmt = select(func.count()).where(
+            (case_source.c.case_id == case_id.value)
+            & (case_source.c.source_id == source_id.value)
+        )
+        result = self._conn.execute(stmt)
+        return result.scalar() > 0
+
+    def _row_to_case(self, row, source_ids: tuple[int, ...] | None = None) -> Case:
         """Convert a database row to a Case entity."""
         return Case(
             id=CaseId(value=row.id),
             name=row.name,
             description=row.description,
             memo=row.memo,
+            source_ids=source_ids if source_ids is not None else (),
             created_at=row.created_at or datetime.now(UTC),
             updated_at=row.updated_at or datetime.now(UTC),
         )

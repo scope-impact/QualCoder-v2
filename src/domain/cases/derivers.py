@@ -15,6 +15,8 @@ from src.domain.cases.events import (
     CaseCreated,
     CaseRemoved,
     CaseUpdated,
+    SourceLinkedToCase,
+    SourceUnlinkedFromCase,
 )
 from src.domain.cases.invariants import (
     is_case_name_unique,
@@ -24,6 +26,7 @@ from src.domain.cases.invariants import (
     is_valid_case_name,
 )
 from src.domain.shared.types import CaseId, Failure
+from src.domain.shared.types import SourceId as _SourceId  # For type checking
 
 if TYPE_CHECKING:
     from src.domain.cases.entities import Case
@@ -123,6 +126,40 @@ class InvalidAttributeName:
     """Attribute name is invalid."""
 
     message: str = "Attribute name cannot be empty"
+
+
+@dataclass(frozen=True)
+class SourceAlreadyLinked:
+    """Source is already linked to case."""
+
+    case_id: CaseId | None = None
+    source_id: int = 0
+    message: str = ""
+
+    def __post_init__(self) -> None:
+        if not self.message and self.case_id:
+            object.__setattr__(
+                self,
+                "message",
+                f"Source {self.source_id} is already linked to case {self.case_id.value}",
+            )
+
+
+@dataclass(frozen=True)
+class SourceNotLinked:
+    """Source is not linked to case."""
+
+    case_id: CaseId | None = None
+    source_id: int = 0
+    message: str = ""
+
+    def __post_init__(self) -> None:
+        if not self.message and self.case_id:
+            object.__setattr__(
+                self,
+                "message",
+                f"Source {self.source_id} is not linked to case {self.case_id.value}",
+            )
 
 
 # =============================================================================
@@ -298,4 +335,70 @@ def derive_set_case_attribute(
         attr_name=attr_name.strip(),
         attr_type=attr_type.lower(),
         attr_value=attr_value,
+    )
+
+
+def derive_link_source_to_case(
+    case_id: CaseId,
+    source_id: _SourceId,
+    state: CaseState,
+) -> SourceLinkedToCase | Failure:
+    """
+    Derive a source linked to case event from inputs and state.
+
+    Pure function - no I/O, no side effects.
+
+    Args:
+        case_id: The case ID to link to
+        source_id: The source ID to link
+        state: Current case state for invariant checking
+
+    Returns:
+        SourceLinkedToCase event on success, Failure with reason on error
+    """
+    # Find the case
+    case = next((c for c in state.existing_cases if c.id == case_id), None)
+    if case is None:
+        return Failure(CaseNotFound(case_id=case_id))
+
+    # Check if source is already linked
+    if source_id.value in case.source_ids:
+        return Failure(SourceAlreadyLinked(case_id=case_id, source_id=source_id.value))
+
+    return SourceLinkedToCase(
+        case_id=case_id,
+        source_id=source_id.value,
+    )
+
+
+def derive_unlink_source_from_case(
+    case_id: CaseId,
+    source_id: _SourceId,
+    state: CaseState,
+) -> SourceUnlinkedFromCase | Failure:
+    """
+    Derive a source unlinked from case event from inputs and state.
+
+    Pure function - no I/O, no side effects.
+
+    Args:
+        case_id: The case ID to unlink from
+        source_id: The source ID to unlink
+        state: Current case state for invariant checking
+
+    Returns:
+        SourceUnlinkedFromCase event on success, Failure with reason on error
+    """
+    # Find the case
+    case = next((c for c in state.existing_cases if c.id == case_id), None)
+    if case is None:
+        return Failure(CaseNotFound(case_id=case_id))
+
+    # Check if source is linked
+    if source_id.value not in case.source_ids:
+        return Failure(SourceNotLinked(case_id=case_id, source_id=source_id.value))
+
+    return SourceUnlinkedFromCase(
+        case_id=case_id,
+        source_id=source_id.value,
     )

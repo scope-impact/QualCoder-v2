@@ -21,11 +21,19 @@ from returns.result import Failure, Result, Success
 from src.domain.cases.derivers import (
     CaseState,
     derive_create_case,
+    derive_link_source_to_case,
     derive_remove_case,
+    derive_unlink_source_from_case,
     derive_update_case,
 )
 from src.domain.cases.entities import Case
-from src.domain.cases.events import CaseCreated, CaseRemoved, CaseUpdated
+from src.domain.cases.events import (
+    CaseCreated,
+    CaseRemoved,
+    CaseUpdated,
+    SourceLinkedToCase,
+    SourceUnlinkedFromCase,
+)
 from src.domain.projects.derivers import (
     ProjectState,
     derive_add_source,
@@ -142,6 +150,22 @@ class RemoveCaseCommand:
     """Command to remove a case."""
 
     case_id: int
+
+
+@dataclass(frozen=True)
+class LinkSourceToCaseCommand:
+    """Command to link a source to a case."""
+
+    case_id: int
+    source_id: int
+
+
+@dataclass(frozen=True)
+class UnlinkSourceFromCaseCommand:
+    """Command to unlink a source from a case."""
+
+    case_id: int
+    source_id: int
 
 
 # ============================================================
@@ -623,6 +647,83 @@ class ProjectControllerImpl:
 
         # Update internal state
         self._cases = [c for c in self._cases if c.id != case_id]
+
+        # Publish event
+        self._event_bus.publish(event)
+
+        return Success(event)
+
+    def link_source_to_case(self, command: LinkSourceToCaseCommand) -> Result:
+        """Link a source to a case."""
+        if self._current_project is None:
+            return Failure("No project is currently open")
+
+        case_id = CaseId(value=command.case_id)
+        source_id = SourceId(value=command.source_id)
+
+        # Verify source exists
+        source = next((s for s in self._sources if s.id == source_id), None)
+        if source is None:
+            return Failure(f"Source {command.source_id} not found")
+
+        # Build state with fresh case data from repository
+        if self._case_repo:
+            self._cases = self._case_repo.get_all()
+        state = CaseState(existing_cases=tuple(self._cases))
+
+        # Derive event or failure
+        result = derive_link_source_to_case(
+            case_id=case_id,
+            source_id=source_id,
+            state=state,
+        )
+
+        if isinstance(result, Failure):
+            return result
+
+        event: SourceLinkedToCase = result
+
+        # Persist link
+        if self._case_repo:
+            self._case_repo.link_source(case_id, source_id)
+            # Refresh cases to get updated source_ids
+            self._cases = self._case_repo.get_all()
+
+        # Publish event
+        self._event_bus.publish(event)
+
+        return Success(event)
+
+    def unlink_source_from_case(self, command: UnlinkSourceFromCaseCommand) -> Result:
+        """Unlink a source from a case."""
+        if self._current_project is None:
+            return Failure("No project is currently open")
+
+        case_id = CaseId(value=command.case_id)
+        source_id = SourceId(value=command.source_id)
+
+        # Build state with fresh case data from repository
+        if self._case_repo:
+            self._cases = self._case_repo.get_all()
+        state = CaseState(existing_cases=tuple(self._cases))
+
+        # Derive event or failure
+        result = derive_unlink_source_from_case(
+            case_id=case_id,
+            source_id=source_id,
+            state=state,
+        )
+
+        if isinstance(result, Failure):
+            return result
+
+        event: SourceUnlinkedFromCase = result
+
+        # Remove link
+        if self._case_repo:
+            self._case_repo.unlink_source(case_id, source_id)
+            # Refresh cases to get updated source_ids
+            self._cases = self._case_repo.get_all()
 
         # Publish event
         self._event_bus.publish(event)

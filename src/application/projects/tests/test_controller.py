@@ -592,3 +592,192 @@ class TestCaseCommands:
         assert context["case_count"] == 1
         assert len(context["cases"]) == 1
         assert context["cases"][0]["name"] == "Participant A"
+
+
+class TestSourceLinkingCommands:
+    """Tests for linking sources to cases."""
+
+    def test_link_source_to_case_successfully(
+        self,
+        project_controller,
+        event_bus,
+        existing_project_path: Path,
+        sample_source_path: Path,
+    ):
+        """Test linking a source to a case."""
+        from src.application.projects.controller import (
+            AddSourceCommand,
+            CreateCaseCommand,
+            LinkSourceToCaseCommand,
+            OpenProjectCommand,
+        )
+
+        # Open project
+        project_controller.open_project(
+            OpenProjectCommand(path=str(existing_project_path))
+        )
+
+        # Add source
+        source_result = project_controller.add_source(
+            AddSourceCommand(source_path=str(sample_source_path))
+        )
+        source = source_result.unwrap()
+
+        # Create case
+        case_result = project_controller.create_case(
+            CreateCaseCommand(name="Participant A")
+        )
+        case = case_result.unwrap()
+
+        # Link source to case
+        command = LinkSourceToCaseCommand(
+            case_id=case.id.value,
+            source_id=source.id.value,
+        )
+        result = project_controller.link_source_to_case(command)
+
+        assert isinstance(result, Success)
+
+        # Verify event was published
+        history = event_bus.get_history()
+        assert any("source_linked" in h.event_type for h in history)
+
+    def test_link_source_fails_without_open_project(self, project_controller):
+        """Test failure when no project is open."""
+        from src.application.projects.controller import LinkSourceToCaseCommand
+
+        command = LinkSourceToCaseCommand(case_id=1, source_id=10)
+        result = project_controller.link_source_to_case(command)
+
+        assert isinstance(result, Failure)
+
+    def test_link_source_fails_for_nonexistent_source(
+        self,
+        project_controller,
+        existing_project_path: Path,
+    ):
+        """Test failure when source doesn't exist."""
+        from src.application.projects.controller import (
+            CreateCaseCommand,
+            LinkSourceToCaseCommand,
+            OpenProjectCommand,
+        )
+
+        project_controller.open_project(
+            OpenProjectCommand(path=str(existing_project_path))
+        )
+        case_result = project_controller.create_case(
+            CreateCaseCommand(name="Participant A")
+        )
+        case = case_result.unwrap()
+
+        command = LinkSourceToCaseCommand(case_id=case.id.value, source_id=999)
+        result = project_controller.link_source_to_case(command)
+
+        assert isinstance(result, Failure)
+
+    def test_link_source_fails_for_nonexistent_case(
+        self,
+        project_controller,
+        existing_project_path: Path,
+        sample_source_path: Path,
+    ):
+        """Test failure when case doesn't exist."""
+        from src.application.projects.controller import (
+            AddSourceCommand,
+            LinkSourceToCaseCommand,
+            OpenProjectCommand,
+        )
+
+        project_controller.open_project(
+            OpenProjectCommand(path=str(existing_project_path))
+        )
+        source_result = project_controller.add_source(
+            AddSourceCommand(source_path=str(sample_source_path))
+        )
+        source = source_result.unwrap()
+
+        command = LinkSourceToCaseCommand(case_id=999, source_id=source.id.value)
+        result = project_controller.link_source_to_case(command)
+
+        assert isinstance(result, Failure)
+
+    def test_unlink_source_from_case_successfully(
+        self,
+        project_controller,
+        event_bus,
+        existing_project_path: Path,
+        sample_source_path: Path,
+    ):
+        """Test unlinking a source from a case."""
+        from src.application.projects.controller import (
+            AddSourceCommand,
+            CreateCaseCommand,
+            LinkSourceToCaseCommand,
+            OpenProjectCommand,
+            UnlinkSourceFromCaseCommand,
+        )
+
+        # Setup: open project, add source, create case, link
+        project_controller.open_project(
+            OpenProjectCommand(path=str(existing_project_path))
+        )
+        source_result = project_controller.add_source(
+            AddSourceCommand(source_path=str(sample_source_path))
+        )
+        source = source_result.unwrap()
+        case_result = project_controller.create_case(
+            CreateCaseCommand(name="Participant A")
+        )
+        case = case_result.unwrap()
+        project_controller.link_source_to_case(
+            LinkSourceToCaseCommand(case_id=case.id.value, source_id=source.id.value)
+        )
+
+        # Unlink
+        command = UnlinkSourceFromCaseCommand(
+            case_id=case.id.value,
+            source_id=source.id.value,
+        )
+        result = project_controller.unlink_source_from_case(command)
+
+        assert isinstance(result, Success)
+
+        # Verify event was published
+        history = event_bus.get_history()
+        assert any("source_unlinked" in h.event_type for h in history)
+
+    def test_unlink_source_fails_when_not_linked(
+        self,
+        project_controller,
+        existing_project_path: Path,
+        sample_source_path: Path,
+    ):
+        """Test failure when source is not linked to case."""
+        from src.application.projects.controller import (
+            AddSourceCommand,
+            CreateCaseCommand,
+            OpenProjectCommand,
+            UnlinkSourceFromCaseCommand,
+        )
+
+        project_controller.open_project(
+            OpenProjectCommand(path=str(existing_project_path))
+        )
+        source_result = project_controller.add_source(
+            AddSourceCommand(source_path=str(sample_source_path))
+        )
+        source = source_result.unwrap()
+        case_result = project_controller.create_case(
+            CreateCaseCommand(name="Participant A")
+        )
+        case = case_result.unwrap()
+
+        # Try to unlink without linking first
+        command = UnlinkSourceFromCaseCommand(
+            case_id=case.id.value,
+            source_id=source.id.value,
+        )
+        result = project_controller.unlink_source_from_case(command)
+
+        assert isinstance(result, Failure)

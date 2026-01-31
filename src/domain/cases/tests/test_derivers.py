@@ -389,3 +389,138 @@ class TestDeriveSetCaseAttribute:
 
         assert isinstance(result, Failure)
         assert isinstance(result.failure(), InvalidAttributeName)
+
+
+class TestDeriveLinkSourceToCase:
+    """Tests for derive_link_source_to_case deriver."""
+
+    def test_links_source_to_case(self):
+        """Should create SourceLinkedToCase event with valid inputs."""
+        from src.domain.cases.derivers import CaseState, derive_link_source_to_case
+        from src.domain.cases.entities import Case
+        from src.domain.cases.events import SourceLinkedToCase
+        from src.domain.shared.types import CaseId, SourceId
+
+        existing = (Case(id=CaseId(value=1), name="Participant A"),)
+        state = CaseState(existing_cases=existing)
+
+        result = derive_link_source_to_case(
+            case_id=CaseId(value=1),
+            source_id=SourceId(value=10),
+            state=state,
+        )
+
+        assert isinstance(result, SourceLinkedToCase)
+        assert result.case_id == CaseId(value=1)
+        assert result.source_id == 10
+
+    def test_fails_when_case_not_found(self):
+        """Should fail with CaseNotFound for non-existent case."""
+        from src.domain.cases.derivers import (
+            CaseNotFound,
+            CaseState,
+            derive_link_source_to_case,
+        )
+        from src.domain.shared.types import CaseId, Failure, SourceId
+
+        state = CaseState(existing_cases=())
+
+        result = derive_link_source_to_case(
+            case_id=CaseId(value=999),
+            source_id=SourceId(value=10),
+            state=state,
+        )
+
+        assert isinstance(result, Failure)
+        assert isinstance(result.failure(), CaseNotFound)
+
+    def test_fails_when_source_already_linked(self):
+        """Should fail when source is already linked to case."""
+        from src.domain.cases.derivers import (
+            CaseState,
+            SourceAlreadyLinked,
+            derive_link_source_to_case,
+        )
+        from src.domain.cases.entities import Case
+        from src.domain.shared.types import CaseId, Failure, SourceId
+
+        # Case with source already linked
+        existing = (Case(id=CaseId(value=1), name="Participant A", source_ids=(10,)),)
+        state = CaseState(existing_cases=existing)
+
+        result = derive_link_source_to_case(
+            case_id=CaseId(value=1),
+            source_id=SourceId(value=10),
+            state=state,
+        )
+
+        assert isinstance(result, Failure)
+        assert isinstance(result.failure(), SourceAlreadyLinked)
+
+
+class TestDeriveUnlinkSourceFromCase:
+    """Tests for derive_unlink_source_from_case deriver."""
+
+    def test_unlinks_source_from_case(self):
+        """Should create SourceUnlinkedFromCase event with valid inputs."""
+        from src.domain.cases.derivers import CaseState, derive_unlink_source_from_case
+        from src.domain.cases.entities import Case
+        from src.domain.cases.events import SourceUnlinkedFromCase
+        from src.domain.shared.types import CaseId, SourceId
+
+        # Case with source linked
+        existing = (Case(id=CaseId(value=1), name="Participant A", source_ids=(10,)),)
+        state = CaseState(existing_cases=existing)
+
+        result = derive_unlink_source_from_case(
+            case_id=CaseId(value=1),
+            source_id=SourceId(value=10),
+            state=state,
+        )
+
+        assert isinstance(result, SourceUnlinkedFromCase)
+        assert result.case_id == CaseId(value=1)
+        assert result.source_id == 10
+
+    def test_fails_when_case_not_found(self):
+        """Should fail with CaseNotFound for non-existent case."""
+        from src.domain.cases.derivers import (
+            CaseNotFound,
+            CaseState,
+            derive_unlink_source_from_case,
+        )
+        from src.domain.shared.types import CaseId, Failure, SourceId
+
+        state = CaseState(existing_cases=())
+
+        result = derive_unlink_source_from_case(
+            case_id=CaseId(value=999),
+            source_id=SourceId(value=10),
+            state=state,
+        )
+
+        assert isinstance(result, Failure)
+        assert isinstance(result.failure(), CaseNotFound)
+
+    def test_fails_when_source_not_linked(self):
+        """Should fail when source is not linked to case."""
+        from src.domain.cases.derivers import (
+            CaseState,
+            SourceNotLinked,
+            derive_unlink_source_from_case,
+        )
+        from src.domain.cases.entities import Case
+        from src.domain.shared.types import CaseId, Failure, SourceId
+
+        # Case without source linked
+        existing = (Case(id=CaseId(value=1), name="Participant A"),)
+        state = CaseState(existing_cases=existing)
+
+        result = derive_unlink_source_from_case(
+            case_id=CaseId(value=1),
+            source_id=SourceId(value=10),
+            state=state,
+        )
+
+        assert isinstance(result, Failure)
+        assert isinstance(result.failure(), SourceNotLinked)
