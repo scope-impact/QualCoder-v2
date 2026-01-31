@@ -9,46 +9,15 @@ These tests:
 2. Simulate actual mouse/keyboard events
 3. Verify UI state changes
 4. Verify data persistence
-"""
 
-import sys
+Note: qapp, colors, coding_context, viewmodel fixtures from root conftest.py.
+"""
 
 import pytest
 from PySide6.QtTest import QSignalSpy
 from PySide6.QtWidgets import QApplication
 
-
-@pytest.fixture(scope="session")
-def qapp():
-    """Create QApplication instance for the test session."""
-    app = QApplication.instance()
-    if app is None:
-        app = QApplication(sys.argv)
-    yield app
-
-
-@pytest.fixture
-def colors():
-    """Get theme colors."""
-    from design_system import get_colors
-
-    return get_colors()
-
-
-@pytest.fixture
-def coding_context():
-    """Create an in-memory CodingContext for testing."""
-    from src.presentation.factory import CodingContext
-
-    ctx = CodingContext.create_in_memory()
-    yield ctx
-    ctx.close()
-
-
-@pytest.fixture
-def viewmodel(coding_context):
-    """Create a TextCodingViewModel connected to the test context."""
-    return coding_context.create_text_coding_viewmodel()
+pytestmark = pytest.mark.e2e  # All tests in this module are E2E tests
 
 
 @pytest.fixture

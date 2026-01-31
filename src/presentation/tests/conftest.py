@@ -1,8 +1,14 @@
 """
-Pytest configuration and fixtures for UI tests
+Pytest fixtures for presentation layer tests.
+
+Note: Core fixtures are inherited from root conftest.py:
+- qapp, colors: Qt application and theme
+- coding_context, viewmodel: Database and business logic
+
+This file contains presentation-specific fixtures for screenshots
+and UI testing utilities.
 """
 
-import sys
 from datetime import datetime
 from pathlib import Path
 
@@ -10,31 +16,9 @@ import pytest
 from PySide6.QtCore import QTimer
 from PySide6.QtWidgets import QApplication, QLabel, QWidget
 
-
-@pytest.fixture(scope="session")
-def qapp():
-    """Create QApplication instance for the test session"""
-    app = QApplication.instance()
-    if app is None:
-        app = QApplication(sys.argv)
-    yield app
-
-
-@pytest.fixture
-def colors():
-    """Get dark theme colors"""
-    from design_system import get_colors
-
-    return get_colors()
-
-
-@pytest.fixture
-def light_colors():
-    """Get light theme colors"""
-    from design_system import get_colors
-
-    return get_colors()
-
+# =============================================================================
+# Screenshot Fixtures
+# =============================================================================
 
 # Screenshot directory
 SCREENSHOT_DIR = Path(__file__).parent / "screenshots"
