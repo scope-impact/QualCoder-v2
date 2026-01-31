@@ -200,3 +200,199 @@ class TestCaseRepositorySourceLinking:
         assert retrieved is not None
         assert 10 in retrieved.source_ids
         assert 20 in retrieved.source_ids
+
+
+class TestCaseRepositoryAttributes:
+    """Tests for case attribute functionality in CaseRepository."""
+
+    def test_save_attribute_to_case(self, case_repo):
+        """Should save an attribute to a case."""
+        from src.domain.cases.entities import AttributeType, CaseAttribute
+
+        case = Case(
+            id=CaseId(value=1),
+            name="Participant A",
+            created_at=datetime.now(UTC),
+            updated_at=datetime.now(UTC),
+        )
+        case_repo.save(case)
+
+        # Save attribute
+        case_repo.save_attribute(
+            CaseId(value=1),
+            CaseAttribute(name="age", attr_type=AttributeType.NUMBER, value=25),
+        )
+
+        # Verify attribute is saved
+        retrieved = case_repo.get_by_id(CaseId(value=1))
+        assert retrieved is not None
+        assert len(retrieved.attributes) == 1
+        assert retrieved.attributes[0].name == "age"
+        assert retrieved.attributes[0].value == 25
+
+    def test_save_multiple_attributes(self, case_repo):
+        """Should save multiple attributes to a case."""
+        from src.domain.cases.entities import AttributeType, CaseAttribute
+
+        case = Case(
+            id=CaseId(value=1),
+            name="Participant A",
+            created_at=datetime.now(UTC),
+            updated_at=datetime.now(UTC),
+        )
+        case_repo.save(case)
+
+        case_repo.save_attribute(
+            CaseId(value=1),
+            CaseAttribute(name="age", attr_type=AttributeType.NUMBER, value=25),
+        )
+        case_repo.save_attribute(
+            CaseId(value=1),
+            CaseAttribute(name="gender", attr_type=AttributeType.TEXT, value="female"),
+        )
+        case_repo.save_attribute(
+            CaseId(value=1),
+            CaseAttribute(name="employed", attr_type=AttributeType.BOOLEAN, value=True),
+        )
+
+        retrieved = case_repo.get_by_id(CaseId(value=1))
+        assert retrieved is not None
+        assert len(retrieved.attributes) == 3
+
+    def test_update_existing_attribute(self, case_repo):
+        """Should update an existing attribute with the same name."""
+        from src.domain.cases.entities import AttributeType, CaseAttribute
+
+        case = Case(
+            id=CaseId(value=1),
+            name="Participant A",
+            created_at=datetime.now(UTC),
+            updated_at=datetime.now(UTC),
+        )
+        case_repo.save(case)
+
+        # Save initial attribute
+        case_repo.save_attribute(
+            CaseId(value=1),
+            CaseAttribute(name="age", attr_type=AttributeType.NUMBER, value=25),
+        )
+
+        # Update attribute
+        case_repo.save_attribute(
+            CaseId(value=1),
+            CaseAttribute(name="age", attr_type=AttributeType.NUMBER, value=26),
+        )
+
+        retrieved = case_repo.get_by_id(CaseId(value=1))
+        assert retrieved is not None
+        assert len(retrieved.attributes) == 1
+        assert retrieved.attributes[0].value == 26
+
+    def test_delete_attribute(self, case_repo):
+        """Should delete an attribute from a case."""
+        from src.domain.cases.entities import AttributeType, CaseAttribute
+
+        case = Case(
+            id=CaseId(value=1),
+            name="Participant A",
+            created_at=datetime.now(UTC),
+            updated_at=datetime.now(UTC),
+        )
+        case_repo.save(case)
+
+        case_repo.save_attribute(
+            CaseId(value=1),
+            CaseAttribute(name="age", attr_type=AttributeType.NUMBER, value=25),
+        )
+        case_repo.save_attribute(
+            CaseId(value=1),
+            CaseAttribute(name="gender", attr_type=AttributeType.TEXT, value="female"),
+        )
+
+        # Delete one attribute
+        case_repo.delete_attribute(CaseId(value=1), "age")
+
+        retrieved = case_repo.get_by_id(CaseId(value=1))
+        assert retrieved is not None
+        assert len(retrieved.attributes) == 1
+        assert retrieved.attributes[0].name == "gender"
+
+    def test_get_attribute(self, case_repo):
+        """Should get a specific attribute by name."""
+        from src.domain.cases.entities import AttributeType, CaseAttribute
+
+        case = Case(
+            id=CaseId(value=1),
+            name="Participant A",
+            created_at=datetime.now(UTC),
+            updated_at=datetime.now(UTC),
+        )
+        case_repo.save(case)
+
+        case_repo.save_attribute(
+            CaseId(value=1),
+            CaseAttribute(name="age", attr_type=AttributeType.NUMBER, value=25),
+        )
+
+        attr = case_repo.get_attribute(CaseId(value=1), "age")
+        assert attr is not None
+        assert attr.name == "age"
+        assert attr.value == 25
+
+    def test_get_attribute_returns_none_for_nonexistent(self, case_repo):
+        """Should return None for non-existent attribute."""
+        case = Case(
+            id=CaseId(value=1),
+            name="Participant A",
+            created_at=datetime.now(UTC),
+            updated_at=datetime.now(UTC),
+        )
+        case_repo.save(case)
+
+        attr = case_repo.get_attribute(CaseId(value=1), "nonexistent")
+        assert attr is None
+
+    def test_delete_case_removes_attributes(self, case_repo):
+        """Should remove all attributes when case is deleted."""
+        from src.domain.cases.entities import AttributeType, CaseAttribute
+
+        case = Case(
+            id=CaseId(value=1),
+            name="Participant A",
+            created_at=datetime.now(UTC),
+            updated_at=datetime.now(UTC),
+        )
+        case_repo.save(case)
+
+        case_repo.save_attribute(
+            CaseId(value=1),
+            CaseAttribute(name="age", attr_type=AttributeType.NUMBER, value=25),
+        )
+
+        case_repo.delete(CaseId(value=1))
+
+        # Trying to get attribute should return None
+        attr = case_repo.get_attribute(CaseId(value=1), "age")
+        assert attr is None
+
+    def test_get_all_cases_includes_attributes(self, case_repo):
+        """Should include attributes when getting all cases."""
+        from src.domain.cases.entities import AttributeType, CaseAttribute
+
+        case = Case(
+            id=CaseId(value=1),
+            name="Participant A",
+            created_at=datetime.now(UTC),
+            updated_at=datetime.now(UTC),
+        )
+        case_repo.save(case)
+
+        case_repo.save_attribute(
+            CaseId(value=1),
+            CaseAttribute(name="age", attr_type=AttributeType.NUMBER, value=25),
+        )
+
+        cases = case_repo.get_all()
+        assert len(cases) == 1
+        assert len(cases[0].attributes) == 1
+        assert cases[0].attributes[0].name == "age"

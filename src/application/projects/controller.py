@@ -23,11 +23,13 @@ from src.domain.cases.derivers import (
     derive_create_case,
     derive_link_source_to_case,
     derive_remove_case,
+    derive_set_case_attribute,
     derive_unlink_source_from_case,
     derive_update_case,
 )
-from src.domain.cases.entities import Case
+from src.domain.cases.entities import AttributeType, Case, CaseAttribute
 from src.domain.cases.events import (
+    CaseAttributeSet,
     CaseCreated,
     CaseRemoved,
     CaseUpdated,
@@ -166,6 +168,16 @@ class UnlinkSourceFromCaseCommand:
 
     case_id: int
     source_id: int
+
+
+@dataclass(frozen=True)
+class SetCaseAttributeCommand:
+    """Command to set an attribute on a case."""
+
+    case_id: int
+    attr_name: str
+    attr_type: str  # text, number, date, boolean
+    attr_value: Any
 
 
 # ============================================================
@@ -723,6 +735,48 @@ class ProjectControllerImpl:
         if self._case_repo:
             self._case_repo.unlink_source(case_id, source_id)
             # Refresh cases to get updated source_ids
+            self._cases = self._case_repo.get_all()
+
+        # Publish event
+        self._event_bus.publish(event)
+
+        return Success(event)
+
+    def set_case_attribute(self, command: SetCaseAttributeCommand) -> Result:
+        """Set an attribute on a case."""
+        if self._current_project is None:
+            return Failure("No project is currently open")
+
+        case_id = CaseId(value=command.case_id)
+
+        # Build state with fresh case data from repository
+        if self._case_repo:
+            self._cases = self._case_repo.get_all()
+        state = CaseState(existing_cases=tuple(self._cases))
+
+        # Derive event or failure
+        result = derive_set_case_attribute(
+            case_id=case_id,
+            attr_name=command.attr_name,
+            attr_type=command.attr_type,
+            attr_value=command.attr_value,
+            state=state,
+        )
+
+        if isinstance(result, Failure):
+            return result
+
+        event: CaseAttributeSet = result
+
+        # Persist attribute
+        if self._case_repo:
+            attr = CaseAttribute(
+                name=event.attr_name,
+                attr_type=AttributeType(event.attr_type),
+                value=event.attr_value,
+            )
+            self._case_repo.save_attribute(case_id, attr)
+            # Refresh cases to get updated attributes
             self._cases = self._case_repo.get_all()
 
         # Publish event

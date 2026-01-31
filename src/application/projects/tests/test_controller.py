@@ -781,3 +781,148 @@ class TestSourceLinkingCommands:
         result = project_controller.unlink_source_from_case(command)
 
         assert isinstance(result, Failure)
+
+
+class TestCaseAttributeCommands:
+    """Tests for case attribute commands."""
+
+    def test_set_case_attribute_successfully(
+        self,
+        project_controller,
+        event_bus,
+        existing_project_path: Path,
+    ):
+        """Test setting an attribute on a case."""
+        from src.application.projects.controller import (
+            CreateCaseCommand,
+            OpenProjectCommand,
+            SetCaseAttributeCommand,
+        )
+
+        # Open project and create case
+        project_controller.open_project(
+            OpenProjectCommand(path=str(existing_project_path))
+        )
+        case_result = project_controller.create_case(
+            CreateCaseCommand(name="Participant A")
+        )
+        case = case_result.unwrap()
+
+        # Set attribute
+        command = SetCaseAttributeCommand(
+            case_id=case.id.value,
+            attr_name="age",
+            attr_type="number",
+            attr_value=25,
+        )
+        result = project_controller.set_case_attribute(command)
+
+        assert isinstance(result, Success)
+
+        # Verify event was published
+        history = event_bus.get_history()
+        assert any("attribute_set" in h.event_type for h in history)
+
+    def test_set_case_attribute_fails_without_open_project(self, project_controller):
+        """Test failure when no project is open."""
+        from src.application.projects.controller import SetCaseAttributeCommand
+
+        command = SetCaseAttributeCommand(
+            case_id=1,
+            attr_name="age",
+            attr_type="number",
+            attr_value=25,
+        )
+        result = project_controller.set_case_attribute(command)
+
+        assert isinstance(result, Failure)
+
+    def test_set_case_attribute_fails_for_nonexistent_case(
+        self,
+        project_controller,
+        existing_project_path: Path,
+    ):
+        """Test failure when case doesn't exist."""
+        from src.application.projects.controller import (
+            OpenProjectCommand,
+            SetCaseAttributeCommand,
+        )
+
+        project_controller.open_project(
+            OpenProjectCommand(path=str(existing_project_path))
+        )
+
+        command = SetCaseAttributeCommand(
+            case_id=999,
+            attr_name="age",
+            attr_type="number",
+            attr_value=25,
+        )
+        result = project_controller.set_case_attribute(command)
+
+        assert isinstance(result, Failure)
+
+    def test_set_case_attribute_fails_for_invalid_type(
+        self,
+        project_controller,
+        existing_project_path: Path,
+    ):
+        """Test failure for invalid attribute type."""
+        from src.application.projects.controller import (
+            CreateCaseCommand,
+            OpenProjectCommand,
+            SetCaseAttributeCommand,
+        )
+
+        project_controller.open_project(
+            OpenProjectCommand(path=str(existing_project_path))
+        )
+        case_result = project_controller.create_case(
+            CreateCaseCommand(name="Participant A")
+        )
+        case = case_result.unwrap()
+
+        command = SetCaseAttributeCommand(
+            case_id=case.id.value,
+            attr_name="age",
+            attr_type="invalid_type",
+            attr_value=25,
+        )
+        result = project_controller.set_case_attribute(command)
+
+        assert isinstance(result, Failure)
+
+    def test_get_case_includes_attributes(
+        self,
+        project_controller,
+        existing_project_path: Path,
+    ):
+        """Test that get_case includes attributes."""
+        from src.application.projects.controller import (
+            CreateCaseCommand,
+            OpenProjectCommand,
+            SetCaseAttributeCommand,
+        )
+
+        project_controller.open_project(
+            OpenProjectCommand(path=str(existing_project_path))
+        )
+        case_result = project_controller.create_case(
+            CreateCaseCommand(name="Participant A")
+        )
+        case = case_result.unwrap()
+
+        project_controller.set_case_attribute(
+            SetCaseAttributeCommand(
+                case_id=case.id.value,
+                attr_name="age",
+                attr_type="number",
+                attr_value=25,
+            )
+        )
+
+        retrieved = project_controller.get_case(case.id.value)
+        assert retrieved is not None
+        assert len(retrieved.attributes) == 1
+        assert retrieved.attributes[0].name == "age"
+        assert retrieved.attributes[0].value == 25
