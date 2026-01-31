@@ -223,9 +223,7 @@ class SourceStatsRow(QFrame):
 
         # Create cards for each type
         for source_type in ["text", "audio", "video", "image", "pdf"]:
-            card = SourceStatCard(
-                source_type=source_type, count=0, colors=self._colors
-            )
+            card = SourceStatCard(source_type=source_type, count=0, colors=self._colors)
             card.clicked.connect(self._on_card_clicked)
             self._cards[source_type] = card
             layout.addWidget(card)

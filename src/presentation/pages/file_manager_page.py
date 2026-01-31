@@ -165,7 +165,9 @@ class FileManagerPage(QWidget):
 
         # Table signals
         self._source_table.source_clicked.connect(self.source_clicked.emit)
-        self._source_table.source_double_clicked.connect(self.source_double_clicked.emit)
+        self._source_table.source_double_clicked.connect(
+            self.source_double_clicked.emit
+        )
         self._source_table.selection_changed.connect(self._on_selection_changed)
         self._source_table.open_for_coding.connect(self.open_for_coding.emit)
         self._source_table.delete_sources.connect(self.delete_sources.emit)

@@ -115,6 +115,7 @@ class FileManagerToolbar(QFrame):
         # Add icon using qtawesome
         try:
             import qtawesome as qta
+
             btn.setIcon(qta.icon(icon_name, color=self._get_icon_color(variant)))
         except ImportError:
             pass  # No icon if qtawesome not available
@@ -175,7 +176,9 @@ class EmptyState(QFrame):
         """)
 
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(SPACING.xxl, SPACING.xxl * 2, SPACING.xxl, SPACING.xxl * 2)
+        layout.setContentsMargins(
+            SPACING.xxl, SPACING.xxl * 2, SPACING.xxl, SPACING.xxl * 2
+        )
         layout.setSpacing(SPACING.lg)
         layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
@@ -183,9 +186,11 @@ class EmptyState(QFrame):
         icon_label = QLabel()
         try:
             import qtawesome as qta
+
             icon_label.setPixmap(
-                qta.icon("mdi6.folder-open-outline", color=self._colors.text_disabled)
-                .pixmap(64, 64)
+                qta.icon(
+                    "mdi6.folder-open-outline", color=self._colors.text_disabled
+                ).pixmap(64, 64)
             )
         except ImportError:
             icon_label.setText("📁")
@@ -204,7 +209,9 @@ class EmptyState(QFrame):
         layout.addWidget(title)
 
         # Description
-        desc = QLabel("Import your first source files to\nstart coding your qualitative data")
+        desc = QLabel(
+            "Import your first source files to\nstart coding your qualitative data"
+        )
         desc.setStyleSheet(f"""
             color: {self._colors.text_secondary};
             font-size: 14px;
@@ -217,19 +224,31 @@ class EmptyState(QFrame):
         btn_layout.setSpacing(SPACING.md)
         btn_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
-        import_btn = Button("Import Files", variant="primary", size="lg", colors=self._colors)
+        import_btn = Button(
+            "Import Files", variant="primary", size="lg", colors=self._colors
+        )
         try:
             import qtawesome as qta
-            import_btn.setIcon(qta.icon("mdi6.file-import-outline", color=self._colors.primary_foreground))
+
+            import_btn.setIcon(
+                qta.icon(
+                    "mdi6.file-import-outline", color=self._colors.primary_foreground
+                )
+            )
         except ImportError:
             pass
         import_btn.clicked.connect(self.import_clicked.emit)
         btn_layout.addWidget(import_btn)
 
-        link_btn = Button("Link External Files", variant="outline", size="lg", colors=self._colors)
+        link_btn = Button(
+            "Link External Files", variant="outline", size="lg", colors=self._colors
+        )
         try:
             import qtawesome as qta
-            link_btn.setIcon(qta.icon("mdi6.link-variant", color=self._colors.text_primary))
+
+            link_btn.setIcon(
+                qta.icon("mdi6.link-variant", color=self._colors.text_primary)
+            )
         except ImportError:
             pass
         link_btn.clicked.connect(self.link_clicked.emit)

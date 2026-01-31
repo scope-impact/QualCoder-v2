@@ -19,7 +19,7 @@ class TestDeriveCreateProject:
 
     def test_creates_project_with_valid_inputs(self):
         """Should create ProjectCreated event with valid inputs."""
-        from src.domain.projects.derivers import derive_create_project, ProjectState
+        from src.domain.projects.derivers import ProjectState, derive_create_project
         from src.domain.projects.events import ProjectCreated
 
         state = ProjectState(
@@ -42,9 +42,12 @@ class TestDeriveCreateProject:
 
     def test_fails_with_empty_name(self):
         """Should fail with EmptyName for empty project names."""
-        from src.domain.projects.derivers import derive_create_project, ProjectState
+        from src.domain.projects.derivers import (
+            EmptyProjectName,
+            ProjectState,
+            derive_create_project,
+        )
         from src.domain.shared.types import Failure
-        from src.domain.projects.derivers import EmptyProjectName
 
         state = ProjectState(
             path_exists=lambda _: False,
@@ -64,9 +67,12 @@ class TestDeriveCreateProject:
 
     def test_fails_with_invalid_path(self):
         """Should fail with InvalidProjectPath for non-.qda paths."""
-        from src.domain.projects.derivers import derive_create_project, ProjectState
+        from src.domain.projects.derivers import (
+            InvalidProjectPath,
+            ProjectState,
+            derive_create_project,
+        )
         from src.domain.shared.types import Failure
-        from src.domain.projects.derivers import InvalidProjectPath
 
         state = ProjectState(
             path_exists=lambda _: False,
@@ -86,9 +92,12 @@ class TestDeriveCreateProject:
 
     def test_fails_when_path_already_exists(self):
         """Should fail with ProjectAlreadyExists when file exists."""
-        from src.domain.projects.derivers import derive_create_project, ProjectState
+        from src.domain.projects.derivers import (
+            ProjectAlreadyExists,
+            ProjectState,
+            derive_create_project,
+        )
         from src.domain.shared.types import Failure
-        from src.domain.projects.derivers import ProjectAlreadyExists
 
         state = ProjectState(
             path_exists=lambda _: True,  # File already exists
@@ -108,9 +117,12 @@ class TestDeriveCreateProject:
 
     def test_fails_when_parent_not_writable(self):
         """Should fail with ParentNotWritable for read-only directories."""
-        from src.domain.projects.derivers import derive_create_project, ProjectState
+        from src.domain.projects.derivers import (
+            ParentNotWritable,
+            ProjectState,
+            derive_create_project,
+        )
         from src.domain.shared.types import Failure
-        from src.domain.projects.derivers import ParentNotWritable
 
         state = ProjectState(
             path_exists=lambda _: False,
@@ -134,7 +146,7 @@ class TestDeriveOpenProject:
 
     def test_opens_existing_project(self):
         """Should create ProjectOpened event for existing project."""
-        from src.domain.projects.derivers import derive_open_project, ProjectState
+        from src.domain.projects.derivers import ProjectState, derive_open_project
         from src.domain.projects.events import ProjectOpened
 
         state = ProjectState(
@@ -152,9 +164,12 @@ class TestDeriveOpenProject:
 
     def test_fails_with_nonexistent_path(self):
         """Should fail with ProjectNotFound for missing files."""
-        from src.domain.projects.derivers import derive_open_project, ProjectState
+        from src.domain.projects.derivers import (
+            ProjectNotFound,
+            ProjectState,
+            derive_open_project,
+        )
         from src.domain.shared.types import Failure
-        from src.domain.projects.derivers import ProjectNotFound
 
         state = ProjectState(
             path_exists=lambda _: False,
@@ -171,9 +186,12 @@ class TestDeriveOpenProject:
 
     def test_fails_with_invalid_extension(self):
         """Should fail with InvalidProjectPath for non-.qda files."""
-        from src.domain.projects.derivers import derive_open_project, ProjectState
+        from src.domain.projects.derivers import (
+            InvalidProjectPath,
+            ProjectState,
+            derive_open_project,
+        )
         from src.domain.shared.types import Failure
-        from src.domain.projects.derivers import InvalidProjectPath
 
         state = ProjectState(
             path_exists=lambda _: True,
@@ -194,9 +212,9 @@ class TestDeriveAddSource:
 
     def test_adds_source_with_valid_path(self):
         """Should create SourceAdded event with valid inputs."""
-        from src.domain.projects.derivers import derive_add_source, ProjectState
-        from src.domain.projects.events import SourceAdded
+        from src.domain.projects.derivers import ProjectState, derive_add_source
         from src.domain.projects.entities import SourceType
+        from src.domain.projects.events import SourceAdded
 
         state = ProjectState(
             path_exists=lambda _: True,
@@ -219,9 +237,12 @@ class TestDeriveAddSource:
 
     def test_fails_with_nonexistent_source(self):
         """Should fail with SourceFileNotFound for missing files."""
-        from src.domain.projects.derivers import derive_add_source, ProjectState
+        from src.domain.projects.derivers import (
+            ProjectState,
+            SourceFileNotFound,
+            derive_add_source,
+        )
         from src.domain.shared.types import Failure
-        from src.domain.projects.derivers import SourceFileNotFound
 
         state = ProjectState(
             path_exists=lambda _: False,
@@ -242,10 +263,13 @@ class TestDeriveAddSource:
 
     def test_fails_with_duplicate_name(self):
         """Should fail with DuplicateSourceName for existing source name."""
-        from src.domain.projects.derivers import derive_add_source, ProjectState
+        from src.domain.projects.derivers import (
+            DuplicateSourceName,
+            ProjectState,
+            derive_add_source,
+        )
+        from src.domain.projects.entities import Source, SourceStatus, SourceType
         from src.domain.shared.types import Failure, SourceId
-        from src.domain.projects.derivers import DuplicateSourceName
-        from src.domain.projects.entities import Source, SourceType, SourceStatus
 
         existing = (
             Source(
@@ -275,9 +299,9 @@ class TestDeriveAddSource:
 
     def test_detects_correct_source_type(self):
         """Should detect source type based on file extension."""
-        from src.domain.projects.derivers import derive_add_source, ProjectState
-        from src.domain.projects.events import SourceAdded
+        from src.domain.projects.derivers import ProjectState, derive_add_source
         from src.domain.projects.entities import SourceType
+        from src.domain.projects.events import SourceAdded
 
         state = ProjectState(
             path_exists=lambda _: True,

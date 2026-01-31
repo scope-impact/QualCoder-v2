@@ -83,8 +83,8 @@ class TestSourceTypeInvariants:
 
     def test_detect_text_source_types(self):
         """Text file extensions should be detected correctly."""
-        from src.domain.projects.invariants import detect_source_type
         from src.domain.projects.entities import SourceType
+        from src.domain.projects.invariants import detect_source_type
 
         assert detect_source_type(Path("interview.txt")) == SourceType.TEXT
         assert detect_source_type(Path("document.docx")) == SourceType.TEXT
@@ -93,8 +93,8 @@ class TestSourceTypeInvariants:
 
     def test_detect_audio_source_types(self):
         """Audio file extensions should be detected correctly."""
-        from src.domain.projects.invariants import detect_source_type
         from src.domain.projects.entities import SourceType
+        from src.domain.projects.invariants import detect_source_type
 
         assert detect_source_type(Path("recording.mp3")) == SourceType.AUDIO
         assert detect_source_type(Path("interview.wav")) == SourceType.AUDIO
@@ -102,8 +102,8 @@ class TestSourceTypeInvariants:
 
     def test_detect_video_source_types(self):
         """Video file extensions should be detected correctly."""
-        from src.domain.projects.invariants import detect_source_type
         from src.domain.projects.entities import SourceType
+        from src.domain.projects.invariants import detect_source_type
 
         assert detect_source_type(Path("observation.mp4")) == SourceType.VIDEO
         assert detect_source_type(Path("interview.mov")) == SourceType.VIDEO
@@ -111,8 +111,8 @@ class TestSourceTypeInvariants:
 
     def test_detect_image_source_types(self):
         """Image file extensions should be detected correctly."""
-        from src.domain.projects.invariants import detect_source_type
         from src.domain.projects.entities import SourceType
+        from src.domain.projects.invariants import detect_source_type
 
         assert detect_source_type(Path("photo.jpg")) == SourceType.IMAGE
         assert detect_source_type(Path("diagram.png")) == SourceType.IMAGE
@@ -120,15 +120,15 @@ class TestSourceTypeInvariants:
 
     def test_detect_pdf_source_types(self):
         """PDF file extensions should be detected correctly."""
-        from src.domain.projects.invariants import detect_source_type
         from src.domain.projects.entities import SourceType
+        from src.domain.projects.invariants import detect_source_type
 
         assert detect_source_type(Path("article.pdf")) == SourceType.PDF
 
     def test_detect_unknown_source_types(self):
         """Unknown extensions should return UNKNOWN type."""
-        from src.domain.projects.invariants import detect_source_type
         from src.domain.projects.entities import SourceType
+        from src.domain.projects.invariants import detect_source_type
 
         assert detect_source_type(Path("data.xyz")) == SourceType.UNKNOWN
         assert detect_source_type(Path("noextension")) == SourceType.UNKNOWN
@@ -145,8 +145,8 @@ class TestSourceNameInvariants:
 
     def test_source_name_unique_detects_duplicate(self):
         """Duplicate names should be detected (case-insensitive)."""
+        from src.domain.projects.entities import Source, SourceStatus, SourceType
         from src.domain.projects.invariants import is_source_name_unique
-        from src.domain.projects.entities import Source, SourceType, SourceStatus
         from src.domain.shared.types import SourceId
 
         existing = [
@@ -171,28 +171,37 @@ class TestCanOpenProjectInvariants:
         from src.domain.projects.invariants import can_open_project
 
         # The invariant takes a path and a function to check existence
-        assert can_open_project(
-            Path("/home/user/project.qda"),
-            path_exists=lambda _: True,
-        ) is True
+        assert (
+            can_open_project(
+                Path("/home/user/project.qda"),
+                path_exists=lambda _: True,
+            )
+            is True
+        )
 
     def test_cannot_open_nonexistent_project(self):
         """Non-existent path should not be openable."""
         from src.domain.projects.invariants import can_open_project
 
-        assert can_open_project(
-            Path("/home/user/missing.qda"),
-            path_exists=lambda _: False,
-        ) is False
+        assert (
+            can_open_project(
+                Path("/home/user/missing.qda"),
+                path_exists=lambda _: False,
+            )
+            is False
+        )
 
     def test_cannot_open_invalid_extension(self):
         """Wrong extension should not be openable even if exists."""
         from src.domain.projects.invariants import can_open_project
 
-        assert can_open_project(
-            Path("/home/user/project.txt"),
-            path_exists=lambda _: True,
-        ) is False
+        assert (
+            can_open_project(
+                Path("/home/user/project.txt"),
+                path_exists=lambda _: True,
+            )
+            is False
+        )
 
 
 class TestCanCreateProjectInvariants:
@@ -202,28 +211,37 @@ class TestCanCreateProjectInvariants:
         """Valid path with .qda and writable parent should be creatable."""
         from src.domain.projects.invariants import can_create_project
 
-        assert can_create_project(
-            Path("/home/user/new_project.qda"),
-            path_exists=lambda _: False,
-            parent_writable=lambda _: True,
-        ) is True
+        assert (
+            can_create_project(
+                Path("/home/user/new_project.qda"),
+                path_exists=lambda _: False,
+                parent_writable=lambda _: True,
+            )
+            is True
+        )
 
     def test_cannot_create_project_at_existing_path(self):
         """Should not overwrite existing project."""
         from src.domain.projects.invariants import can_create_project
 
-        assert can_create_project(
-            Path("/home/user/existing.qda"),
-            path_exists=lambda _: True,
-            parent_writable=lambda _: True,
-        ) is False
+        assert (
+            can_create_project(
+                Path("/home/user/existing.qda"),
+                path_exists=lambda _: True,
+                parent_writable=lambda _: True,
+            )
+            is False
+        )
 
     def test_cannot_create_project_in_readonly_location(self):
         """Should not create in read-only directory."""
         from src.domain.projects.invariants import can_create_project
 
-        assert can_create_project(
-            Path("/readonly/project.qda"),
-            path_exists=lambda _: False,
-            parent_writable=lambda _: False,
-        ) is False
+        assert (
+            can_create_project(
+                Path("/readonly/project.qda"),
+                path_exists=lambda _: False,
+                parent_writable=lambda _: False,
+            )
+            is False
+        )

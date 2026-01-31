@@ -63,24 +63,30 @@ class TestSQLiteSourceRepository:
     def test_get_by_type(self, source_repo):
         """Test filtering sources by type."""
         # Save sources of different types
-        source_repo.save(Source(
-            id=SourceId(value=1),
-            name="interview.txt",
-            source_type=SourceType.TEXT,
-            status=SourceStatus.IMPORTED,
-        ))
-        source_repo.save(Source(
-            id=SourceId(value=2),
-            name="recording.mp3",
-            source_type=SourceType.AUDIO,
-            status=SourceStatus.IMPORTED,
-        ))
-        source_repo.save(Source(
-            id=SourceId(value=3),
-            name="notes.txt",
-            source_type=SourceType.TEXT,
-            status=SourceStatus.IMPORTED,
-        ))
+        source_repo.save(
+            Source(
+                id=SourceId(value=1),
+                name="interview.txt",
+                source_type=SourceType.TEXT,
+                status=SourceStatus.IMPORTED,
+            )
+        )
+        source_repo.save(
+            Source(
+                id=SourceId(value=2),
+                name="recording.mp3",
+                source_type=SourceType.AUDIO,
+                status=SourceStatus.IMPORTED,
+            )
+        )
+        source_repo.save(
+            Source(
+                id=SourceId(value=3),
+                name="notes.txt",
+                source_type=SourceType.TEXT,
+                status=SourceStatus.IMPORTED,
+            )
+        )
 
         text_sources = source_repo.get_by_type(SourceType.TEXT)
         assert len(text_sources) == 2
@@ -90,18 +96,22 @@ class TestSQLiteSourceRepository:
 
     def test_get_by_status(self, source_repo):
         """Test filtering sources by status."""
-        source_repo.save(Source(
-            id=SourceId(value=1),
-            name="coded.txt",
-            source_type=SourceType.TEXT,
-            status=SourceStatus.CODED,
-        ))
-        source_repo.save(Source(
-            id=SourceId(value=2),
-            name="new.txt",
-            source_type=SourceType.TEXT,
-            status=SourceStatus.IMPORTED,
-        ))
+        source_repo.save(
+            Source(
+                id=SourceId(value=1),
+                name="coded.txt",
+                source_type=SourceType.TEXT,
+                status=SourceStatus.CODED,
+            )
+        )
+        source_repo.save(
+            Source(
+                id=SourceId(value=2),
+                name="new.txt",
+                source_type=SourceType.TEXT,
+                status=SourceStatus.IMPORTED,
+            )
+        )
 
         coded = source_repo.get_by_status(SourceStatus.CODED)
         assert len(coded) == 1
@@ -185,8 +195,14 @@ class TestSQLiteSourceRepository:
         source_repo.save(src)
 
         # Excluding the source's own ID should return False
-        assert source_repo.name_exists("Interview.txt", exclude_id=SourceId(value=1)) is False
-        assert source_repo.name_exists("Interview.txt", exclude_id=SourceId(value=2)) is True
+        assert (
+            source_repo.name_exists("Interview.txt", exclude_id=SourceId(value=1))
+            is False
+        )
+        assert (
+            source_repo.name_exists("Interview.txt", exclude_id=SourceId(value=2))
+            is True
+        )
 
     def test_count(self, source_repo):
         """Test counting sources."""
@@ -205,18 +221,30 @@ class TestSQLiteSourceRepository:
 
     def test_count_by_type(self, source_repo):
         """Test counting sources by type."""
-        source_repo.save(Source(
-            id=SourceId(value=1), name="a.txt",
-            source_type=SourceType.TEXT, status=SourceStatus.IMPORTED,
-        ))
-        source_repo.save(Source(
-            id=SourceId(value=2), name="b.mp3",
-            source_type=SourceType.AUDIO, status=SourceStatus.IMPORTED,
-        ))
-        source_repo.save(Source(
-            id=SourceId(value=3), name="c.txt",
-            source_type=SourceType.TEXT, status=SourceStatus.IMPORTED,
-        ))
+        source_repo.save(
+            Source(
+                id=SourceId(value=1),
+                name="a.txt",
+                source_type=SourceType.TEXT,
+                status=SourceStatus.IMPORTED,
+            )
+        )
+        source_repo.save(
+            Source(
+                id=SourceId(value=2),
+                name="b.mp3",
+                source_type=SourceType.AUDIO,
+                status=SourceStatus.IMPORTED,
+            )
+        )
+        source_repo.save(
+            Source(
+                id=SourceId(value=3),
+                name="c.txt",
+                source_type=SourceType.TEXT,
+                status=SourceStatus.IMPORTED,
+            )
+        )
 
         assert source_repo.count_by_type(SourceType.TEXT) == 2
         assert source_repo.count_by_type(SourceType.AUDIO) == 1

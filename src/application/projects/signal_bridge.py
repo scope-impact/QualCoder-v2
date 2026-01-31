@@ -36,7 +36,6 @@ from src.domain.projects.events import (
     SourceStatusChanged,
 )
 
-
 # =============================================================================
 # Payloads - Data transferred via signals
 # =============================================================================

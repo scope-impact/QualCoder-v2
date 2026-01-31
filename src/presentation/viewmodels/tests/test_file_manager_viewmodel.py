@@ -7,9 +7,6 @@ Following TDD: Write tests first, then implement to pass.
 
 from __future__ import annotations
 
-import tempfile
-from pathlib import Path
-
 import pytest
 
 pytestmark = pytest.mark.unit
@@ -24,7 +21,9 @@ class TestFileManagerViewModelLoadSources:
 
         assert sources == []
 
-    def test_load_sources_returns_source_dtos(self, file_manager_vm, sample_source_file):
+    def test_load_sources_returns_source_dtos(
+        self, file_manager_vm, sample_source_file
+    ):
         """Test that load_sources returns SourceDTO objects."""
         # Add a source first
         file_manager_vm.add_source(str(sample_source_file))
@@ -35,7 +34,9 @@ class TestFileManagerViewModelLoadSources:
         assert sources[0].name == sample_source_file.name
         assert sources[0].source_type == "text"
 
-    def test_load_sources_includes_all_fields(self, file_manager_vm, sample_source_file):
+    def test_load_sources_includes_all_fields(
+        self, file_manager_vm, sample_source_file
+    ):
         """Test that SourceDTO includes all required fields."""
         file_manager_vm.add_source(str(sample_source_file))
 
@@ -177,9 +178,7 @@ class TestFileManagerViewModelRemoveSource:
 
         assert result is True
 
-    def test_remove_source_removes_from_list(
-        self, file_manager_vm, sample_source_file
-    ):
+    def test_remove_source_removes_from_list(self, file_manager_vm, sample_source_file):
         """Test that removed source no longer appears in list."""
         file_manager_vm.add_source(str(sample_source_file))
         sources = file_manager_vm.load_sources()
@@ -218,9 +217,7 @@ class TestFileManagerViewModelOpenSource:
 
         assert result is False
 
-    def test_get_current_source_after_open(
-        self, file_manager_vm, sample_source_file
-    ):
+    def test_get_current_source_after_open(self, file_manager_vm, sample_source_file):
         """Test that current source is set after opening."""
         file_manager_vm.add_source(str(sample_source_file))
         sources = file_manager_vm.load_sources()

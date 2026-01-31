@@ -158,7 +158,9 @@ class SQLiteSourceRepository:
         return Source(
             id=SourceId(value=row.id),
             name=row.name,
-            source_type=SourceType(row.source_type) if row.source_type else SourceType.TEXT,
+            source_type=SourceType(row.source_type)
+            if row.source_type
+            else SourceType.TEXT,
             status=SourceStatus(row.status) if row.status else SourceStatus.IMPORTED,
             file_path=Path(row.mediapath) if row.mediapath else None,
             file_size=row.file_size or 0,

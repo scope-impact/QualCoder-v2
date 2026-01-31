@@ -13,7 +13,6 @@ from pathlib import Path
 
 from src.domain.shared.types import SourceId
 
-
 # ============================================================
 # Enums
 # ============================================================

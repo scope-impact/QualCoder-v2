@@ -123,9 +123,7 @@ class StatusBadge(QFrame):
         "error": ("error", "Error"),
     }
 
-    def __init__(
-        self, status: str, colors: ColorPalette = None, parent=None
-    ):
+    def __init__(self, status: str, colors: ColorPalette = None, parent=None):
         super().__init__(parent)
         self._colors = colors or get_colors()
 
@@ -218,6 +216,7 @@ class BulkActionsBar(QFrame):
         clear_btn = QPushButton()
         try:
             import qtawesome as qta
+
             clear_btn.setIcon(qta.icon("mdi6.close", color=self._colors.text_secondary))
         except ImportError:
             clear_btn.setText("×")
@@ -255,6 +254,7 @@ class BulkActionsBar(QFrame):
         # Add icon if available
         try:
             import qtawesome as qta
+
             btn.setIcon(qta.icon(icon_name, color=color))
         except ImportError:
             pass
@@ -277,9 +277,7 @@ class BulkActionsBar(QFrame):
     def set_count(self, count: int):
         """Update the selection count."""
         self._count = count
-        self._count_label.setText(
-            f"{count} file{'s' if count != 1 else ''} selected"
-        )
+        self._count_label.setText(f"{count} file{'s' if count != 1 else ''} selected")
         self.setVisible(count > 0)
 
 
@@ -506,7 +504,10 @@ class SourceTable(QFrame):
         view_btn = QPushButton()
         try:
             import qtawesome as qta
-            view_btn.setIcon(qta.icon("mdi6.eye-outline", color=self._colors.text_secondary))
+
+            view_btn.setIcon(
+                qta.icon("mdi6.eye-outline", color=self._colors.text_secondary)
+            )
         except ImportError:
             view_btn.setText("👁")
         view_btn.setFixedSize(28, 28)
@@ -520,7 +521,10 @@ class SourceTable(QFrame):
         code_btn = QPushButton()
         try:
             import qtawesome as qta
-            code_btn.setIcon(qta.icon("mdi6.code-tags", color=self._colors.text_secondary))
+
+            code_btn.setIcon(
+                qta.icon("mdi6.code-tags", color=self._colors.text_secondary)
+            )
         except ImportError:
             code_btn.setText("</>")
         code_btn.setFixedSize(28, 28)
@@ -534,7 +538,10 @@ class SourceTable(QFrame):
         more_btn = QPushButton()
         try:
             import qtawesome as qta
-            more_btn.setIcon(qta.icon("mdi6.dots-vertical", color=self._colors.text_secondary))
+
+            more_btn.setIcon(
+                qta.icon("mdi6.dots-vertical", color=self._colors.text_secondary)
+            )
         except ImportError:
             more_btn.setText("⋮")
         more_btn.setFixedSize(28, 28)

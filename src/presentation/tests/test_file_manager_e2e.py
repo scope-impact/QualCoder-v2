@@ -17,7 +17,6 @@ import tempfile
 from pathlib import Path
 
 import pytest
-from PySide6.QtCore import Qt
 from PySide6.QtTest import QSignalSpy
 from PySide6.QtWidgets import QApplication, QMainWindow, QVBoxLayout, QWidget
 
@@ -565,9 +564,7 @@ class TestEmptyStateActions:
 class TestNavigationSignals:
     """E2E tests for navigation between screens."""
 
-    def test_double_click_source_triggers_navigation(
-        self, file_manager_window, qapp
-    ):
+    def test_double_click_source_triggers_navigation(self, file_manager_window, qapp):
         """
         E2E: Double-clicking a source triggers navigate_to_coding signal.
         """

@@ -7,14 +7,13 @@ Events are produced by Derivers and consumed by the Application layer.
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
 from uuid import uuid4
 
 from src.domain.projects.entities import SourceType
 from src.domain.shared.types import SourceId
-
 
 # ============================================================
 # Project Events
