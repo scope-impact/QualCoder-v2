@@ -134,7 +134,10 @@ class TestGetProjectContext:
         assert context["project_open"] is False
 
     def test_returns_project_info_when_open(
-        self, project_controller: ProjectControllerImpl, project_tools: ProjectTools, tmp_path: Path
+        self,
+        project_controller: ProjectControllerImpl,
+        project_tools: ProjectTools,
+        tmp_path: Path,
     ):
         """Returns project info when a project is open."""
         # Create a project
@@ -154,15 +157,21 @@ class TestGetProjectContext:
         assert "test.qda" in context["project_path"]
 
     def test_returns_source_count(
-        self, project_controller: ProjectControllerImpl, project_tools: ProjectTools, sample_source: Source, tmp_path: Path
+        self,
+        project_controller: ProjectControllerImpl,
+        project_tools: ProjectTools,
+        sample_source: Source,
+        tmp_path: Path,
     ):
         """Returns source count when project has sources."""
         # Create a project
         project_path = tmp_path / "test.qda"
-        project_controller.create_project(CreateProjectCommand(
-            name="Test",
-            path=str(project_path),
-        ))
+        project_controller.create_project(
+            CreateProjectCommand(
+                name="Test",
+                path=str(project_path),
+            )
+        )
 
         # Add a source manually (would normally use add_source command)
         project_controller._sources.append(sample_source)
@@ -178,14 +187,19 @@ class TestListSources:
     """Tests for listing sources."""
 
     def test_returns_empty_list_when_no_sources(
-        self, project_controller: ProjectControllerImpl, project_tools: ProjectTools, tmp_path: Path
+        self,
+        project_controller: ProjectControllerImpl,
+        project_tools: ProjectTools,
+        tmp_path: Path,
     ):
         """Returns empty list when project has no sources."""
         project_path = tmp_path / "test.qda"
-        project_controller.create_project(CreateProjectCommand(
-            name="Test",
-            path=str(project_path),
-        ))
+        project_controller.create_project(
+            CreateProjectCommand(
+                name="Test",
+                path=str(project_path),
+            )
+        )
 
         result = project_tools.execute("list_sources", {})
 
@@ -195,14 +209,20 @@ class TestListSources:
         assert data["sources"] == []
 
     def test_returns_sources_with_details(
-        self, project_controller: ProjectControllerImpl, project_tools: ProjectTools, sample_source: Source, tmp_path: Path
+        self,
+        project_controller: ProjectControllerImpl,
+        project_tools: ProjectTools,
+        sample_source: Source,
+        tmp_path: Path,
     ):
         """Returns source details."""
         project_path = tmp_path / "test.qda"
-        project_controller.create_project(CreateProjectCommand(
-            name="Test",
-            path=str(project_path),
-        ))
+        project_controller.create_project(
+            CreateProjectCommand(
+                name="Test",
+                path=str(project_path),
+            )
+        )
         project_controller._sources.append(sample_source)
 
         result = project_tools.execute("list_sources", {})
@@ -216,14 +236,19 @@ class TestListSources:
         assert source["type"] == "text"
 
     def test_filters_by_source_type(
-        self, project_controller: ProjectControllerImpl, project_tools: ProjectTools, tmp_path: Path
+        self,
+        project_controller: ProjectControllerImpl,
+        project_tools: ProjectTools,
+        tmp_path: Path,
     ):
         """Filters sources by type."""
         project_path = tmp_path / "test.qda"
-        project_controller.create_project(CreateProjectCommand(
-            name="Test",
-            path=str(project_path),
-        ))
+        project_controller.create_project(
+            CreateProjectCommand(
+                name="Test",
+                path=str(project_path),
+            )
+        )
 
         # Add text source
         text_source = Source(
@@ -267,58 +292,81 @@ class TestNavigateToSegment:
 
     def test_fails_with_missing_source_id(self, project_tools: ProjectTools):
         """Fails when source_id is missing."""
-        result = project_tools.execute("navigate_to_segment", {
-            "start_pos": 0,
-            "end_pos": 100,
-        })
+        result = project_tools.execute(
+            "navigate_to_segment",
+            {
+                "start_pos": 0,
+                "end_pos": 100,
+            },
+        )
 
         assert isinstance(result, Failure)
         assert "source_id" in result.failure()
 
     def test_fails_with_missing_positions(self, project_tools: ProjectTools):
         """Fails when positions are missing."""
-        result = project_tools.execute("navigate_to_segment", {
-            "source_id": 1,
-        })
+        result = project_tools.execute(
+            "navigate_to_segment",
+            {
+                "source_id": 1,
+            },
+        )
 
         assert isinstance(result, Failure)
         assert "start_pos" in result.failure()
 
     def test_fails_for_nonexistent_source(
-        self, project_controller: ProjectControllerImpl, project_tools: ProjectTools, tmp_path: Path
+        self,
+        project_controller: ProjectControllerImpl,
+        project_tools: ProjectTools,
+        tmp_path: Path,
     ):
         """Fails when source doesn't exist."""
         project_path = tmp_path / "test.qda"
-        project_controller.create_project(CreateProjectCommand(
-            name="Test",
-            path=str(project_path),
-        ))
+        project_controller.create_project(
+            CreateProjectCommand(
+                name="Test",
+                path=str(project_path),
+            )
+        )
 
-        result = project_tools.execute("navigate_to_segment", {
-            "source_id": 999,
-            "start_pos": 0,
-            "end_pos": 100,
-        })
+        result = project_tools.execute(
+            "navigate_to_segment",
+            {
+                "source_id": 999,
+                "start_pos": 0,
+                "end_pos": 100,
+            },
+        )
 
         assert isinstance(result, Failure)
 
     def test_navigates_to_segment_successfully(
-        self, project_controller: ProjectControllerImpl, project_tools: ProjectTools, sample_source: Source, tmp_path: Path
+        self,
+        project_controller: ProjectControllerImpl,
+        project_tools: ProjectTools,
+        sample_source: Source,
+        tmp_path: Path,
     ):
         """Successfully navigates to segment."""
         project_path = tmp_path / "test.qda"
-        project_controller.create_project(CreateProjectCommand(
-            name="Test",
-            path=str(project_path),
-        ))
+        project_controller.create_project(
+            CreateProjectCommand(
+                name="Test",
+                path=str(project_path),
+            )
+        )
         project_controller._sources.append(sample_source)
 
-        result = project_tools.execute("navigate_to_segment", {
-            "source_id": 1,
-            "start_pos": 50,
-            "end_pos": 150,
-            "highlight": True,
-        })
+        result = project_tools.execute(
+            "navigate_to_segment",
+            {
+                "source_id": 1,
+                "start_pos": 50,
+                "end_pos": 150,
+                "highlight": True,
+            },
+        )
 
         assert isinstance(result, Success)
         data = result.unwrap()
@@ -328,21 +376,30 @@ class TestNavigateToSegment:
         assert data["current_screen"] == "coding"
 
     def test_defaults_highlight_to_true(
-        self, project_controller: ProjectControllerImpl, project_tools: ProjectTools, sample_source: Source, tmp_path: Path
+        self,
+        project_controller: ProjectControllerImpl,
+        project_tools: ProjectTools,
+        sample_source: Source,
+        tmp_path: Path,
     ):
         """Defaults highlight to True when not specified."""
         project_path = tmp_path / "test.qda"
-        project_controller.create_project(CreateProjectCommand(
-            name="Test",
-            path=str(project_path),
-        ))
+        project_controller.create_project(
+            CreateProjectCommand(
+                name="Test",
+                path=str(project_path),
+            )
+        )
         project_controller._sources.append(sample_source)
 
-        result = project_tools.execute("navigate_to_segment", {
-            "source_id": 1,
-            "start_pos": 0,
-            "end_pos": 100,
-        })
+        result = project_tools.execute(
+            "navigate_to_segment",
+            {
+                "source_id": 1,
+                "start_pos": 0,
+                "end_pos": 100,
+            },
+        )
 
         assert isinstance(result, Success)
         data = result.unwrap()

@@ -134,7 +134,9 @@ class TestCreateProjectDialog:
         dialog = CreateProjectDialog(colors=colors)
         assert dialog is not None
 
-    def test_create_project_dialog_shows_default_directory(self, qapp, colors, tmp_path):
+    def test_create_project_dialog_shows_default_directory(
+        self, qapp, colors, tmp_path
+    ):
         """CreateProjectDialog shows specified default directory."""
         from src.presentation.dialogs.project_dialog import CreateProjectDialog
 
@@ -203,7 +205,9 @@ class TestCreateProjectDialog:
         # Should sanitize to safe filename
         path = dialog.get_project_path()
         assert ":" not in path
-        assert "/" not in Path(path).name or Path(path).name == dialog.get_project_name()
+        assert (
+            "/" not in Path(path).name or Path(path).name == dialog.get_project_name()
+        )
 
     def test_create_project_dialog_emits_project_created(self, qapp, colors, tmp_path):
         """CreateProjectDialog emits project_created signal."""

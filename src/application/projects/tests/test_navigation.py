@@ -215,9 +215,7 @@ class TestOpenSourceNavigation:
         assert isinstance(result, Success)
         # Should navigate to coding screen
         history = event_bus.get_history()
-        screen_events = [
-            h.event for h in history if isinstance(h.event, ScreenChanged)
-        ]
+        screen_events = [h.event for h in history if isinstance(h.event, ScreenChanged)]
         coding_events = [e for e in screen_events if e.to_screen == "coding"]
         assert len(coding_events) >= 1
 
