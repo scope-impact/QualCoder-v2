@@ -276,7 +276,7 @@ class OpenProjectDialog(QDialog):
                 background-color: {self._colors.primary_light};
             }}
             QPushButton:disabled {{
-                background-color: {self._colors.muted};
+                background-color: {self._colors.surface_light};
                 color: {self._colors.text_secondary};
             }}
         """)
@@ -579,7 +579,7 @@ class CreateProjectDialog(QDialog):
                 background-color: {self._colors.primary_light};
             }}
             QPushButton:disabled {{
-                background-color: {self._colors.muted};
+                background-color: {self._colors.surface_light};
                 color: {self._colors.text_secondary};
             }}
         """)

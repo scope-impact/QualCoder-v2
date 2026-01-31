@@ -94,7 +94,7 @@ class TestOpenProjectDialog:
         dialog._open_btn.click()
 
         assert spy.count() == 1
-        assert spy[0][0] == "/tmp/projectA.qda"
+        assert spy.at(0)[0] == "/tmp/projectA.qda"
 
     def test_open_project_dialog_emits_cancel_signal(self, qapp, colors):
         """OpenProjectDialog emits cancel_clicked signal."""
@@ -223,8 +223,8 @@ class TestCreateProjectDialog:
         dialog._create_btn.click()
 
         assert spy.count() == 1
-        assert spy[0][0] == "New Project"  # name
-        assert str(tmp_path) in spy[0][1]  # path
+        assert spy.at(0)[0] == "New Project"  # name
+        assert str(tmp_path) in spy.at(0)[1]  # path
 
     def test_create_project_dialog_emits_cancel_signal(self, qapp, colors):
         """CreateProjectDialog emits cancel_clicked signal."""
