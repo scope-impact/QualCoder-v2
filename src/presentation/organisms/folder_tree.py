@@ -164,7 +164,9 @@ class FolderTree(QFrame):
         if item is None or item == self._root_item:
             # Root context menu
             create_action = QAction("New Folder", self)
-            create_action.triggered.connect(lambda: self.create_folder_requested.emit(None))
+            create_action.triggered.connect(
+                lambda: self.create_folder_requested.emit(None)
+            )
             menu.addAction(create_action)
         else:
             folder: FolderNode = item.data(0, Qt.ItemDataRole.UserRole)

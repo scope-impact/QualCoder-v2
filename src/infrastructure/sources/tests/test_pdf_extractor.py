@@ -32,9 +32,7 @@ class TestPdfExtraction:
         assert not extractor.supports(Path("document.txt"))
         assert not extractor.supports(Path("document.docx"))
 
-    def test_fails_for_nonexistent_file(
-        self, extractor: PdfExtractor, tmp_path: Path
-    ):
+    def test_fails_for_nonexistent_file(self, extractor: PdfExtractor, tmp_path: Path):
         """Returns failure for non-existent file."""
         missing = tmp_path / "missing.pdf"
 

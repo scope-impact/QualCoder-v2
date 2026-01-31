@@ -151,7 +151,9 @@ class MediaPlayer(QWidget):
         """)
 
         controls_layout = QVBoxLayout(controls)
-        controls_layout.setContentsMargins(SPACING.md, SPACING.sm, SPACING.md, SPACING.sm)
+        controls_layout.setContentsMargins(
+            SPACING.md, SPACING.sm, SPACING.md, SPACING.sm
+        )
         controls_layout.setSpacing(SPACING.sm)
 
         # Progress slider
@@ -197,7 +199,9 @@ class MediaPlayer(QWidget):
         bottom_row.addStretch()
 
         # Volume control
-        volume_icon = Icon("mdi6.volume-high", size=18, color=self._colors.text_secondary)
+        volume_icon = Icon(
+            "mdi6.volume-high", size=18, color=self._colors.text_secondary
+        )
         volume_label = QLabel()
         volume_label.setPixmap(volume_icon.pixmap(18, 18))
         bottom_row.addWidget(volume_label)
@@ -294,7 +298,13 @@ class MediaPlayer(QWidget):
             return
 
         self._current_path = path
-        self._is_video = path.suffix.lower() in {".mp4", ".mov", ".avi", ".mkv", ".webm"}
+        self._is_video = path.suffix.lower() in {
+            ".mp4",
+            ".mov",
+            ".avi",
+            ".mkv",
+            ".webm",
+        }
 
         # Show appropriate view
         if self._is_video:
@@ -411,14 +421,10 @@ class MediaPlayer(QWidget):
     def _on_state_changed(self, state: QMediaPlayer.PlaybackState):
         """Handle playback state change."""
         if state == QMediaPlayer.PlaybackState.PlayingState:
-            self._play_btn.setIcon(
-                Icon("mdi6.pause", size=24, color="#ffffff")
-            )
+            self._play_btn.setIcon(Icon("mdi6.pause", size=24, color="#ffffff"))
             self.playback_started.emit()
         else:
-            self._play_btn.setIcon(
-                Icon("mdi6.play", size=24, color="#ffffff")
-            )
+            self._play_btn.setIcon(Icon("mdi6.play", size=24, color="#ffffff"))
             if state == QMediaPlayer.PlaybackState.StoppedState:
                 self.playback_stopped.emit()
 

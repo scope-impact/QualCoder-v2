@@ -181,7 +181,9 @@ class SourceMetadataDialog(QDialog):
         form.setLabelAlignment(Qt.AlignmentFlag.AlignRight)
 
         # File size
-        size_label = self._create_value_label(self._format_size(self._metadata.file_size))
+        size_label = self._create_value_label(
+            self._format_size(self._metadata.file_size)
+        )
         form.addRow(self._create_field_label("Size:"), size_label)
 
         # Type
@@ -189,7 +191,9 @@ class SourceMetadataDialog(QDialog):
         form.addRow(self._create_field_label("Type:"), type_label)
 
         # Status
-        status_label = self._create_value_label(self._metadata.status.replace("_", " ").title())
+        status_label = self._create_value_label(
+            self._metadata.status.replace("_", " ").title()
+        )
         form.addRow(self._create_field_label("Status:"), status_label)
 
         # Modified date
