@@ -818,6 +818,47 @@ class ProjectControllerImpl:
         cid = CaseId(value=case_id)
         return next((c for c in self._cases if c.id == cid), None)
 
+    def get_case_with_sources(self, case_id: int) -> tuple[Case, list[Source]] | None:
+        """
+        Get a case with its linked Source entities.
+
+        Args:
+            case_id: The case ID to look up
+
+        Returns:
+            Tuple of (Case, list of linked Sources) or None if not found
+        """
+        cid = CaseId(value=case_id)
+        case = next((c for c in self._cases if c.id == cid), None)
+        if case is None:
+            return None
+
+        # Get Source entities for each linked source_id
+        linked_sources = []
+        for sid in case.source_ids:
+            source = next((s for s in self._sources if s.id.value == sid), None)
+            if source:
+                linked_sources.append(source)
+
+        return (case, linked_sources)
+
+    def get_all_cases_with_sources(self) -> list[tuple[Case, list[Source]]]:
+        """
+        Get all cases with their linked Source entities.
+
+        Returns:
+            List of tuples (Case, list of linked Sources)
+        """
+        result = []
+        for case in self._cases:
+            linked_sources = []
+            for sid in case.source_ids:
+                source = next((s for s in self._sources if s.id.value == sid), None)
+                if source:
+                    linked_sources.append(source)
+            result.append((case, linked_sources))
+        return result
+
     def get_project_summary(self) -> ProjectSummary | None:
         """Get summary statistics for the current project."""
         if self._current_project is None:

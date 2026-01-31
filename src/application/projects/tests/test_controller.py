@@ -926,3 +926,179 @@ class TestCaseAttributeCommands:
         assert len(retrieved.attributes) == 1
         assert retrieved.attributes[0].name == "age"
         assert retrieved.attributes[0].value == 25
+
+
+class TestCaseDataQueries:
+    """Tests for comprehensive case data queries."""
+
+    def test_get_case_with_sources_returns_linked_sources(
+        self,
+        project_controller,
+        existing_project_path: Path,
+        sample_source_path: Path,
+    ):
+        """Test that get_case_with_sources returns case with linked Source entities."""
+        from src.application.projects.controller import (
+            AddSourceCommand,
+            CreateCaseCommand,
+            LinkSourceToCaseCommand,
+            OpenProjectCommand,
+        )
+
+        # Setup: Open project, add sources, create case, link
+        project_controller.open_project(
+            OpenProjectCommand(path=str(existing_project_path))
+        )
+
+        source_result = project_controller.add_source(
+            AddSourceCommand(source_path=str(sample_source_path))
+        )
+        source = source_result.unwrap()
+
+        case_result = project_controller.create_case(
+            CreateCaseCommand(name="Participant A")
+        )
+        case = case_result.unwrap()
+
+        project_controller.link_source_to_case(
+            LinkSourceToCaseCommand(case_id=case.id.value, source_id=source.id.value)
+        )
+
+        # Act: Get case with sources
+        result = project_controller.get_case_with_sources(case.id.value)
+
+        # Assert
+        assert result is not None
+        case_data, sources = result
+        assert case_data.id == case.id
+        assert len(sources) == 1
+        assert sources[0].id == source.id
+        assert sources[0].name == source.name
+
+    def test_get_case_with_sources_returns_multiple_sources(
+        self,
+        project_controller,
+        existing_project_path: Path,
+        tmp_path: Path,
+    ):
+        """Test that get_case_with_sources returns all linked sources."""
+        from src.application.projects.controller import (
+            AddSourceCommand,
+            CreateCaseCommand,
+            LinkSourceToCaseCommand,
+            OpenProjectCommand,
+        )
+
+        # Create multiple source files
+        source_path1 = tmp_path / "interview1.txt"
+        source_path1.write_text("Content 1")
+        source_path2 = tmp_path / "interview2.txt"
+        source_path2.write_text("Content 2")
+
+        project_controller.open_project(
+            OpenProjectCommand(path=str(existing_project_path))
+        )
+
+        source1 = project_controller.add_source(
+            AddSourceCommand(source_path=str(source_path1))
+        ).unwrap()
+        source2 = project_controller.add_source(
+            AddSourceCommand(source_path=str(source_path2))
+        ).unwrap()
+
+        case = project_controller.create_case(
+            CreateCaseCommand(name="Participant A")
+        ).unwrap()
+
+        project_controller.link_source_to_case(
+            LinkSourceToCaseCommand(case_id=case.id.value, source_id=source1.id.value)
+        )
+        project_controller.link_source_to_case(
+            LinkSourceToCaseCommand(case_id=case.id.value, source_id=source2.id.value)
+        )
+
+        result = project_controller.get_case_with_sources(case.id.value)
+
+        assert result is not None
+        case_data, sources = result
+        assert len(sources) == 2
+
+    def test_get_case_with_sources_returns_empty_for_no_links(
+        self,
+        project_controller,
+        existing_project_path: Path,
+    ):
+        """Test that get_case_with_sources returns empty list when no sources linked."""
+        from src.application.projects.controller import (
+            CreateCaseCommand,
+            OpenProjectCommand,
+        )
+
+        project_controller.open_project(
+            OpenProjectCommand(path=str(existing_project_path))
+        )
+
+        case = project_controller.create_case(
+            CreateCaseCommand(name="Participant A")
+        ).unwrap()
+
+        result = project_controller.get_case_with_sources(case.id.value)
+
+        assert result is not None
+        case_data, sources = result
+        assert len(sources) == 0
+
+    def test_get_case_with_sources_returns_none_for_nonexistent(
+        self,
+        project_controller,
+        existing_project_path: Path,
+    ):
+        """Test that get_case_with_sources returns None for non-existent case."""
+        from src.application.projects.controller import OpenProjectCommand
+
+        project_controller.open_project(
+            OpenProjectCommand(path=str(existing_project_path))
+        )
+
+        result = project_controller.get_case_with_sources(999)
+
+        assert result is None
+
+    def test_get_all_cases_with_sources(
+        self,
+        project_controller,
+        existing_project_path: Path,
+        sample_source_path: Path,
+    ):
+        """Test getting all cases with their linked sources."""
+        from src.application.projects.controller import (
+            AddSourceCommand,
+            CreateCaseCommand,
+            LinkSourceToCaseCommand,
+            OpenProjectCommand,
+        )
+
+        project_controller.open_project(
+            OpenProjectCommand(path=str(existing_project_path))
+        )
+
+        source = project_controller.add_source(
+            AddSourceCommand(source_path=str(sample_source_path))
+        ).unwrap()
+
+        case1 = project_controller.create_case(
+            CreateCaseCommand(name="Participant A")
+        ).unwrap()
+        # Create second case (not linked to any source)
+        project_controller.create_case(CreateCaseCommand(name="Participant B"))
+
+        project_controller.link_source_to_case(
+            LinkSourceToCaseCommand(case_id=case1.id.value, source_id=source.id.value)
+        )
+
+        result = project_controller.get_all_cases_with_sources()
+
+        assert len(result) == 2
+        # Find case1 in results (has source linked)
+        case1_data = next((c for c, _ in result if c.id == case1.id), None)
+        assert case1_data is not None
