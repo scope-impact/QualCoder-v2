@@ -8,6 +8,8 @@ Implements QC-027.06 View Source Metadata:
 - AC #4: Edit source properties
 """
 
+from __future__ import annotations
+
 from dataclasses import dataclass
 
 from PySide6.QtCore import Qt, Signal
@@ -33,7 +35,7 @@ from design_system import (
 )
 
 
-@dataclass
+@dataclass(frozen=True)
 class SourceMetadata:
     """Data for source metadata dialog."""
 

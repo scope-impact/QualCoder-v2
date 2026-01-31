@@ -8,6 +8,8 @@ Implements QC-027.04 Import Audio/Video Files:
 Supports audio and video file playback with standard controls.
 """
 
+from __future__ import annotations
+
 from pathlib import Path
 
 from PySide6.QtCore import Qt, Signal, Slot
