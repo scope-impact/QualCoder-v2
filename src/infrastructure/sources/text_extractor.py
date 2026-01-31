@@ -18,7 +18,6 @@ from pathlib import Path
 
 from returns.result import Failure, Result, Success
 
-
 # ============================================================
 # Data Types
 # ============================================================
@@ -182,7 +181,7 @@ class TextExtractor:
         except Exception as e:
             return Failure(f"Error extracting odt: {e}")
 
-    def _extract_doc(self, path: Path) -> Result[ExtractionResult, str]:
+    def _extract_doc(self, _path: Path) -> Result[ExtractionResult, str]:
         """Extract text from legacy Word .doc files."""
         # Legacy .doc format requires antiword or similar
         # For now, return a helpful error

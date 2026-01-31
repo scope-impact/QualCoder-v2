@@ -19,16 +19,16 @@ from .auto_code_dialog import (
     AutoCodePreview,
 )
 from .color_picker_dialog import ColorPickerDialog
+from .delete_source_dialog import (
+    DeleteSourceDialog,
+    DeleteSourceInfo,
+)
 from .memo_dialog import (
     CodeMemoDialog,
     FileMemoDialog,
     MemoDialog,
     MemosPanel,
     SegmentMemoDialog,
-)
-from .delete_source_dialog import (
-    DeleteSourceDialog,
-    DeleteSourceInfo,
 )
 from .project_dialog import (
     CreateProjectDialog,

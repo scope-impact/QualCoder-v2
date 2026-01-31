@@ -181,10 +181,10 @@ class ImageViewer(QWidget):
         # Image label
         self._image_label = QLabel()
         self._image_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self._image_label.setStyleSheet(f"""
-            QLabel {{
+        self._image_label.setStyleSheet("""
+            QLabel {
                 background-color: transparent;
-            }}
+            }
         """)
 
         self._scroll_area.setWidget(self._image_label)

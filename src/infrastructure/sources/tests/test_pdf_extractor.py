@@ -9,7 +9,7 @@ Implements QC-027.02: Import PDF Document
 from pathlib import Path
 
 import pytest
-from returns.result import Failure, Success
+from returns.result import Failure
 
 from src.infrastructure.sources.pdf_extractor import PdfExtractionResult, PdfExtractor
 

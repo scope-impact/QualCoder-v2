@@ -12,7 +12,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from PySide6.QtCore import Qt, Signal, Slot
+from PySide6.QtCore import Qt, QUrl, Signal, Slot
 from PySide6.QtMultimedia import QAudioOutput, QMediaPlayer
 from PySide6.QtMultimediaWidgets import QVideoWidget
 from PySide6.QtWidgets import (
@@ -99,10 +99,10 @@ class MediaPlayer(QWidget):
 
         # Video display area (hidden for audio)
         self._video_container = QFrame()
-        self._video_container.setStyleSheet(f"""
-            QFrame {{
+        self._video_container.setStyleSheet("""
+            QFrame {
                 background-color: #000000;
-            }}
+            }
         """)
         video_layout = QVBoxLayout(self._video_container)
         video_layout.setContentsMargins(0, 0, 0, 0)
@@ -288,8 +288,6 @@ class MediaPlayer(QWidget):
         Args:
             path: Path to the audio or video file
         """
-        from PySide6.QtCore import QUrl
-
         path = Path(path)
         if not path.exists():
             self.load_failed.emit(f"File not found: {path}")
@@ -405,7 +403,7 @@ class MediaPlayer(QWidget):
         self.position_changed.emit(position)
 
     @Slot(int)
-    def _on_duration_changed(self, duration: int):
+    def _on_duration_changed(self, _duration: int):
         """Handle duration change when media loads."""
         self._update_time_display()
 
@@ -425,7 +423,7 @@ class MediaPlayer(QWidget):
                 self.playback_stopped.emit()
 
     @Slot(QMediaPlayer.Error, str)
-    def _on_error(self, error: QMediaPlayer.Error, message: str):
+    def _on_error(self, _error: QMediaPlayer.Error, message: str):
         """Handle media player errors."""
         self.load_failed.emit(f"Media error: {message}")
 

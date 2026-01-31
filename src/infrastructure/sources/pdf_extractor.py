@@ -18,7 +18,6 @@ from pathlib import Path
 
 from returns.result import Failure, Result, Success
 
-
 # ============================================================
 # Data Types
 # ============================================================
@@ -84,7 +83,7 @@ class PdfExtractor:
             reader = PdfReader(str(path))
             page_texts = []
 
-            for i, page in enumerate(reader.pages):
+            for page in reader.pages:
                 text = page.extract_text() or ""
                 if text.strip():
                     page_texts.append(text)
