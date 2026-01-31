@@ -26,9 +26,17 @@ from .memo_dialog import (
     MemosPanel,
     SegmentMemoDialog,
 )
+from .delete_source_dialog import (
+    DeleteSourceDialog,
+    DeleteSourceInfo,
+)
 from .project_dialog import (
     CreateProjectDialog,
     OpenProjectDialog,
+)
+from .source_metadata_dialog import (
+    SourceMetadata,
+    SourceMetadataDialog,
 )
 
 __all__ = [
@@ -43,4 +51,8 @@ __all__ = [
     "AutoCodePreview",
     "OpenProjectDialog",
     "CreateProjectDialog",
+    "DeleteSourceDialog",
+    "DeleteSourceInfo",
+    "SourceMetadata",
+    "SourceMetadataDialog",
 ]
