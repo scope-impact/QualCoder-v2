@@ -68,6 +68,22 @@ class SetCaseAttributeInput:
     attr_value: str | int | float | bool  # Value matching the type
 
 
+@dataclass(frozen=True)
+class SuggestCaseGroupingsInput:
+    """Input for suggest_case_groupings tool"""
+
+    attribute_names: list[str] | None = None  # Focus on specific attributes (optional)
+    min_group_size: int = 2  # Minimum cases per group
+
+
+@dataclass(frozen=True)
+class CompareCasesInput:
+    """Input for compare_cases tool"""
+
+    case_ids: list[int]  # Cases to compare (at least 2)
+    code_ids: list[int] | None = None  # Filter to specific codes (optional)
+
+
 # ============================================================
 # Tool Output Schemas
 # ============================================================
@@ -120,6 +136,61 @@ class ListCasesOutput:
 
     cases: list[CaseSummaryOutput]
     total_count: int
+
+
+@dataclass(frozen=True)
+class CaseGroupMemberOutput:
+    """A case within a suggested group"""
+
+    case_id: int
+    name: str
+
+
+@dataclass(frozen=True)
+class SuggestedGroupOutput:
+    """A suggested case grouping"""
+
+    group_name: str  # Suggested group name (e.g., "Age 25-34", "Urban Sites")
+    attribute_basis: str  # Which attribute(s) this grouping is based on
+    rationale: str  # Why this grouping is meaningful
+    cases: list[CaseGroupMemberOutput]  # Cases in this group
+
+
+@dataclass(frozen=True)
+class SuggestCaseGroupingsOutput:
+    """Output from suggest_case_groupings tool"""
+
+    groupings: list[SuggestedGroupOutput]
+    total_cases_analyzed: int
+    ungrouped_case_ids: list[int]  # Cases that didn't fit any group
+
+
+@dataclass(frozen=True)
+class CaseCodeSummaryOutput:
+    """Code summary for a case in comparison"""
+
+    code_id: int
+    code_name: str
+    segment_count: int
+
+
+@dataclass(frozen=True)
+class CaseComparisonOutput:
+    """Comparison data for a single case"""
+
+    case_id: int
+    case_name: str
+    unique_codes: list[CaseCodeSummaryOutput]  # Codes only in this case
+    total_segments: int
+
+
+@dataclass(frozen=True)
+class CompareCasesOutput:
+    """Output from compare_cases tool"""
+
+    cases: list[CaseComparisonOutput]  # Comparison data per case
+    common_codes: list[CaseCodeSummaryOutput]  # Codes present in all cases
+    analysis_summary: str  # Natural language summary of comparison
 
 
 # ============================================================
@@ -286,6 +357,50 @@ CASES_TOOLS = [
                 },
             },
             "required": ["case_id", "attr_name", "attr_type", "attr_value"],
+        },
+    },
+    {
+        "name": "suggest_case_groupings",
+        "description": "Analyze case attributes and suggest meaningful groupings. Identifies patterns in demographic or categorical data to help organize cases for analysis.",
+        "trust_level": TrustLevel.AUTONOMOUS,
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "attribute_names": {
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Focus analysis on specific attributes (optional, analyzes all if not provided)",
+                },
+                "min_group_size": {
+                    "type": "integer",
+                    "description": "Minimum number of cases required for a group",
+                    "minimum": 2,
+                    "default": 2,
+                },
+            },
+            "required": [],
+        },
+    },
+    {
+        "name": "compare_cases",
+        "description": "Compare coding patterns across multiple cases. Identifies unique themes per case and common themes across all cases to support cross-case analysis.",
+        "trust_level": TrustLevel.AUTONOMOUS,
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "case_ids": {
+                    "type": "array",
+                    "items": {"type": "integer"},
+                    "description": "IDs of cases to compare (minimum 2)",
+                    "minItems": 2,
+                },
+                "code_ids": {
+                    "type": "array",
+                    "items": {"type": "integer"},
+                    "description": "Filter comparison to specific codes (optional)",
+                },
+            },
+            "required": ["case_ids"],
         },
     },
 ]
