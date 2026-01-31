@@ -108,12 +108,13 @@ class TestProjectToolsRegistration:
         """get_tool_schemas returns all tool schemas."""
         schemas = project_tools.get_tool_schemas()
 
-        assert len(schemas) == 4
+        assert len(schemas) == 5
         names = [s["name"] for s in schemas]
         assert "get_project_context" in names
         assert "list_sources" in names
         assert "read_source_content" in names
         assert "navigate_to_segment" in names
+        assert "suggest_source_metadata" in names
 
     def test_get_tool_names(self, project_tools: ProjectTools):
         """get_tool_names returns list of tool names."""
@@ -123,6 +124,7 @@ class TestProjectToolsRegistration:
         assert "list_sources" in names
         assert "read_source_content" in names
         assert "navigate_to_segment" in names
+        assert "suggest_source_metadata" in names
 
 
 class TestGetProjectContext:
@@ -655,6 +657,201 @@ class TestReadSourceContent:
         )
 
         result = project_tools.execute("read_source_content", {"source_id": 999})
+
+        assert isinstance(result, Failure)
+        assert "not found" in result.failure().lower()
+
+
+class TestSuggestSourceMetadata:
+    """Tests for QC-027.10: Agent can suggest source metadata."""
+
+    def test_tool_has_schema(self):
+        """suggest_source_metadata tool has valid schema."""
+        from src.infrastructure.mcp.project_tools import suggest_source_metadata_tool
+
+        schema = suggest_source_metadata_tool.to_schema()
+
+        assert schema["name"] == "suggest_source_metadata"
+        props = schema["inputSchema"]["properties"]
+        assert "source_id" in props
+        assert "language" in props
+        assert "topics" in props
+        assert "organization_suggestion" in props
+
+    def test_suggests_language(
+        self,
+        project_controller: ProjectControllerImpl,
+        project_tools: ProjectTools,
+        tmp_path: Path,
+    ):
+        """AC #1: Agent can detect/suggest document language."""
+        project_path = tmp_path / "test.qda"
+        project_controller.create_project(
+            CreateProjectCommand(name="Test", path=str(project_path))
+        )
+
+        source = Source(
+            id=SourceId(value=1),
+            name="doc.txt",
+            source_type=SourceType.TEXT,
+            status=SourceStatus.READY,
+            file_path=Path("/tmp/doc.txt"),
+            origin="internal",
+            memo=None,
+            code_count=0,
+            case_ids=(),
+            fulltext="This is English text.",
+        )
+        project_controller._sources.append(source)
+
+        result = project_tools.execute(
+            "suggest_source_metadata",
+            {
+                "source_id": 1,
+                "language": "en",
+            },
+        )
+
+        assert isinstance(result, Success)
+        data = result.unwrap()
+        assert data["suggested"]["language"] == "en"
+
+    def test_suggests_topics(
+        self,
+        project_controller: ProjectControllerImpl,
+        project_tools: ProjectTools,
+        tmp_path: Path,
+    ):
+        """AC #2: Agent can extract/suggest key topics."""
+        project_path = tmp_path / "test.qda"
+        project_controller.create_project(
+            CreateProjectCommand(name="Test", path=str(project_path))
+        )
+
+        source = Source(
+            id=SourceId(value=1),
+            name="interview.txt",
+            source_type=SourceType.TEXT,
+            status=SourceStatus.READY,
+            file_path=Path("/tmp/interview.txt"),
+            origin="internal",
+            memo=None,
+            code_count=0,
+            case_ids=(),
+            fulltext="Interview about healthcare and technology.",
+        )
+        project_controller._sources.append(source)
+
+        result = project_tools.execute(
+            "suggest_source_metadata",
+            {
+                "source_id": 1,
+                "topics": ["healthcare", "technology", "interviews"],
+            },
+        )
+
+        assert isinstance(result, Success)
+        data = result.unwrap()
+        assert "healthcare" in data["suggested"]["topics"]
+        assert "technology" in data["suggested"]["topics"]
+
+    def test_suggests_organization(
+        self,
+        project_controller: ProjectControllerImpl,
+        project_tools: ProjectTools,
+        tmp_path: Path,
+    ):
+        """AC #3: Agent can suggest source organization."""
+        project_path = tmp_path / "test.qda"
+        project_controller.create_project(
+            CreateProjectCommand(name="Test", path=str(project_path))
+        )
+
+        source = Source(
+            id=SourceId(value=1),
+            name="interview_001.txt",
+            source_type=SourceType.TEXT,
+            status=SourceStatus.READY,
+            file_path=Path("/tmp/interview_001.txt"),
+            origin="internal",
+            memo=None,
+            code_count=0,
+            case_ids=(),
+            fulltext="Interview with participant about health.",
+        )
+        project_controller._sources.append(source)
+
+        result = project_tools.execute(
+            "suggest_source_metadata",
+            {
+                "source_id": 1,
+                "organization_suggestion": "Group with other health interviews",
+            },
+        )
+
+        assert isinstance(result, Success)
+        data = result.unwrap()
+        assert "health interviews" in data["suggested"]["organization_suggestion"]
+
+    def test_returns_pending_status(
+        self,
+        project_controller: ProjectControllerImpl,
+        project_tools: ProjectTools,
+        tmp_path: Path,
+    ):
+        """AC #4: Extraction results require researcher approval (pending status)."""
+        project_path = tmp_path / "test.qda"
+        project_controller.create_project(
+            CreateProjectCommand(name="Test", path=str(project_path))
+        )
+
+        source = Source(
+            id=SourceId(value=1),
+            name="doc.txt",
+            source_type=SourceType.TEXT,
+            status=SourceStatus.READY,
+            file_path=Path("/tmp/doc.txt"),
+            origin="internal",
+            memo=None,
+            code_count=0,
+            case_ids=(),
+            fulltext="Sample document.",
+        )
+        project_controller._sources.append(source)
+
+        result = project_tools.execute(
+            "suggest_source_metadata",
+            {
+                "source_id": 1,
+                "language": "en",
+                "topics": ["research"],
+            },
+        )
+
+        assert isinstance(result, Success)
+        data = result.unwrap()
+        assert data["status"] == "pending_approval"
+        assert data["requires_approval"] is True
+
+    def test_fails_for_nonexistent_source(
+        self,
+        project_controller: ProjectControllerImpl,
+        project_tools: ProjectTools,
+        tmp_path: Path,
+    ):
+        """Returns failure for non-existent source."""
+        project_path = tmp_path / "test.qda"
+        project_controller.create_project(
+            CreateProjectCommand(name="Test", path=str(project_path))
+        )
+
+        result = project_tools.execute(
+            "suggest_source_metadata",
+            {
+                "source_id": 999,
+                "language": "en",
+            },
+        )
 
         assert isinstance(result, Failure)
         assert "not found" in result.failure().lower()
