@@ -1,10 +1,14 @@
 [project]
 name = "qualcoder-v2"
-version = "0.1.0"
+version = "0.2.0"
 description = "QualCoder v2 - Qualitative Data Analysis"
 requires-python = ">=3.11"
 dependencies = [
     "design-system",
+    # Qt binding (PySide6 preferred - LGPL license)
+    "pyside6>=6.5.0",
+    # Database
+    "sqlalchemy>=2.0",
 ]
 
 [tool.uv.workspace]
@@ -13,11 +17,18 @@ members = ["design_system", "_template"]
 [tool.uv.sources]
 design-system = { workspace = true }
 
+[project.optional-dependencies]
+ddd = [
+    "returns>=0.22",  # Result/Maybe/IO monads
+]
+
 [dependency-groups]
 dev = [
+    "pytest>=8.0.0",
     "pytest-qt>=4.5.0",
     "pre-commit>=4.0.0",
     "ruff>=0.9.0",
+    "returns>=0.22",  # Result monad for domain layer
 ]
 docs = [
     "mkdocs>=1.6",
@@ -55,3 +66,27 @@ known-first-party = ["design_system", "src"]
 [tool.ruff.lint.per-file-ignores]
 "__init__.py" = ["F401"]  # unused imports ok for re-exports
 "**/tests/**" = ["ARG002"]  # pytest fixtures like qapp are used implicitly
+
+# ============================================================================
+# Pytest Configuration
+# ============================================================================
+[tool.pytest.ini_options]
+testpaths = ["src", "design_system/tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = [
+    "-v",
+    "--tb=short",
+    "--strict-markers",
+]
+markers = [
+    "unit: fast isolated tests with no external dependencies",
+    "integration: tests involving database or component integration",
+    "e2e: end-to-end workflow tests",
+    "slow: tests taking more than 1 second",
+    "screenshot: tests that capture visual screenshots",
+]
+filterwarnings = [
+    "ignore::DeprecationWarning",
+]

@@ -16,6 +16,95 @@ from PySide6.QtWidgets import (
 
 from .tokens import RADIUS, SPACING, TYPOGRAPHY, ColorPalette, get_colors, hex_to_rgba
 
+# ============================================================================
+# Color Swatch - Clickable color indicator
+# ============================================================================
+
+
+class ColorSwatch(QFrame):
+    """
+    Clickable color swatch for color selection.
+
+    A small, clickable square that displays a color and emits a signal when clicked.
+    Supports selected state with highlighted border.
+
+    Usage:
+        swatch = ColorSwatch("#FF5722", size=32)
+        swatch.clicked.connect(lambda color: print(f"Selected: {color}"))
+        swatch.set_selected(True)
+
+    Signals:
+        clicked(str): Emitted when swatch is clicked, with the color value
+    """
+
+    clicked = Signal(str)
+
+    def __init__(
+        self,
+        color: str,
+        size: int = 32,
+        colors: ColorPalette = None,
+        parent=None,
+    ):
+        """
+        Initialize the color swatch.
+
+        Args:
+            color: Hex color string (e.g., "#FF5722")
+            size: Size of the swatch in pixels (default 32)
+            colors: Color palette for styling
+            parent: Parent widget
+        """
+        super().__init__(parent)
+        self._color = color
+        self._design_colors = colors or get_colors()
+        self._selected = False
+
+        self.setFixedSize(size, size)
+        self.setCursor(Qt.CursorShape.PointingHandCursor)
+        self._update_style()
+
+    def _update_style(self):
+        """Update the swatch style based on selection state."""
+        border = (
+            f"2px solid {self._design_colors.primary}"
+            if self._selected
+            else "1px solid rgba(0,0,0,0.2)"
+        )
+        self.setStyleSheet(f"""
+            QFrame {{
+                background-color: {self._color};
+                border: {border};
+                border-radius: {RADIUS.sm}px;
+            }}
+            QFrame:hover {{
+                border: 2px solid {self._design_colors.primary};
+            }}
+        """)
+
+    def set_selected(self, selected: bool):
+        """Set the selected state."""
+        self._selected = selected
+        self._update_style()
+
+    def is_selected(self) -> bool:
+        """Check if swatch is selected."""
+        return self._selected
+
+    def get_color(self) -> str:
+        """Get the swatch color."""
+        return self._color
+
+    def set_color(self, color: str):
+        """Set the swatch color."""
+        self._color = color
+        self._update_style()
+
+    def mousePressEvent(self, event):
+        """Handle click events."""
+        if event.button() == Qt.MouseButton.LeftButton:
+            self.clicked.emit(self._color)
+
 
 class TypeSelector(QFrame):
     """

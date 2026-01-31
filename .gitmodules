@@ -1,0 +1,3 @@
+[submodule "vendor/QualCoder"]
+	path = vendor/QualCoder
+	url = https://github.com/ccbogel/QualCoder

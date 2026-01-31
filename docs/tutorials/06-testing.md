@@ -117,8 +117,8 @@ class TestDeriveCreateCodePriority:
         )
 
         assert isinstance(result, Failure)
-        assert isinstance(result.error, InvalidPriority)
-        assert result.error.value == 10
+        assert isinstance(result.failure(), InvalidPriority)
+        assert result.failure().value == 10
 ```
 
 Notice:
@@ -145,8 +145,8 @@ def test_fails_with_duplicate_name(self, populated_state):
     )
 
     assert isinstance(result, Failure)
-    assert isinstance(result.error, DuplicateName)
-    assert result.error.name == "Theme A"
+    assert isinstance(result.failure(), DuplicateName)
+    assert result.failure().name == "Theme A"
 ```
 
 Compare to traditional:
@@ -180,7 +180,7 @@ def test_validates_name_before_priority(self, empty_state):
 
     # Name is checked first
     assert isinstance(result, Failure)
-    assert isinstance(result.error, EmptyName)
+    assert isinstance(result.failure(), EmptyName)
     # Priority error never reached
 ```
 

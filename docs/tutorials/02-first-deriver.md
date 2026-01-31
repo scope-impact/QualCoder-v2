@@ -225,8 +225,8 @@ class TestDeriveCreateCodePriority:
         )
 
         assert isinstance(result, Failure)
-        assert isinstance(result.error, InvalidPriority)
-        assert result.error.value == 10
+        assert isinstance(result.failure(), InvalidPriority)
+        assert result.failure().value == 10
 ```
 
 ## The CodingState Container

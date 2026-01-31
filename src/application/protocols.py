@@ -54,6 +54,22 @@ class DeleteCodeCommand:
 
 
 @dataclass(frozen=True)
+class UpdateCodeMemoCommand:
+    """Command to update a code's memo"""
+
+    code_id: int
+    new_memo: str | None
+
+
+@dataclass(frozen=True)
+class MoveCodeToCategoryCommand:
+    """Command to move a code to a different category"""
+
+    code_id: int
+    category_id: int | None  # None = uncategorized
+
+
+@dataclass(frozen=True)
 class MergeCodesCommand:
     """Command to merge one code into another"""
 
@@ -128,6 +144,14 @@ class CodingController(Protocol):
 
     def merge_codes(self, command: MergeCodesCommand) -> Result:
         """Merge source code into target code"""
+        ...
+
+    def update_code_memo(self, command: UpdateCodeMemoCommand) -> Result:
+        """Update a code's memo"""
+        ...
+
+    def move_code_to_category(self, command: MoveCodeToCategoryCommand) -> Result:
+        """Move a code to a different category"""
         ...
 
     # --- Segment Commands ---

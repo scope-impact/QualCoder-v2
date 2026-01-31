@@ -235,6 +235,7 @@ from .pickers import (
     ChartTypeSelector,
     ColorSchemeOption,
     ColorSchemeSelector,
+    ColorSwatch,
     RadioCard,
     RadioCardGroup,
     TypeOptionCard,

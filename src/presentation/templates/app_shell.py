@@ -30,8 +30,8 @@ Structure:
 
 from typing import Protocol, runtime_checkable
 
-from PyQt6.QtCore import Qt, pyqtSignal
-from PyQt6.QtWidgets import (
+from PySide6.QtCore import Qt, Signal
+from PySide6.QtWidgets import (
     QFrame,
     QHBoxLayout,
     QLabel,
@@ -49,7 +49,7 @@ from design_system import (
     ColorPalette,
     Icon,
     TitleBar,
-    get_theme,
+    get_colors,
 )
 
 # QualCoder-specific menu items
@@ -191,7 +191,7 @@ class AppMenuBar(QFrame):
     Emits signals when menu items are clicked.
     """
 
-    item_clicked = pyqtSignal(str)  # menu_id
+    item_clicked = Signal(str)  # menu_id
 
     def __init__(self, colors: ColorPalette, parent=None):
         super().__init__(parent)
@@ -271,7 +271,7 @@ class TabButton(QFrame):
     Custom tab button with icon and label.
     """
 
-    clicked = pyqtSignal()
+    clicked = Signal()
 
     def __init__(self, label: str, icon_name: str, colors: ColorPalette, parent=None):
         super().__init__(parent)
@@ -352,7 +352,7 @@ class AppTabBar(QFrame):
     QualCoder-specific tab bar with predefined tabs and icons.
     """
 
-    tab_clicked = pyqtSignal(str)  # tab_id
+    tab_clicked = Signal(str)  # tab_id
 
     def __init__(self, colors: ColorPalette, parent=None):
         super().__init__(parent)
@@ -425,7 +425,7 @@ class AppStatusBar(QFrame):
         # Left side - main message
         self._message_label = QLabel("Ready")
         self._message_label.setStyleSheet(f"""
-            color: white;
+            color: {self._colors.text_on_dark};
             font-size: {TYPOGRAPHY.text_sm}px;
         """)
         layout.addWidget(self._message_label)
@@ -476,7 +476,7 @@ class AppShell(QMainWindow):
     - Status bar
 
     Usage:
-        shell = AppShell(colors=get_theme("dark"))
+        shell = AppShell(colors=get_colors())
         shell.set_project("my_project.qda")
 
         # Set a screen
@@ -489,12 +489,12 @@ class AppShell(QMainWindow):
     """
 
     # Navigation signals
-    menu_clicked = pyqtSignal(str)  # menu_id
-    tab_clicked = pyqtSignal(str)  # tab_id
+    menu_clicked = Signal(str)  # menu_id
+    tab_clicked = Signal(str)  # tab_id
 
     def __init__(self, colors: ColorPalette = None, parent=None):
         super().__init__(parent)
-        self._colors = colors or get_theme("dark")
+        self._colors = colors or get_colors()
         self._current_screen = None
         self._project_name = "Untitled"
 

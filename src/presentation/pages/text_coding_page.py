@@ -21,10 +21,10 @@ Layout:
 
 from typing import Any
 
-from PyQt6.QtCore import pyqtSignal
-from PyQt6.QtWidgets import QFrame, QVBoxLayout, QWidget
+from PySide6.QtCore import Signal
+from PySide6.QtWidgets import QFrame, QVBoxLayout, QWidget
 
-from design_system import ColorPalette, get_theme
+from design_system import ColorPalette, get_colors
 
 from ..organisms import (
     CodesPanel,
@@ -48,12 +48,27 @@ class TextCodingPage(QWidget):
         code_selected(dict): A code was selected
         text_selected(str, int, int): Text was selected
         action_triggered(str): A toolbar action was triggered
+        navigation_clicked(str): Navigation button clicked (prev/next)
+        editor_code_applied(str, int, int): Code applied in editor
+        ai_chat_clicked(): AI chat button clicked
+        ai_suggest_clicked(): AI suggest button clicked
+        media_type_changed(str): Media type filter changed
+        search_changed(str): Search query changed
     """
 
-    file_selected = pyqtSignal(dict)
-    code_selected = pyqtSignal(dict)
-    text_selected = pyqtSignal(str, int, int)
-    action_triggered = pyqtSignal(str)
+    # Existing signals
+    file_selected = Signal(dict)
+    code_selected = Signal(dict)
+    text_selected = Signal(str, int, int)
+    action_triggered = Signal(str)
+
+    # Signal routing (QC-007.05)
+    navigation_clicked = Signal(str)  # prev/next
+    editor_code_applied = Signal(str, int, int)  # code_id, start, end
+    ai_chat_clicked = Signal()
+    ai_suggest_clicked = Signal()
+    media_type_changed = Signal(str)
+    search_changed = Signal(str)
 
     def __init__(
         self,
@@ -76,7 +91,7 @@ class TextCodingPage(QWidget):
             parent: Parent widget
         """
         super().__init__(parent)
-        self._colors = colors or get_theme("dark")
+        self._colors = colors or get_colors()
         self._coders = coders or ["default"]
         self._selected_coder = selected_coder
 
@@ -91,6 +106,8 @@ class TextCodingPage(QWidget):
             colors=self._colors,
         )
         self._toolbar.action_triggered.connect(self.action_triggered.emit)
+        self._toolbar.media_type_changed.connect(self.media_type_changed.emit)
+        self._toolbar.search_changed.connect(self.search_changed.emit)
         layout.addWidget(self._toolbar)
 
         # Main content - three panel layout
@@ -102,7 +119,7 @@ class TextCodingPage(QWidget):
 
         # Left panel - Files + Codes (stacked)
         left_container = QFrame()
-        left_container.setStyleSheet("background: transparent;")
+        left_container.setStyleSheet(f"background: {self._colors.transparent};")
         left_layout = QVBoxLayout(left_container)
         left_layout.setContentsMargins(0, 0, 0, 0)
         left_layout.setSpacing(0)
@@ -114,6 +131,7 @@ class TextCodingPage(QWidget):
 
         self._codes_panel = CodesPanel(colors=self._colors)
         self._codes_panel.code_selected.connect(self._on_code_selected)
+        self._codes_panel.navigation_clicked.connect(self.navigation_clicked.emit)
         left_layout.addWidget(self._codes_panel, 1)
 
         self._layout.set_left(left_container)
@@ -121,10 +139,13 @@ class TextCodingPage(QWidget):
         # Center panel - Text editor
         self._editor_panel = TextEditorPanel(colors=self._colors)
         self._editor_panel.text_selected.connect(self._on_text_selected)
+        self._editor_panel.code_applied.connect(self.editor_code_applied.emit)
         self._layout.set_center(self._editor_panel)
 
         # Right panel - Details
         self._details_panel = DetailsPanel(colors=self._colors)
+        self._details_panel.ai_chat_clicked.connect(self.ai_chat_clicked.emit)
+        self._details_panel.ai_suggest_clicked.connect(self.ai_suggest_clicked.emit)
         self._layout.set_right(self._details_panel)
 
         layout.addWidget(self._layout, 1)
@@ -267,11 +288,11 @@ def main():
     """Run the text coding page demo."""
     import sys
 
-    from PyQt6.QtWidgets import QApplication, QMainWindow
+    from PySide6.QtWidgets import QApplication, QMainWindow
 
     app = QApplication(sys.argv)
 
-    colors = get_theme("dark")
+    colors = get_colors()
 
     window = QMainWindow()
     window.setWindowTitle("Text Coding Page Demo")
@@ -308,24 +329,32 @@ def main():
             {
                 "name": "Abilities",
                 "codes": [
-                    {"name": "soccer playing", "color": "#FFC107", "count": 3},
-                    {"name": "struggling", "color": "#F44336", "count": 5},
-                    {"name": "tactics", "color": "#9C27B0", "count": 2},
+                    {"name": "soccer playing", "color": colors.code_yellow, "count": 3},
+                    {"name": "struggling", "color": colors.code_red, "count": 5},
+                    {"name": "tactics", "color": colors.code_purple, "count": 2},
                 ],
             },
             {
                 "name": "Opinion of Club",
                 "codes": [
-                    {"name": "club development", "color": "#4CAF50", "count": 4},
-                    {"name": "facilities", "color": "#2196F3", "count": 1},
+                    {
+                        "name": "club development",
+                        "color": colors.code_green,
+                        "count": 4,
+                    },
+                    {"name": "facilities", "color": colors.code_blue, "count": 1},
                 ],
             },
             {
                 "name": "Motivation",
                 "codes": [
-                    {"name": "cost concerns", "color": "#E91E63", "count": 2},
-                    {"name": "learning enthusiasm", "color": "#00BCD4", "count": 6},
-                    {"name": "time pressure", "color": "#FF9800", "count": 3},
+                    {"name": "cost concerns", "color": colors.code_pink, "count": 2},
+                    {
+                        "name": "learning enthusiasm",
+                        "color": colors.code_cyan,
+                        "count": 6,
+                    },
+                    {"name": "time pressure", "color": colors.code_orange, "count": 3},
                 ],
             },
         ]
@@ -353,7 +382,7 @@ Overall, I am satisfied with the club's facilities and the quality of instructio
     )
 
     page.set_selected_code(
-        "#FFC107",
+        colors.code_yellow,
         "soccer playing",
         "Code for references to playing soccer, including training, matches, and general participation in the sport.",
         "I have not studied much before...",
@@ -361,8 +390,8 @@ Overall, I am satisfied with the club's facilities and the quality of instructio
 
     page.set_overlapping_codes(
         [
-            ("Segment 1", ["#4CAF50", "#00BCD4"]),
-            ("Segment 2", ["#F44336", "#FF9800"]),
+            ("Segment 1", [colors.code_green, colors.code_cyan]),
+            ("Segment 2", [colors.code_red, colors.code_orange]),
         ]
     )
 

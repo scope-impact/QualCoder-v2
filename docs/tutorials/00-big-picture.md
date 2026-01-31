@@ -56,7 +56,7 @@ def test_duplicate_name_rejected():
     state = CodingState(existing_codes=(Code(name="Theme A", ...),))
     result = derive_create_code("Theme A", ..., state=state)
     assert isinstance(result, Failure)
-    assert isinstance(result.error, DuplicateName)
+    assert isinstance(result.failure(), DuplicateName)
 ```
 
 No database. No mocks. Just data in, data out.

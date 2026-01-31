@@ -6,8 +6,8 @@ Run with: python -m ui.templates.demo
 
 import sys
 
-from PyQt6.QtCore import Qt
-from PyQt6.QtWidgets import (
+from PySide6.QtCore import Qt
+from PySide6.QtWidgets import (
     QApplication,
     QHBoxLayout,
     QLabel,
@@ -15,7 +15,7 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
-from design_system import SPACING, Button, get_theme
+from design_system import RADIUS, SPACING, Button, get_colors
 
 from ..screens import TextCodingScreen
 from .app_shell import AppShell
@@ -25,13 +25,13 @@ from .layouts import SidebarLayout, SinglePanelLayout, ThreePanelLayout
 def create_placeholder(text: str, color: str = None) -> QWidget:
     """Create a placeholder widget for testing"""
     widget = QWidget()
-    colors = get_theme("dark")
+    colors = get_colors()
 
     bg_color = color or colors.surface_light
     widget.setStyleSheet(f"""
         QWidget {{
             background-color: {bg_color};
-            border-radius: 8px;
+            border-radius: {RADIUS.md}px;
         }}
     """)
 
@@ -160,7 +160,7 @@ class DemoSinglePanelScreen:
 def main():
     app = QApplication(sys.argv)
 
-    colors = get_theme("dark")
+    colors = get_colors()
 
     # Create app shell
     shell = AppShell(colors=colors)

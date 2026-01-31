@@ -1,5 +1,5 @@
 """
-Presentation Layer - PyQt6 UI Components
+Presentation Layer - PySide6 UI Components
 
 Part of the DDD architecture (Domain → Application → Infrastructure → Presentation).
 This layer handles all user interface concerns using Atomic Design methodology.
@@ -49,6 +49,7 @@ from .dto import (
     SelectedCodeDTO,
     TextCodingDataDTO,
 )
+from .factory import CodingContext
 from .organisms import (
     CodesPanel,
     CodingToolbar,
@@ -60,6 +61,7 @@ from .pages import TextCodingPage
 from .sample_data import create_sample_text_coding_data
 from .screens import TextCodingScreen
 from .templates import AppShell, ThreePanelLayout
+from .viewmodels import TextCodingViewModel
 
 __all__ = [
     # Templates
@@ -75,6 +77,10 @@ __all__ = [
     "CodesPanel",
     "TextEditorPanel",
     "DetailsPanel",
+    # ViewModels
+    "TextCodingViewModel",
+    # Factory
+    "CodingContext",
     # DTOs
     "FileDTO",
     "CodeDTO",

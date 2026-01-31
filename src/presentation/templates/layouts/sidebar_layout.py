@@ -11,8 +11,8 @@ A two-panel layout with a sidebar and main content area.
 └──────────┴────────────────────────────┘
 """
 
-from PyQt6.QtCore import Qt
-from PyQt6.QtWidgets import (
+from PySide6.QtCore import Qt
+from PySide6.QtWidgets import (
     QFrame,
     QHBoxLayout,
     QSizePolicy,
@@ -21,7 +21,7 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
-from design_system import ColorPalette, get_theme
+from design_system import ColorPalette, get_colors
 
 
 class SidebarLayout(QWidget):
@@ -52,7 +52,7 @@ class SidebarLayout(QWidget):
         parent=None,
     ):
         super().__init__(parent)
-        self._colors = colors or get_theme("dark")
+        self._colors = colors or get_colors()
         self._sidebar_width = sidebar_width
         self._sidebar_min = sidebar_min
         self._sidebar_max = sidebar_max

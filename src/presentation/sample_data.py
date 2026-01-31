@@ -5,6 +5,8 @@ These functions create mock DTOs for UI development without needing
 real data sources.
 """
 
+from design_system import get_colors
+
 from .dto import (
     CodeCategoryDTO,
     CodeDTO,
@@ -21,6 +23,7 @@ from .dto import (
 
 def create_sample_text_coding_data() -> TextCodingDataDTO:
     """Create sample data for the text coding screen."""
+    colors = get_colors()
 
     files = [
         FileDTO(
@@ -52,26 +55,34 @@ def create_sample_text_coding_data() -> TextCodingDataDTO:
             id="cat1",
             name="Abilities",
             codes=[
-                CodeDTO(id="c1", name="soccer playing", color="#FFC107", count=3),
-                CodeDTO(id="c2", name="struggling", color="#F44336", count=5),
-                CodeDTO(id="c3", name="tactics", color="#9C27B0", count=2),
+                CodeDTO(
+                    id="c1", name="soccer playing", color=colors.code_yellow, count=3
+                ),
+                CodeDTO(id="c2", name="struggling", color=colors.code_red, count=5),
+                CodeDTO(id="c3", name="tactics", color=colors.code_purple, count=2),
             ],
         ),
         CodeCategoryDTO(
             id="cat2",
             name="Opinion of Club",
             codes=[
-                CodeDTO(id="c4", name="club development", color="#4CAF50", count=4),
-                CodeDTO(id="c5", name="facilities", color="#2196F3", count=1),
+                CodeDTO(
+                    id="c4", name="club development", color=colors.code_green, count=4
+                ),
+                CodeDTO(id="c5", name="facilities", color=colors.code_blue, count=1),
             ],
         ),
         CodeCategoryDTO(
             id="cat3",
             name="Motivation",
             codes=[
-                CodeDTO(id="c6", name="cost concerns", color="#E91E63", count=2),
-                CodeDTO(id="c7", name="learning enthusiasm", color="#00BCD4", count=6),
-                CodeDTO(id="c8", name="time pressure", color="#FF9800", count=3),
+                CodeDTO(id="c6", name="cost concerns", color=colors.code_pink, count=2),
+                CodeDTO(
+                    id="c7", name="learning enthusiasm", color=colors.code_cyan, count=6
+                ),
+                CodeDTO(
+                    id="c8", name="time pressure", color=colors.code_orange, count=3
+                ),
             ],
         ),
     ]
@@ -80,17 +91,29 @@ def create_sample_text_coding_data() -> TextCodingDataDTO:
         id="doc1",
         title="ID2.odt",
         badge="Case: ID2",
-        content="""I have not studied much before. I know that I must get help as I have struggled understanding the lecture slides so far and searching the web did not help.
+        content="""INTERVIEWER: Thank you for joining us today. Can you tell me about your experience with the course so far?
 
-I really want someone to sit down with me and explain the course material. The tutors seem helpful but there are not enough of them to go around.
+PARTICIPANT: I have not studied much before. I know that I must get help as I have struggled understanding the lecture slides so far and searching the web did not help.
 
-The course cost €200.00 and I do not want to waste my money. I have to make the most of this opportunity.
+INTERVIEWER: What kind of support would be most helpful for you?
 
-I really like learning new things. I think this course is good for me as I have wanted to learn about world history for a while. The structured content, lecture slides and web links have been really good. I guess some less computer-savvy people would have some trouble accessing the internet-based material, but its like a duck to water for me – no problem at all.
+PARTICIPANT: I really want someone to sit down with me and explain the course material. The tutors seem helpful but there are not enough of them to go around.
 
-I get the feeling most students are having some problems with the coursework deadlines. There is much to learn and not many of us practice directed learning. We need more guidance on time management and prioritization.
+INTERVIEWER: I understand. How do you feel about the investment you've made?
 
-Overall, I am satisfied with the club's facilities and the quality of instruction. The new training ground has made a big difference. I feel like I am improving week by week, which keeps me motivated to continue.""",
+PARTICIPANT: The course cost €200.00 and I do not want to waste my money. I have to make the most of this opportunity.
+
+INTERVIEWER: What aspects of the course do you enjoy?
+
+PARTICIPANT: I really like learning new things. I think this course is good for me as I have wanted to learn about world history for a while. The structured content, lecture slides and web links have been really good. I guess some less computer-savvy people would have some trouble accessing the internet-based material, but its like a duck to water for me – no problem at all.
+
+INTERVIEWER: Have you noticed any common challenges among other students?
+
+PARTICIPANT: I get the feeling most students are having some problems with the coursework deadlines. There is much to learn and not many of us practice directed learning. We need more guidance on time management and prioritization.
+
+INTERVIEWER: Any final thoughts?
+
+PARTICIPANT: Overall, I am satisfied with the club's facilities and the quality of instruction. The new training ground has made a big difference. I feel like I am improving week by week, which keeps me motivated to continue.""",
     )
 
     document_stats = DocumentStatsDTO(
@@ -102,14 +125,18 @@ Overall, I am satisfied with the club's facilities and the quality of instructio
     selected_code = SelectedCodeDTO(
         id="c1",
         name="soccer playing",
-        color="#FFC107",
+        color=colors.code_yellow,
         memo="Code for references to playing soccer, including training, matches, and general participation in the sport.",
         example_text="I have not studied much before...",
     )
 
     overlapping_segments = [
-        OverlappingSegmentDTO(segment_label="Segment 1", colors=["#4CAF50", "#00BCD4"]),
-        OverlappingSegmentDTO(segment_label="Segment 2", colors=["#F44336", "#FF9800"]),
+        OverlappingSegmentDTO(
+            segment_label="Segment 1", colors=[colors.code_green, colors.code_cyan]
+        ),
+        OverlappingSegmentDTO(
+            segment_label="Segment 2", colors=[colors.code_red, colors.code_orange]
+        ),
     ]
 
     file_memo = FileMemoDTO(

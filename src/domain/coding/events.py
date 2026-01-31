@@ -8,7 +8,7 @@ Other contexts subscribe to these events to react to changes.
 
 from dataclasses import dataclass
 
-from src.domain.coding.entities import Color, TextPosition
+from src.domain.coding.entities import BatchId, Color, TextPosition
 from src.domain.shared.types import (
     CategoryId,
     CodeId,
@@ -355,6 +355,62 @@ class SegmentMemoUpdated(DomainEvent):
 
 
 # ============================================================
+# Batch Events (Auto-coding operations)
+# ============================================================
+
+
+@dataclass(frozen=True)
+class BatchCreated(DomainEvent):
+    """An auto-code batch was created with multiple segments."""
+
+    batch_id: BatchId
+    code_id: CodeId
+    pattern: str
+    segment_ids: tuple[SegmentId, ...]
+    owner: str | None = None
+
+    @classmethod
+    def create(
+        cls,
+        batch_id: BatchId,
+        code_id: CodeId,
+        pattern: str,
+        segment_ids: tuple[SegmentId, ...],
+        owner: str | None = None,
+    ) -> "BatchCreated":
+        return cls(
+            event_id=cls._generate_id(),
+            occurred_at=cls._now(),
+            batch_id=batch_id,
+            code_id=code_id,
+            pattern=pattern,
+            segment_ids=segment_ids,
+            owner=owner,
+        )
+
+
+@dataclass(frozen=True)
+class BatchUndone(DomainEvent):
+    """An auto-code batch was undone, removing all its segments."""
+
+    batch_id: BatchId
+    segments_removed: int
+
+    @classmethod
+    def create(
+        cls,
+        batch_id: BatchId,
+        segments_removed: int,
+    ) -> "BatchUndone":
+        return cls(
+            event_id=cls._generate_id(),
+            occurred_at=cls._now(),
+            batch_id=batch_id,
+            segments_removed=segments_removed,
+        )
+
+
+# ============================================================
 # Type Aliases (Published Language)
 # ============================================================
 
@@ -372,5 +428,7 @@ CategoryEvent = CategoryCreated | CategoryRenamed | CategoryDeleted
 
 SegmentEvent = SegmentCoded | SegmentUncoded | SegmentMemoUpdated
 
+BatchEvent = BatchCreated | BatchUndone
+
 # All events from the Coding context
-CodingEvent = CodeEvent | CategoryEvent | SegmentEvent
+CodingEvent = CodeEvent | CategoryEvent | SegmentEvent | BatchEvent

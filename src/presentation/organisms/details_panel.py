@@ -8,8 +8,8 @@ A panel showing contextual details for the coding interface:
 - AI Assistant actions
 """
 
-from PyQt6.QtCore import Qt, pyqtSignal
-from PyQt6.QtWidgets import (
+from PySide6.QtCore import Qt, Signal
+from PySide6.QtWidgets import (
     QFrame,
     QHBoxLayout,
     QLabel,
@@ -28,7 +28,7 @@ from design_system import (
     Icon,
     InfoCard,
     ProgressBar,
-    get_theme,
+    get_colors,
 )
 
 
@@ -41,8 +41,8 @@ class DetailsPanel(QFrame):
         ai_suggest_clicked: Emitted when suggest codes button is clicked
     """
 
-    ai_chat_clicked = pyqtSignal()
-    ai_suggest_clicked = pyqtSignal()
+    ai_chat_clicked = Signal()
+    ai_suggest_clicked = Signal()
 
     def __init__(self, colors: ColorPalette = None, parent=None):
         """
@@ -53,7 +53,7 @@ class DetailsPanel(QFrame):
             parent: Parent widget
         """
         super().__init__(parent)
-        self._colors = colors or get_theme("dark")
+        self._colors = colors or get_colors()
 
         self.setStyleSheet(f"""
             DetailsPanel {{
@@ -70,7 +70,9 @@ class DetailsPanel(QFrame):
         scroll = QScrollArea()
         scroll.setWidgetResizable(True)
         scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
-        scroll.setStyleSheet("QScrollArea { background: transparent; border: none; }")
+        scroll.setStyleSheet(
+            f"QScrollArea {{ background: {self._colors.transparent}; border: none; }}"
+        )
 
         container = QWidget()
         container_layout = QVBoxLayout(container)
@@ -84,7 +86,7 @@ class DetailsPanel(QFrame):
             colors=self._colors,
         )
         self._code_detail = CodeDetailCard(
-            color="#808080",
+            color=self._colors.text_disabled,
             name="No code selected",
             memo="Select a code from the tree to see details.",
             colors=self._colors,
@@ -134,7 +136,7 @@ class DetailsPanel(QFrame):
             segments: List of (segment_text, [color1, color2, ...]) tuples
         """
         widget = QFrame()
-        widget.setStyleSheet("background: transparent;")
+        widget.setStyleSheet(f"background: {self._colors.transparent};")
         layout = QVBoxLayout(widget)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(SPACING.sm)
@@ -163,7 +165,9 @@ class DetailsPanel(QFrame):
         )
         warning_layout.setSpacing(SPACING.sm)
 
-        icon = Icon("mdi6.information", size=16, color="#FF9800", colors=self._colors)
+        icon = Icon(
+            "mdi6.information", size=16, color=self._colors.warning, colors=self._colors
+        )
         warning_layout.addWidget(icon)
 
         label = QLabel(f"{len(segments)} segments have multiple codes")
@@ -217,7 +221,7 @@ class DetailsPanel(QFrame):
             progress: Coding progress percentage (0-100)
         """
         widget = QFrame()
-        widget.setStyleSheet("background: transparent;")
+        widget.setStyleSheet(f"background: {self._colors.transparent};")
         layout = QVBoxLayout(widget)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(SPACING.sm)
@@ -254,7 +258,7 @@ class DetailsPanel(QFrame):
     def _create_ai_content(self) -> QWidget:
         """Create the AI assistant content."""
         widget = QFrame()
-        widget.setStyleSheet("background: transparent;")
+        widget.setStyleSheet(f"background: {self._colors.transparent};")
         layout = QVBoxLayout(widget)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(SPACING.sm)

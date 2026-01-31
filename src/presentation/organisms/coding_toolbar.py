@@ -11,19 +11,19 @@ The main toolbar for the text coding screen containing:
 - Search box
 """
 
-from PyQt6.QtCore import Qt, pyqtSignal
-from PyQt6.QtWidgets import QFrame, QHBoxLayout, QLabel
+from PySide6.QtCore import Qt, Signal
+from PySide6.QtWidgets import QFrame, QHBoxLayout, QLabel
 
 from design_system import (
-    RADIUS,
     SPACING,
     TYPOGRAPHY,
     CoderSelector,
     ColorPalette,
-    Icon,
     MediaTypeSelector,
     SearchBox,
-    get_theme,
+    Separator,
+    ToolbarButton,
+    get_colors,
 )
 
 
@@ -40,10 +40,10 @@ class CodingToolbar(QFrame):
         search_changed(str): Emitted when search text changes
     """
 
-    media_type_changed = pyqtSignal(str)
-    coder_changed = pyqtSignal(str)
-    action_triggered = pyqtSignal(str)
-    search_changed = pyqtSignal(str)
+    media_type_changed = Signal(str)
+    coder_changed = Signal(str)
+    action_triggered = Signal(str)
+    search_changed = Signal(str)
 
     def __init__(
         self,
@@ -62,7 +62,7 @@ class CodingToolbar(QFrame):
             parent: Parent widget
         """
         super().__init__(parent)
-        self._colors = colors or get_theme("dark")
+        self._colors = colors or get_colors()
         self._coders = coders or ["default"]
         self._selected_coder = selected_coder or self._coders[0]
 
@@ -92,7 +92,7 @@ class CodingToolbar(QFrame):
         layout.addWidget(self._media_selector)
 
         # Divider
-        layout.addWidget(self._divider())
+        layout.addWidget(Separator(orientation="vertical", colors=self._colors))
 
         # Coder selector
         self._coder_selector = CoderSelector(
@@ -104,19 +104,25 @@ class CodingToolbar(QFrame):
         layout.addWidget(self._coder_selector)
 
         # Action buttons group 1
-        layout.addWidget(self._divider())
+        layout.addWidget(Separator(orientation="vertical", colors=self._colors))
         for icon_name, tooltip, action_id in [
             ("mdi6.help-circle-outline", "Help", "help"),
             ("mdi6.format-size", "Text size", "text_size"),
             ("mdi6.star-outline", "Important only", "important"),
             ("mdi6.comment-outline", "Show annotations", "annotations"),
         ]:
-            btn = self._action_button(icon_name, tooltip, action_id)
+            btn = ToolbarButton(icon=icon_name, colors=self._colors)
+            btn.setToolTip(tooltip)
+            btn.clicked.connect(
+                lambda _checked, aid=action_id: self.action_triggered.emit(aid)
+            )
             layout.addWidget(btn)
 
         # Navigation
-        layout.addWidget(self._divider())
-        self._prev_btn = self._action_button("mdi6.chevron-left", "Previous", "prev")
+        layout.addWidget(Separator(orientation="vertical", colors=self._colors))
+        self._prev_btn = ToolbarButton(icon="mdi6.chevron-left", colors=self._colors)
+        self._prev_btn.setToolTip("Previous")
+        self._prev_btn.clicked.connect(lambda: self.action_triggered.emit("prev"))
         layout.addWidget(self._prev_btn)
 
         self._nav_label = QLabel("0 / 0")
@@ -128,27 +134,37 @@ class CodingToolbar(QFrame):
         self._nav_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         layout.addWidget(self._nav_label)
 
-        self._next_btn = self._action_button("mdi6.chevron-right", "Next", "next")
+        self._next_btn = ToolbarButton(icon="mdi6.chevron-right", colors=self._colors)
+        self._next_btn.setToolTip("Next")
+        self._next_btn.clicked.connect(lambda: self.action_triggered.emit("next"))
         layout.addWidget(self._next_btn)
 
         # Auto-code buttons
-        layout.addWidget(self._divider())
+        layout.addWidget(Separator(orientation="vertical", colors=self._colors))
         for icon_name, tooltip, action_id in [
             ("mdi6.auto-fix", "Auto-code exact", "auto_exact"),
             ("mdi6.creation", "Auto-code fragment", "auto_fragment"),
             ("mdi6.account-voice", "Mark speakers", "speakers"),
             ("mdi6.undo", "Undo auto-code", "undo_auto"),
         ]:
-            btn = self._action_button(icon_name, tooltip, action_id)
+            btn = ToolbarButton(icon=icon_name, colors=self._colors)
+            btn.setToolTip(tooltip)
+            btn.clicked.connect(
+                lambda _checked, aid=action_id: self.action_triggered.emit(aid)
+            )
             layout.addWidget(btn)
 
         # Memo/Annotate
-        layout.addWidget(self._divider())
+        layout.addWidget(Separator(orientation="vertical", colors=self._colors))
         for icon_name, tooltip, action_id in [
             ("mdi6.note-plus", "Memo", "memo"),
             ("mdi6.note-edit", "Annotate", "annotate"),
         ]:
-            btn = self._action_button(icon_name, tooltip, action_id)
+            btn = ToolbarButton(icon=icon_name, colors=self._colors)
+            btn.setToolTip(tooltip)
+            btn.clicked.connect(
+                lambda _checked, aid=action_id: self.action_triggered.emit(aid)
+            )
             layout.addWidget(btn)
 
         layout.addStretch()
@@ -158,39 +174,6 @@ class CodingToolbar(QFrame):
         self._search.setFixedWidth(200)
         self._search.text_changed.connect(self.search_changed.emit)
         layout.addWidget(self._search)
-
-    def _divider(self) -> QFrame:
-        """Create a vertical divider."""
-        div = QFrame()
-        div.setFixedWidth(1)
-        div.setStyleSheet(f"background-color: {self._colors.border};")
-        return div
-
-    def _action_button(self, icon_name: str, tooltip: str, action_id: str) -> QFrame:
-        """Create an action button with icon."""
-        btn = QFrame()
-        btn.setFixedSize(32, 32)
-        btn.setCursor(Qt.CursorShape.PointingHandCursor)
-        btn.setToolTip(tooltip)
-        btn.setStyleSheet(f"""
-            QFrame {{
-                background-color: transparent;
-                border-radius: {RADIUS.sm}px;
-            }}
-            QFrame:hover {{
-                background-color: {self._colors.surface_light};
-            }}
-        """)
-
-        layout = QHBoxLayout(btn)
-        layout.setContentsMargins(0, 0, 0, 0)
-        icon = Icon(
-            icon_name, size=18, color=self._colors.text_secondary, colors=self._colors
-        )
-        layout.addWidget(icon, alignment=Qt.AlignmentFlag.AlignCenter)
-
-        btn.mousePressEvent = lambda _e: self.action_triggered.emit(action_id)
-        return btn
 
     def set_navigation(self, current: int, total: int):
         """Update the navigation display."""

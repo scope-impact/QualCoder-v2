@@ -4,7 +4,7 @@ Tests for UI Organisms
 Tests each organism component individually and the composed TextCodingPage.
 """
 
-from PyQt6.QtTest import QSignalSpy
+from PySide6.QtTest import QSignalSpy
 
 # =============================================================================
 # CodingToolbar Tests
@@ -16,7 +16,7 @@ class TestCodingToolbar:
 
     def test_creates_with_defaults(self, qapp, colors):
         """Test toolbar creates with default settings."""
-        from ui.organisms import CodingToolbar
+        from src.presentation.organisms import CodingToolbar
 
         toolbar = CodingToolbar(colors=colors)
 
@@ -27,7 +27,7 @@ class TestCodingToolbar:
 
     def test_creates_with_coders(self, qapp, colors):
         """Test toolbar creates with custom coders list."""
-        from ui.organisms import CodingToolbar
+        from src.presentation.organisms import CodingToolbar
 
         coders = ["alice", "bob", "charlie"]
         toolbar = CodingToolbar(coders=coders, selected_coder="bob", colors=colors)
@@ -37,7 +37,7 @@ class TestCodingToolbar:
 
     def test_set_navigation(self, qapp, colors):
         """Test navigation label updates."""
-        from ui.organisms import CodingToolbar
+        from src.presentation.organisms import CodingToolbar
 
         toolbar = CodingToolbar(colors=colors)
         toolbar.set_navigation(3, 10)
@@ -46,7 +46,7 @@ class TestCodingToolbar:
 
     def test_action_triggered_signal(self, qapp, colors):
         """Test action buttons emit signals."""
-        from ui.organisms import CodingToolbar
+        from src.presentation.organisms import CodingToolbar
 
         toolbar = CodingToolbar(colors=colors)
         spy = QSignalSpy(toolbar.action_triggered)
@@ -54,12 +54,12 @@ class TestCodingToolbar:
         # Simulate clicking the help button (first action button)
         toolbar.action_triggered.emit("help")
 
-        assert len(spy) == 1
-        assert spy[0][0] == "help"
+        assert spy.count() == 1
+        assert spy.at(0)[0] == "help"
 
     def test_screenshot(self, qapp, colors, take_screenshot):
         """Take screenshot of toolbar."""
-        from ui.organisms import CodingToolbar
+        from src.presentation.organisms import CodingToolbar
 
         toolbar = CodingToolbar(
             coders=["colin", "sarah", "james"],
@@ -82,7 +82,7 @@ class TestFilesPanel:
 
     def test_creates_empty(self, qapp, colors):
         """Test panel creates with no files."""
-        from ui.organisms import FilesPanel
+        from src.presentation.organisms import FilesPanel
 
         panel = FilesPanel(colors=colors)
 
@@ -91,7 +91,7 @@ class TestFilesPanel:
 
     def test_set_files(self, qapp, colors):
         """Test setting file list."""
-        from ui.organisms import FilesPanel
+        from src.presentation.organisms import FilesPanel
 
         panel = FilesPanel(colors=colors)
         files = [
@@ -104,7 +104,7 @@ class TestFilesPanel:
 
     def test_file_selected_signal(self, qapp, colors):
         """Test file selection emits signal."""
-        from ui.organisms import FilesPanel
+        from src.presentation.organisms import FilesPanel
 
         panel = FilesPanel(colors=colors)
         files = [
@@ -116,12 +116,12 @@ class TestFilesPanel:
         spy = QSignalSpy(panel.file_selected)
         panel._on_file_click(0)
 
-        assert len(spy) == 1
-        assert spy[0][0]["name"] == "file1.txt"
+        assert spy.count() == 1
+        assert spy.at(0)[0]["name"] == "file1.txt"
 
     def test_clear(self, qapp, colors):
         """Test clearing file list."""
-        from ui.organisms import FilesPanel
+        from src.presentation.organisms import FilesPanel
 
         panel = FilesPanel(colors=colors)
         panel.set_files([{"name": "test.txt", "type": "text", "meta": ""}])
@@ -131,7 +131,7 @@ class TestFilesPanel:
 
     def test_screenshot(self, qapp, colors, take_screenshot):
         """Take screenshot of files panel."""
-        from ui.organisms import FilesPanel
+        from src.presentation.organisms import FilesPanel
 
         panel = FilesPanel(colors=colors)
         panel.set_files(
@@ -168,7 +168,7 @@ class TestCodesPanel:
 
     def test_creates_empty(self, qapp, colors):
         """Test panel creates with no codes."""
-        from ui.organisms import CodesPanel
+        from src.presentation.organisms import CodesPanel
 
         panel = CodesPanel(colors=colors)
 
@@ -177,15 +177,15 @@ class TestCodesPanel:
 
     def test_set_codes(self, qapp, colors):
         """Test setting code tree data."""
-        from ui.organisms import CodesPanel
+        from src.presentation.organisms import CodesPanel
 
         panel = CodesPanel(colors=colors)
         categories = [
             {
                 "name": "Category A",
                 "codes": [
-                    {"name": "code1", "color": "#FF0000", "count": 3},
-                    {"name": "code2", "color": "#00FF00", "count": 5},
+                    {"name": "code1", "color": colors.code_red, "count": 3},
+                    {"name": "code2", "color": colors.code_green, "count": 5},
                 ],
             }
         ]
@@ -196,31 +196,122 @@ class TestCodesPanel:
 
     def test_code_selected_signal(self, qapp, colors):
         """Test code selection emits signal."""
-        from ui.organisms import CodesPanel
+        from src.presentation.organisms import CodesPanel
 
         panel = CodesPanel(colors=colors)
         spy = QSignalSpy(panel.code_selected)
 
         panel._on_code_click("test_code")
 
-        assert len(spy) == 1
-        assert spy[0][0]["id"] == "test_code"
+        assert spy.count() == 1
+        assert spy.at(0)[0]["id"] == "test_code"
 
     def test_navigation_clicked_signal(self, qapp, colors):
         """Test navigation buttons emit signals."""
-        from ui.organisms import CodesPanel
+        from src.presentation.organisms import CodesPanel
 
         panel = CodesPanel(colors=colors)
         spy = QSignalSpy(panel.navigation_clicked)
 
         panel.navigation_clicked.emit("next")
 
-        assert len(spy) == 1
-        assert spy[0][0] == "next"
+        assert spy.count() == 1
+        assert spy.at(0)[0] == "next"
+
+    def test_set_codes_with_numeric_ids(self, qapp, colors):
+        """Test that numeric IDs from set_codes are preserved."""
+        from src.presentation.organisms import CodesPanel
+
+        panel = CodesPanel(colors=colors)
+        categories = [
+            {
+                "name": "Category A",
+                "codes": [
+                    {
+                        "id": "12345",
+                        "name": "code1",
+                        "color": colors.code_red,
+                        "count": 3,
+                    },
+                    {
+                        "id": "67890",
+                        "name": "code2",
+                        "color": colors.code_green,
+                        "count": 5,
+                    },
+                ],
+            }
+        ]
+        panel.set_codes(categories)
+
+        # Verify the tree items have the correct IDs
+        items = panel._code_tree._items
+        assert len(items) == 1  # One category
+        assert len(items[0].children) == 2  # Two codes
+        assert items[0].children[0].id == "12345"
+        assert items[0].children[0].name == "code1"
+        assert items[0].children[1].id == "67890"
+        assert items[0].children[1].name == "code2"
+
+    def test_code_selected_emits_id_not_name(self, qapp, colors):
+        """Test that code selection emits the numeric ID, not the name.
+
+        This test would have caught the bug where CodeItem was created with
+        id=code_name instead of id=code.get("id").
+        """
+        from src.presentation.organisms import CodesPanel
+
+        panel = CodesPanel(colors=colors)
+        spy = QSignalSpy(panel.code_selected)
+
+        # Set codes with numeric IDs different from names
+        categories = [
+            {
+                "name": "Emotions",
+                "codes": [
+                    {
+                        "id": "999",
+                        "name": "happy",
+                        "color": colors.code_green,
+                        "count": 1,
+                    },
+                ],
+            }
+        ]
+        panel.set_codes(categories)
+
+        # Simulate clicking the code (which should use the ID from the tree item)
+        panel._on_code_click("999")
+
+        assert spy.count() == 1
+        emitted_data = spy.at(0)[0]
+        assert emitted_data["id"] == "999"
+        # The ID should NOT be the code name
+        assert emitted_data["id"] != "happy"
+
+    def test_set_codes_fallback_to_name_when_no_id(self, qapp, colors):
+        """Test that when no ID is provided, the code name is used as fallback."""
+        from src.presentation.organisms import CodesPanel
+
+        panel = CodesPanel(colors=colors)
+        categories = [
+            {
+                "name": "Category A",
+                "codes": [
+                    {"name": "fallback_code", "color": colors.code_red, "count": 1},
+                ],
+            }
+        ]
+        panel.set_codes(categories)
+
+        # When no ID is provided, name should be used as ID
+        items = panel._code_tree._items
+        assert items[0].children[0].id == "fallback_code"
+        assert items[0].children[0].name == "fallback_code"
 
     def test_screenshot(self, qapp, colors, take_screenshot):
         """Take screenshot of codes panel."""
-        from ui.organisms import CodesPanel
+        from src.presentation.organisms import CodesPanel
 
         panel = CodesPanel(colors=colors)
         panel.set_codes(
@@ -228,15 +319,23 @@ class TestCodesPanel:
                 {
                     "name": "Abilities",
                     "codes": [
-                        {"name": "soccer playing", "color": "#FFC107", "count": 3},
-                        {"name": "struggling", "color": "#F44336", "count": 5},
+                        {
+                            "name": "soccer playing",
+                            "color": colors.code_yellow,
+                            "count": 3,
+                        },
+                        {"name": "struggling", "color": colors.code_red, "count": 5},
                     ],
                 },
                 {
                     "name": "Motivation",
                     "codes": [
-                        {"name": "cost concerns", "color": "#E91E63", "count": 2},
-                        {"name": "enthusiasm", "color": "#00BCD4", "count": 6},
+                        {
+                            "name": "cost concerns",
+                            "color": colors.code_pink,
+                            "count": 2,
+                        },
+                        {"name": "enthusiasm", "color": colors.code_cyan, "count": 6},
                     ],
                 },
             ]
@@ -256,16 +355,16 @@ class TestTextEditorPanel:
 
     def test_creates_empty(self, qapp, colors):
         """Test panel creates with no document."""
-        from ui.organisms import TextEditorPanel
+        from src.presentation.organisms import TextEditorPanel
 
         panel = TextEditorPanel(colors=colors)
 
         assert panel is not None
-        assert panel._text_panel is not None
+        assert panel._text_edit is not None
 
     def test_set_document(self, qapp, colors):
         """Test setting document content."""
-        from ui.organisms import TextEditorPanel
+        from src.presentation.organisms import TextEditorPanel
 
         panel = TextEditorPanel(colors=colors)
         panel.set_document("test.txt", "Case 1", "Hello world")
@@ -275,7 +374,7 @@ class TestTextEditorPanel:
 
     def test_set_stats(self, qapp, colors):
         """Test setting document stats."""
-        from ui.organisms import TextEditorPanel
+        from src.presentation.organisms import TextEditorPanel
 
         panel = TextEditorPanel(colors=colors)
         panel.set_stats(
@@ -289,21 +388,21 @@ class TestTextEditorPanel:
 
     def test_text_selected_signal(self, qapp, colors):
         """Test text selection emits signal."""
-        from ui.organisms import TextEditorPanel
+        from src.presentation.organisms import TextEditorPanel
 
         panel = TextEditorPanel(colors=colors)
         spy = QSignalSpy(panel.text_selected)
 
         panel.text_selected.emit("selected text", 0, 13)
 
-        assert len(spy) == 1
-        assert spy[0][0] == "selected text"
-        assert spy[0][1] == 0
-        assert spy[0][2] == 13
+        assert spy.count() == 1
+        assert spy.at(0)[0] == "selected text"
+        assert spy.at(0)[1] == 0
+        assert spy.at(0)[2] == 13
 
     def test_screenshot(self, qapp, colors, take_screenshot):
         """Take screenshot of text editor panel."""
-        from ui.organisms import TextEditorPanel
+        from src.presentation.organisms import TextEditorPanel
 
         panel = TextEditorPanel(colors=colors)
         panel.set_document(
@@ -334,7 +433,7 @@ class TestDetailsPanel:
 
     def test_creates_with_defaults(self, qapp, colors):
         """Test panel creates with default content."""
-        from ui.organisms import DetailsPanel
+        from src.presentation.organisms import DetailsPanel
 
         panel = DetailsPanel(colors=colors)
 
@@ -346,24 +445,27 @@ class TestDetailsPanel:
 
     def test_set_selected_code(self, qapp, colors):
         """Test updating selected code display."""
-        from ui.organisms import DetailsPanel
+        from src.presentation.organisms import DetailsPanel
 
         panel = DetailsPanel(colors=colors)
         panel.set_selected_code(
-            "#FF5722", "test code", "This is a test code memo", "Example text here"
+            colors.code_orange,
+            "test code",
+            "This is a test code memo",
+            "Example text here",
         )
 
         assert panel._code_detail is not None
 
     def test_set_overlapping_codes(self, qapp, colors):
         """Test updating overlapping codes display."""
-        from ui.organisms import DetailsPanel
+        from src.presentation.organisms import DetailsPanel
 
         panel = DetailsPanel(colors=colors)
         panel.set_overlapping_codes(
             [
-                ("Segment 1", ["#FF0000", "#00FF00"]),
-                ("Segment 2", ["#0000FF", "#FFFF00"]),
+                ("Segment 1", [colors.code_red, colors.code_green]),
+                ("Segment 2", [colors.code_blue, colors.code_yellow]),
             ]
         )
 
@@ -371,7 +473,7 @@ class TestDetailsPanel:
 
     def test_set_file_memo(self, qapp, colors):
         """Test updating file memo display."""
-        from ui.organisms import DetailsPanel
+        from src.presentation.organisms import DetailsPanel
 
         panel = DetailsPanel(colors=colors)
         panel.set_file_memo("This is a test memo", 75)
@@ -380,7 +482,7 @@ class TestDetailsPanel:
 
     def test_ai_signals(self, qapp, colors):
         """Test AI button signals."""
-        from ui.organisms import DetailsPanel
+        from src.presentation.organisms import DetailsPanel
 
         panel = DetailsPanel(colors=colors)
         chat_spy = QSignalSpy(panel.ai_chat_clicked)
@@ -389,23 +491,23 @@ class TestDetailsPanel:
         panel.ai_chat_clicked.emit()
         panel.ai_suggest_clicked.emit()
 
-        assert len(chat_spy) == 1
-        assert len(suggest_spy) == 1
+        assert chat_spy.count() == 1
+        assert suggest_spy.count() == 1
 
     def test_screenshot(self, qapp, colors, take_screenshot):
         """Take screenshot of details panel."""
-        from ui.organisms import DetailsPanel
+        from src.presentation.organisms import DetailsPanel
 
         panel = DetailsPanel(colors=colors)
         panel.set_selected_code(
-            "#FFC107",
+            colors.code_yellow,
             "soccer playing",
             "Code for references to playing soccer.",
             "I have been playing...",
         )
         panel.set_overlapping_codes(
             [
-                ("Segment 1", ["#4CAF50", "#00BCD4"]),
+                ("Segment 1", [colors.code_green, colors.code_cyan]),
             ]
         )
         panel.set_file_memo("Interview transcript about course experience.", 65)
@@ -424,7 +526,7 @@ class TestTextCodingPage:
 
     def test_creates_with_defaults(self, qapp, colors):
         """Test page creates with default settings."""
-        from ui.pages import TextCodingPage
+        from src.presentation.pages import TextCodingPage
 
         page = TextCodingPage(colors=colors)
 
@@ -437,7 +539,7 @@ class TestTextCodingPage:
 
     def test_creates_with_coders(self, qapp, colors):
         """Test page creates with custom coders."""
-        from ui.pages import TextCodingPage
+        from src.presentation.pages import TextCodingPage
 
         page = TextCodingPage(
             coders=["alice", "bob"],
@@ -449,7 +551,7 @@ class TestTextCodingPage:
 
     def test_set_files(self, qapp, colors):
         """Test setting files on page."""
-        from ui.pages import TextCodingPage
+        from src.presentation.pages import TextCodingPage
 
         page = TextCodingPage(colors=colors)
         page.set_files(
@@ -462,14 +564,14 @@ class TestTextCodingPage:
 
     def test_set_codes(self, qapp, colors):
         """Test setting codes on page."""
-        from ui.pages import TextCodingPage
+        from src.presentation.pages import TextCodingPage
 
         page = TextCodingPage(colors=colors)
         page.set_codes(
             [
                 {
                     "name": "Category",
-                    "codes": [{"name": "code1", "color": "#FF0000", "count": 1}],
+                    "codes": [{"name": "code1", "color": colors.code_red, "count": 1}],
                 }
             ]
         )
@@ -478,7 +580,7 @@ class TestTextCodingPage:
 
     def test_set_document(self, qapp, colors):
         """Test setting document on page."""
-        from ui.pages import TextCodingPage
+        from src.presentation.pages import TextCodingPage
 
         page = TextCodingPage(colors=colors)
         page.set_document("test.txt", "Case 1", "Content here")
@@ -487,7 +589,7 @@ class TestTextCodingPage:
 
     def test_file_selected_signal_propagates(self, qapp, colors):
         """Test file selection signal propagates from organism to page."""
-        from ui.pages import TextCodingPage
+        from src.presentation.pages import TextCodingPage
 
         page = TextCodingPage(colors=colors)
         page.set_files([{"name": "test.txt", "type": "text", "meta": ""}])
@@ -495,36 +597,36 @@ class TestTextCodingPage:
         spy = QSignalSpy(page.file_selected)
         page.files_panel._on_file_click(0)
 
-        assert len(spy) == 1
-        assert spy[0][0]["name"] == "test.txt"
+        assert spy.count() == 1
+        assert spy.at(0)[0]["name"] == "test.txt"
 
     def test_code_selected_signal_propagates(self, qapp, colors):
         """Test code selection signal propagates from organism to page."""
-        from ui.pages import TextCodingPage
+        from src.presentation.pages import TextCodingPage
 
         page = TextCodingPage(colors=colors)
         spy = QSignalSpy(page.code_selected)
 
         page.codes_panel._on_code_click("test_code")
 
-        assert len(spy) == 1
-        assert spy[0][0]["id"] == "test_code"
+        assert spy.count() == 1
+        assert spy.at(0)[0]["id"] == "test_code"
 
     def test_action_triggered_signal_propagates(self, qapp, colors):
         """Test action signal propagates from toolbar to page."""
-        from ui.pages import TextCodingPage
+        from src.presentation.pages import TextCodingPage
 
         page = TextCodingPage(colors=colors)
         spy = QSignalSpy(page.action_triggered)
 
         page.toolbar.action_triggered.emit("help")
 
-        assert len(spy) == 1
-        assert spy[0][0] == "help"
+        assert spy.count() == 1
+        assert spy.at(0)[0] == "help"
 
     def test_screenshot(self, qapp, colors, take_screenshot):
         """Take screenshot of complete page."""
-        from ui.pages import TextCodingPage
+        from src.presentation.pages import TextCodingPage
 
         page = TextCodingPage(
             coders=["colin", "sarah", "james"],
@@ -558,15 +660,23 @@ class TestTextCodingPage:
                 {
                     "name": "Abilities",
                     "codes": [
-                        {"name": "soccer playing", "color": "#FFC107", "count": 3},
-                        {"name": "struggling", "color": "#F44336", "count": 5},
+                        {
+                            "name": "soccer playing",
+                            "color": colors.code_yellow,
+                            "count": 3,
+                        },
+                        {"name": "struggling", "color": colors.code_red, "count": 5},
                     ],
                 },
                 {
                     "name": "Motivation",
                     "codes": [
-                        {"name": "cost concerns", "color": "#E91E63", "count": 2},
-                        {"name": "enthusiasm", "color": "#00BCD4", "count": 6},
+                        {
+                            "name": "cost concerns",
+                            "color": colors.code_pink,
+                            "count": 2,
+                        },
+                        {"name": "enthusiasm", "color": colors.code_cyan, "count": 6},
                     ],
                 },
             ]
@@ -587,14 +697,14 @@ class TestTextCodingPage:
         )
 
         page.set_selected_code(
-            "#FFC107",
+            colors.code_yellow,
             "soccer playing",
             "Code for soccer references.",
         )
 
         page.set_overlapping_codes(
             [
-                ("Segment 1", ["#4CAF50", "#00BCD4"]),
+                ("Segment 1", [colors.code_green, colors.code_cyan]),
             ]
         )
 
@@ -616,7 +726,7 @@ class TestTextCodingScreen:
 
     def test_creates_with_sample_data(self, qapp, colors):
         """Test screen creates and loads sample data."""
-        from ui.screens import TextCodingScreen
+        from src.presentation.screens import TextCodingScreen
 
         screen = TextCodingScreen(colors=colors)
 
@@ -627,7 +737,7 @@ class TestTextCodingScreen:
 
     def test_screen_protocol_get_content(self, qapp, colors):
         """Test ScreenProtocol get_content returns self."""
-        from ui.screens import TextCodingScreen
+        from src.presentation.screens import TextCodingScreen
 
         screen = TextCodingScreen(colors=colors)
 
@@ -635,7 +745,7 @@ class TestTextCodingScreen:
 
     def test_screen_protocol_get_status(self, qapp, colors):
         """Test ScreenProtocol get_status_message."""
-        from ui.screens import TextCodingScreen
+        from src.presentation.screens import TextCodingScreen
 
         screen = TextCodingScreen(colors=colors)
 
@@ -643,18 +753,74 @@ class TestTextCodingScreen:
 
     def test_signals_propagate(self, qapp, colors):
         """Test signals propagate from page to screen."""
-        from ui.screens import TextCodingScreen
+        from src.presentation.screens import TextCodingScreen
 
         screen = TextCodingScreen(colors=colors)
         spy = QSignalSpy(screen.file_selected)
 
         screen.page.files_panel._on_file_click(0)
 
-        assert len(spy) == 1
+        assert spy.count() == 1
+
+    def test_initial_data_includes_code_ids(self, qapp, colors):
+        """Test that codes in initial data have their IDs preserved.
+
+        This test ensures the DTO-to-dict conversion includes the 'id' field,
+        which is critical for apply code operations.
+        """
+        from src.presentation.dto import (
+            CodeCategoryDTO,
+            CodeDTO,
+            DocumentDTO,
+            NavigationDTO,
+            TextCodingDataDTO,
+        )
+        from src.presentation.screens import TextCodingScreen
+
+        # Create data with numeric code IDs
+        data = TextCodingDataDTO(
+            files=[],
+            categories=[
+                CodeCategoryDTO(
+                    id="cat1",
+                    name="Test Category",
+                    codes=[
+                        CodeDTO(id="12345", name="test_code", color="#ff0000", count=0),
+                        CodeDTO(
+                            id="67890", name="another_code", color="#00ff00", count=0
+                        ),
+                    ],
+                )
+            ],
+            document=DocumentDTO(
+                id="1", title="Test", badge="", content="Test content"
+            ),
+            document_stats=None,
+            selected_code=None,
+            overlapping_segments=[],
+            file_memo=None,
+            navigation=NavigationDTO(current=1, total=1),
+            coders=["user"],
+            selected_coder="user",
+        )
+
+        screen = TextCodingScreen(data=data, colors=colors)
+
+        # Verify the codes panel tree items have the correct IDs
+        items = screen.page.codes_panel._code_tree._items
+        assert len(items) == 1  # One category
+        assert len(items[0].children) == 2  # Two codes
+
+        # IDs should be numeric, not the code names
+        # Note: codes are sorted alphabetically, so "another_code" comes before "test_code"
+        assert items[0].children[0].id == "67890"
+        assert items[0].children[0].name == "another_code"
+        assert items[0].children[1].id == "12345"
+        assert items[0].children[1].name == "test_code"
 
     def test_screenshot(self, qapp, colors, take_screenshot):
         """Take screenshot of complete screen."""
-        from ui.screens import TextCodingScreen
+        from src.presentation.screens import TextCodingScreen
 
         screen = TextCodingScreen(colors=colors)
         screen.setMinimumSize(1200, 700)
@@ -663,7 +829,7 @@ class TestTextCodingScreen:
 
     def test_action_handlers_registered(self, qapp, colors):
         """Test that all action handlers are registered."""
-        from ui.screens import TextCodingScreen
+        from src.presentation.screens import TextCodingScreen
 
         screen = TextCodingScreen(colors=colors)
 
@@ -689,7 +855,7 @@ class TestTextCodingScreen:
 
     def test_action_prev_next_navigation(self, qapp, colors):
         """Test prev/next file navigation."""
-        from ui.screens import TextCodingScreen
+        from src.presentation.screens import TextCodingScreen
 
         screen = TextCodingScreen(colors=colors)
 
@@ -710,7 +876,7 @@ class TestTextCodingScreen:
 
     def test_action_toggle_important(self, qapp, colors):
         """Test toggling important-only filter."""
-        from ui.screens import TextCodingScreen
+        from src.presentation.screens import TextCodingScreen
 
         screen = TextCodingScreen(colors=colors)
 
@@ -719,28 +885,28 @@ class TestTextCodingScreen:
 
         # Toggle on
         screen._on_action("important")
-        assert screen._show_important_only
+        assert screen._show_important_only is True
 
         # Toggle off
         screen._on_action("important")
-        assert not screen._show_important_only
+        assert screen._show_important_only is False
 
     def test_action_toggle_annotations(self, qapp, colors):
         """Test toggling annotations display."""
-        from ui.screens import TextCodingScreen
+        from src.presentation.screens import TextCodingScreen
 
         screen = TextCodingScreen(colors=colors)
 
-        # Should start as False
-        assert not getattr(screen, "_show_annotations", False)
-
-        # Toggle on
-        screen._on_action("annotations")
-        assert screen._show_annotations
+        # Should start as True (annotations shown by default)
+        assert screen._show_annotations is True
 
         # Toggle off
         screen._on_action("annotations")
-        assert not screen._show_annotations
+        assert screen._show_annotations is False
+
+        # Toggle on
+        screen._on_action("annotations")
+        assert screen._show_annotations is True
 
 
 # =============================================================================
@@ -753,7 +919,7 @@ class TestActionHandlers:
 
     def test_action_help(self, qapp, colors, capsys):
         """Test help action."""
-        from ui.screens import TextCodingScreen
+        from src.presentation.screens import TextCodingScreen
 
         screen = TextCodingScreen(colors=colors)
         screen._on_action("help")
@@ -763,7 +929,7 @@ class TestActionHandlers:
 
     def test_action_text_size(self, qapp, colors, capsys):
         """Test text size action."""
-        from ui.screens import TextCodingScreen
+        from src.presentation.screens import TextCodingScreen
 
         screen = TextCodingScreen(colors=colors)
         screen._on_action("text_size")
@@ -773,7 +939,7 @@ class TestActionHandlers:
 
     def test_action_important_toggle_multiple(self, qapp, colors):
         """Test important toggle works multiple times."""
-        from ui.screens import TextCodingScreen
+        from src.presentation.screens import TextCodingScreen
 
         screen = TextCodingScreen(colors=colors)
 
@@ -787,20 +953,22 @@ class TestActionHandlers:
 
     def test_action_annotations_toggle_multiple(self, qapp, colors):
         """Test annotations toggle works multiple times."""
-        from ui.screens import TextCodingScreen
+        from src.presentation.screens import TextCodingScreen
 
         screen = TextCodingScreen(colors=colors)
 
+        # Annotations start as True (shown by default)
         states = []
         for _ in range(4):
             screen._on_action("annotations")
             states.append(screen._show_annotations)
 
-        assert states == [True, False, True, False]
+        # Starting from True, toggling gives: False, True, False, True
+        assert states == [False, True, False, True]
 
     def test_action_prev_at_start(self, qapp, colors):
         """Test prev action at start of file list does nothing."""
-        from ui.screens import TextCodingScreen
+        from src.presentation.screens import TextCodingScreen
 
         screen = TextCodingScreen(colors=colors)
         screen._current_file_index = 0
@@ -812,7 +980,7 @@ class TestActionHandlers:
 
     def test_action_next_at_end(self, qapp, colors):
         """Test next action at end of file list does nothing."""
-        from ui.screens import TextCodingScreen
+        from src.presentation.screens import TextCodingScreen
 
         screen = TextCodingScreen(colors=colors)
         total_files = len(screen._page.files_panel._files)
@@ -825,7 +993,7 @@ class TestActionHandlers:
 
     def test_action_navigate_full_range(self, qapp, colors):
         """Test navigating through all files."""
-        from ui.screens import TextCodingScreen
+        from src.presentation.screens import TextCodingScreen
 
         screen = TextCodingScreen(colors=colors)
         total_files = len(screen._page.files_panel._files)
@@ -841,49 +1009,53 @@ class TestActionHandlers:
             screen._on_action("prev")
         assert screen._current_file_index == 0
 
-    def test_action_auto_exact_no_selection(self, qapp, colors, capsys):
-        """Test auto-exact with no text selected."""
-        from ui.screens import TextCodingScreen
+    def test_action_auto_exact_no_code_selected(self, qapp, colors, capsys):
+        """Test auto-exact with no code selected prints message."""
+        from src.presentation.screens import TextCodingScreen
 
         screen = TextCodingScreen(colors=colors)
+        # No code selected
         screen._on_action("auto_exact")
 
         captured = capsys.readouterr()
         assert "select" in captured.out.lower()
 
-    def test_action_auto_fragment_no_selection(self, qapp, colors, capsys):
-        """Test auto-fragment with no text selected."""
-        from ui.screens import TextCodingScreen
+    def test_action_auto_fragment_no_code_selected(self, qapp, colors, capsys):
+        """Test auto-fragment with no code selected prints message."""
+        from src.presentation.screens import TextCodingScreen
 
         screen = TextCodingScreen(colors=colors)
+        # No code selected
         screen._on_action("auto_fragment")
 
         captured = capsys.readouterr()
         assert "select" in captured.out.lower()
 
-    def test_action_mark_speakers(self, qapp, colors, capsys):
-        """Test mark speakers action."""
-        from ui.screens import TextCodingScreen
+    def test_action_mark_speakers_no_document(self, qapp, colors, capsys):
+        """Test mark speakers action with no document."""
+        from src.presentation.screens import TextCodingScreen
 
         screen = TextCodingScreen(colors=colors)
+        # Clear the document
+        screen._page.set_document("", text="")
         screen._on_action("speakers")
 
         captured = capsys.readouterr()
-        assert "speaker" in captured.out.lower() or "TODO" in captured.out
+        assert "no document" in captured.out.lower()
 
-    def test_action_undo_auto(self, qapp, colors, capsys):
-        """Test undo auto-code action."""
-        from ui.screens import TextCodingScreen
+    def test_action_undo_auto_nothing_to_undo(self, qapp, colors, capsys):
+        """Test undo auto-code when nothing to undo."""
+        from src.presentation.screens import TextCodingScreen
 
         screen = TextCodingScreen(colors=colors)
         screen._on_action("undo_auto")
 
         captured = capsys.readouterr()
-        assert "undo" in captured.out.lower() or "TODO" in captured.out
+        assert "nothing to undo" in captured.out.lower()
 
     def test_action_memo_no_selection(self, qapp, colors, capsys):
         """Test memo action with no selection falls back to file memo."""
-        from ui.screens import TextCodingScreen
+        from src.presentation.screens import TextCodingScreen
 
         screen = TextCodingScreen(colors=colors)
         screen._on_action("memo")
@@ -893,7 +1065,7 @@ class TestActionHandlers:
 
     def test_action_annotate_no_selection(self, qapp, colors, capsys):
         """Test annotate action with no selection."""
-        from ui.screens import TextCodingScreen
+        from src.presentation.screens import TextCodingScreen
 
         screen = TextCodingScreen(colors=colors)
         screen._on_action("annotate")
@@ -903,7 +1075,7 @@ class TestActionHandlers:
 
     def test_unknown_action(self, qapp, colors, capsys):
         """Test unknown action prints error."""
-        from ui.screens import TextCodingScreen
+        from src.presentation.screens import TextCodingScreen
 
         screen = TextCodingScreen(colors=colors)
         screen._on_action("unknown_action_xyz")
@@ -913,7 +1085,7 @@ class TestActionHandlers:
 
     def test_all_actions_no_crash(self, qapp, colors):
         """Test all actions can be called without crashing."""
-        from ui.screens import TextCodingScreen
+        from src.presentation.screens import TextCodingScreen
 
         screen = TextCodingScreen(colors=colors)
 
@@ -942,7 +1114,7 @@ class TestActionHandlers:
 
     def test_navigation_updates_display(self, qapp, colors):
         """Test that navigation updates the toolbar display."""
-        from ui.screens import TextCodingScreen
+        from src.presentation.screens import TextCodingScreen
 
         screen = TextCodingScreen(colors=colors)
         screen._current_file_index = 0
@@ -956,8 +1128,7 @@ class TestActionHandlers:
 
     def test_media_type_signal(self, qapp, colors):
         """Test media type change signal from toolbar."""
-        from PyQt6.QtTest import QSignalSpy
-        from ui.pages import TextCodingPage
+        from src.presentation.pages import TextCodingPage
 
         page = TextCodingPage(colors=colors)
         spy = QSignalSpy(page.toolbar.media_type_changed)
@@ -965,13 +1136,12 @@ class TestActionHandlers:
         # Emit signal (simulating selection change)
         page.toolbar.media_type_changed.emit("image")
 
-        assert len(spy) == 1
-        assert spy[0][0] == "image"
+        assert spy.count() == 1
+        assert spy.at(0)[0] == "image"
 
     def test_coder_change_signal(self, qapp, colors):
         """Test coder change signal from toolbar."""
-        from PyQt6.QtTest import QSignalSpy
-        from ui.pages import TextCodingPage
+        from src.presentation.pages import TextCodingPage
 
         page = TextCodingPage(coders=["alice", "bob"], colors=colors)
         spy = QSignalSpy(page.toolbar.coder_changed)
@@ -979,13 +1149,12 @@ class TestActionHandlers:
         # Emit signal
         page.toolbar.coder_changed.emit("bob")
 
-        assert len(spy) == 1
-        assert spy[0][0] == "bob"
+        assert spy.count() == 1
+        assert spy.at(0)[0] == "bob"
 
     def test_search_change_signal(self, qapp, colors):
         """Test search text change signal from toolbar."""
-        from PyQt6.QtTest import QSignalSpy
-        from ui.pages import TextCodingPage
+        from src.presentation.pages import TextCodingPage
 
         page = TextCodingPage(colors=colors)
         spy = QSignalSpy(page.toolbar.search_changed)
@@ -993,5 +1162,5 @@ class TestActionHandlers:
         # Emit signal
         page.toolbar.search_changed.emit("test query")
 
-        assert len(spy) == 1
-        assert spy[0][0] == "test query"
+        assert spy.count() == 1
+        assert spy.at(0)[0] == "test query"
