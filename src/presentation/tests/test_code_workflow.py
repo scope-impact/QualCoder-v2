@@ -11,7 +11,6 @@ import pytest
 
 from src.presentation.screens.text_coding import TextCodingScreen
 
-
 # Note: qapp, colors, coding_context, viewmodel fixtures come from conftest.py
 
 

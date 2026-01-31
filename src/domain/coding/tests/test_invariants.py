@@ -7,8 +7,6 @@ Tests verify they correctly identify valid and invalid states.
 
 import pytest
 
-pytestmark = pytest.mark.unit  # All tests in this module are unit tests
-
 from src.domain.coding.entities import (
     Category,
     Code,
@@ -25,22 +23,20 @@ from src.domain.coding.invariants import (
     count_codes_in_category,
     count_segments_for_code,
     does_category_exist,
-    # Cross-entity invariants
     does_code_exist,
     does_segment_overlap,
-    # Category invariants
     is_category_hierarchy_valid,
     is_code_name_unique,
-    # Code invariants
     is_valid_code_name,
     is_valid_color,
     is_valid_image_region,
     is_valid_importance,
-    # Segment invariants
     is_valid_text_position,
     is_valid_time_range,
 )
 from src.domain.shared.types import CategoryId, CodeId
+
+pytestmark = pytest.mark.unit  # All tests in this module are unit tests
 
 
 class TestCodeNameInvariants:

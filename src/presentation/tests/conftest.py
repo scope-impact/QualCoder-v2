@@ -16,7 +16,6 @@ import pytest
 from PySide6.QtCore import QTimer
 from PySide6.QtWidgets import QApplication, QLabel, QWidget
 
-
 # =============================================================================
 # Screenshot Fixtures
 # =============================================================================

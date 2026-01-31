@@ -15,7 +15,6 @@ Test Categories:
 from PySide6.QtTest import QSignalSpy
 from PySide6.QtWidgets import QApplication
 
-
 # Note: qapp, colors, coding_context, viewmodel fixtures come from conftest.py
 
 

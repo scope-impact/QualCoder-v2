@@ -17,7 +17,6 @@ import sys
 import pytest
 from PySide6.QtWidgets import QApplication
 
-
 # =============================================================================
 # Qt Application Fixtures (Session-scoped)
 # =============================================================================

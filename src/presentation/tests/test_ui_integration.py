@@ -11,8 +11,6 @@ These tests simulate real user workflows and would catch bugs like:
 """
 
 from PySide6.QtTest import QSignalSpy
-from PySide6.QtWidgets import QApplication
-
 
 # Note: qapp, colors, coding_context, viewmodel fixtures come from conftest.py
 

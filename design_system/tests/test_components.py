@@ -5,8 +5,6 @@ Tests for core components: Button, Input, Card, Badge, Alert, etc.
 import pytest
 from PySide6.QtCore import Qt
 
-pytestmark = pytest.mark.unit  # All tests in this module are unit tests
-
 from design_system.components import (
     Alert,
     Avatar,
@@ -19,6 +17,8 @@ from design_system.components import (
     Label,
     Separator,
 )
+
+pytestmark = pytest.mark.unit  # All tests in this module are unit tests
 
 
 class TestButton:
