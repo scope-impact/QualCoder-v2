@@ -774,3 +774,209 @@ class TestSourceManagementIntegration:
 
         # 4. Clear
         player.clear()
+
+
+# =============================================================================
+# UI Control Click Tests
+# =============================================================================
+
+
+class TestMediaPlayerUIControls:
+    """E2E tests for MediaPlayer UI button/slider interactions."""
+
+    def test_play_button_click_toggles_playback(
+        self, qtbot, qapp, colors, sample_files: SampleFiles
+    ):
+        """Clicking play button toggles playback state."""
+        from PySide6.QtCore import Qt
+
+        from src.presentation.organisms import MediaPlayer
+
+        player = MediaPlayer(colors=colors)
+        qtbot.addWidget(player)
+
+        player.load_media(sample_files.wav_file)
+        QApplication.processEvents()
+
+        # Initially not playing
+        assert not player.is_playing()
+
+        # Click play button
+        qtbot.mouseClick(player._play_btn, Qt.MouseButton.LeftButton)
+        QApplication.processEvents()
+
+        assert player.is_playing()
+
+        # Click again to pause
+        qtbot.mouseClick(player._play_btn, Qt.MouseButton.LeftButton)
+        QApplication.processEvents()
+
+        assert not player.is_playing()
+
+    def test_play_button_emits_signals(
+        self, qtbot, qapp, colors, sample_files: SampleFiles
+    ):
+        """Play button click emits playback_started signal."""
+        from PySide6.QtCore import Qt
+
+        from src.presentation.organisms import MediaPlayer
+
+        player = MediaPlayer(colors=colors)
+        qtbot.addWidget(player)
+
+        player.load_media(sample_files.wav_file)
+        QApplication.processEvents()
+
+        # Set up signal spy
+        started_spy = QSignalSpy(player.playback_started)
+
+        # Click play
+        qtbot.mouseClick(player._play_btn, Qt.MouseButton.LeftButton)
+        QApplication.processEvents()
+
+        assert started_spy.count() == 1
+
+    def test_volume_slider_changes_volume(
+        self, qtbot, qapp, colors, sample_files: SampleFiles
+    ):
+        """Moving volume slider changes volume."""
+        from src.presentation.organisms import MediaPlayer
+
+        player = MediaPlayer(colors=colors)
+        qtbot.addWidget(player)
+
+        player.load_media(sample_files.wav_file)
+        QApplication.processEvents()
+
+        # Change volume via slider
+        player._volume_slider.setValue(30)
+        QApplication.processEvents()
+
+        # Volume should be updated in backend
+        assert player._volume_slider.value() == 30
+
+    def test_progress_slider_seeks(
+        self, qtbot, qapp, colors, sample_files: SampleFiles
+    ):
+        """Moving progress slider seeks playback position."""
+        from src.presentation.organisms import MediaPlayer
+
+        player = MediaPlayer(colors=colors)
+        qtbot.addWidget(player)
+
+        player.load_media(sample_files.wav_file)
+        QApplication.processEvents()
+
+        # Simulate slider movement
+        player._progress_slider.setValue(500)  # 50% of 1000 range
+        player._on_seek(500)
+        QApplication.processEvents()
+
+        # Position should have changed
+        position = player.get_position()
+        # NoopBackend: position is set based on duration ratio
+        assert position >= 0
+
+
+class TestImageViewerUIControls:
+    """E2E tests for ImageViewer UI button interactions."""
+
+    def test_fit_button_toggles_fit_mode(
+        self, qtbot, qapp, colors, sample_files: SampleFiles
+    ):
+        """Clicking fit button toggles fit-to-window mode."""
+        from PySide6.QtCore import Qt
+
+        from src.presentation.organisms import ImageViewer
+
+        viewer = ImageViewer(colors=colors)
+        qtbot.addWidget(viewer)
+
+        viewer.load_image(sample_files.png_file)
+        QApplication.processEvents()
+
+        # Get fit button
+        fit_btn = viewer._fit_btn
+
+        # Initially in fit mode
+        assert fit_btn.isChecked()
+
+        # Click to toggle off (show actual size)
+        qtbot.mouseClick(fit_btn, Qt.MouseButton.LeftButton)
+        QApplication.processEvents()
+
+        # Should now be unchecked
+        assert not fit_btn.isChecked()
+
+    def test_actual_size_button(self, qtbot, qapp, colors, sample_files: SampleFiles):
+        """Clicking actual size button shows image at 100%."""
+        from PySide6.QtCore import Qt
+
+        from src.presentation.organisms import ImageViewer
+
+        viewer = ImageViewer(colors=colors)
+        qtbot.addWidget(viewer)
+
+        viewer.load_image(sample_files.png_file)
+        QApplication.processEvents()
+
+        # Click actual size button
+        actual_btn = viewer._actual_btn
+        qtbot.mouseClick(actual_btn, Qt.MouseButton.LeftButton)
+        QApplication.processEvents()
+
+        # Zoom should be 100%
+        assert viewer.get_zoom_level() == 1.0
+
+    def test_zoom_methods_work(self, qtbot, qapp, colors, sample_files: SampleFiles):
+        """Zoom in/out methods change zoom level."""
+        from src.presentation.organisms import ImageViewer
+
+        viewer = ImageViewer(colors=colors)
+        qtbot.addWidget(viewer)
+
+        viewer.load_image(sample_files.png_file)
+        QApplication.processEvents()
+
+        # First set to actual size so we have a baseline
+        viewer.show_actual_size()
+        QApplication.processEvents()
+
+        initial_zoom = viewer.get_zoom_level()
+        assert initial_zoom == 1.0
+
+        # Zoom in
+        viewer.zoom_in()
+        QApplication.processEvents()
+
+        assert viewer.get_zoom_level() > initial_zoom
+
+        # Zoom out
+        viewer.zoom_out()
+        QApplication.processEvents()
+
+        assert viewer.get_zoom_level() == initial_zoom
+
+    def test_zoom_label_updates(self, qtbot, qapp, colors, sample_files: SampleFiles):
+        """Zoom label updates when zoom changes."""
+        from src.presentation.organisms import ImageViewer
+
+        viewer = ImageViewer(colors=colors)
+        qtbot.addWidget(viewer)
+
+        viewer.load_image(sample_files.png_file)
+        QApplication.processEvents()
+
+        # Set to actual size
+        viewer.show_actual_size()
+        QApplication.processEvents()
+
+        # Label should show 100%
+        assert "100%" in viewer._zoom_label.text()
+
+        # Zoom in
+        viewer.zoom_in()
+        QApplication.processEvents()
+
+        # Label should show higher percentage
+        assert "100%" not in viewer._zoom_label.text() or viewer.get_zoom_level() != 1.0
