@@ -46,6 +46,17 @@ class CategoryId:
 
 
 @dataclass(frozen=True)
+class CaseId:
+    """Typed identifier for Case entities."""
+
+    value: int
+
+    @classmethod
+    def new(cls) -> CaseId:
+        return cls(value=int(uuid4().int % 1_000_000))
+
+
+@dataclass(frozen=True)
 class FolderId:
     """Unique identifier for a source folder."""
 
