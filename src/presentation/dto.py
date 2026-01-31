@@ -95,6 +95,36 @@ class NavigationDTO:
 
 
 @dataclass
+class SourceDTO:
+    """A source file in the project."""
+
+    id: str
+    name: str
+    source_type: str  # text, audio, video, image, pdf
+    status: str = "imported"  # imported, transcribing, ready, in_progress, coded
+    file_size: int = 0
+    code_count: int = 0
+    memo: str | None = None
+    origin: str | None = None
+    cases: list[str] = field(default_factory=list)
+    modified_at: str | None = None
+
+
+@dataclass
+class ProjectSummaryDTO:
+    """Summary statistics for a project."""
+
+    total_sources: int = 0
+    text_count: int = 0
+    audio_count: int = 0
+    video_count: int = 0
+    image_count: int = 0
+    pdf_count: int = 0
+    total_codes: int = 0
+    total_segments: int = 0
+
+
+@dataclass
 class TextCodingDataDTO:
     """
     Complete data bundle for the TextCodingPage.

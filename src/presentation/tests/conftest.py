@@ -13,8 +13,19 @@ from datetime import datetime
 from pathlib import Path
 
 import pytest
-from PySide6.QtCore import QTimer
-from PySide6.QtWidgets import QApplication, QLabel, QWidget
+
+# Conditionally import Qt - allows non-UI tests to run without Qt available
+try:
+    from PySide6.QtCore import QTimer
+    from PySide6.QtWidgets import QApplication, QLabel, QWidget
+
+    HAS_QT = True
+except ImportError:
+    HAS_QT = False
+    QTimer = None
+    QApplication = None
+    QLabel = None
+    QWidget = None
 
 # =============================================================================
 # Screenshot Fixtures
@@ -34,6 +45,8 @@ def screenshot_dir():
 @pytest.fixture
 def take_screenshot(screenshot_dir, request):
     """Fixture to take screenshots of widgets"""
+    if not HAS_QT:
+        pytest.skip("Qt not available")
 
     def _take_screenshot(widget: QWidget, name: str = None, delay_ms: int = 100):
         if name is None:
@@ -68,6 +81,8 @@ def take_screenshot(screenshot_dir, request):
 @pytest.fixture
 def placeholder_widget(colors):
     """Create a simple placeholder widget for testing layouts"""
+    if not HAS_QT:
+        pytest.skip("Qt not available")
     from design_system import RADIUS
 
     def _create(text: str = "Placeholder", min_height: int = 100):

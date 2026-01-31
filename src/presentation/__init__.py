@@ -37,6 +37,7 @@ Usage:
     from src.presentation.sample_data import create_sample_text_coding_data
 """
 
+# DTOs are pure Python - always available
 from .dto import (
     CodeCategoryDTO,
     CodeDTO,
@@ -46,52 +47,75 @@ from .dto import (
     FileMemoDTO,
     NavigationDTO,
     OverlappingSegmentDTO,
+    ProjectSummaryDTO,
     SelectedCodeDTO,
+    SourceDTO,
     TextCodingDataDTO,
 )
-from .factory import CodingContext
-from .organisms import (
-    CodesPanel,
-    CodingToolbar,
-    DetailsPanel,
-    FilesPanel,
-    TextEditorPanel,
-)
-from .pages import TextCodingPage
-from .sample_data import create_sample_text_coding_data
-from .screens import TextCodingScreen
-from .templates import AppShell, ThreePanelLayout
-from .viewmodels import TextCodingViewModel
 
-__all__ = [
-    # Templates
-    "AppShell",
-    "ThreePanelLayout",
-    # Screens
-    "TextCodingScreen",
-    # Pages
-    "TextCodingPage",
-    # Organisms
-    "CodingToolbar",
-    "FilesPanel",
-    "CodesPanel",
-    "TextEditorPanel",
-    "DetailsPanel",
-    # ViewModels
-    "TextCodingViewModel",
-    # Factory
-    "CodingContext",
-    # DTOs
-    "FileDTO",
-    "CodeDTO",
-    "CodeCategoryDTO",
-    "DocumentDTO",
-    "DocumentStatsDTO",
-    "SelectedCodeDTO",
-    "OverlappingSegmentDTO",
-    "FileMemoDTO",
-    "NavigationDTO",
-    "TextCodingDataDTO",
-    # Sample Data
-    "create_sample_text_coding_data",
-]
+# Qt-dependent imports are conditional to allow non-UI testing
+try:
+    from .factory import CodingContext
+    from .organisms import (
+        CodesPanel,
+        CodingToolbar,
+        DetailsPanel,
+        FilesPanel,
+        TextEditorPanel,
+    )
+    from .pages import TextCodingPage
+    from .sample_data import create_sample_text_coding_data
+    from .screens import TextCodingScreen
+    from .templates import AppShell, ThreePanelLayout
+    from .viewmodels import TextCodingViewModel
+
+    __all__ = [
+        # Templates
+        "AppShell",
+        "ThreePanelLayout",
+        # Screens
+        "TextCodingScreen",
+        # Pages
+        "TextCodingPage",
+        # Organisms
+        "CodingToolbar",
+        "FilesPanel",
+        "CodesPanel",
+        "TextEditorPanel",
+        "DetailsPanel",
+        # ViewModels
+        "TextCodingViewModel",
+        # Factory
+        "CodingContext",
+        # DTOs
+        "FileDTO",
+        "CodeDTO",
+        "CodeCategoryDTO",
+        "DocumentDTO",
+        "DocumentStatsDTO",
+        "SelectedCodeDTO",
+        "OverlappingSegmentDTO",
+        "FileMemoDTO",
+        "NavigationDTO",
+        "TextCodingDataDTO",
+        "SourceDTO",
+        "ProjectSummaryDTO",
+        # Sample Data
+        "create_sample_text_coding_data",
+    ]
+except ImportError:
+    # Qt not available - only DTOs are exported
+    __all__ = [
+        "FileDTO",
+        "CodeDTO",
+        "CodeCategoryDTO",
+        "DocumentDTO",
+        "DocumentStatsDTO",
+        "SelectedCodeDTO",
+        "OverlappingSegmentDTO",
+        "FileMemoDTO",
+        "NavigationDTO",
+        "TextCodingDataDTO",
+        "SourceDTO",
+        "ProjectSummaryDTO",
+    ]
