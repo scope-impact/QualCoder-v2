@@ -216,7 +216,11 @@ class BulkActionsBar(QFrame):
 
         # Clear selection
         clear_btn = QPushButton()
-        clear_btn.setIcon(Icon("mdi6.close", size=16, color=self._colors.text_secondary)._get_icon())
+        try:
+            import qtawesome as qta
+            clear_btn.setIcon(qta.icon("mdi6.close", color=self._colors.text_secondary))
+        except ImportError:
+            clear_btn.setText("×")
         clear_btn.setFixedSize(28, 28)
         clear_btn.setCursor(Qt.CursorShape.PointingHandCursor)
         clear_btn.setStyleSheet(f"""
@@ -500,9 +504,11 @@ class SourceTable(QFrame):
 
         # View button
         view_btn = QPushButton()
-        view_btn.setIcon(
-            Icon("mdi6.eye-outline", size=16, color=self._colors.text_secondary)._get_icon()
-        )
+        try:
+            import qtawesome as qta
+            view_btn.setIcon(qta.icon("mdi6.eye-outline", color=self._colors.text_secondary))
+        except ImportError:
+            view_btn.setText("👁")
         view_btn.setFixedSize(28, 28)
         view_btn.setCursor(Qt.CursorShape.PointingHandCursor)
         view_btn.setToolTip("View")
@@ -512,9 +518,11 @@ class SourceTable(QFrame):
 
         # Code button
         code_btn = QPushButton()
-        code_btn.setIcon(
-            Icon("mdi6.code-tags", size=16, color=self._colors.text_secondary)._get_icon()
-        )
+        try:
+            import qtawesome as qta
+            code_btn.setIcon(qta.icon("mdi6.code-tags", color=self._colors.text_secondary))
+        except ImportError:
+            code_btn.setText("</>")
         code_btn.setFixedSize(28, 28)
         code_btn.setCursor(Qt.CursorShape.PointingHandCursor)
         code_btn.setToolTip("Code")
@@ -524,9 +532,11 @@ class SourceTable(QFrame):
 
         # More button (placeholder)
         more_btn = QPushButton()
-        more_btn.setIcon(
-            Icon("mdi6.dots-vertical", size=16, color=self._colors.text_secondary)._get_icon()
-        )
+        try:
+            import qtawesome as qta
+            more_btn.setIcon(qta.icon("mdi6.dots-vertical", color=self._colors.text_secondary))
+        except ImportError:
+            more_btn.setText("⋮")
         more_btn.setFixedSize(28, 28)
         more_btn.setCursor(Qt.CursorShape.PointingHandCursor)
         more_btn.setToolTip("More actions")
@@ -587,6 +597,11 @@ class SourceTable(QFrame):
                 if checkbox and checkbox.isChecked() and row in self._source_map:
                     selected.append(self._source_map[row].id)
         return selected
+
+    def clear_selection(self):
+        """Clear all checkbox selections (public API)."""
+        self._selected_ids.clear()
+        self._clear_selection()
 
     def _on_bulk_code(self):
         """Handle bulk code action."""
