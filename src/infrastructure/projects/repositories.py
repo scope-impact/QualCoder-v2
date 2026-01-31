@@ -13,13 +13,14 @@ from typing import TYPE_CHECKING
 
 from sqlalchemy import delete, func, select, update
 
+from src.domain.cases.entities import Case
 from src.domain.projects.entities import (
     Source,
     SourceStatus,
     SourceType,
 )
-from src.domain.shared.types import SourceId
-from src.infrastructure.projects.schema import project_settings, source
+from src.domain.shared.types import CaseId, SourceId
+from src.infrastructure.projects.schema import cases, project_settings, source
 
 if TYPE_CHECKING:
     from sqlalchemy import Connection
@@ -239,3 +240,99 @@ class SQLiteProjectSettingsRepository:
     def set_project_memo(self, memo: str) -> None:
         """Set the project memo."""
         self.set("project_memo", memo)
+
+
+class SQLiteCaseRepository:
+    """
+    SQLAlchemy Core implementation of CaseRepository.
+
+    Maps between domain Case entities and the cases table.
+    """
+
+    def __init__(self, connection: Connection) -> None:
+        self._conn = connection
+
+    def get_all(self) -> list[Case]:
+        """Get all cases in the project."""
+        stmt = select(cases).order_by(cases.c.name)
+        result = self._conn.execute(stmt)
+        return [self._row_to_case(row) for row in result]
+
+    def get_by_id(self, case_id: CaseId) -> Case | None:
+        """Get a case by its ID."""
+        stmt = select(cases).where(cases.c.id == case_id.value)
+        result = self._conn.execute(stmt)
+        row = result.fetchone()
+        return self._row_to_case(row) if row else None
+
+    def get_by_name(self, name: str) -> Case | None:
+        """Get a case by its name (case-insensitive)."""
+        stmt = select(cases).where(func.lower(cases.c.name) == name.lower())
+        result = self._conn.execute(stmt)
+        row = result.fetchone()
+        return self._row_to_case(row) if row else None
+
+    def save(self, case: Case) -> None:
+        """Save a case (insert or update)."""
+        exists = self.exists(case.id)
+
+        if exists:
+            stmt = (
+                update(cases)
+                .where(cases.c.id == case.id.value)
+                .values(
+                    name=case.name,
+                    description=case.description,
+                    memo=case.memo,
+                    updated_at=datetime.now(UTC),
+                )
+            )
+        else:
+            stmt = cases.insert().values(
+                id=case.id.value,
+                name=case.name,
+                description=case.description,
+                memo=case.memo,
+                created_at=case.created_at,
+                updated_at=case.updated_at,
+            )
+
+        self._conn.execute(stmt)
+        self._conn.commit()
+
+    def delete(self, case_id: CaseId) -> None:
+        """Delete a case by ID."""
+        stmt = delete(cases).where(cases.c.id == case_id.value)
+        self._conn.execute(stmt)
+        self._conn.commit()
+
+    def exists(self, case_id: CaseId) -> bool:
+        """Check if a case exists."""
+        stmt = select(func.count()).where(cases.c.id == case_id.value)
+        result = self._conn.execute(stmt)
+        return result.scalar() > 0
+
+    def name_exists(self, name: str, exclude_id: CaseId | None = None) -> bool:
+        """Check if a case name is already taken."""
+        stmt = select(func.count()).where(func.lower(cases.c.name) == name.lower())
+        if exclude_id:
+            stmt = stmt.where(cases.c.id != exclude_id.value)
+        result = self._conn.execute(stmt)
+        return result.scalar() > 0
+
+    def count(self) -> int:
+        """Get total count of cases."""
+        stmt = select(func.count()).select_from(cases)
+        result = self._conn.execute(stmt)
+        return result.scalar()
+
+    def _row_to_case(self, row) -> Case:
+        """Convert a database row to a Case entity."""
+        return Case(
+            id=CaseId(value=row.id),
+            name=row.name,
+            description=row.description,
+            memo=row.memo,
+            created_at=row.created_at or datetime.now(UTC),
+            updated_at=row.updated_at or datetime.now(UTC),
+        )

@@ -42,3 +42,11 @@ def settings_repo(connection):
     from src.infrastructure.projects.repositories import SQLiteProjectSettingsRepository
 
     return SQLiteProjectSettingsRepository(connection)
+
+
+@pytest.fixture
+def case_repo(connection):
+    """Create a case repository."""
+    from src.infrastructure.projects.repositories import SQLiteCaseRepository
+
+    return SQLiteCaseRepository(connection)

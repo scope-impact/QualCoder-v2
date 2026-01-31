@@ -57,6 +57,34 @@ project_settings = Table(
     Column("updated_at", DateTime),
 )
 
+# Cases table - stores research units (participants, sites, etc.)
+cases = Table(
+    "cases",
+    metadata,
+    Column("id", Integer, primary_key=True),
+    Column("name", String(255), nullable=False),
+    Column("description", Text),
+    Column("memo", Text),
+    Column("owner", String(100)),
+    Column("created_at", DateTime),
+    Column("updated_at", DateTime),
+    Index("idx_cases_name", "name"),
+)
+
+# Case attributes table - stores demographic/categorical data
+case_attribute = Table(
+    "case_attribute",
+    metadata,
+    Column("id", Integer, primary_key=True),
+    Column("case_id", Integer, nullable=False),
+    Column("name", String(100), nullable=False),
+    Column("attr_type", String(20), nullable=False),  # text, number, date, boolean
+    Column("value_text", Text),
+    Column("value_number", Integer),
+    Column("value_date", DateTime),
+    Index("idx_case_attr", "case_id", "name", unique=True),
+)
+
 # Case-Source association table
 # Compatible with QualCoder's case_text linkage
 case_source = Table(
