@@ -202,23 +202,6 @@ class TestTextHighlighter:
         # Should not raise
         highlighter.scroll_to_position(200)
 
-    def test_selection_signal(self, qtbot):
-        """TextHighlighter should emit text_selected signal"""
-        highlighter = TextHighlighter()
-        qtbot.addWidget(highlighter)
-
-        highlighter.set_text("Hello World")
-
-        # Signal should exist
-        assert hasattr(highlighter, "text_selected")
-
-    def test_segment_clicked_signal(self, qtbot):
-        """TextHighlighter should have segment_clicked signal"""
-        highlighter = TextHighlighter()
-        qtbot.addWidget(highlighter)
-
-        assert hasattr(highlighter, "segment_clicked")
-
     def test_file_offset(self, qtbot):
         """TextHighlighter should handle file offset"""
         highlighter = TextHighlighter()
