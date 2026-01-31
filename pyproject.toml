@@ -9,6 +9,10 @@ dependencies = [
     "pyside6>=6.5.0",
     # Database
     "sqlalchemy>=2.0",
+    # Image processing (MIT-CMU license)
+    "pillow>=10.0",
+    # Media playback (LGPL-2.1 - VLC bindings)
+    "python-vlc>=3.0",
 ]
 
 [tool.uv.workspace]
@@ -65,7 +69,7 @@ known-first-party = ["design_system", "src"]
 
 [tool.ruff.lint.per-file-ignores]
 "__init__.py" = ["F401"]  # unused imports ok for re-exports
-"**/tests/**" = ["ARG002"]  # pytest fixtures like qapp are used implicitly
+"**/tests/**" = ["ARG001", "ARG002"]  # pytest fixtures like qapp are used implicitly
 
 # ============================================================================
 # Pytest Configuration

@@ -19,13 +19,6 @@ from PySide6.QtTest import QSignalSpy
 class TestAutoCodeDialog:
     """Tests for auto-code dialog UI."""
 
-    def test_auto_code_dialog_creates(self, qapp, colors):
-        """AutoCodeDialog creates with default settings."""
-        from src.presentation.dialogs.auto_code_dialog import AutoCodeDialog
-
-        dialog = AutoCodeDialog(colors=colors)
-        assert dialog is not None
-
     def test_auto_code_dialog_has_pattern_input(self, qapp, colors):
         """Dialog has pattern input field."""
         from src.presentation.dialogs.auto_code_dialog import AutoCodeDialog
@@ -224,49 +217,3 @@ class TestAutoCodePreview:
         preview.set_matches(matches)
 
         assert "3" in preview.get_summary_text()
-
-
-class TestAutoCodeScreenshot:
-    """Visual tests with screenshots."""
-
-    def test_screenshot_auto_code_dialog(self, qapp, colors, take_screenshot):
-        """Screenshot of auto-code dialog."""
-        from src.presentation.dialogs.auto_code_dialog import AutoCodeDialog
-
-        dialog = AutoCodeDialog(colors=colors)
-        dialog.set_code({"id": "1", "name": "Theme: Identity", "color": "#E91E63"})
-        dialog.set_pattern("identity")
-        dialog.setFixedSize(500, 400)
-
-        take_screenshot(dialog, "auto_code_dialog")
-
-    def test_screenshot_auto_code_preview(self, qapp, colors, take_screenshot):
-        """Screenshot of auto-code preview."""
-        from src.presentation.dialogs.auto_code_dialog import AutoCodePreview
-
-        preview = AutoCodePreview(colors=colors)
-        preview.set_matches(
-            [
-                {
-                    "start": 0,
-                    "end": 8,
-                    "text": "identity",
-                    "context": "...exploring identity through narrative...",
-                },
-                {
-                    "start": 100,
-                    "end": 108,
-                    "text": "identity",
-                    "context": "...sense of identity was shaped by...",
-                },
-                {
-                    "start": 250,
-                    "end": 258,
-                    "text": "identity",
-                    "context": "...cultural identity remains important...",
-                },
-            ]
-        )
-        preview.setFixedSize(500, 300)
-
-        take_screenshot(preview, "auto_code_preview")

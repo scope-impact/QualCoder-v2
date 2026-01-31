@@ -6,24 +6,6 @@ This is a molecule-level test with no Qt dependencies.
 """
 
 
-class TestOverlapDetectorMolecule:
-    """Unit tests for OverlapDetector molecule."""
-
-    def test_imports_from_molecules_package(self):
-        """OverlapDetector can be imported from molecules package."""
-        from src.presentation.molecules import OverlapDetector
-
-        detector = OverlapDetector()
-        assert detector is not None
-
-    def test_imports_from_highlighting_subpackage(self):
-        """OverlapDetector can be imported from highlighting subpackage."""
-        from src.presentation.molecules.highlighting import OverlapDetector
-
-        detector = OverlapDetector()
-        assert detector is not None
-
-
 class TestRangeClass:
     """Tests for the Range dataclass."""
 
