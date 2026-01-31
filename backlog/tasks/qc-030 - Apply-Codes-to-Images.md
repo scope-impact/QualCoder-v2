@@ -4,8 +4,13 @@ title: Apply Codes to Images
 status: To Do
 assignee: []
 created_date: '2026-01-30 20:29'
+updated_date: '2026-01-31 05:32'
 labels: []
-dependencies: []
+dependencies:
+  - QC-045.01
+  - QC-045.02
+  - QC-027.03
+  - QC-028
 ---
 
 ## Description

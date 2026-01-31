@@ -4,8 +4,13 @@ title: Apply Codes to Audio Video
 status: To Do
 assignee: []
 created_date: '2026-01-30 20:30'
+updated_date: '2026-01-31 05:32'
 labels: []
-dependencies: []
+dependencies:
+  - QC-045.03
+  - QC-045.04
+  - QC-027.04
+  - QC-028
 ---
 
 ## Description
