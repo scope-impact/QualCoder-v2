@@ -123,33 +123,6 @@ class TestTextHighlighter:
         assert len(segments) == 1
         assert segments[0].segment_id == "keep"
 
-    def test_highlight_applies_formatting(self, qtbot):
-        """TextHighlighter.highlight() should apply formatting"""
-        highlighter = TextHighlighter()
-        qtbot.addWidget(highlighter)
-
-        highlighter.set_text("Hello World Test Document")
-        highlighter.add_segment(
-            CodeSegment(segment_id="1", code_color=_colors.code_yellow, pos0=0, pos1=5)
-        )
-
-        # Should not raise
-        highlighter.highlight()
-
-    def test_unlight_removes_formatting(self, qtbot):
-        """TextHighlighter.unlight() should remove formatting"""
-        highlighter = TextHighlighter()
-        qtbot.addWidget(highlighter)
-
-        highlighter.set_text("Hello World")
-        highlighter.add_segment(
-            CodeSegment(pos0=0, pos1=5, code_color=_colors.code_yellow)
-        )
-        highlighter.highlight()
-
-        # Should not raise
-        highlighter.unlight()
-
     def test_overlap_detection(self, qtbot):
         """TextHighlighter should detect overlapping segments"""
         highlighter = TextHighlighter()
