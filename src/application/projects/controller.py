@@ -197,7 +197,7 @@ class ProjectControllerImpl:
         # Build state with file system checks
         state = ProjectState(
             path_exists=lambda p: p.exists(),
-            parent_writable=lambda p: True,
+            parent_writable=lambda _p: True,
         )
 
         # Derive event or failure
@@ -267,7 +267,7 @@ class ProjectControllerImpl:
         # Build state
         state = ProjectState(
             path_exists=lambda p: p.exists(),
-            parent_writable=lambda p: True,
+            parent_writable=lambda _p: True,
             existing_sources=tuple(self._sources),
         )
 
@@ -318,8 +318,8 @@ class ProjectControllerImpl:
 
         # Build state
         state = ProjectState(
-            path_exists=lambda p: True,
-            parent_writable=lambda p: True,
+            path_exists=lambda _p: True,
+            parent_writable=lambda _p: True,
             existing_sources=tuple(self._sources),
         )
 
@@ -355,8 +355,8 @@ class ProjectControllerImpl:
 
         # Build state
         state = ProjectState(
-            path_exists=lambda p: True,
-            parent_writable=lambda p: True,
+            path_exists=lambda _p: True,
+            parent_writable=lambda _p: True,
             existing_sources=tuple(self._sources),
         )
 
@@ -427,10 +427,18 @@ class ProjectControllerImpl:
 
         return ProjectSummary(
             total_sources=len(self._sources),
-            text_count=sum(1 for s in self._sources if s.source_type == SourceType.TEXT),
-            audio_count=sum(1 for s in self._sources if s.source_type == SourceType.AUDIO),
-            video_count=sum(1 for s in self._sources if s.source_type == SourceType.VIDEO),
-            image_count=sum(1 for s in self._sources if s.source_type == SourceType.IMAGE),
+            text_count=sum(
+                1 for s in self._sources if s.source_type == SourceType.TEXT
+            ),
+            audio_count=sum(
+                1 for s in self._sources if s.source_type == SourceType.AUDIO
+            ),
+            video_count=sum(
+                1 for s in self._sources if s.source_type == SourceType.VIDEO
+            ),
+            image_count=sum(
+                1 for s in self._sources if s.source_type == SourceType.IMAGE
+            ),
             pdf_count=sum(1 for s in self._sources if s.source_type == SourceType.PDF),
             total_codes=0,  # Would come from coding context
             total_segments=0,

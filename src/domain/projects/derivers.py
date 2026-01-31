@@ -18,14 +18,15 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
 
-from src.domain.projects.entities import Source, SourceType
+from src.domain.projects.entities import Source
 from src.domain.projects.events import (
     ProjectCreated,
     ProjectOpened,
     SourceAdded,
+    SourceOpened,
+    SourceRemoved,
 )
 from src.domain.projects.invariants import (
-    can_create_project,
     can_open_project,
     detect_source_type,
     is_source_name_unique,
@@ -33,7 +34,6 @@ from src.domain.projects.invariants import (
     is_valid_project_path,
 )
 from src.domain.shared.types import Failure, SourceId
-
 
 # ============================================================
 # State Container (Input to Derivers)
@@ -76,10 +76,14 @@ class InvalidProjectPath:
     def __post_init__(self) -> None:
         if self.path:
             object.__setattr__(
-                self, "message", f"Invalid project path: {self.path}. Must have .qda extension."
+                self,
+                "message",
+                f"Invalid project path: {self.path}. Must have .qda extension.",
             )
         else:
-            object.__setattr__(self, "message", "Invalid project path. Must have .qda extension.")
+            object.__setattr__(
+                self, "message", "Invalid project path. Must have .qda extension."
+            )
 
 
 @dataclass(frozen=True)
@@ -90,9 +94,7 @@ class ProjectAlreadyExists:
     message: str = ""
 
     def __post_init__(self) -> None:
-        object.__setattr__(
-            self, "message", f"Project already exists at: {self.path}"
-        )
+        object.__setattr__(self, "message", f"Project already exists at: {self.path}")
 
 
 @dataclass(frozen=True)
@@ -116,9 +118,7 @@ class ProjectNotFound:
     message: str = ""
 
     def __post_init__(self) -> None:
-        object.__setattr__(
-            self, "message", f"Project not found: {self.path}"
-        )
+        object.__setattr__(self, "message", f"Project not found: {self.path}")
 
 
 @dataclass(frozen=True)
@@ -129,9 +129,7 @@ class SourceFileNotFound:
     message: str = ""
 
     def __post_init__(self) -> None:
-        object.__setattr__(
-            self, "message", f"Source file not found: {self.path}"
-        )
+        object.__setattr__(self, "message", f"Source file not found: {self.path}")
 
 
 @dataclass(frozen=True)
@@ -291,7 +289,7 @@ def derive_add_source(
 def derive_remove_source(
     source_id: SourceId,
     state: ProjectState,
-) -> "SourceRemoved | Failure":
+) -> SourceRemoved | Failure:
     """
     Derive a SourceRemoved event or failure.
 
@@ -305,10 +303,7 @@ def derive_remove_source(
     from src.domain.projects.events import SourceRemoved
 
     # Find the source
-    source = next(
-        (s for s in state.existing_sources if s.id == source_id),
-        None
-    )
+    source = next((s for s in state.existing_sources if s.id == source_id), None)
 
     if source is None:
         return Failure(SourceFileNotFound(Path(f"source_id={source_id.value}")))
@@ -323,7 +318,7 @@ def derive_remove_source(
 def derive_open_source(
     source_id: SourceId,
     state: ProjectState,
-) -> "SourceOpened | Failure":
+) -> SourceOpened | Failure:
     """
     Derive a SourceOpened event or failure.
 
@@ -337,10 +332,7 @@ def derive_open_source(
     from src.domain.projects.events import SourceOpened
 
     # Find the source
-    source = next(
-        (s for s in state.existing_sources if s.id == source_id),
-        None
-    )
+    source = next((s for s in state.existing_sources if s.id == source_id), None)
 
     if source is None:
         return Failure(SourceFileNotFound(Path(f"source_id={source_id.value}")))

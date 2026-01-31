@@ -27,7 +27,9 @@ from src.domain.shared.validation import is_non_empty_string, is_within_length
 TEXT_EXTENSIONS = frozenset({".txt", ".docx", ".doc", ".odt", ".rtf", ".md", ".epub"})
 AUDIO_EXTENSIONS = frozenset({".mp3", ".wav", ".m4a", ".ogg", ".flac", ".aac", ".wma"})
 VIDEO_EXTENSIONS = frozenset({".mp4", ".mov", ".avi", ".mkv", ".wmv", ".webm", ".m4v"})
-IMAGE_EXTENSIONS = frozenset({".jpg", ".jpeg", ".png", ".gif", ".bmp", ".tiff", ".webp"})
+IMAGE_EXTENSIONS = frozenset(
+    {".jpg", ".jpeg", ".png", ".gif", ".bmp", ".tiff", ".webp"}
+)
 PDF_EXTENSIONS = frozenset({".pdf"})
 
 
@@ -64,10 +66,7 @@ def is_valid_project_path(path: Path) -> bool:
         return False
 
     # Check filename is not just ".qda"
-    if path.stem == "":
-        return False
-
-    return True
+    return path.stem != ""
 
 
 def can_open_project(
