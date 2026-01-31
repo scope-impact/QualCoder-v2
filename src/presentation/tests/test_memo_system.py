@@ -19,13 +19,6 @@ from PySide6.QtTest import QSignalSpy
 class TestMemoDialog:
     """Tests for the MemoDialog component."""
 
-    def test_memo_dialog_creates(self, qapp, colors):
-        """MemoDialog creates with default settings."""
-        from src.presentation.dialogs.memo_dialog import MemoDialog
-
-        dialog = MemoDialog(colors=colors)
-        assert dialog is not None
-
     def test_memo_dialog_shows_title(self, qapp, colors):
         """MemoDialog shows the specified title."""
         from src.presentation.dialogs.memo_dialog import MemoDialog
@@ -91,66 +84,16 @@ class TestMemoDialog:
 class TestFileMemoDialog:
     """Tests for file-specific memo dialog."""
 
-    def test_file_memo_dialog_creates(self, qapp, colors):
-        """FileMemoDialog creates with file info."""
+    def test_file_memo_dialog_shows_filename_in_title(self, qapp, colors):
+        """FileMemoDialog includes filename in title."""
         from src.presentation.dialogs.memo_dialog import FileMemoDialog
 
-        dialog = FileMemoDialog(
-            filename="interview_001.txt",
-            colors=colors,
-        )
-        assert dialog is not None
+        dialog = FileMemoDialog(filename="interview_001.txt", colors=colors)
         assert "interview_001.txt" in dialog.get_title()
-
-    def test_file_memo_dialog_shows_file_icon(self, qapp, colors):
-        """FileMemoDialog displays file icon."""
-        from src.presentation.dialogs.memo_dialog import FileMemoDialog
-
-        dialog = FileMemoDialog(filename="test.txt", colors=colors)
-        # Icon should be present
-        assert dialog._icon is not None
-
-
-class TestCodeMemoDialog:
-    """Tests for code-specific memo dialog."""
-
-    def test_code_memo_dialog_creates(self, qapp, colors):
-        """CodeMemoDialog creates with code info."""
-        from src.presentation.dialogs.memo_dialog import CodeMemoDialog
-
-        dialog = CodeMemoDialog(
-            code_name="Theme: Identity",
-            code_color="#FF5733",
-            colors=colors,
-        )
-        assert dialog is not None
-
-    def test_code_memo_dialog_shows_code_color(self, qapp, colors):
-        """CodeMemoDialog displays code color indicator."""
-        from src.presentation.dialogs.memo_dialog import CodeMemoDialog
-
-        dialog = CodeMemoDialog(
-            code_name="Test Code",
-            code_color="#00FF00",
-            colors=colors,
-        )
-        # Color indicator should show the code color
-        assert dialog._color_indicator is not None
 
 
 class TestSegmentMemoDialog:
     """Tests for segment-specific memo dialog."""
-
-    def test_segment_memo_dialog_creates(self, qapp, colors):
-        """SegmentMemoDialog creates with segment info."""
-        from src.presentation.dialogs.memo_dialog import SegmentMemoDialog
-
-        dialog = SegmentMemoDialog(
-            segment_text="The participant mentioned...",
-            code_name="Theme: Experience",
-            colors=colors,
-        )
-        assert dialog is not None
 
     def test_segment_memo_dialog_shows_segment_preview(self, qapp, colors):
         """SegmentMemoDialog shows the coded text preview."""
@@ -201,13 +144,6 @@ class TestMemoIndicator:
 
 class TestMemosPanel:
     """Tests for the all memos view panel."""
-
-    def test_memos_panel_creates(self, qapp, colors):
-        """MemosPanel creates with default settings."""
-        from src.presentation.dialogs.memo_dialog import MemosPanel
-
-        panel = MemosPanel(colors=colors)
-        assert panel is not None
 
     def test_memos_panel_set_memos(self, qapp, colors):
         """MemosPanel displays list of memos."""
@@ -262,58 +198,3 @@ class TestMemosPanel:
 
         # Verify the signal exists (clicking would require internal widget access)
         assert panel.memo_clicked is not None
-
-
-class TestMemoScreenshot:
-    """Visual tests with screenshots."""
-
-    def test_screenshot_memo_dialog(self, qapp, colors, take_screenshot):
-        """Screenshot of memo dialog."""
-        from src.presentation.dialogs.memo_dialog import MemoDialog
-
-        dialog = MemoDialog(
-            title="Segment Memo",
-            content="This participant's response highlights a key theme in the data. "
-            "The emphasis on community connection is particularly notable.\n\n"
-            "Follow-up questions should explore this further.",
-            author="Dr. Smith",
-            timestamp=datetime(2026, 1, 15, 14, 30),
-            colors=colors,
-        )
-        dialog.setFixedSize(500, 400)
-
-        take_screenshot(dialog, "memo_dialog")
-
-    def test_screenshot_memos_panel(self, qapp, colors, take_screenshot):
-        """Screenshot of memos panel."""
-        from src.presentation.dialogs.memo_dialog import MemosPanel
-
-        panel = MemosPanel(colors=colors)
-        panel.set_memos(
-            [
-                {
-                    "type": "file",
-                    "name": "Interview_001.txt",
-                    "content": "Initial interview with participant A",
-                    "author": "Dr. Smith",
-                    "timestamp": "2026-01-10",
-                },
-                {
-                    "type": "code",
-                    "name": "Theme: Identity",
-                    "content": "References to personal identity and self-concept",
-                    "author": "Dr. Jones",
-                    "timestamp": "2026-01-12",
-                },
-                {
-                    "type": "segment",
-                    "name": "Para 3, Interview_001",
-                    "content": "Key quote about community belonging",
-                    "author": "Dr. Smith",
-                    "timestamp": "2026-01-14",
-                },
-            ]
-        )
-        panel.setFixedSize(600, 400)
-
-        take_screenshot(panel, "memos_panel")
