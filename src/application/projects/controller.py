@@ -45,6 +45,7 @@ from src.domain.projects.events import (
     SourceRemoved,
 )
 from src.domain.shared.types import SourceId
+from src.infrastructure.sources.pdf_extractor import PdfExtractor
 from src.infrastructure.sources.text_extractor import TextExtractor
 
 if TYPE_CHECKING:
@@ -298,7 +299,7 @@ class ProjectControllerImpl:
 
         event: SourceAdded = result
 
-        # Extract text content for text sources (QC-027.01 AC #2)
+        # Extract text content for text/PDF sources (QC-027.01, QC-027.02)
         fulltext: str | None = None
         file_size = event.file_size
 
@@ -306,6 +307,15 @@ class ProjectControllerImpl:
             extractor = TextExtractor()
             if extractor.supports(event.file_path):
                 extraction_result = extractor.extract(event.file_path)
+                if isinstance(extraction_result, Success):
+                    extracted = extraction_result.unwrap()
+                    fulltext = extracted.content
+                    file_size = extracted.file_size
+
+        elif event.source_type == SourceType.PDF:
+            pdf_extractor = PdfExtractor()
+            if pdf_extractor.supports(event.file_path):
+                extraction_result = pdf_extractor.extract(event.file_path)
                 if isinstance(extraction_result, Success):
                     extracted = extraction_result.unwrap()
                     fulltext = extracted.content
