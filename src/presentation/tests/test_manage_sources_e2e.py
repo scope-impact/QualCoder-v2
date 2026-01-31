@@ -294,7 +294,10 @@ class TestImportImageFiles:
         viewer.load_image(sample_files.png_file)
         QApplication.processEvents()
 
+        # Start from actual size (100% zoom) for predictable testing
+        viewer.show_actual_size()
         initial_zoom = viewer.get_zoom_level()
+        assert initial_zoom == 1.0
 
         viewer.zoom_in()
         assert viewer.get_zoom_level() > initial_zoom
@@ -458,53 +461,53 @@ class TestOrganizeSources:
     As a Researcher, I want to organize sources into folders so that I can manage large projects.
     """
 
-    def test_ac1_create_folders(self, qapp, colors):
+    def test_ac1_create_folders(self, qapp):
         """
         AC #1: I can create folders for sources.
         Tests FolderTree and FolderDialog for folder creation.
         """
         from src.presentation.organisms import FolderTree
 
-        tree = FolderTree(colors=colors)
+        tree = FolderTree()
         QSignalSpy(tree.create_folder_requested)
 
         # Folder tree should have create folder capability
         assert hasattr(tree, "create_folder_requested")
 
-    def test_ac2_move_sources_between_folders(self, qapp, colors):
+    def test_ac2_move_sources_between_folders(self, qapp):
         """
         AC #2: I can move sources between folders.
         Tests FolderTree move functionality.
         """
         from src.presentation.organisms import FolderTree
 
-        tree = FolderTree(colors=colors)
+        tree = FolderTree()
         QSignalSpy(tree.move_sources_requested)
 
         # Should have move signal
         assert hasattr(tree, "move_sources_requested")
 
-    def test_ac3_rename_folders(self, qapp, colors):
+    def test_ac3_rename_folders(self, qapp):
         """
         AC #3: I can rename folders.
         Tests FolderTree rename functionality.
         """
         from src.presentation.organisms import FolderTree
 
-        tree = FolderTree(colors=colors)
+        tree = FolderTree()
         QSignalSpy(tree.rename_folder_requested)
 
         # Should have rename signal
         assert hasattr(tree, "rename_folder_requested")
 
-    def test_ac4_folder_structure_in_list(self, qapp, colors):
+    def test_ac4_folder_structure_in_list(self, qapp):
         """
         AC #4: Folder structure is reflected in the source list.
         Tests FolderTree displays hierarchical structure.
         """
         from src.presentation.organisms import FolderNode, FolderTree
 
-        tree = FolderTree(colors=colors)
+        tree = FolderTree()
 
         # Add folders with hierarchy
         folders = [
@@ -520,11 +523,11 @@ class TestOrganizeSources:
         # Tree should contain the folders
         # (visual verification in actual UI, but signals/structure works)
 
-    def test_folder_dialog_validation(self, qapp, colors):
+    def test_folder_dialog_validation(self, qapp):
         """Additional: Folder dialog validates input."""
         from src.presentation.dialogs import FolderDialog
 
-        dialog = FolderDialog(colors=colors)
+        dialog = FolderDialog()
 
         # Empty name should be invalid
         assert dialog.folder_name == ""
@@ -595,14 +598,14 @@ class TestViewSourceMetadata:
         AC #2: I can add a memo/notes to a source.
         Tests Source entity memo field.
         """
-        from src.domain.projects.entities import Source
+        from src.domain.projects.entities import Source, SourceType
         from src.domain.shared.types import SourceId
 
         source = Source(
             id=SourceId(1),
             name="test.txt",
-            source_type="text",
-            content="Content here",
+            source_type=SourceType.TEXT,
+            fulltext="Content here",
         )
 
         # Add memo
@@ -614,14 +617,14 @@ class TestViewSourceMetadata:
         AC #4: I can edit source properties.
         Tests Source entity property editing.
         """
-        from src.domain.projects.entities import Source
+        from src.domain.projects.entities import Source, SourceType
         from src.domain.shared.types import SourceId
 
         source = Source(
             id=SourceId(1),
             name="old_name.txt",
-            source_type="text",
-            content="Content",
+            source_type=SourceType.TEXT,
+            fulltext="Content",
         )
 
         # Edit name
@@ -660,14 +663,14 @@ class TestDeleteSource:
         This is a UI concern - dialog should be shown before deletion.
         Tests that the system tracks coded segments per source.
         """
-        from src.domain.projects.entities import Source
+        from src.domain.projects.entities import Source, SourceType
         from src.domain.shared.types import SourceId
 
         source = Source(
             id=SourceId(1),
             name="test.txt",
-            source_type="text",
-            content="Content",
+            source_type=SourceType.TEXT,
+            fulltext="Content",
         )
 
         # Source should track if it has been coded
@@ -679,14 +682,14 @@ class TestDeleteSource:
         AC #3: Deletion removes source and its coded segments.
         Tests that Source entity is immutable and deletion is safe.
         """
-        from src.domain.projects.entities import Source
+        from src.domain.projects.entities import Source, SourceType
         from src.domain.shared.types import SourceId
 
         source = Source(
             id=SourceId(1),
             name="test.txt",
-            source_type="text",
-            content="Content",
+            source_type=SourceType.TEXT,
+            fulltext="Content",
         )
 
         # Source is frozen (immutable) - safe for deletion
