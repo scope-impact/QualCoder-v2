@@ -4,8 +4,9 @@ title: Chat with Agent
 status: To Do
 assignee: []
 created_date: '2026-01-30 20:39'
-updated_date: '2026-01-31 05:32'
-labels: []
+updated_date: '2026-01-31 06:10'
+labels:
+  - tier-5
 dependencies:
   - QC-033
   - QC-035

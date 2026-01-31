@@ -4,8 +4,9 @@ title: Generate Reports
 status: To Do
 assignee: []
 created_date: '2026-01-30 20:36'
-updated_date: '2026-01-31 05:32'
-labels: []
+updated_date: '2026-01-31 06:10'
+labels:
+  - tier-4
 dependencies:
   - QC-029
   - QC-030

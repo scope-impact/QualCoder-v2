@@ -4,6 +4,19 @@
 
 **Total:** 20 features (QC-026 to QC-045) with 135+ subtasks
 
+## Tier Labels
+
+All features are labeled by tier for filtering:
+
+| Label | Tier | Features |
+|-------|------|----------|
+| `tier-1` | Foundation | QC-026, QC-027 |
+| `tier-2` | Core Coding | QC-028, QC-029 |
+| `tier-3` | Specialized Coding | QC-030, QC-031, QC-032, QC-045 |
+| `tier-4` | Analysis | QC-033, QC-035, QC-044 |
+| `tier-5` | Collaboration & AI | QC-036, QC-037 |
+| `parallel` | Independent | QC-034, QC-038-043 |
+
 ## Dependency Tiers
 
 ```

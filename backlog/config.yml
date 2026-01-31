@@ -1,8 +1,24 @@
 project_name: "QualCoder v2"
 default_status: "To Do"
 statuses: ["To Do", "In Progress", "Done"]
-labels: []
-milestones: []
+labels:
+  - tier-1
+  - tier-2
+  - tier-3
+  - tier-4
+  - tier-5
+  - parallel
+  - coding
+  - technical
+  - focus
+  - agent
+milestones:
+  - "Tier 1: Foundation"
+  - "Tier 2: Core Coding"
+  - "Tier 3: Specialized Coding"
+  - "Tier 4: Analysis"
+  - "Tier 5: Collaboration & AI"
+  - "Parallel Track"
 date_format: yyyy-mm-dd
 max_column_width: 20
 auto_open_browser: true
