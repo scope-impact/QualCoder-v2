@@ -5,16 +5,16 @@ Implements QC-027.04 Import Audio/Video Files:
 - AC #3: Media duration is displayed
 - AC #4: Playback controls are available
 
-Supports audio and video file playback with standard controls.
+Uses python-vlc for media playback (excellent codec support via libVLC).
 """
 
 from __future__ import annotations
 
+import sys
 from pathlib import Path
 
-from PySide6.QtCore import Qt, QUrl, Signal, Slot
-from PySide6.QtMultimedia import QAudioOutput, QMediaPlayer
-from PySide6.QtMultimediaWidgets import QVideoWidget
+import vlc
+from PySide6.QtCore import Qt, QTimer, Signal
 from PySide6.QtWidgets import (
     QFrame,
     QHBoxLayout,
@@ -37,7 +37,7 @@ from design_system import (
 
 class MediaPlayer(QWidget):
     """
-    Widget for playing audio and video files.
+    Widget for playing audio and video files using VLC.
 
     Features:
     - Play/pause toggle
@@ -45,6 +45,7 @@ class MediaPlayer(QWidget):
     - Volume control
     - Duration display (AC #3)
     - Playback controls (AC #4)
+    - Excellent codec support via libVLC
 
     Signals:
         media_loaded(str): Emitted when media is successfully loaded
@@ -69,21 +70,17 @@ class MediaPlayer(QWidget):
         self._colors = colors or get_colors()
         self._current_path: Path | None = None
         self._is_video = False
+        self._duration_ms = 0
 
-        self._setup_media_player()
+        self._setup_vlc()
         self._setup_ui()
-        self._connect_signals()
+        self._setup_timer()
 
-    def _setup_media_player(self):
-        """Initialize the media player."""
-        self._player = QMediaPlayer()
-        self._audio_output = QAudioOutput()
-        self._player.setAudioOutput(self._audio_output)
-        self._audio_output.setVolume(0.7)
-
-        # Video widget
-        self._video_widget = QVideoWidget()
-        self._player.setVideoOutput(self._video_widget)
+    def _setup_vlc(self):
+        """Initialize VLC player instance."""
+        # Create VLC instance with minimal output
+        self._vlc_instance = vlc.Instance("--no-xlib", "--quiet")
+        self._player = self._vlc_instance.media_player_new()
 
     def _setup_ui(self):
         """Build the player UI."""
@@ -97,7 +94,7 @@ class MediaPlayer(QWidget):
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(0)
 
-        # Video display area (hidden for audio)
+        # Video display area
         self._video_container = QFrame()
         self._video_container.setStyleSheet("""
             QFrame {
@@ -106,7 +103,11 @@ class MediaPlayer(QWidget):
         """)
         video_layout = QVBoxLayout(self._video_container)
         video_layout.setContentsMargins(0, 0, 0, 0)
-        video_layout.addWidget(self._video_widget)
+
+        # Video frame for VLC output
+        self._video_frame = QFrame()
+        self._video_frame.setStyleSheet("background-color: #000000;")
+        video_layout.addWidget(self._video_frame)
         layout.addWidget(self._video_container, 1)
 
         # Audio placeholder (shown for audio files)
@@ -158,10 +159,14 @@ class MediaPlayer(QWidget):
 
         # Progress slider
         self._progress_slider = QSlider(Qt.Orientation.Horizontal)
-        self._progress_slider.setRange(0, 100)
+        self._progress_slider.setRange(0, 1000)  # Use 1000 for smooth seeking
         self._progress_slider.setStyleSheet(self._slider_style())
+        self._progress_slider.sliderPressed.connect(self._on_slider_pressed)
+        self._progress_slider.sliderReleased.connect(self._on_slider_released)
         self._progress_slider.sliderMoved.connect(self._on_seek)
         controls_layout.addWidget(self._progress_slider)
+
+        self._slider_being_dragged = False
 
         # Bottom controls row
         bottom_row = QHBoxLayout()
@@ -213,6 +218,9 @@ class MediaPlayer(QWidget):
         self._volume_slider.setStyleSheet(self._slider_style())
         self._volume_slider.valueChanged.connect(self._on_volume_change)
         bottom_row.addWidget(self._volume_slider)
+
+        # Apply initial volume
+        self._player.audio_set_volume(70)
 
         controls_layout.addLayout(bottom_row)
         parent_layout.addWidget(controls)
@@ -276,12 +284,21 @@ class MediaPlayer(QWidget):
             }}
         """
 
-    def _connect_signals(self):
-        """Connect media player signals."""
-        self._player.positionChanged.connect(self._on_position_changed)
-        self._player.durationChanged.connect(self._on_duration_changed)
-        self._player.playbackStateChanged.connect(self._on_state_changed)
-        self._player.errorOccurred.connect(self._on_error)
+    def _setup_timer(self):
+        """Set up timer for updating UI during playback."""
+        self._update_timer = QTimer(self)
+        self._update_timer.setInterval(100)  # Update every 100ms
+        self._update_timer.timeout.connect(self._on_timer_tick)
+
+    def _attach_vlc_to_widget(self):
+        """Attach VLC video output to the video frame widget."""
+        # Get the window handle for VLC
+        if sys.platform.startswith("linux"):
+            self._player.set_xwindow(int(self._video_frame.winId()))
+        elif sys.platform == "win32":
+            self._player.set_hwnd(int(self._video_frame.winId()))
+        elif sys.platform == "darwin":
+            self._player.set_nsobject(int(self._video_frame.winId()))
 
     # Public API
 
@@ -304,6 +321,9 @@ class MediaPlayer(QWidget):
             ".avi",
             ".mkv",
             ".webm",
+            ".wmv",
+            ".flv",
+            ".m4v",
         }
 
         # Show appropriate view
@@ -315,21 +335,47 @@ class MediaPlayer(QWidget):
             self._audio_placeholder.show()
             self._audio_name_label.setText(path.name)
 
-        # Load media
-        self._player.setSource(QUrl.fromLocalFile(str(path)))
-        self.media_loaded.emit(str(path))
+        # Create VLC media and load
+        try:
+            media = self._vlc_instance.media_new(str(path))
+            self._player.set_media(media)
+
+            # Attach to video widget if video
+            if self._is_video:
+                self._attach_vlc_to_widget()
+
+            # Parse media to get duration
+            media.parse_with_options(vlc.MediaParseFlag.local, 0)
+
+            # Reset UI
+            self._progress_slider.setValue(0)
+            self._update_time_display()
+
+            self.media_loaded.emit(str(path))
+
+        except Exception as e:
+            self.load_failed.emit(f"Failed to load media: {e}")
 
     def play(self):
         """Start or resume playback."""
         self._player.play()
+        self._update_timer.start()
+        self._play_btn.setIcon(Icon("mdi6.pause", size=24, color="#ffffff"))
+        self.playback_started.emit()
 
     def pause(self):
         """Pause playback."""
         self._player.pause()
+        self._play_btn.setIcon(Icon("mdi6.play", size=24, color="#ffffff"))
 
     def stop(self):
         """Stop playback and reset to beginning."""
         self._player.stop()
+        self._update_timer.stop()
+        self._progress_slider.setValue(0)
+        self._play_btn.setIcon(Icon("mdi6.play", size=24, color="#ffffff"))
+        self._update_time_display()
+        self.playback_stopped.emit()
 
     def seek(self, position_ms: int):
         """
@@ -338,24 +384,26 @@ class MediaPlayer(QWidget):
         Args:
             position_ms: Position in milliseconds
         """
-        self._player.setPosition(position_ms)
+        self._player.set_time(position_ms)
 
     def get_position(self) -> int:
         """Get current playback position in milliseconds."""
-        return self._player.position()
+        pos = self._player.get_time()
+        return pos if pos >= 0 else 0
 
     def get_duration(self) -> int:
         """Get total duration in milliseconds."""
-        return self._player.duration()
+        duration = self._player.get_length()
+        return duration if duration >= 0 else 0
 
     def is_playing(self) -> bool:
         """Check if media is currently playing."""
-        return self._player.playbackState() == QMediaPlayer.PlaybackState.PlayingState
+        return self._player.is_playing() == 1
 
     def clear(self):
         """Clear the current media."""
-        self._player.stop()
-        self._player.setSource(QUrl())
+        self.stop()
+        self._player.set_media(None)
         self._current_path = None
         self._time_label.setText("0:00 / 0:00")
         self._progress_slider.setValue(0)
@@ -364,6 +412,8 @@ class MediaPlayer(QWidget):
 
     def _format_time(self, ms: int) -> str:
         """Format milliseconds as M:SS or H:MM:SS."""
+        if ms < 0:
+            ms = 0
         seconds = ms // 1000
         minutes = seconds // 60
         hours = minutes // 60
@@ -372,7 +422,35 @@ class MediaPlayer(QWidget):
             return f"{hours}:{minutes % 60:02d}:{seconds % 60:02d}"
         return f"{minutes}:{seconds % 60:02d}"
 
+    def _update_time_display(self):
+        """Update the time display label."""
+        current = self._format_time(self.get_position())
+        total = self._format_time(self.get_duration())
+        self._time_label.setText(f"{current} / {total}")
+
     # Event handlers
+
+    def _on_timer_tick(self):
+        """Handle periodic UI update during playback."""
+        # Check if still playing
+        if not self.is_playing():
+            state = self._player.get_state()
+            if state == vlc.State.Ended:
+                self.stop()
+            return
+
+        # Update position slider (if not being dragged)
+        if not self._slider_being_dragged:
+            duration = self.get_duration()
+            if duration > 0:
+                position = self.get_position()
+                slider_pos = int(position * 1000 / duration)
+                self._progress_slider.blockSignals(True)
+                self._progress_slider.setValue(slider_pos)
+                self._progress_slider.blockSignals(False)
+
+        self._update_time_display()
+        self.position_changed.emit(self.get_position())
 
     def _on_play_pause(self):
         """Handle play/pause button click."""
@@ -387,54 +465,41 @@ class MediaPlayer(QWidget):
 
     def _on_next(self):
         """Handle next button click - seek to end."""
-        self.seek(self.get_duration())
+        duration = self.get_duration()
+        if duration > 0:
+            self.seek(duration - 1000)  # Seek near end
+
+    def _on_slider_pressed(self):
+        """Handle slider press - pause updates."""
+        self._slider_being_dragged = True
+
+    def _on_slider_released(self):
+        """Handle slider release - apply seek."""
+        self._slider_being_dragged = False
+        self._on_seek(self._progress_slider.value())
 
     def _on_seek(self, position: int):
         """Handle seek slider movement."""
-        if self._player.duration() > 0:
-            ms_position = int(position * self._player.duration() / 100)
-            self._player.setPosition(ms_position)
+        duration = self.get_duration()
+        if duration > 0:
+            ms_position = int(position * duration / 1000)
+            self._player.set_time(ms_position)
+            self._update_time_display()
 
     def _on_volume_change(self, value: int):
         """Handle volume slider change."""
-        self._audio_output.setVolume(value / 100.0)
+        self._player.audio_set_volume(value)
 
-    @Slot(int)
-    def _on_position_changed(self, position: int):
-        """Handle playback position change."""
-        duration = self._player.duration()
-        if duration > 0:
-            slider_pos = int(position * 100 / duration)
-            self._progress_slider.blockSignals(True)
-            self._progress_slider.setValue(slider_pos)
-            self._progress_slider.blockSignals(False)
+    def showEvent(self, event):
+        """Handle show event to attach VLC to widget."""
+        super().showEvent(event)
+        if self._is_video:
+            self._attach_vlc_to_widget()
 
-        self._update_time_display()
-        self.position_changed.emit(position)
-
-    @Slot(int)
-    def _on_duration_changed(self, _duration: int):
-        """Handle duration change when media loads."""
-        self._update_time_display()
-
-    @Slot(QMediaPlayer.PlaybackState)
-    def _on_state_changed(self, state: QMediaPlayer.PlaybackState):
-        """Handle playback state change."""
-        if state == QMediaPlayer.PlaybackState.PlayingState:
-            self._play_btn.setIcon(Icon("mdi6.pause", size=24, color="#ffffff"))
-            self.playback_started.emit()
-        else:
-            self._play_btn.setIcon(Icon("mdi6.play", size=24, color="#ffffff"))
-            if state == QMediaPlayer.PlaybackState.StoppedState:
-                self.playback_stopped.emit()
-
-    @Slot(QMediaPlayer.Error, str)
-    def _on_error(self, _error: QMediaPlayer.Error, message: str):
-        """Handle media player errors."""
-        self.load_failed.emit(f"Media error: {message}")
-
-    def _update_time_display(self):
-        """Update the time display label."""
-        current = self._format_time(self._player.position())
-        total = self._format_time(self._player.duration())
-        self._time_label.setText(f"{current} / {total}")
+    def closeEvent(self, event):
+        """Clean up VLC resources on close."""
+        self._update_timer.stop()
+        self._player.stop()
+        self._player.release()
+        self._vlc_instance.release()
+        super().closeEvent(event)

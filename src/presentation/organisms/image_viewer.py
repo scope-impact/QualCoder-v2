@@ -6,14 +6,19 @@ Implements QC-027.03 Import Image Files:
 - Supports zoom, pan, and fit-to-window
 
 Also supports QC-027.04 for image metadata display.
+
+Uses Pillow for image loading (better format support and metadata).
 """
 
 from __future__ import annotations
 
+from dataclasses import dataclass
 from pathlib import Path
 
+from PIL import Image
+from PIL.ExifTags import TAGS
 from PySide6.QtCore import Qt, Signal
-from PySide6.QtGui import QPixmap, QWheelEvent
+from PySide6.QtGui import QImage, QPixmap, QWheelEvent
 from PySide6.QtWidgets import (
     QFrame,
     QHBoxLayout,
@@ -32,6 +37,18 @@ from design_system import (
     Icon,
     get_colors,
 )
+
+
+@dataclass(frozen=True)
+class ImageMetadata:
+    """Extracted image metadata."""
+
+    width: int
+    height: int
+    format: str
+    mode: str
+    file_size: int
+    exif: dict[str, str] | None = None
 
 
 class ImageViewer(QWidget):
@@ -246,7 +263,7 @@ class ImageViewer(QWidget):
 
     def load_image(self, path: str | Path):
         """
-        Load and display an image file.
+        Load and display an image file using Pillow.
 
         Args:
             path: Path to the image file
@@ -256,9 +273,21 @@ class ImageViewer(QWidget):
             self.load_failed.emit(f"File not found: {path}")
             return
 
-        pixmap = QPixmap(str(path))
-        if pixmap.isNull():
-            self.load_failed.emit(f"Failed to load image: {path}")
+        try:
+            # Load with Pillow for better format support
+            pil_image = Image.open(path)
+
+            # Extract metadata before conversion
+            self._metadata = self._extract_metadata(pil_image, path)
+
+            # Convert to QPixmap
+            pixmap = self._pil_to_pixmap(pil_image)
+            if pixmap.isNull():
+                self.load_failed.emit(f"Failed to convert image: {path}")
+                return
+
+        except Exception as e:
+            self.load_failed.emit(f"Failed to load image: {e}")
             return
 
         self._current_path = path
@@ -270,14 +299,71 @@ class ImageViewer(QWidget):
         else:
             self._show_actual_size()
 
-        # Update info bar (AC #4 metadata)
-        self._update_info(pixmap)
+        # Update info bar with metadata
+        self._update_info_from_metadata()
         self.image_loaded.emit(str(path))
+
+    def _pil_to_pixmap(self, pil_image: Image.Image) -> QPixmap:
+        """Convert a PIL Image to QPixmap."""
+        # Convert to RGB/RGBA for Qt compatibility
+        if pil_image.mode == "RGBA":
+            qimage_format = QImage.Format.Format_RGBA8888
+        elif pil_image.mode == "RGB":
+            qimage_format = QImage.Format.Format_RGB888
+        else:
+            # Convert other modes to RGB
+            pil_image = pil_image.convert("RGB")
+            qimage_format = QImage.Format.Format_RGB888
+
+        # Get image data
+        data = pil_image.tobytes("raw", pil_image.mode)
+
+        # Create QImage
+        qimage = QImage(
+            data,
+            pil_image.width,
+            pil_image.height,
+            qimage_format,
+        )
+
+        # QImage doesn't copy data, so we need to copy it
+        return QPixmap.fromImage(qimage.copy())
+
+    def _extract_metadata(self, pil_image: Image.Image, path: Path) -> ImageMetadata:
+        """Extract metadata from a PIL Image."""
+        exif_data = None
+
+        # Extract EXIF if available
+        try:
+            exif = pil_image._getexif()
+            if exif:
+                exif_data = {}
+                for tag_id, value in exif.items():
+                    tag_name = TAGS.get(tag_id, tag_id)
+                    # Only include common string-representable values
+                    if isinstance(value, (str, int, float)):
+                        exif_data[str(tag_name)] = str(value)
+        except (AttributeError, KeyError):
+            pass
+
+        return ImageMetadata(
+            width=pil_image.width,
+            height=pil_image.height,
+            format=pil_image.format or "Unknown",
+            mode=pil_image.mode,
+            file_size=path.stat().st_size,
+            exif=exif_data,
+        )
+
+    def get_metadata(self) -> ImageMetadata | None:
+        """Get metadata for the currently loaded image."""
+        return getattr(self, "_metadata", None)
 
     def clear(self):
         """Clear the current image."""
         self._image_label.clear()
         self._current_path = None
+        self._metadata = None
         self._info_label.setText("No image loaded")
 
     def get_current_path(self) -> Path | None:
@@ -329,13 +415,21 @@ class ImageViewer(QWidget):
         percent = int(self._zoom_level * 100)
         self._zoom_label.setText(f"{percent}%")
 
-    def _update_info(self, pixmap: QPixmap):
-        """Update the info bar with image metadata."""
-        if self._current_path:
-            size = self._current_path.stat().st_size
-            size_str = self._format_size(size)
-            dims = f"{pixmap.width()} x {pixmap.height()}"
-            self._info_label.setText(f"{self._current_path.name} | {dims} | {size_str}")
+    def _update_info_from_metadata(self):
+        """Update the info bar with image metadata from Pillow."""
+        if self._current_path and hasattr(self, "_metadata"):
+            meta = self._metadata
+            size_str = self._format_size(meta.file_size)
+            dims = f"{meta.width} x {meta.height}"
+            format_info = f"{meta.format}" if meta.format != "Unknown" else ""
+            if format_info:
+                self._info_label.setText(
+                    f"{self._current_path.name} | {dims} | {format_info} | {size_str}"
+                )
+            else:
+                self._info_label.setText(
+                    f"{self._current_path.name} | {dims} | {size_str}"
+                )
 
     def _format_size(self, size: int) -> str:
         """Format file size for display."""
