@@ -9,6 +9,10 @@ dependencies = [
     "pyside6>=6.5.0",
     # Database
     "sqlalchemy>=2.0",
+    # Image processing (MIT-CMU license)
+    "pillow>=10.0",
+    # Media playback (LGPL-2.1 - VLC bindings)
+    "python-vlc>=3.0",
 ]
 
 [tool.uv.workspace]

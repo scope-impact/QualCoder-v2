@@ -23,6 +23,17 @@ metadata = MetaData()
 # Table Definitions
 # ============================================================
 
+# Folder table - organizes sources hierarchically (v2 only)
+folder = Table(
+    "folder",
+    metadata,
+    Column("id", Integer, primary_key=True),
+    Column("name", String(255), nullable=False),
+    Column("parent_id", Integer),  # Self-referential for hierarchy
+    Column("created_at", DateTime),
+    Index("idx_folder_parent", "parent_id"),
+)
+
 # Source table - stores imported files
 # Compatible with QualCoder's source table
 source = Table(
@@ -42,9 +53,11 @@ source = Table(
     Column("status", String(20), default="imported"),
     Column("file_size", Integer, default=0),
     Column("origin", String(255)),  # Where the source came from
+    Column("folder_id", Integer),  # Reference to folder
     # Indexes
     Index("idx_source_name", "name"),
     Index("idx_source_type", "source_type"),
+    Index("idx_source_folder", "folder_id"),
 )
 
 # Project settings table (v2 only)

@@ -51,6 +51,7 @@ from src.domain.projects.entities import (
     RecentProject,
     Source,
     SourceStatus,
+    SourceType,
 )
 from src.domain.projects.events import (
     ProjectClosed,
@@ -62,6 +63,8 @@ from src.domain.projects.events import (
     SourceRemoved,
 )
 from src.domain.shared.types import CaseId, SourceId
+from src.infrastructure.sources.pdf_extractor import PdfExtractor
+from src.infrastructure.sources.text_extractor import TextExtractor
 
 if TYPE_CHECKING:
     from src.application.event_bus import EventBus
@@ -372,6 +375,28 @@ class ProjectControllerImpl:
 
         event: SourceAdded = result
 
+        # Extract text content for text/PDF sources (QC-027.01, QC-027.02)
+        fulltext: str | None = None
+        file_size = event.file_size
+
+        if event.source_type == SourceType.TEXT:
+            extractor = TextExtractor()
+            if extractor.supports(event.file_path):
+                extraction_result = extractor.extract(event.file_path)
+                if isinstance(extraction_result, Success):
+                    extracted = extraction_result.unwrap()
+                    fulltext = extracted.content
+                    file_size = extracted.file_size
+
+        elif event.source_type == SourceType.PDF:
+            pdf_extractor = PdfExtractor()
+            if pdf_extractor.supports(event.file_path):
+                extraction_result = pdf_extractor.extract(event.file_path)
+                if isinstance(extraction_result, Success):
+                    extracted = extraction_result.unwrap()
+                    fulltext = extracted.content
+                    file_size = extracted.file_size
+
         # Create source entity
         source = Source(
             id=event.source_id,
@@ -379,9 +404,10 @@ class ProjectControllerImpl:
             source_type=event.source_type,
             status=SourceStatus.IMPORTED,
             file_path=event.file_path,
-            file_size=event.file_size,
+            file_size=file_size,
             origin=event.origin,
             memo=event.memo,
+            fulltext=fulltext,
         )
 
         # Persist source
