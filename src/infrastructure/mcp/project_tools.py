@@ -112,6 +112,45 @@ list_sources_tool = ToolDefinition(
     ),
 )
 
+# Tool: read_source_content
+read_source_content_tool = ToolDefinition(
+    name="read_source_content",
+    description=(
+        "Read the text content of a source document. "
+        "Supports reading full content or a specific position range. "
+        "Large documents are paginated with max_length parameter."
+    ),
+    parameters=(
+        ToolParameter(
+            name="source_id",
+            type="integer",
+            description="The ID of the source document to read.",
+            required=True,
+        ),
+        ToolParameter(
+            name="start_pos",
+            type="integer",
+            description="Starting character position. Default 0.",
+            required=False,
+            default=0,
+        ),
+        ToolParameter(
+            name="end_pos",
+            type="integer",
+            description="Ending character position. Default: end of content.",
+            required=False,
+            default=None,
+        ),
+        ToolParameter(
+            name="max_length",
+            type="integer",
+            description="Maximum characters to return. Default 50000 for pagination.",
+            required=False,
+            default=50000,
+        ),
+    ),
+)
+
 # Tool: navigate_to_segment
 navigate_to_segment_tool = ToolDefinition(
     name="navigate_to_segment",
@@ -186,6 +225,7 @@ class ProjectTools:
         self._tools: dict[str, ToolDefinition] = {
             "get_project_context": get_project_context_tool,
             "list_sources": list_sources_tool,
+            "read_source_content": read_source_content_tool,
             "navigate_to_segment": navigate_to_segment_tool,
         }
 
@@ -219,6 +259,7 @@ class ProjectTools:
         handlers = {
             "get_project_context": self._execute_get_project_context,
             "list_sources": self._execute_list_sources,
+            "read_source_content": self._execute_read_source_content,
             "navigate_to_segment": self._execute_navigate_to_segment,
         }
 
@@ -286,6 +327,58 @@ class ProjectTools:
                     }
                     for s in sources
                 ],
+            }
+        )
+
+    def _execute_read_source_content(
+        self, arguments: dict[str, Any]
+    ) -> Result[dict[str, Any], str]:
+        """
+        Execute read_source_content tool.
+
+        Args:
+            arguments: Must contain source_id. Optional: start_pos, end_pos, max_length
+
+        Returns:
+            Success with content and position markers, or Failure
+        """
+        # Get source_id
+        source_id = arguments.get("source_id")
+        if source_id is None:
+            return Failure("Missing required parameter: source_id")
+
+        # Find the source
+        source = self._controller.get_source(int(source_id))
+        if source is None:
+            return Failure(f"Source not found: {source_id}")
+
+        # Get content
+        content = source.fulltext or ""
+        total_length = len(content)
+
+        # Apply position range
+        start_pos = arguments.get("start_pos", 0) or 0
+        end_pos = arguments.get("end_pos")
+        max_length = arguments.get("max_length", 50000) or 50000
+
+        # If end_pos not specified, use total_length
+        if end_pos is None:
+            end_pos = total_length
+
+        # Apply max_length for pagination
+        actual_end = min(end_pos, start_pos + max_length)
+        extracted_content = content[start_pos:actual_end]
+        has_more = actual_end < total_length
+
+        return Success(
+            {
+                "source_id": source_id,
+                "source_name": source.name,
+                "content": extracted_content,
+                "start_pos": start_pos,
+                "end_pos": actual_end,
+                "total_length": total_length,
+                "has_more": has_more,
             }
         )
 

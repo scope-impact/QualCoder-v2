@@ -23,6 +23,7 @@ from src.infrastructure.mcp.project_tools import (
     get_project_context_tool,
     list_sources_tool,
     navigate_to_segment_tool,
+    read_source_content_tool,
 )
 
 
@@ -107,10 +108,11 @@ class TestProjectToolsRegistration:
         """get_tool_schemas returns all tool schemas."""
         schemas = project_tools.get_tool_schemas()
 
-        assert len(schemas) == 3
+        assert len(schemas) == 4
         names = [s["name"] for s in schemas]
         assert "get_project_context" in names
         assert "list_sources" in names
+        assert "read_source_content" in names
         assert "navigate_to_segment" in names
 
     def test_get_tool_names(self, project_tools: ProjectTools):
@@ -119,6 +121,7 @@ class TestProjectToolsRegistration:
 
         assert "get_project_context" in names
         assert "list_sources" in names
+        assert "read_source_content" in names
         assert "navigate_to_segment" in names
 
 
@@ -476,6 +479,185 @@ class TestNavigateToSegment:
         assert isinstance(result, Success)
         data = result.unwrap()
         assert data["navigated_to"]["highlight"] is True
+
+
+class TestReadSourceContent:
+    """Tests for QC-027.09: Agent can read source content."""
+
+    def test_tool_has_schema(self):
+        """read_source_content tool has valid schema."""
+        schema = read_source_content_tool.to_schema()
+
+        assert schema["name"] == "read_source_content"
+        props = schema["inputSchema"]["properties"]
+        assert "source_id" in props
+        assert "start_pos" in props
+        assert "end_pos" in props
+        assert "max_length" in props
+
+    def test_returns_full_content(
+        self,
+        project_controller: ProjectControllerImpl,
+        project_tools: ProjectTools,
+        tmp_path: Path,
+    ):
+        """AC #1: Agent can get text content of a source."""
+        project_path = tmp_path / "test.qda"
+        project_controller.create_project(
+            CreateProjectCommand(name="Test", path=str(project_path))
+        )
+
+        # Create source with content
+        source = Source(
+            id=SourceId(value=1),
+            name="doc.txt",
+            source_type=SourceType.TEXT,
+            status=SourceStatus.READY,
+            file_path=Path("/tmp/doc.txt"),
+            origin="internal",
+            memo=None,
+            code_count=0,
+            case_ids=(),
+            fulltext="Hello World. This is test content.",
+        )
+        project_controller._sources.append(source)
+
+        result = project_tools.execute("read_source_content", {"source_id": 1})
+
+        assert isinstance(result, Success)
+        data = result.unwrap()
+        assert data["source_id"] == 1
+        assert data["content"] == "Hello World. This is test content."
+        assert data["start_pos"] == 0
+        assert data["end_pos"] == 34
+
+    def test_returns_content_range(
+        self,
+        project_controller: ProjectControllerImpl,
+        project_tools: ProjectTools,
+        tmp_path: Path,
+    ):
+        """AC #2: Agent can get content by position range."""
+        project_path = tmp_path / "test.qda"
+        project_controller.create_project(
+            CreateProjectCommand(name="Test", path=str(project_path))
+        )
+
+        source = Source(
+            id=SourceId(value=1),
+            name="doc.txt",
+            source_type=SourceType.TEXT,
+            status=SourceStatus.READY,
+            file_path=Path("/tmp/doc.txt"),
+            origin="internal",
+            memo=None,
+            code_count=0,
+            case_ids=(),
+            fulltext="Hello World. This is test content.",
+        )
+        project_controller._sources.append(source)
+
+        result = project_tools.execute(
+            "read_source_content",
+            {"source_id": 1, "start_pos": 0, "end_pos": 11},
+        )
+
+        assert isinstance(result, Success)
+        data = result.unwrap()
+        assert data["content"] == "Hello World"
+        assert data["start_pos"] == 0
+        assert data["end_pos"] == 11
+
+    def test_returns_position_markers(
+        self,
+        project_controller: ProjectControllerImpl,
+        project_tools: ProjectTools,
+        tmp_path: Path,
+    ):
+        """AC #3: Agent receives content with position markers."""
+        project_path = tmp_path / "test.qda"
+        project_controller.create_project(
+            CreateProjectCommand(name="Test", path=str(project_path))
+        )
+
+        source = Source(
+            id=SourceId(value=1),
+            name="doc.txt",
+            source_type=SourceType.TEXT,
+            status=SourceStatus.READY,
+            file_path=Path("/tmp/doc.txt"),
+            origin="internal",
+            memo=None,
+            code_count=0,
+            case_ids=(),
+            fulltext="Line one.\nLine two.\nLine three.",
+        )
+        project_controller._sources.append(source)
+
+        result = project_tools.execute("read_source_content", {"source_id": 1})
+
+        assert isinstance(result, Success)
+        data = result.unwrap()
+        assert data["total_length"] == 31  # "Line one.\nLine two.\nLine three."
+        assert data["start_pos"] == 0
+        assert data["end_pos"] == 31
+
+    def test_paginates_large_content(
+        self,
+        project_controller: ProjectControllerImpl,
+        project_tools: ProjectTools,
+        tmp_path: Path,
+    ):
+        """AC #4: Large sources are paginated."""
+        project_path = tmp_path / "test.qda"
+        project_controller.create_project(
+            CreateProjectCommand(name="Test", path=str(project_path))
+        )
+
+        # Create large content
+        large_text = "A" * 10000
+        source = Source(
+            id=SourceId(value=1),
+            name="large.txt",
+            source_type=SourceType.TEXT,
+            status=SourceStatus.READY,
+            file_path=Path("/tmp/large.txt"),
+            origin="internal",
+            memo=None,
+            code_count=0,
+            case_ids=(),
+            fulltext=large_text,
+        )
+        project_controller._sources.append(source)
+
+        # Request with max_length
+        result = project_tools.execute(
+            "read_source_content",
+            {"source_id": 1, "max_length": 1000},
+        )
+
+        assert isinstance(result, Success)
+        data = result.unwrap()
+        assert len(data["content"]) == 1000
+        assert data["has_more"] is True
+        assert data["total_length"] == 10000
+
+    def test_fails_for_nonexistent_source(
+        self,
+        project_controller: ProjectControllerImpl,
+        project_tools: ProjectTools,
+        tmp_path: Path,
+    ):
+        """Returns failure for non-existent source."""
+        project_path = tmp_path / "test.qda"
+        project_controller.create_project(
+            CreateProjectCommand(name="Test", path=str(project_path))
+        )
+
+        result = project_tools.execute("read_source_content", {"source_id": 999})
+
+        assert isinstance(result, Failure)
+        assert "not found" in result.failure().lower()
 
 
 class TestUnknownTool:

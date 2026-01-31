@@ -98,6 +98,7 @@ class Source:
     origin: str | None = None  # Where the source came from
     case_ids: tuple[int, ...] = ()  # Associated cases
     code_count: int = 0  # Number of codes applied
+    fulltext: str | None = None  # Text content for text sources
     created_at: datetime = field(default_factory=lambda: datetime.now(UTC))
     modified_at: datetime = field(default_factory=lambda: datetime.now(UTC))
 
@@ -114,6 +115,7 @@ class Source:
             origin=self.origin,
             case_ids=self.case_ids,
             code_count=self.code_count,
+            fulltext=self.fulltext,
             created_at=self.created_at,
             modified_at=datetime.now(UTC),
         )
@@ -131,6 +133,7 @@ class Source:
             origin=self.origin,
             case_ids=self.case_ids,
             code_count=self.code_count,
+            fulltext=self.fulltext,
             created_at=self.created_at,
             modified_at=datetime.now(UTC),
         )
@@ -148,6 +151,7 @@ class Source:
             origin=self.origin,
             case_ids=self.case_ids,
             code_count=new_count,
+            fulltext=self.fulltext,
             created_at=self.created_at,
             modified_at=datetime.now(UTC),
         )
