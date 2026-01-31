@@ -1,7 +1,7 @@
 # QualCoder v2 Development Makefile
 # =================================
 
-.PHONY: init install-deps sync test test-unit test-all lint format clean help
+.PHONY: init install-deps sync install-hooks test test-unit test-all lint format pre-commit clean help
 
 # Default target
 .DEFAULT_GOAL := help
@@ -13,7 +13,7 @@ export QT_QPA_PLATFORM ?= offscreen
 # Setup
 # =============================================================================
 
-init: install-deps sync ## Full initialization: install system deps + uv sync
+init: install-deps sync install-hooks ## Full initialization: install system deps + uv sync + pre-commit hooks
 	@echo "Initialization complete!"
 
 install-deps: ## Install required system libraries for Qt
@@ -31,6 +31,11 @@ sync: ## Run uv sync with all extras
 	@echo "Syncing Python dependencies..."
 	uv sync --all-extras
 	@echo "Python dependencies synced."
+
+install-hooks: ## Install pre-commit hooks
+	@echo "Installing pre-commit hooks..."
+	uv run pre-commit install
+	@echo "Pre-commit hooks installed."
 
 # =============================================================================
 # Testing
@@ -63,6 +68,9 @@ lint: ## Run ruff linter
 format: ## Format code with ruff
 	uv run ruff format src/ design_system/
 	uv run ruff check --fix src/ design_system/
+
+pre-commit: ## Run pre-commit checks on all files
+	uv run pre-commit run --all-files
 
 typecheck: ## Run type checking (if mypy is available)
 	uv run mypy src/ --ignore-missing-imports || echo "mypy not configured"
