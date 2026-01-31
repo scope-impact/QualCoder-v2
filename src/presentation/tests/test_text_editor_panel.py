@@ -19,6 +19,27 @@ from src.presentation.organisms.text_editor_panel import TextEditorPanel
 _colors = get_colors()
 
 
+class TestTextEditorPanelCreation:
+    """Basic creation and setup tests."""
+
+    def test_creation(self, qtbot):
+        """TextEditorPanel should be created successfully."""
+        panel = TextEditorPanel()
+        qtbot.addWidget(panel)
+        assert panel is not None
+
+    def test_set_document(self, qtbot):
+        """TextEditorPanel should display document content."""
+        panel = TextEditorPanel()
+        qtbot.addWidget(panel)
+
+        panel.set_document(
+            title="Test Document",
+            text="Hello, this is test content for highlighting.",
+        )
+        # Should not raise
+
+
 class TestHighlightRange:
     """AC #1: highlight_range(start, end, color) applies background color to text range."""
 
