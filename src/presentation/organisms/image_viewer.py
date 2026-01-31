@@ -341,7 +341,7 @@ class ImageViewer(QWidget):
                 for tag_id, value in exif.items():
                     tag_name = TAGS.get(tag_id, tag_id)
                     # Only include common string-representable values
-                    if isinstance(value, (str, int, float)):
+                    if isinstance(value, str | int | float):
                         exif_data[str(tag_name)] = str(value)
         except (AttributeError, KeyError):
             pass
