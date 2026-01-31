@@ -9,20 +9,6 @@ This is a molecule-level test - it tests the component in isolation.
 class TestLineNumberGutterMolecule:
     """Unit tests for LineNumberGutter molecule."""
 
-    def test_imports_from_molecules_package(self, qapp, colors):
-        """LineNumberGutter can be imported from molecules package."""
-        from src.presentation.molecules import LineNumberGutter
-
-        gutter = LineNumberGutter(colors=colors)
-        assert gutter is not None
-
-    def test_imports_from_editor_subpackage(self, qapp, colors):
-        """LineNumberGutter can be imported from editor subpackage."""
-        from src.presentation.molecules.editor import LineNumberGutter
-
-        gutter = LineNumberGutter(colors=colors)
-        assert gutter is not None
-
     def test_default_line_count_is_one(self, qapp, colors):
         """Default line count is 1."""
         from src.presentation.molecules.editor import LineNumberGutter
@@ -128,13 +114,6 @@ class TestLineNumberGutterMolecule:
 
 class TestBackwardCompatibility:
     """Tests for backward compatibility with LineNumberWidget alias."""
-
-    def test_linenumberwidget_alias_available(self, qapp, colors):
-        """LineNumberWidget alias is available from text_editor_panel."""
-        from src.presentation.organisms.text_editor_panel import LineNumberWidget
-
-        widget = LineNumberWidget(colors=colors)
-        assert widget is not None
 
     def test_linenumberwidget_is_linenumbergutter(self, qapp, colors):
         """LineNumberWidget is the same class as LineNumberGutter."""

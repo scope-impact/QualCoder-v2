@@ -15,7 +15,15 @@ Fixture Hierarchy:
 import sys
 
 import pytest
-from PySide6.QtWidgets import QApplication
+
+# Conditionally import Qt - allows non-UI tests to run without Qt available
+try:
+    from PySide6.QtWidgets import QApplication
+
+    HAS_QT = True
+except ImportError:
+    HAS_QT = False
+    QApplication = None
 
 # =============================================================================
 # Qt Application Fixtures (Session-scoped)
@@ -33,6 +41,8 @@ def qapp():
     Note: Session scope is required because Qt doesn't allow multiple
     QApplication instances in the same process.
     """
+    if not HAS_QT:
+        pytest.skip("Qt not available")
     app = QApplication.instance()
     if app is None:
         app = QApplication(sys.argv)
@@ -52,6 +62,8 @@ def colors():
 
     Returns the default (dark) theme colors for testing UI components.
     """
+    if not HAS_QT:
+        pytest.skip("Qt not available")
     from design_system import get_colors
 
     return get_colors()
@@ -96,6 +108,8 @@ def coding_context():
     - All repositories (codes, categories, segments)
     - Controller for business operations
     """
+    if not HAS_QT:
+        pytest.skip("Qt not available")
     from src.presentation.factory import CodingContext
 
     ctx = CodingContext.create_in_memory()

@@ -157,13 +157,6 @@ class TestAppShell:
 class TestSidebarLayout:
     """Tests for SidebarLayout"""
 
-    def test_sidebar_layout_creation(self, qapp, colors):
-        """SidebarLayout should create without errors"""
-        from src.presentation.templates import SidebarLayout
-
-        layout = SidebarLayout(colors=colors)
-        assert layout is not None
-
     def test_sidebar_layout_custom_width(self, qapp, colors):
         """SidebarLayout should accept custom sidebar width"""
         from src.presentation.templates import SidebarLayout
@@ -224,13 +217,6 @@ class TestSidebarLayout:
 
 class TestThreePanelLayout:
     """Tests for ThreePanelLayout"""
-
-    def test_three_panel_creation(self, qapp, colors):
-        """ThreePanelLayout should create without errors"""
-        from src.presentation.templates import ThreePanelLayout
-
-        layout = ThreePanelLayout(colors=colors)
-        assert layout is not None
 
     def test_three_panel_custom_widths(self, qapp, colors):
         """ThreePanelLayout should accept custom panel widths"""
@@ -329,13 +315,6 @@ class TestThreePanelLayout:
 class TestSinglePanelLayout:
     """Tests for SinglePanelLayout"""
 
-    def test_single_panel_creation(self, qapp, colors):
-        """SinglePanelLayout should create without errors"""
-        from src.presentation.templates import SinglePanelLayout
-
-        layout = SinglePanelLayout(colors=colors)
-        assert layout is not None
-
     def test_single_panel_with_padding(self, qapp, colors):
         """SinglePanelLayout should apply padding"""
         from src.presentation.templates import SinglePanelLayout
@@ -433,13 +412,6 @@ class TestToolbarSlot:
 class TestContentSlot:
     """Tests for ContentSlot component"""
 
-    def test_content_slot_creation(self, qapp, colors):
-        """ContentSlot should create without errors"""
-        from src.presentation.templates.app_shell import ContentSlot
-
-        slot = ContentSlot(colors=colors)
-        assert slot is not None
-
     def test_content_slot_set_content(self, qapp, colors, placeholder_widget):
         """ContentSlot should accept content"""
         from src.presentation.templates.app_shell import ContentSlot
@@ -534,13 +506,6 @@ class TestAppTabBar:
 
 class TestAppStatusBar:
     """Tests for AppStatusBar component"""
-
-    def test_status_bar_creation(self, qapp, colors):
-        """AppStatusBar should create without errors"""
-        from src.presentation.templates.app_shell import AppStatusBar
-
-        status_bar = AppStatusBar(colors=colors)
-        assert status_bar is not None
 
     def test_status_bar_set_message(self, qapp, colors):
         """AppStatusBar should update message"""

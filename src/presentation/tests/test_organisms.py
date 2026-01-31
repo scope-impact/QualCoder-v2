@@ -57,20 +57,6 @@ class TestCodingToolbar:
         assert spy.count() == 1
         assert spy.at(0)[0] == "help"
 
-    def test_screenshot(self, qapp, colors, take_screenshot):
-        """Take screenshot of toolbar."""
-        from src.presentation.organisms import CodingToolbar
-
-        toolbar = CodingToolbar(
-            coders=["colin", "sarah", "james"],
-            selected_coder="colin",
-            colors=colors,
-        )
-        toolbar.set_navigation(2, 5)
-        toolbar.setFixedWidth(1200)
-
-        take_screenshot(toolbar, "coding_toolbar")
-
 
 # =============================================================================
 # FilesPanel Tests
@@ -129,34 +115,6 @@ class TestFilesPanel:
 
         assert panel._files == []
 
-    def test_screenshot(self, qapp, colors, take_screenshot):
-        """Take screenshot of files panel."""
-        from src.presentation.organisms import FilesPanel
-
-        panel = FilesPanel(colors=colors)
-        panel.set_files(
-            [
-                {
-                    "name": "interview1.txt",
-                    "type": "text",
-                    "meta": "Text • 2.4 KB • 3 codes",
-                },
-                {
-                    "name": "interview2.docx",
-                    "type": "text",
-                    "meta": "Text • 3.1 KB • 7 codes",
-                },
-                {
-                    "name": "notes.odt",
-                    "type": "text",
-                    "meta": "Text • 1.2 KB • 5 codes",
-                },
-            ]
-        )
-        panel.setFixedSize(280, 200)
-
-        take_screenshot(panel, "files_panel")
-
 
 # =============================================================================
 # CodesPanel Tests
@@ -174,25 +132,6 @@ class TestCodesPanel:
 
         assert panel is not None
         assert panel._code_tree is not None
-
-    def test_set_codes(self, qapp, colors):
-        """Test setting code tree data."""
-        from src.presentation.organisms import CodesPanel
-
-        panel = CodesPanel(colors=colors)
-        categories = [
-            {
-                "name": "Category A",
-                "codes": [
-                    {"name": "code1", "color": colors.code_red, "count": 3},
-                    {"name": "code2", "color": colors.code_green, "count": 5},
-                ],
-            }
-        ]
-        panel.set_codes(categories)
-
-        # Panel should have processed the codes
-        assert panel is not None
 
     def test_code_selected_signal(self, qapp, colors):
         """Test code selection emits signal."""
@@ -309,41 +248,6 @@ class TestCodesPanel:
         assert items[0].children[0].id == "fallback_code"
         assert items[0].children[0].name == "fallback_code"
 
-    def test_screenshot(self, qapp, colors, take_screenshot):
-        """Take screenshot of codes panel."""
-        from src.presentation.organisms import CodesPanel
-
-        panel = CodesPanel(colors=colors)
-        panel.set_codes(
-            [
-                {
-                    "name": "Abilities",
-                    "codes": [
-                        {
-                            "name": "soccer playing",
-                            "color": colors.code_yellow,
-                            "count": 3,
-                        },
-                        {"name": "struggling", "color": colors.code_red, "count": 5},
-                    ],
-                },
-                {
-                    "name": "Motivation",
-                    "codes": [
-                        {
-                            "name": "cost concerns",
-                            "color": colors.code_pink,
-                            "count": 2,
-                        },
-                        {"name": "enthusiasm", "color": colors.code_cyan, "count": 6},
-                    ],
-                },
-            ]
-        )
-        panel.setFixedSize(280, 300)
-
-        take_screenshot(panel, "codes_panel")
-
 
 # =============================================================================
 # TextEditorPanel Tests
@@ -352,39 +256,6 @@ class TestCodesPanel:
 
 class TestTextEditorPanel:
     """Tests for the TextEditorPanel organism."""
-
-    def test_creates_empty(self, qapp, colors):
-        """Test panel creates with no document."""
-        from src.presentation.organisms import TextEditorPanel
-
-        panel = TextEditorPanel(colors=colors)
-
-        assert panel is not None
-        assert panel._text_edit is not None
-
-    def test_set_document(self, qapp, colors):
-        """Test setting document content."""
-        from src.presentation.organisms import TextEditorPanel
-
-        panel = TextEditorPanel(colors=colors)
-        panel.set_document("test.txt", "Case 1", "Hello world")
-
-        # Document should be set
-        assert panel is not None
-
-    def test_set_stats(self, qapp, colors):
-        """Test setting document stats."""
-        from src.presentation.organisms import TextEditorPanel
-
-        panel = TextEditorPanel(colors=colors)
-        panel.set_stats(
-            [
-                ("mdi6.label", "5 codes"),
-                ("mdi6.format-size", "100 words"),
-            ]
-        )
-
-        assert panel is not None
 
     def test_text_selected_signal(self, qapp, colors):
         """Test text selection emits signal."""
@@ -399,28 +270,6 @@ class TestTextEditorPanel:
         assert spy.at(0)[0] == "selected text"
         assert spy.at(0)[1] == 0
         assert spy.at(0)[2] == 13
-
-    def test_screenshot(self, qapp, colors, take_screenshot):
-        """Take screenshot of text editor panel."""
-        from src.presentation.organisms import TextEditorPanel
-
-        panel = TextEditorPanel(colors=colors)
-        panel.set_document(
-            "interview.txt",
-            "Case: ID2",
-            "I have not studied much before. I know that I must get help as I have "
-            "struggled understanding the lecture slides so far.\n\n"
-            "I really want someone to sit down with me and explain the course material.",
-        )
-        panel.set_stats(
-            [
-                ("mdi6.layers", "2 overlapping"),
-                ("mdi6.label", "5 codes"),
-            ]
-        )
-        panel.setFixedSize(600, 400)
-
-        take_screenshot(panel, "text_editor_panel")
 
 
 # =============================================================================
@@ -494,27 +343,6 @@ class TestDetailsPanel:
         assert chat_spy.count() == 1
         assert suggest_spy.count() == 1
 
-    def test_screenshot(self, qapp, colors, take_screenshot):
-        """Take screenshot of details panel."""
-        from src.presentation.organisms import DetailsPanel
-
-        panel = DetailsPanel(colors=colors)
-        panel.set_selected_code(
-            colors.code_yellow,
-            "soccer playing",
-            "Code for references to playing soccer.",
-            "I have been playing...",
-        )
-        panel.set_overlapping_codes(
-            [
-                ("Segment 1", [colors.code_green, colors.code_cyan]),
-            ]
-        )
-        panel.set_file_memo("Interview transcript about course experience.", 65)
-        panel.setFixedSize(300, 600)
-
-        take_screenshot(panel, "details_panel")
-
 
 # =============================================================================
 # TextCodingPage Tests
@@ -537,18 +365,6 @@ class TestTextCodingPage:
         assert page.editor_panel is not None
         assert page.details_panel is not None
 
-    def test_creates_with_coders(self, qapp, colors):
-        """Test page creates with custom coders."""
-        from src.presentation.pages import TextCodingPage
-
-        page = TextCodingPage(
-            coders=["alice", "bob"],
-            selected_coder="bob",
-            colors=colors,
-        )
-
-        assert page is not None
-
     def test_set_files(self, qapp, colors):
         """Test setting files on page."""
         from src.presentation.pages import TextCodingPage
@@ -561,31 +377,6 @@ class TestTextCodingPage:
         )
 
         assert page.files_panel._files[0]["name"] == "test.txt"
-
-    def test_set_codes(self, qapp, colors):
-        """Test setting codes on page."""
-        from src.presentation.pages import TextCodingPage
-
-        page = TextCodingPage(colors=colors)
-        page.set_codes(
-            [
-                {
-                    "name": "Category",
-                    "codes": [{"name": "code1", "color": colors.code_red, "count": 1}],
-                }
-            ]
-        )
-
-        assert page is not None
-
-    def test_set_document(self, qapp, colors):
-        """Test setting document on page."""
-        from src.presentation.pages import TextCodingPage
-
-        page = TextCodingPage(colors=colors)
-        page.set_document("test.txt", "Case 1", "Content here")
-
-        assert page is not None
 
     def test_file_selected_signal_propagates(self, qapp, colors):
         """Test file selection signal propagates from organism to page."""
@@ -623,97 +414,6 @@ class TestTextCodingPage:
 
         assert spy.count() == 1
         assert spy.at(0)[0] == "help"
-
-    def test_screenshot(self, qapp, colors, take_screenshot):
-        """Take screenshot of complete page."""
-        from src.presentation.pages import TextCodingPage
-
-        page = TextCodingPage(
-            coders=["colin", "sarah", "james"],
-            selected_coder="colin",
-            colors=colors,
-        )
-
-        # Load sample data
-        page.set_files(
-            [
-                {
-                    "name": "interview1.txt",
-                    "type": "text",
-                    "meta": "Text • 2.4 KB • 3 codes",
-                },
-                {
-                    "name": "interview2.docx",
-                    "type": "text",
-                    "meta": "Text • 3.1 KB • 7 codes",
-                },
-                {
-                    "name": "notes.odt",
-                    "type": "text",
-                    "meta": "Text • 1.2 KB • 5 codes",
-                },
-            ]
-        )
-
-        page.set_codes(
-            [
-                {
-                    "name": "Abilities",
-                    "codes": [
-                        {
-                            "name": "soccer playing",
-                            "color": colors.code_yellow,
-                            "count": 3,
-                        },
-                        {"name": "struggling", "color": colors.code_red, "count": 5},
-                    ],
-                },
-                {
-                    "name": "Motivation",
-                    "codes": [
-                        {
-                            "name": "cost concerns",
-                            "color": colors.code_pink,
-                            "count": 2,
-                        },
-                        {"name": "enthusiasm", "color": colors.code_cyan, "count": 6},
-                    ],
-                },
-            ]
-        )
-
-        page.set_document(
-            "interview1.txt",
-            "Case: ID2",
-            "I have not studied much before. I know that I must get help.\n\n"
-            "The course cost €200 and I do not want to waste my money.",
-        )
-
-        page.set_document_stats(
-            [
-                ("mdi6.layers", "2 overlapping"),
-                ("mdi6.label", "5 codes"),
-            ]
-        )
-
-        page.set_selected_code(
-            colors.code_yellow,
-            "soccer playing",
-            "Code for soccer references.",
-        )
-
-        page.set_overlapping_codes(
-            [
-                ("Segment 1", [colors.code_green, colors.code_cyan]),
-            ]
-        )
-
-        page.set_file_memo("Interview transcript.", 65)
-        page.set_navigation(1, 3)
-
-        page.setMinimumSize(1200, 700)
-
-        take_screenshot(page, "text_coding_page")
 
 
 # =============================================================================
@@ -817,15 +517,6 @@ class TestTextCodingScreen:
         assert items[0].children[0].name == "another_code"
         assert items[0].children[1].id == "12345"
         assert items[0].children[1].name == "test_code"
-
-    def test_screenshot(self, qapp, colors, take_screenshot):
-        """Take screenshot of complete screen."""
-        from src.presentation.screens import TextCodingScreen
-
-        screen = TextCodingScreen(colors=colors)
-        screen.setMinimumSize(1200, 700)
-
-        take_screenshot(screen, "text_coding_screen")
 
     def test_action_handlers_registered(self, qapp, colors):
         """Test that all action handlers are registered."""

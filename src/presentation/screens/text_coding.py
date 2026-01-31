@@ -436,6 +436,68 @@ class TextCodingScreen(QWidget):
             self._page.editor_panel.scroll_to_position(position)
 
     # =========================================================================
+    # Navigation (QC-026 AC #6)
+    # =========================================================================
+
+    def navigate_to_segment(self, start_pos: int, end_pos: int, highlight: bool = True):
+        """
+        Navigate to a specific segment position in the text.
+
+        Implements QC-026 AC #6: Agent can navigate to a specific source or segment.
+
+        This method:
+        1. Scrolls the editor to make the segment visible
+        2. Selects the text range
+        3. Optionally highlights/flashes the segment
+
+        Args:
+            start_pos: The start character position
+            end_pos: The end character position
+            highlight: Whether to flash/highlight the segment (default True)
+        """
+        if self._page and hasattr(self._page, "editor_panel"):
+            # Scroll to position
+            self._page.editor_panel.scroll_to_position(start_pos)
+
+            # Select the range
+            self._page.editor_panel.select_range(start_pos, end_pos)
+
+            # Update internal selection state
+            text = ""
+            full_text = self._page.editor_panel.get_text()
+            if full_text and 0 <= start_pos < end_pos <= len(full_text):
+                text = full_text[start_pos:end_pos]
+
+            self._text_selection = TextSelection(
+                start=start_pos, end=end_pos, text=text
+            )
+            self._quick_mark_enabled = start_pos < end_pos
+
+            # Flash highlight if requested
+            if highlight:
+                self._flash_highlight(start_pos, end_pos)
+
+    def on_navigated_to_segment(self, payload):
+        """
+        Handle NavigatedToSegment signal from ProjectSignalBridge.
+
+        This slot can be connected to the signal bridge's navigated_to_segment signal
+        to respond to navigation commands from agents or other parts of the system.
+
+        Args:
+            payload: NavigationPayload with source_id, position_start, position_end
+        """
+        # Extract payload data
+        start_pos = getattr(payload, "position_start", None)
+        end_pos = getattr(payload, "position_end", None)
+
+        if start_pos is None or end_pos is None:
+            return
+
+        # Navigate to the segment
+        self.navigate_to_segment(start_pos, end_pos, highlight=True)
+
+    # =========================================================================
     # Quick Mark (AC #1)
     # =========================================================================
 

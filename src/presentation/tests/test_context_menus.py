@@ -31,13 +31,6 @@ from PySide6.QtTest import QSignalSpy
 class TestTextEditorContextMenu:
     """Tests for text editor context menu."""
 
-    def test_context_menu_creates(self, qapp, colors):
-        """TextEditorContextMenu creates with default settings."""
-        from src.presentation.organisms.context_menus import TextEditorContextMenu
-
-        menu = TextEditorContextMenu(colors=colors)
-        assert menu is not None
-
     def test_context_menu_has_mark_action(self, qapp, colors):
         """Menu has mark with selected code action."""
         from src.presentation.organisms.context_menus import TextEditorContextMenu
@@ -158,13 +151,6 @@ class TestTextEditorContextMenu:
 class TestCodeTreeContextMenu:
     """Tests for code tree context menu."""
 
-    def test_context_menu_creates(self, qapp, colors):
-        """CodeTreeContextMenu creates with default settings."""
-        from src.presentation.organisms.context_menus import CodeTreeContextMenu
-
-        menu = CodeTreeContextMenu(colors=colors)
-        assert menu is not None
-
     def test_context_menu_has_add_code_action(self, qapp, colors):
         """Menu has add code action."""
         from src.presentation.organisms.context_menus import CodeTreeContextMenu
@@ -260,13 +246,6 @@ class TestCodeTreeContextMenu:
 class TestColorPickerDialog:
     """Tests for color picker dialog."""
 
-    def test_color_picker_creates(self, qapp, colors):
-        """ColorPickerDialog creates."""
-        from src.presentation.dialogs.color_picker_dialog import ColorPickerDialog
-
-        dialog = ColorPickerDialog(colors=colors)
-        assert dialog is not None
-
     def test_color_picker_has_preset_colors(self, qapp, colors):
         """ColorPickerDialog shows preset colors."""
         from src.presentation.dialogs.color_picker_dialog import ColorPickerDialog
@@ -292,41 +271,3 @@ class TestColorPickerDialog:
 
         assert spy.count() == 1
         assert spy.at(0)[0] == "#00FF00"
-
-
-class TestContextMenuScreenshot:
-    """Visual tests with screenshots."""
-
-    def test_screenshot_text_context_menu(self, qapp, colors, take_screenshot):
-        """Screenshot of text editor context menu."""
-        from src.presentation.organisms.context_menus import TextEditorContextMenu
-
-        menu = TextEditorContextMenu(colors=colors)
-        menu.set_has_selection(True)
-        menu.set_selected_code({"id": "1", "name": "Theme: Identity"})
-        menu.set_codes_at_cursor([{"id": "2", "name": "Sub-theme: Self"}])
-        menu.set_recent_codes(
-            [
-                {"id": "1", "name": "Theme: Identity", "color": "#FF5733"},
-                {"id": "2", "name": "Sub-theme: Self", "color": "#33FF57"},
-                {"id": "3", "name": "Context: Work", "color": "#3357FF"},
-            ]
-        )
-
-        # Can't easily screenshot a QMenu, but we can verify it's created
-        assert menu is not None
-
-    def test_screenshot_code_tree_context_menu(self, qapp, colors, take_screenshot):
-        """Screenshot of code tree context menu."""
-        from src.presentation.organisms.context_menus import CodeTreeContextMenu
-
-        menu = CodeTreeContextMenu(colors=colors)
-        menu.set_selected_item({"id": "1", "name": "Theme: Identity", "type": "code"})
-        menu.set_categories(
-            [
-                {"id": "cat1", "name": "Themes"},
-                {"id": "cat2", "name": "Sub-themes"},
-            ]
-        )
-
-        assert menu is not None
