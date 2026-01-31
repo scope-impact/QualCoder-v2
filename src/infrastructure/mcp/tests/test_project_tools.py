@@ -286,6 +286,78 @@ class TestListSources:
         assert data["count"] == 1
         assert data["sources"][0]["type"] == "text"
 
+    def test_returns_source_metadata(
+        self,
+        project_controller: ProjectControllerImpl,
+        project_tools: ProjectTools,
+        tmp_path: Path,
+    ):
+        """AC #3: Returns source metadata (memo, file_size, origin)."""
+        project_path = tmp_path / "test.qda"
+        project_controller.create_project(
+            CreateProjectCommand(
+                name="Test",
+                path=str(project_path),
+            )
+        )
+
+        source_with_metadata = Source(
+            id=SourceId(value=1),
+            name="interview.txt",
+            source_type=SourceType.TEXT,
+            status=SourceStatus.CODED,
+            file_path=Path("/tmp/interview.txt"),
+            file_size=1024,
+            origin="external",
+            memo="Important interview with participant",
+            code_count=5,
+            case_ids=(),
+        )
+        project_controller._sources.append(source_with_metadata)
+
+        result = project_tools.execute("list_sources", {})
+
+        assert isinstance(result, Success)
+        source = result.unwrap()["sources"][0]
+        assert source["memo"] == "Important interview with participant"
+        assert source["file_size"] == 1024
+        assert source["origin"] == "external"
+
+    def test_returns_coding_status(
+        self,
+        project_controller: ProjectControllerImpl,
+        project_tools: ProjectTools,
+        tmp_path: Path,
+    ):
+        """AC #4: Returns coding status per source (code_count, status)."""
+        project_path = tmp_path / "test.qda"
+        project_controller.create_project(
+            CreateProjectCommand(
+                name="Test",
+                path=str(project_path),
+            )
+        )
+
+        coded_source = Source(
+            id=SourceId(value=1),
+            name="coded_doc.txt",
+            source_type=SourceType.TEXT,
+            status=SourceStatus.CODED,
+            file_path=Path("/tmp/coded_doc.txt"),
+            origin="internal",
+            memo=None,
+            code_count=15,
+            case_ids=(),
+        )
+        project_controller._sources.append(coded_source)
+
+        result = project_tools.execute("list_sources", {})
+
+        assert isinstance(result, Success)
+        source = result.unwrap()["sources"][0]
+        assert source["code_count"] == 15
+        assert source["status"] == "coded"
+
 
 class TestNavigateToSegment:
     """Tests for AC #6: Agent can navigate to a specific source or segment."""

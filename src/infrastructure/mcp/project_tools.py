@@ -277,6 +277,12 @@ class ProjectTools:
                         "type": s.source_type.value,
                         "status": s.status.value,
                         "file_path": str(s.file_path),
+                        # AC #3: Source metadata
+                        "memo": s.memo,
+                        "file_size": s.file_size,
+                        "origin": s.origin,
+                        # AC #4: Coding status
+                        "code_count": s.code_count,
                     }
                     for s in sources
                 ],
