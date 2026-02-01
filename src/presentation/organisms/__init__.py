@@ -23,6 +23,9 @@ Organisms in this module:
 - EmptyState: Empty state display for new projects
 """
 
+from .case_manager_toolbar import CaseManagerToolbar
+from .case_summary_stats import CaseSummaryStats
+from .case_table import CaseTable
 from .codes_panel import CodesPanel
 from .coding_toolbar import CodingToolbar
 from .details_panel import DetailsPanel
@@ -58,6 +61,10 @@ __all__ = [
     "BulkActionsBar",
     "FileManagerToolbar",
     "EmptyState",
+    # Case Manager organisms
+    "CaseTable",
+    "CaseManagerToolbar",
+    "CaseSummaryStats",
     # Folder organization
     "FolderNode",
     "FolderTree",

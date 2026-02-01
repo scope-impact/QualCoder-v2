@@ -315,3 +315,173 @@ class TestSQLiteProjectSettingsRepository:
         settings_repo.set_project_memo("Project description")
 
         assert settings_repo.get_project_memo() == "Project description"
+
+
+class TestSQLiteCaseRepository:
+    """Tests for SQLiteCaseRepository."""
+
+    def test_save_and_get_by_id(self, case_repo):
+        """Test saving and retrieving a case."""
+        from src.domain.cases.entities import Case
+        from src.domain.shared.types import CaseId
+
+        case = Case(
+            id=CaseId(value=1),
+            name="Participant A",
+            description="First interview subject",
+            memo="Recruited from university",
+        )
+
+        case_repo.save(case)
+
+        retrieved = case_repo.get_by_id(CaseId(value=1))
+        assert retrieved is not None
+        assert retrieved.name == "Participant A"
+        assert retrieved.description == "First interview subject"
+        assert retrieved.memo == "Recruited from university"
+
+    def test_get_by_id_not_found(self, case_repo):
+        """Test getting a non-existent case returns None."""
+        from src.domain.shared.types import CaseId
+
+        result = case_repo.get_by_id(CaseId(value=999))
+        assert result is None
+
+    def test_get_all(self, case_repo):
+        """Test getting all cases."""
+        from src.domain.cases.entities import Case
+        from src.domain.shared.types import CaseId
+
+        for i in range(3):
+            case = Case(
+                id=CaseId(value=i + 1),
+                name=f"Participant {chr(65 + i)}",
+            )
+            case_repo.save(case)
+
+        all_cases = case_repo.get_all()
+        assert len(all_cases) == 3
+
+    def test_get_by_name(self, case_repo):
+        """Test getting a case by name (case-insensitive)."""
+        from src.domain.cases.entities import Case
+        from src.domain.shared.types import CaseId
+
+        case = Case(
+            id=CaseId(value=1),
+            name="Participant A",
+        )
+        case_repo.save(case)
+
+        # Case-insensitive lookup
+        result = case_repo.get_by_name("participant a")
+        assert result is not None
+        assert result.name == "Participant A"
+
+        result = case_repo.get_by_name("PARTICIPANT A")
+        assert result is not None
+
+    def test_update_case(self, case_repo):
+        """Test updating an existing case."""
+        from src.domain.cases.entities import Case
+        from src.domain.shared.types import CaseId
+
+        case = Case(
+            id=CaseId(value=1),
+            name="Original Name",
+        )
+        case_repo.save(case)
+
+        updated = Case(
+            id=CaseId(value=1),
+            name="Updated Name",
+            description="New description",
+            memo="New memo",
+        )
+        case_repo.save(updated)
+
+        retrieved = case_repo.get_by_id(CaseId(value=1))
+        assert retrieved.name == "Updated Name"
+        assert retrieved.description == "New description"
+        assert retrieved.memo == "New memo"
+
+    def test_delete_case(self, case_repo):
+        """Test deleting a case."""
+        from src.domain.cases.entities import Case
+        from src.domain.shared.types import CaseId
+
+        case = Case(
+            id=CaseId(value=1),
+            name="To Delete",
+        )
+        case_repo.save(case)
+
+        case_repo.delete(CaseId(value=1))
+
+        assert case_repo.get_by_id(CaseId(value=1)) is None
+
+    def test_exists(self, case_repo):
+        """Test checking case existence."""
+        from src.domain.cases.entities import Case
+        from src.domain.shared.types import CaseId
+
+        assert case_repo.exists(CaseId(value=1)) is False
+
+        case = Case(
+            id=CaseId(value=1),
+            name="Exists",
+        )
+        case_repo.save(case)
+
+        assert case_repo.exists(CaseId(value=1)) is True
+
+    def test_name_exists(self, case_repo):
+        """Test checking name uniqueness."""
+        from src.domain.cases.entities import Case
+        from src.domain.shared.types import CaseId
+
+        case = Case(
+            id=CaseId(value=1),
+            name="Participant A",
+        )
+        case_repo.save(case)
+
+        # Case-insensitive check
+        assert case_repo.name_exists("Participant A") is True
+        assert case_repo.name_exists("participant a") is True
+        assert case_repo.name_exists("Participant B") is False
+
+    def test_name_exists_with_exclude(self, case_repo):
+        """Test name uniqueness with ID exclusion."""
+        from src.domain.cases.entities import Case
+        from src.domain.shared.types import CaseId
+
+        case = Case(
+            id=CaseId(value=1),
+            name="Participant A",
+        )
+        case_repo.save(case)
+
+        # Excluding the case's own ID should return False
+        assert (
+            case_repo.name_exists("Participant A", exclude_id=CaseId(value=1)) is False
+        )
+        assert (
+            case_repo.name_exists("Participant A", exclude_id=CaseId(value=2)) is True
+        )
+
+    def test_count(self, case_repo):
+        """Test counting cases."""
+        from src.domain.cases.entities import Case
+        from src.domain.shared.types import CaseId
+
+        assert case_repo.count() == 0
+
+        for i in range(5):
+            case = Case(
+                id=CaseId(value=i + 1),
+                name=f"Case {i}",
+            )
+            case_repo.save(case)
+
+        assert case_repo.count() == 5

@@ -1,5 +1,7 @@
 """
 Project application test fixtures.
+
+Uses shared fixtures from src.tests.fixtures for database and repositories.
 """
 
 from __future__ import annotations
@@ -10,6 +12,10 @@ import pytest
 
 from src.application.event_bus import EventBus
 
+# Import shared fixtures - pytest auto-discovers these
+from src.tests.fixtures.database import db_connection, db_engine  # noqa: F401
+from src.tests.fixtures.repositories import case_repo, source_repo  # noqa: F401, F811
+
 
 @pytest.fixture
 def event_bus() -> EventBus:
@@ -18,14 +24,15 @@ def event_bus() -> EventBus:
 
 
 @pytest.fixture
-def project_controller(event_bus: EventBus):
-    """Create a ProjectController with the test event bus."""
+def project_controller(event_bus: EventBus, source_repo, case_repo):  # noqa: F811
+    """Create a ProjectController with the test event bus and repositories."""
     from src.application.projects.controller import ProjectControllerImpl
 
     return ProjectControllerImpl(
         event_bus=event_bus,
-        source_repo=None,
+        source_repo=source_repo,
         project_repo=None,
+        case_repo=case_repo,
     )
 
 

@@ -13,6 +13,8 @@ These tests:
 Note: qapp, colors, coding_context, viewmodel fixtures from root conftest.py.
 """
 
+from __future__ import annotations
+
 import pytest
 from PySide6.QtTest import QSignalSpy
 from PySide6.QtWidgets import QApplication

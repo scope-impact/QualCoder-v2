@@ -13,6 +13,8 @@ These tests:
 Note: Uses fixtures from root conftest.py (qapp, colors) and local fixtures.
 """
 
+from __future__ import annotations
+
 import tempfile
 from pathlib import Path
 
