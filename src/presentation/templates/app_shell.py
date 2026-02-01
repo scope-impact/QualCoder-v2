@@ -192,6 +192,7 @@ class AppMenuBar(QFrame):
     """
 
     item_clicked = Signal(str)  # menu_id
+    settings_clicked = Signal()  # settings button clicked
 
     def __init__(self, colors: ColorPalette, parent=None):
         super().__init__(parent)
@@ -221,6 +222,35 @@ class AppMenuBar(QFrame):
             self._style_button(btn, False)
 
         layout.addStretch()
+
+        # Settings button (gear icon) on the right
+        self._settings_btn = QPushButton()
+        self._settings_btn.setObjectName("settings_button")
+        self._settings_btn.setCursor(Qt.CursorShape.PointingHandCursor)
+        self._settings_btn.setToolTip("Settings")
+        self._settings_btn.clicked.connect(self.settings_clicked.emit)
+        self._settings_btn.setStyleSheet(f"""
+            QPushButton {{
+                background-color: transparent;
+                border: none;
+                border-radius: {RADIUS.sm}px;
+                padding: {SPACING.sm}px;
+            }}
+            QPushButton:hover {{
+                background-color: {self._colors.surface_light};
+            }}
+        """)
+        # Add gear icon
+        settings_icon = Icon(
+            "mdi6.cog",
+            size=18,
+            color=self._colors.text_secondary,
+            colors=self._colors,
+        )
+        icon_layout = QHBoxLayout(self._settings_btn)
+        icon_layout.setContentsMargins(SPACING.xs, SPACING.xs, SPACING.xs, SPACING.xs)
+        icon_layout.addWidget(settings_icon)
+        layout.addWidget(self._settings_btn)
 
     def _on_click(self, menu_id: str):
         self.set_active(menu_id)
@@ -491,6 +521,7 @@ class AppShell(QMainWindow):
     # Navigation signals
     menu_clicked = Signal(str)  # menu_id
     tab_clicked = Signal(str)  # tab_id
+    settings_clicked = Signal()  # settings button clicked
 
     def __init__(self, colors: ColorPalette = None, parent=None):
         super().__init__(parent)
@@ -552,6 +583,7 @@ class AppShell(QMainWindow):
     def _connect_signals(self):
         self._menu_bar.item_clicked.connect(self.menu_clicked.emit)
         self._tab_bar.tab_clicked.connect(self.tab_clicked.emit)
+        self._menu_bar.settings_clicked.connect(self.settings_clicked.emit)
 
         # Window controls
         self._title_bar.close_clicked.connect(self.close)
