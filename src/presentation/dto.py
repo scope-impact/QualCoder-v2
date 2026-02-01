@@ -143,3 +143,37 @@ class TextCodingDataDTO:
     navigation: NavigationDTO | None = None
     coders: list[str] = field(default_factory=list)
     selected_coder: str | None = None
+
+
+@dataclass
+class CaseAttributeDTO:
+    """A case attribute (demographic or categorical data)."""
+
+    name: str
+    attr_type: str  # text, number, boolean, date
+    value: str | int | float | bool | None = None
+
+
+@dataclass
+class CaseDTO:
+    """A case (participant, site, or other grouping)."""
+
+    id: str
+    name: str
+    description: str | None = None
+    memo: str | None = None
+    attributes: list[CaseAttributeDTO] = field(default_factory=list)
+    source_ids: list[str] = field(default_factory=list)
+    source_count: int = 0
+    created_at: str | None = None
+    updated_at: str | None = None
+
+
+@dataclass
+class CaseSummaryDTO:
+    """Summary statistics for cases."""
+
+    total_cases: int = 0
+    cases_with_sources: int = 0
+    total_attributes: int = 0
+    unique_attribute_names: list[str] = field(default_factory=list)

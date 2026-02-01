@@ -63,3 +63,44 @@ def sample_source_file(tmp_path: Path) -> Path:
     source_file = tmp_path / "interview.txt"
     source_file.write_text("Sample interview content for testing.")
     return source_file
+
+
+# ============================================================
+# Case Manager Fixtures
+# ============================================================
+
+
+@pytest.fixture
+def engine():
+    """Create in-memory SQLite engine for testing."""
+    from sqlalchemy import create_engine
+
+    from src.infrastructure.projects.schema import create_all, drop_all
+
+    engine = create_engine("sqlite:///:memory:", echo=False)
+    create_all(engine)
+    yield engine
+    drop_all(engine)
+    engine.dispose()
+
+
+@pytest.fixture
+def connection(engine):
+    """Create a database connection."""
+    conn = engine.connect()
+    yield conn
+    conn.close()
+
+
+@pytest.fixture
+def case_repo(connection):
+    """Create a case repository."""
+    from src.infrastructure.projects.repositories import SQLiteCaseRepository
+
+    return SQLiteCaseRepository(connection)
+
+
+@pytest.fixture
+def event_bus() -> EventBus:
+    """Create an event bus for case manager tests."""
+    return EventBus(history_size=100)
