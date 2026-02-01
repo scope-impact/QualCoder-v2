@@ -57,6 +57,8 @@ except ImportError:
     ProjectSignalBridge = None
 
 if TYPE_CHECKING:
+    from pathlib import Path
+
     from src.infrastructure.mcp.project_tools import ProjectTools
     from src.presentation.screens.text_coding import TextCodingScreen
 
@@ -264,6 +266,54 @@ class ApplicationCoordinator:
                 return self.create_project(name, path)
 
         return Failure("Dialog cancelled")
+
+    def show_settings_dialog(
+        self,
+        parent: Any = None,
+        colors: Any = None,
+        config_path: Path | None = None,
+        blocking: bool = True,
+    ) -> Any:
+        """
+        Show the settings dialog.
+
+        Implements QC-038: Settings and Preferences.
+
+        Args:
+            parent: Parent widget for the dialog
+            colors: Color configuration for theming
+            config_path: Optional custom config path (for testing)
+            blocking: Whether to block with exec() (default True)
+
+        Returns:
+            The dialog instance (for non-blocking mode)
+        """
+        if not HAS_QT:
+            return None
+
+        from src.application.settings import SettingsControllerImpl
+        from src.infrastructure.settings import UserSettingsRepository
+        from src.presentation.dialogs.settings_dialog import SettingsDialog
+        from src.presentation.viewmodels import SettingsViewModel
+
+        # Create settings stack
+        repo = UserSettingsRepository(config_path=config_path)
+        controller = SettingsControllerImpl(settings_repo=repo)
+        viewmodel = SettingsViewModel(settings_controller=controller)
+
+        # Create and show dialog
+        dialog = SettingsDialog(
+            viewmodel=viewmodel,
+            colors=colors,
+            parent=parent,
+        )
+
+        if blocking:
+            dialog.exec()
+        else:
+            dialog.show()
+
+        return dialog
 
     # =========================================================================
     # Screen Connection (AC #6)
