@@ -2,19 +2,28 @@
 AI Infrastructure: LLM Provider Implementations
 
 Concrete implementations of the LLMProvider protocol for different backends.
-Supports Anthropic Claude, OpenAI, and a mock provider for testing.
+Supports OpenAI-compatible APIs (OpenAI, Ollama, LM Studio, vLLM),
+Anthropic Claude, and a mock provider for testing.
 """
 
 from __future__ import annotations
 
 import json
+import logging
 import os
 from typing import TYPE_CHECKING
 
 from returns.result import Failure, Result, Success
 
 if TYPE_CHECKING:
-    from src.infrastructure.ai.config import AIConfig
+    from src.infrastructure.ai.config import AIConfig, LLMConfig
+
+logger = logging.getLogger(__name__)
+
+
+# ============================================================
+# Anthropic Provider
+# ============================================================
 
 
 class AnthropicLLMProvider:
@@ -24,16 +33,30 @@ class AnthropicLLMProvider:
     Requires the 'anthropic' package and ANTHROPIC_API_KEY environment variable.
     """
 
-    def __init__(self, config: AIConfig | None = None) -> None:
+    def __init__(self, config: LLMConfig | AIConfig | None = None) -> None:
         """
         Initialize the Anthropic provider.
 
         Args:
-            config: AI configuration (uses defaults if not provided)
+            config: LLM or AI configuration (uses defaults if not provided)
         """
-        from src.infrastructure.ai.config import DEFAULT_CONFIG
+        from src.infrastructure.ai.config import DEFAULT_LLM_CONFIG, LLMConfig
 
-        self._config = config or DEFAULT_CONFIG
+        # Handle both config types
+        if config is None:
+            self._config = DEFAULT_LLM_CONFIG
+        elif isinstance(config, LLMConfig):
+            self._config = config
+        else:
+            # Legacy AIConfig
+            self._config = LLMConfig(
+                provider="anthropic",
+                model=config.model,
+                max_tokens=config.max_tokens,
+                temperature=config.temperature,
+            )
+            self._api_key_env_var = config.api_key_env_var
+
         self._client = None
 
     def _get_client(self):
@@ -42,10 +65,11 @@ class AnthropicLLMProvider:
             try:
                 import anthropic
 
-                api_key = os.getenv(self._config.api_key_env_var)
+                # Try config api_key first, then environment variable
+                api_key = self._config.api_key or os.getenv("ANTHROPIC_API_KEY")
                 if not api_key:
                     raise ValueError(
-                        f"Missing API key: set {self._config.api_key_env_var} environment variable"
+                        "Missing API key: set ANTHROPIC_API_KEY environment variable"
                     )
                 self._client = anthropic.Anthropic(api_key=api_key)
             except ImportError as e:
@@ -142,6 +166,152 @@ class AnthropicLLMProvider:
             return Failure(f"Failed to parse JSON: {e!s}")
 
 
+# ============================================================
+# OpenAI-Compatible Provider
+# ============================================================
+
+
+class OpenAICompatibleLLMProvider:
+    """
+    LLM provider using OpenAI-compatible API.
+
+    Works with:
+    - OpenAI API
+    - Ollama (via /v1 endpoints)
+    - LM Studio
+    - vLLM
+    - Any other OpenAI-compatible server
+    """
+
+    def __init__(self, config: LLMConfig | None = None) -> None:
+        """
+        Initialize the OpenAI-compatible provider.
+
+        Args:
+            config: LLM configuration (uses defaults if not provided)
+        """
+        from src.infrastructure.ai.config import DEFAULT_LLM_CONFIG
+
+        self._config = config or DEFAULT_LLM_CONFIG
+        self._client = None
+
+    def _get_client(self):
+        """Lazily initialize the OpenAI client."""
+        if self._client is None:
+            try:
+                from openai import OpenAI
+
+                self._client = OpenAI(
+                    base_url=self._config.api_base_url,
+                    api_key=self._config.api_key
+                    or "not-needed",  # Local servers often don't need keys
+                    timeout=self._config.timeout_seconds,
+                )
+            except ImportError as e:
+                raise ImportError(
+                    "openai package not installed. Install with: pip install openai"
+                ) from e
+        return self._client
+
+    def complete(
+        self,
+        prompt: str,
+        system: str | None = None,
+        max_tokens: int | None = None,
+        temperature: float | None = None,
+    ) -> Result[str, str]:
+        """
+        Send a completion request to the LLM.
+
+        Args:
+            prompt: The user prompt to complete
+            system: Optional system prompt for context
+            max_tokens: Maximum tokens in response (uses config default if None)
+            temperature: Sampling temperature (uses config default if None)
+
+        Returns:
+            Success with completion text, or Failure with error message
+        """
+        try:
+            client = self._get_client()
+
+            messages = []
+            if system:
+                messages.append({"role": "system", "content": system})
+            messages.append({"role": "user", "content": prompt})
+
+            response = client.chat.completions.create(
+                model=self._config.model,
+                messages=messages,
+                max_tokens=max_tokens or self._config.max_tokens,
+                temperature=temperature or self._config.temperature,
+            )
+
+            # Extract text from response
+            if response.choices and len(response.choices) > 0:
+                content = response.choices[0].message.content
+                if content:
+                    return Success(content)
+                return Failure("Empty response from API")
+
+            return Failure("No choices in response")
+
+        except Exception as e:
+            logger.warning(f"LLM API error: {e}")
+            return Failure(f"API error: {e!s}")
+
+    def complete_json(
+        self,
+        prompt: str,
+        system: str | None = None,
+        max_tokens: int | None = None,
+    ) -> Result[dict, str]:
+        """
+        Send a completion request expecting JSON response.
+
+        Args:
+            prompt: The user prompt (should request JSON output)
+            system: Optional system prompt
+            max_tokens: Maximum tokens in response
+
+        Returns:
+            Success with parsed JSON dict, or Failure with error message
+        """
+        result = self.complete(
+            prompt=prompt,
+            system=system,
+            max_tokens=max_tokens,
+            temperature=0.1,  # Lower temperature for structured output
+        )
+
+        if isinstance(result, Failure):
+            return result
+
+        text = result.unwrap()
+
+        # Try to extract JSON from response
+        try:
+            # Handle markdown code blocks
+            if "```json" in text:
+                start = text.find("```json") + 7
+                end = text.find("```", start)
+                text = text[start:end].strip()
+            elif "```" in text:
+                start = text.find("```") + 3
+                end = text.find("```", start)
+                text = text[start:end].strip()
+
+            return Success(json.loads(text))
+
+        except json.JSONDecodeError as e:
+            return Failure(f"Failed to parse JSON: {e!s}")
+
+
+# ============================================================
+# Mock Provider
+# ============================================================
+
+
 class MockLLMProvider:
     """
     Mock LLM provider for testing.
@@ -235,12 +405,19 @@ class MockLLMProvider:
         self._prompts = []
 
 
-def create_llm_provider(config: AIConfig | None = None):
+# ============================================================
+# Factory Functions
+# ============================================================
+
+
+def create_llm_provider(
+    config: LLMConfig | AIConfig | None = None,
+) -> OpenAICompatibleLLMProvider | AnthropicLLMProvider | MockLLMProvider:
     """
     Factory function to create an LLM provider based on configuration.
 
     Args:
-        config: AI configuration (uses defaults if not provided)
+        config: LLM or AI configuration (uses defaults if not provided)
 
     Returns:
         An LLM provider instance
@@ -248,13 +425,26 @@ def create_llm_provider(config: AIConfig | None = None):
     Raises:
         ValueError: If provider type is unknown
     """
-    from src.infrastructure.ai.config import DEFAULT_CONFIG
+    from src.infrastructure.ai.config import DEFAULT_LLM_CONFIG, LLMConfig
 
-    config = config or DEFAULT_CONFIG
+    # Handle legacy AIConfig
+    if config is not None and not isinstance(config, LLMConfig):
+        # Convert AIConfig to LLMConfig for backwards compatibility
+        llm_config = LLMConfig(
+            provider=config.provider,  # type: ignore
+            model=config.model,
+            api_key=None,  # Will be read from env
+            max_tokens=config.max_tokens,
+            temperature=config.temperature,
+        )
+    else:
+        llm_config = config or DEFAULT_LLM_CONFIG
 
-    if config.provider == "anthropic":
-        return AnthropicLLMProvider(config)
-    elif config.provider == "mock":
+    if llm_config.provider == "openai-compatible":
+        return OpenAICompatibleLLMProvider(llm_config)
+    elif llm_config.provider == "anthropic":
+        return AnthropicLLMProvider(llm_config)
+    elif llm_config.provider == "mock":
         return MockLLMProvider()
     else:
-        raise ValueError(f"Unknown provider: {config.provider}")
+        raise ValueError(f"Unknown provider: {llm_config.provider}")

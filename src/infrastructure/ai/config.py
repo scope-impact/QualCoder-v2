@@ -189,6 +189,97 @@ class EmbeddingConfig:
 
 
 @dataclass(frozen=True)
+class LLMConfig:
+    """
+    Configuration for LLM providers.
+
+    Supports OpenAI-compatible APIs (including local servers like Ollama, LM Studio),
+    Anthropic Claude, and mock for testing.
+    """
+
+    # Provider selection
+    provider: Literal["openai-compatible", "anthropic", "mock"] = "openai-compatible"
+
+    # OpenAI-compatible settings (works with OpenAI, Ollama, LM Studio, vLLM)
+    api_base_url: str = "http://localhost:11434/v1"  # Ollama default
+    api_key: str | None = None  # Optional for local servers
+    model: str = "llama3.2"  # Good default for Ollama
+
+    # Request settings
+    max_tokens: int = 1024
+    temperature: float = 0.3
+    timeout_seconds: int = 60
+
+    @classmethod
+    def for_testing(cls) -> LLMConfig:
+        """Create a configuration suitable for testing (uses mock provider)."""
+        return cls(provider="mock")
+
+    @classmethod
+    def for_openai(
+        cls,
+        api_key: str,
+        model: str = "gpt-4o-mini",
+    ) -> LLMConfig:
+        """Create configuration for OpenAI API."""
+        return cls(
+            provider="openai-compatible",
+            api_base_url="https://api.openai.com/v1",
+            api_key=api_key,
+            model=model,
+        )
+
+    @classmethod
+    def for_ollama(
+        cls,
+        model: str = "llama3.2",
+        base_url: str = "http://localhost:11434/v1",
+    ) -> LLMConfig:
+        """Create configuration for Ollama."""
+        return cls(
+            provider="openai-compatible",
+            api_base_url=base_url,
+            model=model,
+        )
+
+    @classmethod
+    def for_anthropic(
+        cls,
+        model: str = "claude-3-haiku-20240307",
+    ) -> LLMConfig:
+        """Create configuration for Anthropic Claude."""
+        return cls(
+            provider="anthropic",
+            model=model,
+        )
+
+    @classmethod
+    def from_env(cls) -> LLMConfig:
+        """
+        Create configuration from environment variables.
+
+        Environment variables:
+            QUALCODER_LLM_PROVIDER: Provider (openai-compatible, anthropic, mock)
+            QUALCODER_LLM_API_URL: API base URL for OpenAI-compatible
+            QUALCODER_LLM_API_KEY: API key
+            QUALCODER_LLM_MODEL: Model name
+        """
+        import os
+
+        provider = os.getenv("QUALCODER_LLM_PROVIDER", "openai-compatible")
+        api_url = os.getenv("QUALCODER_LLM_API_URL", "http://localhost:11434/v1")
+        api_key = os.getenv("QUALCODER_LLM_API_KEY") or os.getenv("OPENAI_API_KEY")
+        model = os.getenv("QUALCODER_LLM_MODEL", "llama3.2")
+
+        return cls(
+            provider=provider,  # type: ignore
+            api_base_url=api_url,
+            api_key=api_key,
+            model=model,
+        )
+
+
+@dataclass(frozen=True)
 class VectorStoreConfig:
     """
     Configuration for vector store.
@@ -251,4 +342,5 @@ class VectorStoreConfig:
 # Default configuration instances
 DEFAULT_CONFIG = AIConfig()
 DEFAULT_EMBEDDING_CONFIG = EmbeddingConfig()
+DEFAULT_LLM_CONFIG = LLMConfig()
 DEFAULT_VECTOR_STORE_CONFIG = VectorStoreConfig()

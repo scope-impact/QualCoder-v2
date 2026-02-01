@@ -13,12 +13,18 @@ Components:
     - Configuration management
 """
 
-from src.infrastructure.ai.code_analyzer import LLMCodeAnalyzer
+from src.infrastructure.ai.code_analyzer import LLMCodeAnalyzer, MockCodeAnalyzer
 from src.infrastructure.ai.code_comparator import (
     LLMCodeComparator,
+    MockCodeComparator,
     VectorCodeComparator,
 )
-from src.infrastructure.ai.config import AIConfig, EmbeddingConfig, VectorStoreConfig
+from src.infrastructure.ai.config import (
+    AIConfig,
+    EmbeddingConfig,
+    LLMConfig,
+    VectorStoreConfig,
+)
 from src.infrastructure.ai.embedding_provider import (
     MiniLMEmbeddingProvider,
     MockEmbeddingProvider,
@@ -28,6 +34,8 @@ from src.infrastructure.ai.embedding_provider import (
 from src.infrastructure.ai.llm_provider import (
     AnthropicLLMProvider,
     MockLLMProvider,
+    OpenAICompatibleLLMProvider,
+    create_llm_provider,
 )
 from src.infrastructure.ai.vector_store import (
     ChromaVectorStore,
@@ -36,19 +44,29 @@ from src.infrastructure.ai.vector_store import (
 )
 
 __all__ = [
+    # Config
     "AIConfig",
-    "AnthropicLLMProvider",
-    "ChromaVectorStore",
     "EmbeddingConfig",
-    "LLMCodeAnalyzer",
-    "LLMCodeComparator",
+    "LLMConfig",
+    "VectorStoreConfig",
+    # LLM Providers
+    "AnthropicLLMProvider",
+    "MockLLMProvider",
+    "OpenAICompatibleLLMProvider",
+    "create_llm_provider",
+    # Embedding Providers
     "MiniLMEmbeddingProvider",
     "MockEmbeddingProvider",
-    "MockLLMProvider",
-    "MockVectorStore",
     "OpenAICompatibleEmbeddingProvider",
-    "VectorCodeComparator",
-    "VectorStoreConfig",
     "create_embedding_provider",
+    # Vector Store
+    "ChromaVectorStore",
+    "MockVectorStore",
     "create_vector_store",
+    # Code Analysis
+    "LLMCodeAnalyzer",
+    "MockCodeAnalyzer",
+    "LLMCodeComparator",
+    "MockCodeComparator",
+    "VectorCodeComparator",
 ]
