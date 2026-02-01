@@ -32,7 +32,7 @@ from typing import TYPE_CHECKING, Any
 from returns.result import Failure, Result, Success
 
 if TYPE_CHECKING:
-    from src.infrastructure.projects.repositories import SQLiteCaseRepository
+    from src.infrastructure.projects.case_repository import SQLiteCaseRepository
 
 
 # ============================================================

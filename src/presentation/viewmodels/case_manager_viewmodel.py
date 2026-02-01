@@ -27,7 +27,7 @@ from src.presentation.dto import CaseAttributeDTO, CaseDTO, CaseSummaryDTO
 
 if TYPE_CHECKING:
     from src.application.event_bus import EventBus
-    from src.infrastructure.projects.repositories import SQLiteCaseRepository
+    from src.infrastructure.projects.case_repository import SQLiteCaseRepository
 
 
 class CaseManagerViewModel:

@@ -31,7 +31,7 @@ from sqlalchemy import create_engine
 from src.application.event_bus import EventBus
 from src.domain.cases.entities import AttributeType, Case, CaseAttribute
 from src.domain.shared.types import CaseId, SourceId
-from src.infrastructure.projects.repositories import SQLiteCaseRepository
+from src.infrastructure.projects.case_repository import SQLiteCaseRepository
 from src.infrastructure.projects.schema import create_all, drop_all
 from src.presentation.screens import CaseManagerScreen
 from src.presentation.viewmodels.case_manager_viewmodel import CaseManagerViewModel

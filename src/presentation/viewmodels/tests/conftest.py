@@ -95,7 +95,7 @@ def connection(engine):
 @pytest.fixture
 def case_repo(connection):
     """Create a case repository."""
-    from src.infrastructure.projects.repositories import SQLiteCaseRepository
+    from src.infrastructure.projects.case_repository import SQLiteCaseRepository
 
     return SQLiteCaseRepository(connection)
 
