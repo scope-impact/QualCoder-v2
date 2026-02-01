@@ -15,11 +15,8 @@ import pytest
 
 from src.domain.privacy.entities import AnonymizationSessionId, PseudonymId
 from src.domain.privacy.events import (
-    AnonymizationReverted,
     PseudonymCreated,
-    PseudonymDeleted,
     PseudonymsApplied,
-    PseudonymUpdated,
 )
 from src.domain.shared.types import SourceId
 
@@ -28,8 +25,9 @@ _qt_available = False
 try:
     # Only try to import if we have a display
     if os.environ.get("DISPLAY") or os.environ.get("QT_QPA_PLATFORM") == "offscreen":
-        from PySide6.QtWidgets import QApplication
-        _qt_available = True
+        import importlib.util
+
+        _qt_available = importlib.util.find_spec("PySide6.QtWidgets") is not None
 except (ImportError, RuntimeError):
     pass
 
@@ -47,67 +45,77 @@ def qapp():
     yield app
 
 
+@pytest.fixture
+def mock_event_bus():
+    """Create a mock event bus for testing."""
+    bus = Mock()
+    bus.subscribe = Mock()
+    bus.unsubscribe = Mock()
+    bus.publish = Mock()
+    return bus
+
+
 class TestPrivacySignalBridgeSignals:
     """Tests for PrivacySignalBridge signal definitions."""
 
-    def test_has_pseudonym_created_signal(self, qapp):
+    def test_has_pseudonym_created_signal(self, qapp, mock_event_bus):
         """Should have pseudonym_created signal."""
         from src.application.privacy.signal_bridge import PrivacySignalBridge
 
-        bridge = PrivacySignalBridge()
+        bridge = PrivacySignalBridge(mock_event_bus)
         assert hasattr(bridge, "pseudonym_created")
 
-    def test_has_pseudonym_updated_signal(self, qapp):
+    def test_has_pseudonym_updated_signal(self, qapp, mock_event_bus):
         """Should have pseudonym_updated signal."""
         from src.application.privacy.signal_bridge import PrivacySignalBridge
 
-        bridge = PrivacySignalBridge()
+        bridge = PrivacySignalBridge(mock_event_bus)
         assert hasattr(bridge, "pseudonym_updated")
 
-    def test_has_pseudonym_deleted_signal(self, qapp):
+    def test_has_pseudonym_deleted_signal(self, qapp, mock_event_bus):
         """Should have pseudonym_deleted signal."""
         from src.application.privacy.signal_bridge import PrivacySignalBridge
 
-        bridge = PrivacySignalBridge()
+        bridge = PrivacySignalBridge(mock_event_bus)
         assert hasattr(bridge, "pseudonym_deleted")
 
-    def test_has_pseudonyms_applied_signal(self, qapp):
+    def test_has_pseudonyms_applied_signal(self, qapp, mock_event_bus):
         """Should have pseudonyms_applied signal."""
         from src.application.privacy.signal_bridge import PrivacySignalBridge
 
-        bridge = PrivacySignalBridge()
+        bridge = PrivacySignalBridge(mock_event_bus)
         assert hasattr(bridge, "pseudonyms_applied")
 
-    def test_has_anonymization_reverted_signal(self, qapp):
+    def test_has_anonymization_reverted_signal(self, qapp, mock_event_bus):
         """Should have anonymization_reverted signal."""
         from src.application.privacy.signal_bridge import PrivacySignalBridge
 
-        bridge = PrivacySignalBridge()
+        bridge = PrivacySignalBridge(mock_event_bus)
         assert hasattr(bridge, "anonymization_reverted")
 
-    def test_has_speakers_detected_signal(self, qapp):
+    def test_has_speakers_detected_signal(self, qapp, mock_event_bus):
         """Should have speakers_detected signal."""
         from src.application.privacy.signal_bridge import PrivacySignalBridge
 
-        bridge = PrivacySignalBridge()
+        bridge = PrivacySignalBridge(mock_event_bus)
         assert hasattr(bridge, "speakers_detected")
 
-    def test_has_speakers_converted_signal(self, qapp):
+    def test_has_speakers_converted_signal(self, qapp, mock_event_bus):
         """Should have speakers_converted signal."""
         from src.application.privacy.signal_bridge import PrivacySignalBridge
 
-        bridge = PrivacySignalBridge()
+        bridge = PrivacySignalBridge(mock_event_bus)
         assert hasattr(bridge, "speakers_converted")
 
 
 class TestPrivacySignalBridgeContext:
     """Tests for signal bridge context name."""
 
-    def test_context_name_is_privacy(self, qapp):
+    def test_context_name_is_privacy(self, qapp, mock_event_bus):
         """Context name should be 'privacy'."""
         from src.application.privacy.signal_bridge import PrivacySignalBridge
 
-        bridge = PrivacySignalBridge()
+        bridge = PrivacySignalBridge(mock_event_bus)
         assert bridge._get_context_name() == "privacy"
 
 

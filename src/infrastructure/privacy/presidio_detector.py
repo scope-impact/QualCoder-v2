@@ -100,8 +100,17 @@ class PresidioDetector:
         if self._analyzer is None:
             try:
                 from presidio_analyzer import AnalyzerEngine
+                from presidio_analyzer.nlp_engine import NlpEngineProvider
 
-                self._analyzer = AnalyzerEngine()
+                # Configure to use en_core_web_sm (smaller, faster model)
+                configuration = {
+                    "nlp_engine_name": "spacy",
+                    "models": [{"lang_code": "en", "model_name": "en_core_web_sm"}],
+                }
+                provider = NlpEngineProvider(nlp_configuration=configuration)
+                nlp_engine = provider.create_engine()
+
+                self._analyzer = AnalyzerEngine(nlp_engine=nlp_engine)
             except ImportError as e:
                 raise ImportError(
                     "Presidio is not installed. Install with: "
@@ -199,9 +208,7 @@ class PresidioDetector:
 
         return identifiers
 
-    def _find_all_positions(
-        self, text: str, search_text: str
-    ) -> list[tuple[int, int]]:
+    def _find_all_positions(self, text: str, search_text: str) -> list[tuple[int, int]]:
         """Find all positions of search_text in text."""
         positions = []
         start = 0
