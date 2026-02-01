@@ -332,8 +332,8 @@ class AICodingController:
 
     def approve_merge(
         self,
-        source_code_id: int,
-        target_code_id: int,
+        source_code_id: CodeId,
+        target_code_id: CodeId,
     ) -> Result[Code, str]:
         """
         Approve a merge suggestion and merge the codes.
@@ -346,8 +346,8 @@ class AICodingController:
             Success with target Code, or Failure with error message
         """
         # Get codes
-        source_code = self._code_repo.get_by_id(CodeId(value=source_code_id))
-        target_code = self._code_repo.get_by_id(CodeId(value=target_code_id))
+        source_code = self._code_repo.get_by_id(source_code_id)
+        target_code = self._code_repo.get_by_id(target_code_id)
 
         if source_code is None:
             return Failure(f"Source code {source_code_id} not found")
@@ -355,14 +355,14 @@ class AICodingController:
             return Failure(f"Target code {target_code_id} not found")
 
         # Count segments to move
-        source_segments = self._segment_repo.get_by_code(CodeId(value=source_code_id))
+        source_segments = self._segment_repo.get_by_code(source_code_id)
         segments_to_move = len(source_segments)
 
         # Build state and derive event
         state = self._build_suggestion_state()
         result = derive_approve_merge(
-            source_code_id=CodeId(value=source_code_id),
-            target_code_id=CodeId(value=target_code_id),
+            source_code_id=source_code_id,
+            target_code_id=target_code_id,
             segments_to_move=segments_to_move,
             state=state,
         )
@@ -373,17 +373,14 @@ class AICodingController:
         event: MergeSuggestionApproved = result
 
         # Perform the merge: reassign segments and delete source code
-        self._segment_repo.reassign_code(
-            CodeId(value=source_code_id),
-            CodeId(value=target_code_id),
-        )
-        self._code_repo.delete(CodeId(value=source_code_id))
+        self._segment_repo.reassign_code(source_code_id, target_code_id)
+        self._code_repo.delete(source_code_id)
 
         # Remove from pending duplicates
-        key = (source_code_id, target_code_id)
+        key = (source_code_id.value, target_code_id.value)
         self._pending_duplicates.pop(key, None)
         # Also check reverse key
-        key_reverse = (target_code_id, source_code_id)
+        key_reverse = (target_code_id.value, source_code_id.value)
         self._pending_duplicates.pop(key_reverse, None)
 
         # Publish events
@@ -403,8 +400,8 @@ class AICodingController:
 
     def dismiss_merge(
         self,
-        code_a_id: int,
-        code_b_id: int,
+        code_a_id: CodeId,
+        code_b_id: CodeId,
         reason: str | None = None,
     ) -> Result[None, str]:
         """
@@ -421,8 +418,8 @@ class AICodingController:
         # Build state and derive event
         state = self._build_suggestion_state()
         result = derive_dismiss_merge(
-            source_code_id=CodeId(value=code_a_id),
-            target_code_id=CodeId(value=code_b_id),
+            source_code_id=code_a_id,
+            target_code_id=code_b_id,
             reason=reason,
             state=state,
         )
@@ -433,10 +430,10 @@ class AICodingController:
         event: MergeSuggestionDismissed = result
 
         # Remove from pending duplicates
-        key = (code_a_id, code_b_id)
+        key = (code_a_id.value, code_b_id.value)
         self._pending_duplicates.pop(key, None)
         # Also check reverse key
-        key_reverse = (code_b_id, code_a_id)
+        key_reverse = (code_b_id.value, code_a_id.value)
         self._pending_duplicates.pop(key_reverse, None)
 
         # Publish event

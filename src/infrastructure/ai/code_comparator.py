@@ -18,6 +18,7 @@ from src.domain.ai_services.entities import (
     SimilarityScore,
 )
 from src.domain.coding.entities import Code
+from src.domain.shared.types import CodeId
 
 if TYPE_CHECKING:
     from src.infrastructure.ai.config import AIConfig
@@ -138,9 +139,9 @@ class LLMCodeComparator:
 
                 if code_a and code_b:
                     candidate = DuplicateCandidate(
-                        code_a_id=code_a.id,
+                        code_a_id=CodeId(value=code_a.id),
                         code_a_name=code_a.name,
-                        code_b_id=code_b.id,
+                        code_b_id=CodeId(value=code_b.id),
                         code_b_name=code_b.name,
                         similarity=SimilarityScore(comp["similarity"]),
                         rationale=comp.get("rationale", "Semantically similar codes"),
@@ -231,9 +232,9 @@ Return your analysis in the JSON format specified."""
 
             if similarity >= threshold:
                 candidate = DuplicateCandidate(
-                    code_a_id=code_a.id,
+                    code_a_id=CodeId(value=code_a.id),
                     code_a_name=code_a.name,
-                    code_b_id=code_b.id,
+                    code_b_id=CodeId(value=code_b.id),
                     code_b_name=code_b.name,
                     similarity=SimilarityScore(similarity),
                     rationale=f"Names are {int(similarity * 100)}% similar",
@@ -371,14 +372,14 @@ class VectorCodeComparator:
         if not codes:
             return Success(None)
 
-        ids = [str(code.id) for code in codes]
+        ids = [str(code.id.value) for code in codes]
         texts = [self._code_to_text(code) for code in codes]
-        metadata = [{"name": code.name, "code_id": code.id} for code in codes]
+        metadata = [{"name": code.name, "code_id": code.id.value} for code in codes]
 
         result = self._store.add(ids=ids, texts=texts, metadata=metadata)
 
         if isinstance(result, Success):
-            self._indexed_ids.update(code.id for code in codes)
+            self._indexed_ids.update(code.id.value for code in codes)
 
         return result
 
@@ -394,10 +395,10 @@ class VectorCodeComparator:
         Returns:
             Success or Failure with error message
         """
-        current_ids = {code.id for code in codes}
+        current_ids = {code.id.value for code in codes}
 
         # Find codes to add (new codes not yet indexed)
-        to_add = tuple(code for code in codes if code.id not in self._indexed_ids)
+        to_add = tuple(code for code in codes if code.id.value not in self._indexed_ids)
 
         # Find codes to remove (indexed but no longer exist)
         to_remove = self._indexed_ids - current_ids
@@ -415,19 +416,20 @@ class VectorCodeComparator:
 
         return Success(None)
 
-    def remove_code(self, code_id: int) -> Result[None, str]:
+    def remove_code(self, code_id: CodeId | int) -> Result[None, str]:
         """
         Remove a code from the index.
 
         Args:
-            code_id: ID of code to remove
+            code_id: ID of code to remove (CodeId or int)
 
         Returns:
             Success or Failure with error message
         """
-        result = self._store.delete([str(code_id)])
+        id_value = code_id.value if isinstance(code_id, CodeId) else code_id
+        result = self._store.delete([str(id_value)])
         if isinstance(result, Success):
-            self._indexed_ids.discard(code_id)
+            self._indexed_ids.discard(id_value)
         return result
 
     def find_duplicates(
@@ -461,7 +463,9 @@ class VectorCodeComparator:
             result = self._store.query(query_text=text, n_results=10)
 
             if isinstance(result, Failure):
-                logger.warning(f"Query failed for code {code.id}: {result.failure()}")
+                logger.warning(
+                    f"Query failed for code {code.id.value}: {result.failure()}"
+                )
                 continue
 
             similar_items = result.unwrap()
@@ -470,11 +474,11 @@ class VectorCodeComparator:
                 other_id = item["metadata"].get("code_id", int(item["id"]))
 
                 # Skip self-comparison
-                if other_id == code.id:
+                if other_id == code.id.value:
                     continue
 
                 # Skip already seen pairs
-                pair = tuple(sorted([code.id, other_id]))
+                pair = tuple(sorted([code.id.value, other_id]))
                 if pair in seen_pairs:
                     continue
                 seen_pairs.add(pair)
@@ -485,7 +489,9 @@ class VectorCodeComparator:
 
                 if similarity >= threshold:
                     # Find the other code
-                    other_code = next((c for c in codes if c.id == other_id), None)
+                    other_code = next(
+                        (c for c in codes if c.id.value == other_id), None
+                    )
                     other_name = (
                         other_code.name
                         if other_code
@@ -495,7 +501,7 @@ class VectorCodeComparator:
                     candidate = DuplicateCandidate(
                         code_a_id=code.id,
                         code_a_name=code.name,
-                        code_b_id=other_id,
+                        code_b_id=CodeId(value=other_id),
                         code_b_name=other_name,
                         similarity=SimilarityScore(similarity),
                         rationale=f"Semantic similarity: {similarity:.0%}",
