@@ -625,3 +625,128 @@ Tests:
 Full help available: `backlog --help`
 
 <!-- BACKLOG.MD GUIDELINES END -->
+
+---
+
+# E2E Testing Guidelines
+
+## Architecture
+
+QualCoder uses a layered architecture for E2E tests that verifies the full integration stack:
+
+```
+UI Action → Screen → ViewModel → Repository → SQLite DB → ViewModel → Screen (refresh)
+```
+
+## Fixture Hierarchy
+
+```python
+# 1. Database layer - real in-memory SQLite
+@pytest.fixture
+def db_engine():
+    engine = create_engine("sqlite:///:memory:")
+    create_all(engine)  # Creates real schema tables
+    yield engine
+    drop_all(engine)
+
+@pytest.fixture
+def db_connection(db_engine):
+    conn = db_engine.connect()
+    yield conn
+    conn.close()
+
+@pytest.fixture
+def case_repo(db_connection):
+    return SQLiteCaseRepository(db_connection)
+
+# 2. Application layer
+@pytest.fixture
+def event_bus():
+    return EventBus(history_size=100)
+
+@pytest.fixture
+def viewmodel(case_repo, event_bus):
+    return CaseManagerViewModel(case_repo=case_repo, event_bus=event_bus)
+
+# 3. Seed data fixture
+@pytest.fixture
+def seeded_cases(case_repo):
+    case_repo.save(case1)
+    case_repo.save_attribute(CaseId(value=1), attribute)
+    case_repo.link_source(CaseId(value=1), SourceId(value=100))
+    return cases
+
+# 4. Full window with real viewmodel
+@pytest.fixture
+def case_manager_window(qapp, colors, seeded_viewmodel):
+    screen = CaseManagerScreen(viewmodel=seeded_viewmodel, colors=colors)
+    window = QMainWindow()
+    # ... window setup
+    yield {"window": window, "screen": screen, "viewmodel": seeded_viewmodel}
+    window.close()
+```
+
+## Test Pattern
+
+```python
+def test_create_case_persists_to_db(self, window, case_repo):
+    """E2E: Action via UI persists to database."""
+    viewmodel = window["viewmodel"]
+
+    # Action via ViewModel (simulating UI)
+    viewmodel.create_case(name="Test", description="E2E")
+
+    # Verify in Database
+    db_case = case_repo.get_by_name("Test")
+    assert db_case.description == "E2E"
+
+def test_refresh_reloads_from_db(self, window, case_repo, qapp):
+    """E2E: Database changes appear after refresh."""
+    screen = window["screen"]
+
+    # Modify database directly
+    case_repo.save(new_case)
+
+    # Refresh screen
+    screen.refresh()
+    QApplication.processEvents()
+
+    # Verify UI updated
+    assert screen.page._case_table._table.rowCount() == expected_count
+```
+
+## Key Differences: Unit vs E2E
+
+| Aspect | Unit Test | E2E Test |
+|--------|-----------|----------|
+| Database | Mock/None | Real SQLite (in-memory) |
+| Repository | Mock | Real `SQLiteXxxRepository` |
+| ViewModel | Direct test | Connected to repository |
+| Screen | Isolated | Connected to viewmodel |
+| Data | DTOs only | Persisted to database |
+| Mark | `@pytest.mark.unit` | `@pytest.mark.e2e` |
+
+## Running E2E Tests
+
+```bash
+# Run with offscreen Qt platform (required for CI/headless)
+QT_QPA_PLATFORM=offscreen uv run pytest src/presentation/tests/test_case_manager_e2e.py -v
+
+# Run all tests
+QT_QPA_PLATFORM=offscreen make test-all
+```
+
+## Test Organization
+
+- `src/presentation/tests/test_*_e2e.py` - Full E2E tests with database
+- `src/presentation/tests/test_*_screen.py` - Screen unit tests (no database)
+- `src/presentation/viewmodels/tests/` - ViewModel unit tests
+- `src/infrastructure/*/tests/` - Repository integration tests
+
+## Reference Implementation
+
+See `src/presentation/tests/test_case_manager_e2e.py` for a complete example covering:
+- Database fixtures with seeded test data
+- Create/Delete/Update flows with DB verification
+- UI refresh and state management
+- Signal emission and navigation
