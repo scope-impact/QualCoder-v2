@@ -19,6 +19,8 @@ Implements QC-034 Manage Cases:
 Note: Uses fixtures from root conftest.py (qapp, colors) and local fixtures.
 """
 
+from __future__ import annotations
+
 from datetime import UTC, datetime
 
 import pytest
