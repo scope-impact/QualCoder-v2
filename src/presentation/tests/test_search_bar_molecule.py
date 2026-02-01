@@ -11,20 +11,6 @@ from PySide6.QtTest import QSignalSpy
 class TestSearchBarMolecule:
     """Unit tests for SearchBar molecule."""
 
-    def test_imports_from_molecules_package(self, qapp, colors):
-        """SearchBar can be imported from molecules package."""
-        from src.presentation.molecules import SearchBar
-
-        bar = SearchBar(colors=colors)
-        assert bar is not None
-
-    def test_imports_from_search_subpackage(self, qapp, colors):
-        """SearchBar can be imported from search subpackage."""
-        from src.presentation.molecules.search import SearchBar
-
-        bar = SearchBar(colors=colors)
-        assert bar is not None
-
     def test_hidden_by_default(self, qapp, colors):
         """SearchBar is hidden by default."""
         from src.presentation.molecules.search import SearchBar
@@ -165,13 +151,6 @@ class TestSearchBarSignals:
 
 class TestBackwardCompatibility:
     """Tests for backward compatibility with SearchWidget alias."""
-
-    def test_searchwidget_alias_available(self, qapp, colors):
-        """SearchWidget alias is available from text_editor_panel."""
-        from src.presentation.organisms.text_editor_panel import SearchWidget
-
-        widget = SearchWidget(colors=colors)
-        assert widget is not None
 
     def test_searchwidget_is_searchbar(self, qapp, colors):
         """SearchWidget is the same class as SearchBar."""

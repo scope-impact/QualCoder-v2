@@ -19,12 +19,29 @@ from .auto_code_dialog import (
     AutoCodePreview,
 )
 from .color_picker_dialog import ColorPickerDialog
+from .delete_source_dialog import (
+    DeleteSourceDialog,
+    DeleteSourceInfo,
+)
+from .folder_dialog import (
+    FolderDialog,
+    FolderFormData,
+    RenameFolderDialog,
+)
 from .memo_dialog import (
     CodeMemoDialog,
     FileMemoDialog,
     MemoDialog,
     MemosPanel,
     SegmentMemoDialog,
+)
+from .project_dialog import (
+    CreateProjectDialog,
+    OpenProjectDialog,
+)
+from .source_metadata_dialog import (
+    SourceMetadata,
+    SourceMetadataDialog,
 )
 
 __all__ = [
@@ -37,4 +54,13 @@ __all__ = [
     "ColorPickerDialog",
     "AutoCodeDialog",
     "AutoCodePreview",
+    "OpenProjectDialog",
+    "CreateProjectDialog",
+    "DeleteSourceDialog",
+    "DeleteSourceInfo",
+    "FolderDialog",
+    "FolderFormData",
+    "RenameFolderDialog",
+    "SourceMetadata",
+    "SourceMetadataDialog",
 ]

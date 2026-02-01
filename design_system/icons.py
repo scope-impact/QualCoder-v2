@@ -66,8 +66,8 @@ class Icon(QLabel):
         self.setFixedSize(self._size + 4, self._size + 4)
 
         try:
-            icon = qta.icon(self._name, color=self._color)
-            pixmap = icon.pixmap(self._size, self._size)
+            qicon = qta.icon(self._name, color=self._color)
+            pixmap = qicon.pixmap(self._size, self._size)
             self.setPixmap(pixmap)
         except Exception:
             # Show icon name as text if icon not found
@@ -82,8 +82,8 @@ class Icon(QLabel):
         """Update icon color"""
         self._color = color
         try:
-            icon = qta.icon(self._name, color=self._color)
-            pixmap = icon.pixmap(self._size, self._size)
+            qicon = qta.icon(self._name, color=self._color)
+            pixmap = qicon.pixmap(self._size, self._size)
             self.setPixmap(pixmap)
         except Exception:
             self.setStyleSheet(

@@ -95,6 +95,36 @@ class NavigationDTO:
 
 
 @dataclass
+class SourceDTO:
+    """A source file in the project."""
+
+    id: str
+    name: str
+    source_type: str  # text, audio, video, image, pdf
+    status: str = "imported"  # imported, transcribing, ready, in_progress, coded
+    file_size: int = 0
+    code_count: int = 0
+    memo: str | None = None
+    origin: str | None = None
+    cases: list[str] = field(default_factory=list)
+    modified_at: str | None = None
+
+
+@dataclass
+class ProjectSummaryDTO:
+    """Summary statistics for a project."""
+
+    total_sources: int = 0
+    text_count: int = 0
+    audio_count: int = 0
+    video_count: int = 0
+    image_count: int = 0
+    pdf_count: int = 0
+    total_codes: int = 0
+    total_segments: int = 0
+
+
+@dataclass
 class TextCodingDataDTO:
     """
     Complete data bundle for the TextCodingPage.
@@ -113,3 +143,37 @@ class TextCodingDataDTO:
     navigation: NavigationDTO | None = None
     coders: list[str] = field(default_factory=list)
     selected_coder: str | None = None
+
+
+@dataclass
+class CaseAttributeDTO:
+    """A case attribute (demographic or categorical data)."""
+
+    name: str
+    attr_type: str  # text, number, boolean, date
+    value: str | int | float | bool | None = None
+
+
+@dataclass
+class CaseDTO:
+    """A case (participant, site, or other grouping)."""
+
+    id: str
+    name: str
+    description: str | None = None
+    memo: str | None = None
+    attributes: list[CaseAttributeDTO] = field(default_factory=list)
+    source_ids: list[str] = field(default_factory=list)
+    source_count: int = 0
+    created_at: str | None = None
+    updated_at: str | None = None
+
+
+@dataclass
+class CaseSummaryDTO:
+    """Summary statistics for cases."""
+
+    total_cases: int = 0
+    cases_with_sources: int = 0
+    total_attributes: int = 0
+    unique_attribute_names: list[str] = field(default_factory=list)

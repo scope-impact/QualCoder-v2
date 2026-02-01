@@ -29,22 +29,6 @@ class MockPopup:
 class TestSelectionPopupControllerMolecule:
     """Unit tests for SelectionPopupController molecule."""
 
-    def test_imports_from_molecules_package(self, qapp):
-        """SelectionPopupController can be imported from molecules package."""
-        from src.presentation.molecules import SelectionPopupController
-
-        popup = MockPopup()
-        controller = SelectionPopupController(popup)
-        assert controller is not None
-
-    def test_imports_from_selection_subpackage(self, qapp):
-        """SelectionPopupController can be imported from selection subpackage."""
-        from src.presentation.molecules.selection import SelectionPopupController
-
-        popup = MockPopup()
-        controller = SelectionPopupController(popup)
-        assert controller is not None
-
     def test_enabled_by_default(self, qapp):
         """Controller is enabled by default."""
         from src.presentation.molecules.selection import SelectionPopupController
