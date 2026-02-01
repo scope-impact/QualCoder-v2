@@ -111,6 +111,37 @@ case_source = Table(
     Index("idx_case_source", "case_id", "source_id", unique=True),
 )
 
+# References table - stores academic bibliography entries
+references = Table(
+    "references",
+    metadata,
+    Column("id", Integer, primary_key=True),
+    Column("title", String(500), nullable=False),
+    Column("authors", Text, nullable=False),
+    Column("year", Integer),
+    Column("source", String(255)),  # Journal, publisher, etc.
+    Column("doi", String(100)),
+    Column("url", String(500)),
+    Column("memo", Text),
+    Column("owner", String(100)),
+    Column("created_at", DateTime),
+    Column("updated_at", DateTime),
+    Index("idx_references_title", "title"),
+    Index("idx_references_doi", "doi"),
+)
+
+# Reference-Segment association table
+reference_segment = Table(
+    "reference_segment",
+    metadata,
+    Column("id", Integer, primary_key=True),
+    Column("reference_id", Integer, nullable=False),
+    Column("segment_id", Integer, nullable=False),
+    Column("owner", String(100)),
+    Column("date", String(50)),
+    Index("idx_ref_segment", "reference_id", "segment_id", unique=True),
+)
+
 
 def create_all(engine) -> None:
     """

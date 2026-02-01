@@ -67,6 +67,17 @@ class FolderId:
         return cls(value=int(uuid4().int % 1_000_000))
 
 
+@dataclass(frozen=True)
+class ReferenceId:
+    """Typed identifier for Reference entities."""
+
+    value: int
+
+    @classmethod
+    def new(cls) -> ReferenceId:
+        return cls(value=int(uuid4().int % 1_000_000))
+
+
 # ============================================================
 # Result Type (Success | Failure)
 # ============================================================

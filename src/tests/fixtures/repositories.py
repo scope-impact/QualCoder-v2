@@ -18,6 +18,7 @@ from src.infrastructure.projects.settings_repository import (
     SQLiteProjectSettingsRepository,
 )
 from src.infrastructure.projects.source_repository import SQLiteSourceRepository
+from src.infrastructure.references.repositories import SQLiteReferenceRepository
 
 
 @pytest.fixture
@@ -42,3 +43,9 @@ def case_repo(db_connection):
 def folder_repo(db_connection):
     """Create a folder repository connected to the test database."""
     return SQLiteFolderRepository(db_connection)
+
+
+@pytest.fixture
+def ref_repo(db_connection):
+    """Create a reference repository connected to the test database."""
+    return SQLiteReferenceRepository(db_connection)
