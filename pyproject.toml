@@ -25,6 +25,14 @@ design-system = { workspace = true }
 ddd = [
     "returns>=0.22",  # Result/Maybe/IO monads
 ]
+pii = [
+    # PII Detection (QC-040.05)
+    "presidio-analyzer>=2.2.0",
+    "presidio-anonymizer>=2.2.0",
+    "spacy>=3.7.0",
+    # spaCy model for NER (required for PII detection)
+    "en-core-web-sm @ https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-3.8.0/en_core_web_sm-3.8.0-py3-none-any.whl",
+]
 
 [dependency-groups]
 dev = [
@@ -90,6 +98,7 @@ markers = [
     "e2e: end-to-end workflow tests",
     "slow: tests taking more than 1 second",
     "screenshot: tests that capture visual screenshots",
+    "pii: tests requiring presidio and spacy (optional dependency)",
 ]
 filterwarnings = [
     "ignore::DeprecationWarning",
