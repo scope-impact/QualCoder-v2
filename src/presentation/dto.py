@@ -177,3 +177,41 @@ class CaseSummaryDTO:
     cases_with_sources: int = 0
     total_attributes: int = 0
     unique_attribute_names: list[str] = field(default_factory=list)
+
+
+# =============================================================================
+# Settings DTOs
+# =============================================================================
+
+
+@dataclass
+class SettingsDTO:
+    """All user settings for display."""
+
+    theme: str = "light"
+    font_family: str = "Inter"
+    font_size: int = 14
+    language_code: str = "en"
+    language_name: str = "English"
+    backup_enabled: bool = False
+    backup_interval: int = 30
+    backup_max: int = 5
+    backup_path: str | None = None
+    timestamp_format: str = "HH:MM:SS"
+    speaker_format: str = "Speaker {n}"
+
+
+@dataclass
+class LanguageOptionDTO:
+    """Available language option."""
+
+    code: str
+    name: str
+
+
+@dataclass
+class FontFamilyOptionDTO:
+    """Available font family option."""
+
+    family: str
+    display_name: str
