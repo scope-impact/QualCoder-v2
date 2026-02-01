@@ -123,14 +123,9 @@ class CaseManagerPage(QWidget):
         # Content area: either table or empty state
         self._content_stack = QStackedWidget()
 
-        # Empty state
-        self._empty_state = EmptyState(
-            title="No Cases Yet",
-            description="Create your first case to organize your data by participant, site, or other groupings.",
-            primary_action="Create Case",
-            secondary_action="Import Cases",
-            colors=self._colors,
-        )
+        # Empty state (reuses file empty state styling)
+        # TODO: Create CaseEmptyState with case-specific messaging
+        self._empty_state = EmptyState(colors=self._colors)
         self._content_stack.addWidget(self._empty_state)
 
         # Table container
