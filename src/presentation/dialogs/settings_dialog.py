@@ -120,11 +120,7 @@ class SettingsDialog(QDialog):
         content_layout.setContentsMargins(0, 0, 0, 0)
         content_layout.setSpacing(0)
 
-        # Sidebar navigation
-        self._sidebar = self._create_sidebar()
-        content_layout.addWidget(self._sidebar)
-
-        # Content stack
+        # Content stack (created first so sidebar can reference it)
         self._content_stack = QStackedWidget()
         self._content_stack.setStyleSheet(f"""
             QStackedWidget {{
@@ -135,6 +131,10 @@ class SettingsDialog(QDialog):
         self._content_stack.addWidget(self._create_language_section())
         self._content_stack.addWidget(self._create_backup_section())
         self._content_stack.addWidget(self._create_av_coding_section())
+
+        # Sidebar navigation (created after content stack)
+        self._sidebar = self._create_sidebar()
+        content_layout.addWidget(self._sidebar)
         content_layout.addWidget(self._content_stack, 1)
 
         layout.addWidget(content_frame, 1)
