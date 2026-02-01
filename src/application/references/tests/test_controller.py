@@ -13,6 +13,93 @@ from returns.result import Failure, Success
 pytestmark = pytest.mark.integration
 
 
+class TestImportReferencesFromRis:
+    """Tests for import_references_from_ris command."""
+
+    def test_imports_single_reference(self, ref_controller, event_bus):
+        """Should import a single reference from RIS content."""
+        ris_content = """TY  - JOUR
+AU  - Popper, Karl
+TI  - The Logic of Scientific Discovery
+JO  - Philosophy of Science
+PY  - 1959
+ER  - """
+
+        result = ref_controller.import_references_from_ris(ris_content)
+
+        assert isinstance(result, Success)
+        imported = result.unwrap()
+        assert len(imported) == 1
+        assert imported[0].title == "The Logic of Scientific Discovery"
+
+        # Verify persisted
+        refs = ref_controller.get_references()
+        assert len(refs) == 1
+
+    def test_imports_multiple_references(self, ref_controller):
+        """Should import multiple references from RIS content."""
+        ris_content = """TY  - JOUR
+AU  - Smith, John
+TI  - First Article
+PY  - 2020
+ER  -
+TY  - BOOK
+AU  - Doe, Jane
+TI  - Second Book
+PY  - 2021
+ER  - """
+
+        result = ref_controller.import_references_from_ris(ris_content)
+
+        assert isinstance(result, Success)
+        imported = result.unwrap()
+        assert len(imported) == 2
+
+    def test_publishes_events_for_each_import(self, ref_controller, event_bus):
+        """Should publish ReferenceAdded event for each imported reference."""
+        ris_content = """TY  - JOUR
+AU  - Author, One
+TI  - First
+PY  - 2023
+ER  -
+TY  - JOUR
+AU  - Author, Two
+TI  - Second
+PY  - 2023
+ER  - """
+
+        ref_controller.import_references_from_ris(ris_content)
+
+        history = event_bus.get_history()
+        added_events = [e for e in history if "reference_added" in e.event_type]
+        assert len(added_events) == 2
+
+    def test_returns_empty_for_invalid_ris(self, ref_controller):
+        """Should return empty list for invalid RIS content."""
+        result = ref_controller.import_references_from_ris("")
+
+        assert isinstance(result, Success)
+        assert result.unwrap() == []
+
+    def test_skips_invalid_references(self, ref_controller):
+        """Should skip references missing required fields."""
+        ris_content = """TY  - JOUR
+AU  - Author Only
+ER  -
+TY  - JOUR
+AU  - Valid, Author
+TI  - Valid Reference
+PY  - 2023
+ER  - """
+
+        result = ref_controller.import_references_from_ris(ris_content)
+
+        assert isinstance(result, Success)
+        imported = result.unwrap()
+        assert len(imported) == 1
+        assert imported[0].title == "Valid Reference"
+
+
 class TestAddReference:
     """Tests for add_reference command."""
 

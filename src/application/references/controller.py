@@ -129,6 +129,73 @@ class ReferencesControllerImpl:
 
         return Success(reference)
 
+    def import_references_from_ris(self, ris_content: str) -> Result:
+        """
+        Import references from RIS format content.
+
+        Parses the RIS content and creates Reference entities for each
+        valid reference found.
+
+        Args:
+            ris_content: RIS format string content
+
+        Returns:
+            Success(list[Reference]) with imported references
+        """
+        from src.domain.references.services.ris_parser import RisParser
+
+        # Step 1: Parse RIS content
+        parser = RisParser()
+        parsed_refs = parser.parse(ris_content)
+
+        if not parsed_refs:
+            return Success([])
+
+        # Step 2: Import each parsed reference
+        imported: list[Reference] = []
+        for parsed in parsed_refs:
+            # Build state
+            state = ReferenceState(existing_references=tuple(self._references))
+
+            # Derive event
+            result = derive_add_reference(
+                title=parsed.title,
+                authors=parsed.authors,
+                year=parsed.year,
+                doi=parsed.doi,
+                source=parsed.source,
+                url=parsed.url,
+                memo=parsed.memo,
+                state=state,
+            )
+
+            # Skip failures (invalid references)
+            if isinstance(result, Failure):
+                continue
+
+            event: ReferenceAdded = result
+            reference = Reference(
+                id=event.reference_id,
+                title=event.title,
+                authors=event.authors,
+                year=event.year,
+                source=event.source,
+                doi=event.doi,
+                url=event.url,
+                memo=event.memo,
+            )
+
+            # Persist
+            if self._ref_repo:
+                self._ref_repo.save(reference)
+
+            # Update state and publish
+            self._references.append(reference)
+            self._event_bus.publish(event)
+            imported.append(reference)
+
+        return Success(imported)
+
     def update_reference(self, command: UpdateReferenceCommand) -> Result:
         """
         Update an existing reference.
