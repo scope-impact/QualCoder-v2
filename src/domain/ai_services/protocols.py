@@ -23,6 +23,94 @@ if TYPE_CHECKING:
 
 
 # ============================================================
+# Vector Store Protocol
+# ============================================================
+
+
+class VectorStore(Protocol):
+    """
+    Protocol for vector storage and similarity search.
+
+    Abstraction over vector databases (ChromaDB, etc.) for
+    storing embeddings and performing semantic search.
+    """
+
+    def add(
+        self,
+        ids: list[str],
+        texts: list[str],
+        embeddings: list[list[float]] | None = None,
+        metadata: list[dict] | None = None,
+    ) -> Result[None, str]:
+        """
+        Add items to the vector store.
+
+        Args:
+            ids: Unique identifiers for each item
+            texts: Text content for each item
+            embeddings: Pre-computed embeddings (computed if not provided)
+            metadata: Optional metadata for each item
+
+        Returns:
+            Success or Failure with error message
+        """
+        ...
+
+    def query(
+        self,
+        query_text: str | None = None,
+        query_embedding: list[float] | None = None,
+        n_results: int = 10,
+        where: dict | None = None,
+    ) -> Result[list[dict], str]:
+        """
+        Query for similar items.
+
+        Args:
+            query_text: Text to search for (will be embedded)
+            query_embedding: Pre-computed query embedding
+            n_results: Maximum number of results
+            where: Optional metadata filter
+
+        Returns:
+            Success with list of results (id, text, distance, metadata)
+        """
+        ...
+
+    def delete(self, ids: list[str]) -> Result[None, str]:
+        """
+        Delete items by ID.
+
+        Args:
+            ids: IDs of items to delete
+
+        Returns:
+            Success or Failure with error message
+        """
+        ...
+
+    def get(self, ids: list[str]) -> Result[list[dict], str]:
+        """
+        Get items by ID.
+
+        Args:
+            ids: IDs of items to retrieve
+
+        Returns:
+            Success with list of items (id, text, embedding, metadata)
+        """
+        ...
+
+    def count(self) -> int:
+        """Return the number of items in the store."""
+        ...
+
+    def clear(self) -> Result[None, str]:
+        """Remove all items from the store."""
+        ...
+
+
+# ============================================================
 # Embedding Provider Protocol
 # ============================================================
 

@@ -188,6 +188,67 @@ class EmbeddingConfig:
         )
 
 
+@dataclass(frozen=True)
+class VectorStoreConfig:
+    """
+    Configuration for vector store.
+
+    Supports ChromaDB for persistent vector storage and similarity search.
+    """
+
+    # Storage settings
+    persist_directory: str | None = None  # None = in-memory
+    collection_name: str = "qualcoder_codes"
+
+    # Search settings
+    distance_metric: Literal["cosine", "l2", "ip"] = "cosine"
+    default_n_results: int = 10
+
+    # Performance settings
+    batch_size: int = 100  # Items per batch for bulk operations
+
+    @classmethod
+    def for_testing(cls) -> VectorStoreConfig:
+        """Create in-memory configuration for testing."""
+        return cls(
+            persist_directory=None,
+            collection_name="test_collection",
+        )
+
+    @classmethod
+    def for_project(
+        cls, project_path: str, collection: str = "codes"
+    ) -> VectorStoreConfig:
+        """Create configuration for a specific project."""
+        import os
+
+        persist_dir = os.path.join(project_path, ".qualcoder", "vectors")
+        return cls(
+            persist_directory=persist_dir,
+            collection_name=collection,
+        )
+
+    @classmethod
+    def from_env(cls) -> VectorStoreConfig:
+        """
+        Create configuration from environment variables.
+
+        Environment variables:
+            QUALCODER_VECTOR_PERSIST_DIR: Directory for persistent storage
+            QUALCODER_VECTOR_COLLECTION: Collection name
+        """
+        import os
+
+        persist_dir = os.getenv("QUALCODER_VECTOR_PERSIST_DIR")
+        collection = os.getenv("QUALCODER_VECTOR_COLLECTION", "qualcoder_codes")
+
+        return cls(
+            persist_directory=persist_dir,
+            collection_name=collection,
+        )
+
+
 # Default configuration instances
 DEFAULT_CONFIG = AIConfig()
 DEFAULT_EMBEDDING_CONFIG = EmbeddingConfig()
+DEFAULT_VECTOR_STORE_CONFIG = VectorStoreConfig()

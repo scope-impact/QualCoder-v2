@@ -51,6 +51,7 @@ from src.domain.ai_services.protocols import (
     EmbeddingProvider,
     LLMProvider,
     SuggestionRepository,
+    VectorStore,
 )
 
 __all__ = [
@@ -81,4 +82,5 @@ __all__ = [
     "EmbeddingProvider",
     "LLMProvider",
     "SuggestionRepository",
+    "VectorStore",
 ]
