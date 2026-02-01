@@ -724,12 +724,19 @@ class TestStatsRowFiltering:
         """
         screen = case_manager_window["screen"]
 
+        spy = QSignalSpy(screen.page.filter_changed)
+
         # Emit filter signal
         screen.page._stats_row._cards["with_sources"].clicked.emit("with_sources")
         QApplication.processEvents()
 
-        # The screen's filter handler should filter the cases
-        # (implemented in _on_filter_changed)
+        # Verify signal emitted with correct filter type
+        assert spy.count() == 1
+        assert spy.at(0)[0] == "with_sources"
+
+        # Verify card visual state changed (active style applied)
+        card = screen.page._stats_row._cards["with_sources"]
+        assert card._active is True
 
 
 class TestTableSelection:
