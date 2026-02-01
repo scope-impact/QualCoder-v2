@@ -14,7 +14,10 @@ Components:
 """
 
 from src.infrastructure.ai.code_analyzer import LLMCodeAnalyzer
-from src.infrastructure.ai.code_comparator import LLMCodeComparator
+from src.infrastructure.ai.code_comparator import (
+    LLMCodeComparator,
+    VectorCodeComparator,
+)
 from src.infrastructure.ai.config import AIConfig, EmbeddingConfig, VectorStoreConfig
 from src.infrastructure.ai.embedding_provider import (
     MiniLMEmbeddingProvider,
@@ -44,6 +47,7 @@ __all__ = [
     "MockLLMProvider",
     "MockVectorStore",
     "OpenAICompatibleEmbeddingProvider",
+    "VectorCodeComparator",
     "VectorStoreConfig",
     "create_embedding_provider",
     "create_vector_store",

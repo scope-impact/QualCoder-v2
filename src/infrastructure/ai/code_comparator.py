@@ -1,13 +1,14 @@
 """
 AI Infrastructure: Code Comparator Implementation
 
-LLM-powered duplicate detection service that identifies semantically
-similar codes that could be merged.
+Duplicate detection services that identify semantically similar codes.
+Supports both LLM-based and vector-based approaches.
 """
 
 from __future__ import annotations
 
 import difflib
+import logging
 from typing import TYPE_CHECKING
 
 from returns.result import Failure, Result, Success
@@ -20,7 +21,15 @@ from src.domain.coding.entities import Code
 
 if TYPE_CHECKING:
     from src.infrastructure.ai.config import AIConfig
+    from src.infrastructure.ai.embedding_provider import (
+        MiniLMEmbeddingProvider,
+        MockEmbeddingProvider,
+        OpenAICompatibleEmbeddingProvider,
+    )
     from src.infrastructure.ai.llm_provider import AnthropicLLMProvider, MockLLMProvider
+    from src.infrastructure.ai.vector_store import ChromaVectorStore, MockVectorStore
+
+logger = logging.getLogger(__name__)
 
 
 # System prompt for duplicate detection
@@ -311,3 +320,246 @@ class MockCodeComparator:
     def call_count(self) -> int:
         """Get number of times find_duplicates was called."""
         return self._call_count
+
+
+# ============================================================
+# Vector-Based Code Comparator
+# ============================================================
+
+
+class VectorCodeComparator:
+    """
+    Fast duplicate detection using vector embeddings.
+
+    Uses a vector store to find semantically similar codes
+    without expensive LLM calls for every comparison.
+    """
+
+    def __init__(
+        self,
+        vector_store: ChromaVectorStore | MockVectorStore,
+        embedding_provider: (
+            OpenAICompatibleEmbeddingProvider
+            | MiniLMEmbeddingProvider
+            | MockEmbeddingProvider
+        ),
+        similarity_threshold: float = 0.8,
+    ) -> None:
+        """
+        Initialize the vector-based code comparator.
+
+        Args:
+            vector_store: Vector store for code embeddings
+            embedding_provider: Provider for generating embeddings
+            similarity_threshold: Default threshold for duplicate detection
+        """
+        self._store = vector_store
+        self._embedder = embedding_provider
+        self._threshold = similarity_threshold
+        self._indexed_ids: set[int] = set()
+
+    def index_codes(self, codes: tuple[Code, ...]) -> Result[None, str]:
+        """
+        Index all codes in the vector store.
+
+        Args:
+            codes: Codes to index
+
+        Returns:
+            Success or Failure with error message
+        """
+        if not codes:
+            return Success(None)
+
+        ids = [str(code.id) for code in codes]
+        texts = [self._code_to_text(code) for code in codes]
+        metadata = [{"name": code.name, "code_id": code.id} for code in codes]
+
+        result = self._store.add(ids=ids, texts=texts, metadata=metadata)
+
+        if isinstance(result, Success):
+            self._indexed_ids.update(code.id for code in codes)
+
+        return result
+
+    def sync_codes(self, codes: tuple[Code, ...]) -> Result[None, str]:
+        """
+        Sync vector store with current codes.
+
+        Adds new codes and removes deleted ones.
+
+        Args:
+            codes: Current codes to sync
+
+        Returns:
+            Success or Failure with error message
+        """
+        current_ids = {code.id for code in codes}
+
+        # Find codes to add (new codes not yet indexed)
+        to_add = tuple(code for code in codes if code.id not in self._indexed_ids)
+
+        # Find codes to remove (indexed but no longer exist)
+        to_remove = self._indexed_ids - current_ids
+
+        # Remove old codes
+        if to_remove:
+            result = self._store.delete([str(id_) for id_ in to_remove])
+            if isinstance(result, Failure):
+                return result
+            self._indexed_ids -= to_remove
+
+        # Add new codes
+        if to_add:
+            return self.index_codes(to_add)
+
+        return Success(None)
+
+    def remove_code(self, code_id: int) -> Result[None, str]:
+        """
+        Remove a code from the index.
+
+        Args:
+            code_id: ID of code to remove
+
+        Returns:
+            Success or Failure with error message
+        """
+        result = self._store.delete([str(code_id)])
+        if isinstance(result, Success):
+            self._indexed_ids.discard(code_id)
+        return result
+
+    def find_duplicates(
+        self,
+        codes: tuple[Code, ...],
+        threshold: float | None = None,
+    ) -> Result[list[DuplicateCandidate], str]:
+        """
+        Find potentially duplicate codes using vector similarity.
+
+        Args:
+            codes: All codes to compare
+            threshold: Minimum similarity score (uses default if None)
+
+        Returns:
+            Success with list of duplicate candidates, or Failure with error
+        """
+        threshold = threshold or self._threshold
+
+        if len(codes) < 2:
+            return Success([])
+
+        candidates: list[DuplicateCandidate] = []
+        seen_pairs: set[tuple[int, int]] = set()
+
+        # For each code, find similar codes
+        for code in codes:
+            text = self._code_to_text(code)
+
+            # Query for similar codes
+            result = self._store.query(query_text=text, n_results=10)
+
+            if isinstance(result, Failure):
+                logger.warning(f"Query failed for code {code.id}: {result.failure()}")
+                continue
+
+            similar_items = result.unwrap()
+
+            for item in similar_items:
+                other_id = item["metadata"].get("code_id", int(item["id"]))
+
+                # Skip self-comparison
+                if other_id == code.id:
+                    continue
+
+                # Skip already seen pairs
+                pair = tuple(sorted([code.id, other_id]))
+                if pair in seen_pairs:
+                    continue
+                seen_pairs.add(pair)
+
+                # Convert distance to similarity (cosine distance: 0 = identical)
+                distance = item.get("distance", 0.5)
+                similarity = max(0.0, min(1.0, 1.0 - distance))
+
+                if similarity >= threshold:
+                    # Find the other code
+                    other_code = next((c for c in codes if c.id == other_id), None)
+                    other_name = (
+                        other_code.name
+                        if other_code
+                        else item["metadata"].get("name", f"Code {other_id}")
+                    )
+
+                    candidate = DuplicateCandidate(
+                        code_a_id=code.id,
+                        code_a_name=code.name,
+                        code_b_id=other_id,
+                        code_b_name=other_name,
+                        similarity=SimilarityScore(similarity),
+                        rationale=f"Semantic similarity: {similarity:.0%}",
+                        status="pending",
+                    )
+                    candidates.append(candidate)
+
+        # Sort by similarity descending
+        candidates.sort(key=lambda c: c.similarity.value, reverse=True)
+
+        return Success(candidates)
+
+    def calculate_similarity(
+        self,
+        code_a: Code,
+        code_b: Code,
+    ) -> float:
+        """
+        Calculate semantic similarity between two codes.
+
+        Uses cosine similarity of embeddings.
+
+        Args:
+            code_a: First code
+            code_b: Second code
+
+        Returns:
+            Similarity score between 0.0 and 1.0
+        """
+        text_a = self._code_to_text(code_a)
+        text_b = self._code_to_text(code_b)
+
+        # Get embeddings
+        result_a = self._embedder.embed(text_a)
+        result_b = self._embedder.embed(text_b)
+
+        if isinstance(result_a, Failure) or isinstance(result_b, Failure):
+            # Fallback to string similarity
+            return difflib.SequenceMatcher(
+                None, code_a.name.lower(), code_b.name.lower()
+            ).ratio()
+
+        emb_a = result_a.unwrap()
+        emb_b = result_b.unwrap()
+
+        # Calculate cosine similarity
+        return self._cosine_similarity(emb_a, emb_b)
+
+    def _code_to_text(self, code: Code) -> str:
+        """Convert code to text for embedding."""
+        parts = [code.name]
+        if code.memo:
+            parts.append(code.memo)
+        return " - ".join(parts)
+
+    def _cosine_similarity(self, a: list[float], b: list[float]) -> float:
+        """Calculate cosine similarity between two vectors."""
+        dot_product = sum(x * y for x, y in zip(a, b, strict=False))
+        norm_a = sum(x * x for x in a) ** 0.5
+        norm_b = sum(x * x for x in b) ** 0.5
+
+        if norm_a == 0 or norm_b == 0:
+            return 0.0
+
+        similarity = dot_product / (norm_a * norm_b)
+        # Clamp to [0, 1] range (can be negative with certain embeddings)
+        return max(0.0, min(1.0, similarity))
