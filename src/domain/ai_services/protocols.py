@@ -23,6 +23,59 @@ if TYPE_CHECKING:
 
 
 # ============================================================
+# Embedding Provider Protocol
+# ============================================================
+
+
+class EmbeddingProvider(Protocol):
+    """
+    Protocol for text embedding providers.
+
+    Abstraction over different embedding backends (OpenAI-compatible,
+    sentence-transformers, etc.) for semantic similarity operations.
+    """
+
+    def embed(self, text: str) -> Result[list[float], str]:
+        """
+        Generate embedding vector for a single text.
+
+        Args:
+            text: The text to embed
+
+        Returns:
+            Success with embedding vector, or Failure with error message
+        """
+        ...
+
+    def embed_batch(
+        self,
+        texts: list[str],
+    ) -> Result[list[list[float]], str]:
+        """
+        Generate embeddings for multiple texts.
+
+        More efficient than calling embed() multiple times.
+
+        Args:
+            texts: List of texts to embed
+
+        Returns:
+            Success with list of embedding vectors, or Failure with error
+        """
+        ...
+
+    @property
+    def dimensions(self) -> int:
+        """Return the dimensionality of the embedding vectors."""
+        ...
+
+    @property
+    def model_name(self) -> str:
+        """Return the name of the embedding model being used."""
+        ...
+
+
+# ============================================================
 # LLM Provider Protocol
 # ============================================================
 

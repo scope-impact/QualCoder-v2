@@ -99,5 +99,95 @@ class AIConfig:
         )
 
 
-# Default configuration instance
+@dataclass(frozen=True)
+class EmbeddingConfig:
+    """
+    Configuration for embedding providers.
+
+    Supports both OpenAI-compatible APIs (including local servers)
+    and local sentence-transformers models.
+    """
+
+    # Provider selection
+    provider: Literal["openai-compatible", "minilm", "mock"] = "openai-compatible"
+
+    # OpenAI-compatible settings (works with OpenAI, Azure, Ollama, LM Studio, vLLM)
+    api_base_url: str = "http://localhost:11434/v1"  # Ollama default
+    api_key: str | None = None  # Optional for local servers
+    openai_model: str = "nomic-embed-text"  # Good default for Ollama
+
+    # MiniLM local settings (sentence-transformers)
+    minilm_model: str = "all-MiniLM-L6-v2"
+
+    # Request settings
+    timeout_seconds: int = 30
+    batch_size: int = 32  # Max texts per batch request
+
+    @classmethod
+    def for_testing(cls) -> EmbeddingConfig:
+        """Create a configuration suitable for testing (uses mock provider)."""
+        return cls(provider="mock")
+
+    @classmethod
+    def for_openai(
+        cls, api_key: str, model: str = "text-embedding-3-small"
+    ) -> EmbeddingConfig:
+        """Create configuration for OpenAI API."""
+        return cls(
+            provider="openai-compatible",
+            api_base_url="https://api.openai.com/v1",
+            api_key=api_key,
+            openai_model=model,
+        )
+
+    @classmethod
+    def for_ollama(
+        cls,
+        model: str = "nomic-embed-text",
+        base_url: str = "http://localhost:11434/v1",
+    ) -> EmbeddingConfig:
+        """Create configuration for Ollama."""
+        return cls(
+            provider="openai-compatible",
+            api_base_url=base_url,
+            openai_model=model,
+        )
+
+    @classmethod
+    def for_local(cls, model: str = "all-MiniLM-L6-v2") -> EmbeddingConfig:
+        """Create configuration for local sentence-transformers."""
+        return cls(
+            provider="minilm",
+            minilm_model=model,
+        )
+
+    @classmethod
+    def from_env(cls) -> EmbeddingConfig:
+        """
+        Create configuration from environment variables.
+
+        Environment variables:
+            QUALCODER_EMBEDDING_PROVIDER: Provider (openai-compatible, minilm, mock)
+            QUALCODER_EMBEDDING_API_URL: API base URL for OpenAI-compatible
+            QUALCODER_EMBEDDING_API_KEY: API key (optional for local)
+            QUALCODER_EMBEDDING_MODEL: Model name
+        """
+        import os
+
+        provider = os.getenv("QUALCODER_EMBEDDING_PROVIDER", "openai-compatible")
+        api_url = os.getenv("QUALCODER_EMBEDDING_API_URL", "http://localhost:11434/v1")
+        api_key = os.getenv("QUALCODER_EMBEDDING_API_KEY")
+        model = os.getenv("QUALCODER_EMBEDDING_MODEL", "nomic-embed-text")
+
+        return cls(
+            provider=provider,  # type: ignore
+            api_base_url=api_url,
+            api_key=api_key,
+            openai_model=model,
+            minilm_model=model if provider == "minilm" else "all-MiniLM-L6-v2",
+        )
+
+
+# Default configuration instances
 DEFAULT_CONFIG = AIConfig()
+DEFAULT_EMBEDDING_CONFIG = EmbeddingConfig()

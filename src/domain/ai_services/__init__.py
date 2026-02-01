@@ -16,6 +16,7 @@ Events:
     - MergeSuggested/Approved/Dismissed: Merge workflow
 
 Protocols:
+    - EmbeddingProvider: Text embedding interface
     - LLMProvider: Abstract LLM interface
     - CodeAnalyzer: Code suggestion service
     - CodeComparator: Duplicate detection service
@@ -47,6 +48,7 @@ from src.domain.ai_services.protocols import (
     CodeAnalyzer,
     CodeComparator,
     DuplicateRepository,
+    EmbeddingProvider,
     LLMProvider,
     SuggestionRepository,
 )
@@ -76,6 +78,7 @@ __all__ = [
     "CodeAnalyzer",
     "CodeComparator",
     "DuplicateRepository",
+    "EmbeddingProvider",
     "LLMProvider",
     "SuggestionRepository",
 ]
