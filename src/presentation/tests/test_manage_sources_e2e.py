@@ -13,6 +13,8 @@ Comprehensive E2E tests covering all acceptance criteria for source management:
 Uses NoopBackend for media player (works in headless CI).
 """
 
+from __future__ import annotations
+
 from pathlib import Path
 
 import pytest
