@@ -410,3 +410,139 @@ class TestQueries:
         results = ref_controller.search_references("Learning")
 
         assert len(results) == 2
+
+
+class TestExportReferencesToRis:
+    """Tests for export_references_to_ris method."""
+
+    def test_exports_all_references(self, ref_controller):
+        """Should export all references to RIS format."""
+        from src.application.references.commands import AddReferenceCommand
+
+        ref_controller.add_reference(
+            AddReferenceCommand(
+                title="First Article",
+                authors="Smith, John",
+                year=2020,
+            )
+        )
+        ref_controller.add_reference(
+            AddReferenceCommand(
+                title="Second Article",
+                authors="Doe, Jane",
+                year=2021,
+            )
+        )
+
+        result = ref_controller.export_references_to_ris()
+
+        assert isinstance(result, Success)
+        ris_content = result.unwrap()
+        assert "First Article" in ris_content
+        assert "Second Article" in ris_content
+        assert ris_content.count("TY  - JOUR") == 2
+
+    def test_exports_empty_when_no_references(self, ref_controller):
+        """Should return empty string when no references."""
+        result = ref_controller.export_references_to_ris()
+
+        assert isinstance(result, Success)
+        assert result.unwrap() == ""
+
+    def test_exports_filtered_by_segment(self, ref_controller):
+        """Should export only references linked to specific segment."""
+        from src.application.references.commands import (
+            AddReferenceCommand,
+            LinkReferenceToSegmentCommand,
+        )
+
+        # Add two references
+        result1 = ref_controller.add_reference(
+            AddReferenceCommand(title="Linked", authors="Author 1", year=2023)
+        )
+        ref1 = result1.unwrap()
+
+        ref_controller.add_reference(
+            AddReferenceCommand(title="Not Linked", authors="Author 2", year=2023)
+        )
+
+        # Link first reference to segment
+        ref_controller.link_reference_to_segment(
+            LinkReferenceToSegmentCommand(reference_id=ref1.id.value, segment_id=100)
+        )
+
+        # Export filtered by segment
+        result = ref_controller.export_references_to_ris(segment_id=100)
+
+        assert isinstance(result, Success)
+        ris_content = result.unwrap()
+        assert "Linked" in ris_content
+        assert "Not Linked" not in ris_content
+
+
+class TestExportReferencesToBibtex:
+    """Tests for export_references_to_bibtex method."""
+
+    def test_exports_all_references(self, ref_controller):
+        """Should export all references to BibTeX format."""
+        from src.application.references.commands import AddReferenceCommand
+
+        ref_controller.add_reference(
+            AddReferenceCommand(
+                title="First Article",
+                authors="Smith, John",
+                year=2020,
+            )
+        )
+        ref_controller.add_reference(
+            AddReferenceCommand(
+                title="Second Article",
+                authors="Doe, Jane",
+                year=2021,
+            )
+        )
+
+        result = ref_controller.export_references_to_bibtex()
+
+        assert isinstance(result, Success)
+        bibtex_content = result.unwrap()
+        assert "First Article" in bibtex_content
+        assert "Second Article" in bibtex_content
+        assert bibtex_content.count("@article{") == 2
+
+    def test_exports_empty_when_no_references(self, ref_controller):
+        """Should return empty string when no references."""
+        result = ref_controller.export_references_to_bibtex()
+
+        assert isinstance(result, Success)
+        assert result.unwrap() == ""
+
+    def test_exports_filtered_by_segment(self, ref_controller):
+        """Should export only references linked to specific segment."""
+        from src.application.references.commands import (
+            AddReferenceCommand,
+            LinkReferenceToSegmentCommand,
+        )
+
+        # Add two references
+        result1 = ref_controller.add_reference(
+            AddReferenceCommand(title="Linked", authors="Author 1", year=2023)
+        )
+        ref1 = result1.unwrap()
+
+        ref_controller.add_reference(
+            AddReferenceCommand(title="Not Linked", authors="Author 2", year=2023)
+        )
+
+        # Link first reference to segment
+        ref_controller.link_reference_to_segment(
+            LinkReferenceToSegmentCommand(reference_id=ref1.id.value, segment_id=100)
+        )
+
+        # Export filtered by segment
+        result = ref_controller.export_references_to_bibtex(segment_id=100)
+
+        assert isinstance(result, Success)
+        bibtex_content = result.unwrap()
+        assert "Linked" in bibtex_content
+        assert "Not Linked" not in bibtex_content

@@ -196,6 +196,54 @@ class ReferencesControllerImpl:
 
         return Success(imported)
 
+    def export_references_to_ris(self, segment_id: int | None = None) -> Result:
+        """
+        Export references to RIS format.
+
+        Args:
+            segment_id: Optional segment ID to filter references
+
+        Returns:
+            Success(str) with RIS format content
+        """
+        from src.domain.references.services.ris_exporter import RisExporter
+
+        # Get references to export
+        if segment_id is not None:
+            references = self.get_references_for_segment(segment_id)
+        else:
+            references = self._references
+
+        # Export to RIS format
+        exporter = RisExporter()
+        ris_content = exporter.export(references)
+
+        return Success(ris_content)
+
+    def export_references_to_bibtex(self, segment_id: int | None = None) -> Result:
+        """
+        Export references to BibTeX format.
+
+        Args:
+            segment_id: Optional segment ID to filter references
+
+        Returns:
+            Success(str) with BibTeX format content
+        """
+        from src.domain.references.services.bibtex_exporter import BibTexExporter
+
+        # Get references to export
+        if segment_id is not None:
+            references = self.get_references_for_segment(segment_id)
+        else:
+            references = self._references
+
+        # Export to BibTeX format
+        exporter = BibTexExporter()
+        bibtex_content = exporter.export(references)
+
+        return Success(bibtex_content)
+
     def update_reference(self, command: UpdateReferenceCommand) -> Result:
         """
         Update an existing reference.
@@ -328,6 +376,12 @@ class ReferencesControllerImpl:
             self._ref_repo.link_segment(ref_id, segment_id)
             # Refresh to get updated segment_ids
             self._references = self._ref_repo.get_all()
+        else:
+            # Update in-memory state when no repository
+            self._references = [
+                r.with_segment(segment_id.value) if r.id == ref_id else r
+                for r in self._references
+            ]
 
         # Step 5: Publish event
         self._event_bus.publish(event)
@@ -373,6 +427,12 @@ class ReferencesControllerImpl:
             self._ref_repo.unlink_segment(ref_id, segment_id)
             # Refresh to get updated segment_ids
             self._references = self._ref_repo.get_all()
+        else:
+            # Update in-memory state when no repository
+            self._references = [
+                r.without_segment(segment_id.value) if r.id == ref_id else r
+                for r in self._references
+            ]
 
         # Step 5: Publish event
         self._event_bus.publish(event)
