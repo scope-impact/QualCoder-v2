@@ -16,10 +16,12 @@ Structure:
 
 from .case_manager_page import CaseManagerPage
 from .file_manager_page import FileManagerPage
+from .references_page import ReferencesPage
 from .text_coding_page import TextCodingPage
 
 __all__ = [
     "TextCodingPage",
     "FileManagerPage",
     "CaseManagerPage",
+    "ReferencesPage",
 ]

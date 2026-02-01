@@ -177,3 +177,19 @@ class CaseSummaryDTO:
     cases_with_sources: int = 0
     total_attributes: int = 0
     unique_attribute_names: list[str] = field(default_factory=list)
+
+
+@dataclass
+class ReferenceDTO:
+    """A bibliographic reference."""
+
+    id: str
+    title: str
+    authors: str
+    year: int | None = None
+    source: str | None = None  # Journal, publisher, etc.
+    doi: str | None = None
+    url: str | None = None
+    memo: str | None = None
+    segment_count: int = 0
+    segment_ids: list[int] = field(default_factory=list)

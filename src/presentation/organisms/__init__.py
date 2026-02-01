@@ -26,6 +26,7 @@ Organisms in this module:
 from .case_manager_toolbar import CaseManagerToolbar
 from .case_summary_stats import CaseSummaryStats
 from .case_table import CaseTable
+from .references_panel import ReferencesPanel
 from .codes_panel import CodesPanel
 from .coding_toolbar import CodingToolbar
 from .details_panel import DetailsPanel
@@ -65,6 +66,8 @@ __all__ = [
     "CaseTable",
     "CaseManagerToolbar",
     "CaseSummaryStats",
+    # References organisms
+    "ReferencesPanel",
     # Folder organization
     "FolderNode",
     "FolderTree",
