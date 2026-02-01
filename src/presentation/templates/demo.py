@@ -16,6 +16,7 @@ from PySide6.QtWidgets import (
 )
 
 from design_system import RADIUS, SPACING, Button, get_colors
+from src.application.coordinator import get_coordinator
 
 from ..screens import TextCodingScreen
 from .app_shell import AppShell
@@ -202,6 +203,12 @@ def main():
 
     shell.menu_clicked.connect(on_menu_click)
     shell.tab_clicked.connect(on_tab_click)
+
+    # Connect settings button to coordinator
+    coordinator = get_coordinator()
+    shell.settings_clicked.connect(
+        lambda: coordinator.show_settings_dialog(parent=shell, colors=colors)
+    )
 
     shell.show()
     sys.exit(app.exec())
