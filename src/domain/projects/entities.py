@@ -179,6 +179,25 @@ class Source:
             modified_at=datetime.now(UTC),
         )
 
+    def with_name(self, new_name: str) -> Source:
+        """Return new Source with updated name."""
+        return Source(
+            id=self.id,
+            name=new_name,
+            source_type=self.source_type,
+            status=self.status,
+            file_path=self.file_path,
+            file_size=self.file_size,
+            memo=self.memo,
+            origin=self.origin,
+            folder_id=self.folder_id,
+            case_ids=self.case_ids,
+            code_count=self.code_count,
+            fulltext=self.fulltext,
+            created_at=self.created_at,
+            modified_at=datetime.now(UTC),
+        )
+
 
 @dataclass(frozen=True)
 class Folder:

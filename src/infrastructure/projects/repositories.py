@@ -13,13 +13,13 @@ from typing import TYPE_CHECKING
 
 from sqlalchemy import delete, func, select, update
 
+from src.domain.cases.entities import AttributeType, Case, CaseAttribute
 from src.domain.projects.entities import (
     Folder,
     Source,
     SourceStatus,
     SourceType,
 )
-from src.domain.cases.entities import AttributeType, Case, CaseAttribute
 from src.domain.shared.types import CaseId, FolderId, SourceId
 from src.infrastructure.projects.schema import (
     case_attribute,

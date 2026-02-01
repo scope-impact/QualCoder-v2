@@ -34,8 +34,8 @@ from design_system import (
     SPACING,
     TYPOGRAPHY,
     ColorPalette,
-    Icon,
     get_colors,
+    get_qicon,
 )
 
 
@@ -239,7 +239,7 @@ class ImageViewer(QWidget):
         btn = QPushButton()
         btn.setFixedSize(32, 32)
         btn.setToolTip(tooltip)
-        btn.setIcon(Icon(icon_name, size=18, color=self._colors.text_secondary))
+        btn.setIcon(get_qicon(icon_name, color=self._colors.text_secondary))
         btn.setStyleSheet(f"""
             QPushButton {{
                 background-color: transparent;
@@ -341,7 +341,7 @@ class ImageViewer(QWidget):
                 for tag_id, value in exif.items():
                     tag_name = TAGS.get(tag_id, tag_id)
                     # Only include common string-representable values
-                    if isinstance(value, (str, int, float)):
+                    if isinstance(value, str | int | float):
                         exif_data[str(tag_name)] = str(value)
         except (AttributeError, KeyError):
             pass
@@ -369,6 +369,26 @@ class ImageViewer(QWidget):
     def get_current_path(self) -> Path | None:
         """Get the path of the currently displayed image."""
         return self._current_path
+
+    def get_zoom_level(self) -> float:
+        """Get the current zoom level (1.0 = 100%)."""
+        return getattr(self, "_zoom_level", 1.0)
+
+    def fit_to_window(self):
+        """Scale image to fit the viewport (public API)."""
+        self._fit_to_window()
+
+    def show_actual_size(self):
+        """Show image at actual size/100% (public API)."""
+        self._show_actual_size()
+
+    def zoom_in(self):
+        """Zoom in by 25% (public API)."""
+        self._on_zoom_in()
+
+    def zoom_out(self):
+        """Zoom out by 25% (public API)."""
+        self._on_zoom_out()
 
     # Internal methods
 
@@ -443,10 +463,13 @@ class ImageViewer(QWidget):
     # Event handlers
 
     def _on_fit_clicked(self):
-        """Handle fit to window button click."""
-        self._fit_mode = True
-        self._fit_btn.setChecked(True)
-        self._fit_to_window()
+        """Handle fit to window button click - toggles fit mode."""
+        # QPushButton auto-toggles, so use current checked state
+        self._fit_mode = self._fit_btn.isChecked()
+        if self._fit_mode:
+            self._fit_to_window()
+        else:
+            self._show_actual_size()
 
     def _on_actual_size_clicked(self):
         """Handle actual size button click."""

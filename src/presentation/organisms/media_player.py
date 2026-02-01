@@ -33,14 +33,21 @@ from design_system import (
     ColorPalette,
     Icon,
     get_colors,
+    get_qicon,
 )
 
-# Try to import VLC - falls back to Noop if unavailable
+# Try to import VLC and verify it's actually usable
+# python-vlc can import successfully but fail if libvlc is not installed
+HAS_VLC = False
 try:
     import vlc
 
-    HAS_VLC = True
-except (ImportError, OSError):
+    # Test if VLC is actually usable by creating an instance
+    _test_instance = vlc.Instance("--no-xlib", "--quiet")
+    if _test_instance is not None:
+        HAS_VLC = True
+        del _test_instance
+except (ImportError, OSError, NameError, AttributeError):
     HAS_VLC = False
 
 
@@ -423,13 +430,11 @@ class MediaPlayer(QWidget):
 
         bottom_row.addStretch()
 
-        # Volume control
+        # Volume control - add Icon widget directly (Icon is a QLabel)
         volume_icon = Icon(
             "mdi6.volume-high", size=18, color=self._colors.text_secondary
         )
-        volume_label = QLabel()
-        volume_label.setPixmap(volume_icon.pixmap(18, 18))
-        bottom_row.addWidget(volume_label)
+        bottom_row.addWidget(volume_icon)
 
         self._volume_slider = QSlider(Qt.Orientation.Horizontal)
         self._volume_slider.setRange(0, 100)
@@ -454,9 +459,8 @@ class MediaPlayer(QWidget):
         btn.setFixedSize(size, size)
         btn.setToolTip(tooltip)
 
-        icon_size = 24 if primary else 18
         color = self._colors.primary if primary else self._colors.text_secondary
-        btn.setIcon(Icon(icon_name, size=icon_size, color=color))
+        btn.setIcon(get_qicon(icon_name, color=color))
 
         if primary:
             btn.setStyleSheet(f"""
@@ -466,7 +470,7 @@ class MediaPlayer(QWidget):
                     border-radius: {size // 2}px;
                 }}
                 QPushButton:hover {{
-                    background-color: {self._colors.primary_hover};
+                    background-color: {self._colors.primary_dark};
                 }}
             """)
         else:
@@ -578,20 +582,20 @@ class MediaPlayer(QWidget):
         """Start or resume playback."""
         self._backend.play()
         self._update_timer.start()
-        self._play_btn.setIcon(Icon("mdi6.pause", size=24, color="#ffffff"))
+        self._play_btn.setIcon(get_qicon("mdi6.pause", color="#ffffff"))
         self.playback_started.emit()
 
     def pause(self):
         """Pause playback."""
         self._backend.pause()
-        self._play_btn.setIcon(Icon("mdi6.play", size=24, color="#ffffff"))
+        self._play_btn.setIcon(get_qicon("mdi6.play", color="#ffffff"))
 
     def stop(self):
         """Stop playback and reset to beginning."""
         self._backend.stop()
         self._update_timer.stop()
         self._progress_slider.setValue(0)
-        self._play_btn.setIcon(Icon("mdi6.play", size=24, color="#ffffff"))
+        self._play_btn.setIcon(get_qicon("mdi6.play", color="#ffffff"))
         self._update_time_display()
         self.playback_stopped.emit()
 
