@@ -28,6 +28,9 @@ from .coding_toolbar import CodingToolbar
 from .details_panel import DetailsPanel
 from .file_manager_toolbar import EmptyState, FileManagerToolbar
 from .files_panel import FilesPanel
+from .folder_tree import FolderNode, FolderTree
+from .image_viewer import ImageMetadata, ImageViewer
+from .media_player import MediaPlayer
 from .source_stats_row import SourceStatCard, SourceStatsRow
 from .source_table import BulkActionsBar, SourceTable
 from .text_editor_panel import TextEditorPanel
@@ -55,6 +58,13 @@ __all__ = [
     "BulkActionsBar",
     "FileManagerToolbar",
     "EmptyState",
+    # Folder organization
+    "FolderNode",
+    "FolderTree",
+    # Media viewers
+    "ImageViewer",
+    "ImageMetadata",
+    "MediaPlayer",
     # Text highlighting
     "TextHighlighter",
     "CodeSegment",

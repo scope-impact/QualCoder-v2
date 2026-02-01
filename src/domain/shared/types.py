@@ -56,6 +56,17 @@ class CaseId:
         return cls(value=int(uuid4().int % 1_000_000))
 
 
+@dataclass(frozen=True)
+class FolderId:
+    """Unique identifier for a source folder."""
+
+    value: int
+
+    @classmethod
+    def new(cls) -> FolderId:
+        return cls(value=int(uuid4().int % 1_000_000))
+
+
 # ============================================================
 # Result Type (Success | Failure)
 # ============================================================
@@ -144,6 +155,22 @@ class EmptyName:
     message: str = "Code name cannot be empty"
 
 
+@dataclass(frozen=True)
+class FolderNotFound:
+    folder_id: FolderId
+    message: str = ""
+
+    def __post_init__(self):
+        object.__setattr__(
+            self, "message", f"Folder with id {self.folder_id.value} not found"
+        )
+
+
 FailureReason = (
-    DuplicateName | CodeNotFound | SourceNotFound | InvalidPosition | EmptyName
+    DuplicateName
+    | CodeNotFound
+    | SourceNotFound
+    | InvalidPosition
+    | EmptyName
+    | FolderNotFound
 )
