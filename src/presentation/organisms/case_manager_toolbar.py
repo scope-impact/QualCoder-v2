@@ -11,8 +11,7 @@ Implements QC-034 presentation layer:
 from PySide6.QtCore import Signal
 from PySide6.QtWidgets import QFrame, QHBoxLayout
 
-from design_system import ColorPalette, get_colors
-from design_system.components import Button, SearchBox
+from design_system import Button, ColorPalette, SearchBox, get_colors
 from design_system.tokens import SPACING
 
 
@@ -57,29 +56,20 @@ class CaseManagerToolbar(QFrame):
         left_layout.setSpacing(SPACING.sm)
 
         # Create case button (primary)
-        self._create_btn = Button(
-            "Create Case",
-            variant="primary",
-            icon="mdi6.plus",
-            colors=self._colors,
+        self._create_btn = self._create_button(
+            "Create Case", "mdi6.plus", variant="primary"
         )
         left_layout.addWidget(self._create_btn)
 
         # Import button
-        self._import_btn = Button(
-            "Import",
-            variant="outline",
-            icon="mdi6.upload-outline",
-            colors=self._colors,
+        self._import_btn = self._create_button(
+            "Import", "mdi6.upload-outline", variant="outline"
         )
         left_layout.addWidget(self._import_btn)
 
         # Export button
-        self._export_btn = Button(
-            "Export",
-            variant="outline",
-            icon="mdi6.download-outline",
-            colors=self._colors,
+        self._export_btn = self._create_button(
+            "Export", "mdi6.download-outline", variant="outline"
         )
         left_layout.addWidget(self._export_btn)
 
@@ -94,12 +84,34 @@ class CaseManagerToolbar(QFrame):
         self._search.setFixedWidth(250)
         layout.addWidget(self._search)
 
+    def _create_button(
+        self, text: str, icon_name: str, variant: str = "outline"
+    ) -> Button:
+        """Create a button with icon."""
+        btn = Button(text, variant=variant, size="md", colors=self._colors)
+
+        # Add icon using qtawesome
+        try:
+            import qtawesome as qta
+
+            btn.setIcon(qta.icon(icon_name, color=self._get_icon_color(variant)))
+        except ImportError:
+            pass  # No icon if qtawesome not available
+
+        return btn
+
+    def _get_icon_color(self, variant: str) -> str:
+        """Get icon color based on button variant."""
+        if variant == "primary":
+            return self._colors.primary_foreground
+        return self._colors.text_primary
+
     def _connect_signals(self):
         """Connect internal signals."""
         self._create_btn.clicked.connect(self.create_case_clicked.emit)
         self._import_btn.clicked.connect(self.import_clicked.emit)
         self._export_btn.clicked.connect(self.export_clicked.emit)
-        self._search.textChanged.connect(self.search_changed.emit)
+        self._search.text_changed.connect(self.search_changed.emit)
 
     def set_search_text(self, text: str):
         """Set the search text."""

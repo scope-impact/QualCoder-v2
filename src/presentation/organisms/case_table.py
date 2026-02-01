@@ -24,7 +24,7 @@ from PySide6.QtWidgets import (
 )
 
 from design_system import ColorPalette, get_colors
-from design_system.icons import Icon
+from design_system.icons import Icon, get_qicon
 from design_system.tokens import RADIUS, SPACING, TYPOGRAPHY, hex_to_rgba
 
 from ..dto import CaseDTO
@@ -154,7 +154,7 @@ class CaseTable(QFrame):
         header = self._table.horizontalHeader()
         header.setStyleSheet(f"""
             QHeaderView::section {{
-                background-color: {self._colors.surface_muted};
+                background-color: {self._colors.surface_light};
                 color: {self._colors.text_secondary};
                 font-size: {TYPOGRAPHY.text_xs}px;
                 font-weight: {TYPOGRAPHY.weight_medium};
@@ -270,7 +270,9 @@ class CaseTable(QFrame):
 
         # Link source button
         link_btn = QPushButton()
-        link_btn.setIcon(Icon("mdi6.link-variant", size=16, colors=self._colors).icon)
+        link_btn.setIcon(
+            get_qicon("mdi6.link-variant", color=self._colors.text_secondary)
+        )
         link_btn.setToolTip("Link Source")
         link_btn.setFixedSize(28, 28)
         link_btn.setStyleSheet(f"""
@@ -280,7 +282,7 @@ class CaseTable(QFrame):
                 border-radius: {RADIUS.sm}px;
             }}
             QPushButton:hover {{
-                background-color: {self._colors.surface_muted};
+                background-color: {self._colors.surface_light};
             }}
         """)
         link_btn.clicked.connect(lambda: self.link_source.emit(case_id))
@@ -288,7 +290,9 @@ class CaseTable(QFrame):
 
         # Edit button
         edit_btn = QPushButton()
-        edit_btn.setIcon(Icon("mdi6.pencil-outline", size=16, colors=self._colors).icon)
+        edit_btn.setIcon(
+            get_qicon("mdi6.pencil-outline", color=self._colors.text_secondary)
+        )
         edit_btn.setToolTip("Edit Case")
         edit_btn.setFixedSize(28, 28)
         edit_btn.setStyleSheet(f"""
@@ -298,7 +302,7 @@ class CaseTable(QFrame):
                 border-radius: {RADIUS.sm}px;
             }}
             QPushButton:hover {{
-                background-color: {self._colors.surface_muted};
+                background-color: {self._colors.surface_light};
             }}
         """)
         edit_btn.clicked.connect(lambda: self.edit_case.emit(case_id))
