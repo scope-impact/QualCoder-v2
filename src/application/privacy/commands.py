@@ -52,3 +52,33 @@ class RevertAnonymizationCommand:
 
     source_id: int
     session_id: str | None = None  # None = revert latest
+
+
+@dataclass(frozen=True)
+class DetectSpeakersCommand:
+    """Command to detect speakers in source text."""
+
+    source_id: int
+    source_text: str
+    custom_patterns: tuple[str, ...] | None = None
+    include_defaults: bool = True
+
+
+@dataclass(frozen=True)
+class ConvertSpeakersToCodesCommand:
+    """Command to convert speakers to codes and auto-code segments."""
+
+    source_id: int
+    source_text: str
+    speakers: tuple[str, ...] | list[str]
+    category_id: int | None = None
+    custom_patterns: tuple[str, ...] | None = None
+
+
+@dataclass(frozen=True)
+class PreviewSpeakerConversionCommand:
+    """Command to preview speaker-to-code conversion without persisting."""
+
+    source_id: int
+    source_text: str
+    speakers: tuple[str, ...] | list[str]
