@@ -18,10 +18,18 @@ from .auto_code_dialog import (
     AutoCodeDialog,
     AutoCodePreview,
 )
+from .code_suggestion_dialog import (
+    CodeSuggestionDialog,
+    SuggestionCard,
+)
 from .color_picker_dialog import ColorPickerDialog
 from .delete_source_dialog import (
     DeleteSourceDialog,
     DeleteSourceInfo,
+)
+from .duplicate_codes_dialog import (
+    DuplicateCodesDialog,
+    DuplicatePairCard,
 )
 from .folder_dialog import (
     FolderDialog,
@@ -63,4 +71,8 @@ __all__ = [
     "RenameFolderDialog",
     "SourceMetadata",
     "SourceMetadataDialog",
+    "CodeSuggestionDialog",
+    "SuggestionCard",
+    "DuplicateCodesDialog",
+    "DuplicatePairCard",
 ]
