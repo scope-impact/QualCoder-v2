@@ -11,7 +11,7 @@ from typing import TYPE_CHECKING
 
 from sqlalchemy import delete, func, select, update
 
-from src.infrastructure.projects.schema import project_settings
+from src.contexts.projects.infra.schema import project_settings
 
 if TYPE_CHECKING:
     from sqlalchemy import Connection

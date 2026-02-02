@@ -11,7 +11,7 @@ import pytest
 from PIL import Image
 from returns.result import Failure, Success
 
-from src.infrastructure.sources.image_extractor import (
+from src.contexts.sources.infra.image_extractor import (
     ImageExtractionResult,
     ImageExtractor,
 )

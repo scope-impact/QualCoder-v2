@@ -7,15 +7,13 @@ Implementations (SQLite, in-memory, etc.) must conform to these protocols.
 
 from typing import Protocol
 
-from src.contexts.shared.core.types import CategoryId, CodeId, SegmentId, SourceId
-
-# Forward references for entities that will be in their respective contexts
-# These will need to be updated once coding context is migrated
-from src.domain.coding.entities import (
+# Import entities from the coding context
+from src.contexts.coding.core.entities import (
     Category,
     Code,
     TextSegment,
 )
+from src.contexts.shared.core.types import CategoryId, CodeId, SegmentId, SourceId
 
 # ============================================================
 # Coding Context Repositories

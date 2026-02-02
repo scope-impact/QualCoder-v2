@@ -14,6 +14,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
+from src.contexts.projects.core import RecentProject
 from src.contexts.settings.core.entities import (
     AVCodingConfig,
     BackupConfig,
@@ -22,9 +23,6 @@ from src.contexts.settings.core.entities import (
     ThemePreference,
     UserSettings,
 )
-
-# Note: RecentProject is from projects context - will be updated when projects migrates
-from src.domain.projects.entities import RecentProject
 
 
 class UserSettingsRepository:

@@ -6,7 +6,7 @@ TDD RED phase: These tests verify runtime protocol checking.
 from dataclasses import dataclass
 
 from src.agent_context.protocols import MCPToolSchema
-from src.domain.shared.agent import TrustLevel
+from src.contexts.shared.core import TrustLevel
 
 
 class TestMCPToolSchemaProtocol:

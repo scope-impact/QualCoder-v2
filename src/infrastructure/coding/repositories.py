@@ -12,15 +12,15 @@ from typing import TYPE_CHECKING
 
 from sqlalchemy import delete, func, select, update
 
-from src.domain.coding.entities import (
+from src.contexts.coding.core import (
     Category,
     Code,
     Color,
     TextPosition,
     TextSegment,
 )
-from src.domain.shared.types import CategoryId, CodeId, SegmentId, SourceId
-from src.infrastructure.coding.schema import code_cat, code_name, code_text
+from src.contexts.coding.infra import code_cat, code_name, code_text
+from src.contexts.shared.core import CategoryId, CodeId, SegmentId, SourceId
 
 if TYPE_CHECKING:
     from sqlalchemy import Connection

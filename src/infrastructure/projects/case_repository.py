@@ -11,9 +11,17 @@ from typing import TYPE_CHECKING
 
 from sqlalchemy import delete, func, select, update
 
-from src.domain.cases.entities import AttributeType, Case, CaseAttribute
-from src.domain.shared.types import CaseId, SourceId
-from src.infrastructure.projects.schema import case_attribute, case_source, cases
+from src.contexts.cases.core.entities import AttributeType, Case, CaseAttribute
+from src.contexts.cases.infra.schema import (
+    cas_attribute as case_attribute,
+)
+from src.contexts.cases.infra.schema import (
+    cas_case as cases,
+)
+from src.contexts.cases.infra.schema import (
+    cas_source_link as case_source,
+)
+from src.contexts.shared.core.types import CaseId, SourceId
 
 if TYPE_CHECKING:
     from sqlalchemy import Connection

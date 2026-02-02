@@ -27,7 +27,7 @@ class TestUserSettingsRepositoryLoad:
 
     def test_returns_default_settings_when_file_not_exists(self, temp_config_path):
         """Should return default settings when config file doesn't exist."""
-        from src.domain.settings.entities import UserSettings
+        from src.contexts.settings.core import UserSettings
         from src.infrastructure.settings import UserSettingsRepository
 
         repo = UserSettingsRepository(config_path=temp_config_path)
@@ -112,7 +112,7 @@ class TestUserSettingsRepositorySave:
 
     def test_saves_settings_to_file(self, temp_config_path):
         """Should persist settings to JSON file."""
-        from src.domain.settings.entities import (
+        from src.contexts.settings.core import (
             FontPreference,
             ThemePreference,
             UserSettings,
@@ -139,7 +139,7 @@ class TestUserSettingsRepositorySave:
 
     def test_creates_parent_directories(self, temp_config_path):
         """Should create parent directories if they don't exist."""
-        from src.domain.settings.entities import UserSettings
+        from src.contexts.settings.core import UserSettings
         from src.infrastructure.settings import UserSettingsRepository
 
         # Use a nested path
@@ -152,7 +152,7 @@ class TestUserSettingsRepositorySave:
 
     def test_round_trip_preserves_all_settings(self, temp_config_path):
         """Should preserve all settings through save and load."""
-        from src.domain.settings.entities import (
+        from src.contexts.settings.core import (
             AVCodingConfig,
             BackupConfig,
             FontPreference,
@@ -210,7 +210,7 @@ class TestUserSettingsRepositoryTheme:
 
     def test_set_theme(self, temp_config_path):
         """Should persist theme change."""
-        from src.domain.settings.entities import ThemePreference
+        from src.contexts.settings.core import ThemePreference
         from src.infrastructure.settings import UserSettingsRepository
 
         repo = UserSettingsRepository(config_path=temp_config_path)
@@ -237,7 +237,7 @@ class TestUserSettingsRepositoryFont:
 
     def test_set_font(self, temp_config_path):
         """Should persist font change."""
-        from src.domain.settings.entities import FontPreference
+        from src.contexts.settings.core import FontPreference
         from src.infrastructure.settings import UserSettingsRepository
 
         repo = UserSettingsRepository(config_path=temp_config_path)
@@ -264,7 +264,7 @@ class TestUserSettingsRepositoryLanguage:
 
     def test_set_language(self, temp_config_path):
         """Should persist language change."""
-        from src.domain.settings.entities import LanguagePreference
+        from src.contexts.settings.core import LanguagePreference
         from src.infrastructure.settings import UserSettingsRepository
 
         repo = UserSettingsRepository(config_path=temp_config_path)
@@ -292,7 +292,7 @@ class TestUserSettingsRepositoryBackup:
 
     def test_set_backup_config(self, temp_config_path):
         """Should persist backup config change."""
-        from src.domain.settings.entities import BackupConfig
+        from src.contexts.settings.core import BackupConfig
         from src.infrastructure.settings import UserSettingsRepository
 
         repo = UserSettingsRepository(config_path=temp_config_path)
@@ -328,7 +328,7 @@ class TestUserSettingsRepositoryAVCoding:
 
     def test_set_av_coding_config(self, temp_config_path):
         """Should persist AV coding config change."""
-        from src.domain.settings.entities import AVCodingConfig
+        from src.contexts.settings.core import AVCodingConfig
         from src.infrastructure.settings import UserSettingsRepository
 
         repo = UserSettingsRepository(config_path=temp_config_path)
@@ -379,7 +379,7 @@ class TestUserSettingsRepositoryRecentProjects:
         """Should add a new project to recent list."""
         from datetime import UTC, datetime
 
-        from src.domain.projects.entities import RecentProject
+        from src.contexts.projects.core import RecentProject
         from src.infrastructure.settings import UserSettingsRepository
 
         repo = UserSettingsRepository(config_path=temp_config_path)
@@ -401,7 +401,7 @@ class TestUserSettingsRepositoryRecentProjects:
         """Should update existing project when path matches."""
         from datetime import UTC, datetime
 
-        from src.domain.projects.entities import RecentProject
+        from src.contexts.projects.core import RecentProject
         from src.infrastructure.settings import UserSettingsRepository
 
         repo = UserSettingsRepository(config_path=temp_config_path)
@@ -433,7 +433,7 @@ class TestUserSettingsRepositoryRecentProjects:
         """Should keep projects ordered with most recent first."""
         from datetime import UTC, datetime
 
-        from src.domain.projects.entities import RecentProject
+        from src.contexts.projects.core import RecentProject
         from src.infrastructure.settings import UserSettingsRepository
 
         repo = UserSettingsRepository(config_path=temp_config_path)
@@ -471,7 +471,7 @@ class TestUserSettingsRepositoryRecentProjects:
         """Should remove oldest projects when exceeding max limit."""
         from datetime import UTC, datetime, timedelta
 
-        from src.domain.projects.entities import RecentProject
+        from src.contexts.projects.core import RecentProject
         from src.infrastructure.settings import UserSettingsRepository
 
         repo = UserSettingsRepository(config_path=temp_config_path)
@@ -500,7 +500,7 @@ class TestUserSettingsRepositoryRecentProjects:
         """Should remove project matching the given path."""
         from datetime import UTC, datetime
 
-        from src.domain.projects.entities import RecentProject
+        from src.contexts.projects.core import RecentProject
         from src.infrastructure.settings import UserSettingsRepository
 
         repo = UserSettingsRepository(config_path=temp_config_path)
@@ -531,7 +531,7 @@ class TestUserSettingsRepositoryRecentProjects:
         """Should not error when removing non-existent path."""
         from datetime import UTC, datetime
 
-        from src.domain.projects.entities import RecentProject
+        from src.contexts.projects.core import RecentProject
         from src.infrastructure.settings import UserSettingsRepository
 
         repo = UserSettingsRepository(config_path=temp_config_path)
@@ -592,8 +592,8 @@ class TestUserSettingsRepositoryRecentProjects:
         """Should not overwrite other settings when saving recent projects."""
         from datetime import UTC, datetime
 
-        from src.domain.projects.entities import RecentProject
-        from src.domain.settings.entities import ThemePreference
+        from src.contexts.projects.core import RecentProject
+        from src.contexts.settings.core import ThemePreference
         from src.infrastructure.settings import UserSettingsRepository
 
         repo = UserSettingsRepository(config_path=temp_config_path)
@@ -621,7 +621,7 @@ class TestUserSettingsRepositoryRecentProjects:
         """Should preserve recent projects through save and reload."""
         from datetime import UTC, datetime
 
-        from src.domain.projects.entities import RecentProject
+        from src.contexts.projects.core import RecentProject
         from src.infrastructure.settings import UserSettingsRepository
 
         repo = UserSettingsRepository(config_path=temp_config_path)

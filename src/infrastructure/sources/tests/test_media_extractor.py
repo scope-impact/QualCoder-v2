@@ -10,7 +10,7 @@ from pathlib import Path
 import pytest
 from returns.result import Failure, Success
 
-from src.infrastructure.sources.media_extractor import (
+from src.contexts.sources.infra.media_extractor import (
     MediaExtractionResult,
     MediaExtractor,
 )

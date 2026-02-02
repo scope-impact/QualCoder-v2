@@ -14,8 +14,8 @@ from datetime import UTC, datetime
 import pytest
 from returns.result import Failure, Success
 
-from src.domain.cases.entities import AttributeType, Case, CaseAttribute
-from src.domain.shared.types import CaseId, SourceId
+from src.contexts.cases.core.entities import AttributeType, Case, CaseAttribute
+from src.contexts.shared import CaseId, SourceId
 
 # ============================================================
 # Fixtures

@@ -12,14 +12,14 @@ import pytest
 from returns.result import Failure, Success
 
 from src.application.event_bus import EventBus
-from src.domain.projects.entities import (
+from src.contexts.projects.core.entities import (
     Project,
     ProjectId,
     Source,
     SourceStatus,
     SourceType,
 )
-from src.domain.shared.types import SourceId
+from src.contexts.shared import SourceId
 from src.infrastructure.mcp.project_tools import (
     ProjectTools,
     get_project_context_tool,

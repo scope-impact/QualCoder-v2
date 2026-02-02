@@ -11,7 +11,7 @@ from pathlib import Path
 import pytest
 from returns.result import Failure, Success
 
-from src.infrastructure.sources.text_extractor import ExtractionResult, TextExtractor
+from src.contexts.sources.infra.text_extractor import ExtractionResult, TextExtractor
 
 
 @pytest.fixture

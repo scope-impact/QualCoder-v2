@@ -32,7 +32,7 @@ from typing import TYPE_CHECKING, Any
 from returns.result import Failure, Result, Success
 
 if TYPE_CHECKING:
-    from src.infrastructure.projects.case_repository import SQLiteCaseRepository
+    from src.contexts.cases.infra.case_repository import SQLiteCaseRepository
 
 
 # ============================================================
@@ -294,7 +294,7 @@ class CaseTools:
         if case_id is None:
             return Failure("Missing required parameter: case_id")
 
-        from src.domain.shared.types import CaseId
+        from src.contexts.shared import CaseId
 
         case = self._case_repo.get_by_id(CaseId(value=int(case_id)))
         if case is None:
@@ -420,7 +420,7 @@ class CaseTools:
         if len(case_ids) < 2:
             return Failure("Comparison requires at least 2 cases")
 
-        from src.domain.shared.types import CaseId
+        from src.contexts.shared import CaseId
 
         # Fetch all cases
         cases = []

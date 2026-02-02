@@ -12,9 +12,9 @@ from typing import TYPE_CHECKING
 
 from sqlalchemy import delete, func, select, update
 
-from src.domain.projects.entities import Source, SourceStatus, SourceType
-from src.domain.shared.types import FolderId, SourceId
-from src.infrastructure.projects.schema import source
+from src.contexts.projects.core.entities import Source, SourceStatus, SourceType
+from src.contexts.shared.core.types import FolderId, SourceId
+from src.contexts.sources.infra.schema import src_source as source
 
 if TYPE_CHECKING:
     from sqlalchemy import Connection

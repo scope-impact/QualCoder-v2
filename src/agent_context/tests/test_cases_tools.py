@@ -23,7 +23,7 @@ from src.agent_context.schemas.cases_tools import (
     SuggestCaseGroupingsOutput,
     SuggestedGroupOutput,
 )
-from src.domain.shared.agent import TrustLevel
+from src.contexts.shared.core import TrustLevel
 
 
 class TestCasesToolDefinitions:

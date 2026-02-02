@@ -14,8 +14,8 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
-from src.domain.projects.entities import RecentProject
-from src.domain.settings.entities import (
+from src.contexts.projects.core import RecentProject
+from src.contexts.settings.core.entities import (
     AVCodingConfig,
     BackupConfig,
     FontPreference,

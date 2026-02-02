@@ -2,14 +2,14 @@
 
 from __future__ import annotations
 
-from src.domain.coding.entities import (
+from src.contexts.coding.core.entities import (
     Category,
     Code,
     Color,
     TextPosition,
     TextSegment,
 )
-from src.domain.shared.types import CategoryId, CodeId, SegmentId, SourceId
+from src.contexts.shared.core.types import CategoryId, CodeId, SegmentId, SourceId
 
 
 class TestSQLiteCodeRepository:

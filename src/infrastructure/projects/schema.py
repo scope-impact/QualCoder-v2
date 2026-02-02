@@ -42,14 +42,14 @@ project_settings = prj_settings
 # DEPRECATED: Legacy table references
 # These are kept for backward compatibility but should not be used.
 # Import from the appropriate context schema instead:
-# - Sources: src.infrastructure.sources.schema (src_source, src_folder)
-# - Cases: src.infrastructure.cases.schema (cas_case, cas_attribute, cas_source_link)
+# - Sources: src.contexts.sources.infra.schema (src_source, src_folder)
+# - Cases: src.contexts.cases.infra.schema (cas_case, cas_attribute, cas_source_link)
 # ============================================================
 
 # Import from sources context for backward compatibility
 try:
-    from src.infrastructure.sources.schema import src_folder as folder
-    from src.infrastructure.sources.schema import src_source as source
+    from src.contexts.sources.infra.schema import src_folder as folder
+    from src.contexts.sources.infra.schema import src_source as source
 except ImportError:
     # During initial import, sources may not exist yet
     folder = None
@@ -57,9 +57,9 @@ except ImportError:
 
 # Import from cases context for backward compatibility
 try:
-    from src.infrastructure.cases.schema import cas_attribute as case_attribute
-    from src.infrastructure.cases.schema import cas_case as cases
-    from src.infrastructure.cases.schema import cas_source_link as case_source
+    from src.contexts.cases.infra.schema import cas_attribute as case_attribute
+    from src.contexts.cases.infra.schema import cas_case as cases
+    from src.contexts.cases.infra.schema import cas_source_link as case_source
 except ImportError:
     # During initial import, cases may not exist yet
     cases = None
@@ -101,9 +101,9 @@ def create_all_contexts(engine) -> None:
     Args:
         engine: SQLAlchemy engine instance
     """
-    from src.infrastructure.cases import schema as cases_schema
-    from src.infrastructure.coding import schema as coding_schema
-    from src.infrastructure.sources import schema as sources_schema
+    from src.contexts.cases.infra import schema as cases_schema
+    from src.contexts.coding.infra import schema as coding_schema
+    from src.contexts.sources.infra import schema as sources_schema
 
     # Create tables in dependency order
     metadata.create_all(engine)  # Projects context
@@ -119,9 +119,9 @@ def drop_all_contexts(engine) -> None:
     Args:
         engine: SQLAlchemy engine instance
     """
-    from src.infrastructure.cases import schema as cases_schema
-    from src.infrastructure.coding import schema as coding_schema
-    from src.infrastructure.sources import schema as sources_schema
+    from src.contexts.cases.infra import schema as cases_schema
+    from src.contexts.coding.infra import schema as coding_schema
+    from src.contexts.sources.infra import schema as sources_schema
 
     # Drop in reverse order of dependencies
     cases_schema.metadata.drop_all(engine)
