@@ -836,9 +836,8 @@ class TestSourceManagementIntegration:
         Critical test: Verify sources persist in database after close/reopen.
         This ensures import actually saves to SQLite, not just in-memory.
 
-        Note: fulltext and code_count are NOT persisted by source_repo:
-        - fulltext is stored separately (in source_text table per QualCoder schema)
-        - code_count is computed from coding relationships
+        Verifies: name, source_type, memo, origin, and fulltext all persist.
+        Note: code_count is computed from coding relationships, not persisted.
         """
         from returns.result import Success
 
@@ -848,7 +847,7 @@ class TestSourceManagementIntegration:
 
         project_path = tmp_path / "persist_test.qda"
 
-        with allure.step("Step 1: Create project and import source"):
+        with allure.step("Step 1: Create project and import source with content"):
             reset_app_context()
             ctx = create_app_context()
             ctx.start()
@@ -861,6 +860,7 @@ class TestSourceManagementIntegration:
                 id=SourceId(1),
                 name="persisted_doc.txt",
                 source_type=SourceType.TEXT,
+                fulltext="This is the document content that should persist.",
                 memo="Test memo for persistence",
                 origin="test_import",
             )
@@ -879,7 +879,7 @@ class TestSourceManagementIntegration:
             open_result = ctx2.open_project(str(project_path))
             assert isinstance(open_result, Success)
 
-        with allure.step("Step 4: Verify source metadata persisted"):
+        with allure.step("Step 4: Verify source and content persisted"):
             # Source should be loaded from database
             assert len(ctx2.state.sources) == 1
             persisted_source = list(ctx2.state.sources)[0]
@@ -887,6 +887,10 @@ class TestSourceManagementIntegration:
             assert persisted_source.source_type == SourceType.TEXT
             assert persisted_source.memo == "Test memo for persistence"
             assert persisted_source.origin == "test_import"
+            assert (
+                persisted_source.fulltext
+                == "This is the document content that should persist."
+            )
 
         with allure.step("Cleanup"):
             ctx2.close_project()
