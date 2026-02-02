@@ -305,8 +305,10 @@ class QualCoderApp:
         self._shell.tab_clicked.connect(self._on_tab_click)
 
         # Load and apply saved settings at startup
-        # (AppShell.open_settings_dialog is already connected internally for live updates)
         self._shell.load_and_apply_settings(self._ctx.settings_repo)
+
+        # Connect settings button to open dialog with live updates
+        self._shell.settings_clicked.connect(self._shell.open_settings_dialog)
 
         # Connect file manager navigation to coding screen
         self._screens["files"].navigate_to_coding.connect(self._on_navigate_to_coding)

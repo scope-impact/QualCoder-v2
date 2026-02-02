@@ -586,8 +586,8 @@ class AppShell(QMainWindow):
         self._tab_bar.tab_clicked.connect(self.tab_clicked.emit)
         self._menu_bar.settings_clicked.connect(self.settings_clicked.emit)
 
-        # Connect settings button to open dialog with live updates
-        self._menu_bar.settings_clicked.connect(self.open_settings_dialog)
+        # Note: Dialog opening is handled externally via settings_clicked signal
+        # (see main.py which connects to open_settings_dialog after setup)
 
         # Window controls
         self._title_bar.close_clicked.connect(self.close)
