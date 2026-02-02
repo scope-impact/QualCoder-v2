@@ -14,12 +14,22 @@ Architecture (per SKILL.md - calls use cases directly):
     User Action → ViewModel → Use Cases → Domain → Events
                       ↓                              ↓
                     Repo (queries)          SignalBridge → UI Update
+                                                     ↓
+                                            ViewModel signals → Screen
 """
 
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from PySide6.QtCore import QObject, Signal
+
+from src.application.cases.signal_bridge import (
+    CaseAttributePayload,
+    CasePayload,
+    CasesSignalBridge,
+    SourceLinkPayload,
+)
 from src.application.cases.usecases import (
     create_case,
     link_source_to_case,
@@ -57,7 +67,7 @@ if TYPE_CHECKING:
         def delete_attribute(self, case_id: CaseId, attr_name: str) -> bool: ...
 
 
-class CaseManagerViewModel:
+class CaseManagerViewModel(QObject):
     """
     ViewModel for the Case Manager screen.
 
@@ -66,14 +76,25 @@ class CaseManagerViewModel:
     - Handle user actions by calling use cases directly
     - Provide filtering and search capabilities (via repo)
     - Track selection state
+    - React to domain events via SignalBridge
 
     Follows SKILL.md pattern:
     - Queries → Direct to repo (CQRS)
     - Commands → Use cases
+    - Events → SignalBridge → ViewModel signals → Screen
 
-    This is a pure Python class (no Qt dependency) so it can be
-    tested without a Qt event loop.
+    Signals:
+        cases_changed: Emitted when case list changes (create/delete)
+        case_updated: Emitted when a case is updated (payload: CaseDTO)
+        summary_changed: Emitted when summary statistics change
+        error_occurred: Emitted on errors (payload: str)
     """
+
+    # Signals for UI updates
+    cases_changed = Signal()  # Emitted when case list changes
+    case_updated = Signal(object)  # CaseDTO
+    summary_changed = Signal()  # Emitted when summary changes
+    error_occurred = Signal(str)  # Error message
 
     def __init__(
         self,
@@ -81,6 +102,8 @@ class CaseManagerViewModel:
         state: ProjectState,
         event_bus: EventBus,
         cases_ctx: CasesContext | None = None,
+        signal_bridge: CasesSignalBridge | None = None,
+        parent: QObject | None = None,
     ) -> None:
         """
         Initialize the ViewModel with direct dependencies.
@@ -90,15 +113,91 @@ class CaseManagerViewModel:
             state: Project state cache
             event_bus: Event bus for publishing events
             cases_ctx: Cases context (for backward compatibility with use cases)
+            signal_bridge: Signal bridge for reactive updates (optional)
+            parent: Qt parent object
         """
+        super().__init__(parent)
         self._case_repo = case_repo
         self._state = state
         self._event_bus = event_bus
-        # Use provided context or create minimal one from repo
         self._cases_ctx = cases_ctx
+        self._signal_bridge = signal_bridge
 
         # Selection state
         self._selected_case_id: int | None = None
+
+        # Connect to signal bridge if provided
+        if self._signal_bridge is not None:
+            self._connect_signals()
+
+    def _connect_signals(self) -> None:
+        """Connect to CasesSignalBridge signals for reactive updates."""
+        if self._signal_bridge is None:
+            return
+
+        # Case lifecycle
+        self._signal_bridge.case_created.connect(self._on_case_created)
+        self._signal_bridge.case_updated.connect(self._on_case_updated)
+        self._signal_bridge.case_removed.connect(self._on_case_removed)
+
+        # Attributes
+        self._signal_bridge.attribute_set.connect(self._on_attribute_set)
+        self._signal_bridge.attribute_removed.connect(self._on_attribute_removed)
+
+        # Source links
+        self._signal_bridge.source_linked.connect(self._on_source_linked)
+        self._signal_bridge.source_unlinked.connect(self._on_source_unlinked)
+
+    # =========================================================================
+    # Signal Bridge Handlers - React to domain events
+    # =========================================================================
+
+    def _on_case_created(self, _payload: CasePayload) -> None:
+        """Handle case created event."""
+        self.cases_changed.emit()
+        self.summary_changed.emit()
+
+    def _on_case_updated(self, payload: CasePayload) -> None:
+        """Handle case updated event."""
+        case_dto = self.get_case(payload.case_id)
+        if case_dto:
+            self.case_updated.emit(case_dto)
+
+    def _on_case_removed(self, payload: CasePayload) -> None:
+        """Handle case removed event."""
+        # Clear selection if deleted case was selected
+        if self._selected_case_id == payload.case_id:
+            self._selected_case_id = None
+        self.cases_changed.emit()
+        self.summary_changed.emit()
+
+    def _on_attribute_set(self, payload: CaseAttributePayload) -> None:
+        """Handle attribute set event."""
+        case_dto = self.get_case(payload.case_id)
+        if case_dto:
+            self.case_updated.emit(case_dto)
+        self.summary_changed.emit()
+
+    def _on_attribute_removed(self, payload: CaseAttributePayload) -> None:
+        """Handle attribute removed event."""
+        case_dto = self.get_case(payload.case_id)
+        if case_dto:
+            self.case_updated.emit(case_dto)
+        self.summary_changed.emit()
+
+    def _on_source_linked(self, payload: SourceLinkPayload) -> None:
+        """Handle source linked event."""
+        case_dto = self.get_case(payload.case_id)
+        if case_dto:
+            self.case_updated.emit(case_dto)
+        self.summary_changed.emit()
+
+    def _on_source_unlinked(self, payload: SourceLinkPayload) -> None:
+        """Handle source unlinked event."""
+        case_dto = self.get_case(payload.case_id)
+        if case_dto:
+            self.case_updated.emit(case_dto)
+        self.summary_changed.emit()
 
     # =========================================================================
     # Load Data (AC #4) - Queries go direct to repo (CQRS)
