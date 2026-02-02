@@ -586,6 +586,9 @@ class AppShell(QMainWindow):
         self._tab_bar.tab_clicked.connect(self.tab_clicked.emit)
         self._menu_bar.settings_clicked.connect(self.settings_clicked.emit)
 
+        # Connect settings button to open dialog with live updates
+        self._menu_bar.settings_clicked.connect(self.open_settings_dialog)
+
         # Window controls
         self._title_bar.close_clicked.connect(self.close)
         self._title_bar.minimize_clicked.connect(self.showMinimized)
@@ -699,6 +702,7 @@ class AppShell(QMainWindow):
         Args:
             settings_repo: UserSettingsRepository instance
         """
+        self._settings_repo = settings_repo
         settings = settings_repo.load()
 
         # Apply theme (only if not system - system theme handled separately)
@@ -707,6 +711,58 @@ class AppShell(QMainWindow):
 
         # Apply font
         self.apply_font(settings.font.family, settings.font.size)
+
+    def open_settings_dialog(self, colors: ColorPalette | None = None) -> None:
+        """
+        Open the settings dialog and wire up live UI updates.
+
+        This method:
+        1. Creates the SettingsDialog with proper viewmodel
+        2. Connects settings_changed signal to apply theme/font changes live
+        3. Shows the dialog modally
+
+        Args:
+            colors: Optional color palette for dialog theming
+        """
+        from src.presentation.dialogs.settings_dialog import SettingsDialog
+        from src.presentation.services.settings_service import SettingsService
+        from src.presentation.viewmodels import SettingsViewModel
+
+        # Use stored settings repo or create default
+        if not hasattr(self, "_settings_repo") or self._settings_repo is None:
+            from src.contexts.settings.infra import UserSettingsRepository
+
+            self._settings_repo = UserSettingsRepository()
+
+        settings_service = SettingsService(self._settings_repo)
+        viewmodel = SettingsViewModel(settings_provider=settings_service)
+
+        dialog = SettingsDialog(
+            viewmodel=viewmodel,
+            colors=colors or self._colors,
+            parent=self,
+        )
+
+        # Wire up live UI updates when settings change
+        def on_settings_changed():
+            settings = self._settings_repo.load()
+            # Apply theme if changed
+            if (
+                settings.theme.name in ("light", "dark")
+                and settings.theme.name != self._get_current_theme()
+            ):
+                self.apply_theme(settings.theme.name)
+            # Apply font
+            self.apply_font(settings.font.family, settings.font.size)
+
+        dialog.settings_changed.connect(on_settings_changed)
+        dialog.exec()
+
+    def _get_current_theme(self) -> str:
+        """Get current theme name from design system."""
+        from design_system.tokens import _current_theme
+
+        return _current_theme
 
     def _refresh_ui(self) -> None:
         """Refresh all UI components with current colors."""

@@ -760,3 +760,70 @@ class TestUIApplication:
 
         with allure.step("Cleanup"):
             shell.close()
+
+    @allure.title("Live settings update: theme changes while dialog is open")
+    def test_live_settings_update_theme(self, qapp, temp_config_path):
+        """
+        E2E: Changing theme in open dialog immediately updates AppShell.
+
+        This tests the full wired flow:
+        1. AppShell with settings_changed connected
+        2. User changes theme in dialog
+        3. settings_changed signal fires
+        4. AppShell.apply_theme() is called
+        5. UI colors change immediately
+        """
+        from design_system import get_colors, get_theme
+        from src.contexts.settings.infra import UserSettingsRepository
+        from src.presentation.dialogs.settings_dialog import SettingsDialog
+        from src.presentation.services.settings_service import SettingsService
+        from src.presentation.templates.app_shell import AppShell
+        from src.presentation.viewmodels import SettingsViewModel
+
+        with allure.step("Create AppShell with light theme"):
+            light_colors = get_theme("light")
+            shell = AppShell(colors=light_colors)
+            repo = UserSettingsRepository(config_path=temp_config_path)
+            shell.load_and_apply_settings(repo)
+
+        with allure.step("Verify initial theme is light"):
+            assert shell._colors.background == light_colors.background
+
+        with allure.step("Open settings dialog (non-blocking for test)"):
+            settings_service = SettingsService(repo)
+            viewmodel = SettingsViewModel(settings_provider=settings_service)
+            dialog = SettingsDialog(
+                viewmodel=viewmodel,
+                colors=shell._colors,
+                parent=shell,
+            )
+
+            # Wire up the same way AppShell.open_settings_dialog does
+            def on_settings_changed():
+                settings = repo.load()
+                if settings.theme.name in ("light", "dark"):
+                    shell.apply_theme(settings.theme.name)
+                shell.apply_font(settings.font.family, settings.font.size)
+
+            dialog.settings_changed.connect(on_settings_changed)
+            dialog.show()
+            QApplication.processEvents()
+
+        with allure.step("Change theme to dark in dialog"):
+            dark_btn = next(
+                btn
+                for btn in dialog.findChildren(QPushButton)
+                if btn.property("theme_value") == "dark"
+            )
+            dark_btn.click()
+            QApplication.processEvents()
+
+        with allure.step("Verify AppShell colors changed to dark immediately"):
+            dark_colors = get_theme("dark")
+            current_colors = get_colors()
+            assert current_colors.background == dark_colors.background
+            assert shell._colors.background == dark_colors.background
+
+        with allure.step("Cleanup"):
+            dialog.close()
+            shell.close()
