@@ -50,6 +50,7 @@ from design_system import (
     Icon,
     TitleBar,
     get_colors,
+    set_theme,
 )
 
 # QualCoder-specific menu items
@@ -585,6 +586,9 @@ class AppShell(QMainWindow):
         self._tab_bar.tab_clicked.connect(self.tab_clicked.emit)
         self._menu_bar.settings_clicked.connect(self.settings_clicked.emit)
 
+        # Note: Dialog opening is handled externally via settings_clicked signal
+        # (see main.py which connects to open_settings_dialog after setup)
+
         # Window controls
         self._title_bar.close_clicked.connect(self.close)
         self._title_bar.minimize_clicked.connect(self.showMinimized)
@@ -650,6 +654,133 @@ class AppShell(QMainWindow):
     def set_active_tab(self, tab_id: str):
         """Set active tab"""
         self._tab_bar.set_active(tab_id)
+
+    # --- Settings Application ---
+
+    def apply_theme(self, theme_name: str) -> None:
+        """
+        Apply theme to the entire application UI.
+
+        This changes the design system's global theme and refreshes
+        all widgets to use the new color palette.
+
+        Args:
+            theme_name: Theme name ('light' or 'dark')
+        """
+        # Update global design system theme
+        set_theme(theme_name)
+
+        # Get new colors
+        self._colors = get_colors()
+
+        # Rebuild UI with new colors
+        self._refresh_ui()
+
+    def apply_font(self, family: str, size: int) -> None:
+        """
+        Apply font settings to the application.
+
+        Args:
+            family: Font family name
+            size: Font size in pixels
+        """
+        from PySide6.QtGui import QFont
+        from PySide6.QtWidgets import QApplication
+
+        app = QApplication.instance()
+        if app:
+            font = QFont(family, size)
+            app.setFont(font)
+
+    def load_and_apply_settings(self, settings_repo) -> None:
+        """
+        Load settings from repository and apply to UI.
+
+        This should be called at application startup to restore
+        saved user preferences.
+
+        Args:
+            settings_repo: UserSettingsRepository instance
+        """
+        self._settings_repo = settings_repo
+        settings = settings_repo.load()
+
+        # Apply theme (only if not system - system theme handled separately)
+        if settings.theme.name in ("light", "dark"):
+            self.apply_theme(settings.theme.name)
+
+        # Apply font
+        self.apply_font(settings.font.family, settings.font.size)
+
+    def open_settings_dialog(self, colors: ColorPalette | None = None) -> None:
+        """
+        Open the settings dialog and wire up live UI updates.
+
+        This method:
+        1. Creates the SettingsDialog with proper viewmodel
+        2. Connects settings_changed signal to apply theme/font changes live
+        3. Shows the dialog modally
+
+        Args:
+            colors: Optional color palette for dialog theming
+        """
+        from src.presentation.dialogs.settings_dialog import SettingsDialog
+        from src.presentation.services.settings_service import SettingsService
+        from src.presentation.viewmodels import SettingsViewModel
+
+        # Use stored settings repo or create default
+        if not hasattr(self, "_settings_repo") or self._settings_repo is None:
+            from src.contexts.settings.infra import UserSettingsRepository
+
+            self._settings_repo = UserSettingsRepository()
+
+        settings_service = SettingsService(self._settings_repo)
+        viewmodel = SettingsViewModel(settings_provider=settings_service)
+
+        dialog = SettingsDialog(
+            viewmodel=viewmodel,
+            colors=colors or self._colors,
+            parent=self,
+        )
+
+        # Wire up live UI updates when settings change
+        def on_settings_changed():
+            settings = self._settings_repo.load()
+            # Apply theme if changed
+            if (
+                settings.theme.name in ("light", "dark")
+                and settings.theme.name != self._get_current_theme()
+            ):
+                self.apply_theme(settings.theme.name)
+            # Apply font
+            self.apply_font(settings.font.family, settings.font.size)
+
+        dialog.settings_changed.connect(on_settings_changed)
+        dialog.exec()
+
+    def _get_current_theme(self) -> str:
+        """Get current theme name from design system."""
+        from design_system.tokens import _current_theme
+
+        return _current_theme
+
+    def _refresh_ui(self) -> None:
+        """Refresh all UI components with current colors."""
+        # Rebuild components with new colors
+        central = self.centralWidget()
+
+        # Remove old layout
+        old_layout = central.layout()
+        if old_layout:
+            # Clear all widgets
+            while old_layout.count():
+                item = old_layout.takeAt(0)
+                widget = item.widget()
+                if widget:
+                    widget.deleteLater()
+
+        # Rebuild UI
+        self._setup_ui()
 
     # --- Accessors ---
 
