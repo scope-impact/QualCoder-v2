@@ -9,7 +9,7 @@ Detailed conventions are in `.claude/skills/`:
 | `developer` | Code style, patterns, testing, E2E | Writing Python code, tests |
 | `backlog` | Task management with DDD structure | Creating/editing tasks |
 | `c4-architecture` | System architecture diagrams | Understanding codebase structure |
-| `sub-agents` | Layer-specific Claude sub-agents | Complex multi-layer features, parallel development |
+| `sub-agents` | Domain & layer-specific Claude sub-agents | Complex features, domain-focused or cross-cutting work |
 
 ---
 
@@ -99,7 +99,24 @@ docs: update CLAUDE.md
 
 ## Sub-Agents Architecture
 
-For complex multi-layer features, use specialized sub-agents from `.claude/agents/`:
+For complex features, use specialized sub-agents from `.claude/agents/`:
+
+### Domain-Specific Agents (Recommended)
+
+Full vertical slice experts for each bounded context:
+
+| Agent | Bounded Context | Use For |
+|-------|-----------------|---------|
+| `coding-context-agent` | coding | Code/category/segment features across all layers |
+| `cases-context-agent` | cases | Case/attribute features across all layers |
+| `projects-context-agent` | projects | Project/source/folder features across all layers |
+| `analysis-context-agent` | analysis | Query/report/chart features (planned) |
+| `ai-assistant-context-agent` | ai-assistant | LLM/suggestion/summary features (planned) |
+| `journals-context-agent` | journals | Journal/memo/annotation features (planned) |
+
+### Layer-Specific Agents
+
+For cross-cutting concerns or pattern-focused work:
 
 | Agent | Layer | Scope |
 |-------|-------|-------|

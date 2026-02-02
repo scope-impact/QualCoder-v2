@@ -25,16 +25,98 @@ A comprehensive plan for using Claude Code sub-agents across QualCoder v2's DDD 
 
 ## Overview
 
-QualCoder v2 uses a **functional Domain-Driven Design (fDDD)** architecture with clear layer separation. Each layer has distinct responsibilities and can be developed independently. Claude Code sub-agents enable:
+QualCoder v2 uses a **functional Domain-Driven Design (fDDD)** architecture with clear layer separation. Sub-agents are organized in two complementary approaches:
 
-1. **Isolated Context** - Each layer gets dedicated context window (no pollution)
-2. **Specialized Tools** - Agents only access tools relevant to their layer
-3. **Parallel Work** - Multiple layers can be developed simultaneously
-4. **Domain Expertise** - Custom prompts encode layer-specific patterns
+1. **Domain-Specific Agents** (Recommended) - Full vertical slice experts for each bounded context
+2. **Layer-Specific Agents** - Horizontal specialists for cross-cutting layer work
+
+### When to Use Which
+
+| Scenario | Agent Type | Rationale |
+|----------|------------|-----------|
+| Implement feature in coding context | `coding-context-agent` | Understands full stack for that domain |
+| Add new entity + UI for cases | `cases-context-agent` | Knows cases domain top to bottom |
+| Fix repository pattern across contexts | `repository-agent` | Specialized in that layer pattern |
+| Create new design system atom | `design-system-agent` | Focused on atomic UI components |
+| Work on planned AI features | `ai-assistant-context-agent` | Knows AI integration architecture |
+
+### Benefits of Domain-Specific Agents
+
+1. **Unified Context** - Agent understands entities, events, repositories, controllers, and UI for one domain
+2. **Reduced Fragmentation** - No need to coordinate between multiple layer agents
+3. **Better Decision Making** - Agent can make architectural decisions with full context
+4. **Faster Iteration** - Single agent handles changes across all layers
 
 ---
 
-## Architecture Layers & Sub-Agents
+## Domain-Specific Agents (Recommended)
+
+Domain-specific agents understand the **full vertical slice** of a bounded context - from domain entities through infrastructure, application, and presentation layers.
+
+```
+┌────────────────────────────────────────────────────────────────────────────┐
+│                        MAIN ORCHESTRATOR (Claude)                          │
+│                     Analyzes task, delegates to domain agents              │
+└─────────────┬──────────────┬──────────────┬──────────────┬─────────────────┘
+              │              │              │              │
+              ▼              ▼              ▼              ▼
+┌──────────────────┐ ┌──────────────────┐ ┌──────────────────┐ ┌──────────────────┐
+│ coding-context   │ │ cases-context    │ │ projects-context │ │ analysis-context │
+│     agent        │ │     agent        │ │      agent       │ │      agent       │
+├──────────────────┤ ├──────────────────┤ ├──────────────────┤ ├──────────────────┤
+│ • Code entities  │ │ • Case entities  │ │ • Project/Source │ │ • Query entities │
+│ • Coding repos   │ │ • Case repos     │ │ • Folder repos   │ │ • Report repos   │
+│ • CodingCtrl     │ │ • CaseCtrl       │ │ • ProjectCtrl    │ │ • AnalysisCtrl   │
+│ • Coding UI      │ │ • Case UI        │ │ • FileManager UI │ │ • Analysis UI    │
+└──────────────────┘ └──────────────────┘ └──────────────────┘ └──────────────────┘
+
+┌──────────────────┐ ┌──────────────────┐
+│ ai-assistant     │ │ journals-context │
+│ context-agent    │ │      agent       │
+├──────────────────┤ ├──────────────────┤
+│ • LLM services   │ │ • Journal/Memo   │
+│ • Suggestions    │ │ • Entry repos    │
+│ • Auto-coding    │ │ • JournalsCtrl   │
+│ • Chat UI        │ │ • Journals UI    │
+└──────────────────┘ └──────────────────┘
+```
+
+### Domain Agent Reference
+
+| Agent | Bounded Context | Key Entities | Status |
+|-------|-----------------|--------------|--------|
+| `coding-context-agent` | coding | Code, Category, Segment | Production |
+| `cases-context-agent` | cases | Case, CaseAttribute | Production |
+| `projects-context-agent` | projects | Project, Source, Folder | Production |
+| `analysis-context-agent` | analysis | Query, Report, Chart | Planned |
+| `ai-assistant-context-agent` | ai-assistant | Suggestion, Summary, Theme | Planned |
+| `journals-context-agent` | journals | Journal, Entry, Memo | Planned |
+
+### Example: Feature in Coding Context
+
+```bash
+# User request: "Add a 'favorite' flag to codes"
+
+# Claude delegates to single domain agent:
+coding-context-agent:
+  1. Add `is_favorite: bool` to Code entity
+  2. Add CodeFavoriteToggled event
+  3. Update derive_toggle_favorite
+  4. Add column to schema + migration
+  5. Update repository _to_entity mapping
+  6. Add controller toggle_favorite method
+  7. Update signal bridge with favorite_toggled signal
+  8. Add favorite icon to CodesPanel
+  9. Wire up ViewModel
+```
+
+All in one agent with full context - no coordination overhead.
+
+---
+
+## Layer-Specific Agents
+
+For cross-cutting concerns or when working on patterns that span multiple contexts, use layer-specific agents.
 
 ```
 ┌────────────────────────────────────────────────────────────────────────────┐
@@ -512,6 +594,15 @@ Sub-agents are configured in `.claude/agents/` directory:
 
 ```
 .claude/agents/
+├── # Domain-Specific Agents (Recommended)
+├── coding-context-agent.md
+├── cases-context-agent.md
+├── projects-context-agent.md
+├── analysis-context-agent.md
+├── ai-assistant-context-agent.md
+├── journals-context-agent.md
+│
+├── # Layer-Specific Agents
 ├── domain-agent.md
 ├── infrastructure-agent.md
 ├── repository-agent.md
@@ -595,6 +686,19 @@ Sub-agents are configured in `.claude/agents/` directory:
 ---
 
 ## Quick Reference
+
+### Domain-Specific Agents (Recommended)
+
+| Agent | Bounded Context | Scope | Use For |
+|-------|-----------------|-------|---------|
+| `coding-context-agent` | coding | All coding layers | Code/category/segment features |
+| `cases-context-agent` | cases | All cases layers | Case/attribute features |
+| `projects-context-agent` | projects | All projects layers | Project/source/folder features |
+| `analysis-context-agent` | analysis | All analysis layers | Query/report/chart features |
+| `ai-assistant-context-agent` | ai-assistant | All AI layers | LLM/suggestion/summary features |
+| `journals-context-agent` | journals | All journals layers | Journal/memo/annotation features |
+
+### Layer-Specific Agents
 
 | Layer | Agent | Scope | Key Pattern |
 |-------|-------|-------|-------------|
