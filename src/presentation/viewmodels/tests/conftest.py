@@ -25,7 +25,12 @@ def project_event_bus() -> EventBus:
 
 @pytest.fixture
 def coordinator(project_event_bus: EventBus, connection):
-    """Create an ApplicationCoordinator for testing."""
+    """Create an ApplicationCoordinator for testing.
+
+    NOTE: Uses ApplicationCoordinator (not CoordinatorAdapter) because
+    tests need access to internal properties like ._state and .coding_context
+    that are not part of the adapter interface.
+    """
     from src.application.contexts import (
         CasesContext,
         CodingContext,

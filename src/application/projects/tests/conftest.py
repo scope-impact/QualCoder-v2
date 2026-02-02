@@ -30,7 +30,12 @@ def event_bus() -> EventBus:
 
 @pytest.fixture
 def coordinator(event_bus: EventBus, db_connection):  # noqa: F811
-    """Create an ApplicationCoordinator for testing."""
+    """Create an ApplicationCoordinator for testing.
+
+    NOTE: This uses ApplicationCoordinator (not CoordinatorAdapter) because
+    the navigation tests specifically test coordinator features like
+    .navigation property that are not part of the adapter interface.
+    """
     from src.application.contexts import (
         CasesContext,
         CodingContext,

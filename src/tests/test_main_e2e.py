@@ -19,15 +19,20 @@ pytestmark = pytest.mark.e2e
 @pytest.fixture
 def app_instance(qapp, colors):
     """Create a QualCoderApp instance for testing."""
-    from src.application.coordinator import get_coordinator, reset_coordinator
-    from src.main import QualCoderApp
+    from src.application.app_context import get_app_context, reset_app_context
+    from src.application.navigation.service import NavigationService
+    from src.main import CoordinatorAdapter, QualCoderApp
+    from src.presentation.services import DialogService
 
-    reset_coordinator()
+    reset_app_context()
 
     app = QualCoderApp.__new__(QualCoderApp)
     app._app = qapp
     app._colors = colors
-    app._coordinator = get_coordinator()
+    app._ctx = get_app_context()
+    app._dialog_service = DialogService(app._ctx)
+    app._navigation_service = NavigationService(app._ctx)
+    app._coordinator_adapter = CoordinatorAdapter(app._ctx)
     app._shell = None
     app._screens = {}
     app._current_project_path = None
@@ -36,8 +41,8 @@ def app_instance(qapp, colors):
 
     if app._shell:
         app._shell.close()
-    app._coordinator.stop()
-    reset_coordinator()
+    app._ctx.stop()
+    reset_app_context()
 
 
 class TestAppStartup:
@@ -108,7 +113,7 @@ class TestSettingsIntegration:
         QApplication.processEvents()
 
         dialogs_opened = []
-        original_show = app_instance._coordinator.show_settings_dialog
+        original_show = app_instance._dialog_service.show_settings_dialog
 
         def mock_show(*args, **kwargs):
             kwargs["blocking"] = False
@@ -116,7 +121,7 @@ class TestSettingsIntegration:
             dialogs_opened.append(dialog)
             return dialog
 
-        app_instance._coordinator.show_settings_dialog = mock_show
+        app_instance._dialog_service.show_settings_dialog = mock_show
         settings_btn = app_instance._shell.findChild(QPushButton, "settings_button")
         settings_btn.click()
         QApplication.processEvents()
@@ -201,7 +206,7 @@ class TestFullUserJourney:
             app_instance._shell.show()
             QApplication.processEvents()
 
-            dialog = app_instance._coordinator.show_settings_dialog(
+            dialog = app_instance._dialog_service.show_settings_dialog(
                 parent=app_instance._shell,
                 colors=app_instance._colors,
                 config_path=config_path,
@@ -220,7 +225,7 @@ class TestFullUserJourney:
 
             dialog.close()
 
-            from src.infrastructure.settings import UserSettingsRepository
+            from src.contexts.settings.infra import UserSettingsRepository
 
             repo = UserSettingsRepository(config_path=config_path)
             settings = repo.load()
