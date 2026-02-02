@@ -2,6 +2,7 @@
 
 from src.contexts.shared.core.agent import AgentSession, TrustLevel
 from src.contexts.shared.core.failure_events import AnyFailureEvent, FailureEvent
+from src.contexts.shared.core.operation_result import OperationResult
 from src.contexts.shared.core.types import (
     CaseId,
     CategoryId,
@@ -68,6 +69,8 @@ __all__ = [
     # Failure events
     "FailureEvent",
     "AnyFailureEvent",
+    # Operation result
+    "OperationResult",
     # Agent types
     "AgentSession",
     "TrustLevel",

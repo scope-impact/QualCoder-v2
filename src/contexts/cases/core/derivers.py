@@ -210,7 +210,7 @@ def derive_create_case(
     if not is_case_name_unique(name, list(state.existing_cases)):
         return Failure(DuplicateCaseName(name=name))
 
-    return CaseCreated(
+    return CaseCreated.create(
         name=name.strip(),
         description=description,
         memo=memo,
@@ -258,7 +258,7 @@ def derive_update_case(
     ):
         return Failure(DuplicateCaseName(name=name))
 
-    return CaseUpdated(
+    return CaseUpdated.create(
         case_id=case_id,
         name=name.strip(),
         description=description,
@@ -287,7 +287,7 @@ def derive_remove_case(
     if not case_exists:
         return Failure(CaseNotFound(case_id=case_id))
 
-    return CaseRemoved(case_id=case_id)
+    return CaseRemoved.create(case_id=case_id)
 
 
 def derive_set_case_attribute(
@@ -329,7 +329,7 @@ def derive_set_case_attribute(
     if not is_valid_attribute_value(attr_value, attr_type):
         return Failure(InvalidAttributeValue(attr_name=attr_name, attr_type=attr_type))
 
-    return CaseAttributeSet(
+    return CaseAttributeSet.create(
         case_id=case_id,
         attr_name=attr_name.strip(),
         attr_type=attr_type.lower(),
@@ -364,7 +364,7 @@ def derive_link_source_to_case(
     if source_id.value in case.source_ids:
         return Failure(SourceAlreadyLinked(case_id=case_id, source_id=source_id.value))
 
-    return SourceLinkedToCase(
+    return SourceLinkedToCase.create(
         case_id=case_id,
         source_id=source_id.value,
     )
@@ -397,7 +397,7 @@ def derive_unlink_source_from_case(
     if source_id.value not in case.source_ids:
         return Failure(SourceNotLinked(case_id=case_id, source_id=source_id.value))
 
-    return SourceUnlinkedFromCase(
+    return SourceUnlinkedFromCase.create(
         case_id=case_id,
         source_id=source_id.value,
     )
