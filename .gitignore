@@ -85,3 +85,4 @@ dmypy.json
 # Logs
 *.log
 *.png
+design_system/assets/screenshots/
