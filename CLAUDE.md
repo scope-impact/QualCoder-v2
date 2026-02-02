@@ -9,6 +9,7 @@ Detailed conventions are in `.claude/skills/`:
 | `developer` | Code style, patterns, testing, E2E | Writing Python code, tests |
 | `backlog` | Task management with DDD structure | Creating/editing tasks |
 | `c4-architecture` | System architecture diagrams | Understanding codebase structure |
+| `sub-agents` | Layer-specific Claude sub-agents | Complex multi-layer features, parallel development |
 
 ---
 
@@ -93,3 +94,25 @@ fix(coding): resolve segment overlap detection
 test(cases): add e2e tests for case manager
 docs: update CLAUDE.md
 ```
+
+---
+
+## Sub-Agents Architecture
+
+For complex multi-layer features, use specialized sub-agents from `.claude/agents/`:
+
+| Agent | Layer | Scope |
+|-------|-------|-------|
+| `domain-agent` | Domain | Pure functions, entities, events, derivers |
+| `infrastructure-agent` | Infrastructure | Repositories, schemas, external services |
+| `repository-agent` | Infrastructure | Repository implementations specifically |
+| `controller-agent` | Application | 5-step pattern controllers |
+| `signal-bridge-agent` | Application | Event → Qt signal translation |
+| `design-system-agent` | Presentation | Design tokens, atoms |
+| `molecule-agent` | Presentation | Small composite widgets (2-5 atoms) |
+| `organism-agent` | Presentation | Business-logic UI components |
+| `page-agent` | Presentation | Organism compositions with layouts |
+| `screen-agent` | Presentation | Page + ViewModel integration |
+| `viewmodel-agent` | Presentation | UI ↔ Application binding |
+
+See `.claude/skills/sub-agents/SKILL.md` for full orchestration patterns.
