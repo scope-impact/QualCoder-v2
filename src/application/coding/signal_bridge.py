@@ -22,7 +22,7 @@ from PySide6.QtCore import Signal
 
 from src.application.signal_bridge.base import BaseSignalBridge
 from src.application.signal_bridge.protocols import EventConverter
-from src.domain.coding.events import (
+from src.contexts.coding.core.events import (
     CategoryCreated,
     CategoryDeleted,
     CategoryRenamed,

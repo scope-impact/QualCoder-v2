@@ -245,3 +245,189 @@ class TestCanCreateProjectInvariants:
             )
             is False
         )
+
+
+class TestFolderNameInvariants:
+    """Tests for folder name validation."""
+
+    def test_valid_folder_name_accepts_normal_string(self):
+        """Normal alphanumeric names should be valid."""
+        from src.domain.projects.invariants import is_valid_folder_name
+
+        assert is_valid_folder_name("Interviews") is True
+        assert is_valid_folder_name("Phase 1") is True
+        assert is_valid_folder_name("2023-Data") is True
+
+    def test_valid_folder_name_rejects_empty_string(self):
+        """Empty string should be invalid."""
+        from src.domain.projects.invariants import is_valid_folder_name
+
+        assert is_valid_folder_name("") is False
+
+    def test_valid_folder_name_rejects_whitespace_only(self):
+        """Whitespace-only strings should be invalid."""
+        from src.domain.projects.invariants import is_valid_folder_name
+
+        assert is_valid_folder_name("   ") is False
+        assert is_valid_folder_name("\t\n") is False
+
+    def test_valid_folder_name_rejects_special_chars(self):
+        """Folder names with path separators should be invalid."""
+        from src.domain.projects.invariants import is_valid_folder_name
+
+        assert is_valid_folder_name("folder/name") is False
+        assert is_valid_folder_name("folder\\name") is False
+        assert is_valid_folder_name("/root") is False
+
+
+class TestFolderNameUniqueInvariants:
+    """Tests for folder name uniqueness."""
+
+    def test_folder_name_unique_in_empty_list(self):
+        """Any name is unique when no folders exist."""
+        from src.domain.projects.invariants import is_folder_name_unique
+
+        assert is_folder_name_unique("Interviews", None, ()) is True
+
+    def test_folder_name_unique_at_same_level(self):
+        """Duplicate names at the same level should be detected."""
+        from src.domain.projects.entities import Folder
+        from src.domain.projects.invariants import is_folder_name_unique
+        from src.domain.shared.types import FolderId
+
+        existing = (
+            Folder(id=FolderId(value=1), name="Interviews", parent_id=None),
+            Folder(id=FolderId(value=2), name="Documents", parent_id=None),
+        )
+
+        assert is_folder_name_unique("Data", None, existing) is True
+        assert is_folder_name_unique("Interviews", None, existing) is False
+        assert is_folder_name_unique("interviews", None, existing) is False
+
+    def test_folder_name_unique_at_different_level(self):
+        """Same name at different parent level should be allowed."""
+        from src.domain.projects.entities import Folder
+        from src.domain.projects.invariants import is_folder_name_unique
+        from src.domain.shared.types import FolderId
+
+        parent1 = FolderId(value=1)
+        parent2 = FolderId(value=2)
+
+        existing = (
+            Folder(id=FolderId(value=10), name="Data", parent_id=parent1),
+            Folder(id=FolderId(value=11), name="Other", parent_id=parent2),
+        )
+
+        # "Data" already exists under parent1, should be rejected
+        assert is_folder_name_unique("Data", parent1, existing) is False
+
+        # "Data" doesn't exist under parent2, should be allowed
+        assert is_folder_name_unique("Data", parent2, existing) is True
+
+
+class TestFolderEmptyInvariants:
+    """Tests for folder empty check."""
+
+    def test_folder_empty_when_no_sources(self):
+        """Folder with no sources should be considered empty."""
+        from src.domain.projects.invariants import is_folder_empty
+        from src.domain.shared.types import FolderId
+
+        folder_id = FolderId(value=1)
+        assert is_folder_empty(folder_id, ()) is True
+
+    def test_folder_not_empty_when_has_sources(self):
+        """Folder with sources should not be considered empty."""
+        from src.domain.projects.entities import Source, SourceStatus, SourceType
+        from src.domain.projects.invariants import is_folder_empty
+        from src.domain.shared.types import FolderId, SourceId
+
+        folder_id = FolderId(value=1)
+        sources = (
+            Source(
+                id=SourceId(value=1),
+                name="interview.txt",
+                source_type=SourceType.TEXT,
+                status=SourceStatus.IMPORTED,
+                folder_id=folder_id,
+            ),
+        )
+
+        assert is_folder_empty(folder_id, sources) is False
+
+    def test_folder_empty_when_sources_in_other_folders(self):
+        """Sources in other folders should not affect empty check."""
+        from src.domain.projects.entities import Source, SourceStatus, SourceType
+        from src.domain.projects.invariants import is_folder_empty
+        from src.domain.shared.types import FolderId, SourceId
+
+        folder_id = FolderId(value=1)
+        other_folder = FolderId(value=2)
+
+        sources = (
+            Source(
+                id=SourceId(value=1),
+                name="interview.txt",
+                source_type=SourceType.TEXT,
+                status=SourceStatus.IMPORTED,
+                folder_id=other_folder,
+            ),
+        )
+
+        assert is_folder_empty(folder_id, sources) is True
+
+
+class TestFolderCycleInvariants:
+    """Tests for folder cycle detection."""
+
+    def test_would_create_cycle_moving_to_unrelated_folder(self):
+        """Moving folder to unrelated folder should not create cycle."""
+        from src.domain.projects.entities import Folder
+        from src.domain.projects.invariants import would_create_cycle
+        from src.domain.shared.types import FolderId
+
+        folder1 = FolderId(value=1)
+        folder2 = FolderId(value=2)
+
+        folders = (
+            Folder(id=folder1, name="A", parent_id=None),
+            Folder(id=folder2, name="B", parent_id=None),
+        )
+
+        # Moving folder1 under folder2 is safe
+        assert would_create_cycle(folder1, folder2, folders) is False
+
+    def test_would_create_cycle_moving_to_child(self):
+        """Moving folder to its own child should create cycle."""
+        from src.domain.projects.entities import Folder
+        from src.domain.projects.invariants import would_create_cycle
+        from src.domain.shared.types import FolderId
+
+        parent = FolderId(value=1)
+        child = FolderId(value=2)
+        grandchild = FolderId(value=3)
+
+        folders = (
+            Folder(id=parent, name="Parent", parent_id=None),
+            Folder(id=child, name="Child", parent_id=parent),
+            Folder(id=grandchild, name="Grandchild", parent_id=child),
+        )
+
+        # Moving parent under child would create cycle
+        assert would_create_cycle(parent, child, folders) is True
+
+        # Moving parent under grandchild would also create cycle
+        assert would_create_cycle(parent, grandchild, folders) is True
+
+    def test_would_create_cycle_moving_to_self(self):
+        """Moving folder to itself should create cycle."""
+        from src.domain.projects.entities import Folder
+        from src.domain.projects.invariants import would_create_cycle
+        from src.domain.shared.types import FolderId
+
+        folder_id = FolderId(value=1)
+
+        folders = (Folder(id=folder_id, name="Folder", parent_id=None),)
+
+        # Moving folder to itself is invalid
+        assert would_create_cycle(folder_id, folder_id, folders) is True

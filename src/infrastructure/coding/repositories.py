@@ -117,7 +117,11 @@ class SQLiteCodeRepository:
         return result.scalar() > 0
 
     def _row_to_code(self, row) -> Code:
-        """Convert a database row to a Code entity."""
+        """
+        Map database row to domain Code entity.
+
+        This mapper enforces invariants via the Code constructor.
+        """
         return Code(
             id=CodeId(value=row.cid),
             name=row.name,
@@ -129,6 +133,22 @@ class SQLiteCodeRepository:
             if row.date
             else datetime.now(UTC),
         )
+
+    def _to_code_data(self, code: Code) -> dict:
+        """
+        Map domain Code entity to database format.
+
+        Returns a dict suitable for SQLAlchemy insert/update.
+        """
+        return {
+            "cid": code.id.value,
+            "name": code.name,
+            "color": code.color.to_hex(),
+            "memo": code.memo,
+            "catid": code.category_id.value if code.category_id else None,
+            "owner": code.owner,
+            "date": code.created_at.isoformat(),
+        }
 
 
 class SQLiteCategoryRepository:
@@ -215,7 +235,11 @@ class SQLiteCategoryRepository:
         return result.scalar() > 0
 
     def _row_to_category(self, row) -> Category:
-        """Convert a database row to a Category entity."""
+        """
+        Map database row to domain Category entity.
+
+        This mapper enforces invariants via the Category constructor.
+        """
         return Category(
             id=CategoryId(value=row.catid),
             name=row.name,
@@ -226,6 +250,21 @@ class SQLiteCategoryRepository:
             if row.date
             else datetime.now(UTC),
         )
+
+    def _to_category_data(self, category: Category) -> dict:
+        """
+        Map domain Category entity to database format.
+
+        Returns a dict suitable for SQLAlchemy insert/update.
+        """
+        return {
+            "catid": category.id.value,
+            "name": category.name,
+            "supercatid": category.parent_id.value if category.parent_id else None,
+            "memo": category.memo,
+            "owner": category.owner,
+            "date": category.created_at.isoformat(),
+        }
 
 
 class SQLiteSegmentRepository:
@@ -335,9 +374,23 @@ class SQLiteSegmentRepository:
         self._conn.commit()
         return count
 
+    def delete_by_source(self, source_id: SourceId) -> int:
+        """Delete all segments for a source, returns count deleted."""
+        count = self.count_by_source(source_id)
+        stmt = delete(code_text).where(code_text.c.fid == source_id.value)
+        self._conn.execute(stmt)
+        self._conn.commit()
+        return count
+
     def count_by_code(self, code_id: CodeId) -> int:
         """Count segments with a specific code."""
         stmt = select(func.count()).where(code_text.c.cid == code_id.value)
+        result = self._conn.execute(stmt)
+        return result.scalar()
+
+    def count_by_source(self, source_id: SourceId) -> int:
+        """Count segments for a specific source."""
+        stmt = select(func.count()).where(code_text.c.fid == source_id.value)
         result = self._conn.execute(stmt)
         return result.scalar()
 
@@ -353,8 +406,26 @@ class SQLiteSegmentRepository:
         self._conn.commit()
         return count
 
+    def update_source_name(self, source_id: SourceId, new_name: str) -> None:
+        """
+        Update denormalized source_name for all segments of a source.
+
+        Called when a source is renamed to keep denormalized data in sync.
+        """
+        stmt = (
+            update(code_text)
+            .where(code_text.c.fid == source_id.value)
+            .values(source_name=new_name)
+        )
+        self._conn.execute(stmt)
+        self._conn.commit()
+
     def _row_to_segment(self, row) -> TextSegment:
-        """Convert a database row to a TextSegment entity."""
+        """
+        Map database row to domain TextSegment entity.
+
+        This mapper enforces invariants via the TextSegment constructor.
+        """
         return TextSegment(
             id=SegmentId(value=row.ctid),
             source_id=SourceId(value=row.fid),
@@ -368,3 +439,22 @@ class SQLiteSegmentRepository:
             if row.date
             else datetime.now(UTC),
         )
+
+    def _to_segment_data(self, segment: TextSegment) -> dict:
+        """
+        Map domain TextSegment entity to database format.
+
+        Returns a dict suitable for SQLAlchemy insert/update.
+        """
+        return {
+            "ctid": segment.id.value,
+            "cid": segment.code_id.value,
+            "fid": segment.source_id.value,
+            "pos0": segment.position.start,
+            "pos1": segment.position.end,
+            "seltext": segment.selected_text,
+            "memo": segment.memo,
+            "owner": segment.owner,
+            "date": segment.created_at.isoformat(),
+            "important": segment.importance,
+        }

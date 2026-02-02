@@ -343,3 +343,302 @@ class TestUserSettingsRepositoryAVCoding:
         av = repo.get_av_coding_config()
         assert av.timestamp_format == "MM:SS"
         assert av.speaker_format == "Participant {n}"
+
+
+class TestUserSettingsRepositoryRecentProjects:
+    """Tests for recent projects operations."""
+
+    def test_get_recent_projects_returns_empty_list_when_no_file(
+        self, temp_config_path
+    ):
+        """Should return empty list when no config file exists."""
+        from src.infrastructure.settings import UserSettingsRepository
+
+        repo = UserSettingsRepository(config_path=temp_config_path)
+        projects = repo.get_recent_projects()
+
+        assert projects == []
+
+    def test_get_recent_projects_returns_empty_list_when_no_recent_projects_key(
+        self, temp_config_path
+    ):
+        """Should return empty list when config has no recent_projects key."""
+        from src.infrastructure.settings import UserSettingsRepository
+
+        # Write config without recent_projects
+        temp_config_path.parent.mkdir(parents=True, exist_ok=True)
+        with open(temp_config_path, "w") as f:
+            json.dump({"theme": {"name": "dark"}}, f)
+
+        repo = UserSettingsRepository(config_path=temp_config_path)
+        projects = repo.get_recent_projects()
+
+        assert projects == []
+
+    def test_add_recent_project_creates_entry(self, temp_config_path):
+        """Should add a new project to recent list."""
+        from datetime import UTC, datetime
+
+        from src.domain.projects.entities import RecentProject
+        from src.infrastructure.settings import UserSettingsRepository
+
+        repo = UserSettingsRepository(config_path=temp_config_path)
+        project = RecentProject(
+            path=Path("/projects/test.qda"),
+            name="Test Project",
+            last_opened=datetime(2024, 1, 15, 10, 30, tzinfo=UTC),
+        )
+
+        repo.add_recent_project(project)
+
+        projects = repo.get_recent_projects()
+        assert len(projects) == 1
+        assert projects[0].path == Path("/projects/test.qda")
+        assert projects[0].name == "Test Project"
+        assert projects[0].last_opened == datetime(2024, 1, 15, 10, 30, tzinfo=UTC)
+
+    def test_add_recent_project_updates_existing_by_path(self, temp_config_path):
+        """Should update existing project when path matches."""
+        from datetime import UTC, datetime
+
+        from src.domain.projects.entities import RecentProject
+        from src.infrastructure.settings import UserSettingsRepository
+
+        repo = UserSettingsRepository(config_path=temp_config_path)
+
+        # Add initial project
+        project1 = RecentProject(
+            path=Path("/projects/test.qda"),
+            name="Old Name",
+            last_opened=datetime(2024, 1, 15, tzinfo=UTC),
+        )
+        repo.add_recent_project(project1)
+
+        # Update same path with new name and timestamp
+        project2 = RecentProject(
+            path=Path("/projects/test.qda"),
+            name="New Name",
+            last_opened=datetime(2024, 1, 20, tzinfo=UTC),
+        )
+        repo.add_recent_project(project2)
+
+        projects = repo.get_recent_projects()
+        assert len(projects) == 1
+        assert projects[0].name == "New Name"
+        assert projects[0].last_opened == datetime(2024, 1, 20, tzinfo=UTC)
+
+    def test_add_recent_project_orders_by_last_opened_descending(
+        self, temp_config_path
+    ):
+        """Should keep projects ordered with most recent first."""
+        from datetime import UTC, datetime
+
+        from src.domain.projects.entities import RecentProject
+        from src.infrastructure.settings import UserSettingsRepository
+
+        repo = UserSettingsRepository(config_path=temp_config_path)
+
+        # Add projects out of order
+        repo.add_recent_project(
+            RecentProject(
+                path=Path("/projects/middle.qda"),
+                name="Middle",
+                last_opened=datetime(2024, 1, 15, tzinfo=UTC),
+            )
+        )
+        repo.add_recent_project(
+            RecentProject(
+                path=Path("/projects/oldest.qda"),
+                name="Oldest",
+                last_opened=datetime(2024, 1, 10, tzinfo=UTC),
+            )
+        )
+        repo.add_recent_project(
+            RecentProject(
+                path=Path("/projects/newest.qda"),
+                name="Newest",
+                last_opened=datetime(2024, 1, 20, tzinfo=UTC),
+            )
+        )
+
+        projects = repo.get_recent_projects()
+        assert len(projects) == 3
+        assert projects[0].name == "Newest"
+        assert projects[1].name == "Middle"
+        assert projects[2].name == "Oldest"
+
+    def test_add_recent_project_enforces_max_limit(self, temp_config_path):
+        """Should remove oldest projects when exceeding max limit."""
+        from datetime import UTC, datetime, timedelta
+
+        from src.domain.projects.entities import RecentProject
+        from src.infrastructure.settings import UserSettingsRepository
+
+        repo = UserSettingsRepository(config_path=temp_config_path)
+
+        # Add 12 projects (exceeds limit of 10)
+        base_time = datetime(2024, 1, 1, tzinfo=UTC)
+        for i in range(12):
+            repo.add_recent_project(
+                RecentProject(
+                    path=Path(f"/projects/project{i}.qda"),
+                    name=f"Project {i}",
+                    last_opened=base_time + timedelta(days=i),
+                )
+            )
+
+        projects = repo.get_recent_projects()
+        assert len(projects) == 10
+
+        # Should have kept the 10 most recent (indices 2-11)
+        project_names = [p.name for p in projects]
+        assert "Project 0" not in project_names
+        assert "Project 1" not in project_names
+        assert "Project 11" in project_names
+
+    def test_remove_recent_project_by_path(self, temp_config_path):
+        """Should remove project matching the given path."""
+        from datetime import UTC, datetime
+
+        from src.domain.projects.entities import RecentProject
+        from src.infrastructure.settings import UserSettingsRepository
+
+        repo = UserSettingsRepository(config_path=temp_config_path)
+
+        # Add two projects
+        repo.add_recent_project(
+            RecentProject(
+                path=Path("/projects/keep.qda"),
+                name="Keep",
+                last_opened=datetime(2024, 1, 15, tzinfo=UTC),
+            )
+        )
+        repo.add_recent_project(
+            RecentProject(
+                path=Path("/projects/remove.qda"),
+                name="Remove",
+                last_opened=datetime(2024, 1, 20, tzinfo=UTC),
+            )
+        )
+
+        repo.remove_recent_project(Path("/projects/remove.qda"))
+
+        projects = repo.get_recent_projects()
+        assert len(projects) == 1
+        assert projects[0].name == "Keep"
+
+    def test_remove_recent_project_no_op_if_not_found(self, temp_config_path):
+        """Should not error when removing non-existent path."""
+        from datetime import UTC, datetime
+
+        from src.domain.projects.entities import RecentProject
+        from src.infrastructure.settings import UserSettingsRepository
+
+        repo = UserSettingsRepository(config_path=temp_config_path)
+
+        repo.add_recent_project(
+            RecentProject(
+                path=Path("/projects/exists.qda"),
+                name="Exists",
+                last_opened=datetime(2024, 1, 15, tzinfo=UTC),
+            )
+        )
+
+        # Should not raise
+        repo.remove_recent_project(Path("/projects/not_exists.qda"))
+
+        projects = repo.get_recent_projects()
+        assert len(projects) == 1
+
+    def test_get_recent_projects_handles_corrupted_entry(self, temp_config_path):
+        """Should skip malformed entries and return valid ones."""
+        from src.infrastructure.settings import UserSettingsRepository
+
+        # Write config with mixed valid and invalid entries
+        config_data = {
+            "recent_projects": [
+                {
+                    "path": "/projects/valid.qda",
+                    "name": "Valid",
+                    "last_opened": "2024-01-15T10:00:00+00:00",
+                },
+                {"path": "/projects/missing_name.qda"},  # Missing required fields
+                {
+                    "path": "/projects/invalid_date.qda",
+                    "name": "Invalid Date",
+                    "last_opened": "not-a-date",
+                },
+                {
+                    "path": "/projects/valid2.qda",
+                    "name": "Valid 2",
+                    "last_opened": "2024-01-20T10:00:00+00:00",
+                },
+            ]
+        }
+        temp_config_path.parent.mkdir(parents=True, exist_ok=True)
+        with open(temp_config_path, "w") as f:
+            json.dump(config_data, f)
+
+        repo = UserSettingsRepository(config_path=temp_config_path)
+        projects = repo.get_recent_projects()
+
+        # Should only have the two valid entries
+        assert len(projects) == 2
+        names = [p.name for p in projects]
+        assert "Valid" in names
+        assert "Valid 2" in names
+
+    def test_recent_projects_preserves_other_settings(self, temp_config_path):
+        """Should not overwrite other settings when saving recent projects."""
+        from datetime import UTC, datetime
+
+        from src.domain.projects.entities import RecentProject
+        from src.domain.settings.entities import ThemePreference
+        from src.infrastructure.settings import UserSettingsRepository
+
+        repo = UserSettingsRepository(config_path=temp_config_path)
+
+        # Set theme first
+        repo.set_theme(ThemePreference(name="dark"))
+
+        # Add a recent project
+        repo.add_recent_project(
+            RecentProject(
+                path=Path("/projects/test.qda"),
+                name="Test",
+                last_opened=datetime(2024, 1, 15, tzinfo=UTC),
+            )
+        )
+
+        # Theme should still be dark
+        assert repo.get_theme().name == "dark"
+
+        # Recent projects should be present
+        projects = repo.get_recent_projects()
+        assert len(projects) == 1
+
+    def test_round_trip_preserves_recent_projects(self, temp_config_path):
+        """Should preserve recent projects through save and reload."""
+        from datetime import UTC, datetime
+
+        from src.domain.projects.entities import RecentProject
+        from src.infrastructure.settings import UserSettingsRepository
+
+        repo = UserSettingsRepository(config_path=temp_config_path)
+
+        original = RecentProject(
+            path=Path("/projects/roundtrip.qda"),
+            name="Round Trip Test",
+            last_opened=datetime(2024, 6, 15, 14, 30, 45, tzinfo=UTC),
+        )
+        repo.add_recent_project(original)
+
+        # Create new repo instance (simulates app restart)
+        repo2 = UserSettingsRepository(config_path=temp_config_path)
+        projects = repo2.get_recent_projects()
+
+        assert len(projects) == 1
+        loaded = projects[0]
+        assert loaded.path == original.path
+        assert loaded.name == original.name
+        assert loaded.last_opened == original.last_opened

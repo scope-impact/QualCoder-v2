@@ -27,8 +27,8 @@ Usage:
 
 from __future__ import annotations
 
-from src.domain.coding.entities import AutoCodeBatch, BatchId
-from src.domain.shared.types import CodeId, SegmentId
+from src.contexts.coding.core.entities import AutoCodeBatch, BatchId
+from src.contexts.shared.core.types import CodeId, SegmentId
 
 
 class BatchManager:

@@ -607,7 +607,6 @@ class SourceTable(QFrame):
 
     def clear_selection(self):
         """Clear all checkbox selections (public API)."""
-        self._selected_ids.clear()
         self._clear_selection()
 
     def _on_bulk_code(self):

@@ -1,10 +1,11 @@
 """
 Sources Domain Services
 
-Pure domain services for the Sources bounded context.
+DEPRECATED: This module is a re-export for backward compatibility.
+New code should import from src.contexts.sources.core.services
 """
 
-from src.domain.sources.services.speaker_detector import (
+from src.contexts.sources.core.services import (
     Speaker,
     SpeakerDetector,
     SpeakerSegment,

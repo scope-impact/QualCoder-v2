@@ -125,6 +125,16 @@ class ProjectSummaryDTO:
 
 
 @dataclass
+class FolderDTO:
+    """A folder for organizing sources."""
+
+    id: str
+    name: str
+    parent_id: str | None = None
+    source_count: int = 0
+
+
+@dataclass
 class TextCodingDataDTO:
     """
     Complete data bundle for the TextCodingPage.

@@ -9,8 +9,8 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from typing import Any, Protocol
 
-from src.domain.coding.events import CodingEvent
-from src.domain.shared.types import Result
+from src.contexts.coding.core.events import CodingEvent
+from src.contexts.shared.core.types import Result
 
 # ============================================================
 # Command DTOs (Input to Controllers)

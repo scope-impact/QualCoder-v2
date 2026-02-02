@@ -15,8 +15,8 @@ These tools follow the MCP (Model Context Protocol) specification:
 Usage:
     from src.infrastructure.mcp import ProjectTools
 
-    # Create tools with controller dependency
-    tools = ProjectTools(controller=project_controller)
+    # Create tools with coordinator dependency
+    tools = ProjectTools(coordinator=coordinator)
 
     # Execute a tool
     result = tools.execute("get_project_context", {})
@@ -30,7 +30,7 @@ from typing import TYPE_CHECKING, Any
 from returns.result import Failure, Result, Success
 
 if TYPE_CHECKING:
-    from src.application.projects.controller import ProjectControllerImpl
+    from src.application.coordinator import ApplicationCoordinator
 
 
 # ============================================================
@@ -244,8 +244,8 @@ class ProjectTools:
     - List and filter project sources
 
     Example:
-        controller = ProjectControllerImpl(event_bus=EventBus())
-        tools = ProjectTools(controller=controller)
+        coordinator = ApplicationCoordinator()
+        tools = ProjectTools(coordinator=coordinator)
 
         # Get available tools
         schemas = tools.get_tool_schemas()
@@ -254,14 +254,23 @@ class ProjectTools:
         result = tools.execute("get_project_context", {})
     """
 
-    def __init__(self, controller: ProjectControllerImpl) -> None:
+    def __init__(
+        self,
+        coordinator: ApplicationCoordinator | None = None,
+        *,
+        provider: ApplicationCoordinator | None = None,
+    ) -> None:
         """
-        Initialize project tools with controller dependency.
+        Initialize project tools with coordinator dependency.
 
         Args:
-            controller: The project controller to delegate operations to
+            coordinator: The application coordinator
+            provider: Deprecated alias for coordinator (backward compatibility)
         """
-        self._controller = controller
+        self._coordinator = coordinator or provider
+        if self._coordinator is None:
+            raise ValueError("coordinator is required")
+
         self._tools: dict[str, ToolDefinition] = {
             "get_project_context": get_project_context_tool,
             "list_sources": list_sources_tool,
@@ -328,7 +337,7 @@ class ProjectTools:
         - sources: list of source dicts
         - current_screen: str
         """
-        context = self._controller.get_project_context()
+        context = self._coordinator.projects.get_project_context()
         return Success(context)
 
     def _execute_list_sources(
@@ -346,9 +355,9 @@ class ProjectTools:
         source_type = arguments.get("source_type")
 
         if source_type:
-            sources = self._controller.get_sources_by_type(source_type)
+            sources = self._coordinator.sources.get_sources_by_type(source_type)
         else:
-            sources = self._controller.get_sources()
+            sources = self._coordinator.sources.get_sources()
 
         return Success(
             {
@@ -390,7 +399,7 @@ class ProjectTools:
             return Failure("Missing required parameter: source_id")
 
         # Find the source
-        source = self._controller.get_source(int(source_id))
+        source = self._coordinator.sources.get_source(int(source_id))
         if source is None:
             return Failure(f"Source not found: {source_id}")
 
@@ -437,7 +446,7 @@ class ProjectTools:
         Returns:
             Success with navigation result, or Failure
         """
-        from src.application.projects.controller import NavigateToSegmentCommand
+        from src.application.projects.commands import NavigateToSegmentCommand
 
         # Validate required parameters
         source_id = arguments.get("source_id")
@@ -461,7 +470,7 @@ class ProjectTools:
             highlight=bool(highlight),
         )
 
-        result = self._controller.navigate_to_segment(command)
+        result = self._coordinator.navigation.navigate_to_segment(command)
 
         if isinstance(result, Failure):
             return result
@@ -475,7 +484,7 @@ class ProjectTools:
                     "end_pos": end_pos,
                     "highlight": highlight,
                 },
-                "current_screen": self._controller.get_current_screen(),
+                "current_screen": self._coordinator.navigation.get_current_screen(),
             }
         )
 
@@ -497,7 +506,7 @@ class ProjectTools:
             return Failure("Missing required parameter: source_id")
 
         # Verify source exists
-        source = self._controller.get_source(int(source_id))
+        source = self._coordinator.sources.get_source(int(source_id))
         if source is None:
             return Failure(f"Source not found: {source_id}")
 

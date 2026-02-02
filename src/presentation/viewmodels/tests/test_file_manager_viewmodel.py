@@ -344,3 +344,409 @@ class TestFileManagerViewModelBulkOperations:
 
         selected = file_manager_vm.get_selected_sources()
         assert len(selected) == 1
+
+
+class TestFolderOperations:
+    """Tests for folder management operations."""
+
+    def test_create_folder_success(self, file_manager_vm):
+        """Test creating a folder successfully."""
+        result = file_manager_vm.create_folder(name="Interviews")
+
+        assert result is True
+
+    def test_create_folder_failure_invalid_name(self, file_manager_vm):
+        """Test creating a folder with invalid name fails."""
+        result = file_manager_vm.create_folder(name="")
+
+        assert result is False
+
+    def test_create_folder_failure_duplicate_name(self, file_manager_vm):
+        """Test creating a folder with duplicate name fails."""
+        file_manager_vm.create_folder(name="Interviews")
+        result = file_manager_vm.create_folder(name="Interviews")
+
+        assert result is False
+
+    def test_create_nested_folder_success(self, file_manager_vm):
+        """Test creating a nested folder successfully."""
+        file_manager_vm.create_folder(name="Parent")
+        folders = file_manager_vm.get_folders()
+        parent_id = int(folders[0].id)
+
+        result = file_manager_vm.create_folder(name="Child", parent_id=parent_id)
+
+        assert result is True
+
+    def test_rename_folder_success(self, file_manager_vm):
+        """Test renaming a folder successfully."""
+        file_manager_vm.create_folder(name="OldName")
+        folders = file_manager_vm.get_folders()
+        folder_id = int(folders[0].id)
+
+        result = file_manager_vm.rename_folder(folder_id=folder_id, new_name="NewName")
+
+        assert result is True
+
+    def test_rename_folder_failure_not_found(self, file_manager_vm):
+        """Test renaming a non-existent folder fails."""
+        result = file_manager_vm.rename_folder(folder_id=999, new_name="NewName")
+
+        assert result is False
+
+    def test_rename_folder_failure_duplicate_name(self, file_manager_vm):
+        """Test renaming a folder to an existing name fails."""
+        file_manager_vm.create_folder(name="Folder1")
+        file_manager_vm.create_folder(name="Folder2")
+        folders = file_manager_vm.get_folders()
+        folder_id = int(folders[0].id)
+
+        result = file_manager_vm.rename_folder(folder_id=folder_id, new_name="Folder2")
+
+        assert result is False
+
+    def test_delete_folder_success(self, file_manager_vm):
+        """Test deleting an empty folder successfully."""
+        file_manager_vm.create_folder(name="EmptyFolder")
+        folders = file_manager_vm.get_folders()
+        folder_id = int(folders[0].id)
+
+        result = file_manager_vm.delete_folder(folder_id=folder_id)
+
+        assert result is True
+
+    def test_delete_folder_failure_not_found(self, file_manager_vm):
+        """Test deleting a non-existent folder fails."""
+        result = file_manager_vm.delete_folder(folder_id=999)
+
+        assert result is False
+
+    def test_delete_folder_failure_has_sources(
+        self, file_manager_vm, sample_source_file
+    ):
+        """Test deleting a folder with sources fails."""
+        # Create folder
+        file_manager_vm.create_folder(name="WithSources")
+        folders = file_manager_vm.get_folders()
+        folder_id = int(folders[0].id)
+
+        # Add source and move to folder
+        file_manager_vm.add_source(str(sample_source_file))
+        sources = file_manager_vm.load_sources()
+        source_id = int(sources[0].id)
+        file_manager_vm.move_source_to_folder(source_id=source_id, folder_id=folder_id)
+
+        # Try to delete folder
+        result = file_manager_vm.delete_folder(folder_id=folder_id)
+
+        assert result is False
+
+    def test_move_source_to_folder_success(self, file_manager_vm, sample_source_file):
+        """Test moving a source to a folder successfully."""
+        # Create folder
+        file_manager_vm.create_folder(name="Folder")
+        folders = file_manager_vm.get_folders()
+        folder_id = int(folders[0].id)
+
+        # Add source
+        file_manager_vm.add_source(str(sample_source_file))
+        sources = file_manager_vm.load_sources()
+        source_id = int(sources[0].id)
+
+        # Move to folder
+        result = file_manager_vm.move_source_to_folder(
+            source_id=source_id, folder_id=folder_id
+        )
+
+        assert result is True
+
+    def test_move_source_to_root(self, file_manager_vm, sample_source_file):
+        """Test moving a source to root (None folder) successfully."""
+        # Create folder and add source
+        file_manager_vm.create_folder(name="Folder")
+        folders = file_manager_vm.get_folders()
+        folder_id = int(folders[0].id)
+
+        file_manager_vm.add_source(str(sample_source_file))
+        sources = file_manager_vm.load_sources()
+        source_id = int(sources[0].id)
+
+        # Move to folder first
+        file_manager_vm.move_source_to_folder(source_id=source_id, folder_id=folder_id)
+
+        # Move back to root
+        result = file_manager_vm.move_source_to_folder(
+            source_id=source_id, folder_id=None
+        )
+
+        assert result is True
+
+    def test_move_source_failure_source_not_found(self, file_manager_vm):
+        """Test moving a non-existent source fails."""
+        file_manager_vm.create_folder(name="Folder")
+        folders = file_manager_vm.get_folders()
+        folder_id = int(folders[0].id)
+
+        result = file_manager_vm.move_source_to_folder(
+            source_id=999, folder_id=folder_id
+        )
+
+        assert result is False
+
+    def test_move_source_failure_folder_not_found(
+        self, file_manager_vm, sample_source_file
+    ):
+        """Test moving a source to a non-existent folder fails."""
+        file_manager_vm.add_source(str(sample_source_file))
+        sources = file_manager_vm.load_sources()
+        source_id = int(sources[0].id)
+
+        result = file_manager_vm.move_source_to_folder(
+            source_id=source_id, folder_id=999
+        )
+
+        assert result is False
+
+    def test_get_folders_returns_list(self, file_manager_vm):
+        """Test getting all folders returns a list of FolderDTO objects."""
+        file_manager_vm.create_folder(name="Folder1")
+        file_manager_vm.create_folder(name="Folder2")
+
+        folders = file_manager_vm.get_folders()
+
+        assert len(folders) == 2
+        assert all(hasattr(f, "id") for f in folders)
+        assert all(hasattr(f, "name") for f in folders)
+        assert folders[0].name == "Folder1"
+        assert folders[1].name == "Folder2"
+
+    def test_get_folders_empty_list(self, file_manager_vm):
+        """Test getting folders returns empty list when none exist."""
+        folders = file_manager_vm.get_folders()
+
+        assert folders == []
+
+
+class TestSourceDTOCases:
+    """Tests for SourceDTO cases field population."""
+
+    def test_source_dto_cases_empty_when_not_linked(
+        self, file_manager_vm, sample_source_file
+    ):
+        """Test that source DTO has empty cases when not linked to any case."""
+        file_manager_vm.add_source(str(sample_source_file))
+
+        sources = file_manager_vm.load_sources()
+
+        assert sources[0].cases == []
+
+    def test_source_dto_cases_populated_when_linked(
+        self, file_manager_vm, sample_source_file, coordinator
+    ):
+        """Test that source DTO includes case names when linked to cases."""
+        from src.application.projects.commands import (
+            CreateCaseCommand,
+            LinkSourceToCaseCommand,
+        )
+
+        # Add source
+        file_manager_vm.add_source(str(sample_source_file))
+        sources = file_manager_vm.load_sources()
+        source_id = int(sources[0].id)
+
+        # Create a case
+        coordinator.cases.create_case(
+            CreateCaseCommand(name="Participant A", description="First participant")
+        )
+        cases = coordinator.cases.get_cases()
+        case_id = cases[0].id.value
+
+        # Link source to case
+        coordinator.cases.link_source_to_case(
+            LinkSourceToCaseCommand(source_id=source_id, case_id=case_id)
+        )
+
+        # Reload sources and check cases field
+        sources = file_manager_vm.load_sources()
+
+        assert len(sources[0].cases) == 1
+        assert sources[0].cases[0] == "Participant A"
+
+    def test_source_dto_cases_includes_multiple_cases(
+        self, file_manager_vm, sample_source_file, coordinator
+    ):
+        """Test that source DTO includes all linked case names."""
+        from src.application.projects.commands import (
+            CreateCaseCommand,
+            LinkSourceToCaseCommand,
+        )
+
+        # Add source
+        file_manager_vm.add_source(str(sample_source_file))
+        sources = file_manager_vm.load_sources()
+        source_id = int(sources[0].id)
+
+        # Create two cases
+        coordinator.cases.create_case(CreateCaseCommand(name="Case Alpha"))
+        coordinator.cases.create_case(CreateCaseCommand(name="Case Beta"))
+        cases = coordinator.cases.get_cases()
+
+        # Link source to both cases
+        for case in cases:
+            coordinator.cases.link_source_to_case(
+                LinkSourceToCaseCommand(source_id=source_id, case_id=case.id.value)
+            )
+
+        # Reload sources and check cases field
+        sources = file_manager_vm.load_sources()
+
+        assert len(sources[0].cases) == 2
+        assert "Case Alpha" in sources[0].cases
+        assert "Case Beta" in sources[0].cases
+
+
+class TestUpdateSource:
+    """Tests for updating source metadata."""
+
+    def test_update_source_memo_successfully(self, file_manager_vm, sample_source_file):
+        """Test updating source memo returns True on success."""
+        # Add source
+        file_manager_vm.add_source(str(sample_source_file))
+        sources = file_manager_vm.load_sources()
+        source_id = int(sources[0].id)
+
+        # Update memo
+        result = file_manager_vm.update_source(source_id=source_id, memo="New memo")
+
+        assert result is True
+
+        # Verify memo was updated
+        sources = file_manager_vm.load_sources()
+        assert sources[0].memo == "New memo"
+
+    def test_update_source_origin_successfully(
+        self, file_manager_vm, sample_source_file
+    ):
+        """Test updating source origin returns True on success."""
+        # Add source
+        file_manager_vm.add_source(str(sample_source_file))
+        sources = file_manager_vm.load_sources()
+        source_id = int(sources[0].id)
+
+        # Update origin
+        result = file_manager_vm.update_source(
+            source_id=source_id, origin="Field Research"
+        )
+
+        assert result is True
+
+        # Verify origin was updated
+        sources = file_manager_vm.load_sources()
+        assert sources[0].origin == "Field Research"
+
+    def test_update_source_status_successfully(
+        self, file_manager_vm, sample_source_file
+    ):
+        """Test updating source status returns True on success."""
+        # Add source
+        file_manager_vm.add_source(str(sample_source_file))
+        sources = file_manager_vm.load_sources()
+        source_id = int(sources[0].id)
+
+        # Update status
+        result = file_manager_vm.update_source(source_id=source_id, status="coded")
+
+        assert result is True
+
+        # Verify status was updated
+        sources = file_manager_vm.load_sources()
+        assert sources[0].status == "coded"
+
+    def test_update_source_multiple_fields(self, file_manager_vm, sample_source_file):
+        """Test updating multiple source fields at once."""
+        # Add source
+        file_manager_vm.add_source(str(sample_source_file))
+        sources = file_manager_vm.load_sources()
+        source_id = int(sources[0].id)
+
+        # Update multiple fields (using valid SourceStatus value)
+        result = file_manager_vm.update_source(
+            source_id=source_id,
+            memo="Updated memo",
+            origin="Interview",
+            status="coded",
+        )
+
+        assert result is True
+
+        # Verify all fields were updated
+        sources = file_manager_vm.load_sources()
+        assert sources[0].memo == "Updated memo"
+        assert sources[0].origin == "Interview"
+        assert sources[0].status == "coded"
+
+    def test_update_source_returns_false_for_nonexistent(self, file_manager_vm):
+        """Test updating nonexistent source returns False."""
+        result = file_manager_vm.update_source(source_id=999, memo="Test")
+
+        assert result is False
+
+
+class TestSegmentCountForSource:
+    """Tests for coded segment warning before delete."""
+
+    def test_get_segment_count_returns_zero_for_new_source(
+        self, file_manager_vm, sample_source_file
+    ):
+        """Test that a new source has zero segments."""
+        file_manager_vm.add_source(str(sample_source_file))
+        sources = file_manager_vm.load_sources()
+        source_id = int(sources[0].id)
+
+        count = file_manager_vm.get_segment_count_for_source(source_id)
+
+        assert count == 0
+
+    def test_get_segment_count_returns_correct_count(
+        self, file_manager_vm, sample_source_file, coordinator
+    ):
+        """Test that segment count reflects actual coded segments."""
+        from src.contexts.coding.core.entities import TextPosition, TextSegment
+        from src.contexts.shared.core.types import CodeId, SegmentId, SourceId
+
+        # Add source
+        file_manager_vm.add_source(str(sample_source_file))
+        sources = file_manager_vm.load_sources()
+        source_id = int(sources[0].id)
+
+        # Create segments directly via segment_repo
+        segment_repo = coordinator.coding_context.segment_repo
+        if segment_repo:
+            segment1 = TextSegment(
+                id=SegmentId(value=2001),
+                source_id=SourceId(value=source_id),
+                code_id=CodeId(value=1),
+                position=TextPosition(start=0, end=10),
+                selected_text="Test text",
+            )
+            segment2 = TextSegment(
+                id=SegmentId(value=2002),
+                source_id=SourceId(value=source_id),
+                code_id=CodeId(value=2),
+                position=TextPosition(start=15, end=25),
+                selected_text="More text",
+            )
+            segment_repo.save(segment1)
+            segment_repo.save(segment2)
+
+            count = file_manager_vm.get_segment_count_for_source(source_id)
+
+            assert count == 2
+
+    def test_get_segment_count_returns_zero_for_nonexistent_source(
+        self, file_manager_vm
+    ):
+        """Test that nonexistent source returns zero segments."""
+        count = file_manager_vm.get_segment_count_for_source(999)
+
+        assert count == 0

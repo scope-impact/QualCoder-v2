@@ -10,7 +10,7 @@ from typing import TYPE_CHECKING, Any, Protocol, TypeVar
 
 if TYPE_CHECKING:
     from src.application.signal_bridge.payloads import ActivityItem, SignalPayload
-    from src.domain.shared.types import DomainEvent
+    from src.contexts.shared.core.types import DomainEvent
 
 
 T = TypeVar("T", bound="SignalPayload")
