@@ -5,16 +5,7 @@ Pure functions, entities, events for AI-powered code analysis.
 No I/O operations.
 """
 
-from src.contexts.ai_services.core.derivers import (
-    AISuggestionState,
-    DuplicatesNotDetected,
-    MergeNotApproved,
-    MergeNotCreated,
-    MergeNotDismissed,
-    SuggestionNotApproved,
-    SuggestionNotCreated,
-    SuggestionNotRejected,
-)
+from src.contexts.ai_services.core.derivers import AISuggestionState
 from src.contexts.ai_services.core.entities import (
     CodeSuggestion,
     DuplicateCandidate,
@@ -28,6 +19,15 @@ from src.contexts.ai_services.core.events import (
     DuplicatesDetected,
     MergeSuggestionApproved,
     MergeSuggestionDismissed,
+)
+from src.contexts.ai_services.core.failure_events import (
+    DuplicatesNotDetected,
+    MergeNotApproved,
+    MergeNotCreated,
+    MergeNotDismissed,
+    SuggestionNotApproved,
+    SuggestionNotCreated,
+    SuggestionNotRejected,
 )
 from src.contexts.ai_services.core.protocols import (
     CodeAnalyzer,
