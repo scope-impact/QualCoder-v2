@@ -99,6 +99,7 @@ class FileManagerPage(QWidget):
     delete_sources = Signal(list)
     export_sources = Signal(list)
     open_for_coding = Signal(str)
+    view_metadata = Signal(str)
 
     # Filtering
     filter_changed = Signal(object)  # str | None
@@ -209,6 +210,7 @@ class FileManagerPage(QWidget):
         self._source_table.open_for_coding.connect(self.open_for_coding.emit)
         self._source_table.delete_sources.connect(self.delete_sources.emit)
         self._source_table.export_sources.connect(self.export_sources.emit)
+        self._source_table.view_metadata.connect(self.view_metadata.emit)
 
         # Empty state signals
         self._empty_state.import_clicked.connect(self.import_clicked.emit)
