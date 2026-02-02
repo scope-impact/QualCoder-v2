@@ -116,9 +116,8 @@ class TestDeriveCreateCodePriority:
             state=empty_state,
         )
 
-        assert isinstance(result, Failure)
-        assert isinstance(result.failure(), InvalidPriority)
-        assert result.failure().value == 10
+        assert isinstance(result, CodeNotCreated)
+        assert "Priority" in result.message
 ```
 
 Notice:
@@ -133,7 +132,7 @@ Testing error conditions is equally simple:
 
 ```python
 def test_fails_with_duplicate_name(self, populated_state):
-    """Duplicate name should return DuplicateName failure."""
+    """Duplicate name should return CodeNotCreated failure event."""
     result = derive_create_code(
         name="Theme A",  # Already exists in sample_codes
         color=Color(red=100, green=100, blue=100),
@@ -144,9 +143,9 @@ def test_fails_with_duplicate_name(self, populated_state):
         state=populated_state,
     )
 
-    assert isinstance(result, Failure)
-    assert isinstance(result.failure(), DuplicateName)
-    assert result.failure().name == "Theme A"
+    assert isinstance(result, CodeNotCreated)
+    assert result.reason == "DUPLICATE_NAME"
+    assert result.name == "Theme A"
 ```
 
 Compare to traditional:
@@ -179,8 +178,8 @@ def test_validates_name_before_priority(self, empty_state):
     )
 
     # Name is checked first
-    assert isinstance(result, Failure)
-    assert isinstance(result.failure(), EmptyName)
+    assert isinstance(result, CodeNotCreated)
+    assert result.reason == "EMPTY_NAME"
     # Priority error never reached
 ```
 
@@ -260,7 +259,7 @@ No database. No Qt. Just the core logic.
 Organize tests to mirror the architecture:
 
 ```
-src/domain/coding/tests/
+src/contexts/coding/core/tests/
 ├── conftest.py           # Shared fixtures (sample_codes, states)
 ├── test_invariants.py    # Pure predicate tests
 └── test_derivers.py      # Event derivation tests
@@ -268,6 +267,10 @@ src/domain/coding/tests/
 src/application/tests/
 ├── test_event_bus.py     # Pub/sub tests
 └── test_converters.py    # Payload conversion tests
+
+src/application/signal_bridge/tests/
+├── test_base.py          # SignalBridge tests
+└── test_payloads.py      # Payload tests
 ```
 
 Each layer tested in isolation.
@@ -278,10 +281,10 @@ Fast, focused test runs:
 
 ```bash
 # Test just invariants (milliseconds)
-pytest src/domain/coding/tests/test_invariants.py -v
+pytest src/contexts/coding/core/tests/test_invariants.py -v
 
 # Test just derivers (still fast)
-pytest src/domain/coding/tests/test_derivers.py -v
+pytest src/contexts/coding/core/tests/test_derivers.py -v
 
 # Test specific feature
 pytest -k "priority" -v

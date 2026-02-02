@@ -21,7 +21,7 @@ Let's encode this as an invariant.
 
 ## Writing the Invariant
 
-Open `src/domain/coding/invariants.py`. You'll see existing invariants like:
+Open `src/contexts/coding/core/invariants.py`. You'll see existing invariants like:
 
 ```python
 def is_valid_code_name(name: str) -> bool:
@@ -69,7 +69,7 @@ This tiny function is:
 
 ## Writing Tests
 
-Open `src/domain/coding/tests/test_invariants.py`. You'll see test classes for each invariant group. Let's add tests for priority:
+Open `src/contexts/coding/core/tests/test_invariants.py`. You'll see test classes for each invariant group. Let's add tests for priority:
 
 ```python
 class TestPriorityInvariants:
@@ -99,7 +99,7 @@ class TestPriorityInvariants:
 Run the tests:
 
 ```bash
-pytest src/domain/coding/tests/test_invariants.py::TestPriorityInvariants -v
+pytest src/contexts/coding/core/tests/test_invariants.py::TestPriorityInvariants -v
 ```
 
 ## Anatomy of an Invariant Test
@@ -176,7 +176,7 @@ You've learned:
 - Testing them requires no setup
 - The pattern: `is_*(value) -> bool`
 
-In the actual codebase, you'd add `is_valid_priority` to `invariants.py` and the tests to `test_invariants.py`. The snippets here show the pattern.
+In the actual codebase, you'd add `is_valid_priority` to `src/contexts/coding/core/invariants.py` and the tests to `src/contexts/coding/core/tests/test_invariants.py`. The snippets here show the pattern.
 
 ## Next Steps
 
