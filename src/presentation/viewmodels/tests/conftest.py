@@ -43,7 +43,7 @@ def coordinator(project_event_bus: EventBus, connection):
     from src.application.state import ProjectState
     from src.contexts.projects.core.entities import Project, ProjectId
     from src.contexts.settings.infra import UserSettingsRepository
-    from src.main import CoordinatorAdapter
+    from src.main import FileManagerService
 
     # Create state with test event bus
     state = ProjectState()
@@ -73,7 +73,7 @@ def coordinator(project_event_bus: EventBus, connection):
         ctx.state.project = project
 
         # Create adapter (coding_context is exposed as a property)
-        adapter = CoordinatorAdapter(ctx)
+        adapter = FileManagerService(ctx)
         yield adapter
 
 

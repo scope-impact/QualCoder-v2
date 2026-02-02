@@ -21,7 +21,7 @@ def app_instance(qapp, colors):
     """Create a QualCoderApp instance for testing."""
     from src.application.app_context import get_app_context, reset_app_context
     from src.application.navigation.service import NavigationService
-    from src.main import CoordinatorAdapter, QualCoderApp
+    from src.main import FileManagerService, QualCoderApp
     from src.presentation.services import DialogService
 
     reset_app_context()
@@ -32,7 +32,7 @@ def app_instance(qapp, colors):
     app._ctx = get_app_context()
     app._dialog_service = DialogService(app._ctx)
     app._navigation_service = NavigationService(app._ctx)
-    app._coordinator_adapter = CoordinatorAdapter(app._ctx)
+    app._file_manager_service = FileManagerService(app._ctx)
     app._shell = None
     app._screens = {}
     app._current_project_path = None
