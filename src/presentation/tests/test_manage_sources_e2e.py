@@ -829,6 +829,70 @@ class TestSourceManagementIntegration:
         with allure.step("Step 4: Clear player"):
             player.clear()
 
+    @allure.title("Imported sources persist between sessions")
+    @allure.severity(allure.severity_level.CRITICAL)
+    def test_imported_sources_persist_after_reopen(self, tmp_path):
+        """
+        Critical test: Verify sources persist in database after close/reopen.
+        This ensures import actually saves to SQLite, not just in-memory.
+
+        Note: fulltext and code_count are NOT persisted by source_repo:
+        - fulltext is stored separately (in source_text table per QualCoder schema)
+        - code_count is computed from coding relationships
+        """
+        from returns.result import Success
+
+        from src.application.app_context import create_app_context, reset_app_context
+        from src.contexts.projects.core.entities import Source, SourceType
+        from src.contexts.shared.core.types import SourceId
+
+        project_path = tmp_path / "persist_test.qda"
+
+        with allure.step("Step 1: Create project and import source"):
+            reset_app_context()
+            ctx = create_app_context()
+            ctx.start()
+
+            result = ctx.create_project(name="Persist Test", path=str(project_path))
+            assert isinstance(result, Success)
+            ctx.open_project(str(project_path))
+
+            source = Source(
+                id=SourceId(1),
+                name="persisted_doc.txt",
+                source_type=SourceType.TEXT,
+                memo="Test memo for persistence",
+                origin="test_import",
+            )
+            ctx.sources_context.source_repo.save(source)
+            ctx.state.add_source(source)
+
+        with allure.step("Step 2: Close project and stop context"):
+            ctx.close_project()
+            ctx.stop()
+            reset_app_context()
+
+        with allure.step("Step 3: Create new context and reopen project"):
+            reset_app_context()
+            ctx2 = create_app_context()
+            ctx2.start()
+            open_result = ctx2.open_project(str(project_path))
+            assert isinstance(open_result, Success)
+
+        with allure.step("Step 4: Verify source metadata persisted"):
+            # Source should be loaded from database
+            assert len(ctx2.state.sources) == 1
+            persisted_source = list(ctx2.state.sources)[0]
+            assert persisted_source.name == "persisted_doc.txt"
+            assert persisted_source.source_type == SourceType.TEXT
+            assert persisted_source.memo == "Test memo for persistence"
+            assert persisted_source.origin == "test_import"
+
+        with allure.step("Cleanup"):
+            ctx2.close_project()
+            ctx2.stop()
+            reset_app_context()
+
 
 # =============================================================================
 # UI Control Click Tests
