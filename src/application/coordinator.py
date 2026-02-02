@@ -296,9 +296,12 @@ class ApplicationCoordinator:
         from src.presentation.dialogs.settings_dialog import SettingsDialog
         from src.presentation.viewmodels import SettingsViewModel
 
-        # Create settings stack
+        # Create settings stack with event bus for reactive updates
         repo = UserSettingsRepository(config_path=config_path)
-        controller = SettingsControllerImpl(settings_repo=repo)
+        controller = SettingsControllerImpl(
+            settings_repo=repo,
+            event_bus=self._event_bus,
+        )
         viewmodel = SettingsViewModel(settings_controller=controller)
 
         # Create and show dialog

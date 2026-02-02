@@ -184,7 +184,7 @@ class CaseSummaryDTO:
 # =============================================================================
 
 
-@dataclass
+@dataclass(frozen=True)
 class SettingsDTO:
     """All user settings for display."""
 
@@ -201,7 +201,7 @@ class SettingsDTO:
     speaker_format: str = "Speaker {n}"
 
 
-@dataclass
+@dataclass(frozen=True)
 class LanguageOptionDTO:
     """Available language option."""
 
@@ -209,7 +209,7 @@ class LanguageOptionDTO:
     name: str
 
 
-@dataclass
+@dataclass(frozen=True)
 class FontFamilyOptionDTO:
     """Available font family option."""
 

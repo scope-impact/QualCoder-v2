@@ -206,8 +206,9 @@ class SettingsDialog(QDialog):
             ("AV Coding", "mdi6.video"),
         ]
 
-        for name, _icon_name in sections:
+        for name, icon_name in sections:
             item = QListWidgetItem(name)
+            item.setData(Qt.ItemDataRole.UserRole, icon_name)
             sidebar.addItem(item)
 
         sidebar.setCurrentRow(0)

@@ -83,16 +83,27 @@ class UserSettingsRepository:
             # Return defaults if file is corrupted
             return UserSettings.default()
 
-    def save(self, settings: UserSettings) -> None:
+    def save(self, settings: UserSettings) -> bool:
         """
         Persist settings to file.
 
         Args:
             settings: UserSettings to save
+
+        Returns:
+            True if save succeeded, False if an error occurred
         """
-        data = self._to_dict(settings)
-        with open(self._config_path, "w", encoding="utf-8") as f:
-            json.dump(data, f, indent=2)
+        try:
+            data = self._to_dict(settings)
+            # Write to temp file first, then rename for atomic write
+            temp_path = self._config_path.with_suffix(".tmp")
+            with open(temp_path, "w", encoding="utf-8") as f:
+                json.dump(data, f, indent=2)
+            temp_path.replace(self._config_path)
+            return True
+        except (PermissionError, OSError):
+            # Log would go here in production
+            return False
 
     # =========================================================================
     # Theme Operations
