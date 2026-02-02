@@ -283,8 +283,8 @@ class SQLiteProjectRepository:
         """Compute project summary statistics from the database."""
         from sqlalchemy import func
 
-        from src.infrastructure.coding.schema import cod_code, cod_segment
-        from src.infrastructure.sources.schema import src_source
+        from src.contexts.coding.infra.schema import cod_code, cod_segment
+        from src.contexts.sources.infra.schema import src_source
 
         # Count sources by type
         try:

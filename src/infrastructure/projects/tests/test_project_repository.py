@@ -11,7 +11,7 @@ from pathlib import Path
 
 import pytest
 
-from src.domain.projects.entities import Project, ProjectSummary
+from src.contexts.projects.core.entities import Project, ProjectSummary
 from src.infrastructure.projects.project_repository import SQLiteProjectRepository
 
 pytestmark = pytest.mark.integration

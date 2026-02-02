@@ -7,7 +7,7 @@ Used by MCP Server, REST API, and other protocol adapters.
 
 from dataclasses import dataclass
 
-from src.domain.shared.agent import TrustLevel
+from src.contexts.shared.core import TrustLevel
 
 # ============================================================
 # Tool Input Schemas

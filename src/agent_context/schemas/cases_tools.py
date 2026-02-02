@@ -9,7 +9,7 @@ Cases organize qualitative data by participant, site, or other groupings.
 
 from dataclasses import dataclass
 
-from src.domain.shared.agent import TrustLevel
+from src.contexts.shared.core import TrustLevel
 
 # ============================================================
 # Tool Input Schemas

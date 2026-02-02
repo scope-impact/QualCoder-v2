@@ -11,8 +11,8 @@ from datetime import UTC, datetime
 
 import pytest
 
-from src.domain.cases.entities import Case
-from src.domain.shared.types import CaseId, SourceId
+from src.contexts.cases.core.entities import Case
+from src.contexts.shared.core.types import CaseId, SourceId
 
 pytestmark = pytest.mark.integration
 
@@ -207,7 +207,7 @@ class TestCaseRepositoryAttributes:
 
     def test_save_attribute_to_case(self, case_repo):
         """Should save an attribute to a case."""
-        from src.domain.cases.entities import AttributeType, CaseAttribute
+        from src.contexts.cases.core.entities import AttributeType, CaseAttribute
 
         case = Case(
             id=CaseId(value=1),
@@ -232,7 +232,7 @@ class TestCaseRepositoryAttributes:
 
     def test_save_multiple_attributes(self, case_repo):
         """Should save multiple attributes to a case."""
-        from src.domain.cases.entities import AttributeType, CaseAttribute
+        from src.contexts.cases.core.entities import AttributeType, CaseAttribute
 
         case = Case(
             id=CaseId(value=1),
@@ -261,7 +261,7 @@ class TestCaseRepositoryAttributes:
 
     def test_update_existing_attribute(self, case_repo):
         """Should update an existing attribute with the same name."""
-        from src.domain.cases.entities import AttributeType, CaseAttribute
+        from src.contexts.cases.core.entities import AttributeType, CaseAttribute
 
         case = Case(
             id=CaseId(value=1),
@@ -290,7 +290,7 @@ class TestCaseRepositoryAttributes:
 
     def test_delete_attribute(self, case_repo):
         """Should delete an attribute from a case."""
-        from src.domain.cases.entities import AttributeType, CaseAttribute
+        from src.contexts.cases.core.entities import AttributeType, CaseAttribute
 
         case = Case(
             id=CaseId(value=1),
@@ -319,7 +319,7 @@ class TestCaseRepositoryAttributes:
 
     def test_get_attribute(self, case_repo):
         """Should get a specific attribute by name."""
-        from src.domain.cases.entities import AttributeType, CaseAttribute
+        from src.contexts.cases.core.entities import AttributeType, CaseAttribute
 
         case = Case(
             id=CaseId(value=1),
@@ -354,7 +354,7 @@ class TestCaseRepositoryAttributes:
 
     def test_delete_case_removes_attributes(self, case_repo):
         """Should remove all attributes when case is deleted."""
-        from src.domain.cases.entities import AttributeType, CaseAttribute
+        from src.contexts.cases.core.entities import AttributeType, CaseAttribute
 
         case = Case(
             id=CaseId(value=1),
@@ -377,7 +377,7 @@ class TestCaseRepositoryAttributes:
 
     def test_get_all_cases_includes_attributes(self, case_repo):
         """Should include attributes when getting all cases."""
-        from src.domain.cases.entities import AttributeType, CaseAttribute
+        from src.contexts.cases.core.entities import AttributeType, CaseAttribute
 
         case = Case(
             id=CaseId(value=1),

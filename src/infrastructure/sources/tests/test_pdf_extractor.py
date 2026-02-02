@@ -11,7 +11,7 @@ from pathlib import Path
 import pytest
 from returns.result import Failure
 
-from src.infrastructure.sources.pdf_extractor import PdfExtractionResult, PdfExtractor
+from src.contexts.sources.infra.pdf_extractor import PdfExtractionResult, PdfExtractor
 
 
 @pytest.fixture

@@ -11,9 +11,9 @@ from typing import TYPE_CHECKING
 
 from sqlalchemy import delete, func, select, update
 
+from src.contexts.projects.core.entities import Folder
+from src.contexts.shared.core.types import FolderId
 from src.contexts.sources.infra.schema import src_folder
-from src.domain.projects.entities import Folder
-from src.domain.shared.types import FolderId
 
 if TYPE_CHECKING:
     from sqlalchemy import Connection

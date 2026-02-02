@@ -379,8 +379,8 @@ class TestUserSettingsRepositoryRecentProjects:
         """Should add a new project to recent list."""
         from datetime import UTC, datetime
 
+        from src.contexts.projects.core import RecentProject
         from src.contexts.settings.infra import UserSettingsRepository
-        from src.domain.projects.entities import RecentProject
 
         repo = UserSettingsRepository(config_path=temp_config_path)
         project = RecentProject(
@@ -401,8 +401,8 @@ class TestUserSettingsRepositoryRecentProjects:
         """Should update existing project when path matches."""
         from datetime import UTC, datetime
 
+        from src.contexts.projects.core import RecentProject
         from src.contexts.settings.infra import UserSettingsRepository
-        from src.domain.projects.entities import RecentProject
 
         repo = UserSettingsRepository(config_path=temp_config_path)
 
@@ -433,8 +433,8 @@ class TestUserSettingsRepositoryRecentProjects:
         """Should keep projects ordered with most recent first."""
         from datetime import UTC, datetime
 
+        from src.contexts.projects.core import RecentProject
         from src.contexts.settings.infra import UserSettingsRepository
-        from src.domain.projects.entities import RecentProject
 
         repo = UserSettingsRepository(config_path=temp_config_path)
 
@@ -471,8 +471,8 @@ class TestUserSettingsRepositoryRecentProjects:
         """Should remove oldest projects when exceeding max limit."""
         from datetime import UTC, datetime, timedelta
 
+        from src.contexts.projects.core import RecentProject
         from src.contexts.settings.infra import UserSettingsRepository
-        from src.domain.projects.entities import RecentProject
 
         repo = UserSettingsRepository(config_path=temp_config_path)
 
@@ -500,8 +500,8 @@ class TestUserSettingsRepositoryRecentProjects:
         """Should remove project matching the given path."""
         from datetime import UTC, datetime
 
+        from src.contexts.projects.core import RecentProject
         from src.contexts.settings.infra import UserSettingsRepository
-        from src.domain.projects.entities import RecentProject
 
         repo = UserSettingsRepository(config_path=temp_config_path)
 
@@ -531,8 +531,8 @@ class TestUserSettingsRepositoryRecentProjects:
         """Should not error when removing non-existent path."""
         from datetime import UTC, datetime
 
+        from src.contexts.projects.core import RecentProject
         from src.contexts.settings.infra import UserSettingsRepository
-        from src.domain.projects.entities import RecentProject
 
         repo = UserSettingsRepository(config_path=temp_config_path)
 
@@ -592,9 +592,9 @@ class TestUserSettingsRepositoryRecentProjects:
         """Should not overwrite other settings when saving recent projects."""
         from datetime import UTC, datetime
 
+        from src.contexts.projects.core import RecentProject
         from src.contexts.settings.core.entities import ThemePreference
         from src.contexts.settings.infra import UserSettingsRepository
-        from src.domain.projects.entities import RecentProject
 
         repo = UserSettingsRepository(config_path=temp_config_path)
 
@@ -621,8 +621,8 @@ class TestUserSettingsRepositoryRecentProjects:
         """Should preserve recent projects through save and reload."""
         from datetime import UTC, datetime
 
+        from src.contexts.projects.core import RecentProject
         from src.contexts.settings.infra import UserSettingsRepository
-        from src.domain.projects.entities import RecentProject
 
         repo = UserSettingsRepository(config_path=temp_config_path)
 

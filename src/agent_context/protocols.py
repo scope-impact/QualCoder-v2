@@ -7,7 +7,7 @@ All tool adapters must conform to these protocols.
 
 from typing import Protocol, runtime_checkable
 
-from src.domain.shared.agent import TrustLevel
+from src.contexts.shared.core import TrustLevel
 
 
 @runtime_checkable

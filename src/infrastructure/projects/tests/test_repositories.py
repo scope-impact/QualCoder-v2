@@ -10,8 +10,8 @@ from pathlib import Path
 
 import pytest
 
-from src.domain.projects.entities import Source, SourceStatus, SourceType
-from src.domain.shared.types import SourceId
+from src.contexts.projects.core.entities import Source, SourceStatus, SourceType
+from src.contexts.shared.core.types import SourceId
 
 pytestmark = pytest.mark.integration
 
@@ -322,8 +322,8 @@ class TestSQLiteCaseRepository:
 
     def test_save_and_get_by_id(self, case_repo):
         """Test saving and retrieving a case."""
-        from src.domain.cases.entities import Case
-        from src.domain.shared.types import CaseId
+        from src.contexts.cases.core.entities import Case
+        from src.contexts.shared.core.types import CaseId
 
         case = Case(
             id=CaseId(value=1),
@@ -342,15 +342,15 @@ class TestSQLiteCaseRepository:
 
     def test_get_by_id_not_found(self, case_repo):
         """Test getting a non-existent case returns None."""
-        from src.domain.shared.types import CaseId
+        from src.contexts.shared.core.types import CaseId
 
         result = case_repo.get_by_id(CaseId(value=999))
         assert result is None
 
     def test_get_all(self, case_repo):
         """Test getting all cases."""
-        from src.domain.cases.entities import Case
-        from src.domain.shared.types import CaseId
+        from src.contexts.cases.core.entities import Case
+        from src.contexts.shared.core.types import CaseId
 
         for i in range(3):
             case = Case(
@@ -364,8 +364,8 @@ class TestSQLiteCaseRepository:
 
     def test_get_by_name(self, case_repo):
         """Test getting a case by name (case-insensitive)."""
-        from src.domain.cases.entities import Case
-        from src.domain.shared.types import CaseId
+        from src.contexts.cases.core.entities import Case
+        from src.contexts.shared.core.types import CaseId
 
         case = Case(
             id=CaseId(value=1),
@@ -383,8 +383,8 @@ class TestSQLiteCaseRepository:
 
     def test_update_case(self, case_repo):
         """Test updating an existing case."""
-        from src.domain.cases.entities import Case
-        from src.domain.shared.types import CaseId
+        from src.contexts.cases.core.entities import Case
+        from src.contexts.shared.core.types import CaseId
 
         case = Case(
             id=CaseId(value=1),
@@ -407,8 +407,8 @@ class TestSQLiteCaseRepository:
 
     def test_delete_case(self, case_repo):
         """Test deleting a case."""
-        from src.domain.cases.entities import Case
-        from src.domain.shared.types import CaseId
+        from src.contexts.cases.core.entities import Case
+        from src.contexts.shared.core.types import CaseId
 
         case = Case(
             id=CaseId(value=1),
@@ -422,8 +422,8 @@ class TestSQLiteCaseRepository:
 
     def test_exists(self, case_repo):
         """Test checking case existence."""
-        from src.domain.cases.entities import Case
-        from src.domain.shared.types import CaseId
+        from src.contexts.cases.core.entities import Case
+        from src.contexts.shared.core.types import CaseId
 
         assert case_repo.exists(CaseId(value=1)) is False
 
@@ -437,8 +437,8 @@ class TestSQLiteCaseRepository:
 
     def test_name_exists(self, case_repo):
         """Test checking name uniqueness."""
-        from src.domain.cases.entities import Case
-        from src.domain.shared.types import CaseId
+        from src.contexts.cases.core.entities import Case
+        from src.contexts.shared.core.types import CaseId
 
         case = Case(
             id=CaseId(value=1),
@@ -453,8 +453,8 @@ class TestSQLiteCaseRepository:
 
     def test_name_exists_with_exclude(self, case_repo):
         """Test name uniqueness with ID exclusion."""
-        from src.domain.cases.entities import Case
-        from src.domain.shared.types import CaseId
+        from src.contexts.cases.core.entities import Case
+        from src.contexts.shared.core.types import CaseId
 
         case = Case(
             id=CaseId(value=1),
@@ -472,8 +472,8 @@ class TestSQLiteCaseRepository:
 
     def test_count(self, case_repo):
         """Test counting cases."""
-        from src.domain.cases.entities import Case
-        from src.domain.shared.types import CaseId
+        from src.contexts.cases.core.entities import Case
+        from src.contexts.shared.core.types import CaseId
 
         assert case_repo.count() == 0
 
