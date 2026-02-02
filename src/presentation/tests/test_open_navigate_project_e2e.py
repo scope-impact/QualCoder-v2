@@ -100,7 +100,7 @@ class TestOpenExistingProject:
     @allure.title("AC #1: Open project validates database before opening")
     @allure.severity(allure.severity_level.NORMAL)
     def test_open_validates_database(self, app_context: AppContext, tmp_path: Path):
-        from src.infrastructure.projects.project_repository import (
+        from src.contexts.projects.infra.project_repository import (
             SQLiteProjectRepository,
         )
 
@@ -201,7 +201,7 @@ class TestCreateNewProject:
     def test_created_project_has_valid_schema(
         self, app_context: AppContext, temp_project_path: Path
     ):
-        from src.infrastructure.projects.project_repository import (
+        from src.contexts.projects.infra.project_repository import (
             SQLiteProjectRepository,
         )
 
