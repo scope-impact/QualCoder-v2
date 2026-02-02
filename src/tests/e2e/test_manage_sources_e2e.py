@@ -22,7 +22,7 @@ import pytest
 from PySide6.QtTest import QSignalSpy
 from PySide6.QtWidgets import QApplication
 
-from src.presentation.tests.fixtures import SampleFiles, create_sample_files
+from src.tests.e2e.fixtures import SampleFiles, create_sample_files
 
 pytestmark = [
     pytest.mark.e2e,
