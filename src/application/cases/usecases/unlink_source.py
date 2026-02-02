@@ -2,18 +2,25 @@
 Unlink Source from Case Use Case
 
 Functional use case for unlinking a source from a case.
+Returns OperationResult for rich error handling in UI and AI consumers.
 """
 
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from returns.result import Failure, Result, Success
+from returns.result import Failure
 
 from src.application.projects.commands import UnlinkSourceFromCaseCommand
 from src.application.state import ProjectState
-from src.contexts.cases.core.derivers import CaseState, derive_unlink_source_from_case
+from src.contexts.cases.core.derivers import (
+    CaseNotFound,
+    CaseState,
+    SourceNotLinked,
+    derive_unlink_source_from_case,
+)
 from src.contexts.cases.core.events import SourceUnlinkedFromCase
+from src.contexts.shared.core.operation_result import OperationResult
 from src.contexts.shared.core.types import CaseId, SourceId
 
 if TYPE_CHECKING:
@@ -26,7 +33,7 @@ def unlink_source_from_case(
     state: ProjectState,
     cases_ctx: CasesContext,
     event_bus: EventBus,
-) -> Result[SourceUnlinkedFromCase, str]:
+) -> OperationResult:
     """
     Unlink a source from a case.
 
@@ -37,10 +44,14 @@ def unlink_source_from_case(
         event_bus: Event bus for publishing events
 
     Returns:
-        Success with SourceUnlinkedFromCase event, or Failure with error message
+        OperationResult with SourceUnlinkedFromCase event on success, or error details on failure
     """
     if state.project is None:
-        return Failure("No project is currently open")
+        return OperationResult.fail(
+            error="No project is currently open",
+            error_code="SOURCE_NOT_UNLINKED/NO_PROJECT",
+            suggestions=("Open a project first",),
+        )
 
     case_id = CaseId(value=command.case_id)
     source_id = SourceId(value=command.source_id)
@@ -59,7 +70,8 @@ def unlink_source_from_case(
     )
 
     if isinstance(result, Failure):
-        return result
+        reason = result.failure()
+        return _failure_to_result(reason)
 
     event: SourceUnlinkedFromCase = result
 
@@ -72,4 +84,25 @@ def unlink_source_from_case(
     # Publish event
     event_bus.publish(event)
 
-    return Success(event)
+    return OperationResult.ok(data=event)
+
+
+def _failure_to_result(reason: object) -> OperationResult:
+    """Convert deriver failure reason to OperationResult."""
+    if isinstance(reason, CaseNotFound):
+        return OperationResult.fail(
+            error=reason.message,
+            error_code="SOURCE_NOT_UNLINKED/CASE_NOT_FOUND",
+            suggestions=("Verify the case ID is correct",),
+        )
+    if isinstance(reason, SourceNotLinked):
+        return OperationResult.fail(
+            error=reason.message,
+            error_code="SOURCE_NOT_UNLINKED/NOT_LINKED",
+            suggestions=("Source is not linked to this case",),
+        )
+    # Fallback for unexpected reasons
+    return OperationResult.fail(
+        error=getattr(reason, "message", str(reason)),
+        error_code="SOURCE_NOT_UNLINKED/UNKNOWN",
+    )

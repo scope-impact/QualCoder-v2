@@ -20,8 +20,6 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from returns.result import Success
-
 from src.application.cases.usecases import (
     create_case,
     link_source_to_case,
@@ -188,7 +186,7 @@ class CaseManagerViewModel:
             cases_ctx=self._cases_ctx,
             event_bus=self._event_bus,
         )
-        return isinstance(result, Success)
+        return result.is_success
 
     # =========================================================================
     # Update Case - Commands go through use cases
@@ -226,7 +224,7 @@ class CaseManagerViewModel:
             cases_ctx=self._cases_ctx,
             event_bus=self._event_bus,
         )
-        return isinstance(result, Success)
+        return result.is_success
 
     # =========================================================================
     # Delete Case - Commands go through use cases
@@ -251,7 +249,7 @@ class CaseManagerViewModel:
             event_bus=self._event_bus,
         )
 
-        if isinstance(result, Success):
+        if result.is_success:
             # Clear selection if deleted case was selected
             if self._selected_case_id == case_id:
                 self._selected_case_id = None
@@ -285,7 +283,7 @@ class CaseManagerViewModel:
             cases_ctx=self._cases_ctx,
             event_bus=self._event_bus,
         )
-        return isinstance(result, Success)
+        return result.is_success
 
     def unlink_source(self, case_id: int, source_id: int) -> bool:
         """
@@ -309,7 +307,7 @@ class CaseManagerViewModel:
             cases_ctx=self._cases_ctx,
             event_bus=self._event_bus,
         )
-        return isinstance(result, Success)
+        return result.is_success
 
     # =========================================================================
     # Add Attribute (AC #3) - Commands go through use cases
@@ -347,7 +345,7 @@ class CaseManagerViewModel:
             cases_ctx=self._cases_ctx,
             event_bus=self._event_bus,
         )
-        return isinstance(result, Success)
+        return result.is_success
 
     def remove_attribute(self, case_id: int, name: str) -> bool:
         """

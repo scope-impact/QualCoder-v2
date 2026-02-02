@@ -2,19 +2,27 @@
 Create Case Use Case
 
 Functional use case for creating a new case.
+Returns OperationResult for rich error handling in UI and AI consumers.
 """
 
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from returns.result import Failure, Result, Success
+from returns.result import Failure
 
-from src.application.projects.commands import CreateCaseCommand
+from src.application.projects.commands import CreateCaseCommand, RemoveCaseCommand
 from src.application.state import ProjectState
-from src.contexts.cases.core.derivers import CaseState, derive_create_case
+from src.contexts.cases.core.derivers import (
+    CaseNameTooLong,
+    CaseState,
+    DuplicateCaseName,
+    EmptyCaseName,
+    derive_create_case,
+)
 from src.contexts.cases.core.entities import Case
 from src.contexts.cases.core.events import CaseCreated
+from src.contexts.shared.core.operation_result import OperationResult
 
 if TYPE_CHECKING:
     from src.application.contexts import CasesContext
@@ -26,7 +34,7 @@ def create_case(
     state: ProjectState,
     cases_ctx: CasesContext,
     event_bus: EventBus,
-) -> Result[Case, str]:
+) -> OperationResult:
     """
     Create a new case in the current project.
 
@@ -37,10 +45,14 @@ def create_case(
         event_bus: Event bus for publishing events
 
     Returns:
-        Success with Case entity, or Failure with error message
+        OperationResult with Case entity on success, or error details on failure
     """
     if state.project is None:
-        return Failure("No project is currently open")
+        return OperationResult.fail(
+            error="No project is currently open",
+            error_code="CASE_NOT_CREATED/NO_PROJECT",
+            suggestions=("Open a project first",),
+        )
 
     # Build state and derive event
     case_state = CaseState(existing_cases=tuple(state.cases))
@@ -53,7 +65,8 @@ def create_case(
     )
 
     if isinstance(result, Failure):
-        return result
+        reason = result.failure()
+        return _failure_to_result(reason)
 
     event: CaseCreated = result
 
@@ -74,4 +87,41 @@ def create_case(
     # Publish event
     event_bus.publish(event)
 
-    return Success(case)
+    # Return success with rollback command
+    return OperationResult.ok(
+        data=case,
+        rollback=RemoveCaseCommand(case_id=case.id.value),
+    )
+
+
+def _failure_to_result(reason: object) -> OperationResult:
+    """Convert deriver failure reason to OperationResult."""
+    if isinstance(reason, EmptyCaseName):
+        return OperationResult.fail(
+            error=reason.message,
+            error_code="CASE_NOT_CREATED/EMPTY_NAME",
+            suggestions=("Provide a non-empty case name",),
+        )
+    if isinstance(reason, CaseNameTooLong):
+        return OperationResult.fail(
+            error=reason.message,
+            error_code="CASE_NOT_CREATED/NAME_TOO_LONG",
+            suggestions=(
+                "Use a shorter name (max 100 characters)",
+                "Abbreviate or use an acronym",
+            ),
+        )
+    if isinstance(reason, DuplicateCaseName):
+        return OperationResult.fail(
+            error=reason.message,
+            error_code="CASE_NOT_CREATED/DUPLICATE_NAME",
+            suggestions=(
+                "Use a different name",
+                "Add a suffix to distinguish (e.g., 'Case A-2')",
+            ),
+        )
+    # Fallback for unexpected reasons
+    return OperationResult.fail(
+        error=getattr(reason, "message", str(reason)),
+        error_code="CASE_NOT_CREATED/UNKNOWN",
+    )

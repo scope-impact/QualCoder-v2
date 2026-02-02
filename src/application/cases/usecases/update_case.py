@@ -2,19 +2,28 @@
 Update Case Use Case
 
 Functional use case for updating case metadata.
+Returns OperationResult for rich error handling in UI and AI consumers.
 """
 
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from returns.result import Failure, Result, Success
+from returns.result import Failure
 
 from src.application.projects.commands import UpdateCaseCommand
 from src.application.state import ProjectState
-from src.contexts.cases.core.derivers import CaseState, derive_update_case
+from src.contexts.cases.core.derivers import (
+    CaseNameTooLong,
+    CaseNotFound,
+    CaseState,
+    DuplicateCaseName,
+    EmptyCaseName,
+    derive_update_case,
+)
 from src.contexts.cases.core.entities import Case
 from src.contexts.cases.core.events import CaseUpdated
+from src.contexts.shared.core.operation_result import OperationResult
 from src.contexts.shared.core.types import CaseId
 
 if TYPE_CHECKING:
@@ -27,7 +36,7 @@ def update_case(
     state: ProjectState,
     cases_ctx: CasesContext,
     event_bus: EventBus,
-) -> Result[Case, str]:
+) -> OperationResult:
     """
     Update an existing case.
 
@@ -38,10 +47,14 @@ def update_case(
         event_bus: Event bus for publishing events
 
     Returns:
-        Success with updated Case, or Failure with error message
+        OperationResult with updated Case on success, or error details on failure
     """
     if state.project is None:
-        return Failure("No project is currently open")
+        return OperationResult.fail(
+            error="No project is currently open",
+            error_code="CASE_NOT_UPDATED/NO_PROJECT",
+            suggestions=("Open a project first",),
+        )
 
     case_id = CaseId(value=command.case_id)
 
@@ -57,7 +70,8 @@ def update_case(
     )
 
     if isinstance(result, Failure):
-        return result
+        reason = result.failure()
+        return _failure_to_result(reason)
 
     event: CaseUpdated = result
 
@@ -78,4 +92,37 @@ def update_case(
     # Publish event
     event_bus.publish(event)
 
-    return Success(updated_case)
+    return OperationResult.ok(data=updated_case)
+
+
+def _failure_to_result(reason: object) -> OperationResult:
+    """Convert deriver failure reason to OperationResult."""
+    if isinstance(reason, CaseNotFound):
+        return OperationResult.fail(
+            error=reason.message,
+            error_code="CASE_NOT_UPDATED/NOT_FOUND",
+            suggestions=("Verify the case ID is correct", "Refresh the case list"),
+        )
+    if isinstance(reason, EmptyCaseName):
+        return OperationResult.fail(
+            error=reason.message,
+            error_code="CASE_NOT_UPDATED/EMPTY_NAME",
+            suggestions=("Provide a non-empty case name",),
+        )
+    if isinstance(reason, CaseNameTooLong):
+        return OperationResult.fail(
+            error=reason.message,
+            error_code="CASE_NOT_UPDATED/NAME_TOO_LONG",
+            suggestions=("Use a shorter name (max 100 characters)",),
+        )
+    if isinstance(reason, DuplicateCaseName):
+        return OperationResult.fail(
+            error=reason.message,
+            error_code="CASE_NOT_UPDATED/DUPLICATE_NAME",
+            suggestions=("Use a different name",),
+        )
+    # Fallback for unexpected reasons
+    return OperationResult.fail(
+        error=getattr(reason, "message", str(reason)),
+        error_code="CASE_NOT_UPDATED/UNKNOWN",
+    )

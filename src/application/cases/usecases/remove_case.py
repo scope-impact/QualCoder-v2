@@ -2,18 +2,20 @@
 Remove Case Use Case
 
 Functional use case for removing a case.
+Returns OperationResult for rich error handling in UI and AI consumers.
 """
 
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from returns.result import Failure, Result, Success
+from returns.result import Failure
 
 from src.application.projects.commands import RemoveCaseCommand
 from src.application.state import ProjectState
-from src.contexts.cases.core.derivers import CaseState, derive_remove_case
+from src.contexts.cases.core.derivers import CaseNotFound, CaseState, derive_remove_case
 from src.contexts.cases.core.events import CaseRemoved
+from src.contexts.shared.core.operation_result import OperationResult
 from src.contexts.shared.core.types import CaseId
 
 if TYPE_CHECKING:
@@ -26,7 +28,7 @@ def remove_case(
     state: ProjectState,
     cases_ctx: CasesContext,
     event_bus: EventBus,
-) -> Result[CaseRemoved, str]:
+) -> OperationResult:
     """
     Remove a case from the current project.
 
@@ -37,10 +39,14 @@ def remove_case(
         event_bus: Event bus for publishing events
 
     Returns:
-        Success with CaseRemoved event, or Failure with error message
+        OperationResult with CaseRemoved event on success, or error details on failure
     """
     if state.project is None:
-        return Failure("No project is currently open")
+        return OperationResult.fail(
+            error="No project is currently open",
+            error_code="CASE_NOT_REMOVED/NO_PROJECT",
+            suggestions=("Open a project first",),
+        )
 
     case_id = CaseId(value=command.case_id)
 
@@ -50,7 +56,8 @@ def remove_case(
     result = derive_remove_case(case_id=case_id, state=case_state)
 
     if isinstance(result, Failure):
-        return result
+        reason = result.failure()
+        return _failure_to_result(reason)
 
     event: CaseRemoved = result
 
@@ -63,4 +70,19 @@ def remove_case(
     # Publish event
     event_bus.publish(event)
 
-    return Success(event)
+    return OperationResult.ok(data=event)
+
+
+def _failure_to_result(reason: object) -> OperationResult:
+    """Convert deriver failure reason to OperationResult."""
+    if isinstance(reason, CaseNotFound):
+        return OperationResult.fail(
+            error=reason.message,
+            error_code="CASE_NOT_REMOVED/NOT_FOUND",
+            suggestions=("Verify the case ID is correct", "Refresh the case list"),
+        )
+    # Fallback for unexpected reasons
+    return OperationResult.fail(
+        error=getattr(reason, "message", str(reason)),
+        error_code="CASE_NOT_REMOVED/UNKNOWN",
+    )
