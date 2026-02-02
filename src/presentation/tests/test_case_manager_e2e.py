@@ -2,11 +2,11 @@
 Case Manager End-to-End Tests
 
 True E2E tests with FULL behavior - real database, viewmodel, and UI integration.
-Tests the complete flow: UI action → ViewModel → Repository → Database → UI update
+Tests the complete flow: UI action → ViewModel → Service → Repository → Database → UI update
 
 These tests:
 1. Create real in-memory SQLite database with case tables
-2. Wire up CaseManagerViewModel with SQLiteCaseRepository
+2. Wire up CaseManagerViewModel with CaseManagerService (implements protocol)
 3. Create CaseManagerScreen with real viewmodel
 4. Test full round-trip data flows
 
@@ -26,6 +26,7 @@ from datetime import UTC, datetime
 import pytest
 from PySide6.QtTest import QSignalSpy
 from PySide6.QtWidgets import QApplication, QMainWindow, QVBoxLayout, QWidget
+from returns.result import Failure, Result, Success
 from sqlalchemy import create_engine
 
 from src.application.event_bus import EventBus
@@ -33,10 +34,144 @@ from src.contexts.cases.core.entities import AttributeType, Case, CaseAttribute
 from src.contexts.cases.infra.case_repository import SQLiteCaseRepository
 from src.contexts.projects.infra.schema import create_all_contexts, drop_all_contexts
 from src.contexts.shared.core.types import CaseId, SourceId
+from src.presentation.dto import CaseSummaryDTO
 from src.presentation.screens import CaseManagerScreen
 from src.presentation.viewmodels.case_manager_viewmodel import CaseManagerViewModel
 
 pytestmark = pytest.mark.e2e  # All tests in this module are E2E tests
+
+
+# =============================================================================
+# Test Service Provider (implements CaseManagerProvider protocol)
+# =============================================================================
+
+
+class TestCaseManagerService:
+    """
+    Test service implementing CaseManagerProvider protocol.
+
+    Wraps the repository directly for E2E tests. In production,
+    CaseManagerService would use use cases and ProjectState.
+    """
+
+    def __init__(self, case_repo: SQLiteCaseRepository):
+        self._repo = case_repo
+
+    def get_all_cases(self) -> list[Case]:
+        return self._repo.get_all()
+
+    def get_case(self, case_id: int) -> Case | None:
+        return self._repo.get_by_id(CaseId(value=case_id))
+
+    def get_summary(self) -> CaseSummaryDTO:
+        cases = self._repo.get_all()
+        unique_attrs: set[str] = set()
+        cases_with_sources = 0
+        for case in cases:
+            for attr in case.attributes:
+                unique_attrs.add(attr.name)
+            if case.source_ids:
+                cases_with_sources += 1
+        return CaseSummaryDTO(
+            total_cases=len(cases),
+            cases_with_sources=cases_with_sources,
+            total_attributes=sum(len(c.attributes) for c in cases),
+            unique_attribute_names=sorted(unique_attrs),
+        )
+
+    def create_case(
+        self, name: str, description: str | None = None, memo: str | None = None
+    ) -> Result[Case, str]:
+        if self._repo.get_by_name(name) is not None:
+            return Failure(f"Case with name '{name}' already exists")
+        new_id = self._repo.count() + 1
+        case = Case(
+            id=CaseId(value=new_id),
+            name=name,
+            description=description,
+            memo=memo,
+            created_at=datetime.now(UTC),
+            updated_at=datetime.now(UTC),
+        )
+        self._repo.save(case)
+        return Success(case)
+
+    def update_case(
+        self,
+        case_id: int,
+        name: str | None = None,
+        description: str | None = None,
+        memo: str | None = None,
+    ) -> Result[Case, str]:
+        case = self._repo.get_by_id(CaseId(value=case_id))
+        if case is None:
+            return Failure(f"Case {case_id} not found")
+        updated = Case(
+            id=case.id,
+            name=name if name is not None else case.name,
+            description=description if description is not None else case.description,
+            memo=memo if memo is not None else case.memo,
+            attributes=case.attributes,
+            source_ids=case.source_ids,
+            created_at=case.created_at,
+            updated_at=datetime.now(UTC),
+        )
+        self._repo.save(updated)
+        return Success(updated)
+
+    def delete_case(self, case_id: int) -> Result[None, str]:
+        case = self._repo.get_by_id(CaseId(value=case_id))
+        if case is None:
+            return Failure(f"Case {case_id} not found")
+        self._repo.delete(CaseId(value=case_id))
+        return Success(None)
+
+    def link_source(self, case_id: int, source_id: int) -> Result[None, str]:
+        case = self._repo.get_by_id(CaseId(value=case_id))
+        if case is None:
+            return Failure(f"Case {case_id} not found")
+        self._repo.link_source(CaseId(value=case_id), SourceId(value=source_id))
+        return Success(None)
+
+    def unlink_source(self, case_id: int, source_id: int) -> Result[None, str]:
+        case = self._repo.get_by_id(CaseId(value=case_id))
+        if case is None:
+            return Failure(f"Case {case_id} not found")
+        self._repo.unlink_source(CaseId(value=case_id), SourceId(value=source_id))
+        return Success(None)
+
+    def add_attribute(
+        self,
+        case_id: int,
+        name: str,
+        attr_type: str,
+        value: str | int | float | bool | None = None,
+    ) -> Result[None, str]:
+        case = self._repo.get_by_id(CaseId(value=case_id))
+        if case is None:
+            return Failure(f"Case {case_id} not found")
+        type_map = {
+            "text": AttributeType.TEXT,
+            "number": AttributeType.NUMBER,
+            "boolean": AttributeType.BOOLEAN,
+            "date": AttributeType.DATE,
+        }
+        attr_type_enum = type_map.get(attr_type, AttributeType.TEXT)
+        attribute = CaseAttribute(name=name, attr_type=attr_type_enum, value=value)
+        self._repo.save_attribute(CaseId(value=case_id), attribute)
+        return Success(None)
+
+    def remove_attribute(self, case_id: int, name: str) -> Result[None, str]:
+        case = self._repo.get_by_id(CaseId(value=case_id))
+        if case is None:
+            return Failure(f"Case {case_id} not found")
+        self._repo.delete_attribute(CaseId(value=case_id), name)
+        return Success(None)
+
+    def search_cases(self, query: str) -> list[Case]:
+        cases = self._repo.get_all()
+        query_lower = query.lower()
+        return [c for c in cases if query_lower in c.name.lower()]
 
 
 # =============================================================================
@@ -75,9 +210,15 @@ def event_bus():
 
 
 @pytest.fixture
-def viewmodel(case_repo, event_bus):
-    """Create CaseManagerViewModel with real repository."""
-    return CaseManagerViewModel(case_repo=case_repo, event_bus=event_bus)
+def case_service(case_repo):
+    """Create test service implementing CaseManagerProvider protocol."""
+    return TestCaseManagerService(case_repo)
+
+
+@pytest.fixture
+def viewmodel(case_service):
+    """Create CaseManagerViewModel with test service."""
+    return CaseManagerViewModel(provider=case_service)
 
 
 # =============================================================================
@@ -146,9 +287,15 @@ def seeded_cases(case_repo):
 
 
 @pytest.fixture
-def seeded_viewmodel(case_repo, event_bus, seeded_cases):
+def seeded_service(case_repo, seeded_cases):
+    """Create test service with seeded test data."""
+    return TestCaseManagerService(case_repo)
+
+
+@pytest.fixture
+def seeded_viewmodel(seeded_service):
     """Create viewmodel with seeded test data."""
-    return CaseManagerViewModel(case_repo=case_repo, event_bus=event_bus)
+    return CaseManagerViewModel(provider=seeded_service)
 
 
 # =============================================================================
@@ -799,7 +946,7 @@ class TestDataRefresh:
         # Should now show 4 cases
         assert screen.page._case_table._table.rowCount() == 4
 
-    def test_set_viewmodel_loads_new_data(self, qapp, colors, case_repo, event_bus):
+    def test_set_viewmodel_loads_new_data(self, qapp, colors, case_service):
         """
         E2E: Setting a new viewmodel loads its data.
         """
@@ -808,7 +955,7 @@ class TestDataRefresh:
         assert screen._viewmodel is None
 
         # Create and set viewmodel
-        vm = CaseManagerViewModel(case_repo=case_repo, event_bus=event_bus)
+        vm = CaseManagerViewModel(provider=case_service)
         vm.create_case(name="VM Test Case")
 
         screen.set_viewmodel(vm)

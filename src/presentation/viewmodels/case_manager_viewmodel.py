@@ -1,7 +1,7 @@
 """
 Case Manager ViewModel
 
-Connects the CaseManagerScreen to the case repository.
+Connects the CaseManagerScreen to the case management service.
 Handles data transformation between domain entities and UI DTOs.
 
 Implements QC-034 presentation layer:
@@ -11,23 +11,22 @@ Implements QC-034 presentation layer:
 - AC #4: Researcher can view all data for a case
 
 Architecture:
-    User Action → ViewModel → Repository → Domain
-                                              ↓
-    UI Update ← ViewModel ← EventBus ←───────┘
+    User Action → ViewModel → Provider (Service) → Use Cases → Domain → Events
+                                                                          ↓
+    UI Update ← ViewModel ← (refresh data) ←──────────────────────────────┘
 """
 
 from __future__ import annotations
 
-from datetime import UTC, datetime
 from typing import TYPE_CHECKING
 
-from src.contexts.cases.core.entities import AttributeType, Case, CaseAttribute
-from src.contexts.shared.core.types import CaseId, SourceId
+from returns.result import Success
+
 from src.presentation.dto import CaseAttributeDTO, CaseDTO, CaseSummaryDTO
 
 if TYPE_CHECKING:
-    from src.application.event_bus import EventBus
-    from src.contexts.cases.infra.case_repository import SQLiteCaseRepository
+    from src.contexts.cases.core.entities import Case
+    from src.presentation.viewmodels.protocols import CaseManagerProvider
 
 
 class CaseManagerViewModel:
@@ -36,10 +35,11 @@ class CaseManagerViewModel:
 
     Responsibilities:
     - Transform domain Case entities to UI DTOs
-    - Handle user actions by calling repository methods
-    - React to domain events via EventBus
+    - Handle user actions by calling provider methods
     - Provide filtering and search capabilities
     - Track selection state
+
+    Uses CaseManagerProvider protocol for decoupled service access.
 
     This is a pure Python class (no Qt dependency) so it can be
     tested without a Qt event loop.
@@ -47,31 +47,18 @@ class CaseManagerViewModel:
 
     def __init__(
         self,
-        case_repo: SQLiteCaseRepository,
-        event_bus: EventBus,
+        provider: CaseManagerProvider,
     ) -> None:
         """
         Initialize the ViewModel.
 
         Args:
-            case_repo: The case repository for data access
-            event_bus: The event bus for reactive updates
+            provider: Case management service implementing CaseManagerProvider protocol
         """
-        self._case_repo = case_repo
-        self._event_bus = event_bus
+        self._provider = provider
 
         # Selection state
         self._selected_case_id: int | None = None
-
-        # Connect to events
-        self._connect_events()
-
-    def _connect_events(self) -> None:
-        """Connect to relevant domain events."""
-        # Events will trigger UI updates via callbacks
-        # For now, this is a placeholder - actual connections
-        # would be made when using Qt signals
-        pass
 
     # =========================================================================
     # Load Data (AC #4)
@@ -84,7 +71,7 @@ class CaseManagerViewModel:
         Returns:
             List of CaseDTO objects for UI display
         """
-        cases = self._case_repo.get_all()
+        cases = self._provider.get_all_cases()
         return [self._case_to_dto(c) for c in cases]
 
     def get_case(self, case_id: int) -> CaseDTO | None:
@@ -97,7 +84,7 @@ class CaseManagerViewModel:
         Returns:
             CaseDTO if found, None otherwise
         """
-        case = self._case_repo.get_by_id(CaseId(value=case_id))
+        case = self._provider.get_case(case_id)
         return self._case_to_dto(case) if case else None
 
     def get_summary(self) -> CaseSummaryDTO:
@@ -107,24 +94,7 @@ class CaseManagerViewModel:
         Returns:
             CaseSummaryDTO with counts
         """
-        cases = self._case_repo.get_all()
-
-        # Collect unique attribute names
-        unique_attrs: set[str] = set()
-        cases_with_sources = 0
-
-        for case in cases:
-            for attr in case.attributes:
-                unique_attrs.add(attr.name)
-            if case.source_ids:
-                cases_with_sources += 1
-
-        return CaseSummaryDTO(
-            total_cases=len(cases),
-            cases_with_sources=cases_with_sources,
-            total_attributes=sum(len(c.attributes) for c in cases),
-            unique_attribute_names=sorted(unique_attrs),
-        )
+        return self._provider.get_summary()
 
     # =========================================================================
     # Create Case (AC #1)
@@ -147,27 +117,12 @@ class CaseManagerViewModel:
         Returns:
             True if successful, False otherwise
         """
-        # Check for duplicate name
-        existing = self._case_repo.get_by_name(name)
-        if existing is not None:
-            return False
-
-        # Generate new ID (count + 1 as simple strategy)
-        new_id = self._case_repo.count() + 1
-
-        case = Case(
-            id=CaseId(value=new_id),
+        result = self._provider.create_case(
             name=name,
             description=description,
             memo=memo,
-            attributes=(),
-            source_ids=(),
-            created_at=datetime.now(UTC),
-            updated_at=datetime.now(UTC),
         )
-
-        self._case_repo.save(case)
-        return True
+        return isinstance(result, Success)
 
     # =========================================================================
     # Update Case
@@ -192,24 +147,13 @@ class CaseManagerViewModel:
         Returns:
             True if successful, False otherwise
         """
-        case = self._case_repo.get_by_id(CaseId(value=case_id))
-        if case is None:
-            return False
-
-        # Build updated case
-        updated = Case(
-            id=case.id,
-            name=name if name is not None else case.name,
-            description=description if description is not None else case.description,
-            memo=memo if memo is not None else case.memo,
-            attributes=case.attributes,
-            source_ids=case.source_ids,
-            created_at=case.created_at,
-            updated_at=datetime.now(UTC),
+        result = self._provider.update_case(
+            case_id=case_id,
+            name=name,
+            description=description,
+            memo=memo,
         )
-
-        self._case_repo.save(updated)
-        return True
+        return isinstance(result, Success)
 
     # =========================================================================
     # Delete Case
@@ -225,17 +169,15 @@ class CaseManagerViewModel:
         Returns:
             True if successful, False otherwise
         """
-        case = self._case_repo.get_by_id(CaseId(value=case_id))
-        if case is None:
-            return False
+        result = self._provider.delete_case(case_id)
 
-        self._case_repo.delete(CaseId(value=case_id))
+        if isinstance(result, Success):
+            # Clear selection if deleted case was selected
+            if self._selected_case_id == case_id:
+                self._selected_case_id = None
+            return True
 
-        # Clear selection if deleted case was selected
-        if self._selected_case_id == case_id:
-            self._selected_case_id = None
-
-        return True
+        return False
 
     # =========================================================================
     # Link Source (AC #2)
@@ -252,12 +194,8 @@ class CaseManagerViewModel:
         Returns:
             True if successful, False otherwise
         """
-        case = self._case_repo.get_by_id(CaseId(value=case_id))
-        if case is None:
-            return False
-
-        self._case_repo.link_source(CaseId(value=case_id), SourceId(value=source_id))
-        return True
+        result = self._provider.link_source(case_id, source_id)
+        return isinstance(result, Success)
 
     def unlink_source(self, case_id: int, source_id: int) -> bool:
         """
@@ -270,12 +208,8 @@ class CaseManagerViewModel:
         Returns:
             True if successful, False otherwise
         """
-        case = self._case_repo.get_by_id(CaseId(value=case_id))
-        if case is None:
-            return False
-
-        self._case_repo.unlink_source(CaseId(value=case_id), SourceId(value=source_id))
-        return True
+        result = self._provider.unlink_source(case_id, source_id)
+        return isinstance(result, Success)
 
     # =========================================================================
     # Add Attribute (AC #3)
@@ -300,27 +234,13 @@ class CaseManagerViewModel:
         Returns:
             True if successful, False otherwise
         """
-        case = self._case_repo.get_by_id(CaseId(value=case_id))
-        if case is None:
-            return False
-
-        # Map string type to enum
-        type_map = {
-            "text": AttributeType.TEXT,
-            "number": AttributeType.NUMBER,
-            "boolean": AttributeType.BOOLEAN,
-            "date": AttributeType.DATE,
-        }
-        attr_type_enum = type_map.get(attr_type, AttributeType.TEXT)
-
-        attribute = CaseAttribute(
+        result = self._provider.add_attribute(
+            case_id=case_id,
             name=name,
-            attr_type=attr_type_enum,
+            attr_type=attr_type,
             value=value,
         )
-
-        self._case_repo.save_attribute(CaseId(value=case_id), attribute)
-        return True
+        return isinstance(result, Success)
 
     def remove_attribute(self, case_id: int, name: str) -> bool:
         """
@@ -333,12 +253,8 @@ class CaseManagerViewModel:
         Returns:
             True if successful, False otherwise
         """
-        case = self._case_repo.get_by_id(CaseId(value=case_id))
-        if case is None:
-            return False
-
-        self._case_repo.delete_attribute(CaseId(value=case_id), name)
-        return True
+        result = self._provider.remove_attribute(case_id, name)
+        return isinstance(result, Success)
 
     # =========================================================================
     # Selection
@@ -375,12 +291,8 @@ class CaseManagerViewModel:
         Returns:
             List of matching CaseDTO objects
         """
-        cases = self._case_repo.get_all()
-        query_lower = query.lower()
-
-        matching = [c for c in cases if query_lower in c.name.lower()]
-
-        return [self._case_to_dto(c) for c in matching]
+        cases = self._provider.search_cases(query)
+        return [self._case_to_dto(c) for c in cases]
 
     # =========================================================================
     # Private Helpers
