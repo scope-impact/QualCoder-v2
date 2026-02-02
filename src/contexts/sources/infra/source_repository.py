@@ -82,6 +82,7 @@ class SQLiteSourceRepository:
                 .where(src_source.c.id == src.id.value)
                 .values(
                     name=src.name,
+                    fulltext=src.fulltext,
                     source_type=src.source_type.value,
                     status=src.status.value,
                     memo=src.memo,
@@ -96,6 +97,7 @@ class SQLiteSourceRepository:
             stmt = src_source.insert().values(
                 id=src.id.value,
                 name=src.name,
+                fulltext=src.fulltext,
                 source_type=src.source_type.value,
                 status=src.status.value,
                 memo=src.memo,
@@ -213,6 +215,7 @@ class SQLiteSourceRepository:
             memo=row.memo,
             origin=row.origin,
             folder_id=folder_id,
+            fulltext=row.fulltext,
             created_at=datetime.fromisoformat(row.date)
             if row.date
             else datetime.now(UTC),
