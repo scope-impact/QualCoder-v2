@@ -197,7 +197,7 @@ def derive_theme_change(
 def derive_font_change(
     family: str,
     size: int,
-    current_settings: UserSettings,  # noqa: ARG001 - kept for API consistency
+    current_settings: UserSettings,
 ) -> FontChanged | Failure:
     """
     Derive a font change event from inputs and state.
@@ -207,7 +207,7 @@ def derive_font_change(
     Args:
         family: The font family name
         size: The font size in pixels
-        current_settings: Current user settings (for API consistency)
+        current_settings: Current user settings for old font values
 
     Returns:
         FontChanged event on success, Failure with reason on error
@@ -219,6 +219,8 @@ def derive_font_change(
         return Failure(InvalidFontSize(size=size))
 
     return FontChanged(
+        old_family=current_settings.font.family,
+        old_size=current_settings.font.size,
         family=family,
         size=size,
     )
@@ -257,6 +259,7 @@ def derive_backup_config_change(
     interval_minutes: int,
     max_backups: int,
     backup_path: str | None,
+    current_settings: UserSettings,
 ) -> BackupConfigChanged | Failure:
     """
     Derive a backup config change event from inputs.
@@ -268,6 +271,7 @@ def derive_backup_config_change(
         interval_minutes: Backup interval in minutes
         max_backups: Maximum number of backups to keep
         backup_path: Optional custom backup path
+        current_settings: Current user settings for old backup values
 
     Returns:
         BackupConfigChanged event on success, Failure with reason on error
@@ -279,6 +283,10 @@ def derive_backup_config_change(
         return Failure(InvalidMaxBackups(max_backups=max_backups))
 
     return BackupConfigChanged(
+        old_enabled=current_settings.backup.enabled,
+        old_interval_minutes=current_settings.backup.interval_minutes,
+        old_max_backups=current_settings.backup.max_backups,
+        old_backup_path=current_settings.backup.backup_path,
         enabled=enabled,
         interval_minutes=interval_minutes,
         max_backups=max_backups,
@@ -289,6 +297,7 @@ def derive_backup_config_change(
 def derive_av_coding_config_change(
     timestamp_format: str,
     speaker_format: str,
+    current_settings: UserSettings,
 ) -> AVCodingConfigChanged | Failure:
     """
     Derive an AV coding config change event from inputs.
@@ -298,6 +307,7 @@ def derive_av_coding_config_change(
     Args:
         timestamp_format: Timestamp display format
         speaker_format: Speaker name format template
+        current_settings: Current user settings for old AV coding values
 
     Returns:
         AVCodingConfigChanged event on success, Failure with reason on error
@@ -309,6 +319,8 @@ def derive_av_coding_config_change(
         return Failure(InvalidSpeakerFormat(format_str=speaker_format))
 
     return AVCodingConfigChanged(
+        old_timestamp_format=current_settings.av_coding.timestamp_format,
+        old_speaker_format=current_settings.av_coding.speaker_format,
         timestamp_format=timestamp_format,
         speaker_format=speaker_format,
     )

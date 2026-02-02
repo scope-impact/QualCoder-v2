@@ -224,13 +224,17 @@ class TestDeriveBackupConfigChange:
     def test_changes_backup_config_with_valid_inputs(self):
         """Should create BackupConfigChanged event with valid settings."""
         from src.domain.settings.derivers import derive_backup_config_change
+        from src.domain.settings.entities import UserSettings
         from src.domain.settings.events import BackupConfigChanged
+
+        settings = UserSettings.default()
 
         result = derive_backup_config_change(
             enabled=True,
             interval_minutes=30,
             max_backups=5,
             backup_path="/tmp/backups",
+            current_settings=settings,
         )
 
         assert isinstance(result, BackupConfigChanged)
@@ -242,13 +246,17 @@ class TestDeriveBackupConfigChange:
     def test_allows_none_backup_path(self):
         """Should accept None for backup_path."""
         from src.domain.settings.derivers import derive_backup_config_change
+        from src.domain.settings.entities import UserSettings
         from src.domain.settings.events import BackupConfigChanged
+
+        settings = UserSettings.default()
 
         result = derive_backup_config_change(
             enabled=True,
             interval_minutes=30,
             max_backups=5,
             backup_path=None,
+            current_settings=settings,
         )
 
         assert isinstance(result, BackupConfigChanged)
@@ -262,12 +270,16 @@ class TestDeriveBackupConfigChange:
             InvalidBackupInterval,
             derive_backup_config_change,
         )
+        from src.domain.settings.entities import UserSettings
+
+        settings = UserSettings.default()
 
         result = derive_backup_config_change(
             enabled=True,
             interval_minutes=3,
             max_backups=5,
             backup_path=None,
+            current_settings=settings,
         )
 
         assert isinstance(result, Failure)
@@ -281,12 +293,16 @@ class TestDeriveBackupConfigChange:
             InvalidBackupInterval,
             derive_backup_config_change,
         )
+        from src.domain.settings.entities import UserSettings
+
+        settings = UserSettings.default()
 
         result = derive_backup_config_change(
             enabled=True,
             interval_minutes=150,
             max_backups=5,
             backup_path=None,
+            current_settings=settings,
         )
 
         assert isinstance(result, Failure)
@@ -300,12 +316,16 @@ class TestDeriveBackupConfigChange:
             InvalidMaxBackups,
             derive_backup_config_change,
         )
+        from src.domain.settings.entities import UserSettings
+
+        settings = UserSettings.default()
 
         result = derive_backup_config_change(
             enabled=True,
             interval_minutes=30,
             max_backups=0,
             backup_path=None,
+            current_settings=settings,
         )
 
         assert isinstance(result, Failure)
@@ -319,12 +339,16 @@ class TestDeriveBackupConfigChange:
             InvalidMaxBackups,
             derive_backup_config_change,
         )
+        from src.domain.settings.entities import UserSettings
+
+        settings = UserSettings.default()
 
         result = derive_backup_config_change(
             enabled=True,
             interval_minutes=30,
             max_backups=25,
             backup_path=None,
+            current_settings=settings,
         )
 
         assert isinstance(result, Failure)
@@ -333,17 +357,28 @@ class TestDeriveBackupConfigChange:
     def test_accepts_boundary_values(self):
         """Should accept values at boundaries."""
         from src.domain.settings.derivers import derive_backup_config_change
+        from src.domain.settings.entities import UserSettings
         from src.domain.settings.events import BackupConfigChanged
+
+        settings = UserSettings.default()
 
         # Minimum interval and max_backups
         result = derive_backup_config_change(
-            enabled=True, interval_minutes=5, max_backups=1, backup_path=None
+            enabled=True,
+            interval_minutes=5,
+            max_backups=1,
+            backup_path=None,
+            current_settings=settings,
         )
         assert isinstance(result, BackupConfigChanged)
 
         # Maximum interval and max_backups
         result = derive_backup_config_change(
-            enabled=True, interval_minutes=120, max_backups=20, backup_path=None
+            enabled=True,
+            interval_minutes=120,
+            max_backups=20,
+            backup_path=None,
+            current_settings=settings,
         )
         assert isinstance(result, BackupConfigChanged)
 
@@ -354,11 +389,15 @@ class TestDeriveAVCodingConfigChange:
     def test_changes_av_config_with_valid_inputs(self):
         """Should create AVCodingConfigChanged event with valid settings."""
         from src.domain.settings.derivers import derive_av_coding_config_change
+        from src.domain.settings.entities import UserSettings
         from src.domain.settings.events import AVCodingConfigChanged
+
+        settings = UserSettings.default()
 
         result = derive_av_coding_config_change(
             timestamp_format="HH:MM:SS.mmm",
             speaker_format="Interviewer {n}",
+            current_settings=settings,
         )
 
         assert isinstance(result, AVCodingConfigChanged)
@@ -368,13 +407,17 @@ class TestDeriveAVCodingConfigChange:
     def test_accepts_all_valid_timestamp_formats(self):
         """Should accept all valid timestamp formats."""
         from src.domain.settings.derivers import derive_av_coding_config_change
+        from src.domain.settings.entities import UserSettings
         from src.domain.settings.events import AVCodingConfigChanged
         from src.domain.settings.invariants import VALID_TIMESTAMP_FORMATS
+
+        settings = UserSettings.default()
 
         for fmt in VALID_TIMESTAMP_FORMATS:
             result = derive_av_coding_config_change(
                 timestamp_format=fmt,
                 speaker_format="Speaker {n}",
+                current_settings=settings,
             )
             assert isinstance(result, AVCodingConfigChanged)
             assert result.timestamp_format == fmt
@@ -387,10 +430,14 @@ class TestDeriveAVCodingConfigChange:
             InvalidTimestampFormat,
             derive_av_coding_config_change,
         )
+        from src.domain.settings.entities import UserSettings
+
+        settings = UserSettings.default()
 
         result = derive_av_coding_config_change(
             timestamp_format="YYYY-MM-DD",
             speaker_format="Speaker {n}",
+            current_settings=settings,
         )
 
         assert isinstance(result, Failure)
@@ -405,10 +452,14 @@ class TestDeriveAVCodingConfigChange:
             InvalidSpeakerFormat,
             derive_av_coding_config_change,
         )
+        from src.domain.settings.entities import UserSettings
+
+        settings = UserSettings.default()
 
         result = derive_av_coding_config_change(
             timestamp_format="HH:MM:SS",
             speaker_format="Speaker",
+            current_settings=settings,
         )
 
         assert isinstance(result, Failure)
@@ -422,10 +473,14 @@ class TestDeriveAVCodingConfigChange:
             InvalidSpeakerFormat,
             derive_av_coding_config_change,
         )
+        from src.domain.settings.entities import UserSettings
+
+        settings = UserSettings.default()
 
         result = derive_av_coding_config_change(
             timestamp_format="HH:MM:SS",
             speaker_format="",
+            current_settings=settings,
         )
 
         assert isinstance(result, Failure)
@@ -434,7 +489,10 @@ class TestDeriveAVCodingConfigChange:
     def test_accepts_various_speaker_formats(self):
         """Should accept various valid speaker formats with {n}."""
         from src.domain.settings.derivers import derive_av_coding_config_change
+        from src.domain.settings.entities import UserSettings
         from src.domain.settings.events import AVCodingConfigChanged
+
+        settings = UserSettings.default()
 
         formats = [
             "Speaker {n}",
@@ -448,6 +506,7 @@ class TestDeriveAVCodingConfigChange:
             result = derive_av_coding_config_change(
                 timestamp_format="HH:MM:SS",
                 speaker_format=fmt,
+                current_settings=settings,
             )
             assert isinstance(result, AVCodingConfigChanged)
             assert result.speaker_format == fmt

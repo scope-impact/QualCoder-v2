@@ -45,6 +45,8 @@ class FontChanged:
     """Emitted when the user changes font settings."""
 
     event_type: str = field(default="settings.font_changed", init=False)
+    old_family: str = ""
+    old_size: int = 14
     family: str = ""
     size: int = 14
     event_id: str = field(default_factory=_uuid)
@@ -78,6 +80,10 @@ class BackupConfigChanged:
     """Emitted when the user changes backup configuration."""
 
     event_type: str = field(default="settings.backup_config_changed", init=False)
+    old_enabled: bool = False
+    old_interval_minutes: int = 30
+    old_max_backups: int = 5
+    old_backup_path: str | None = None
     enabled: bool = False
     interval_minutes: int = 30
     max_backups: int = 5
@@ -96,6 +102,8 @@ class AVCodingConfigChanged:
     """Emitted when the user changes AV coding configuration."""
 
     event_type: str = field(default="settings.av_coding_config_changed", init=False)
+    old_timestamp_format: str = ""
+    old_speaker_format: str = ""
     timestamp_format: str = ""
     speaker_format: str = ""
     event_id: str = field(default_factory=_uuid)

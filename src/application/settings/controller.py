@@ -215,12 +215,16 @@ class SettingsControllerImpl:
         Returns:
             Success with BackupConfigChanged event, or Failure with reason
         """
-        # Step 1: Derive event or failure (no state needed for validation)
+        # Step 1: Build current state
+        current_settings = self._settings_repo.load()
+
+        # Step 2: Derive event or failure
         result = derive_backup_config_change(
             enabled=command.enabled,
             interval_minutes=command.interval_minutes,
             max_backups=command.max_backups,
             backup_path=command.backup_path,
+            current_settings=current_settings,
         )
 
         if isinstance(result, Failure):
@@ -228,7 +232,7 @@ class SettingsControllerImpl:
 
         event: BackupConfigChanged = result
 
-        # Step 2: Persist new backup config
+        # Step 3: Persist new backup config
         new_backup = BackupConfig(
             enabled=command.enabled,
             interval_minutes=command.interval_minutes,
@@ -237,7 +241,7 @@ class SettingsControllerImpl:
         )
         self._settings_repo.set_backup_config(new_backup)
 
-        # Step 3: Publish event
+        # Step 4: Publish event
         if self._event_bus:
             self._event_bus.publish(event)
 
@@ -257,10 +261,14 @@ class SettingsControllerImpl:
         Returns:
             Success with AVCodingConfigChanged event, or Failure with reason
         """
-        # Step 1: Derive event or failure
+        # Step 1: Build current state
+        current_settings = self._settings_repo.load()
+
+        # Step 2: Derive event or failure
         result = derive_av_coding_config_change(
             timestamp_format=command.timestamp_format,
             speaker_format=command.speaker_format,
+            current_settings=current_settings,
         )
 
         if isinstance(result, Failure):
@@ -268,14 +276,14 @@ class SettingsControllerImpl:
 
         event: AVCodingConfigChanged = result
 
-        # Step 2: Persist new AV coding config
+        # Step 3: Persist new AV coding config
         new_av_coding = AVCodingConfig(
             timestamp_format=command.timestamp_format,
             speaker_format=command.speaker_format,
         )
         self._settings_repo.set_av_coding_config(new_av_coding)
 
-        # Step 3: Publish event
+        # Step 4: Publish event
         if self._event_bus:
             self._event_bus.publish(event)
 
