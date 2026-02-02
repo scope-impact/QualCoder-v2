@@ -51,7 +51,7 @@ QualCoder v2 uses a **functional Domain-Driven Design (fDDD)** architecture with
 │  repository-agent           │              │  organism-agent             │
 │  controller-agent           │              │  page-agent                 │
 │  signal-bridge-agent        │              │  screen-agent               │
-│  event-bus-agent            │              │  viewmodel-agent            │
+│                             │              │  viewmodel-agent            │
 └─────────────────────────────┘              └─────────────────────────────┘
 ```
 
