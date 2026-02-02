@@ -304,12 +304,9 @@ class QualCoderApp:
         self._shell.menu_clicked.connect(self._on_menu_click)
         self._shell.tab_clicked.connect(self._on_tab_click)
 
-        # Connect settings button
-        self._shell.settings_clicked.connect(
-            lambda: self._dialog_service.show_settings_dialog(
-                parent=self._shell, colors=self._colors
-            )
-        )
+        # Load and apply saved settings at startup
+        # (AppShell.open_settings_dialog is already connected internally for live updates)
+        self._shell.load_and_apply_settings(self._ctx.settings_repo)
 
         # Connect file manager navigation to coding screen
         self._screens["files"].navigate_to_coding.connect(self._on_navigate_to_coding)
