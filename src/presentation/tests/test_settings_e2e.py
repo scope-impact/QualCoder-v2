@@ -632,3 +632,131 @@ class TestFullRoundTrip:
 
         with allure.step("Close dialog"):
             dialog2.close()
+
+
+# =============================================================================
+# Test Classes - UI Application (Theme/Font Actually Change)
+# =============================================================================
+
+
+@allure.story("QC-038 UI Application")
+@allure.severity(allure.severity_level.CRITICAL)
+class TestUIApplication:
+    """
+    E2E tests verifying settings actually change the UI.
+    Tests that theme and font changes are applied to the application.
+    """
+
+    @allure.title("Theme change applies to AppShell and updates colors")
+    @allure.link("QC-038", name="Backlog Task")
+    def test_theme_change_applies_to_ui(self, qapp, temp_config_path):
+        """
+        E2E: Changing theme actually changes the UI colors.
+
+        Verifies:
+        1. AppShell starts with light theme colors
+        2. After apply_theme('dark'), colors change to dark palette
+        """
+        from design_system import get_colors, get_theme
+        from src.presentation.templates.app_shell import AppShell
+
+        with allure.step("Create AppShell with light theme (default)"):
+            light_colors = get_theme("light")
+            shell = AppShell(colors=light_colors)
+
+        with allure.step("Verify initial colors are light theme"):
+            initial_bg = shell._colors.background
+            assert initial_bg == light_colors.background
+
+        with allure.step("Apply dark theme"):
+            shell.apply_theme("dark")
+            QApplication.processEvents()
+
+        with allure.step("Verify colors changed to dark theme"):
+            dark_colors = get_theme("dark")
+            # After applying theme, global get_colors() returns dark
+            current_colors = get_colors()
+            assert current_colors.background == dark_colors.background
+            assert shell._colors.background == dark_colors.background
+
+        with allure.step("Cleanup"):
+            shell.close()
+
+    @allure.title("Font change applies to QApplication")
+    def test_font_change_applies_to_ui(self, qapp):
+        """
+        E2E: Changing font actually changes the application font.
+
+        Verifies:
+        1. Get initial app font
+        2. After apply_font(), app font changes
+        """
+        from design_system import get_colors
+        from src.presentation.templates.app_shell import AppShell
+
+        with allure.step("Create AppShell"):
+            shell = AppShell(colors=get_colors())
+
+        with allure.step("Get initial font"):
+            _ = qapp.font()  # Just verify we can get the font
+
+        with allure.step("Apply Roboto font at size 18"):
+            shell.apply_font("Roboto", 18)
+            QApplication.processEvents()
+
+        with allure.step("Verify app font changed"):
+            new_font = qapp.font()
+            assert new_font.family() == "Roboto"
+            assert new_font.pointSize() == 18
+
+        with allure.step("Cleanup"):
+            shell.close()
+
+    @allure.title("load_and_apply_settings restores theme and font from JSON")
+    def test_load_and_apply_settings_from_repository(self, qapp, temp_config_path):
+        """
+        E2E: Settings loaded from repository are applied to UI at startup.
+
+        Verifies complete flow:
+        1. Save dark theme + custom font to JSON
+        2. Create new AppShell
+        3. Call load_and_apply_settings()
+        4. Verify theme and font applied
+        """
+        from design_system import get_colors, get_theme
+        from src.contexts.settings.infra import UserSettingsRepository
+        from src.presentation.templates.app_shell import AppShell
+
+        with allure.step("Save dark theme and Roboto 16px to JSON"):
+            repo = UserSettingsRepository(config_path=temp_config_path)
+            settings = repo.load()
+            # Modify settings
+            settings = settings.with_theme(settings.theme.with_name("dark"))
+            settings = settings.with_font(
+                settings.font.with_family("Roboto").with_size(16)
+            )
+            repo.save(settings)
+
+        with allure.step("Verify settings saved"):
+            saved = repo.load()
+            assert saved.theme.name == "dark"
+            assert saved.font.family == "Roboto"
+            assert saved.font.size == 16
+
+        with allure.step("Create new AppShell and load settings"):
+            shell = AppShell(colors=get_colors())
+            shell.load_and_apply_settings(repo)
+            QApplication.processEvents()
+
+        with allure.step("Verify dark theme applied"):
+            dark_colors = get_theme("dark")
+            current_colors = get_colors()
+            assert current_colors.background == dark_colors.background
+
+        with allure.step("Verify font applied"):
+            app_font = qapp.font()
+            assert app_font.family() == "Roboto"
+            assert app_font.pointSize() == 16
+
+        with allure.step("Cleanup"):
+            shell.close()

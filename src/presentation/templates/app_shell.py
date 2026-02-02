@@ -50,6 +50,7 @@ from design_system import (
     Icon,
     TitleBar,
     get_colors,
+    set_theme,
 )
 
 # QualCoder-specific menu items
@@ -650,6 +651,80 @@ class AppShell(QMainWindow):
     def set_active_tab(self, tab_id: str):
         """Set active tab"""
         self._tab_bar.set_active(tab_id)
+
+    # --- Settings Application ---
+
+    def apply_theme(self, theme_name: str) -> None:
+        """
+        Apply theme to the entire application UI.
+
+        This changes the design system's global theme and refreshes
+        all widgets to use the new color palette.
+
+        Args:
+            theme_name: Theme name ('light' or 'dark')
+        """
+        # Update global design system theme
+        set_theme(theme_name)
+
+        # Get new colors
+        self._colors = get_colors()
+
+        # Rebuild UI with new colors
+        self._refresh_ui()
+
+    def apply_font(self, family: str, size: int) -> None:
+        """
+        Apply font settings to the application.
+
+        Args:
+            family: Font family name
+            size: Font size in pixels
+        """
+        from PySide6.QtGui import QFont
+        from PySide6.QtWidgets import QApplication
+
+        app = QApplication.instance()
+        if app:
+            font = QFont(family, size)
+            app.setFont(font)
+
+    def load_and_apply_settings(self, settings_repo) -> None:
+        """
+        Load settings from repository and apply to UI.
+
+        This should be called at application startup to restore
+        saved user preferences.
+
+        Args:
+            settings_repo: UserSettingsRepository instance
+        """
+        settings = settings_repo.load()
+
+        # Apply theme (only if not system - system theme handled separately)
+        if settings.theme.name in ("light", "dark"):
+            self.apply_theme(settings.theme.name)
+
+        # Apply font
+        self.apply_font(settings.font.family, settings.font.size)
+
+    def _refresh_ui(self) -> None:
+        """Refresh all UI components with current colors."""
+        # Rebuild components with new colors
+        central = self.centralWidget()
+
+        # Remove old layout
+        old_layout = central.layout()
+        if old_layout:
+            # Clear all widgets
+            while old_layout.count():
+                item = old_layout.takeAt(0)
+                widget = item.widget()
+                if widget:
+                    widget.deleteLater()
+
+        # Rebuild UI
+        self._setup_ui()
 
     # --- Accessors ---
 
