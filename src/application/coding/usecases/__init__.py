@@ -5,6 +5,11 @@ Functional use cases for coding operations following the 5-step pattern.
 """
 
 from src.application.coding.usecases.apply_code import apply_code
+from src.application.coding.usecases.batch_apply_codes import (
+    BatchApplyCodesResult,
+    BatchOperationResult,
+    batch_apply_codes,
+)
 from src.application.coding.usecases.change_code_color import change_code_color
 from src.application.coding.usecases.create_category import create_category
 from src.application.coding.usecases.create_code import create_code
@@ -34,6 +39,9 @@ __all__ = [
     "move_code_to_category",
     # Segment use cases
     "apply_code",
+    "batch_apply_codes",
+    "BatchApplyCodesResult",
+    "BatchOperationResult",
     "remove_segment",
     # Category use cases
     "create_category",

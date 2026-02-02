@@ -97,6 +97,26 @@ class RemoveCodeCommand:
 
 
 @dataclass(frozen=True)
+class BatchApplyCodesCommand:
+    """
+    Command to apply multiple codes to multiple text segments in a single batch.
+
+    Designed for AI agents to efficiently apply multiple codes at once,
+    reducing round-trips and improving performance.
+
+    Each item in `operations` is an ApplyCodeCommand-like dict with:
+    - code_id: int
+    - source_id: int
+    - start_position: int
+    - end_position: int
+    - memo: str | None (optional)
+    - importance: int (optional, default 0)
+    """
+
+    operations: tuple[ApplyCodeCommand, ...]
+
+
+@dataclass(frozen=True)
 class CreateCategoryCommand:
     """Command to create a new category"""
 
