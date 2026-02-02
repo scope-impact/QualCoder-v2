@@ -29,6 +29,7 @@ from PySide6.QtWidgets import (
 
 if TYPE_CHECKING:
     from PySide6.QtCore import QPoint
+    from PySide6.QtGui import QDragEnterEvent, QDragMoveEvent, QDropEvent
 
 
 # ============================================================
@@ -224,3 +225,74 @@ class FolderTree(QFrame):
             item = self._folder_items[folder.id]
             item.setText(0, self._format_folder_name(folder))
             item.setData(0, Qt.ItemDataRole.UserRole, folder)
+
+    # ============================================================
+    # Drag and Drop
+    # ============================================================
+
+    def dragEnterEvent(self, event: QDragEnterEvent) -> None:
+        """
+        Accept drag events with source IDs.
+
+        Args:
+            event: Drag enter event
+        """
+        if event.mimeData().hasFormat("application/x-qualcoder-source-ids"):
+            event.acceptProposedAction()
+        else:
+            event.ignore()
+
+    def dragMoveEvent(self, event: QDragMoveEvent) -> None:
+        """
+        Highlight valid drop targets as drag moves.
+
+        Args:
+            event: Drag move event
+        """
+        if event.mimeData().hasFormat("application/x-qualcoder-source-ids"):
+            # Accept drop on any item in the tree
+            item = self._tree.itemAt(event.position().toPoint())
+            if item is not None:
+                event.acceptProposedAction()
+            else:
+                event.ignore()
+        else:
+            event.ignore()
+
+    def dropEvent(self, event: QDropEvent) -> None:
+        """
+        Handle drop of source IDs onto a folder.
+
+        Extracts source IDs from MIME data and emits move_sources_requested
+        signal with the target folder.
+
+        Args:
+            event: Drop event
+        """
+        mime_data = event.mimeData()
+        if not mime_data.hasFormat("application/x-qualcoder-source-ids"):
+            event.ignore()
+            return
+
+        # Extract source IDs from MIME data
+        source_ids_bytes = mime_data.data("application/x-qualcoder-source-ids")
+        source_ids_str = bytes(source_ids_bytes).decode("utf-8")
+        source_ids = [int(id_str) for id_str in source_ids_str.split(",") if id_str]
+
+        if not source_ids:
+            event.ignore()
+            return
+
+        # Determine target folder
+        item = self._tree.itemAt(event.position().toPoint())
+        if item is None:
+            event.ignore()
+            return
+
+        # Get folder ID (None for root "All Sources")
+        folder: FolderNode | None = item.data(0, Qt.ItemDataRole.UserRole)
+        folder_id = folder.id if folder is not None else None
+
+        # Emit signal to request move
+        self.move_sources_requested.emit(source_ids, folder_id)
+        event.acceptProposedAction()

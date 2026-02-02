@@ -91,7 +91,7 @@ class TestSettingsDialogIntegration:
             dialog.close()
 
             # Verify change persisted
-            from src.infrastructure.settings import UserSettingsRepository
+            from src.contexts.settings.infra import UserSettingsRepository
 
             repo = UserSettingsRepository(config_path=config_path)
             settings = repo.load()
@@ -143,7 +143,7 @@ class TestAppShellCoordinatorWiring:
     def test_full_workflow_shell_to_coordinator_to_persistence(self, qapp, colors):
         """Full workflow: AppShell -> Coordinator -> Dialog -> Persistence."""
         from src.application.coordinator import ApplicationCoordinator
-        from src.infrastructure.settings import UserSettingsRepository
+        from src.contexts.settings.infra import UserSettingsRepository
         from src.presentation.templates.app_shell import AppShell
 
         with tempfile.TemporaryDirectory() as tmpdir:

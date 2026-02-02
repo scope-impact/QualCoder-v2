@@ -37,9 +37,15 @@ class TestCoordinatorInitialization:
         """Coordinator creates an event bus."""
         assert coordinator.event_bus is not None
 
-    def test_creates_project_controller(self, coordinator: ApplicationCoordinator):
-        """Coordinator creates a project controller."""
-        assert coordinator.project_controller is not None
+    def test_has_sub_coordinators(self, coordinator: ApplicationCoordinator):
+        """Coordinator exposes per-context sub-coordinators."""
+        assert coordinator.projects is not None
+        assert coordinator.sources is not None
+        assert coordinator.cases is not None
+        assert coordinator.folders is not None
+        assert coordinator.coding is not None
+        assert coordinator.navigation is not None
+        assert coordinator.settings is not None
 
     def test_start_and_stop(self, coordinator: ApplicationCoordinator):
         """Coordinator can start and stop."""
@@ -55,16 +61,22 @@ class TestOpenProject:
         self, coordinator: ApplicationCoordinator, tmp_path: Path
     ):
         """Opening an existing project succeeds."""
-        project_path = tmp_path / "test.qda"
-        project_path.touch()
+        # Create a proper .qda database file with schema
+        from src.contexts.projects.infra.project_repository import (
+            SQLiteProjectRepository,
+        )
 
-        result = coordinator.open_project(str(project_path))
+        project_path = tmp_path / "test.qda"
+        repo = SQLiteProjectRepository()
+        repo.create_database(project_path, "Test Project")
+
+        result = coordinator.projects.open_project(str(project_path))
 
         assert isinstance(result, Success)
 
     def test_open_project_failure(self, coordinator: ApplicationCoordinator):
         """Opening a nonexistent project fails."""
-        result = coordinator.open_project("/nonexistent/project.qda")
+        result = coordinator.projects.open_project("/nonexistent/project.qda")
 
         assert isinstance(result, Failure)
 
@@ -78,7 +90,7 @@ class TestCreateProject:
         """Creating a new project succeeds."""
         project_path = tmp_path / "new_project.qda"
 
-        result = coordinator.create_project("My Project", str(project_path))
+        result = coordinator.projects.create_project("My Project", str(project_path))
 
         assert isinstance(result, Success)
 
@@ -88,7 +100,7 @@ class TestCreateProject:
         """Creating a project with empty name fails."""
         project_path = tmp_path / "empty.qda"
 
-        result = coordinator.create_project("", str(project_path))
+        result = coordinator.projects.create_project("", str(project_path))
 
         assert isinstance(result, Failure)
 
@@ -98,11 +110,14 @@ class TestNavigateToSegment:
 
     def test_navigate_fails_without_project(self, coordinator: ApplicationCoordinator):
         """Navigation fails when no project is open."""
-        result = coordinator.navigate_to_segment(
+        from src.application.projects.commands import NavigateToSegmentCommand
+
+        command = NavigateToSegmentCommand(
             source_id=1,
             start_pos=0,
             end_pos=100,
         )
+        result = coordinator.navigation.navigate_to_segment(command)
 
         assert isinstance(result, Failure)
 
@@ -110,14 +125,17 @@ class TestNavigateToSegment:
         self, coordinator: ApplicationCoordinator, tmp_path: Path
     ):
         """Navigation fails for nonexistent source."""
-        project_path = tmp_path / "test.qda"
-        coordinator.create_project("Test", str(project_path))
+        from src.application.projects.commands import NavigateToSegmentCommand
 
-        result = coordinator.navigate_to_segment(
+        project_path = tmp_path / "test.qda"
+        coordinator.projects.create_project("Test", str(project_path))
+
+        command = NavigateToSegmentCommand(
             source_id=999,
             start_pos=0,
             end_pos=100,
         )
+        result = coordinator.navigation.navigate_to_segment(command)
 
         assert isinstance(result, Failure)
 
@@ -127,7 +145,7 @@ class TestProjectContext:
 
     def test_context_when_no_project(self, coordinator: ApplicationCoordinator):
         """Returns closed state when no project."""
-        context = coordinator.get_project_context()
+        context = coordinator.projects.get_project_context()
 
         assert context["project_open"] is False
 
@@ -136,9 +154,9 @@ class TestProjectContext:
     ):
         """Returns project info when project is open."""
         project_path = tmp_path / "test.qda"
-        coordinator.create_project("Test Project", str(project_path))
+        coordinator.projects.create_project("Test Project", str(project_path))
 
-        context = coordinator.get_project_context()
+        context = coordinator.projects.get_project_context()
 
         assert context["project_open"] is True
         assert context["project_name"] == "Test Project"
@@ -155,12 +173,12 @@ class TestMCPTools:
         assert "get_project_context" in tools.get_tool_names()
         assert "navigate_to_segment" in tools.get_tool_names()
 
-    def test_mcp_tools_use_same_controller(
+    def test_mcp_tools_use_same_coordinator(
         self, coordinator: ApplicationCoordinator, tmp_path: Path
     ):
-        """MCP tools share controller state with coordinator."""
+        """MCP tools share state with coordinator."""
         project_path = tmp_path / "test.qda"
-        coordinator.create_project("Test", str(project_path))
+        coordinator.projects.create_project("Test", str(project_path))
 
         tools = coordinator.get_mcp_tools()
         result = tools.execute("get_project_context", {})

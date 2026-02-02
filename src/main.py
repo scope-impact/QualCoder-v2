@@ -20,6 +20,7 @@ from src.presentation.screens import (
     TextCodingScreen,
 )
 from src.presentation.templates.app_shell import AppShell
+from src.presentation.viewmodels import FileManagerViewModel
 
 
 class QualCoderApp:
@@ -44,6 +45,13 @@ class QualCoderApp:
         """Create and configure the main application shell."""
         self._shell = AppShell(colors=self._colors)
 
+        # Create ViewModels
+        # Coordinator implements ProjectProvider protocol directly
+        self._file_manager_viewmodel = FileManagerViewModel(
+            controller=self._coordinator,
+            event_bus=self._coordinator.event_bus,
+        )
+
         # Create screens
         self._screens = {
             "project": ProjectScreen(
@@ -51,7 +59,10 @@ class QualCoderApp:
                 on_open=self._on_open_project,
                 on_create=self._on_create_project,
             ),
-            "files": FileManagerScreen(colors=self._colors),
+            "files": FileManagerScreen(
+                viewmodel=self._file_manager_viewmodel,
+                colors=self._colors,
+            ),
             "cases": CaseManagerScreen(colors=self._colors),
             "coding": TextCodingScreen(colors=self._colors),
         }
@@ -70,6 +81,12 @@ class QualCoderApp:
                 parent=self._shell, colors=self._colors
             )
         )
+
+        # Connect file manager navigation to coding screen
+        self._screens["files"].navigate_to_coding.connect(self._on_navigate_to_coding)
+
+        # Connect text coding screen to receive navigation events
+        self._coordinator.navigation.connect_text_coding_screen(self._screens["coding"])
 
     def _on_menu_click(self, menu_id: str):
         """Handle menu item clicks."""
@@ -94,7 +111,8 @@ class QualCoderApp:
         """Handle open project request."""
         result = self._coordinator.show_open_project_dialog(parent=self._shell)
         if result:
-            # Project opened successfully - switch to files view
+            # Project opened successfully - refresh file manager and switch to files view
+            self._screens["files"].refresh()
             self._shell.set_screen(self._screens["files"])
             self._shell.set_active_menu("files")
 
@@ -102,9 +120,15 @@ class QualCoderApp:
         """Handle create project request."""
         result = self._coordinator.show_create_project_dialog(parent=self._shell)
         if result:
-            # Project created successfully - switch to files view
+            # Project created successfully - refresh file manager and switch to files view
+            self._screens["files"].refresh()
             self._shell.set_screen(self._screens["files"])
             self._shell.set_active_menu("files")
+
+    def _on_navigate_to_coding(self, _source_id: str):
+        """Handle navigation to coding screen with a specific source."""
+        self._shell.set_screen(self._screens["coding"])
+        self._shell.set_active_menu("coding")
 
     def run(self) -> int:
         """Run the application."""

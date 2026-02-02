@@ -352,9 +352,15 @@ class EventBus:
 
         # Generate from module and class name
         module = event_class.__module__
-        # Extract context from module path (e.g., "domain.coding.events" -> "coding")
+        # Extract context from module path
+        # Handles both old (domain.coding.events) and new (contexts.coding.core.events)
         parts = module.split(".")
-        if "domain" in parts:
+        if "contexts" in parts:
+            # New structure: src.contexts.coding.core.events -> "coding"
+            idx = parts.index("contexts")
+            context = parts[idx + 1] if idx + 1 < len(parts) else parts[-1]
+        elif "domain" in parts:
+            # Old structure: src.domain.coding.events -> "coding"
             idx = parts.index("domain")
             context = parts[idx + 1] if idx + 1 < len(parts) else parts[-1]
         else:

@@ -339,3 +339,88 @@ class TestSQLiteSegmentRepository:
         # Segment should now have code2
         retrieved = segment_repo.get_by_id(SegmentId(value=1))
         assert retrieved.code_id == CodeId(value=2)
+
+    def test_delete_by_source_removes_all_segments(self, segment_repo, code_repo):
+        """Test delete_by_source removes all segments for a source."""
+        code = Code(id=CodeId(value=1), name="Code1", color=Color(255, 0, 0))
+        code_repo.save(code)
+
+        # Create segments for source 100
+        for i in range(3):
+            seg = TextSegment(
+                id=SegmentId(value=i),
+                source_id=SourceId(value=100),
+                code_id=CodeId(value=1),
+                position=TextPosition(start=i * 10, end=i * 10 + 5),
+                selected_text=f"seg{i}",
+            )
+            segment_repo.save(seg)
+
+        # Delete all segments for source 100
+        deleted = segment_repo.delete_by_source(SourceId(value=100))
+        assert deleted == 3
+
+        # Verify no segments remain for source 100
+        segments = segment_repo.get_by_source(SourceId(value=100))
+        assert len(segments) == 0
+
+    def test_delete_by_source_returns_correct_count(self, segment_repo, code_repo):
+        """Test delete_by_source returns correct count of deleted rows."""
+        code = Code(id=CodeId(value=1), name="Code1", color=Color(255, 0, 0))
+        code_repo.save(code)
+
+        # Create 5 segments
+        for i in range(5):
+            seg = TextSegment(
+                id=SegmentId(value=i),
+                source_id=SourceId(value=200),
+                code_id=CodeId(value=1),
+                position=TextPosition(start=i * 10, end=i * 10 + 5),
+                selected_text=f"seg{i}",
+            )
+            segment_repo.save(seg)
+
+        # Delete should return count of 5
+        deleted = segment_repo.delete_by_source(SourceId(value=200))
+        assert deleted == 5
+
+    def test_delete_by_source_doesnt_affect_other_sources(
+        self, segment_repo, code_repo
+    ):
+        """Test delete_by_source doesn't affect other sources' segments."""
+        code = Code(id=CodeId(value=1), name="Code1", color=Color(255, 0, 0))
+        code_repo.save(code)
+
+        # Create segments for source 100
+        seg1 = TextSegment(
+            id=SegmentId(value=1),
+            source_id=SourceId(value=100),
+            code_id=CodeId(value=1),
+            position=TextPosition(start=0, end=10),
+            selected_text="source100",
+        )
+        segment_repo.save(seg1)
+
+        # Create segments for source 200
+        seg2 = TextSegment(
+            id=SegmentId(value=2),
+            source_id=SourceId(value=200),
+            code_id=CodeId(value=1),
+            position=TextPosition(start=0, end=10),
+            selected_text="source200",
+        )
+        segment_repo.save(seg2)
+
+        # Delete segments for source 100
+        deleted = segment_repo.delete_by_source(SourceId(value=100))
+        assert deleted == 1
+
+        # Source 200 segments should still exist
+        segments = segment_repo.get_by_source(SourceId(value=200))
+        assert len(segments) == 1
+        assert segments[0].selected_text == "source200"
+
+    def test_delete_by_source_with_no_segments(self, segment_repo):
+        """Test delete_by_source returns 0 when source has no segments."""
+        deleted = segment_repo.delete_by_source(SourceId(value=999))
+        assert deleted == 0

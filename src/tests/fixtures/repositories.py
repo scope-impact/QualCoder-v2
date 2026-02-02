@@ -12,6 +12,9 @@ from __future__ import annotations
 
 import pytest
 
+# Use legacy repositories for backward compatibility with existing tests
+# These use the compatibility aliases to the new V2 tables
+from src.infrastructure.coding.repositories import SQLiteSegmentRepository
 from src.infrastructure.projects.case_repository import SQLiteCaseRepository
 from src.infrastructure.projects.folder_repository import SQLiteFolderRepository
 from src.infrastructure.projects.settings_repository import (
@@ -42,3 +45,9 @@ def case_repo(db_connection):
 def folder_repo(db_connection):
     """Create a folder repository connected to the test database."""
     return SQLiteFolderRepository(db_connection)
+
+
+@pytest.fixture
+def segment_repo(db_connection):
+    """Create a segment repository connected to the test database."""
+    return SQLiteSegmentRepository(db_connection)

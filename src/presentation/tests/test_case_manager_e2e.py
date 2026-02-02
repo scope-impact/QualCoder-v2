@@ -29,10 +29,10 @@ from PySide6.QtWidgets import QApplication, QMainWindow, QVBoxLayout, QWidget
 from sqlalchemy import create_engine
 
 from src.application.event_bus import EventBus
-from src.domain.cases.entities import AttributeType, Case, CaseAttribute
-from src.domain.shared.types import CaseId, SourceId
-from src.infrastructure.projects.case_repository import SQLiteCaseRepository
-from src.infrastructure.projects.schema import create_all, drop_all
+from src.contexts.cases.core.entities import AttributeType, Case, CaseAttribute
+from src.contexts.cases.infra.case_repository import SQLiteCaseRepository
+from src.contexts.projects.infra.schema import create_all_contexts, drop_all_contexts
+from src.contexts.shared.core.types import CaseId, SourceId
 from src.presentation.screens import CaseManagerScreen
 from src.presentation.viewmodels.case_manager_viewmodel import CaseManagerViewModel
 
@@ -48,9 +48,9 @@ pytestmark = pytest.mark.e2e  # All tests in this module are E2E tests
 def db_engine():
     """Create in-memory SQLite engine for testing."""
     engine = create_engine("sqlite:///:memory:", echo=False)
-    create_all(engine)
+    create_all_contexts(engine)
     yield engine
-    drop_all(engine)
+    drop_all_contexts(engine)
     engine.dispose()
 
 

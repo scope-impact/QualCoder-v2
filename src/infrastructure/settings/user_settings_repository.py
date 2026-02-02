@@ -10,9 +10,11 @@ from __future__ import annotations
 import json
 import os
 import sys
+from datetime import datetime
 from pathlib import Path
 from typing import Any
 
+from src.domain.projects.entities import RecentProject
 from src.domain.settings.entities import (
     AVCodingConfig,
     BackupConfig,
@@ -169,6 +171,126 @@ class UserSettingsRepository:
         """Set AV coding configuration."""
         settings = self.load()
         self.save(settings.with_av_coding(av_coding))
+
+    # =========================================================================
+    # Recent Projects Operations
+    # =========================================================================
+
+    MAX_RECENT_PROJECTS = 10
+
+    def get_recent_projects(self) -> list[RecentProject]:
+        """
+        Load recent projects from settings file.
+
+        Returns:
+            List of RecentProject entities ordered by last_opened (most recent first).
+            Returns empty list if no recent projects or data is corrupt.
+        """
+        if not self._config_path.exists():
+            return []
+
+        try:
+            with open(self._config_path, encoding="utf-8") as f:
+                data = json.load(f)
+            return self._recent_projects_from_list(data.get("recent_projects", []))
+        except (json.JSONDecodeError, KeyError, TypeError, OSError):
+            return []
+
+    def add_recent_project(self, project: RecentProject) -> None:
+        """
+        Add or update a project in recent list.
+
+        If the project already exists (by path), updates its last_opened timestamp.
+        Maintains max 10 projects, removing oldest when limit exceeded.
+        Projects are kept ordered by last_opened (most recent first).
+
+        Args:
+            project: RecentProject to add or update
+        """
+        projects = self.get_recent_projects()
+
+        # Remove existing entry for this path if present
+        projects = [p for p in projects if p.path != project.path]
+
+        # Add the new/updated project
+        projects.append(project)
+
+        # Sort by last_opened descending (most recent first)
+        projects.sort(key=lambda p: p.last_opened, reverse=True)
+
+        # Keep only the most recent MAX_RECENT_PROJECTS
+        projects = projects[: self.MAX_RECENT_PROJECTS]
+
+        self._save_recent_projects(projects)
+
+    def remove_recent_project(self, path: Path) -> None:
+        """
+        Remove a project from recent list.
+
+        Args:
+            path: Path of the project to remove
+        """
+        projects = self.get_recent_projects()
+        projects = [p for p in projects if p.path != path]
+        self._save_recent_projects(projects)
+
+    def _save_recent_projects(self, projects: list[RecentProject]) -> None:
+        """Save recent projects list to settings file."""
+        # Load existing data or create empty dict
+        data: dict[str, Any] = {}
+        if self._config_path.exists():
+            try:
+                with open(self._config_path, encoding="utf-8") as f:
+                    data = json.load(f)
+            except (json.JSONDecodeError, OSError):
+                data = {}
+
+        # Update recent_projects in data
+        data["recent_projects"] = self._recent_projects_to_list(projects)
+
+        # Write atomically
+        try:
+            temp_path = self._config_path.with_suffix(".tmp")
+            with open(temp_path, "w", encoding="utf-8") as f:
+                json.dump(data, f, indent=2)
+            temp_path.replace(self._config_path)
+        except (PermissionError, OSError):
+            pass  # Silently fail; logging would go here in production
+
+    def _recent_projects_to_list(
+        self, projects: list[RecentProject]
+    ) -> list[dict[str, Any]]:
+        """Convert list of RecentProject to JSON-serializable list."""
+        return [
+            {
+                "path": str(p.path),
+                "name": p.name,
+                "last_opened": p.last_opened.isoformat(),
+            }
+            for p in projects
+        ]
+
+    def _recent_projects_from_list(
+        self, data: list[dict[str, Any]]
+    ) -> list[RecentProject]:
+        """Convert JSON list to list of RecentProject entities."""
+        projects: list[RecentProject] = []
+        for item in data:
+            try:
+                projects.append(
+                    RecentProject(
+                        path=Path(item["path"]),
+                        name=item["name"],
+                        last_opened=datetime.fromisoformat(item["last_opened"]),
+                    )
+                )
+            except (KeyError, TypeError, ValueError):
+                # Skip malformed entries
+                continue
+
+        # Sort by last_opened descending (most recent first)
+        projects.sort(key=lambda p: p.last_opened, reverse=True)
+        return projects
 
     # =========================================================================
     # Serialization

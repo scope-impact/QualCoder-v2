@@ -9,10 +9,7 @@ failures for invalid operations.
 import pytest
 
 from src.domain.coding.derivers import (
-    CategoryNotFound,
     CodingState,
-    HasReferences,
-    SameEntity,
     derive_apply_code_to_text,
     derive_change_code_color,
     derive_create_category,
@@ -43,17 +40,22 @@ from src.domain.coding.events import (
     SegmentMemoUpdated,
     SegmentUncoded,
 )
+from src.domain.coding.failure_events import (
+    CategoryNotCreated,
+    CodeNotCreated,
+    CodeNotDeleted,
+    CodeNotMoved,
+    CodeNotRenamed,
+    CodeNotUpdated,
+    CodesNotMerged,
+    SegmentNotCoded,
+    SegmentNotRemoved,
+)
 from src.domain.shared.types import (
     CategoryId,
     CodeId,
-    CodeNotFound,
-    DuplicateName,
-    EmptyName,
-    Failure,
-    InvalidPosition,
     SegmentId,
     SourceId,
-    SourceNotFound,
 )
 
 
@@ -80,7 +82,7 @@ class TestDeriveCreateCode:
         assert result.owner == "user1"
 
     def test_fails_with_empty_name(self, empty_state: CodingState):
-        """Should fail with EmptyName for empty names."""
+        """Should fail with CodeNotCreated/EMPTY_NAME for empty names."""
         result = derive_create_code(
             name="",
             color=Color(red=100, green=100, blue=100),
@@ -90,11 +92,11 @@ class TestDeriveCreateCode:
             state=empty_state,
         )
 
-        assert isinstance(result, Failure)
-        assert isinstance(result.failure(), EmptyName)
+        assert isinstance(result, CodeNotCreated)
+        assert result.reason == "EMPTY_NAME"
 
     def test_fails_with_duplicate_name(self, populated_state: CodingState):
-        """Should fail with DuplicateName for existing names."""
+        """Should fail with CodeNotCreated/DUPLICATE_NAME for existing names."""
         result = derive_create_code(
             name="Theme A",  # Already exists in sample_codes
             color=Color(red=100, green=100, blue=100),
@@ -104,12 +106,12 @@ class TestDeriveCreateCode:
             state=populated_state,
         )
 
-        assert isinstance(result, Failure)
-        assert isinstance(result.failure(), DuplicateName)
-        assert result.failure().name == "Theme A"
+        assert isinstance(result, CodeNotCreated)
+        assert result.reason == "DUPLICATE_NAME"
+        assert result.name == "Theme A"
 
     def test_fails_with_nonexistent_category(self, empty_state: CodingState):
-        """Should fail with CategoryNotFound for invalid category."""
+        """Should fail with CodeNotCreated/CATEGORY_NOT_FOUND for invalid category."""
         result = derive_create_code(
             name="New Theme",
             color=Color(red=100, green=100, blue=100),
@@ -119,8 +121,9 @@ class TestDeriveCreateCode:
             state=empty_state,
         )
 
-        assert isinstance(result, Failure)
-        assert isinstance(result.failure(), CategoryNotFound)
+        assert isinstance(result, CodeNotCreated)
+        assert result.reason == "CATEGORY_NOT_FOUND"
+        assert result.category_id == CategoryId(value=999)
 
     def test_creates_code_in_existing_category(self, populated_state: CodingState):
         """Should create code in existing category."""
@@ -154,37 +157,39 @@ class TestDeriveRenameCode:
         assert result.new_name == "Renamed Theme"
 
     def test_fails_for_nonexistent_code(self, populated_state: CodingState):
-        """Should fail for nonexistent code."""
+        """Should fail with CodeNotRenamed/NOT_FOUND for nonexistent code."""
         result = derive_rename_code(
             code_id=CodeId(value=999),
             new_name="New Name",
             state=populated_state,
         )
 
-        assert isinstance(result, Failure)
-        assert isinstance(result.failure(), CodeNotFound)
+        assert isinstance(result, CodeNotRenamed)
+        assert result.reason == "NOT_FOUND"
+        assert result.code_id == CodeId(value=999)
 
     def test_fails_with_empty_name(self, populated_state: CodingState):
-        """Should fail with empty new name."""
+        """Should fail with CodeNotRenamed/EMPTY_NAME for empty new name."""
         result = derive_rename_code(
             code_id=CodeId(value=1),
             new_name="",
             state=populated_state,
         )
 
-        assert isinstance(result, Failure)
-        assert isinstance(result.failure(), EmptyName)
+        assert isinstance(result, CodeNotRenamed)
+        assert result.reason == "EMPTY_NAME"
 
     def test_fails_with_duplicate_name(self, populated_state: CodingState):
-        """Should fail when renaming to existing name."""
+        """Should fail with CodeNotRenamed/DUPLICATE_NAME when renaming to existing name."""
         result = derive_rename_code(
             code_id=CodeId(value=1),
             new_name="Theme B",  # Already exists
             state=populated_state,
         )
 
-        assert isinstance(result, Failure)
-        assert isinstance(result.failure(), DuplicateName)
+        assert isinstance(result, CodeNotRenamed)
+        assert result.reason == "DUPLICATE_NAME"
+        assert result.new_name == "Theme B"
 
     def test_allows_keeping_same_name(self, populated_state: CodingState):
         """Should allow keeping the same name (case-insensitive)."""
@@ -214,15 +219,16 @@ class TestDeriveChangeCodeColor:
         assert result.new_color == new_color
 
     def test_fails_for_nonexistent_code(self, populated_state: CodingState):
-        """Should fail for nonexistent code."""
+        """Should fail with CodeNotUpdated/NOT_FOUND for nonexistent code."""
         result = derive_change_code_color(
             code_id=CodeId(value=999),
             new_color=Color(red=255, green=0, blue=0),
             state=populated_state,
         )
 
-        assert isinstance(result, Failure)
-        assert isinstance(result.failure(), CodeNotFound)
+        assert isinstance(result, CodeNotUpdated)
+        assert result.reason == "NOT_FOUND"
+        assert result.code_id == CodeId(value=999)
 
 
 class TestDeriveDeleteCode:
@@ -243,7 +249,7 @@ class TestDeriveDeleteCode:
     def test_fails_to_delete_code_with_segments_without_force(
         self, populated_state: CodingState
     ):
-        """Should fail to delete code with segments unless forced."""
+        """Should fail with CodeNotDeleted/HAS_REFERENCES to delete code with segments unless forced."""
         # Code 1 has segments
         result = derive_delete_code(
             code_id=CodeId(value=1),
@@ -251,8 +257,9 @@ class TestDeriveDeleteCode:
             state=populated_state,
         )
 
-        assert isinstance(result, Failure)
-        assert isinstance(result.failure(), HasReferences)
+        assert isinstance(result, CodeNotDeleted)
+        assert result.reason == "HAS_REFERENCES"
+        assert result.reference_count == 2
 
     def test_deletes_code_with_segments_when_forced(self, populated_state: CodingState):
         """Should delete code with segments when forced."""
@@ -266,15 +273,16 @@ class TestDeriveDeleteCode:
         assert result.segments_removed == 2  # Code 1 has 2 segments
 
     def test_fails_for_nonexistent_code(self, populated_state: CodingState):
-        """Should fail for nonexistent code."""
+        """Should fail with CodeNotDeleted/NOT_FOUND for nonexistent code."""
         result = derive_delete_code(
             code_id=CodeId(value=999),
             delete_segments=False,
             state=populated_state,
         )
 
-        assert isinstance(result, Failure)
-        assert isinstance(result.failure(), CodeNotFound)
+        assert isinstance(result, CodeNotDeleted)
+        assert result.reason == "NOT_FOUND"
+        assert result.code_id == CodeId(value=999)
 
 
 class TestDeriveMergeCodes:
@@ -294,37 +302,39 @@ class TestDeriveMergeCodes:
         assert result.segments_moved == 2  # Code 1 has 2 segments
 
     def test_fails_to_merge_code_with_itself(self, populated_state: CodingState):
-        """Should fail when merging code with itself."""
+        """Should fail with CodesNotMerged/SAME_CODE when merging code with itself."""
         result = derive_merge_codes(
             source_code_id=CodeId(value=1),
             target_code_id=CodeId(value=1),
             state=populated_state,
         )
 
-        assert isinstance(result, Failure)
-        assert isinstance(result.failure(), SameEntity)
+        assert isinstance(result, CodesNotMerged)
+        assert result.reason == "SAME_CODE"
 
     def test_fails_with_nonexistent_source(self, populated_state: CodingState):
-        """Should fail when source code doesn't exist."""
+        """Should fail with CodesNotMerged/SOURCE_NOT_FOUND when source code doesn't exist."""
         result = derive_merge_codes(
             source_code_id=CodeId(value=999),
             target_code_id=CodeId(value=1),
             state=populated_state,
         )
 
-        assert isinstance(result, Failure)
-        assert isinstance(result.failure(), CodeNotFound)
+        assert isinstance(result, CodesNotMerged)
+        assert result.reason == "SOURCE_NOT_FOUND"
+        assert result.source_code_id == CodeId(value=999)
 
     def test_fails_with_nonexistent_target(self, populated_state: CodingState):
-        """Should fail when target code doesn't exist."""
+        """Should fail with CodesNotMerged/TARGET_NOT_FOUND when target code doesn't exist."""
         result = derive_merge_codes(
             source_code_id=CodeId(value=1),
             target_code_id=CodeId(value=999),
             state=populated_state,
         )
 
-        assert isinstance(result, Failure)
-        assert isinstance(result.failure(), CodeNotFound)
+        assert isinstance(result, CodesNotMerged)
+        assert result.reason == "TARGET_NOT_FOUND"
+        assert result.target_code_id == CodeId(value=999)
 
 
 class TestDeriveMoveCodeToCategory:
@@ -354,15 +364,16 @@ class TestDeriveMoveCodeToCategory:
         assert result.new_category_id is None
 
     def test_fails_with_nonexistent_category(self, populated_state: CodingState):
-        """Should fail for nonexistent target category."""
+        """Should fail with CodeNotMoved/CATEGORY_NOT_FOUND for nonexistent target category."""
         result = derive_move_code_to_category(
             code_id=CodeId(value=1),
             new_category_id=CategoryId(value=999),
             state=populated_state,
         )
 
-        assert isinstance(result, Failure)
-        assert isinstance(result.failure(), CategoryNotFound)
+        assert isinstance(result, CodeNotMoved)
+        assert result.reason == "CATEGORY_NOT_FOUND"
+        assert result.category_id == CategoryId(value=999)
 
 
 class TestDeriveCategoryOperations:
@@ -396,7 +407,7 @@ class TestDeriveCategoryOperations:
         assert result.parent_id == CategoryId(value=1)
 
     def test_fails_to_create_with_duplicate_name(self, populated_state: CodingState):
-        """Should fail with duplicate category name."""
+        """Should fail with CategoryNotCreated/DUPLICATE_NAME for duplicate category name."""
         result = derive_create_category(
             name="Root Category",  # Already exists
             parent_id=None,
@@ -405,8 +416,9 @@ class TestDeriveCategoryOperations:
             state=populated_state,
         )
 
-        assert isinstance(result, Failure)
-        assert isinstance(result.failure(), DuplicateName)
+        assert isinstance(result, CategoryNotCreated)
+        assert result.reason == "DUPLICATE_NAME"
+        assert result.name == "Root Category"
 
     def test_renames_category(self, populated_state: CodingState):
         """Should rename existing category."""
@@ -455,7 +467,7 @@ class TestDeriveApplyCodeToText:
         assert result.position.end == 300
 
     def test_fails_with_nonexistent_code(self, populated_state: CodingState):
-        """Should fail when code doesn't exist."""
+        """Should fail with SegmentNotCoded/CODE_NOT_FOUND when code doesn't exist."""
         result = derive_apply_code_to_text(
             code_id=CodeId(value=999),
             source_id=SourceId(value=1),
@@ -468,11 +480,12 @@ class TestDeriveApplyCodeToText:
             state=populated_state,
         )
 
-        assert isinstance(result, Failure)
-        assert isinstance(result.failure(), CodeNotFound)
+        assert isinstance(result, SegmentNotCoded)
+        assert result.reason == "CODE_NOT_FOUND"
+        assert result.code_id == CodeId(value=999)
 
     def test_fails_with_invalid_position(self, populated_state: CodingState):
-        """Should fail with position outside source bounds."""
+        """Should fail with SegmentNotCoded/INVALID_POSITION for position outside source bounds."""
         result = derive_apply_code_to_text(
             code_id=CodeId(value=1),
             source_id=SourceId(value=1),
@@ -485,11 +498,13 @@ class TestDeriveApplyCodeToText:
             state=populated_state,
         )
 
-        assert isinstance(result, Failure)
-        assert isinstance(result.failure(), InvalidPosition)
+        assert isinstance(result, SegmentNotCoded)
+        assert result.reason == "INVALID_POSITION"
+        assert result.start == 900
+        assert result.end == 1100
 
     def test_fails_with_nonexistent_source(self, populated_state: CodingState):
-        """Should fail when source doesn't exist."""
+        """Should fail with SegmentNotCoded/SOURCE_NOT_FOUND when source doesn't exist."""
         state_no_source = CodingState(
             existing_codes=populated_state.existing_codes,
             existing_categories=populated_state.existing_categories,
@@ -510,8 +525,9 @@ class TestDeriveApplyCodeToText:
             state=state_no_source,
         )
 
-        assert isinstance(result, Failure)
-        assert isinstance(result.failure(), SourceNotFound)
+        assert isinstance(result, SegmentNotCoded)
+        assert result.reason == "SOURCE_NOT_FOUND"
+        assert result.source_id == SourceId(value=999)
 
 
 class TestDeriveSegmentOperations:
@@ -528,13 +544,15 @@ class TestDeriveSegmentOperations:
         assert result.segment_id == SegmentId(value=1)
 
     def test_fails_to_remove_nonexistent_segment(self, populated_state: CodingState):
-        """Should fail for nonexistent segment."""
+        """Should fail with SegmentNotRemoved/NOT_FOUND for nonexistent segment."""
         result = derive_remove_segment(
             segment_id=SegmentId(value=999),
             state=populated_state,
         )
 
-        assert isinstance(result, Failure)
+        assert isinstance(result, SegmentNotRemoved)
+        assert result.reason == "NOT_FOUND"
+        assert result.segment_id == SegmentId(value=999)
 
     def test_updates_segment_memo(self, populated_state: CodingState):
         """Should update segment memo."""

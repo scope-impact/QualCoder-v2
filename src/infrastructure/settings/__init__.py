@@ -1,10 +1,11 @@
 """
-Settings Infrastructure Layer
+DEPRECATED: Use src.contexts.settings.infra instead.
 
-Repository for user-level application settings.
+This module re-exports from the new bounded context location for backwards compatibility.
 """
 
-from src.infrastructure.settings.user_settings_repository import (
+# Re-export from new location
+from src.contexts.settings.infra.user_settings_repository import (
     UserSettingsRepository,
 )
 

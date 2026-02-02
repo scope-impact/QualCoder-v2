@@ -14,7 +14,12 @@ from src.application.event_bus import EventBus
 
 # Import shared fixtures - pytest auto-discovers these
 from src.tests.fixtures.database import db_connection, db_engine  # noqa: F401
-from src.tests.fixtures.repositories import case_repo, source_repo  # noqa: F401, F811
+from src.tests.fixtures.repositories import (  # noqa: F401, F811
+    case_repo,
+    folder_repo,
+    segment_repo,
+    source_repo,
+)
 
 
 @pytest.fixture
@@ -24,16 +29,30 @@ def event_bus() -> EventBus:
 
 
 @pytest.fixture
-def project_controller(event_bus: EventBus, source_repo, case_repo):  # noqa: F811
-    """Create a ProjectController with the test event bus and repositories."""
-    from src.application.projects.controller import ProjectControllerImpl
-
-    return ProjectControllerImpl(
-        event_bus=event_bus,
-        source_repo=source_repo,
-        project_repo=None,
-        case_repo=case_repo,
+def coordinator(event_bus: EventBus, db_connection):  # noqa: F811
+    """Create an ApplicationCoordinator for testing."""
+    from src.application.contexts import (
+        CasesContext,
+        CodingContext,
+        ProjectsContext,
+        SourcesContext,
     )
+    from src.application.coordinator import ApplicationCoordinator
+
+    # Create coordinator
+    coordinator = ApplicationCoordinator()
+
+    # Replace with test event bus
+    coordinator._event_bus = event_bus
+    coordinator._infra.event_bus = event_bus
+
+    # Create contexts with the test connection and set on infrastructure
+    coordinator._infra.sources_context = SourcesContext.create(db_connection)
+    coordinator._infra.coding_context = CodingContext.create(db_connection)
+    coordinator._infra.cases_context = CasesContext.create(db_connection)
+    coordinator._infra.projects_context = ProjectsContext.create(db_connection)
+
+    return coordinator
 
 
 @pytest.fixture

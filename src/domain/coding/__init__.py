@@ -1,23 +1,75 @@
 """
-Coding Context - Core Domain
-Qualitative data coding and analysis.
+DEPRECATED: Use src.contexts.coding.core instead.
 
-This is the CORE domain - the heart of QualCoder.
-It defines how researchers apply semantic codes to research data.
-
-Contracts exported:
-- Entities: Code, Category, TextSegment, ImageSegment, AVSegment
-- Value Objects: Color, TextPosition, ImageRegion, TimeRange
-- Events: CodeCreated, CodeDeleted, SegmentCoded, etc.
-- Invariants: Business rule predicates
-- Derivers: Pure event generators
+This module re-exports from the new bounded context location for backwards compatibility.
 """
 
-# Derivers - Pure event generators
-from src.domain.coding.derivers import (
+# Re-export from new location
+from src.contexts.coding.core import (
+    AutoCodeBatch,
+    AVSegment,
+    BatchCreated,
+    BatchEvent,
+    BatchFailureEvent,
+    BatchId,
+    BatchNotCreated,
+    BatchNotUndone,
+    BatchUndone,
+    Category,
+    CategoryCreated,
+    CategoryDeleted,
+    CategoryEvent,
+    CategoryFailureEvent,
+    CategoryNotCreated,
+    CategoryNotDeleted,
+    CategoryNotRenamed,
+    CategoryRenamed,
+    Code,
+    CodeColorChanged,
+    CodeCreated,
+    CodeDeleted,
+    CodeEvent,
+    CodeFailureEvent,
+    CodeMemoUpdated,
+    CodeMovedToCategory,
+    CodeNotCreated,
+    CodeNotDeleted,
+    CodeNotMoved,
+    CodeNotRenamed,
+    CodeNotUpdated,
+    CodeRenamed,
+    CodesMerged,
+    CodesNotMerged,
+    CodingContextFailureEvent,
+    CodingEvent,
     CodingState,
+    Color,
+    ImageRegion,
+    ImageSegment,
+    MatchScope,
+    MatchType,
+    Segment,
+    SegmentCoded,
+    SegmentEvent,
+    SegmentFailureEvent,
+    SegmentMemoUpdated,
+    SegmentNotCoded,
+    SegmentNotRemoved,
+    SegmentNotUpdated,
+    SegmentUncoded,
+    TextMatch,
+    TextMatcher,
+    TextPosition,
+    TextSegment,
+    TimeRange,
+    are_codes_mergeable,
+    can_category_be_deleted,
+    can_code_be_deleted,
+    count_codes_in_category,
+    count_segments_for_code,
     derive_apply_code_to_text,
     derive_change_code_color,
+    derive_create_batch,
     derive_create_category,
     derive_create_code,
     derive_delete_category,
@@ -27,61 +79,23 @@ from src.domain.coding.derivers import (
     derive_remove_segment,
     derive_rename_category,
     derive_rename_code,
+    derive_undo_batch,
     derive_update_code_memo,
     derive_update_segment_memo,
-)
-from src.domain.coding.entities import (
-    AVSegment,
-    Category,
-    # Entities
-    Code,
-    # Value Objects
-    Color,
-    ImageRegion,
-    ImageSegment,
-    Segment,
-    TextPosition,
-    TextSegment,
-    TimeRange,
-)
-from src.domain.coding.events import (
-    # Category Events
-    CategoryCreated,
-    CategoryDeleted,
-    CategoryEvent,
-    CategoryRenamed,
-    CodeColorChanged,
-    # Code Events
-    CodeCreated,
-    CodeDeleted,
-    # Type Aliases
-    CodeEvent,
-    CodeMemoUpdated,
-    CodeMovedToCategory,
-    CodeRenamed,
-    CodesMerged,
-    CodingEvent,
-    # Segment Events
-    SegmentCoded,
-    SegmentEvent,
-    SegmentMemoUpdated,
-    SegmentUncoded,
-)
-
-# Invariants - Business rule predicates
-from src.domain.coding.invariants import (
-    are_codes_mergeable,
-    can_category_be_deleted,
-    can_code_be_deleted,
     does_category_exist,
     does_code_exist,
+    does_segment_overlap,
+    does_source_exist,
     is_category_hierarchy_valid,
     is_category_name_unique,
     is_code_name_unique,
     is_valid_category_name,
     is_valid_code_name,
     is_valid_color,
+    is_valid_image_region,
+    is_valid_importance,
     is_valid_text_position,
+    is_valid_time_range,
 )
 
 __all__ = [
@@ -97,6 +111,8 @@ __all__ = [
     "ImageSegment",
     "AVSegment",
     "Segment",
+    "BatchId",
+    "AutoCodeBatch",
     # Code Events
     "CodeCreated",
     "CodeRenamed",
@@ -113,10 +129,14 @@ __all__ = [
     "SegmentCoded",
     "SegmentUncoded",
     "SegmentMemoUpdated",
+    # Batch Events
+    "BatchCreated",
+    "BatchUndone",
     # Type Aliases
     "CodeEvent",
     "CategoryEvent",
     "SegmentEvent",
+    "BatchEvent",
     "CodingEvent",
     # Invariants
     "is_valid_code_name",
@@ -129,8 +149,15 @@ __all__ = [
     "is_category_hierarchy_valid",
     "can_category_be_deleted",
     "is_valid_text_position",
+    "is_valid_image_region",
+    "is_valid_time_range",
+    "is_valid_importance",
+    "does_segment_overlap",
     "does_code_exist",
     "does_category_exist",
+    "does_source_exist",
+    "count_segments_for_code",
+    "count_codes_in_category",
     # Derivers
     "CodingState",
     "derive_create_code",
@@ -146,4 +173,31 @@ __all__ = [
     "derive_apply_code_to_text",
     "derive_remove_segment",
     "derive_update_segment_memo",
+    "derive_create_batch",
+    "derive_undo_batch",
+    # Failure Events
+    "BatchNotCreated",
+    "BatchNotUndone",
+    "CategoryNotCreated",
+    "CategoryNotDeleted",
+    "CategoryNotRenamed",
+    "CodeNotCreated",
+    "CodeNotDeleted",
+    "CodeNotMoved",
+    "CodeNotRenamed",
+    "CodeNotUpdated",
+    "CodesNotMerged",
+    "SegmentNotCoded",
+    "SegmentNotRemoved",
+    "SegmentNotUpdated",
+    "CodeFailureEvent",
+    "CategoryFailureEvent",
+    "SegmentFailureEvent",
+    "BatchFailureEvent",
+    "CodingContextFailureEvent",
+    # Services
+    "MatchScope",
+    "MatchType",
+    "TextMatch",
+    "TextMatcher",
 ]

@@ -7,16 +7,19 @@ from __future__ import annotations
 import pytest
 from sqlalchemy import create_engine
 
-from src.infrastructure.projects.schema import create_all, drop_all
+from src.infrastructure.projects.schema import (
+    create_all_contexts,
+    drop_all_contexts,
+)
 
 
 @pytest.fixture
 def engine():
     """Create in-memory SQLite engine for testing."""
     engine = create_engine("sqlite:///:memory:", echo=False)
-    create_all(engine)
+    create_all_contexts(engine)
     yield engine
-    drop_all(engine)
+    drop_all_contexts(engine)
     engine.dispose()
 
 

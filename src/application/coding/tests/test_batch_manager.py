@@ -8,8 +8,8 @@ Extracted from presentation/dialogs/auto_code_dialog.py AutoCodeManager.
 import pytest
 
 from src.application.coding.services.batch_manager import BatchManager
-from src.domain.coding.entities import BatchId
-from src.domain.shared.types import CodeId, SegmentId
+from src.contexts.coding.core.entities import BatchId
+from src.contexts.shared.core.types import CodeId, SegmentId
 
 
 class TestBatchManagerCreation:

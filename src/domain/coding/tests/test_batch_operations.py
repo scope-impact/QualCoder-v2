@@ -16,7 +16,7 @@ from src.domain.coding.derivers import (
 )
 from src.domain.coding.entities import AutoCodeBatch, BatchId
 from src.domain.coding.events import BatchCreated, BatchUndone
-from src.domain.shared.types import CodeId, Failure, SegmentId
+from src.domain.shared.types import CodeId, SegmentId
 
 
 class TestAutoCodeBatchEntity:
@@ -164,7 +164,7 @@ class TestDeriveCreateBatch:
 
     def test_fails_with_invalid_code(self, populated_state: CodingState):
         """Should fail when code doesn't exist."""
-        from src.domain.shared.types import CodeNotFound
+        from src.domain.coding.failure_events import BatchNotCreated
 
         result = derive_create_batch(
             code_id=CodeId(value=999),
@@ -174,8 +174,8 @@ class TestDeriveCreateBatch:
             state=populated_state,
         )
 
-        assert isinstance(result, Failure)
-        assert isinstance(result.failure(), CodeNotFound)
+        assert isinstance(result, BatchNotCreated)
+        assert result.reason == "CODE_NOT_FOUND"
 
 
 class TestDeriveUndoBatch:
@@ -195,15 +195,15 @@ class TestDeriveUndoBatch:
 
     def test_fails_for_nonexistent_batch(self, populated_state: CodingState):
         """Should fail when batch doesn't exist."""
-        from src.domain.coding.derivers import BatchNotFound
+        from src.domain.coding.failure_events import BatchNotUndone
 
         result = derive_undo_batch(
             batch_id=BatchId(value="nonexistent"),
             state=populated_state,
         )
 
-        assert isinstance(result, Failure)
-        assert isinstance(result.failure(), BatchNotFound)
+        assert isinstance(result, BatchNotUndone)
+        assert result.reason == "NOT_FOUND"
 
 
 # Fixtures for batch tests

@@ -1,31 +1,36 @@
 """
-Project Infrastructure Layer.
+Projects Infrastructure Layer.
 
-SQLAlchemy Core implementations for project data persistence.
+DEPRECATED: This module has been migrated to src.contexts.projects.infra.
+Imports are re-exported from the new location for backward compatibility.
 """
 
-from src.infrastructure.projects.schema import (
-    case_source,
+from src.contexts.projects.infra.project_repository import SQLiteProjectRepository
+from src.contexts.projects.infra.schema import (
     create_all,
+    create_all_contexts,
     drop_all,
+    drop_all_contexts,
     metadata,
+    prj_settings,
     project_settings,
-    source,
 )
-from src.infrastructure.projects.settings_repository import (
+from src.contexts.projects.infra.settings_repository import (
     SQLiteProjectSettingsRepository,
 )
-from src.infrastructure.projects.source_repository import SQLiteSourceRepository
 
 __all__ = [
     # Repositories
+    "SQLiteProjectRepository",
     "SQLiteProjectSettingsRepository",
-    "SQLiteSourceRepository",
-    # Schema
-    "case_source",
-    "create_all",
-    "drop_all",
-    "metadata",
+    # Schema - V2 prefixed
+    "prj_settings",
+    # Schema - Compatibility alias
     "project_settings",
-    "source",
+    # Schema utilities
+    "create_all",
+    "create_all_contexts",
+    "drop_all",
+    "drop_all_contexts",
+    "metadata",
 ]

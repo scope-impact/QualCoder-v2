@@ -1,18 +1,18 @@
 """
 Text Coding ViewModel
 
-Connects the TextCodingScreen to the CodingController and CodingSignalBridge.
+Connects the TextCodingScreen to the Coordinator and CodingSignalBridge.
 Handles data transformation between domain entities and UI DTOs.
 
 Architecture:
-    User Action → ViewModel → Controller → Domain → Events
-                                                       ↓
-    UI Update ← ViewModel ← SignalBridge ←────────────┘
+    User Action → ViewModel → Coordinator → Use Cases → Domain → Events
+                                                                    ↓
+    UI Update ← ViewModel ← SignalBridge ←─────────────────────────┘
 """
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Protocol
 
 from PySide6.QtCore import QObject, Signal
 from returns.result import Success
@@ -42,8 +42,25 @@ from src.presentation.dto import (
 )
 
 if TYPE_CHECKING:
-    from src.application.coding import CodingControllerImpl
-    from src.domain.coding.entities import Code, TextSegment
+    from returns.result import Result
+
+    from src.contexts.coding.core.entities import Code, TextSegment
+
+
+class CodingProvider(Protocol):
+    """Protocol for coding operations."""
+
+    def create_code(self, command: CreateCodeCommand) -> Result: ...
+    def rename_code(self, command: RenameCodeCommand) -> Result: ...
+    def delete_code(self, command: DeleteCodeCommand) -> Result: ...
+    def update_code_memo(self, command: UpdateCodeMemoCommand) -> Result: ...
+    def move_code_to_category(self, command: MoveCodeToCategoryCommand) -> Result: ...
+    def apply_code(self, command: ApplyCodeCommand) -> Result: ...
+    def remove_segment(self, command: RemoveCodeCommand) -> Result: ...
+    def create_category(self, command: CreateCategoryCommand) -> Result: ...
+    def get_all_codes(self) -> list: ...
+    def get_all_categories(self) -> list: ...
+    def get_segments_for_source(self, source_id: int) -> list: ...
 
 
 class TextCodingViewModel(QObject):
@@ -72,7 +89,7 @@ class TextCodingViewModel(QObject):
 
     def __init__(
         self,
-        controller: CodingControllerImpl,
+        controller: CodingProvider,
         signal_bridge: CodingSignalBridge,
         parent: QObject | None = None,
     ) -> None:
@@ -80,7 +97,7 @@ class TextCodingViewModel(QObject):
         Initialize the ViewModel.
 
         Args:
-            controller: The coding controller for commands
+            controller: The coding provider (coordinator) for commands
             signal_bridge: The signal bridge for reactive updates
             parent: Optional Qt parent
         """

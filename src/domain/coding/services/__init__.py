@@ -1,10 +1,10 @@
 """
-Coding Domain Services
+DEPRECATED: Use src.contexts.coding.core.services instead.
 
-Pure domain services for the Coding bounded context.
+This module re-exports from the new bounded context location for backwards compatibility.
 """
 
-from src.domain.coding.services.text_matcher import (
+from src.contexts.coding.core.services import (
     MatchScope,
     MatchType,
     TextMatch,

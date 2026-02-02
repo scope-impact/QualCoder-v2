@@ -1,7 +1,7 @@
 """
 Settings ViewModel
 
-Connects the SettingsDialog to the settings controller.
+Connects the SettingsDialog to the settings use cases via the Coordinator.
 Handles data transformation between domain entities and UI DTOs.
 
 Implements QC-038 presentation layer:
@@ -15,18 +15,11 @@ Implements QC-038 presentation layer:
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Protocol
 
 from returns.result import Success
 
-from src.application.settings.commands import (
-    ChangeFontCommand,
-    ChangeLanguageCommand,
-    ChangeThemeCommand,
-    ConfigureAVCodingCommand,
-    ConfigureBackupCommand,
-)
-from src.domain.settings.invariants import (
+from src.contexts.settings.core.invariants import (
     VALID_FONT_FAMILIES,
     VALID_LANGUAGES,
     VALID_THEMES,
@@ -35,7 +28,30 @@ from src.domain.settings.invariants import (
 from src.presentation.dto import FontFamilyOptionDTO, LanguageOptionDTO, SettingsDTO
 
 if TYPE_CHECKING:
-    from src.application.settings.controller import SettingsControllerImpl
+    from returns.result import Result
+
+    from src.contexts.settings.core.entities import UserSettings
+
+
+class SettingsProvider(Protocol):
+    """Protocol for settings access - can be Coordinator or test double."""
+
+    def get_all_settings(self) -> UserSettings: ...
+    def change_theme(self, theme: str) -> Result: ...
+    def change_font(self, family: str, size: int) -> Result: ...
+    def change_language(self, language_code: str) -> Result: ...
+    def configure_backup(
+        self,
+        enabled: bool,
+        interval_minutes: int,
+        max_backups: int,
+        backup_path: str | None = None,
+    ) -> Result: ...
+    def configure_av_coding(
+        self,
+        timestamp_format: str,
+        speaker_format: str,
+    ) -> Result: ...
 
 
 class SettingsViewModel:
@@ -44,7 +60,7 @@ class SettingsViewModel:
 
     Responsibilities:
     - Transform domain settings to UI DTOs
-    - Handle user actions by calling controller methods
+    - Handle user actions by calling use cases via provider
     - Provide available options for dropdowns
     - Track pending changes before applying
 
@@ -54,15 +70,15 @@ class SettingsViewModel:
 
     def __init__(
         self,
-        settings_controller: SettingsControllerImpl,
+        settings_provider: SettingsProvider,
     ) -> None:
         """
         Initialize the ViewModel.
 
         Args:
-            settings_controller: The settings controller for data access
+            settings_provider: Provider for settings access (typically Coordinator)
         """
-        self._controller = settings_controller
+        self._provider = settings_provider
 
     # =========================================================================
     # Load Data
@@ -75,7 +91,7 @@ class SettingsViewModel:
         Returns:
             SettingsDTO with current values
         """
-        settings = self._controller.get_current_settings()
+        settings = self._provider.get_all_settings()
         return SettingsDTO(
             theme=settings.theme.name,
             font_family=settings.font.family,
@@ -143,7 +159,7 @@ class SettingsViewModel:
         Returns:
             True if successful, False otherwise
         """
-        result = self._controller.change_theme(ChangeThemeCommand(theme=theme))
+        result = self._provider.change_theme(theme)
         return isinstance(result, Success)
 
     # =========================================================================
@@ -161,9 +177,7 @@ class SettingsViewModel:
         Returns:
             True if successful, False otherwise
         """
-        result = self._controller.change_font(
-            ChangeFontCommand(family=family, size=size)
-        )
+        result = self._provider.change_font(family, size)
         return isinstance(result, Success)
 
     # =========================================================================
@@ -180,9 +194,7 @@ class SettingsViewModel:
         Returns:
             True if successful, False otherwise
         """
-        result = self._controller.change_language(
-            ChangeLanguageCommand(language_code=code)
-        )
+        result = self._provider.change_language(code)
         return isinstance(result, Success)
 
     # =========================================================================
@@ -208,13 +220,11 @@ class SettingsViewModel:
         Returns:
             True if successful, False otherwise
         """
-        result = self._controller.configure_backup(
-            ConfigureBackupCommand(
-                enabled=enabled,
-                interval_minutes=interval,
-                max_backups=max_backups,
-                backup_path=path,
-            )
+        result = self._provider.configure_backup(
+            enabled=enabled,
+            interval_minutes=interval,
+            max_backups=max_backups,
+            backup_path=path,
         )
         return isinstance(result, Success)
 
@@ -237,11 +247,9 @@ class SettingsViewModel:
         Returns:
             True if successful, False otherwise
         """
-        result = self._controller.configure_av_coding(
-            ConfigureAVCodingCommand(
-                timestamp_format=timestamp_format,
-                speaker_format=speaker_format,
-            )
+        result = self._provider.configure_av_coding(
+            timestamp_format=timestamp_format,
+            speaker_format=speaker_format,
         )
         return isinstance(result, Success)
 

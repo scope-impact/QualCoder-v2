@@ -1,39 +1,35 @@
 """
 Cases bounded context - Domain layer.
 
-Provides entities, events, invariants, and derivers for managing cases
-(participants, sites, organizations) in qualitative research.
+DEPRECATED: This module re-exports from src.contexts.cases.core for backward compatibility.
+Use src.contexts.cases.core directly in new code.
 """
 
-from src.domain.cases.derivers import (
+from src.contexts.cases.core import (
+    AttributeType,
+    Case,
+    CaseAttribute,
+    CaseAttributeRemoved,
+    CaseAttributeSet,
+    CaseCreated,
     CaseNameTooLong,
     CaseNotFound,
+    CaseRemoved,
     CaseState,
+    CaseUpdated,
     DuplicateCaseName,
     EmptyCaseName,
     InvalidAttributeName,
     InvalidAttributeType,
     InvalidAttributeValue,
-    derive_create_case,
-    derive_remove_case,
-    derive_set_case_attribute,
-    derive_update_case,
-)
-from src.domain.cases.entities import (
-    AttributeType,
-    Case,
-    CaseAttribute,
-)
-from src.domain.cases.events import (
-    CaseAttributeRemoved,
-    CaseAttributeSet,
-    CaseCreated,
-    CaseRemoved,
-    CaseUpdated,
     SourceLinkedToCase,
     SourceUnlinkedFromCase,
-)
-from src.domain.cases.invariants import (
+    derive_create_case,
+    derive_link_source_to_case,
+    derive_remove_case,
+    derive_set_case_attribute,
+    derive_unlink_source_from_case,
+    derive_update_case,
     is_case_name_unique,
     is_valid_attribute_name,
     is_valid_attribute_type,
@@ -59,6 +55,8 @@ __all__ = [
     "derive_update_case",
     "derive_remove_case",
     "derive_set_case_attribute",
+    "derive_link_source_to_case",
+    "derive_unlink_source_from_case",
     # State
     "CaseState",
     # Failure reasons

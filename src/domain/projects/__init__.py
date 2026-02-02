@@ -1,31 +1,39 @@
 """
 Project Context - Research project lifecycle management.
 
-This bounded context handles:
-- Creating and opening QualCoder projects (.qda files)
-- Managing source files within projects
-- Project navigation and switching
-- Recent projects list
+DEPRECATED: This module has been migrated to src.contexts.projects.core.
+Imports are re-exported from the new location for backward compatibility.
 """
 
-from src.domain.projects.derivers import (
+from src.contexts.projects.core.derivers import (
     # Failure reasons
+    DuplicateFolderName,
     DuplicateSourceName,
     EmptyProjectName,
+    FolderNotEmpty,
+    FolderNotFound,
+    FolderState,
+    InvalidFolderName,
     InvalidProjectPath,
     ParentNotWritable,
     ProjectAlreadyExists,
     ProjectNotFound,
     ProjectState,
     SourceFileNotFound,
+    SourceNotFound,
     UnsupportedSourceType,
     derive_add_source,
+    derive_create_folder,
     derive_create_project,
+    derive_delete_folder,
+    derive_move_source_to_folder,
     derive_open_project,
     derive_open_source,
     derive_remove_source,
+    derive_rename_folder,
 )
-from src.domain.projects.entities import (
+from src.contexts.projects.core.entities import (
+    Folder,
     Project,
     ProjectId,
     ProjectSummary,
@@ -34,7 +42,10 @@ from src.domain.projects.entities import (
     SourceStatus,
     SourceType,
 )
-from src.domain.projects.events import (
+from src.contexts.projects.core.events import (
+    FolderCreated,
+    FolderDeleted,
+    FolderRenamed,
     NavigatedToSegment,
     ProjectClosed,
     ProjectCreated,
@@ -42,12 +53,25 @@ from src.domain.projects.events import (
     ProjectRenamed,
     ScreenChanged,
     SourceAdded,
+    SourceMovedToFolder,
     SourceOpened,
     SourceRemoved,
     SourceRenamed,
     SourceStatusChanged,
 )
-from src.domain.projects.invariants import (
+from src.contexts.projects.core.failure_events import (
+    FolderNotCreated,
+    FolderNotDeleted,
+    FolderNotRenamed,
+    ProjectNotCreated,
+    ProjectNotOpened,
+    SourceNotAdded,
+    SourceNotMoved,
+    SourceNotOpened,
+    SourceNotRemoved,
+    SourceNotUpdated,
+)
+from src.contexts.projects.core.invariants import (
     can_create_project,
     can_import_source,
     can_open_project,
@@ -58,9 +82,12 @@ from src.domain.projects.invariants import (
     is_valid_project_path,
     is_valid_source_name,
 )
+from src.contexts.shared.core.types import FolderId
 
 __all__ = [
     # Entities
+    "Folder",
+    "FolderId",
     "Project",
     "ProjectId",
     "ProjectSummary",
@@ -79,6 +106,9 @@ __all__ = [
     "is_valid_project_path",
     "is_valid_source_name",
     # Events
+    "FolderCreated",
+    "FolderDeleted",
+    "FolderRenamed",
     "NavigatedToSegment",
     "ProjectClosed",
     "ProjectCreated",
@@ -86,24 +116,46 @@ __all__ = [
     "ProjectRenamed",
     "ScreenChanged",
     "SourceAdded",
+    "SourceMovedToFolder",
     "SourceOpened",
     "SourceRemoved",
     "SourceRenamed",
     "SourceStatusChanged",
     # Derivers
+    "FolderState",
     "ProjectState",
     "derive_add_source",
+    "derive_create_folder",
     "derive_create_project",
+    "derive_delete_folder",
+    "derive_move_source_to_folder",
     "derive_open_project",
     "derive_open_source",
     "derive_remove_source",
-    # Failure reasons
+    "derive_rename_folder",
+    # Failure reasons (legacy - kept for backwards compatibility)
+    "DuplicateFolderName",
     "DuplicateSourceName",
     "EmptyProjectName",
+    "FolderNotEmpty",
+    "FolderNotFound",
+    "InvalidFolderName",
     "InvalidProjectPath",
     "ParentNotWritable",
     "ProjectAlreadyExists",
     "ProjectNotFound",
     "SourceFileNotFound",
+    "SourceNotFound",
     "UnsupportedSourceType",
+    # Failure events (new - publishable)
+    "FolderNotCreated",
+    "FolderNotDeleted",
+    "FolderNotRenamed",
+    "ProjectNotCreated",
+    "ProjectNotOpened",
+    "SourceNotAdded",
+    "SourceNotMoved",
+    "SourceNotOpened",
+    "SourceNotRemoved",
+    "SourceNotUpdated",
 ]

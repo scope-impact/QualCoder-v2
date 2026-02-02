@@ -14,18 +14,18 @@ Layout:
 │ │  Text   │ │  Audio  │ │  Video  │ │ Images  │ │   PDF   │        │
 │ │   12    │ │    5    │ │    3    │ │    8    │ │    4    │        │
 │ └─────────┘ └─────────┘ └─────────┘ └─────────┘ └─────────┘        │
-├─────────────────────────────────────────────────────────────────────┤
-│ TABLE (SourceTable) - or EmptyState if no files                      │
-│ ┌───┬──────────────────┬───────┬────────┬──────────┬─────────────┐ │
-│ │ ☑ │ File Name        │ Codes │ Cases  │ Status   │ Actions     │ │
-│ ├───┼──────────────────┼───────┼────────┼──────────┼─────────────┤ │
-│ │   │ Interview1.txt   │  12   │ Case A │ Coded    │ [···]       │ │
-│ │   │ Recording.mp3    │   3   │ -      │ Ready    │ [···]       │ │
-│ └───┴──────────────────┴───────┴────────┴──────────┴─────────────┘ │
-├─────────────────────────────────────────────────────────────────────┤
-│ BULK ACTIONS BAR (shown when files selected)                         │
-│ ✓ 3 files selected    [Code] [Delete] [Export]                  [×] │
-└─────────────────────────────────────────────────────────────────────┘
+├──────────────┬──────────────────────────────────────────────────────┤
+│ FOLDER TREE  │ TABLE (SourceTable) - or EmptyState if no files      │
+│ (Sidebar)    │ ┌───┬──────────────────┬───────┬────────┬──────────┐ │
+│              │ │ ☑ │ File Name        │ Codes │ Cases  │ Status   │ │
+│ All Sources  │ ├───┼──────────────────┼───────┼────────┼──────────┤ │
+│ ├─Interviews │ │   │ Interview1.txt   │  12   │ Case A │ Coded    │ │
+│ └─Documents  │ │   │ Recording.mp3    │   3   │ -      │ Ready    │ │
+│              │ └───┴──────────────────┴───────┴────────┴──────────┘ │
+│              ├──────────────────────────────────────────────────────┤
+│              │ BULK ACTIONS BAR (shown when files selected)         │
+│              │ ✓ 3 selected [Code] [Delete] [Export]           [×] │
+└──────────────┴──────────────────────────────────────────────────────┘
 
 Addresses UX Tech Debt items:
 - UX-002: Empty state with clear CTA
@@ -35,15 +35,23 @@ Addresses UX Tech Debt items:
 """
 
 from PySide6.QtCore import Signal
-from PySide6.QtWidgets import QFrame, QStackedWidget, QVBoxLayout, QWidget
+from PySide6.QtWidgets import (
+    QFrame,
+    QHBoxLayout,
+    QStackedWidget,
+    QVBoxLayout,
+    QWidget,
+)
 
 from design_system import ColorPalette, get_colors
 from design_system.tokens import SPACING
 
-from ..dto import ProjectSummaryDTO, SourceDTO
+from ..dto import FolderDTO, ProjectSummaryDTO, SourceDTO
 from ..organisms import (
     EmptyState,
     FileManagerToolbar,
+    FolderNode,
+    FolderTree,
     SourceStatsRow,
     SourceTable,
 )
@@ -69,6 +77,11 @@ class FileManagerPage(QWidget):
         open_for_coding(str): User wants to open a source for coding
         filter_changed(str | None): Type filter changed (None = show all)
         search_changed(str): Search text changed
+        folder_selected(object): Folder selected in tree (FolderNode or None)
+        create_folder_requested(object): Create folder requested (parent_id or None)
+        rename_folder_requested(str): Rename folder requested (folder_id)
+        delete_folder_requested(str): Delete folder requested (folder_id)
+        move_sources_to_folder(list, object): Move sources to folder (source_ids, folder_id)
     """
 
     # Toolbar actions
@@ -90,6 +103,13 @@ class FileManagerPage(QWidget):
     # Filtering
     filter_changed = Signal(object)  # str | None
     search_changed = Signal(str)
+
+    # Folder management
+    folder_selected = Signal(object)  # FolderNode | None
+    create_folder_requested = Signal(object)  # str | None (parent folder id)
+    rename_folder_requested = Signal(str)  # folder_id
+    delete_folder_requested = Signal(str)  # folder_id
+    move_sources_to_folder = Signal(list, object)  # source_ids, folder_id | None
 
     def __init__(self, colors: ColorPalette = None, parent=None):
         """
@@ -127,7 +147,22 @@ class FileManagerPage(QWidget):
         self._stats_row = SourceStatsRow(colors=self._colors)
         layout.addWidget(self._stats_row)
 
-        # Content area: either table or empty state
+        # Content area with sidebar layout
+        content_layout = QHBoxLayout()
+        content_layout.setSpacing(SPACING.lg)
+
+        # Left sidebar: Folder tree
+        self._folder_tree = FolderTree()
+        self._folder_tree.setFixedWidth(200)
+        self._folder_tree.setStyleSheet(f"""
+            QFrame {{
+                background: {self._colors.surface};
+                border-radius: 8px;
+            }}
+        """)
+        content_layout.addWidget(self._folder_tree)
+
+        # Right side: Content stack (table or empty state)
         self._content_stack = QStackedWidget()
 
         # Empty state
@@ -146,7 +181,9 @@ class FileManagerPage(QWidget):
 
         self._content_stack.addWidget(self._table_container)
 
-        layout.addWidget(self._content_stack, 1)
+        content_layout.addWidget(self._content_stack, 1)
+
+        layout.addLayout(content_layout, 1)
 
         # Start with empty state
         self._content_stack.setCurrentWidget(self._empty_state)
@@ -177,6 +214,21 @@ class FileManagerPage(QWidget):
         self._empty_state.import_clicked.connect(self.import_clicked.emit)
         self._empty_state.link_clicked.connect(self.link_clicked.emit)
 
+        # Folder tree signals
+        self._folder_tree.folder_selected.connect(self.folder_selected.emit)
+        self._folder_tree.create_folder_requested.connect(
+            self.create_folder_requested.emit
+        )
+        self._folder_tree.rename_folder_requested.connect(
+            self.rename_folder_requested.emit
+        )
+        self._folder_tree.delete_folder_requested.connect(
+            self.delete_folder_requested.emit
+        )
+        self._folder_tree.move_sources_requested.connect(
+            self.move_sources_to_folder.emit
+        )
+
     # =========================================================================
     # Public API - Data Setters
     # =========================================================================
@@ -195,6 +247,24 @@ class FileManagerPage(QWidget):
         else:
             self._source_table.set_sources(sources)
             self._content_stack.setCurrentWidget(self._table_container)
+
+    def set_folders(self, folders: list[FolderDTO]):
+        """
+        Set the folder list for the tree.
+
+        Args:
+            folders: List of FolderDTO objects
+        """
+        folder_nodes = [
+            FolderNode(
+                id=folder.id,
+                name=folder.name,
+                parent_id=folder.parent_id,
+                source_count=folder.source_count,
+            )
+            for folder in folders
+        ]
+        self._folder_tree.set_folders(folder_nodes)
 
     def set_summary(self, summary: ProjectSummaryDTO):
         """
@@ -291,6 +361,11 @@ class FileManagerPage(QWidget):
         """Get the empty state organism."""
         return self._empty_state
 
+    @property
+    def folder_tree(self) -> FolderTree:
+        """Get the folder tree organism."""
+        return self._folder_tree
+
     # =========================================================================
     # Internal Signal Handlers
     # =========================================================================
@@ -339,6 +414,13 @@ def main():
     page.selection_changed.connect(lambda ids: print(f"Selected: {ids}"))
     page.filter_changed.connect(lambda f: print(f"Filter: {f}"))
     page.search_changed.connect(lambda s: print(f"Search: {s}"))
+    page.folder_selected.connect(lambda f: print(f"Folder selected: {f}"))
+    page.create_folder_requested.connect(lambda p: print(f"Create folder, parent: {p}"))
+    page.rename_folder_requested.connect(lambda f: print(f"Rename folder: {f}"))
+    page.delete_folder_requested.connect(lambda f: print(f"Delete folder: {f}"))
+    page.move_sources_to_folder.connect(
+        lambda ids, f: print(f"Move sources {ids} to folder {f}")
+    )
 
     # Set stats
     page.set_stats(
@@ -348,6 +430,16 @@ def main():
         image_count=8,
         pdf_count=4,
     )
+
+    # Sample folders
+    folders = [
+        FolderDTO(id="1", name="Interviews", parent_id=None, source_count=3),
+        FolderDTO(id="2", name="Documents", parent_id=None, source_count=2),
+        FolderDTO(id="3", name="Field Notes", parent_id="2", source_count=1),
+        FolderDTO(id="4", name="Participant 01", parent_id="1", source_count=2),
+        FolderDTO(id="5", name="Participant 02", parent_id="1", source_count=1),
+    ]
+    page.set_folders(folders)
 
     # Sample sources
     sources = [

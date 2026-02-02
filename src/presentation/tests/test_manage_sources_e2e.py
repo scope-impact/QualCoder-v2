@@ -41,7 +41,7 @@ def sample_files(tmp_path_factory) -> SampleFiles:
 @pytest.fixture
 def text_extractor():
     """Create text extractor instance."""
-    from src.infrastructure.sources.text_extractor import TextExtractor
+    from src.contexts.sources.infra.text_extractor import TextExtractor
 
     return TextExtractor()
 
@@ -49,7 +49,7 @@ def text_extractor():
 @pytest.fixture
 def pdf_extractor():
     """Create PDF extractor instance."""
-    from src.infrastructure.sources.pdf_extractor import PdfExtractor
+    from src.contexts.sources.infra.pdf_extractor import PdfExtractor
 
     return PdfExtractor()
 
@@ -200,7 +200,7 @@ class TestImportPdfDocument:
         AC #4: Multi-page PDFs are handled correctly.
         Tests the PdfExtractionResult can represent multiple pages.
         """
-        from src.infrastructure.sources.pdf_extractor import PdfExtractionResult
+        from src.contexts.sources.infra.pdf_extractor import PdfExtractionResult
 
         # Verify the data structure supports multi-page
         result = PdfExtractionResult(
@@ -536,8 +536,8 @@ class TestOrganizeSources:
 
     def test_folder_entity_operations(self):
         """Additional: Folder entity supports operations."""
-        from src.domain.projects.entities import Folder
-        from src.domain.shared.types import FolderId
+        from src.contexts.projects.core.entities import Folder
+        from src.contexts.shared.core.types import FolderId
 
         folder = Folder(
             id=FolderId(1),
@@ -600,8 +600,8 @@ class TestViewSourceMetadata:
         AC #2: I can add a memo/notes to a source.
         Tests Source entity memo field.
         """
-        from src.domain.projects.entities import Source, SourceType
-        from src.domain.shared.types import SourceId
+        from src.contexts.projects.core.entities import Source, SourceType
+        from src.contexts.shared.core.types import SourceId
 
         source = Source(
             id=SourceId(1),
@@ -619,8 +619,8 @@ class TestViewSourceMetadata:
         AC #4: I can edit source properties.
         Tests Source entity property editing.
         """
-        from src.domain.projects.entities import Source, SourceType
-        from src.domain.shared.types import SourceId
+        from src.contexts.projects.core.entities import Source, SourceType
+        from src.contexts.shared.core.types import SourceId
 
         source = Source(
             id=SourceId(1),
@@ -665,8 +665,8 @@ class TestDeleteSource:
         This is a UI concern - dialog should be shown before deletion.
         Tests that the system tracks coded segments per source.
         """
-        from src.domain.projects.entities import Source, SourceType
-        from src.domain.shared.types import SourceId
+        from src.contexts.projects.core.entities import Source, SourceType
+        from src.contexts.shared.core.types import SourceId
 
         source = Source(
             id=SourceId(1),
@@ -684,8 +684,8 @@ class TestDeleteSource:
         AC #3: Deletion removes source and its coded segments.
         Tests that Source entity is immutable and deletion is safe.
         """
-        from src.domain.projects.entities import Source, SourceType
-        from src.domain.shared.types import SourceId
+        from src.contexts.projects.core.entities import Source, SourceType
+        from src.contexts.shared.core.types import SourceId
 
         source = Source(
             id=SourceId(1),

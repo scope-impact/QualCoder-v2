@@ -1,120 +1,75 @@
 """
-Project Context: SQLAlchemy Core Schema
+Projects Context: SQLAlchemy Core Schema
 
-Table definitions for the Project bounded context using SQLAlchemy Core.
-Compatible with QualCoder's existing source table schema.
+Table definitions for the Projects bounded context using SQLAlchemy Core.
+Uses 'prj_' prefix for bounded context isolation.
+
+Note: Source/folder tables are now in Sources context (src/infrastructure/sources/schema.py)
+      Cases tables are now in Cases context (src/infrastructure/cases/schema.py)
 """
 
 from sqlalchemy import (
     Column,
     DateTime,
-    Index,
-    Integer,
     MetaData,
     String,
     Table,
     Text,
 )
 
-# Shared metadata for Project context tables
+# Metadata for Projects context tables
 metadata = MetaData()
 
 # ============================================================
-# Table Definitions
+# Table Definitions (V2 - Prefixed for bounded context isolation)
 # ============================================================
 
-# Folder table - organizes sources hierarchically (v2 only)
-folder = Table(
-    "folder",
-    metadata,
-    Column("id", Integer, primary_key=True),
-    Column("name", String(255), nullable=False),
-    Column("parent_id", Integer),  # Self-referential for hierarchy
-    Column("created_at", DateTime),
-    Index("idx_folder_parent", "parent_id"),
-)
-
-# Source table - stores imported files
-# Compatible with QualCoder's source table
-source = Table(
-    "source",
-    metadata,
-    Column("id", Integer, primary_key=True),
-    Column("name", String(255), nullable=False),
-    Column("fulltext", Text),  # Content for text sources
-    Column("mediapath", String(500)),  # Path to media file
-    Column("memo", Text),
-    Column("owner", String(100)),
-    Column("date", String(50)),
-    Column("av_text_id", Integer),  # For A/V transcripts
-    Column("risession", Integer),  # For external links
-    # Extended columns for v2
-    Column("source_type", String(20)),  # text, audio, video, image, pdf
-    Column("status", String(20), default="imported"),
-    Column("file_size", Integer, default=0),
-    Column("origin", String(255)),  # Where the source came from
-    Column("folder_id", Integer),  # Reference to folder
-    # Indexes
-    Index("idx_source_name", "name"),
-    Index("idx_source_type", "source_type"),
-    Index("idx_source_folder", "folder_id"),
-)
-
-# Project settings table (v2 only)
-# Stores project-level metadata not in the original schema
-project_settings = Table(
-    "project_settings",
+# prj_settings - Project-level settings and metadata
+prj_settings = Table(
+    "prj_settings",
     metadata,
     Column("key", String(100), primary_key=True),
     Column("value", Text),
     Column("updated_at", DateTime),
 )
 
-# Cases table - stores research units (participants, sites, etc.)
-cases = Table(
-    "cases",
-    metadata,
-    Column("id", Integer, primary_key=True),
-    Column("name", String(255), nullable=False),
-    Column("description", Text),
-    Column("memo", Text),
-    Column("owner", String(100)),
-    Column("created_at", DateTime),
-    Column("updated_at", DateTime),
-    Index("idx_cases_name", "name"),
-)
+# ============================================================
+# Compatibility alias for gradual migration
+# ============================================================
+project_settings = prj_settings
 
-# Case attributes table - stores demographic/categorical data
-case_attribute = Table(
-    "case_attribute",
-    metadata,
-    Column("id", Integer, primary_key=True),
-    Column("case_id", Integer, nullable=False),
-    Column("name", String(100), nullable=False),
-    Column("attr_type", String(20), nullable=False),  # text, number, date, boolean
-    Column("value_text", Text),
-    Column("value_number", Integer),
-    Column("value_date", DateTime),
-    Index("idx_case_attr", "case_id", "name", unique=True),
-)
+# ============================================================
+# DEPRECATED: Legacy table references
+# These are kept for backward compatibility but should not be used.
+# Import from the appropriate context schema instead:
+# - Sources: src.infrastructure.sources.schema (src_source, src_folder)
+# - Cases: src.infrastructure.cases.schema (cas_case, cas_attribute, cas_source_link)
+# ============================================================
 
-# Case-Source association table
-# Compatible with QualCoder's case_text linkage
-case_source = Table(
-    "case_source",
-    metadata,
-    Column("id", Integer, primary_key=True),
-    Column("case_id", Integer, nullable=False),
-    Column("source_id", Integer, nullable=False),
-    Column("owner", String(100)),
-    Column("date", String(50)),
-    Index("idx_case_source", "case_id", "source_id", unique=True),
-)
+# Import from sources context for backward compatibility
+try:
+    from src.infrastructure.sources.schema import src_folder as folder
+    from src.infrastructure.sources.schema import src_source as source
+except ImportError:
+    # During initial import, sources may not exist yet
+    folder = None
+    source = None
+
+# Import from cases context for backward compatibility
+try:
+    from src.infrastructure.cases.schema import cas_attribute as case_attribute
+    from src.infrastructure.cases.schema import cas_case as cases
+    from src.infrastructure.cases.schema import cas_source_link as case_source
+except ImportError:
+    # During initial import, cases may not exist yet
+    cases = None
+    case_attribute = None
+    case_source = None
 
 
 def create_all(engine) -> None:
     """
-    Create all tables for the Project context.
+    Create all tables for the Projects context (prj_settings only).
 
     Args:
         engine: SQLAlchemy engine instance
@@ -124,9 +79,52 @@ def create_all(engine) -> None:
 
 def drop_all(engine) -> None:
     """
-    Drop all Project context tables (for testing).
+    Drop all Projects context tables (for testing).
 
     Args:
         engine: SQLAlchemy engine instance
     """
+    metadata.drop_all(engine)
+
+
+def create_all_contexts(engine) -> None:
+    """
+    Create all tables for all bounded contexts.
+
+    This is the main entry point for database initialization when
+    creating a new project. It creates tables for all contexts:
+    - Projects (prj_settings)
+    - Sources (src_source, src_folder)
+    - Coding (cod_category, cod_code, cod_segment)
+    - Cases (cas_case, cas_attribute, cas_source_link)
+
+    Args:
+        engine: SQLAlchemy engine instance
+    """
+    from src.infrastructure.cases import schema as cases_schema
+    from src.infrastructure.coding import schema as coding_schema
+    from src.infrastructure.sources import schema as sources_schema
+
+    # Create tables in dependency order
+    metadata.create_all(engine)  # Projects context
+    sources_schema.metadata.create_all(engine)  # Sources context
+    coding_schema.metadata.create_all(engine)  # Coding context
+    cases_schema.metadata.create_all(engine)  # Cases context
+
+
+def drop_all_contexts(engine) -> None:
+    """
+    Drop all tables for all bounded contexts (for testing).
+
+    Args:
+        engine: SQLAlchemy engine instance
+    """
+    from src.infrastructure.cases import schema as cases_schema
+    from src.infrastructure.coding import schema as coding_schema
+    from src.infrastructure.sources import schema as sources_schema
+
+    # Drop in reverse order of dependencies
+    cases_schema.metadata.drop_all(engine)
+    coding_schema.metadata.drop_all(engine)
+    sources_schema.metadata.drop_all(engine)
     metadata.drop_all(engine)

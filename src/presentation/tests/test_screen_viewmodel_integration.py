@@ -380,7 +380,7 @@ class TestAutoCodingControllerWiring:
         """Screen should use controller to find matches."""
         from returns.result import Success
 
-        from src.domain.coding.services.text_matcher import MatchType
+        from src.contexts.coding.core.services.text_matcher import MatchType
         from src.presentation.screens import TextCodingScreen
 
         screen = TextCodingScreen(colors=colors)
