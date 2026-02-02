@@ -1,20 +1,20 @@
 ---
-name: sub-agents
+name: orchestration
 description: |
-  Claude Code sub-agent architecture for QualCoder v2 DDD layers.
-  Specialized agents for each bounded context and architectural layer.
+  Agent orchestration patterns for QualCoder v2 DDD architecture.
+  Guides when and how to delegate work to specialized sub-agents.
 
   **Invoke when:**
+  - Deciding which agent to use for a task
   - Working on complex multi-layer features
-  - Need parallel development across layers
-  - Want isolated context for specific concerns
-  - Implementing features with clear layer boundaries
+  - Need to coordinate work across bounded contexts
+  - Planning parallel agent execution
 
   **Provides:**
-  - Layer-specific sub-agents (domain, infrastructure, application, presentation)
-  - Atomic design sub-agents (organisms, molecules, screens, pages)
-  - Context-aware prompts and tool restrictions
-  - Parallel orchestration patterns
+  - Domain-specific agents (coding, cases, projects, analysis, ai-assistant, journals)
+  - Layer-specific agents (domain, infrastructure, application, presentation)
+  - Decision framework for agent selection
+  - Orchestration patterns for complex features
 ---
 
 # QualCoder v2 Sub-Agents Architecture

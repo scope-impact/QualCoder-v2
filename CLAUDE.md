@@ -9,7 +9,7 @@ Detailed conventions are in `.claude/skills/`:
 | `developer` | Code style, patterns, testing, E2E | Writing Python code, tests |
 | `backlog` | Task management with DDD structure | Creating/editing tasks |
 | `c4-architecture` | System architecture diagrams | Understanding codebase structure |
-| `sub-agents` | Domain & layer-specific Claude sub-agents | Complex features, domain-focused or cross-cutting work |
+| `orchestration` | Agent selection and orchestration patterns | Deciding which agent to use, coordinating complex features |
 
 ---
 
@@ -132,4 +132,4 @@ For cross-cutting concerns or pattern-focused work:
 | `screen-agent` | Presentation | Page + ViewModel integration |
 | `viewmodel-agent` | Presentation | UI ↔ Application binding |
 
-See `.claude/skills/sub-agents/SKILL.md` for full orchestration patterns.
+See `.claude/skills/orchestration/SKILL.md` for full orchestration patterns.
