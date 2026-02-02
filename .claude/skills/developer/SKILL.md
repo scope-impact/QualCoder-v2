@@ -577,5 +577,5 @@ def test_handles_db_failure():
 ## Reference
 
 - **Tutorials:** `docs/tutorials/` - Hands-on learning
-- **E2E Tests:** `src/presentation/tests/e2e/`
+- **E2E Tests:** `src/tests/e2e/`
 - **Sub-agents:** `.claude/agents/` - Layer-specific prompts
