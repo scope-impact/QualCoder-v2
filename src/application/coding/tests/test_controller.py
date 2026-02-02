@@ -15,7 +15,7 @@ from src.application.protocols import (
     RemoveCodeCommand,
     RenameCodeCommand,
 )
-from src.domain.coding.events import (
+from src.contexts.coding.core.events import (
     CategoryCreated,
     CategoryDeleted,
     CodeColorChanged,

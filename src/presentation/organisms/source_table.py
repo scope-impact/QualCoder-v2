@@ -19,6 +19,7 @@ from PySide6.QtWidgets import (
     QHBoxLayout,
     QHeaderView,
     QLabel,
+    QMenu,
     QPushButton,
     QTableWidget,
     QTableWidgetItem,
@@ -301,6 +302,7 @@ class SourceTable(QFrame):
     source_double_clicked = Signal(str)
     selection_changed = Signal(list)
     open_for_coding = Signal(str)
+    view_metadata = Signal(str)
     delete_sources = Signal(list)
     export_sources = Signal(list)
 
@@ -534,7 +536,7 @@ class SourceTable(QFrame):
         code_btn.clicked.connect(lambda: self.open_for_coding.emit(source_id))
         layout.addWidget(code_btn)
 
-        # More button (placeholder)
+        # More button with context menu
         more_btn = QPushButton()
         try:
             import qtawesome as qta
@@ -548,6 +550,7 @@ class SourceTable(QFrame):
         more_btn.setCursor(Qt.CursorShape.PointingHandCursor)
         more_btn.setToolTip("More actions")
         more_btn.setStyleSheet(self._action_btn_style())
+        more_btn.clicked.connect(lambda: self._show_context_menu(more_btn, source_id))
         layout.addWidget(more_btn)
 
         layout.addStretch()
@@ -565,6 +568,47 @@ class SourceTable(QFrame):
                 background-color: {self._colors.surface_lighter};
             }}
         """
+
+    def _show_context_menu(self, button: QPushButton, source_id: str):
+        """Show context menu for source actions."""
+        menu = QMenu(self)
+        menu.setStyleSheet(f"""
+            QMenu {{
+                background-color: {self._colors.surface};
+                border: 1px solid {self._colors.border};
+                border-radius: {RADIUS.md}px;
+                padding: {SPACING.xs}px;
+            }}
+            QMenu::item {{
+                padding: {SPACING.sm}px {SPACING.md}px;
+                border-radius: {RADIUS.sm}px;
+                color: {self._colors.text_primary};
+            }}
+            QMenu::item:selected {{
+                background-color: {self._colors.surface_light};
+            }}
+        """)
+
+        # View Metadata action
+        view_action = menu.addAction("View Metadata")
+        view_action.triggered.connect(lambda: self.view_metadata.emit(source_id))
+
+        # Open for Coding action
+        code_action = menu.addAction("Open for Coding")
+        code_action.triggered.connect(lambda: self.open_for_coding.emit(source_id))
+
+        menu.addSeparator()
+
+        # Export action
+        export_action = menu.addAction("Export")
+        export_action.triggered.connect(lambda: self.export_sources.emit([source_id]))
+
+        # Delete action
+        delete_action = menu.addAction("Delete")
+        delete_action.triggered.connect(lambda: self.delete_sources.emit([source_id]))
+
+        # Show menu below the button
+        menu.exec(button.mapToGlobal(button.rect().bottomLeft()))
 
     def _on_cell_click(self, row: int, col: int):
         """Handle cell click."""
@@ -607,7 +651,6 @@ class SourceTable(QFrame):
 
     def clear_selection(self):
         """Clear all checkbox selections (public API)."""
-        self._selected_ids.clear()
         self._clear_selection()
 
     def _on_bulk_code(self):

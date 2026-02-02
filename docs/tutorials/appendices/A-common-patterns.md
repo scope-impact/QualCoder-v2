@@ -38,9 +38,9 @@ Default derivers return on first failure:
 ```python
 def derive_create_code(name, color, priority, state):
     if not is_valid_code_name(name):
-        return Failure(EmptyName())  # Stops here
+        return CodeNotCreated.empty_name()  # Stops here
     if not is_valid_priority(priority):
-        return Failure(InvalidPriority(priority))  # Never reached
+        return CodeNotCreated.invalid_priority(priority)  # Never reached
 ```
 
 User sees one error, fixes it, sees another, fixes it... frustrating!
@@ -52,29 +52,34 @@ from dataclasses import dataclass
 from typing import List
 
 @dataclass(frozen=True)
-class ValidationErrors:
-    """Multiple validation errors."""
-    errors: tuple[object, ...]
+class CodeNotCreatedBatch(FailureEvent):
+    """Multiple validation errors for code creation."""
+    errors: tuple[str, ...] = ()
 
     @property
     def message(self) -> str:
-        return "; ".join(getattr(e, 'message', str(e)) for e in self.errors)
+        return "; ".join(self.errors)
 
 
 def derive_create_code_with_all_errors(name, color, priority, state):
-    errors: List[object] = []
+    errors: List[str] = []
 
     if not is_valid_code_name(name):
-        errors.append(EmptyName())
+        errors.append("Code name cannot be empty")
 
     if not is_code_name_unique(name, state.existing_codes):
-        errors.append(DuplicateName(name))
+        errors.append(f"Code name '{name}' already exists")
 
     if not is_valid_priority(priority):
-        errors.append(InvalidPriority(priority))
+        errors.append(f"Priority must be 1-5, got {priority}")
 
     if errors:
-        return Failure(ValidationErrors(tuple(errors)))
+        return CodeNotCreatedBatch(
+            event_id=...,
+            occurred_at=...,
+            event_type="CODE_NOT_CREATED/VALIDATION_ERRORS",
+            errors=tuple(errors),
+        )
 
     return CodeCreated.create(...)
 ```
@@ -82,12 +87,13 @@ def derive_create_code_with_all_errors(name, color, priority, state):
 ### In UI
 
 ```python
-if isinstance(result, Failure):
-    if isinstance(result.failure(), ValidationErrors):
-        for error in result.failure().errors:
+if isinstance(result, CodeNotCreated):
+    # Check if it's a validation batch error
+    if hasattr(result, 'errors') and result.errors:
+        for error in result.errors:
             self.show_field_error(error)
     else:
-        self.show_error(result.failure().message)
+        self.show_error(result.message)
 ```
 
 ## Pattern 2: Cross-Context Event Subscription
@@ -215,7 +221,7 @@ def derive_delete_category_cascade(
 def delete_category(self, category_id, strategy):
     result = derive_delete_category_cascade(category_id, strategy, state)
 
-    if isinstance(result, Failure):
+    if isinstance(result, CategoryNotDeleted):
         return result
 
     # Publish each event
@@ -244,7 +250,7 @@ sequenceDiagram
         C-->>UI: CodeRenamed event
         UI->>UI: Keep new name
     else Failure
-        C-->>UI: Failure(reason)
+        C-->>UI: FailureEvent(reason)
         UI->>UI: 3. Rollback to old name
         UI->>U: Show error
     end
@@ -268,9 +274,9 @@ class CodebookTreeView:
         result = self.controller.rename_code(code_id, new_name)
 
         # 3. Rollback if failed
-        if isinstance(result, Failure):
+        if isinstance(result, CodeNotRenamed):
             item.setText(old_name)
-            self.show_error(result.failure().message)
+            self.show_error(result.message)
 ```
 
 ## Pattern 5: State Composition for Complex Validation
@@ -343,21 +349,34 @@ def test_complex_scenario():
 
 Provide suggestions with failures.
 
-### Enhanced Failure Type
+### Enhanced Failure Event with Suggestions
 
 ```python
 @dataclass(frozen=True)
-class DuplicateName:
-    name: str
-    existing_code_id: CodeId
+class CodeNotCreated(FailureEvent):
+    name: str | None = None
+    existing_code_id: CodeId | None = None
     suggestions: tuple[str, ...] = ()
-    message: str = ""
 
-    def __post_init__(self):
+    @classmethod
+    def duplicate_name_with_suggestions(
+        cls, name: str, existing_id: CodeId, suggestions: tuple[str, ...]
+    ) -> "CodeNotCreated":
+        return cls(
+            event_id=cls._generate_id(),
+            occurred_at=cls._now(),
+            event_type="CODE_NOT_CREATED/DUPLICATE_NAME",
+            name=name,
+            existing_code_id=existing_id,
+            suggestions=suggestions,
+        )
+
+    @property
+    def message(self) -> str:
         msg = f"Code name '{self.name}' already exists"
         if self.suggestions:
             msg += f". Try: {', '.join(self.suggestions)}"
-        object.__setattr__(self, 'message', msg)
+        return msg
 
 
 def derive_create_code(...):
@@ -365,20 +384,20 @@ def derive_create_code(...):
         existing = next(c for c in state.existing_codes
                        if c.name.lower() == name.lower())
         suggestions = generate_name_suggestions(name, state.existing_codes)
-        return Failure(DuplicateName(
+        return CodeNotCreated.duplicate_name_with_suggestions(
             name=name,
-            existing_code_id=existing.id,
+            existing_id=existing.id,
             suggestions=tuple(suggestions),
-        ))
+        )
 ```
 
 ### In UI
 
 ```python
-if isinstance(error, DuplicateName):
-    self.show_error(error.message)
-    if error.suggestions:
-        self.show_suggestions(error.suggestions)
+if isinstance(result, CodeNotCreated) and result.reason == "DUPLICATE_NAME":
+    self.show_error(result.message)
+    if result.suggestions:
+        self.show_suggestions(result.suggestions)
 ```
 
 ## Pattern 8: Audit Trail

@@ -21,13 +21,13 @@ from __future__ import annotations
 from datetime import UTC, datetime
 from typing import TYPE_CHECKING
 
-from src.domain.cases.entities import AttributeType, Case, CaseAttribute
-from src.domain.shared.types import CaseId, SourceId
+from src.contexts.cases.core.entities import AttributeType, Case, CaseAttribute
+from src.contexts.shared.core.types import CaseId, SourceId
 from src.presentation.dto import CaseAttributeDTO, CaseDTO, CaseSummaryDTO
 
 if TYPE_CHECKING:
     from src.application.event_bus import EventBus
-    from src.infrastructure.projects.case_repository import SQLiteCaseRepository
+    from src.contexts.cases.infra.case_repository import SQLiteCaseRepository
 
 
 class CaseManagerViewModel:

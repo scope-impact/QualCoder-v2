@@ -14,26 +14,18 @@ from src.application.event_bus import EventBus
 
 # Import shared fixtures - pytest auto-discovers these
 from src.tests.fixtures.database import db_connection, db_engine  # noqa: F401
-from src.tests.fixtures.repositories import case_repo, source_repo  # noqa: F401, F811
+from src.tests.fixtures.repositories import (  # noqa: F401, F811
+    case_repo,
+    folder_repo,
+    segment_repo,
+    source_repo,
+)
 
 
 @pytest.fixture
 def event_bus() -> EventBus:
     """Create an event bus with history enabled for testing."""
     return EventBus(history_size=100)
-
-
-@pytest.fixture
-def project_controller(event_bus: EventBus, source_repo, case_repo):  # noqa: F811
-    """Create a ProjectController with the test event bus and repositories."""
-    from src.application.projects.controller import ProjectControllerImpl
-
-    return ProjectControllerImpl(
-        event_bus=event_bus,
-        source_repo=source_repo,
-        project_repo=None,
-        case_repo=case_repo,
-    )
 
 
 @pytest.fixture

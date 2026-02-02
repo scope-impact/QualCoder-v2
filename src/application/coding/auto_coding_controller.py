@@ -32,15 +32,15 @@ from typing import TYPE_CHECKING, Any
 from returns.result import Failure, Result, Success
 
 from src.application.coding.services.batch_manager import BatchManager
-from src.domain.coding.events import BatchCreated, BatchUndone
-from src.domain.coding.services.text_matcher import (
+from src.contexts.coding.core.events import BatchCreated, BatchUndone
+from src.contexts.coding.core.services.text_matcher import (
     MatchScope,
     MatchType,
     TextMatch,
     TextMatcher,
 )
-from src.domain.shared.types import CodeId, SegmentId, SourceId
-from src.domain.sources.services.speaker_detector import (
+from src.contexts.shared.core.types import CodeId, SegmentId, SourceId
+from src.contexts.sources.core.services.speaker_detector import (
     Speaker,
     SpeakerDetector,
     SpeakerSegment,

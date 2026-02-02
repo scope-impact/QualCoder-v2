@@ -22,7 +22,10 @@ from PySide6.QtCore import Signal
 
 from src.application.signal_bridge.base import BaseSignalBridge
 from src.application.signal_bridge.protocols import EventConverter
-from src.domain.projects.events import (
+from src.contexts.projects.core.events import (
+    FolderCreated,
+    FolderDeleted,
+    FolderRenamed,
     NavigatedToSegment,
     ProjectClosed,
     ProjectCreated,
@@ -30,6 +33,7 @@ from src.domain.projects.events import (
     ProjectRenamed,
     ScreenChanged,
     SourceAdded,
+    SourceMovedToFolder,
     SourceOpened,
     SourceRemoved,
     SourceRenamed,
@@ -54,6 +58,8 @@ class ProjectPayload:
     name: str | None = None
     memo: str | None = None
     timestamp: datetime = field(default_factory=_now)
+    session_id: str = "local"
+    is_ai_action: bool = False
 
 
 @dataclass(frozen=True)
@@ -70,6 +76,8 @@ class SourcePayload:
     memo: str | None = None
     status: str | None = None
     timestamp: datetime = field(default_factory=_now)
+    session_id: str = "local"
+    is_ai_action: bool = False
 
 
 @dataclass(frozen=True)
@@ -83,6 +91,34 @@ class NavigationPayload:
     position_start: int | None = None
     position_end: int | None = None
     timestamp: datetime = field(default_factory=_now)
+    session_id: str = "local"
+    is_ai_action: bool = False
+
+
+@dataclass(frozen=True)
+class FolderPayload:
+    """Payload for folder events."""
+
+    event_type: str
+    folder_id: int
+    name: str
+    parent_id: int | None = None
+    timestamp: datetime = field(default_factory=_now)
+    session_id: str = "local"
+    is_ai_action: bool = False
+
+
+@dataclass(frozen=True)
+class SourceMovedPayload:
+    """Payload for source moved events."""
+
+    event_type: str
+    source_id: int
+    old_folder_id: int | None
+    new_folder_id: int | None
+    timestamp: datetime = field(default_factory=_now)
+    session_id: str = "local"
+    is_ai_action: bool = False
 
 
 # =============================================================================
@@ -222,6 +258,54 @@ class NavigatedToSegmentConverter(EventConverter):
         )
 
 
+class FolderCreatedConverter(EventConverter):
+    """Convert FolderCreated event to payload."""
+
+    def convert(self, event: FolderCreated) -> FolderPayload:
+        return FolderPayload(
+            event_type="projects.folder_created",
+            folder_id=event.folder_id.value,
+            name=event.name,
+            parent_id=event.parent_id.value if event.parent_id else None,
+        )
+
+
+class FolderRenamedConverter(EventConverter):
+    """Convert FolderRenamed event to payload."""
+
+    def convert(self, event: FolderRenamed) -> FolderPayload:
+        return FolderPayload(
+            event_type="projects.folder_renamed",
+            folder_id=event.folder_id.value,
+            name=event.new_name,
+            parent_id=None,  # FolderRenamed event doesn't include parent_id
+        )
+
+
+class FolderDeletedConverter(EventConverter):
+    """Convert FolderDeleted event to payload."""
+
+    def convert(self, event: FolderDeleted) -> FolderPayload:
+        return FolderPayload(
+            event_type="projects.folder_deleted",
+            folder_id=event.folder_id.value,
+            name=event.name,
+            parent_id=None,  # FolderDeleted event doesn't include parent_id
+        )
+
+
+class SourceMovedToFolderConverter(EventConverter):
+    """Convert SourceMovedToFolder event to payload."""
+
+    def convert(self, event: SourceMovedToFolder) -> SourceMovedPayload:
+        return SourceMovedPayload(
+            event_type="projects.source_moved_to_folder",
+            source_id=event.source_id.value,
+            old_folder_id=event.old_folder_id.value if event.old_folder_id else None,
+            new_folder_id=event.new_folder_id.value if event.new_folder_id else None,
+        )
+
+
 # =============================================================================
 # Signal Bridge
 # =============================================================================
@@ -243,6 +327,10 @@ class ProjectSignalBridge(BaseSignalBridge):
         source_renamed: Emitted when a source is renamed
         source_opened: Emitted when a source is opened for viewing
         source_status_changed: Emitted when a source's status changes
+        folder_created: Emitted when a folder is created
+        folder_renamed: Emitted when a folder is renamed
+        folder_deleted: Emitted when a folder is deleted
+        source_moved: Emitted when a source is moved to a different folder
         screen_changed: Emitted when user navigates to a different screen
         navigated_to_segment: Emitted when navigating to a specific segment
 
@@ -268,6 +356,12 @@ class ProjectSignalBridge(BaseSignalBridge):
     # Navigation signals
     screen_changed = Signal(object)
     navigated_to_segment = Signal(object)
+
+    # Folder signals
+    folder_created = Signal(object)
+    folder_renamed = Signal(object)
+    folder_deleted = Signal(object)
+    source_moved = Signal(object)
 
     def _get_context_name(self) -> str:
         """Return the bounded context name."""
@@ -334,4 +428,26 @@ class ProjectSignalBridge(BaseSignalBridge):
             "projects.navigated_to_segment",
             NavigatedToSegmentConverter(),
             "navigated_to_segment",
+        )
+
+        # Folder events
+        self.register_converter(
+            "projects.folder_created",
+            FolderCreatedConverter(),
+            "folder_created",
+        )
+        self.register_converter(
+            "projects.folder_renamed",
+            FolderRenamedConverter(),
+            "folder_renamed",
+        )
+        self.register_converter(
+            "projects.folder_deleted",
+            FolderDeletedConverter(),
+            "folder_deleted",
+        )
+        self.register_converter(
+            "projects.source_moved_to_folder",
+            SourceMovedToFolderConverter(),
+            "source_moved",
         )

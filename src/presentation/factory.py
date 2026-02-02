@@ -2,19 +2,38 @@
 Factory functions for creating connected UI components.
 
 These factories wire up the full stack:
-    Presentation ← ViewModel ← Controller ← Repositories ← SQLite
+    Presentation ← ViewModel ← Use Cases ← Repositories ← SQLite
 """
 
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from returns.result import Result
 from sqlalchemy import Connection, create_engine
 from sqlalchemy.engine import Engine
 
-from src.application.coding import CodingControllerImpl, CodingSignalBridge
+from src.application.coding import CodingSignalBridge
+from src.application.coding.usecases import (
+    apply_code,
+    change_code_color,
+    create_category,
+    create_code,
+    delete_category,
+    delete_code,
+    get_all_categories,
+    get_all_codes,
+    get_segments_for_code,
+    get_segments_for_source,
+    merge_codes,
+    move_code_to_category,
+    remove_segment,
+    rename_code,
+    update_code_memo,
+)
+from src.application.contexts.coding import CodingContext as AppCodingContext
 from src.application.event_bus import EventBus
-from src.infrastructure.coding import (
+from src.contexts.coding.infra import (
     SQLiteCategoryRepository,
     SQLiteCodeRepository,
     SQLiteSegmentRepository,
@@ -26,12 +45,98 @@ if TYPE_CHECKING:
     pass
 
 
+class CodingOperations:
+    """
+    Adapter that provides controller-like interface using functional use cases.
+
+    This replaces the old CodingControllerImpl with use case delegation.
+    """
+
+    def __init__(
+        self,
+        coding_ctx: AppCodingContext,
+        event_bus: EventBus,
+    ) -> None:
+        self._coding_ctx = coding_ctx
+        self._event_bus = event_bus
+
+    def create_code(self, command) -> Result:
+        """Create a new code."""
+        return create_code(command, self._coding_ctx, self._event_bus)
+
+    def rename_code(self, command) -> Result:
+        """Rename a code."""
+        return rename_code(command, self._coding_ctx, self._event_bus)
+
+    def change_code_color(self, command) -> Result:
+        """Change a code's color."""
+        return change_code_color(command, self._coding_ctx, self._event_bus)
+
+    def delete_code(self, command) -> Result:
+        """Delete a code."""
+        return delete_code(command, self._coding_ctx, self._event_bus)
+
+    def merge_codes(self, command) -> Result:
+        """Merge codes."""
+        return merge_codes(command, self._coding_ctx, self._event_bus)
+
+    def update_code_memo(self, command) -> Result:
+        """Update a code's memo."""
+        return update_code_memo(command, self._coding_ctx, self._event_bus)
+
+    def move_code_to_category(self, command) -> Result:
+        """Move a code to a category."""
+        return move_code_to_category(command, self._coding_ctx, self._event_bus)
+
+    def apply_code(self, command) -> Result:
+        """Apply a code to a segment."""
+        return apply_code(command, self._coding_ctx, self._event_bus)
+
+    def remove_segment(self, command) -> Result:
+        """Remove a segment."""
+        return remove_segment(command, self._coding_ctx, self._event_bus)
+
+    def remove_code(self, command) -> Result:
+        """Remove coding from a segment (alias for remove_segment)."""
+        return remove_segment(command, self._coding_ctx, self._event_bus)
+
+    def create_category(self, command) -> Result:
+        """Create a category."""
+        return create_category(command, self._coding_ctx, self._event_bus)
+
+    def delete_category(self, command) -> Result:
+        """Delete a category."""
+        return delete_category(command, self._coding_ctx, self._event_bus)
+
+    def get_all_codes(self) -> list:
+        """Get all codes."""
+        return get_all_codes(self._coding_ctx)
+
+    def get_code(self, code_id: int):
+        """Get a specific code by ID."""
+        from src.application.coding.usecases import get_code
+
+        return get_code(self._coding_ctx, code_id)
+
+    def get_all_categories(self) -> list:
+        """Get all categories."""
+        return get_all_categories(self._coding_ctx)
+
+    def get_segments_for_source(self, source_id: int) -> list:
+        """Get segments for a source."""
+        return get_segments_for_source(self._coding_ctx, source_id)
+
+    def get_segments_for_code(self, code_id: int) -> list:
+        """Get segments for a code."""
+        return get_segments_for_code(self._coding_ctx, code_id)
+
+
 class CodingContext:
     """
     Container for all coding context dependencies.
 
     Manages the lifecycle of database connections and provides
-    access to repositories, controller, and signal bridge.
+    access to repositories, operations, and signal bridge.
 
     Usage:
         # For in-memory (testing/demo)
@@ -55,7 +160,7 @@ class CodingContext:
         code_repo: SQLiteCodeRepository,
         category_repo: SQLiteCategoryRepository,
         segment_repo: SQLiteSegmentRepository,
-        controller: CodingControllerImpl,
+        controller: CodingOperations,
         signal_bridge: CodingSignalBridge,
     ) -> None:
         self._engine = engine
@@ -84,10 +189,15 @@ class CodingContext:
         category_repo = SQLiteCategoryRepository(connection)
         segment_repo = SQLiteSegmentRepository(connection)
 
-        controller = CodingControllerImpl(
+        # Create app coding context for use cases
+        app_ctx = AppCodingContext(
             code_repo=code_repo,
             category_repo=category_repo,
             segment_repo=segment_repo,
+        )
+
+        controller = CodingOperations(
+            coding_ctx=app_ctx,
             event_bus=event_bus,
         )
 
@@ -123,10 +233,15 @@ class CodingContext:
         category_repo = SQLiteCategoryRepository(connection)
         segment_repo = SQLiteSegmentRepository(connection)
 
-        controller = CodingControllerImpl(
+        # Create app coding context for use cases
+        app_ctx = AppCodingContext(
             code_repo=code_repo,
             category_repo=category_repo,
             segment_repo=segment_repo,
+        )
+
+        controller = CodingOperations(
+            coding_ctx=app_ctx,
             event_bus=event_bus,
         )
 

@@ -16,6 +16,8 @@ from PySide6.QtWidgets import (
 )
 
 from design_system import RADIUS, SPACING, Button, get_colors
+from src.application.app_context import get_app_context
+from src.presentation.services import DialogService
 
 from ..screens import TextCodingScreen
 from .app_shell import AppShell
@@ -202,6 +204,13 @@ def main():
 
     shell.menu_clicked.connect(on_menu_click)
     shell.tab_clicked.connect(on_tab_click)
+
+    # Connect settings button to dialog service
+    ctx = get_app_context()
+    dialog_service = DialogService(ctx)
+    shell.settings_clicked.connect(
+        lambda: dialog_service.show_settings_dialog(parent=shell, colors=colors)
+    )
 
     shell.show()
     sys.exit(app.exec())

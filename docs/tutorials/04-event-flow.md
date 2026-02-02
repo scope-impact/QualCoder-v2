@@ -50,7 +50,7 @@ class CodingController:
         )
 
         # 3. Handle failure
-        if isinstance(result, Failure):
+        if isinstance(result, CodeNotCreated):
             return result
 
         # 4. Persist (side effect)

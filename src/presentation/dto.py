@@ -125,6 +125,16 @@ class ProjectSummaryDTO:
 
 
 @dataclass
+class FolderDTO:
+    """A folder for organizing sources."""
+
+    id: str
+    name: str
+    parent_id: str | None = None
+    source_count: int = 0
+
+
+@dataclass
 class TextCodingDataDTO:
     """
     Complete data bundle for the TextCodingPage.
@@ -177,3 +187,41 @@ class CaseSummaryDTO:
     cases_with_sources: int = 0
     total_attributes: int = 0
     unique_attribute_names: list[str] = field(default_factory=list)
+
+
+# =============================================================================
+# Settings DTOs
+# =============================================================================
+
+
+@dataclass(frozen=True)
+class SettingsDTO:
+    """All user settings for display."""
+
+    theme: str = "light"
+    font_family: str = "Inter"
+    font_size: int = 14
+    language_code: str = "en"
+    language_name: str = "English"
+    backup_enabled: bool = False
+    backup_interval: int = 30
+    backup_max: int = 5
+    backup_path: str | None = None
+    timestamp_format: str = "HH:MM:SS"
+    speaker_format: str = "Speaker {n}"
+
+
+@dataclass(frozen=True)
+class LanguageOptionDTO:
+    """Available language option."""
+
+    code: str
+    name: str
+
+
+@dataclass(frozen=True)
+class FontFamilyOptionDTO:
+    """Available font family option."""
+
+    family: str
+    display_name: str

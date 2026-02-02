@@ -76,17 +76,19 @@ graph LR
 As you work through the tutorial, you'll reference these files:
 
 ```
-src/domain/coding/
+src/contexts/coding/core/
 ├── invariants.py     # Pure validation functions
 ├── derivers.py       # Event derivation logic
 ├── events.py         # Domain event definitions
+├── failure_events.py # Failure event types
 ├── entities.py       # Code, Category, Segment entities
 └── tests/
     ├── test_invariants.py
     └── test_derivers.py
 
-src/domain/shared/
-└── types.py          # Success, Failure, typed IDs
+src/contexts/shared/core/
+├── types.py          # DomainEvent base, typed IDs
+└── validation.py     # Shared validation helpers
 
 src/application/
 ├── event_bus.py      # Pub/sub for domain events

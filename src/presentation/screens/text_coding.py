@@ -44,7 +44,7 @@ from returns.result import Success
 
 from design_system import ColorPalette, get_colors
 from src.application.coding.auto_coding_controller import AutoCodingController
-from src.domain.coding.services.text_matcher import MatchScope, MatchType
+from src.contexts.coding.core.services.text_matcher import MatchScope, MatchType
 
 from ..dialogs.auto_code_dialog import AutoCodeDialog
 from ..dto import TextCodingDataDTO

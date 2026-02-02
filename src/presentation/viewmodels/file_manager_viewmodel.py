@@ -1,13 +1,13 @@
 """
 File Manager ViewModel
 
-Connects the FileManagerScreen to the ProjectController.
+Connects the FileManagerScreen to a controller that implements FileManagerController.
 Handles data transformation between domain entities and UI DTOs.
 
 Architecture:
-    User Action → ViewModel → Controller → Domain → Events
-                                                       ↓
-    UI Update ← ViewModel ← EventBus ←────────────────┘
+    User Action → ViewModel → Controller → Use Case → Domain → Events
+                                                                   ↓
+    UI Update ← ViewModel ← EventBus ←────────────────────────────┘
 """
 
 from __future__ import annotations
@@ -16,17 +16,22 @@ from typing import TYPE_CHECKING
 
 from returns.result import Success
 
-from src.application.projects.controller import (
+from src.application.projects.commands import (
     AddSourceCommand,
+    CreateFolderCommand,
+    DeleteFolderCommand,
+    MoveSourceToFolderCommand,
     OpenSourceCommand,
     RemoveSourceCommand,
+    RenameFolderCommand,
+    UpdateSourceCommand,
 )
-from src.domain.projects.entities import Source
-from src.presentation.dto import ProjectSummaryDTO, SourceDTO
+from src.contexts.projects.core.entities import Folder, Source
+from src.presentation.dto import FolderDTO, ProjectSummaryDTO, SourceDTO
+from src.presentation.viewmodels.protocols import FileManagerController
 
 if TYPE_CHECKING:
     from src.application.event_bus import EventBus
-    from src.application.projects.controller import ProjectControllerImpl
 
 
 class FileManagerViewModel:
@@ -46,14 +51,14 @@ class FileManagerViewModel:
 
     def __init__(
         self,
-        controller: ProjectControllerImpl,
+        controller: FileManagerController,
         event_bus: EventBus,
     ) -> None:
         """
         Initialize the ViewModel.
 
         Args:
-            controller: The project controller for commands
+            controller: Controller implementing FileManagerController protocol
             event_bus: The event bus for reactive updates
         """
         self._controller = controller
@@ -121,6 +126,19 @@ class FileManagerViewModel:
             return None
 
         source = self._controller.get_source(self._current_source_id)
+        return self._source_to_dto(source) if source else None
+
+    def get_source(self, source_id: int) -> SourceDTO | None:
+        """
+        Get a specific source by ID.
+
+        Args:
+            source_id: ID of the source to retrieve
+
+        Returns:
+            SourceDTO if found, None otherwise
+        """
+        source = self._controller.get_source(source_id)
         return self._source_to_dto(source) if source else None
 
     # =========================================================================
@@ -192,6 +210,20 @@ class FileManagerViewModel:
 
         return all_success
 
+    def get_segment_count_for_source(self, source_id: int) -> int:
+        """
+        Get the count of coded segments for a source.
+
+        Use this before deleting a source to warn users if coded data exists.
+
+        Args:
+            source_id: ID of source to check
+
+        Returns:
+            Number of coded segments for this source
+        """
+        return self._controller.get_segment_count_for_source(source_id)
+
     def open_source(self, source_id: int) -> bool:
         """
         Open a source for viewing/coding.
@@ -210,6 +242,36 @@ class FileManagerViewModel:
             return True
 
         return False
+
+    def update_source(
+        self,
+        source_id: int,
+        memo: str | None = None,
+        origin: str | None = None,
+        status: str | None = None,
+    ) -> bool:
+        """
+        Update source properties.
+
+        Args:
+            source_id: ID of source to update
+            memo: Optional memo text
+            origin: Optional origin/category
+            status: Optional status
+
+        Returns:
+            True if successful, False otherwise
+        """
+        command = UpdateSourceCommand(
+            source_id=source_id,
+            memo=memo,
+            origin=origin,
+            status=status,
+        )
+
+        result = self._controller.update_source(command)
+
+        return isinstance(result, Success)
 
     # =========================================================================
     # Selection
@@ -305,11 +367,96 @@ class FileManagerViewModel:
         return [self._source_to_dto(s) for s in matching]
 
     # =========================================================================
+    # Folder Commands
+    # =========================================================================
+
+    def create_folder(self, name: str, parent_id: int | None = None) -> bool:
+        """
+        Create a new folder.
+
+        Args:
+            name: Name of the folder to create
+            parent_id: Optional parent folder ID for nested folders
+
+        Returns:
+            True if successful, False otherwise
+        """
+        command = CreateFolderCommand(name=name, parent_id=parent_id)
+        result = self._controller.create_folder(command)
+
+        return isinstance(result, Success)
+
+    def rename_folder(self, folder_id: int, new_name: str) -> bool:
+        """
+        Rename a folder.
+
+        Args:
+            folder_id: ID of the folder to rename
+            new_name: New name for the folder
+
+        Returns:
+            True if successful, False otherwise
+        """
+        command = RenameFolderCommand(folder_id=folder_id, new_name=new_name)
+        result = self._controller.rename_folder(command)
+
+        return isinstance(result, Success)
+
+    def delete_folder(self, folder_id: int) -> bool:
+        """
+        Delete an empty folder.
+
+        Args:
+            folder_id: ID of the folder to delete
+
+        Returns:
+            True if successful, False otherwise
+        """
+        command = DeleteFolderCommand(folder_id=folder_id)
+        result = self._controller.delete_folder(command)
+
+        return isinstance(result, Success)
+
+    def move_source_to_folder(self, source_id: int, folder_id: int | None) -> bool:
+        """
+        Move a source to a folder (or root if None).
+
+        Args:
+            source_id: ID of the source to move
+            folder_id: Target folder ID, or None to move to root
+
+        Returns:
+            True if successful, False otherwise
+        """
+        command = MoveSourceToFolderCommand(source_id=source_id, folder_id=folder_id)
+        result = self._controller.move_source_to_folder(command)
+
+        return isinstance(result, Success)
+
+    def get_folders(self) -> list[FolderDTO]:
+        """
+        Get all folders as DTOs.
+
+        Returns:
+            List of FolderDTO objects for UI display
+        """
+        folders = self._controller.get_folders()
+        return [self._folder_to_dto(f) for f in folders]
+
+    # =========================================================================
     # Private Helpers
     # =========================================================================
 
     def _source_to_dto(self, source: Source) -> SourceDTO:
         """Convert a Source entity to DTO."""
+        # Find all cases that contain this source
+        source_id_value = source.id.value
+        case_names = [
+            case.name
+            for case in self._controller.get_cases()
+            if source_id_value in case.source_ids
+        ]
+
         return SourceDTO(
             id=str(source.id.value),
             name=source.name,
@@ -319,6 +466,21 @@ class FileManagerViewModel:
             code_count=source.code_count,
             memo=source.memo,
             origin=source.origin,
-            cases=[],  # TODO: Load from case associations
+            cases=case_names,
             modified_at=source.modified_at.isoformat() if source.modified_at else None,
+        )
+
+    def _folder_to_dto(self, folder: Folder) -> FolderDTO:
+        """Convert a Folder entity to DTO."""
+        # Count sources in this folder
+        sources = self._controller.get_sources()
+        source_count = sum(
+            1 for s in sources if s.folder_id and s.folder_id.value == folder.id.value
+        )
+
+        return FolderDTO(
+            id=str(folder.id.value),
+            name=folder.name,
+            parent_id=str(folder.parent_id.value) if folder.parent_id else None,
+            source_count=source_count,
         )
