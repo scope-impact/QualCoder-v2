@@ -597,6 +597,78 @@ class TestOrganizeSources:
             moved = folder.with_parent(new_parent)
             assert moved.parent_id == new_parent
 
+    @allure.title("Folder operations persist between sessions")
+    @allure.severity(allure.severity_level.CRITICAL)
+    def test_folder_operations_persist(self, tmp_path):
+        """
+        E2E test: Create folder, move source to folder, verify persistence.
+        """
+        from returns.result import Success
+
+        from src.application.app_context import create_app_context, reset_app_context
+        from src.application.projects.commands import CreateFolderCommand
+        from src.contexts.projects.core.entities import Source, SourceType
+        from src.contexts.shared.core.types import SourceId
+
+        project_path = tmp_path / "folder_test.qda"
+
+        with allure.step("Step 1: Create project, folder, and source"):
+            reset_app_context()
+            ctx = create_app_context()
+            ctx.start()
+
+            result = ctx.create_project(name="Folder Test", path=str(project_path))
+            assert isinstance(result, Success)
+            ctx.open_project(str(project_path))
+
+            # Create folder using use case
+            from src.application.folders.usecases.create_folder import create_folder
+
+            cmd = CreateFolderCommand(name="Interviews", parent_id=None)
+            folder_result = create_folder(
+                cmd, ctx.state, ctx.sources_context, ctx.event_bus
+            )
+            assert isinstance(folder_result, Success)
+            folder = folder_result.unwrap()
+
+            # Create source in that folder
+            source = Source(
+                id=SourceId(1),
+                name="interview_01.txt",
+                source_type=SourceType.TEXT,
+                fulltext="Interview content",
+                folder_id=folder.id,
+            )
+            ctx.sources_context.source_repo.save(source)
+            ctx.state.add_source(source)
+
+        with allure.step("Step 2: Close project"):
+            ctx.close_project()
+            ctx.stop()
+            reset_app_context()
+
+        with allure.step("Step 3: Reopen project"):
+            reset_app_context()
+            ctx2 = create_app_context()
+            ctx2.start()
+            open_result = ctx2.open_project(str(project_path))
+            assert isinstance(open_result, Success)
+
+        with allure.step("Step 4: Verify folder persisted"):
+            assert len(ctx2.state.folders) == 1
+            persisted_folder = list(ctx2.state.folders)[0]
+            assert persisted_folder.name == "Interviews"
+
+        with allure.step("Step 5: Verify source in folder persisted"):
+            assert len(ctx2.state.sources) == 1
+            persisted_source = list(ctx2.state.sources)[0]
+            assert persisted_source.folder_id == persisted_folder.id
+
+        with allure.step("Cleanup"):
+            ctx2.close_project()
+            ctx2.stop()
+            reset_app_context()
+
 
 # =============================================================================
 # QC-027.06: View Source Metadata
