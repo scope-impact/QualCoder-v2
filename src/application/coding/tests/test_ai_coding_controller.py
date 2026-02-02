@@ -12,7 +12,7 @@ from returns.result import Failure, Success
 
 from src.application.coding.ai_coding_controller import AICodingController
 from src.application.event_bus import EventBus
-from src.domain.ai_services.entities import (
+from src.contexts.ai_services.core.entities import (
     CodeSuggestion,
     DuplicateCandidate,
     SimilarityScore,
@@ -21,8 +21,8 @@ from src.domain.ai_services.entities import (
 )
 
 # Events no longer tested directly - core functionality tests are simpler
-from src.domain.coding.entities import Code, Color, TextPosition
-from src.domain.shared.types import CodeId, SourceId
+from src.contexts.coding.core.entities import Code, Color, TextPosition
+from src.contexts.shared.core.types import CodeId, SourceId
 from src.infrastructure.ai.code_comparator import (
     MockCodeComparator,
     VectorCodeComparator,

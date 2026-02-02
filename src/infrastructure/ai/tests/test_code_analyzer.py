@@ -9,9 +9,9 @@ from __future__ import annotations
 import pytest
 from returns.result import Failure, Success
 
-from src.domain.ai_services.entities import CodeSuggestion
-from src.domain.coding.entities import Code, Color
-from src.domain.shared.types import CodeId, SourceId
+from src.contexts.ai_services.core.entities import CodeSuggestion
+from src.contexts.coding.core.entities import Code, Color
+from src.contexts.shared.core.types import CodeId, SourceId
 from src.infrastructure.ai.code_analyzer import LLMCodeAnalyzer, MockCodeAnalyzer
 from src.infrastructure.ai.config import AIConfig
 from src.infrastructure.ai.llm_provider import MockLLMProvider
@@ -81,8 +81,8 @@ class TestMockCodeAnalyzer:
 
     def test_returns_predefined_suggestions(self) -> None:
         """suggest_codes returns predefined suggestions."""
-        from src.domain.ai_services.entities import SuggestionId, TextContext
-        from src.domain.coding.entities import TextPosition
+        from src.contexts.ai_services.core.entities import SuggestionId, TextContext
+        from src.contexts.coding.core.entities import TextPosition
 
         suggestion = CodeSuggestion(
             id=SuggestionId.new(),
@@ -127,8 +127,8 @@ class TestMockCodeAnalyzer:
 
     def test_respects_max_suggestions(self) -> None:
         """suggest_codes respects max_suggestions parameter."""
-        from src.domain.ai_services.entities import SuggestionId, TextContext
-        from src.domain.coding.entities import TextPosition
+        from src.contexts.ai_services.core.entities import SuggestionId, TextContext
+        from src.contexts.coding.core.entities import TextPosition
 
         suggestions = [
             CodeSuggestion(

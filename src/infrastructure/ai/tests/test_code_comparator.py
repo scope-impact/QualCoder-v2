@@ -10,9 +10,9 @@ from __future__ import annotations
 import pytest
 from returns.result import Success
 
-from src.domain.ai_services.entities import DuplicateCandidate, SimilarityScore
-from src.domain.coding.entities import Code, Color
-from src.domain.shared.types import CodeId
+from src.contexts.ai_services.core.entities import DuplicateCandidate, SimilarityScore
+from src.contexts.coding.core.entities import Code, Color
+from src.contexts.shared.core.types import CodeId
 from src.infrastructure.ai.code_comparator import (
     MockCodeComparator,
     VectorCodeComparator,

@@ -13,13 +13,13 @@ from typing import TYPE_CHECKING
 
 from returns.result import Failure, Result, Success
 
-from src.domain.ai_services.entities import (
+from src.contexts.ai_services.core.entities import (
     CodeSuggestion,
     SuggestionId,
     TextContext,
 )
-from src.domain.coding.entities import Code, Color, TextPosition
-from src.domain.shared.types import SourceId
+from src.contexts.coding.core.entities import Code, Color, TextPosition
+from src.contexts.shared.core.types import SourceId
 
 if TYPE_CHECKING:
     from src.infrastructure.ai.config import AIConfig

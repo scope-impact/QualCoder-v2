@@ -7,15 +7,15 @@ These form the CONTRACT (Published Language) between contexts.
 
 from dataclasses import dataclass
 
-from src.domain.ai_services.entities import (
+from src.contexts.ai_services.core.entities import (
     DetectionId,
     DuplicateCandidate,
     SimilarityScore,
     SuggestionId,
     TextContext,
 )
-from src.domain.coding.entities import Color
-from src.domain.shared.types import CodeId, DomainEvent, SourceId
+from src.contexts.coding.core.entities import Color
+from src.contexts.shared.core.types import CodeId, DomainEvent, SourceId
 
 # ============================================================
 # Code Suggestion Events

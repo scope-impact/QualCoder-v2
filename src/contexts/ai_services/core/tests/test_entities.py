@@ -6,7 +6,7 @@ Tests for CodeSuggestion, DuplicateCandidate, and related value objects.
 
 import pytest
 
-from src.domain.ai_services.entities import (
+from src.contexts.ai_services.core.entities import (
     CodeSuggestion,
     DetectionId,
     DuplicateCandidate,
@@ -16,8 +16,8 @@ from src.domain.ai_services.entities import (
     SuggestionId,
     TextContext,
 )
-from src.domain.coding.entities import Color, TextPosition
-from src.domain.shared.types import CodeId, SourceId
+from src.contexts.coding.core.entities import Color, TextPosition
+from src.contexts.shared.core.types import CodeId, SourceId
 
 
 class TestSimilarityScore:

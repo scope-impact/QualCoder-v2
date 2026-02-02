@@ -28,7 +28,7 @@ from src.application.coding.ai_coding_payloads import (
 )
 from src.application.signal_bridge.base import BaseSignalBridge
 from src.application.signal_bridge.protocols import EventConverter
-from src.domain.ai_services.events import (
+from src.contexts.ai_services.core.events import (
     CodeSuggested,
     CodeSuggestionApproved,
     CodeSuggestionRejected,

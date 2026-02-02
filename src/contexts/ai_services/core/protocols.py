@@ -15,11 +15,11 @@ from typing import TYPE_CHECKING, Protocol
 from returns.result import Result
 
 if TYPE_CHECKING:
-    from src.domain.ai_services.entities import (
+    from src.contexts.ai_services.core.entities import (
         CodeSuggestion,
         DuplicateCandidate,
     )
-    from src.domain.coding.entities import Code, Color
+    from src.contexts.coding.core.entities import Code, Color
 
 
 # ============================================================

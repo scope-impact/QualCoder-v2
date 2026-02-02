@@ -11,8 +11,8 @@ from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from uuid import uuid4
 
-from src.domain.coding.entities import Color, TextPosition
-from src.domain.shared.types import CodeId, SourceId
+from src.contexts.coding.core.entities import Color, TextPosition
+from src.contexts.shared.core.types import CodeId, SourceId
 
 # ============================================================
 # Typed Identifiers

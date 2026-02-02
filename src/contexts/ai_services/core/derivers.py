@@ -16,7 +16,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from src.domain.ai_services.entities import (
+from src.contexts.ai_services.core.entities import (
     CodeSuggestion,
     DetectionId,
     DuplicateCandidate,
@@ -24,7 +24,7 @@ from src.domain.ai_services.entities import (
     SuggestionId,
     TextContext,
 )
-from src.domain.ai_services.events import (
+from src.contexts.ai_services.core.events import (
     CodeSuggested,
     CodeSuggestionApproved,
     CodeSuggestionRejected,
@@ -33,7 +33,7 @@ from src.domain.ai_services.events import (
     MergeSuggestionApproved,
     MergeSuggestionDismissed,
 )
-from src.domain.ai_services.invariants import (
+from src.contexts.ai_services.core.invariants import (
     has_minimum_codes_for_detection,
     has_text_to_analyze,
     is_suggestion_name_unique,
@@ -42,8 +42,8 @@ from src.domain.ai_services.invariants import (
     is_valid_similarity_threshold,
     is_valid_suggestion_name,
 )
-from src.domain.coding.entities import Code, Color
-from src.domain.shared.types import CodeId, Failure, SourceId
+from src.contexts.coding.core.entities import Code, Color
+from src.contexts.shared.core.types import CodeId, Failure, SourceId
 
 # ============================================================
 # State Containers (Input to Derivers)

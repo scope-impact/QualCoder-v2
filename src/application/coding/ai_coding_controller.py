@@ -17,7 +17,7 @@ from typing import TYPE_CHECKING
 
 from returns.result import Failure, Result, Success
 
-from src.domain.ai_services.derivers import (
+from src.contexts.ai_services.core.derivers import (
     AISuggestionState,
     derive_approve_merge,
     derive_approve_suggestion,
@@ -26,12 +26,12 @@ from src.domain.ai_services.derivers import (
     derive_reject_suggestion,
     derive_suggest_code,
 )
-from src.domain.ai_services.entities import (
+from src.contexts.ai_services.core.entities import (
     CodeSuggestion,
     DuplicateCandidate,
     SuggestionId,
 )
-from src.domain.ai_services.events import (
+from src.contexts.ai_services.core.events import (
     CodeSuggested,
     CodeSuggestionApproved,
     CodeSuggestionRejected,
@@ -39,9 +39,9 @@ from src.domain.ai_services.events import (
     MergeSuggestionApproved,
     MergeSuggestionDismissed,
 )
-from src.domain.coding.entities import Code, Color
-from src.domain.coding.events import CodeCreated, CodesMerged
-from src.domain.shared.types import CodeId, SourceId
+from src.contexts.coding.core.entities import Code, Color
+from src.contexts.coding.core.events import CodeCreated, CodesMerged
+from src.contexts.shared.core.types import CodeId, SourceId
 
 if TYPE_CHECKING:
     from src.application.event_bus import EventBus

@@ -16,14 +16,14 @@ from __future__ import annotations
 from collections.abc import Iterable
 from itertools import islice
 
-from src.domain.ai_services.entities import (
+from src.contexts.ai_services.core.entities import (
     CodeSuggestion,
     DuplicateCandidate,
     SuggestionId,
 )
-from src.domain.coding.entities import Code
-from src.domain.shared.types import CodeId
-from src.domain.shared.validation import is_non_empty_string, is_within_length
+from src.contexts.coding.core.entities import Code
+from src.contexts.shared.core.types import CodeId
+from src.contexts.shared.core.validation import is_non_empty_string, is_within_length
 
 # ============================================================
 # Code Suggestion Invariants
