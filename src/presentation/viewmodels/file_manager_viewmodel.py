@@ -1,11 +1,11 @@
 """
 File Manager ViewModel
 
-Connects the FileManagerScreen to the application coordinator.
+Connects the FileManagerScreen to a controller that implements FileManagerController.
 Handles data transformation between domain entities and UI DTOs.
 
 Architecture:
-    User Action → ViewModel → Coordinator → Use Case → Domain → Events
+    User Action → ViewModel → Controller → Use Case → Domain → Events
                                                                    ↓
     UI Update ← ViewModel ← EventBus ←────────────────────────────┘
 """
@@ -28,9 +28,9 @@ from src.application.projects.commands import (
 )
 from src.contexts.projects.core.entities import Folder, Source
 from src.presentation.dto import FolderDTO, ProjectSummaryDTO, SourceDTO
+from src.presentation.viewmodels.protocols import FileManagerController
 
 if TYPE_CHECKING:
-    from src.application.coordinator import ApplicationCoordinator
     from src.application.event_bus import EventBus
 
 
@@ -40,7 +40,7 @@ class FileManagerViewModel:
 
     Responsibilities:
     - Transform domain Source entities to UI DTOs
-    - Handle user actions by calling coordinator commands
+    - Handle user actions by calling controller commands
     - React to domain events via EventBus
     - Provide filtering and search capabilities
     - Track selection state for bulk operations
@@ -51,17 +51,17 @@ class FileManagerViewModel:
 
     def __init__(
         self,
-        controller: ApplicationCoordinator,
+        controller: FileManagerController,
         event_bus: EventBus,
     ) -> None:
         """
         Initialize the ViewModel.
 
         Args:
-            controller: The application coordinator
+            controller: Controller implementing FileManagerController protocol
             event_bus: The event bus for reactive updates
         """
-        self._coordinator = controller
+        self._controller = controller
         self._event_bus = event_bus
 
         # Selection state
@@ -89,7 +89,7 @@ class FileManagerViewModel:
         Returns:
             List of SourceDTO objects for UI display
         """
-        sources = self._coordinator.sources.get_sources()
+        sources = self._controller.get_sources()
         return [self._source_to_dto(s) for s in sources]
 
     def get_summary(self) -> ProjectSummaryDTO:
@@ -99,7 +99,7 @@ class FileManagerViewModel:
         Returns:
             ProjectSummaryDTO with counts by type
         """
-        summary = self._coordinator.projects.get_project_summary()
+        summary = self._controller.get_project_summary()
 
         if summary is None:
             return ProjectSummaryDTO()
@@ -125,7 +125,7 @@ class FileManagerViewModel:
         if self._current_source_id is None:
             return None
 
-        source = self._coordinator.sources.get_source(self._current_source_id)
+        source = self._controller.get_source(self._current_source_id)
         return self._source_to_dto(source) if source else None
 
     # =========================================================================
@@ -155,7 +155,7 @@ class FileManagerViewModel:
             memo=memo,
         )
 
-        result = self._coordinator.sources.add_source(command)
+        result = self._controller.add_source(command)
 
         return isinstance(result, Success)
 
@@ -170,7 +170,7 @@ class FileManagerViewModel:
             True if successful, False otherwise
         """
         command = RemoveSourceCommand(source_id=source_id)
-        result = self._coordinator.sources.remove_source(command)
+        result = self._controller.remove_source(command)
 
         if isinstance(result, Success):
             self._selected_source_ids.discard(source_id)
@@ -209,7 +209,7 @@ class FileManagerViewModel:
         Returns:
             Number of coded segments for this source
         """
-        return self._coordinator.sources.get_segment_count_for_source(source_id)
+        return self._controller.get_segment_count_for_source(source_id)
 
     def open_source(self, source_id: int) -> bool:
         """
@@ -222,7 +222,7 @@ class FileManagerViewModel:
             True if successful, False otherwise
         """
         command = OpenSourceCommand(source_id=source_id)
-        result = self._coordinator.sources.open_source(command)
+        result = self._controller.open_source(command)
 
         if isinstance(result, Success):
             self._current_source_id = source_id
@@ -256,7 +256,7 @@ class FileManagerViewModel:
             status=status,
         )
 
-        result = self._coordinator.sources.update_source(command)
+        result = self._controller.update_source(command)
 
         return isinstance(result, Success)
 
@@ -296,7 +296,7 @@ class FileManagerViewModel:
         Returns:
             List of selected SourceDTO objects
         """
-        sources = self._coordinator.sources.get_sources()
+        sources = self._controller.get_sources()
         return [
             self._source_to_dto(s)
             for s in sources
@@ -326,7 +326,7 @@ class FileManagerViewModel:
         Returns:
             Filtered list of SourceDTO objects
         """
-        sources = self._coordinator.sources.get_sources()
+        sources = self._controller.get_sources()
 
         if source_type:
             sources = [s for s in sources if s.source_type.value == source_type]
@@ -346,7 +346,7 @@ class FileManagerViewModel:
         Returns:
             List of matching SourceDTO objects
         """
-        sources = self._coordinator.sources.get_sources()
+        sources = self._controller.get_sources()
         query_lower = query.lower()
 
         matching = [s for s in sources if query_lower in s.name.lower()]
@@ -369,7 +369,7 @@ class FileManagerViewModel:
             True if successful, False otherwise
         """
         command = CreateFolderCommand(name=name, parent_id=parent_id)
-        result = self._coordinator.folders.create_folder(command)
+        result = self._controller.create_folder(command)
 
         return isinstance(result, Success)
 
@@ -385,7 +385,7 @@ class FileManagerViewModel:
             True if successful, False otherwise
         """
         command = RenameFolderCommand(folder_id=folder_id, new_name=new_name)
-        result = self._coordinator.folders.rename_folder(command)
+        result = self._controller.rename_folder(command)
 
         return isinstance(result, Success)
 
@@ -400,7 +400,7 @@ class FileManagerViewModel:
             True if successful, False otherwise
         """
         command = DeleteFolderCommand(folder_id=folder_id)
-        result = self._coordinator.folders.delete_folder(command)
+        result = self._controller.delete_folder(command)
 
         return isinstance(result, Success)
 
@@ -416,7 +416,7 @@ class FileManagerViewModel:
             True if successful, False otherwise
         """
         command = MoveSourceToFolderCommand(source_id=source_id, folder_id=folder_id)
-        result = self._coordinator.folders.move_source_to_folder(command)
+        result = self._controller.move_source_to_folder(command)
 
         return isinstance(result, Success)
 
@@ -427,7 +427,7 @@ class FileManagerViewModel:
         Returns:
             List of FolderDTO objects for UI display
         """
-        folders = self._coordinator.folders.get_folders()
+        folders = self._controller.get_folders()
         return [self._folder_to_dto(f) for f in folders]
 
     # =========================================================================
@@ -440,7 +440,7 @@ class FileManagerViewModel:
         source_id_value = source.id.value
         case_names = [
             case.name
-            for case in self._coordinator.cases.get_cases()
+            for case in self._controller.get_cases()
             if source_id_value in case.source_ids
         ]
 
@@ -460,7 +460,7 @@ class FileManagerViewModel:
     def _folder_to_dto(self, folder: Folder) -> FolderDTO:
         """Convert a Folder entity to DTO."""
         # Count sources in this folder
-        sources = self._coordinator.sources.get_sources()
+        sources = self._controller.get_sources()
         source_count = sum(
             1 for s in sources if s.folder_id and s.folder_id.value == folder.id.value
         )

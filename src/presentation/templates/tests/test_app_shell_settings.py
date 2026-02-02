@@ -110,16 +110,9 @@ class TestSettingsDialogIntegration:
 
     def test_full_settings_workflow(self, qapp, colors):
         """Full workflow: click settings -> open dialog -> make change -> persist."""
-
-        from src.application.coordinators import (
-            CoordinatorInfrastructure,
-            SettingsCoordinator,
-        )
-        from src.application.event_bus import EventBus
-        from src.application.lifecycle import ProjectLifecycle
-        from src.application.state import ProjectState
         from src.contexts.settings.infra import UserSettingsRepository
         from src.presentation.dialogs.settings_dialog import SettingsDialog
+        from src.presentation.services import SettingsService
         from src.presentation.templates.app_shell import AppShell
         from src.presentation.viewmodels import SettingsViewModel
 
@@ -130,13 +123,7 @@ class TestSettingsDialogIntegration:
         with tempfile.TemporaryDirectory() as tmpdir:
             config_path = Path(tmpdir) / "settings.json"
             repo = UserSettingsRepository(config_path=config_path)
-            infra = CoordinatorInfrastructure(
-                event_bus=EventBus(),
-                state=ProjectState(),
-                lifecycle=ProjectLifecycle(),
-                settings_repo=repo,
-            )
-            provider = SettingsCoordinator(infra)
+            provider = SettingsService(repo)
             viewmodel = SettingsViewModel(settings_provider=provider)
 
             # Variable to track dialog

@@ -48,23 +48,10 @@ def settings_repo(temp_config_path):
 
 @pytest.fixture
 def settings_provider(settings_repo):
-    """Create a settings coordinator for use as a provider."""
-    from src.application.coordinators import (
-        CoordinatorInfrastructure,
-        SettingsCoordinator,
-    )
-    from src.application.event_bus import EventBus
-    from src.application.lifecycle import ProjectLifecycle
-    from src.application.state import ProjectState
+    """Create a settings service for use as a provider."""
+    from src.presentation.services import SettingsService
 
-    event_bus = EventBus()
-    infra = CoordinatorInfrastructure(
-        event_bus=event_bus,
-        state=ProjectState(),
-        lifecycle=ProjectLifecycle(),
-        settings_repo=settings_repo,
-    )
-    return SettingsCoordinator(infra)
+    return SettingsService(settings_repo)
 
 
 @pytest.fixture
@@ -390,30 +377,14 @@ class TestFullRoundTrip:
 
     def test_multiple_settings_persist_and_reload(self, qapp, colors, temp_config_path):
         """Multiple setting changes should persist and reload correctly."""
-        from src.application.coordinators import (
-            CoordinatorInfrastructure,
-            SettingsCoordinator,
-        )
-        from src.application.event_bus import EventBus
-        from src.application.lifecycle import ProjectLifecycle
-        from src.application.state import ProjectState
         from src.contexts.settings.infra import UserSettingsRepository
         from src.presentation.dialogs.settings_dialog import SettingsDialog
+        from src.presentation.services import SettingsService
         from src.presentation.viewmodels import SettingsViewModel
-
-        def create_settings_provider(repo):
-            """Create a SettingsCoordinator from a repository."""
-            infra = CoordinatorInfrastructure(
-                event_bus=EventBus(),
-                state=ProjectState(),
-                lifecycle=ProjectLifecycle(),
-                settings_repo=repo,
-            )
-            return SettingsCoordinator(infra)
 
         # Create first dialog session
         repo1 = UserSettingsRepository(config_path=temp_config_path)
-        provider1 = create_settings_provider(repo1)
+        provider1 = SettingsService(repo1)
         viewmodel1 = SettingsViewModel(settings_provider=provider1)
         dialog1 = SettingsDialog(viewmodel=viewmodel1, colors=colors)
 
@@ -437,7 +408,7 @@ class TestFullRoundTrip:
 
         # Create NEW dialog session (simulates app restart)
         repo2 = UserSettingsRepository(config_path=temp_config_path)
-        provider2 = create_settings_provider(repo2)
+        provider2 = SettingsService(repo2)
         viewmodel2 = SettingsViewModel(settings_provider=provider2)
         dialog2 = SettingsDialog(viewmodel=viewmodel2, colors=colors)
 
