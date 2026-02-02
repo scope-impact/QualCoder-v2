@@ -555,14 +555,14 @@ class TestSourceDTOCases:
         source_id = int(sources[0].id)
 
         # Create a case
-        coordinator.cases.create_case(
+        coordinator.create_case(
             CreateCaseCommand(name="Participant A", description="First participant")
         )
-        cases = coordinator.cases.get_cases()
+        cases = coordinator.get_cases()
         case_id = cases[0].id.value
 
         # Link source to case
-        coordinator.cases.link_source_to_case(
+        coordinator.link_source_to_case(
             LinkSourceToCaseCommand(source_id=source_id, case_id=case_id)
         )
 
@@ -587,13 +587,13 @@ class TestSourceDTOCases:
         source_id = int(sources[0].id)
 
         # Create two cases
-        coordinator.cases.create_case(CreateCaseCommand(name="Case Alpha"))
-        coordinator.cases.create_case(CreateCaseCommand(name="Case Beta"))
-        cases = coordinator.cases.get_cases()
+        coordinator.create_case(CreateCaseCommand(name="Case Alpha"))
+        coordinator.create_case(CreateCaseCommand(name="Case Beta"))
+        cases = coordinator.get_cases()
 
         # Link source to both cases
         for case in cases:
-            coordinator.cases.link_source_to_case(
+            coordinator.link_source_to_case(
                 LinkSourceToCaseCommand(source_id=source_id, case_id=case.id.value)
             )
 

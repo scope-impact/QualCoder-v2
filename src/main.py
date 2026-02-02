@@ -11,17 +11,13 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 from PySide6.QtWidgets import QApplication
+from returns.result import Result
 
 from design_system import get_colors
 from src.application.app_context import AppContext, get_app_context
-from src.application.coordinators import (
-    CasesCoordinator,
-    CoordinatorInfrastructure,
-    FoldersCoordinator,
-    ProjectsCoordinator,
-    SourcesCoordinator,
-)
 from src.application.navigation.service import NavigationService
+from src.contexts.projects.core.entities import ProjectSummary, SourceType
+from src.contexts.shared.core.types import SourceId
 from src.presentation.screens import (
     CaseManagerScreen,
     FileManagerScreen,
@@ -34,75 +30,218 @@ from src.presentation.viewmodels import FileManagerViewModel
 
 if TYPE_CHECKING:
     from src.application.event_bus import EventBus
+    from src.application.projects.commands import (
+        AddSourceCommand,
+        CreateFolderCommand,
+        DeleteFolderCommand,
+        MoveSourceToFolderCommand,
+        OpenSourceCommand,
+        RemoveSourceCommand,
+        RenameFolderCommand,
+        UpdateSourceCommand,
+    )
+    from src.contexts.cases.core.entities import Case
+    from src.contexts.projects.core.entities import Folder, Source
 
 
 class CoordinatorAdapter:
     """
-    Adapter that provides coordinator-like interface from AppContext.
+    Adapter implementing FileManagerController protocol.
 
-    This adapter wraps AppContext and provides access to sub-coordinators
-    (sources, folders, cases, projects) that some ViewModels expect.
-    The sub-coordinators share AppContext's infrastructure.
-
-    This is a temporary migration pattern - eventually ViewModels should
-    use use cases directly or through dedicated services.
+    Provides the interface that FileManagerViewModel expects by calling
+    use cases directly. This replaces the sub-coordinator pattern.
     """
 
     def __init__(self, ctx: AppContext) -> None:
         """Initialize adapter with AppContext."""
         self._ctx = ctx
 
-        # Create infrastructure that references AppContext's components
-        # Note: The contexts are properties that will be evaluated when accessed
-        self._infra = CoordinatorInfrastructure(
-            event_bus=ctx.event_bus,
-            state=ctx.state,
-            lifecycle=ctx.lifecycle,
-            settings_repo=ctx.settings_repo,
-            signal_bridge=ctx.signal_bridge,
-        )
-
-        # Create sub-coordinators using shared infrastructure
-        self._sources = SourcesCoordinator(self._infra)
-        self._folders = FoldersCoordinator(self._infra)
-        self._cases = CasesCoordinator(self._infra)
-        self._projects = ProjectsCoordinator(self._infra)
-
-    def _sync_contexts(self) -> None:
-        """Sync bounded contexts from AppContext to infrastructure."""
-        self._infra.sources_context = self._ctx.sources_context
-        self._infra.cases_context = self._ctx.cases_context
-        self._infra.coding_context = self._ctx.coding_context
-        self._infra.projects_context = self._ctx.projects_context
-
-    @property
-    def sources(self) -> SourcesCoordinator:
-        """Get sources coordinator."""
-        self._sync_contexts()
-        return self._sources
-
-    @property
-    def folders(self) -> FoldersCoordinator:
-        """Get folders coordinator."""
-        self._sync_contexts()
-        return self._folders
-
-    @property
-    def cases(self) -> CasesCoordinator:
-        """Get cases coordinator."""
-        self._sync_contexts()
-        return self._cases
-
-    @property
-    def projects(self) -> ProjectsCoordinator:
-        """Get projects coordinator."""
-        self._sync_contexts()
-        return self._projects
-
     @property
     def event_bus(self) -> EventBus:
         """Get event bus."""
         return self._ctx.event_bus
+
+    # =========================================================================
+    # Source Operations (implements FileManagerController protocol)
+    # =========================================================================
+
+    def get_sources(self) -> list[Source]:
+        """Get all sources in the current project."""
+        return list(self._ctx.state.sources)
+
+    def get_source(self, source_id: int) -> Source | None:
+        """Get a specific source by ID."""
+        return self._ctx.state.get_source(source_id)
+
+    def add_source(self, command: AddSourceCommand) -> Result:
+        """Add a source file to the current project."""
+        from src.application.sources.usecases import add_source
+
+        return add_source(
+            command=command,
+            state=self._ctx.state,
+            sources_ctx=self._ctx.sources_context,
+            event_bus=self._ctx.event_bus,
+        )
+
+    def remove_source(self, command: RemoveSourceCommand) -> Result:
+        """Remove a source from the current project."""
+        from src.application.sources.usecases import remove_source
+
+        return remove_source(
+            command=command,
+            state=self._ctx.state,
+            sources_ctx=self._ctx.sources_context,
+            coding_ctx=self._ctx.coding_context,
+            event_bus=self._ctx.event_bus,
+        )
+
+    def open_source(self, command: OpenSourceCommand) -> Result:
+        """Open a source for viewing/coding."""
+        from src.application.sources.usecases import open_source
+
+        return open_source(
+            command=command,
+            state=self._ctx.state,
+            event_bus=self._ctx.event_bus,
+        )
+
+    def update_source(self, command: UpdateSourceCommand) -> Result:
+        """Update source metadata."""
+        from src.application.sources.usecases import update_source
+
+        return update_source(
+            command=command,
+            state=self._ctx.state,
+            sources_ctx=self._ctx.sources_context,
+            event_bus=self._ctx.event_bus,
+        )
+
+    def get_segment_count_for_source(self, source_id: int) -> int:
+        """Get the count of coded segments for a source."""
+        coding_ctx = self._ctx.coding_context
+        if coding_ctx is None or coding_ctx.segment_repo is None:
+            return 0
+
+        sid = SourceId(value=source_id)
+        return coding_ctx.segment_repo.count_by_source(sid)
+
+    # =========================================================================
+    # Folder Operations
+    # =========================================================================
+
+    def get_folders(self) -> list[Folder]:
+        """Get all folders in the current project."""
+        return list(self._ctx.state.folders)
+
+    def create_folder(self, command: CreateFolderCommand) -> Result:
+        """Create a new folder."""
+        from src.application.folders.usecases import create_folder
+
+        return create_folder(
+            command=command,
+            state=self._ctx.state,
+            sources_ctx=self._ctx.sources_context,
+            event_bus=self._ctx.event_bus,
+        )
+
+    def rename_folder(self, command: RenameFolderCommand) -> Result:
+        """Rename a folder."""
+        from src.application.folders.usecases import rename_folder
+
+        return rename_folder(
+            command=command,
+            state=self._ctx.state,
+            sources_ctx=self._ctx.sources_context,
+            event_bus=self._ctx.event_bus,
+        )
+
+    def delete_folder(self, command: DeleteFolderCommand) -> Result:
+        """Delete an empty folder."""
+        from src.application.folders.usecases import delete_folder
+
+        return delete_folder(
+            command=command,
+            state=self._ctx.state,
+            sources_ctx=self._ctx.sources_context,
+            event_bus=self._ctx.event_bus,
+        )
+
+    def move_source_to_folder(self, command: MoveSourceToFolderCommand) -> Result:
+        """Move a source to a folder."""
+        from src.application.folders.usecases import move_source_to_folder
+
+        return move_source_to_folder(
+            command=command,
+            state=self._ctx.state,
+            sources_ctx=self._ctx.sources_context,
+            event_bus=self._ctx.event_bus,
+        )
+
+    # =========================================================================
+    # Case Operations
+    # =========================================================================
+
+    def get_cases(self) -> list[Case]:
+        """Get all cases in the current project."""
+        return list(self._ctx.state.cases)
+
+    def create_case(self, command) -> Result:
+        """Create a new case in the current project."""
+        from src.application.cases.usecases import create_case
+
+        return create_case(
+            command=command,
+            state=self._ctx.state,
+            cases_ctx=self._ctx.cases_context,
+            event_bus=self._ctx.event_bus,
+        )
+
+    def link_source_to_case(self, command) -> Result:
+        """Link a source to a case."""
+        from src.application.cases.usecases import link_source_to_case
+
+        return link_source_to_case(
+            command=command,
+            state=self._ctx.state,
+            cases_ctx=self._ctx.cases_context,
+            event_bus=self._ctx.event_bus,
+        )
+
+    @property
+    def coding_context(self):
+        """Get coding context (for tests that need segment access)."""
+        return self._ctx.coding_context
+
+    # =========================================================================
+    # Project Operations
+    # =========================================================================
+
+    def get_project_summary(self) -> ProjectSummary | None:
+        """Get summary statistics for the current project."""
+        if self._ctx.state.project is None:
+            return None
+
+        return ProjectSummary(
+            total_sources=len(self._ctx.state.sources),
+            text_count=sum(
+                1 for s in self._ctx.state.sources if s.source_type == SourceType.TEXT
+            ),
+            audio_count=sum(
+                1 for s in self._ctx.state.sources if s.source_type == SourceType.AUDIO
+            ),
+            video_count=sum(
+                1 for s in self._ctx.state.sources if s.source_type == SourceType.VIDEO
+            ),
+            image_count=sum(
+                1 for s in self._ctx.state.sources if s.source_type == SourceType.IMAGE
+            ),
+            pdf_count=sum(
+                1 for s in self._ctx.state.sources if s.source_type == SourceType.PDF
+            ),
+            total_codes=0,  # Would come from coding context
+            total_segments=0,
+        )
 
 
 class QualCoderApp:

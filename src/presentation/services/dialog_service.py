@@ -213,11 +213,8 @@ class DialogService:
         if not HAS_QT:
             return None
 
-        from src.application.coordinators.base import CoordinatorInfrastructure
-        from src.application.coordinators.settings_coordinator import (
-            SettingsCoordinator,
-        )
         from src.presentation.dialogs.settings_dialog import SettingsDialog
+        from src.presentation.services.settings_service import SettingsService
         from src.presentation.viewmodels import SettingsViewModel
 
         # Use custom config path for testing, or default settings from context
@@ -225,24 +222,12 @@ class DialogService:
             from src.contexts.settings.infra import UserSettingsRepository
 
             temp_repo = UserSettingsRepository(config_path=config_path)
-            temp_infra = CoordinatorInfrastructure(
-                event_bus=self._ctx.event_bus,
-                state=self._ctx.state,
-                lifecycle=self._ctx.lifecycle,
-                settings_repo=temp_repo,
-            )
-            settings_coordinator = SettingsCoordinator(temp_infra)
+            settings_service = SettingsService(temp_repo)
         else:
-            # Create settings coordinator using context's settings_repo
-            infra = CoordinatorInfrastructure(
-                event_bus=self._ctx.event_bus,
-                state=self._ctx.state,
-                lifecycle=self._ctx.lifecycle,
-                settings_repo=self._ctx.settings_repo,
-            )
-            settings_coordinator = SettingsCoordinator(infra)
+            # Use context's settings_repo
+            settings_service = SettingsService(self._ctx.settings_repo)
 
-        viewmodel = SettingsViewModel(settings_provider=settings_coordinator)
+        viewmodel = SettingsViewModel(settings_provider=settings_service)
         dialog = SettingsDialog(
             viewmodel=viewmodel,
             colors=colors,

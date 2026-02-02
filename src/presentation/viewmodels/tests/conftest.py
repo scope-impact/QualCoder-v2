@@ -25,37 +25,44 @@ def project_event_bus() -> EventBus:
 
 @pytest.fixture
 def coordinator(project_event_bus: EventBus, connection):
-    """Create an ApplicationCoordinator for testing.
+    """Create a test controller implementing FileManagerController.
 
-    NOTE: Uses ApplicationCoordinator (not CoordinatorAdapter) because
-    tests need access to internal properties like ._state and .coding_context
-    that are not part of the adapter interface.
+    Uses AppContext internally and exposes coding_context for tests
+    that need to manipulate segments directly.
     """
+    import tempfile
+
+    from src.application.app_context import AppContext
     from src.application.contexts import (
         CasesContext,
         CodingContext,
         ProjectsContext,
         SourcesContext,
     )
-    from src.application.coordinator import ApplicationCoordinator
+    from src.application.lifecycle import ProjectLifecycle
+    from src.application.state import ProjectState
     from src.contexts.projects.core.entities import Project, ProjectId
+    from src.contexts.settings.infra import UserSettingsRepository
+    from src.main import CoordinatorAdapter
 
-    # Create coordinator
-    coordinator = ApplicationCoordinator()
+    # Create state with test event bus
+    state = ProjectState()
 
-    # Replace with test event bus
-    coordinator._event_bus = project_event_bus
-    coordinator._infra.event_bus = project_event_bus
+    # Create AppContext
+    ctx = AppContext(
+        event_bus=project_event_bus,
+        state=state,
+        lifecycle=ProjectLifecycle(),
+        settings_repo=UserSettingsRepository(),
+    )
 
-    # Create contexts with the test connection and set on infrastructure
-    coordinator._infra.sources_context = SourcesContext.create(connection)
-    coordinator._infra.coding_context = CodingContext.create(connection)
-    coordinator._infra.cases_context = CasesContext.create(connection)
-    coordinator._infra.projects_context = ProjectsContext.create(connection)
+    # Set contexts with the test connection (no underscore - dataclass attributes)
+    ctx.sources_context = SourcesContext.create(connection)
+    ctx.coding_context = CodingContext.create(connection)
+    ctx.cases_context = CasesContext.create(connection)
+    ctx.projects_context = ProjectsContext.create(connection)
 
     # Create a project state so we can add sources
-    import tempfile
-
     with tempfile.TemporaryDirectory() as tmp_dir:
         project_path = Path(tmp_dir) / "test_project.qda"
         project = Project(
@@ -63,8 +70,11 @@ def coordinator(project_event_bus: EventBus, connection):
             name="Test Project",
             path=project_path,
         )
-        coordinator._state.project = project
-        yield coordinator
+        ctx.state.project = project
+
+        # Create adapter (coding_context is exposed as a property)
+        adapter = CoordinatorAdapter(ctx)
+        yield adapter
 
 
 @pytest.fixture
