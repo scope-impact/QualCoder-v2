@@ -12,6 +12,8 @@ import pytest
 from returns.result import Failure, Success
 
 from src.application.event_bus import EventBus
+from src.application.lifecycle import ProjectLifecycle
+from src.application.state import ProjectState
 from src.contexts.projects.core.entities import (
     Project,
     ProjectId,
@@ -36,19 +38,29 @@ def event_bus() -> EventBus:
 
 
 @pytest.fixture
-def coordinator(event_bus: EventBus):
-    """Create an ApplicationCoordinator for testing."""
-    from src.application.coordinator import ApplicationCoordinator
+def app_context(event_bus: EventBus):
+    """Create an AppContext for testing."""
+    from src.application.app_context import AppContext
+    from src.contexts.settings.infra import UserSettingsRepository
 
-    coordinator = ApplicationCoordinator()
-    coordinator._event_bus = event_bus
-    return coordinator
+    state = ProjectState()
+    lifecycle = ProjectLifecycle()
+    settings_repo = UserSettingsRepository()
+
+    ctx = AppContext(
+        event_bus=event_bus,
+        state=state,
+        lifecycle=lifecycle,
+        settings_repo=settings_repo,
+        signal_bridge=None,  # No Qt in tests
+    )
+    return ctx
 
 
 @pytest.fixture
-def project_tools(coordinator) -> ProjectTools:
+def project_tools(app_context) -> ProjectTools:
     """Create project tools for testing."""
-    return ProjectTools(provider=coordinator)
+    return ProjectTools(ctx=app_context)
 
 
 @pytest.fixture
@@ -67,15 +79,15 @@ def sample_source() -> Source:
     )
 
 
-def _setup_project(coordinator, tmp_path: Path, name: str = "Test Project"):
-    """Helper to set up a project in the coordinator state."""
+def _setup_project(app_context, tmp_path: Path, name: str = "Test Project"):
+    """Helper to set up a project in the AppContext state."""
     project_path = tmp_path / "test.qda"
     project = Project(
         id=ProjectId.from_path(project_path),
         name=name,
         path=project_path,
     )
-    coordinator._state.project = project
+    app_context.state.project = project
     return project_path
 
 
@@ -154,12 +166,12 @@ class TestGetProjectContext:
 
     def test_returns_project_info_when_open(
         self,
-        coordinator,
+        app_context,
         project_tools: ProjectTools,
         tmp_path: Path,
     ):
         """Returns project info when a project is open."""
-        _setup_project(coordinator, tmp_path, "Test Project")
+        _setup_project(app_context, tmp_path, "Test Project")
 
         result = project_tools.execute("get_project_context", {})
 
@@ -171,16 +183,16 @@ class TestGetProjectContext:
 
     def test_returns_source_count(
         self,
-        coordinator,
+        app_context,
         project_tools: ProjectTools,
         sample_source: Source,
         tmp_path: Path,
     ):
         """Returns source count when project has sources."""
-        _setup_project(coordinator, tmp_path, "Test")
+        _setup_project(app_context, tmp_path, "Test")
 
         # Add a source to state
-        coordinator._state.add_source(sample_source)
+        app_context.state.add_source(sample_source)
 
         result = project_tools.execute("get_project_context", {})
 
@@ -194,12 +206,12 @@ class TestListSources:
 
     def test_returns_empty_list_when_no_sources(
         self,
-        coordinator,
+        app_context,
         project_tools: ProjectTools,
         tmp_path: Path,
     ):
         """Returns empty list when project has no sources."""
-        _setup_project(coordinator, tmp_path, "Test")
+        _setup_project(app_context, tmp_path, "Test")
 
         result = project_tools.execute("list_sources", {})
 
@@ -210,14 +222,14 @@ class TestListSources:
 
     def test_returns_sources_with_details(
         self,
-        coordinator,
+        app_context,
         project_tools: ProjectTools,
         sample_source: Source,
         tmp_path: Path,
     ):
         """Returns source details."""
-        _setup_project(coordinator, tmp_path, "Test")
-        coordinator._state.add_source(sample_source)
+        _setup_project(app_context, tmp_path, "Test")
+        app_context.state.add_source(sample_source)
 
         result = project_tools.execute("list_sources", {})
 
@@ -231,12 +243,12 @@ class TestListSources:
 
     def test_filters_by_source_type(
         self,
-        coordinator,
+        app_context,
         project_tools: ProjectTools,
         tmp_path: Path,
     ):
         """Filters sources by type."""
-        _setup_project(coordinator, tmp_path, "Test")
+        _setup_project(app_context, tmp_path, "Test")
 
         # Add text source
         text_source = Source(
@@ -264,8 +276,8 @@ class TestListSources:
             case_ids=(),
         )
 
-        coordinator._state.add_source(text_source)
-        coordinator._state.add_source(audio_source)
+        app_context.state.add_source(text_source)
+        app_context.state.add_source(audio_source)
 
         # Filter by text
         result = project_tools.execute("list_sources", {"source_type": "text"})
@@ -277,12 +289,12 @@ class TestListSources:
 
     def test_returns_source_metadata(
         self,
-        coordinator,
+        app_context,
         project_tools: ProjectTools,
         tmp_path: Path,
     ):
         """AC #3: Returns source metadata (memo, file_size, origin)."""
-        _setup_project(coordinator, tmp_path, "Test")
+        _setup_project(app_context, tmp_path, "Test")
 
         source_with_metadata = Source(
             id=SourceId(value=1),
@@ -296,7 +308,7 @@ class TestListSources:
             code_count=5,
             case_ids=(),
         )
-        coordinator._state.add_source(source_with_metadata)
+        app_context.state.add_source(source_with_metadata)
 
         result = project_tools.execute("list_sources", {})
 
@@ -308,12 +320,12 @@ class TestListSources:
 
     def test_returns_coding_status(
         self,
-        coordinator,
+        app_context,
         project_tools: ProjectTools,
         tmp_path: Path,
     ):
         """AC #4: Returns coding status per source (code_count, status)."""
-        _setup_project(coordinator, tmp_path, "Test")
+        _setup_project(app_context, tmp_path, "Test")
 
         coded_source = Source(
             id=SourceId(value=1),
@@ -326,7 +338,7 @@ class TestListSources:
             code_count=15,
             case_ids=(),
         )
-        coordinator._state.add_source(coded_source)
+        app_context.state.add_source(coded_source)
 
         result = project_tools.execute("list_sources", {})
 
@@ -366,12 +378,12 @@ class TestNavigateToSegment:
 
     def test_fails_for_nonexistent_source(
         self,
-        coordinator,
+        app_context,
         project_tools: ProjectTools,
         tmp_path: Path,
     ):
         """Fails when source doesn't exist."""
-        _setup_project(coordinator, tmp_path, "Test")
+        _setup_project(app_context, tmp_path, "Test")
 
         result = project_tools.execute(
             "navigate_to_segment",
@@ -386,14 +398,14 @@ class TestNavigateToSegment:
 
     def test_navigates_to_segment_successfully(
         self,
-        coordinator,
+        app_context,
         project_tools: ProjectTools,
         sample_source: Source,
         tmp_path: Path,
     ):
         """Successfully navigates to segment."""
-        _setup_project(coordinator, tmp_path, "Test")
-        coordinator._state.add_source(sample_source)
+        _setup_project(app_context, tmp_path, "Test")
+        app_context.state.add_source(sample_source)
 
         result = project_tools.execute(
             "navigate_to_segment",
@@ -414,14 +426,14 @@ class TestNavigateToSegment:
 
     def test_defaults_highlight_to_true(
         self,
-        coordinator,
+        app_context,
         project_tools: ProjectTools,
         sample_source: Source,
         tmp_path: Path,
     ):
         """Defaults highlight to True when not specified."""
-        _setup_project(coordinator, tmp_path, "Test")
-        coordinator._state.add_source(sample_source)
+        _setup_project(app_context, tmp_path, "Test")
+        app_context.state.add_source(sample_source)
 
         result = project_tools.execute(
             "navigate_to_segment",
@@ -453,12 +465,12 @@ class TestReadSourceContent:
 
     def test_returns_full_content(
         self,
-        coordinator,
+        app_context,
         project_tools: ProjectTools,
         tmp_path: Path,
     ):
         """AC #1: Agent can get text content of a source."""
-        _setup_project(coordinator, tmp_path, "Test")
+        _setup_project(app_context, tmp_path, "Test")
 
         # Create source with content
         source = Source(
@@ -473,7 +485,7 @@ class TestReadSourceContent:
             case_ids=(),
             fulltext="Hello World. This is test content.",
         )
-        coordinator._state.add_source(source)
+        app_context.state.add_source(source)
 
         result = project_tools.execute("read_source_content", {"source_id": 1})
 
@@ -486,12 +498,12 @@ class TestReadSourceContent:
 
     def test_returns_content_range(
         self,
-        coordinator,
+        app_context,
         project_tools: ProjectTools,
         tmp_path: Path,
     ):
         """AC #2: Agent can get content by position range."""
-        _setup_project(coordinator, tmp_path, "Test")
+        _setup_project(app_context, tmp_path, "Test")
 
         source = Source(
             id=SourceId(value=1),
@@ -505,7 +517,7 @@ class TestReadSourceContent:
             case_ids=(),
             fulltext="Hello World. This is test content.",
         )
-        coordinator._state.add_source(source)
+        app_context.state.add_source(source)
 
         result = project_tools.execute(
             "read_source_content",
@@ -520,12 +532,12 @@ class TestReadSourceContent:
 
     def test_returns_position_markers(
         self,
-        coordinator,
+        app_context,
         project_tools: ProjectTools,
         tmp_path: Path,
     ):
         """AC #3: Agent receives content with position markers."""
-        _setup_project(coordinator, tmp_path, "Test")
+        _setup_project(app_context, tmp_path, "Test")
 
         source = Source(
             id=SourceId(value=1),
@@ -539,7 +551,7 @@ class TestReadSourceContent:
             case_ids=(),
             fulltext="Line one.\nLine two.\nLine three.",
         )
-        coordinator._state.add_source(source)
+        app_context.state.add_source(source)
 
         result = project_tools.execute("read_source_content", {"source_id": 1})
 
@@ -551,12 +563,12 @@ class TestReadSourceContent:
 
     def test_paginates_large_content(
         self,
-        coordinator,
+        app_context,
         project_tools: ProjectTools,
         tmp_path: Path,
     ):
         """AC #4: Large sources are paginated."""
-        _setup_project(coordinator, tmp_path, "Test")
+        _setup_project(app_context, tmp_path, "Test")
 
         # Create large content
         large_text = "A" * 10000
@@ -572,7 +584,7 @@ class TestReadSourceContent:
             case_ids=(),
             fulltext=large_text,
         )
-        coordinator._state.add_source(source)
+        app_context.state.add_source(source)
 
         # Request with max_length
         result = project_tools.execute(
@@ -588,12 +600,12 @@ class TestReadSourceContent:
 
     def test_fails_for_nonexistent_source(
         self,
-        coordinator,
+        app_context,
         project_tools: ProjectTools,
         tmp_path: Path,
     ):
         """Returns failure for non-existent source."""
-        _setup_project(coordinator, tmp_path, "Test")
+        _setup_project(app_context, tmp_path, "Test")
 
         result = project_tools.execute("read_source_content", {"source_id": 999})
 
@@ -619,12 +631,12 @@ class TestSuggestSourceMetadata:
 
     def test_suggests_language(
         self,
-        coordinator,
+        app_context,
         project_tools: ProjectTools,
         tmp_path: Path,
     ):
         """AC #1: Agent can detect/suggest document language."""
-        _setup_project(coordinator, tmp_path, "Test")
+        _setup_project(app_context, tmp_path, "Test")
 
         source = Source(
             id=SourceId(value=1),
@@ -638,7 +650,7 @@ class TestSuggestSourceMetadata:
             case_ids=(),
             fulltext="This is English text.",
         )
-        coordinator._state.add_source(source)
+        app_context.state.add_source(source)
 
         result = project_tools.execute(
             "suggest_source_metadata",
@@ -654,12 +666,12 @@ class TestSuggestSourceMetadata:
 
     def test_suggests_topics(
         self,
-        coordinator,
+        app_context,
         project_tools: ProjectTools,
         tmp_path: Path,
     ):
         """AC #2: Agent can extract/suggest key topics."""
-        _setup_project(coordinator, tmp_path, "Test")
+        _setup_project(app_context, tmp_path, "Test")
 
         source = Source(
             id=SourceId(value=1),
@@ -673,7 +685,7 @@ class TestSuggestSourceMetadata:
             case_ids=(),
             fulltext="Interview about healthcare and technology.",
         )
-        coordinator._state.add_source(source)
+        app_context.state.add_source(source)
 
         result = project_tools.execute(
             "suggest_source_metadata",
@@ -690,12 +702,12 @@ class TestSuggestSourceMetadata:
 
     def test_suggests_organization(
         self,
-        coordinator,
+        app_context,
         project_tools: ProjectTools,
         tmp_path: Path,
     ):
         """AC #3: Agent can suggest source organization."""
-        _setup_project(coordinator, tmp_path, "Test")
+        _setup_project(app_context, tmp_path, "Test")
 
         source = Source(
             id=SourceId(value=1),
@@ -709,7 +721,7 @@ class TestSuggestSourceMetadata:
             case_ids=(),
             fulltext="Interview with participant about health.",
         )
-        coordinator._state.add_source(source)
+        app_context.state.add_source(source)
 
         result = project_tools.execute(
             "suggest_source_metadata",
@@ -725,12 +737,12 @@ class TestSuggestSourceMetadata:
 
     def test_returns_pending_status(
         self,
-        coordinator,
+        app_context,
         project_tools: ProjectTools,
         tmp_path: Path,
     ):
         """AC #4: Extraction results require researcher approval (pending status)."""
-        _setup_project(coordinator, tmp_path, "Test")
+        _setup_project(app_context, tmp_path, "Test")
 
         source = Source(
             id=SourceId(value=1),
@@ -744,7 +756,7 @@ class TestSuggestSourceMetadata:
             case_ids=(),
             fulltext="Sample document.",
         )
-        coordinator._state.add_source(source)
+        app_context.state.add_source(source)
 
         result = project_tools.execute(
             "suggest_source_metadata",
@@ -762,12 +774,12 @@ class TestSuggestSourceMetadata:
 
     def test_fails_for_nonexistent_source(
         self,
-        coordinator,
+        app_context,
         project_tools: ProjectTools,
         tmp_path: Path,
     ):
         """Returns failure for non-existent source."""
-        _setup_project(coordinator, tmp_path, "Test")
+        _setup_project(app_context, tmp_path, "Test")
 
         result = project_tools.execute(
             "suggest_source_metadata",
