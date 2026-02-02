@@ -41,6 +41,7 @@ from src.contexts.ai_services.core.events import (
 )
 from src.contexts.coding.core.entities import Code, Color
 from src.contexts.coding.core.events import CodeCreated, CodesMerged
+from src.contexts.shared.core.failure_events import FailureEvent
 from src.contexts.shared.core.types import CodeId, SourceId
 
 if TYPE_CHECKING:
@@ -193,8 +194,8 @@ class AICodingController:
             state=state,
         )
 
-        if isinstance(result, Failure):
-            return result
+        if isinstance(result, FailureEvent):
+            return Failure(result.message)
 
         event: CodeSuggestionApproved = result
 
@@ -257,8 +258,8 @@ class AICodingController:
             state=state,
         )
 
-        if isinstance(result, Failure):
-            return result
+        if isinstance(result, FailureEvent):
+            return Failure(result.message)
 
         event: CodeSuggestionRejected = result
 
@@ -367,8 +368,8 @@ class AICodingController:
             state=state,
         )
 
-        if isinstance(result, Failure):
-            return result
+        if isinstance(result, FailureEvent):
+            return Failure(result.message)
 
         event: MergeSuggestionApproved = result
 
@@ -424,8 +425,8 @@ class AICodingController:
             state=state,
         )
 
-        if isinstance(result, Failure):
-            return result
+        if isinstance(result, FailureEvent):
+            return Failure(result.message)
 
         event: MergeSuggestionDismissed = result
 

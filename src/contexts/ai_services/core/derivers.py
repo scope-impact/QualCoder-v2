@@ -43,7 +43,8 @@ from src.contexts.ai_services.core.invariants import (
     is_valid_suggestion_name,
 )
 from src.contexts.coding.core.entities import Code, Color
-from src.contexts.shared.core.types import CodeId, Failure, SourceId
+from src.contexts.shared.core.failure_events import FailureEvent
+from src.contexts.shared.core.types import CodeId, SourceId
 
 # ============================================================
 # State Containers (Input to Derivers)
@@ -64,154 +65,312 @@ class AISuggestionState:
 
 
 # ============================================================
-# Failure Reasons
+# Failure Events (following FailureEvent pattern)
 # ============================================================
 
 
 @dataclass(frozen=True)
-class InvalidSuggestionName:
-    """Suggested code name is invalid."""
+class SuggestionNotCreated(FailureEvent):
+    """Code suggestion could not be created."""
 
-    name: str
-    message: str = ""
+    name: str | None = None
+    confidence: float | None = None
 
-    def __post_init__(self) -> None:
-        object.__setattr__(self, "message", f"Invalid suggestion name: '{self.name}'")
-
-
-@dataclass(frozen=True)
-class SuggestionNameExists:
-    """Suggested code name conflicts with existing code."""
-
-    name: str
-    message: str = ""
-
-    def __post_init__(self) -> None:
-        object.__setattr__(
-            self, "message", f"Code with name '{self.name}' already exists"
+    @classmethod
+    def invalid_name(cls, name: str) -> SuggestionNotCreated:
+        """Name is empty or invalid."""
+        return cls(
+            event_id=cls._generate_id(),
+            occurred_at=cls._now(),
+            event_type="SUGGESTION_NOT_CREATED/INVALID_NAME",
+            name=name,
         )
 
-
-@dataclass(frozen=True)
-class InvalidConfidence:
-    """Confidence value is out of range."""
-
-    confidence: float
-    message: str = ""
-
-    def __post_init__(self) -> None:
-        object.__setattr__(
-            self, "message", f"Confidence must be 0.0-1.0, got {self.confidence}"
+    @classmethod
+    def duplicate_name(cls, name: str) -> SuggestionNotCreated:
+        """Name conflicts with existing code."""
+        return cls(
+            event_id=cls._generate_id(),
+            occurred_at=cls._now(),
+            event_type="SUGGESTION_NOT_CREATED/DUPLICATE_NAME",
+            name=name,
         )
 
-
-@dataclass(frozen=True)
-class InvalidRationale:
-    """Rationale is empty or too long."""
-
-    message: str = "Rationale must be 1-1000 characters"
-
-
-@dataclass(frozen=True)
-class SuggestionNotFound:
-    """Code suggestion was not found."""
-
-    suggestion_id: SuggestionId
-    message: str = ""
-
-    def __post_init__(self) -> None:
-        object.__setattr__(
-            self, "message", f"Suggestion {self.suggestion_id.value} not found"
+    @classmethod
+    def invalid_confidence(cls, confidence: float) -> SuggestionNotCreated:
+        """Confidence value out of range."""
+        return cls(
+            event_id=cls._generate_id(),
+            occurred_at=cls._now(),
+            event_type="SUGGESTION_NOT_CREATED/INVALID_CONFIDENCE",
+            confidence=confidence,
         )
 
-
-@dataclass(frozen=True)
-class SuggestionNotPending:
-    """Suggestion is not in pending status."""
-
-    suggestion_id: SuggestionId
-    status: str
-    message: str = ""
-
-    def __post_init__(self) -> None:
-        object.__setattr__(
-            self,
-            "message",
-            f"Suggestion {self.suggestion_id.value} is {self.status}, not pending",
+    @classmethod
+    def invalid_rationale(cls) -> SuggestionNotCreated:
+        """Rationale is empty or too long."""
+        return cls(
+            event_id=cls._generate_id(),
+            occurred_at=cls._now(),
+            event_type="SUGGESTION_NOT_CREATED/INVALID_RATIONALE",
         )
 
-
-@dataclass(frozen=True)
-class InsufficientCodes:
-    """Not enough codes for duplicate detection."""
-
-    count: int
-    minimum: int
-    message: str = ""
-
-    def __post_init__(self) -> None:
-        object.__setattr__(
-            self, "message", f"Need at least {self.minimum} codes, have {self.count}"
-        )
+    @property
+    def message(self) -> str:
+        """Human-readable error message."""
+        reason = self.reason
+        if reason == "INVALID_NAME":
+            return f"Invalid suggestion name: '{self.name}'"
+        if reason == "DUPLICATE_NAME":
+            return f"Code with name '{self.name}' already exists"
+        if reason == "INVALID_CONFIDENCE":
+            return f"Confidence must be 0.0-1.0, got {self.confidence}"
+        if reason == "INVALID_RATIONALE":
+            return "Rationale must be 1-1000 characters"
+        return super().message
 
 
 @dataclass(frozen=True)
-class InvalidThreshold:
-    """Similarity threshold is invalid."""
+class SuggestionNotApproved(FailureEvent):
+    """Code suggestion could not be approved."""
 
-    threshold: float
-    message: str = ""
+    suggestion_id: SuggestionId | None = None
+    name: str | None = None
+    status: str | None = None
 
-    def __post_init__(self) -> None:
-        object.__setattr__(
-            self, "message", f"Threshold must be 0.0-1.0, got {self.threshold}"
+    @classmethod
+    def not_found(cls, suggestion_id: SuggestionId) -> SuggestionNotApproved:
+        """Suggestion was not found."""
+        return cls(
+            event_id=cls._generate_id(),
+            occurred_at=cls._now(),
+            event_type="SUGGESTION_NOT_APPROVED/NOT_FOUND",
+            suggestion_id=suggestion_id,
         )
+
+    @classmethod
+    def not_pending(
+        cls, suggestion_id: SuggestionId, status: str
+    ) -> SuggestionNotApproved:
+        """Suggestion is not in pending status."""
+        return cls(
+            event_id=cls._generate_id(),
+            occurred_at=cls._now(),
+            event_type="SUGGESTION_NOT_APPROVED/NOT_PENDING",
+            suggestion_id=suggestion_id,
+            status=status,
+        )
+
+    @classmethod
+    def duplicate_name(cls, name: str) -> SuggestionNotApproved:
+        """Final name conflicts with existing code."""
+        return cls(
+            event_id=cls._generate_id(),
+            occurred_at=cls._now(),
+            event_type="SUGGESTION_NOT_APPROVED/DUPLICATE_NAME",
+            name=name,
+        )
+
+    @classmethod
+    def invalid_name(cls, name: str) -> SuggestionNotApproved:
+        """Final name is invalid."""
+        return cls(
+            event_id=cls._generate_id(),
+            occurred_at=cls._now(),
+            event_type="SUGGESTION_NOT_APPROVED/INVALID_NAME",
+            name=name,
+        )
+
+    @property
+    def message(self) -> str:
+        """Human-readable error message."""
+        reason = self.reason
+        if reason == "NOT_FOUND":
+            return f"Suggestion {self.suggestion_id.value} not found"
+        if reason == "NOT_PENDING":
+            return (
+                f"Suggestion {self.suggestion_id.value} is {self.status}, not pending"
+            )
+        if reason == "DUPLICATE_NAME":
+            return f"Code with name '{self.name}' already exists"
+        if reason == "INVALID_NAME":
+            return f"Invalid name: '{self.name}'"
+        return super().message
 
 
 @dataclass(frozen=True)
-class InsufficientText:
-    """Not enough text to analyze."""
+class SuggestionNotRejected(FailureEvent):
+    """Code suggestion could not be rejected."""
 
-    length: int
-    minimum: int
-    message: str = ""
+    suggestion_id: SuggestionId | None = None
+    status: str | None = None
 
-    def __post_init__(self) -> None:
-        object.__setattr__(
-            self,
-            "message",
-            f"Need at least {self.minimum} characters, have {self.length}",
+    @classmethod
+    def not_found(cls, suggestion_id: SuggestionId) -> SuggestionNotRejected:
+        """Suggestion was not found."""
+        return cls(
+            event_id=cls._generate_id(),
+            occurred_at=cls._now(),
+            event_type="SUGGESTION_NOT_REJECTED/NOT_FOUND",
+            suggestion_id=suggestion_id,
         )
+
+    @classmethod
+    def not_pending(
+        cls, suggestion_id: SuggestionId, status: str
+    ) -> SuggestionNotRejected:
+        """Suggestion is not in pending status."""
+        return cls(
+            event_id=cls._generate_id(),
+            occurred_at=cls._now(),
+            event_type="SUGGESTION_NOT_REJECTED/NOT_PENDING",
+            suggestion_id=suggestion_id,
+            status=status,
+        )
+
+    @property
+    def message(self) -> str:
+        """Human-readable error message."""
+        reason = self.reason
+        if reason == "NOT_FOUND":
+            return f"Suggestion {self.suggestion_id.value} not found"
+        if reason == "NOT_PENDING":
+            return (
+                f"Suggestion {self.suggestion_id.value} is {self.status}, not pending"
+            )
+        return super().message
 
 
 @dataclass(frozen=True)
-class CodeNotFoundForMerge:
-    """One of the codes for merge was not found."""
+class DuplicatesNotDetected(FailureEvent):
+    """Duplicate detection could not be performed."""
 
-    code_id: CodeId
-    message: str = ""
+    threshold: float | None = None
+    count: int | None = None
+    minimum: int | None = None
 
-    def __post_init__(self) -> None:
-        object.__setattr__(
-            self, "message", f"Code {self.code_id.value} not found for merge"
+    @classmethod
+    def invalid_threshold(cls, threshold: float) -> DuplicatesNotDetected:
+        """Threshold value out of range."""
+        return cls(
+            event_id=cls._generate_id(),
+            occurred_at=cls._now(),
+            event_type="DUPLICATES_NOT_DETECTED/INVALID_THRESHOLD",
+            threshold=threshold,
         )
+
+    @classmethod
+    def insufficient_codes(cls, count: int, minimum: int) -> DuplicatesNotDetected:
+        """Not enough codes for detection."""
+        return cls(
+            event_id=cls._generate_id(),
+            occurred_at=cls._now(),
+            event_type="DUPLICATES_NOT_DETECTED/INSUFFICIENT_CODES",
+            count=count,
+            minimum=minimum,
+        )
+
+    @property
+    def message(self) -> str:
+        """Human-readable error message."""
+        reason = self.reason
+        if reason == "INVALID_THRESHOLD":
+            return f"Threshold must be 0.0-1.0, got {self.threshold}"
+        if reason == "INSUFFICIENT_CODES":
+            return f"Need at least {self.minimum} codes, have {self.count}"
+        return super().message
 
 
 @dataclass(frozen=True)
-class DuplicateNotPending:
-    """Duplicate candidate is not in pending status."""
+class MergeNotCreated(FailureEvent):
+    """Merge suggestion could not be created."""
 
-    code_a_id: CodeId
-    code_b_id: CodeId
-    status: str
-    message: str = ""
+    code_id: CodeId | None = None
 
-    def __post_init__(self) -> None:
-        object.__setattr__(
-            self,
-            "message",
-            f"Duplicate pair ({self.code_a_id.value}, {self.code_b_id.value}) is {self.status}",
+    @classmethod
+    def code_not_found(cls, code_id: CodeId) -> MergeNotCreated:
+        """Code was not found."""
+        return cls(
+            event_id=cls._generate_id(),
+            occurred_at=cls._now(),
+            event_type="MERGE_NOT_CREATED/CODE_NOT_FOUND",
+            code_id=code_id,
         )
+
+    @classmethod
+    def invalid_rationale(cls) -> MergeNotCreated:
+        """Rationale is empty or too long."""
+        return cls(
+            event_id=cls._generate_id(),
+            occurred_at=cls._now(),
+            event_type="MERGE_NOT_CREATED/INVALID_RATIONALE",
+        )
+
+    @property
+    def message(self) -> str:
+        """Human-readable error message."""
+        reason = self.reason
+        if reason == "CODE_NOT_FOUND":
+            return f"Code {self.code_id.value} not found for merge"
+        if reason == "INVALID_RATIONALE":
+            return "Rationale must be 1-1000 characters"
+        return super().message
+
+
+@dataclass(frozen=True)
+class MergeNotApproved(FailureEvent):
+    """Merge could not be approved."""
+
+    code_id: CodeId | None = None
+
+    @classmethod
+    def code_not_found(cls, code_id: CodeId) -> MergeNotApproved:
+        """Code was not found."""
+        return cls(
+            event_id=cls._generate_id(),
+            occurred_at=cls._now(),
+            event_type="MERGE_NOT_APPROVED/CODE_NOT_FOUND",
+            code_id=code_id,
+        )
+
+    @property
+    def message(self) -> str:
+        """Human-readable error message."""
+        reason = self.reason
+        if reason == "CODE_NOT_FOUND":
+            return f"Code {self.code_id.value} not found for merge"
+        return super().message
+
+
+@dataclass(frozen=True)
+class MergeNotDismissed(FailureEvent):
+    """Merge could not be dismissed."""
+
+    code_a_id: CodeId | None = None
+    code_b_id: CodeId | None = None
+    status: str | None = None
+
+    @classmethod
+    def not_pending(
+        cls, code_a_id: CodeId, code_b_id: CodeId, status: str
+    ) -> MergeNotDismissed:
+        """Duplicate pair is not in pending status."""
+        return cls(
+            event_id=cls._generate_id(),
+            occurred_at=cls._now(),
+            event_type="MERGE_NOT_DISMISSED/NOT_PENDING",
+            code_a_id=code_a_id,
+            code_b_id=code_b_id,
+            status=status,
+        )
+
+    @property
+    def message(self) -> str:
+        """Human-readable error message."""
+        reason = self.reason
+        if reason == "NOT_PENDING":
+            return f"Duplicate pair ({self.code_a_id.value}, {self.code_b_id.value}) is {self.status}"
+        return super().message
 
 
 # ============================================================
@@ -227,7 +386,7 @@ def derive_suggest_code(
     confidence: float,
     source_id: SourceId,
     state: AISuggestionState,
-) -> CodeSuggested | Failure:
+) -> CodeSuggested | SuggestionNotCreated:
     """
     Derive a CodeSuggested event or failure.
 
@@ -241,23 +400,23 @@ def derive_suggest_code(
         state: Current AI suggestion state
 
     Returns:
-        CodeSuggested event or Failure with reason
+        CodeSuggested event or SuggestionNotCreated failure
     """
     # Validate name
     if not is_valid_suggestion_name(name):
-        return Failure(InvalidSuggestionName(name))
+        return SuggestionNotCreated.invalid_name(name)
 
     # Check uniqueness against existing codes
     if not is_suggestion_name_unique(name, state.existing_codes):
-        return Failure(SuggestionNameExists(name))
+        return SuggestionNotCreated.duplicate_name(name)
 
     # Validate confidence
     if not is_valid_confidence(confidence):
-        return Failure(InvalidConfidence(confidence))
+        return SuggestionNotCreated.invalid_confidence(confidence)
 
     # Validate rationale
     if not is_valid_rationale(rationale):
-        return Failure(InvalidRationale())
+        return SuggestionNotCreated.invalid_rationale()
 
     # Generate suggestion ID
     suggestion_id = SuggestionId.new()
@@ -278,7 +437,7 @@ def derive_approve_suggestion(
     final_name: str,
     final_color: Color,
     state: AISuggestionState,
-) -> CodeSuggestionApproved | Failure:
+) -> CodeSuggestionApproved | SuggestionNotApproved:
     """
     Derive a CodeSuggestionApproved event or failure.
 
@@ -289,26 +448,26 @@ def derive_approve_suggestion(
         state: Current AI suggestion state
 
     Returns:
-        CodeSuggestionApproved event or Failure with reason
+        CodeSuggestionApproved event or SuggestionNotApproved failure
     """
     # Find the suggestion
     suggestion = next(
         (s for s in state.pending_suggestions if s.id == suggestion_id), None
     )
     if suggestion is None:
-        return Failure(SuggestionNotFound(suggestion_id))
+        return SuggestionNotApproved.not_found(suggestion_id)
 
     # Check status
     if suggestion.status != "pending":
-        return Failure(SuggestionNotPending(suggestion_id, suggestion.status))
+        return SuggestionNotApproved.not_pending(suggestion_id, suggestion.status)
 
     # Check final name is unique
     if not is_suggestion_name_unique(final_name, state.existing_codes):
-        return Failure(SuggestionNameExists(final_name))
+        return SuggestionNotApproved.duplicate_name(final_name)
 
     # Validate final name
     if not is_valid_suggestion_name(final_name):
-        return Failure(InvalidSuggestionName(final_name))
+        return SuggestionNotApproved.invalid_name(final_name)
 
     # Determine if modified
     modified = final_name != suggestion.name or final_color != suggestion.color
@@ -329,7 +488,7 @@ def derive_reject_suggestion(
     suggestion_id: SuggestionId,
     reason: str | None,
     state: AISuggestionState,
-) -> CodeSuggestionRejected | Failure:
+) -> CodeSuggestionRejected | SuggestionNotRejected:
     """
     Derive a CodeSuggestionRejected event or failure.
 
@@ -339,18 +498,18 @@ def derive_reject_suggestion(
         state: Current AI suggestion state
 
     Returns:
-        CodeSuggestionRejected event or Failure with reason
+        CodeSuggestionRejected event or SuggestionNotRejected failure
     """
     # Find the suggestion
     suggestion = next(
         (s for s in state.pending_suggestions if s.id == suggestion_id), None
     )
     if suggestion is None:
-        return Failure(SuggestionNotFound(suggestion_id))
+        return SuggestionNotRejected.not_found(suggestion_id)
 
     # Check status
     if suggestion.status != "pending":
-        return Failure(SuggestionNotPending(suggestion_id, suggestion.status))
+        return SuggestionNotRejected.not_pending(suggestion_id, suggestion.status)
 
     return CodeSuggestionRejected.create(
         suggestion_id=suggestion_id,
@@ -369,7 +528,7 @@ def derive_detect_duplicates(
     threshold: float,
     codes_analyzed: int,
     state: AISuggestionState,
-) -> DuplicatesDetected | Failure:
+) -> DuplicatesDetected | DuplicatesNotDetected:
     """
     Derive a DuplicatesDetected event or failure.
 
@@ -380,16 +539,16 @@ def derive_detect_duplicates(
         state: Current AI suggestion state
 
     Returns:
-        DuplicatesDetected event or Failure with reason
+        DuplicatesDetected event or DuplicatesNotDetected failure
     """
     # Validate threshold
     if not is_valid_similarity_threshold(threshold):
-        return Failure(InvalidThreshold(threshold))
+        return DuplicatesNotDetected.invalid_threshold(threshold)
 
     # Check minimum codes
     if not has_minimum_codes_for_detection(state.existing_codes):
         count = len(state.existing_codes)
-        return Failure(InsufficientCodes(count, 2))
+        return DuplicatesNotDetected.insufficient_codes(count, 2)
 
     # Generate detection ID
     detection_id = DetectionId.new()
@@ -408,7 +567,7 @@ def derive_suggest_merge(
     similarity: SimilarityScore,
     rationale: str,
     state: AISuggestionState,
-) -> MergeSuggested | Failure:
+) -> MergeSuggested | MergeNotCreated:
     """
     Derive a MergeSuggested event or failure.
 
@@ -420,25 +579,25 @@ def derive_suggest_merge(
         state: Current AI suggestion state
 
     Returns:
-        MergeSuggested event or Failure with reason
+        MergeSuggested event or MergeNotCreated failure
     """
     # Find source code
     source_code = next(
         (c for c in state.existing_codes if c.id == source_code_id), None
     )
     if source_code is None:
-        return Failure(CodeNotFoundForMerge(source_code_id))
+        return MergeNotCreated.code_not_found(source_code_id)
 
     # Find target code
     target_code = next(
         (c for c in state.existing_codes if c.id == target_code_id), None
     )
     if target_code is None:
-        return Failure(CodeNotFoundForMerge(target_code_id))
+        return MergeNotCreated.code_not_found(target_code_id)
 
     # Validate rationale
     if not is_valid_rationale(rationale):
-        return Failure(InvalidRationale())
+        return MergeNotCreated.invalid_rationale()
 
     return MergeSuggested.create(
         source_code_id=source_code_id,
@@ -455,7 +614,7 @@ def derive_approve_merge(
     target_code_id: CodeId,
     segments_to_move: int,
     state: AISuggestionState,
-) -> MergeSuggestionApproved | Failure:
+) -> MergeSuggestionApproved | MergeNotApproved:
     """
     Derive a MergeSuggestionApproved event or failure.
 
@@ -466,7 +625,7 @@ def derive_approve_merge(
         state: Current AI suggestion state
 
     Returns:
-        MergeSuggestionApproved event or Failure with reason
+        MergeSuggestionApproved event or MergeNotApproved failure
     """
     # Candidate doesn't need to exist - user can merge manually
     # Just verify codes exist
@@ -474,13 +633,13 @@ def derive_approve_merge(
         (c for c in state.existing_codes if c.id == source_code_id), None
     )
     if source_code is None:
-        return Failure(CodeNotFoundForMerge(source_code_id))
+        return MergeNotApproved.code_not_found(source_code_id)
 
     target_code = next(
         (c for c in state.existing_codes if c.id == target_code_id), None
     )
     if target_code is None:
-        return Failure(CodeNotFoundForMerge(target_code_id))
+        return MergeNotApproved.code_not_found(target_code_id)
 
     return MergeSuggestionApproved.create(
         source_code_id=source_code_id,
@@ -494,7 +653,7 @@ def derive_dismiss_merge(
     target_code_id: CodeId,
     reason: str | None,
     state: AISuggestionState,
-) -> MergeSuggestionDismissed | Failure:
+) -> MergeSuggestionDismissed | MergeNotDismissed:
     """
     Derive a MergeSuggestionDismissed event or failure.
 
@@ -505,7 +664,7 @@ def derive_dismiss_merge(
         state: Current AI suggestion state
 
     Returns:
-        MergeSuggestionDismissed event or Failure with reason
+        MergeSuggestionDismissed event or MergeNotDismissed failure
     """
     # Find the pending duplicate candidate
     candidate = next(
@@ -522,8 +681,8 @@ def derive_dismiss_merge(
         # Not an error - just dismiss anyway
         pass
     elif candidate.status != "pending":
-        return Failure(
-            DuplicateNotPending(source_code_id, target_code_id, candidate.status)
+        return MergeNotDismissed.not_pending(
+            source_code_id, target_code_id, candidate.status
         )
 
     return MergeSuggestionDismissed.create(
