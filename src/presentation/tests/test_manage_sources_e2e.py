@@ -969,6 +969,87 @@ class TestSourceManagementIntegration:
             ctx2.stop()
             reset_app_context()
 
+    @allure.title("Image/media sources persist with file_path")
+    @allure.severity(allure.severity_level.CRITICAL)
+    def test_media_sources_persist_with_filepath(self, tmp_path, sample_files):
+        """
+        Critical test: Verify image/audio/video sources persist file_path.
+        Media sources use file_path (mediapath) instead of fulltext.
+        """
+        from returns.result import Success
+
+        from src.application.app_context import create_app_context, reset_app_context
+        from src.contexts.projects.core.entities import Source, SourceType
+        from src.contexts.shared.core.types import SourceId
+
+        project_path = tmp_path / "media_persist_test.qda"
+
+        with allure.step("Step 1: Create project and import image source"):
+            reset_app_context()
+            ctx = create_app_context()
+            ctx.start()
+
+            result = ctx.create_project(
+                name="Media Persist Test", path=str(project_path)
+            )
+            assert isinstance(result, Success)
+            ctx.open_project(str(project_path))
+
+            # Create image source with file_path
+            image_source = Source(
+                id=SourceId(1),
+                name="photo.png",
+                source_type=SourceType.IMAGE,
+                file_path=sample_files.png_file,
+                file_size=sample_files.png_file.stat().st_size,
+                memo="Field observation photo",
+            )
+            ctx.sources_context.source_repo.save(image_source)
+            ctx.state.add_source(image_source)
+
+            # Create audio source with file_path
+            audio_source = Source(
+                id=SourceId(2),
+                name="interview.wav",
+                source_type=SourceType.AUDIO,
+                file_path=sample_files.wav_file,
+                file_size=sample_files.wav_file.stat().st_size,
+            )
+            ctx.sources_context.source_repo.save(audio_source)
+            ctx.state.add_source(audio_source)
+
+        with allure.step("Step 2: Close project"):
+            ctx.close_project()
+            ctx.stop()
+            reset_app_context()
+
+        with allure.step("Step 3: Reopen project"):
+            reset_app_context()
+            ctx2 = create_app_context()
+            ctx2.start()
+            open_result = ctx2.open_project(str(project_path))
+            assert isinstance(open_result, Success)
+
+        with allure.step("Step 4: Verify media sources persisted"):
+            assert len(ctx2.state.sources) == 2
+            sources_by_name = {s.name: s for s in ctx2.state.sources}
+
+            # Verify image source
+            img = sources_by_name["photo.png"]
+            assert img.source_type == SourceType.IMAGE
+            assert img.file_path == sample_files.png_file
+            assert img.memo == "Field observation photo"
+
+            # Verify audio source
+            audio = sources_by_name["interview.wav"]
+            assert audio.source_type == SourceType.AUDIO
+            assert audio.file_path == sample_files.wav_file
+
+        with allure.step("Cleanup"):
+            ctx2.close_project()
+            ctx2.stop()
+            reset_app_context()
+
 
 # =============================================================================
 # UI Control Click Tests
