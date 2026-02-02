@@ -178,7 +178,7 @@ class CaseTools:
     - Compare cases (AC #7)
 
     Example:
-        from src.infrastructure.projects.repositories import SQLiteCaseRepository
+        from src.contexts.cases.infra.case_repository import SQLiteCaseRepository
 
         case_repo = SQLiteCaseRepository(connection)
         tools = CaseTools(case_repo=case_repo)
