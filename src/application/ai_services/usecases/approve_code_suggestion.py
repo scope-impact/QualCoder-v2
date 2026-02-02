@@ -3,6 +3,8 @@ Approve Code Suggestion Use Case
 
 Command use case for approving an AI-suggested code.
 Creates a new Code entity in the database.
+
+Uses SuggestionApprovalPolicy for cross-context validation.
 """
 
 from __future__ import annotations
@@ -12,9 +14,10 @@ from typing import TYPE_CHECKING
 from returns.result import Failure, Result, Success
 
 from src.application.ai_services.commands import ApproveCodeSuggestionCommand
+from src.application.ai_services.policies import SuggestionApprovalPolicy
 from src.contexts.ai_services.core.entities import CodeSuggestion, SuggestionId
 from src.contexts.ai_services.core.events import CodeSuggestionApproved
-from src.contexts.coding.core.entities import Code, Color
+from src.contexts.coding.core.entities import Code
 from src.contexts.coding.core.events import CodeCreated
 from src.contexts.shared.core.types import CodeId
 
@@ -28,12 +31,13 @@ def approve_code_suggestion(
     suggestion: CodeSuggestion,
     code_repo: SQLiteCodeRepository,
     event_bus: EventBus,
+    min_confidence: float = 0.0,
 ) -> Result[Code, str]:
     """
     Approve a code suggestion and create the code.
 
     Command use case following 5-step pattern:
-    1. Validate input
+    1. Validate with policy
     2. Build Code entity
     3. Persist to database
     4. Publish events
@@ -44,37 +48,37 @@ def approve_code_suggestion(
         suggestion: The CodeSuggestion to approve (from ViewModel state)
         code_repo: Repository for persisting the new code
         event_bus: Event bus for publishing events
+        min_confidence: Optional minimum confidence threshold
 
     Returns:
         Success with created Code, or Failure with error message
     """
-    # Step 1: Validate
+    # Step 1: Validate with policy
     if command.suggestion_id != suggestion.id.value:
         return Failure(f"Suggestion ID mismatch: {command.suggestion_id}")
 
-    if not command.name or not command.name.strip():
-        return Failure("Code name cannot be empty")
+    policy = SuggestionApprovalPolicy(
+        code_lookup=code_repo,
+        min_confidence=min_confidence,
+    )
+    decision = policy.can_approve(
+        suggestion=suggestion,
+        final_name=command.name,
+        final_color=command.color,
+    )
 
-    # Check for duplicate name
-    existing = code_repo.get_by_name(command.name.strip())
-    if existing is not None:
-        return Failure(f"Code with name '{command.name}' already exists")
+    if not decision.allowed:
+        return Failure(decision.reason)
 
-    # Step 2: Build Code entity
-    try:
-        color = Color.from_hex(command.color)
-    except ValueError as e:
-        return Failure(f"Invalid color: {e}")
-
-    # Generate new code ID
+    # Step 2: Build Code entity (using validated values from policy)
     all_codes = code_repo.get_all()
     max_id = max((c.id.value for c in all_codes), default=0)
     new_code_id = CodeId(value=max_id + 1)
 
     code = Code(
         id=new_code_id,
-        name=command.name.strip(),
-        color=color,
+        name=decision.validated_name,
+        color=decision.validated_color,
         memo=command.memo,
         category_id=None,
         owner=None,
