@@ -128,6 +128,19 @@ class FileManagerViewModel:
         source = self._controller.get_source(self._current_source_id)
         return self._source_to_dto(source) if source else None
 
+    def get_source(self, source_id: int) -> SourceDTO | None:
+        """
+        Get a specific source by ID.
+
+        Args:
+            source_id: ID of the source to retrieve
+
+        Returns:
+            SourceDTO if found, None otherwise
+        """
+        source = self._controller.get_source(source_id)
+        return self._source_to_dto(source) if source else None
+
     # =========================================================================
     # Source Commands
     # =========================================================================

@@ -7,7 +7,7 @@ from __future__ import annotations
 import pytest
 from sqlalchemy import create_engine
 
-from src.infrastructure.projects.schema import (
+from src.contexts.projects.infra.schema import (
     create_all_contexts,
     drop_all_contexts,
 )

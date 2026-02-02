@@ -128,6 +128,7 @@ class FileManagerScreen(QWidget):
         self._page.open_for_coding.connect(self._on_open_for_coding)
         self._page.delete_sources.connect(self._on_delete_sources)
         self._page.export_sources.connect(self._on_export_sources)
+        self._page.view_metadata.connect(self._on_view_metadata)
 
         # Filtering
         self._page.filter_changed.connect(self._on_filter_changed)
@@ -308,6 +309,43 @@ class FileManagerScreen(QWidget):
     def _on_export_sources(self, source_ids: list[str]):
         """Handle export sources request."""
         self._export_sources(source_ids)
+
+    def _on_view_metadata(self, source_id: str):
+        """Handle view metadata request - show metadata dialog."""
+        from ..dialogs.source_metadata_dialog import (
+            SourceMetadata,
+            SourceMetadataDialog,
+        )
+
+        # Get source info from viewmodel
+        if self._viewmodel:
+            source = self._viewmodel.get_source(int(source_id))
+            if source:
+                metadata = SourceMetadata(
+                    id=source.id,
+                    name=source.name,
+                    source_type=source.source_type,
+                    status=source.status,
+                    file_size=source.file_size or 0,
+                    code_count=source.code_count or 0,
+                    memo=source.memo,
+                    origin=source.origin,
+                )
+                dialog = SourceMetadataDialog(metadata, self._colors, self)
+                dialog.save_clicked.connect(
+                    lambda m: self._save_source_metadata(source_id, m)
+                )
+                dialog.exec()
+
+    def _save_source_metadata(self, source_id: str, metadata):
+        """Save updated source metadata."""
+        if self._viewmodel:
+            self._viewmodel.update_source(
+                int(source_id),
+                memo=metadata.memo,
+                origin=metadata.origin,
+            )
+            self._load_data()
 
     # =========================================================================
     # Filter Handlers
