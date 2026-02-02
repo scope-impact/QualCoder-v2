@@ -2,7 +2,13 @@
 Settings Dialog End-to-End Tests
 
 True E2E tests with FULL behavior - real file persistence and UI integration.
-Tests the complete flow: UI action → ViewModel → Controller → Repository → File
+Tests the complete flow: UI action → Dialog → ViewModel → Service → Repository → JSON File
+
+These tests:
+1. Create a temporary JSON config file for settings persistence
+2. Wire up SettingsViewModel with real UserSettingsRepository
+3. Create SettingsDialog with real viewmodel
+4. Test full round-trip data flows
 
 Implements QC-038 Settings and Preferences:
 - AC #1: Researcher can change UI theme (dark, light, colors)
@@ -12,7 +18,9 @@ Implements QC-038 Settings and Preferences:
 - AC #5: Researcher can set timestamp format for AV coding
 - AC #6: Researcher can configure speaker name format
 
-Note: Uses fixtures from root conftest.py (qapp, colors).
+Note: Uses fixtures from root conftest.py (qapp, colors) and local fixtures.
+
+Reference: See test_open_navigate_project_e2e.py for Allure reporting patterns.
 """
 
 from __future__ import annotations
@@ -20,30 +28,40 @@ from __future__ import annotations
 import tempfile
 from pathlib import Path
 
+import allure
 import pytest
 from PySide6.QtWidgets import QApplication, QDialog, QPushButton
 
-pytestmark = pytest.mark.e2e
+pytestmark = [
+    pytest.mark.e2e,
+    allure.epic("QualCoder v2"),
+    allure.feature("QC-038 Settings and Preferences"),
+]
 
 
 # =============================================================================
-# Fixtures
+# Persistence Layer Fixtures
 # =============================================================================
 
 
 @pytest.fixture
 def temp_config_path():
-    """Create a temporary config file path."""
+    """Create a temporary config file path for settings persistence."""
     with tempfile.TemporaryDirectory() as tmpdir:
         yield Path(tmpdir) / "settings.json"
 
 
 @pytest.fixture
 def settings_repo(temp_config_path):
-    """Create a settings repository with temp path."""
+    """Create a settings repository connected to temp JSON file."""
     from src.contexts.settings.infra import UserSettingsRepository
 
     return UserSettingsRepository(config_path=temp_config_path)
+
+
+# =============================================================================
+# Application Layer Fixtures
+# =============================================================================
 
 
 @pytest.fixture
@@ -56,15 +74,25 @@ def settings_provider(settings_repo):
 
 @pytest.fixture
 def settings_viewmodel(settings_provider):
-    """Create a settings viewmodel."""
+    """Create SettingsViewModel with real service."""
     from src.presentation.viewmodels import SettingsViewModel
 
     return SettingsViewModel(settings_provider=settings_provider)
 
 
+# =============================================================================
+# Dialog Fixtures
+# =============================================================================
+
+
 @pytest.fixture
 def settings_dialog(qapp, colors, settings_viewmodel):
-    """Create a settings dialog with real viewmodel."""
+    """
+    Create a complete Settings Dialog for E2E testing with real persistence.
+
+    This fixture creates a real dialog with SettingsViewModel backed by
+    a JSON file in a temporary directory.
+    """
     from src.presentation.dialogs.settings_dialog import SettingsDialog
 
     dialog = SettingsDialog(viewmodel=settings_viewmodel, colors=colors)
@@ -73,358 +101,461 @@ def settings_dialog(qapp, colors, settings_viewmodel):
 
 
 # =============================================================================
-# Test: Settings Dialog Opens with Correct Defaults
+# Test Classes - Settings Dialog Defaults
 # =============================================================================
 
 
+@allure.story("Settings Dialog Defaults")
+@allure.severity(allure.severity_level.NORMAL)
 class TestSettingsDialogDefaults:
-    """Tests that dialog opens with correct default values."""
+    """E2E tests for Settings Dialog default values."""
 
+    @allure.title("Dialog opens with light theme selected by default")
     def test_dialog_opens_with_default_theme(self, settings_dialog):
-        """Dialog should show light theme selected by default."""
-        # Find the theme buttons
-        theme_buttons = [
-            btn
-            for btn in settings_dialog.findChildren(QPushButton)
-            if btn.property("theme_value") is not None
-        ]
+        """E2E: Dialog displays light theme selected by default."""
+        with allure.step("Find theme buttons in dialog"):
+            theme_buttons = [
+                btn
+                for btn in settings_dialog.findChildren(QPushButton)
+                if btn.property("theme_value") is not None
+            ]
 
-        # Light button should be checked
-        light_btn = next(
-            (btn for btn in theme_buttons if btn.property("theme_value") == "light"),
-            None,
-        )
-        assert light_btn is not None
-        assert light_btn.isChecked()
+        with allure.step("Verify light theme button is checked"):
+            light_btn = next(
+                (
+                    btn
+                    for btn in theme_buttons
+                    if btn.property("theme_value") == "light"
+                ),
+                None,
+            )
+            assert light_btn is not None
+            assert light_btn.isChecked()
 
+    @allure.title("Dialog opens with font size 14 by default")
     def test_dialog_opens_with_default_font_size(self, settings_dialog):
-        """Dialog should show font size 14 by default."""
-        # The font slider should be at 14
-        assert settings_dialog._font_slider.value() == 14
-        assert "14px" in settings_dialog._font_size_label.text()
+        """E2E: Dialog displays font size 14 by default."""
+        with allure.step("Verify font slider default value"):
+            assert settings_dialog._font_slider.value() == 14
 
+        with allure.step("Verify font size label shows 14px"):
+            assert "14px" in settings_dialog._font_size_label.text()
+
+    @allure.title("Dialog opens with English selected by default")
     def test_dialog_opens_with_default_language(self, settings_dialog):
-        """Dialog should show English selected by default."""
-        assert settings_dialog._language_combo.currentData() == "en"
+        """E2E: Dialog displays English selected by default."""
+        with allure.step("Verify language combo shows English"):
+            assert settings_dialog._language_combo.currentData() == "en"
 
 
 # =============================================================================
-# Test: Theme Changes Persist (AC #1)
+# Test Classes - Theme Changes (AC #1)
 # =============================================================================
 
 
+@allure.story("QC-038.02 Change UI Theme")
+@allure.severity(allure.severity_level.CRITICAL)
 class TestThemeChanges:
-    """Tests for AC #1: Researcher can change UI theme."""
+    """
+    E2E tests for theme change flow.
+    AC #1: Researcher can change UI theme (dark, light, colors).
+    """
 
-    def test_change_theme_to_dark_persists(
+    @allure.title("AC #1: Changing theme to dark persists to JSON file")
+    @allure.link("QC-038", name="Backlog Task")
+    def test_change_theme_to_dark_persists_to_file(
         self, settings_dialog, settings_viewmodel, settings_repo
     ):
-        """Changing theme to dark should persist to file."""
-        # Find dark theme button
-        theme_buttons = [
-            btn
-            for btn in settings_dialog.findChildren(QPushButton)
-            if btn.property("theme_value") is not None
-        ]
-        dark_btn = next(
-            (btn for btn in theme_buttons if btn.property("theme_value") == "dark"),
-            None,
-        )
+        """E2E: Changing theme via UI persists to JSON file."""
+        with allure.step("Find dark theme button in dialog"):
+            theme_buttons = [
+                btn
+                for btn in settings_dialog.findChildren(QPushButton)
+                if btn.property("theme_value") is not None
+            ]
+            dark_btn = next(
+                (btn for btn in theme_buttons if btn.property("theme_value") == "dark"),
+                None,
+            )
 
-        # Click dark theme button
-        dark_btn.click()
-        QApplication.processEvents()
+        with allure.step("Click dark theme button"):
+            dark_btn.click()
+            QApplication.processEvents()
 
-        # Verify persisted to repository
-        settings = settings_repo.load()
-        assert settings.theme.name == "dark"
+        with allure.step("Verify theme persisted to repository"):
+            settings = settings_repo.load()
+            assert settings.theme.name == "dark"
 
-    def test_change_theme_emits_signal(self, settings_dialog, qapp):
-        """Changing theme should emit settings_changed signal."""
+    @allure.title("AC #1: Changing theme emits settings_changed signal")
+    def test_change_theme_emits_settings_changed_signal(self, settings_dialog, qapp):
+        """E2E: Changing theme emits settings_changed signal for reactive updates."""
         from PySide6.QtTest import QSignalSpy
 
-        spy = QSignalSpy(settings_dialog.settings_changed)
+        with allure.step("Set up signal spy"):
+            spy = QSignalSpy(settings_dialog.settings_changed)
 
-        # Find and click dark theme button
-        theme_buttons = [
-            btn
-            for btn in settings_dialog.findChildren(QPushButton)
-            if btn.property("theme_value") is not None
-        ]
-        dark_btn = next(
-            (btn for btn in theme_buttons if btn.property("theme_value") == "dark"),
-            None,
-        )
-        dark_btn.click()
-        QApplication.processEvents()
+        with allure.step("Find and click dark theme button"):
+            theme_buttons = [
+                btn
+                for btn in settings_dialog.findChildren(QPushButton)
+                if btn.property("theme_value") is not None
+            ]
+            dark_btn = next(
+                (btn for btn in theme_buttons if btn.property("theme_value") == "dark"),
+                None,
+            )
+            dark_btn.click()
+            QApplication.processEvents()
 
-        assert spy.count() >= 1
+        with allure.step("Verify signal emitted"):
+            assert spy.count() >= 1
 
 
 # =============================================================================
-# Test: Font Changes Persist (AC #2)
+# Test Classes - Font Changes (AC #2)
 # =============================================================================
 
 
+@allure.story("QC-038.03 Configure Fonts")
+@allure.severity(allure.severity_level.CRITICAL)
 class TestFontChanges:
-    """Tests for AC #2: Researcher can configure font size and family."""
+    """
+    E2E tests for font configuration flow.
+    AC #2: Researcher can configure font size and family.
+    """
 
-    def test_change_font_size_persists(self, settings_dialog, settings_repo):
-        """Changing font size should persist to file."""
-        # Change font size via slider
-        settings_dialog._font_slider.setValue(18)
-        QApplication.processEvents()
+    @allure.title("AC #2: Changing font size via slider persists to JSON file")
+    @allure.link("QC-038", name="Backlog Task")
+    def test_change_font_size_via_slider_persists_to_file(
+        self, settings_dialog, settings_repo
+    ):
+        """E2E: Changing font size via slider persists to JSON file."""
+        with allure.step("Change font size to 18 via slider"):
+            settings_dialog._font_slider.setValue(18)
+            QApplication.processEvents()
 
-        # Verify persisted
-        settings = settings_repo.load()
-        assert settings.font.size == 18
+        with allure.step("Verify font size persisted to repository"):
+            settings = settings_repo.load()
+            assert settings.font.size == 18
 
-    def test_change_font_family_persists(self, settings_dialog, settings_repo):
-        """Changing font family should persist to file."""
-        # Find Roboto in combo box and select it
-        combo = settings_dialog._font_combo
-        roboto_index = combo.findData("Roboto")
-        assert roboto_index >= 0
+    @allure.title("AC #2: Changing font family via combo persists to JSON file")
+    def test_change_font_family_via_combo_persists_to_file(
+        self, settings_dialog, settings_repo
+    ):
+        """E2E: Changing font family via combo box persists to JSON file."""
+        with allure.step("Find Roboto in combo box"):
+            combo = settings_dialog._font_combo
+            roboto_index = combo.findData("Roboto")
+            assert roboto_index >= 0
 
-        combo.setCurrentIndex(roboto_index)
-        QApplication.processEvents()
+        with allure.step("Select Roboto font"):
+            combo.setCurrentIndex(roboto_index)
+            QApplication.processEvents()
 
-        # Verify persisted
-        settings = settings_repo.load()
-        assert settings.font.family == "Roboto"
+        with allure.step("Verify font family persisted to repository"):
+            settings = settings_repo.load()
+            assert settings.font.family == "Roboto"
 
 
 # =============================================================================
-# Test: Language Changes Persist (AC #3)
+# Test Classes - Language Changes (AC #3)
 # =============================================================================
 
 
+@allure.story("QC-038.04 Select Language")
+@allure.severity(allure.severity_level.CRITICAL)
 class TestLanguageChanges:
-    """Tests for AC #3: Researcher can select application language."""
+    """
+    E2E tests for language selection flow.
+    AC #3: Researcher can select application language.
+    """
 
-    def test_change_language_persists(self, settings_dialog, settings_repo):
-        """Changing language should persist to file."""
-        # Find Spanish in combo box
-        combo = settings_dialog._language_combo
-        es_index = combo.findData("es")
-        assert es_index >= 0
+    @allure.title("AC #3: Selecting language via combo persists to JSON file")
+    @allure.link("QC-038", name="Backlog Task")
+    def test_change_language_via_combo_persists_to_file(
+        self, settings_dialog, settings_repo
+    ):
+        """E2E: Selecting language via combo box persists to JSON file."""
+        with allure.step("Find Spanish in language combo"):
+            combo = settings_dialog._language_combo
+            es_index = combo.findData("es")
+            assert es_index >= 0
 
-        combo.setCurrentIndex(es_index)
-        QApplication.processEvents()
+        with allure.step("Select Spanish language"):
+            combo.setCurrentIndex(es_index)
+            QApplication.processEvents()
 
-        # Verify persisted
-        settings = settings_repo.load()
-        assert settings.language.code == "es"
+        with allure.step("Verify language persisted to repository"):
+            settings = settings_repo.load()
+            assert settings.language.code == "es"
 
 
 # =============================================================================
-# Test: Backup Config Persists (AC #4)
+# Test Classes - Backup Config (AC #4)
 # =============================================================================
 
 
+@allure.story("QC-038.01 Configure Backups")
+@allure.severity(allure.severity_level.CRITICAL)
 class TestBackupChanges:
-    """Tests for AC #4: Researcher can configure automatic backups."""
+    """
+    E2E tests for backup configuration flow.
+    AC #4: Researcher can configure automatic backups.
+    """
 
-    def test_enable_backup_persists(self, settings_dialog, settings_repo):
-        """Enabling backup should persist to file."""
-        # Enable backup checkbox
-        settings_dialog._backup_enabled.setChecked(True)
-        QApplication.processEvents()
+    @allure.title("AC #4: Enabling backup via checkbox persists to JSON file")
+    @allure.link("QC-038", name="Backlog Task")
+    def test_enable_backup_via_checkbox_persists_to_file(
+        self, settings_dialog, settings_repo
+    ):
+        """E2E: Enabling backup via checkbox persists to JSON file."""
+        with allure.step("Enable backup checkbox"):
+            settings_dialog._backup_enabled.setChecked(True)
+            QApplication.processEvents()
 
-        # Verify persisted
-        settings = settings_repo.load()
-        assert settings.backup.enabled is True
+        with allure.step("Verify backup enabled in repository"):
+            settings = settings_repo.load()
+            assert settings.backup.enabled is True
 
-    def test_change_backup_interval_persists(self, settings_dialog, settings_repo):
-        """Changing backup interval should persist to file."""
-        # Enable backup first
-        settings_dialog._backup_enabled.setChecked(True)
+    @allure.title("AC #4: Changing backup interval via spinbox persists to JSON file")
+    def test_change_backup_interval_via_spinbox_persists_to_file(
+        self, settings_dialog, settings_repo
+    ):
+        """E2E: Changing backup interval via spinbox persists to JSON file."""
+        with allure.step("Enable backup first"):
+            settings_dialog._backup_enabled.setChecked(True)
 
-        # Change interval
-        settings_dialog._backup_interval.setValue(60)
-        QApplication.processEvents()
+        with allure.step("Change backup interval to 60 minutes"):
+            settings_dialog._backup_interval.setValue(60)
+            QApplication.processEvents()
 
-        # Verify persisted
-        settings = settings_repo.load()
-        assert settings.backup.interval_minutes == 60
+        with allure.step("Verify interval persisted to repository"):
+            settings = settings_repo.load()
+            assert settings.backup.interval_minutes == 60
 
 
 # =============================================================================
-# Test: AV Coding Config Persists (AC #5, #6)
+# Test Classes - AV Coding Config (AC #5, #6)
 # =============================================================================
 
 
+@allure.story("QC-038.05 Configure Timestamp Format")
+@allure.severity(allure.severity_level.CRITICAL)
 class TestAVCodingChanges:
-    """Tests for AC #5 and #6: Timestamp and speaker format."""
+    """
+    E2E tests for AV coding configuration flow.
+    AC #5: Researcher can set timestamp format for AV coding.
+    AC #6: Researcher can configure speaker name format.
+    """
 
-    def test_change_timestamp_format_persists(self, settings_dialog, settings_repo):
-        """Changing timestamp format should persist to file."""
-        # Find MM:SS in combo box
-        combo = settings_dialog._timestamp_combo
-        mm_ss_index = combo.findData("MM:SS")
-        assert mm_ss_index >= 0
+    @allure.title("AC #5: Changing timestamp format via combo persists to JSON file")
+    @allure.link("QC-038", name="Backlog Task")
+    def test_change_timestamp_format_via_combo_persists_to_file(
+        self, settings_dialog, settings_repo
+    ):
+        """E2E: Changing timestamp format via combo box persists to JSON file."""
+        with allure.step("Find MM:SS format in combo"):
+            combo = settings_dialog._timestamp_combo
+            mm_ss_index = combo.findData("MM:SS")
+            assert mm_ss_index >= 0
 
-        combo.setCurrentIndex(mm_ss_index)
-        QApplication.processEvents()
+        with allure.step("Select MM:SS format"):
+            combo.setCurrentIndex(mm_ss_index)
+            QApplication.processEvents()
 
-        # Verify persisted
-        settings = settings_repo.load()
-        assert settings.av_coding.timestamp_format == "MM:SS"
+        with allure.step("Verify timestamp format persisted to repository"):
+            settings = settings_repo.load()
+            assert settings.av_coding.timestamp_format == "MM:SS"
 
-    def test_change_speaker_format_persists(self, settings_dialog, settings_repo):
-        """Changing speaker format should persist to file."""
-        # Change speaker format
-        settings_dialog._speaker_format.setText("Participant {n}")
-        QApplication.processEvents()
+    @allure.title("AC #6: Changing speaker format via input persists to JSON file")
+    def test_change_speaker_format_via_input_persists_to_file(
+        self, settings_dialog, settings_repo
+    ):
+        """E2E: Changing speaker format via text input persists to JSON file."""
+        with allure.step("Enter custom speaker format"):
+            settings_dialog._speaker_format.setText("Participant {n}")
+            QApplication.processEvents()
 
-        # Verify persisted
-        settings = settings_repo.load()
-        assert settings.av_coding.speaker_format == "Participant {n}"
+        with allure.step("Verify speaker format persisted to repository"):
+            settings = settings_repo.load()
+            assert settings.av_coding.speaker_format == "Participant {n}"
 
-    def test_speaker_preview_updates(self, settings_dialog):
-        """Speaker preview should update when format changes."""
-        settings_dialog._speaker_format.setText("P{n}")
-        QApplication.processEvents()
+    @allure.title("AC #6: Speaker preview updates reactively on format change")
+    def test_speaker_preview_updates_on_format_change(self, settings_dialog):
+        """E2E: Speaker preview updates reactively when format changes."""
+        with allure.step("Enter short speaker format"):
+            settings_dialog._speaker_format.setText("P{n}")
+            QApplication.processEvents()
 
-        preview_text = settings_dialog._speaker_preview.text()
-        assert "P1" in preview_text
-        assert "P2" in preview_text
+        with allure.step("Verify preview shows formatted names"):
+            preview_text = settings_dialog._speaker_preview.text()
+            assert "P1" in preview_text
+            assert "P2" in preview_text
 
 
 # =============================================================================
-# Test: Dialog Navigation
+# Test Classes - Dialog Navigation
 # =============================================================================
 
 
+@allure.story("Dialog Navigation")
+@allure.severity(allure.severity_level.NORMAL)
 class TestDialogNavigation:
-    """Tests for dialog sidebar navigation."""
+    """E2E tests for dialog sidebar navigation."""
 
-    def test_sidebar_switches_sections(self, settings_dialog):
-        """Clicking sidebar items should switch content sections."""
+    @allure.title("Sidebar navigation switches content sections")
+    def test_sidebar_switches_content_sections(self, settings_dialog):
+        """E2E: Clicking sidebar items switches content sections."""
         sidebar = settings_dialog._sidebar
 
-        # Initially on Appearance (index 0)
-        assert settings_dialog._content_stack.currentIndex() == 0
+        with allure.step("Verify initially on Appearance section"):
+            assert settings_dialog._content_stack.currentIndex() == 0
 
-        # Click Language section (index 1)
-        sidebar.setCurrentRow(1)
-        QApplication.processEvents()
-        assert settings_dialog._content_stack.currentIndex() == 1
+        with allure.step("Click Language section in sidebar"):
+            sidebar.setCurrentRow(1)
+            QApplication.processEvents()
+            assert settings_dialog._content_stack.currentIndex() == 1
 
-        # Click Backup section (index 2)
-        sidebar.setCurrentRow(2)
-        QApplication.processEvents()
-        assert settings_dialog._content_stack.currentIndex() == 2
+        with allure.step("Click Backup section in sidebar"):
+            sidebar.setCurrentRow(2)
+            QApplication.processEvents()
+            assert settings_dialog._content_stack.currentIndex() == 2
 
-        # Click AV Coding section (index 3)
-        sidebar.setCurrentRow(3)
-        QApplication.processEvents()
-        assert settings_dialog._content_stack.currentIndex() == 3
+        with allure.step("Click AV Coding section in sidebar"):
+            sidebar.setCurrentRow(3)
+            QApplication.processEvents()
+            assert settings_dialog._content_stack.currentIndex() == 3
 
 
 # =============================================================================
-# Test: Dialog Accept/Cancel
+# Test Classes - Dialog Accept/Cancel
 # =============================================================================
 
 
+@allure.story("Dialog Accept/Cancel")
+@allure.severity(allure.severity_level.NORMAL)
 class TestDialogAcceptCancel:
-    """Tests for dialog OK/Cancel behavior."""
+    """E2E tests for dialog OK/Cancel behavior."""
 
+    @allure.title("OK button accepts the dialog")
     def test_ok_button_accepts_dialog(self, qapp, colors, settings_viewmodel):
-        """OK button should accept the dialog."""
+        """E2E: OK button accepts the dialog with Accepted result code."""
         from src.presentation.dialogs.settings_dialog import SettingsDialog
 
-        dialog = SettingsDialog(viewmodel=settings_viewmodel, colors=colors)
+        with allure.step("Create settings dialog"):
+            dialog = SettingsDialog(viewmodel=settings_viewmodel, colors=colors)
 
-        # Find and click OK button
-        ok_buttons = [
-            btn for btn in dialog.findChildren(QPushButton) if btn.text() == "OK"
-        ]
-        assert len(ok_buttons) == 1
+        with allure.step("Verify OK button exists"):
+            ok_buttons = [
+                btn for btn in dialog.findChildren(QPushButton) if btn.text() == "OK"
+            ]
+            assert len(ok_buttons) == 1
 
-        # Simulate click (but don't block with exec())
-        dialog.show()
-        QApplication.processEvents()
+        with allure.step("Show dialog and accept"):
+            dialog.show()
+            QApplication.processEvents()
+            dialog.accept()
 
-        # Check dialog would accept (we can't call exec() in test)
-        dialog.accept()
-        assert dialog.result() == QDialog.DialogCode.Accepted
+        with allure.step("Verify dialog result is Accepted"):
+            assert dialog.result() == QDialog.DialogCode.Accepted
+            dialog.close()
 
-        dialog.close()
-
+    @allure.title("Cancel button rejects the dialog")
     def test_cancel_button_rejects_dialog(self, qapp, colors, settings_viewmodel):
-        """Cancel button should reject the dialog."""
+        """E2E: Cancel button rejects the dialog with Rejected result code."""
         from src.presentation.dialogs.settings_dialog import SettingsDialog
 
-        dialog = SettingsDialog(viewmodel=settings_viewmodel, colors=colors)
+        with allure.step("Create and show settings dialog"):
+            dialog = SettingsDialog(viewmodel=settings_viewmodel, colors=colors)
+            dialog.show()
+            QApplication.processEvents()
 
-        dialog.show()
-        QApplication.processEvents()
+        with allure.step("Reject dialog"):
+            dialog.reject()
 
-        dialog.reject()
-        assert dialog.result() == QDialog.DialogCode.Rejected
-
-        dialog.close()
+        with allure.step("Verify dialog result is Rejected"):
+            assert dialog.result() == QDialog.DialogCode.Rejected
+            dialog.close()
 
 
 # =============================================================================
-# Test: Full Round-Trip
+# Test Classes - Full Round-Trip (All ACs)
 # =============================================================================
 
 
+@allure.story("QC-038 Integration")
+@allure.severity(allure.severity_level.CRITICAL)
 class TestFullRoundTrip:
-    """Tests for complete settings round-trip."""
+    """
+    E2E tests for complete settings round-trip.
+    Verifies all ACs together with persistence and reload.
+    """
 
-    def test_multiple_settings_persist_and_reload(self, qapp, colors, temp_config_path):
-        """Multiple setting changes should persist and reload correctly."""
+    @allure.title("Complete workflow: Change settings, close, and reload")
+    @allure.link("QC-038", name="Backlog Task")
+    def test_multiple_settings_persist_and_reload_after_restart(
+        self, qapp, colors, temp_config_path
+    ):
+        """
+        E2E: Multiple setting changes persist to file and reload correctly.
+
+        This test simulates a complete user session:
+        1. Open settings dialog
+        2. Make changes to theme (AC #1), font (AC #2), and language (AC #3)
+        3. Close dialog (settings persisted)
+        4. "Restart" by creating new repository/dialog
+        5. Verify all settings loaded correctly from file
+        """
         from src.contexts.settings.infra import UserSettingsRepository
         from src.presentation.dialogs.settings_dialog import SettingsDialog
         from src.presentation.services import SettingsService
         from src.presentation.viewmodels import SettingsViewModel
 
-        # Create first dialog session
-        repo1 = UserSettingsRepository(config_path=temp_config_path)
-        provider1 = SettingsService(repo1)
-        viewmodel1 = SettingsViewModel(settings_provider=provider1)
-        dialog1 = SettingsDialog(viewmodel=viewmodel1, colors=colors)
+        with allure.step("Step 1: Create first dialog session"):
+            repo1 = UserSettingsRepository(config_path=temp_config_path)
+            provider1 = SettingsService(repo1)
+            viewmodel1 = SettingsViewModel(settings_provider=provider1)
+            dialog1 = SettingsDialog(viewmodel=viewmodel1, colors=colors)
 
-        # Make changes
-        # 1. Change theme to dark
-        theme_buttons = [
-            btn
-            for btn in dialog1.findChildren(QPushButton)
-            if btn.property("theme_value") == "dark"
-        ]
-        theme_buttons[0].click()
+        with allure.step("Step 2: Change theme to dark (AC #1)"):
+            theme_buttons = [
+                btn
+                for btn in dialog1.findChildren(QPushButton)
+                if btn.property("theme_value") == "dark"
+            ]
+            theme_buttons[0].click()
 
-        # 2. Change font size
-        dialog1._font_slider.setValue(16)
+        with allure.step("Step 3: Change font size to 16 (AC #2)"):
+            dialog1._font_slider.setValue(16)
 
-        # 3. Change language
-        dialog1._language_combo.setCurrentIndex(dialog1._language_combo.findData("de"))
+        with allure.step("Step 4: Change language to German (AC #3)"):
+            dialog1._language_combo.setCurrentIndex(
+                dialog1._language_combo.findData("de")
+            )
 
-        QApplication.processEvents()
-        dialog1.close()
+        with allure.step("Step 5: Close dialog (settings persisted)"):
+            QApplication.processEvents()
+            dialog1.close()
 
-        # Create NEW dialog session (simulates app restart)
-        repo2 = UserSettingsRepository(config_path=temp_config_path)
-        provider2 = SettingsService(repo2)
-        viewmodel2 = SettingsViewModel(settings_provider=provider2)
-        dialog2 = SettingsDialog(viewmodel=viewmodel2, colors=colors)
+        with allure.step("Step 6: Create NEW dialog session (simulates restart)"):
+            repo2 = UserSettingsRepository(config_path=temp_config_path)
+            provider2 = SettingsService(repo2)
+            viewmodel2 = SettingsViewModel(settings_provider=provider2)
+            dialog2 = SettingsDialog(viewmodel=viewmodel2, colors=colors)
 
-        # Verify all settings loaded correctly
-        # Theme should be dark
-        dark_btn = next(
-            btn
-            for btn in dialog2.findChildren(QPushButton)
-            if btn.property("theme_value") == "dark"
-        )
-        assert dark_btn.isChecked()
+        with allure.step("Step 7: Verify theme loaded as dark (AC #1)"):
+            dark_btn = next(
+                btn
+                for btn in dialog2.findChildren(QPushButton)
+                if btn.property("theme_value") == "dark"
+            )
+            assert dark_btn.isChecked()
 
-        # Font size should be 16
-        assert dialog2._font_slider.value() == 16
+        with allure.step("Step 8: Verify font size loaded as 16 (AC #2)"):
+            assert dialog2._font_slider.value() == 16
 
-        # Language should be German
-        assert dialog2._language_combo.currentData() == "de"
+        with allure.step("Step 9: Verify language loaded as German (AC #3)"):
+            assert dialog2._language_combo.currentData() == "de"
 
-        dialog2.close()
+        with allure.step("Step 10: Close dialog"):
+            dialog2.close()
