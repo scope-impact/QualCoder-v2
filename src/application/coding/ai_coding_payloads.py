@@ -1,7 +1,7 @@
 """
 AI Coding Signal Payloads - UI-friendly DTOs for signal emission.
 
-These immutable types carry data from the AICodingController
+These immutable types carry data from AI use cases
 to UI components via the Signal Bridge. They use primitive types
 only - no domain objects.
 
