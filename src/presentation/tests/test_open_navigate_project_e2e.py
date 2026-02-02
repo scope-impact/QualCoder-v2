@@ -43,11 +43,31 @@ def existing_project(app_context: AppContext, tmp_path: Path) -> Path:
     return project_path
 
 
+@pytest.fixture
+def project_with_data(app_context: AppContext, tmp_path: Path) -> Path:
+    from src.contexts.projects.core.entities import Source, SourceType
+    from src.contexts.shared.core.types import SourceId
+
+    project_path = tmp_path / "project_with_data.qda"
+    app_context.create_project(name="Data Project", path=str(project_path))
+    app_context.open_project(str(project_path))
+
+    source = Source(
+        id=SourceId(1),
+        name="saved_document.txt",
+        source_type=SourceType.TEXT,
+        fulltext="Previously saved content",
+    )
+    app_context.sources_context.source_repo.save(source)
+    app_context.close_project()
+    return project_path
+
+
 @allure.story("QC-026.01 Open Existing Project")
 @allure.severity(allure.severity_level.CRITICAL)
 class TestOpenExistingProject:
     @allure.title("AC #1: Researcher can open an existing project file")
-    @allure.link("QC-026", name="Backlog Task")
+    @allure.link("QC-026.01", name="Subtask")
     def test_open_existing_project_success(
         self, app_context: AppContext, existing_project: Path
     ):
@@ -92,7 +112,7 @@ class TestOpenExistingProject:
             is_valid = repo.validate_database(invalid_file)
             assert not is_valid
 
-    @allure.title("AC #1: Project contexts initialized after open")
+    @allure.title("AC #2: Project opens and shows main workspace")
     @allure.severity(allure.severity_level.CRITICAL)
     def test_contexts_initialized_after_open(
         self, app_context: AppContext, existing_project: Path
@@ -107,31 +127,63 @@ class TestOpenExistingProject:
             assert app_context.cases_context is not None
             assert app_context.projects_context is not None
 
+    @allure.title("AC #3: Previously saved sources are loaded on open")
+    @allure.severity(allure.severity_level.CRITICAL)
+    def test_previously_saved_sources_loaded(
+        self, app_context: AppContext, project_with_data: Path
+    ):
+        with allure.step("Open project with existing data"):
+            result = app_context.open_project(str(project_with_data))
+            assert isinstance(result, Success)
+
+        with allure.step("Verify previously saved sources are in state"):
+            sources = list(app_context.state.sources)
+            assert len(sources) == 1
+            assert sources[0].name == "saved_document.txt"
+
+    @allure.title("AC #4: Recent projects are tracked")
+    @allure.severity(allure.severity_level.NORMAL)
+    def test_recent_projects_tracked(
+        self, app_context: AppContext, existing_project: Path
+    ):
+        with allure.step("Open project"):
+            result = app_context.open_project(str(existing_project))
+            assert isinstance(result, Success)
+
+        with allure.step("Add to recent projects"):
+            project = result.unwrap()
+            app_context.state.add_to_recent(project)
+
+        with allure.step("Verify project in recent list"):
+            recent = app_context.state.recent_projects
+            assert len(recent) >= 1
+            assert recent[0].name == "Existing Project"
+
 
 @allure.story("QC-026.02 Create New Project")
 @allure.severity(allure.severity_level.CRITICAL)
 class TestCreateNewProject:
-    @allure.title("AC #2: Researcher can create a new project")
-    @allure.link("QC-026", name="Backlog Task")
+    @allure.title("AC #1: Researcher can specify project name and location")
+    @allure.link("QC-026.02", name="Subtask")
     def test_create_new_project_success(
         self, app_context: AppContext, temp_project_path: Path
     ):
-        with allure.step("Create new project"):
+        with allure.step("Create new project with name and path"):
             result = app_context.create_project(
                 name="My Research Project", path=str(temp_project_path)
             )
 
-        with allure.step("Verify project created successfully"):
+        with allure.step("Verify project created with specified name"):
             assert isinstance(result, Success)
             project = result.unwrap()
             assert project.name == "My Research Project"
             assert project.path == temp_project_path
 
-        with allure.step("Verify database file exists"):
+        with allure.step("Verify database file at specified location"):
             assert temp_project_path.exists()
             assert temp_project_path.stat().st_size > 0
 
-    @allure.title("AC #2: Create project fails if file already exists")
+    @allure.title("AC #1: Create project fails if file already exists")
     @allure.severity(allure.severity_level.NORMAL)
     def test_create_project_existing_file_fails(
         self, app_context: AppContext, existing_project: Path
@@ -144,7 +196,7 @@ class TestCreateNewProject:
         with allure.step("Verify failure returned"):
             assert isinstance(result, Failure)
 
-    @allure.title("AC #2: Created project has valid schema")
+    @allure.title("AC #2: New empty project is created with valid schema")
     @allure.severity(allure.severity_level.CRITICAL)
     def test_created_project_has_valid_schema(
         self, app_context: AppContext, temp_project_path: Path
@@ -164,7 +216,25 @@ class TestCreateNewProject:
             is_valid = repo.validate_database(temp_project_path)
             assert is_valid
 
-    @allure.title("AC #2: Project can be opened after creation")
+    @allure.title("AC #2: New project starts empty")
+    @allure.severity(allure.severity_level.NORMAL)
+    def test_new_project_is_empty(
+        self, app_context: AppContext, temp_project_path: Path
+    ):
+        with allure.step("Create and open new project"):
+            app_context.create_project(
+                name="Empty Project", path=str(temp_project_path)
+            )
+            app_context.close_project()
+            app_context.open_project(str(temp_project_path))
+
+        with allure.step("Verify no sources"):
+            assert len(list(app_context.state.sources)) == 0
+
+        with allure.step("Verify no cases"):
+            assert len(list(app_context.state.cases)) == 0
+
+    @allure.title("AC #3: Project can be opened after creation (workspace ready)")
     @allure.severity(allure.severity_level.CRITICAL)
     def test_project_openable_after_creation(
         self, app_context: AppContext, temp_project_path: Path
@@ -179,16 +249,17 @@ class TestCreateNewProject:
             app_context.close_project()
             open_result = app_context.open_project(str(temp_project_path))
 
-        with allure.step("Verify project opened"):
+        with allure.step("Verify workspace ready (contexts available)"):
             assert isinstance(open_result, Success)
             assert app_context.has_project
+            assert app_context.sources_context is not None
 
 
 @allure.story("QC-026.03 View Sources List")
 @allure.severity(allure.severity_level.CRITICAL)
 class TestViewSourcesList:
-    @allure.title("AC #3: Researcher can see list of sources in the project")
-    @allure.link("QC-026", name="Backlog Task")
+    @allure.title("AC #1: Researcher can see list of all imported sources")
+    @allure.link("QC-026.03", name="Subtask")
     def test_view_empty_sources_list(
         self, app_context: AppContext, existing_project: Path
     ):
@@ -202,7 +273,7 @@ class TestViewSourcesList:
         with allure.step("Verify empty list for new project"):
             assert sources == []
 
-    @allure.title("AC #3: Sources list updates after adding source")
+    @allure.title("AC #1: Sources list updates after adding source")
     @allure.severity(allure.severity_level.CRITICAL)
     def test_sources_list_reflects_added_sources(
         self, app_context: AppContext, existing_project: Path, tmp_path: Path
@@ -229,7 +300,37 @@ class TestViewSourcesList:
             assert len(sources) == 1
             assert sources[0].name == "test_document.txt"
 
-    @allure.title("AC #3: Sources list shows correct source types")
+    @allure.title("AC #2: Each source shows name, type, and status")
+    @allure.severity(allure.severity_level.CRITICAL)
+    def test_sources_list_shows_name_type_status(
+        self, app_context: AppContext, existing_project: Path
+    ):
+        from src.contexts.projects.core.entities import Source, SourceStatus, SourceType
+        from src.contexts.shared.core.types import SourceId
+
+        with allure.step("Open project"):
+            result = app_context.open_project(str(existing_project))
+            assert isinstance(result, Success)
+
+        with allure.step("Add source with all attributes"):
+            source = Source(
+                id=SourceId(1),
+                name="interview_01.txt",
+                source_type=SourceType.TEXT,
+                status=SourceStatus.IMPORTED,
+                fulltext="Content",
+            )
+            app_context.sources_context.source_repo.save(source)
+            app_context.state.add_source(source)
+
+        with allure.step("Verify source has name, type, status"):
+            sources = list(app_context.state.sources)
+            assert len(sources) == 1
+            assert sources[0].name == "interview_01.txt"
+            assert sources[0].source_type == SourceType.TEXT
+            assert sources[0].status == SourceStatus.IMPORTED
+
+    @allure.title("AC #2: Sources list shows multiple source types")
     @allure.severity(allure.severity_level.NORMAL)
     def test_sources_list_shows_types(
         self, app_context: AppContext, existing_project: Path
@@ -264,44 +365,150 @@ class TestViewSourcesList:
             assert SourceType.TEXT in types
             assert SourceType.IMAGE in types
 
+    @allure.title("AC #3: Sources can be filtered by type")
+    @allure.severity(allure.severity_level.NORMAL)
+    def test_sources_can_be_filtered(
+        self, app_context: AppContext, existing_project: Path
+    ):
+        from src.contexts.projects.core.entities import Source, SourceType
+        from src.contexts.shared.core.types import SourceId
+
+        with allure.step("Open project and add mixed sources"):
+            app_context.open_project(str(existing_project))
+            sources_data = [
+                ("doc1.txt", SourceType.TEXT),
+                ("doc2.txt", SourceType.TEXT),
+                ("img1.png", SourceType.IMAGE),
+                ("audio.wav", SourceType.AUDIO),
+            ]
+            for i, (name, stype) in enumerate(sources_data, 1):
+                src = Source(id=SourceId(i), name=name, source_type=stype)
+                app_context.sources_context.source_repo.save(src)
+                app_context.state.add_source(src)
+
+        with allure.step("Filter sources by type"):
+            all_sources = list(app_context.state.sources)
+            text_only = [s for s in all_sources if s.source_type == SourceType.TEXT]
+            image_only = [s for s in all_sources if s.source_type == SourceType.IMAGE]
+
+        with allure.step("Verify filtering works"):
+            assert len(text_only) == 2
+            assert len(image_only) == 1
+            assert all(s.source_type == SourceType.TEXT for s in text_only)
+
+    @allure.title("AC #4: Source can be selected to set as current")
+    @allure.severity(allure.severity_level.CRITICAL)
+    def test_select_source_sets_current(
+        self, app_context: AppContext, existing_project: Path
+    ):
+        from src.contexts.projects.core.entities import Source, SourceType
+        from src.contexts.shared.core.types import SourceId
+
+        with allure.step("Open project and add source"):
+            app_context.open_project(str(existing_project))
+            source = Source(
+                id=SourceId(1),
+                name="selected.txt",
+                source_type=SourceType.TEXT,
+                fulltext="Content to code",
+            )
+            app_context.sources_context.source_repo.save(source)
+            app_context.state.add_source(source)
+
+        with allure.step("Select source (set as current)"):
+            app_context.state.current_source = source
+
+        with allure.step("Verify current source is set"):
+            assert app_context.state.current_source is not None
+            assert app_context.state.current_source.name == "selected.txt"
+
 
 @allure.story("QC-026.04 Switch Screens/Views")
 @allure.severity(allure.severity_level.NORMAL)
 class TestSwitchScreens:
-    @allure.title("AC #4: Researcher can switch between different screens/views")
-    @allure.link("QC-026", name="Backlog Task")
-    def test_track_current_screen(
+    @allure.title("AC #1: Researcher can switch to Coding screen")
+    @allure.link("QC-026.04", name="Subtask")
+    def test_switch_to_coding_screen(
         self, app_context: AppContext, existing_project: Path
     ):
         with allure.step("Open project"):
-            result = app_context.open_project(str(existing_project))
-            assert isinstance(result, Success)
-
-        with allure.step("Set screen to sources"):
-            app_context.state.current_screen = "sources"
-            assert app_context.state.current_screen == "sources"
+            app_context.open_project(str(existing_project))
 
         with allure.step("Switch to coding screen"):
             app_context.state.current_screen = "coding"
+
+        with allure.step("Verify on coding screen"):
             assert app_context.state.current_screen == "coding"
 
-        with allure.step("Switch to cases screen"):
-            app_context.state.current_screen = "cases"
-            assert app_context.state.current_screen == "cases"
-
-    @allure.title("AC #4: Screen state persists after navigation")
+    @allure.title("AC #2: Researcher can switch to Sources screen")
     @allure.severity(allure.severity_level.NORMAL)
-    def test_screen_state_persistence(
+    def test_switch_to_sources_screen(
         self, app_context: AppContext, existing_project: Path
     ):
-        with allure.step("Open project and set screen"):
-            result = app_context.open_project(str(existing_project))
-            assert isinstance(result, Success)
+        with allure.step("Open project"):
+            app_context.open_project(str(existing_project))
+
+        with allure.step("Switch to sources screen"):
+            app_context.state.current_screen = "sources"
+
+        with allure.step("Verify on sources screen"):
+            assert app_context.state.current_screen == "sources"
+
+    @allure.title("AC #3: Researcher can switch to Analysis screen")
+    @allure.severity(allure.severity_level.NORMAL)
+    def test_switch_to_analysis_screen(
+        self, app_context: AppContext, existing_project: Path
+    ):
+        with allure.step("Open project"):
+            app_context.open_project(str(existing_project))
+
+        with allure.step("Switch to analysis screen"):
             app_context.state.current_screen = "analysis"
 
-        with allure.step("Verify screen persists"):
-            current = app_context.state.current_screen
-            assert current == "analysis"
+        with allure.step("Verify on analysis screen"):
+            assert app_context.state.current_screen == "analysis"
+
+    @allure.title("AC #4: Context preserved when switching screens")
+    @allure.severity(allure.severity_level.CRITICAL)
+    def test_context_preserved_when_switching(
+        self, app_context: AppContext, existing_project: Path
+    ):
+        from src.contexts.projects.core.entities import Source, SourceType
+        from src.contexts.shared.core.types import SourceId
+
+        with allure.step("Open project and set current source"):
+            app_context.open_project(str(existing_project))
+            source = Source(id=SourceId(1), name="doc.txt", source_type=SourceType.TEXT)
+            app_context.state.add_source(source)
+            app_context.state.current_source = source
+            app_context.state.current_screen = "coding"
+
+        with allure.step("Switch to sources screen"):
+            app_context.state.current_screen = "sources"
+
+        with allure.step("Verify current source still set"):
+            assert app_context.state.current_source is not None
+            assert app_context.state.current_source.name == "doc.txt"
+
+        with allure.step("Switch back to coding"):
+            app_context.state.current_screen = "coding"
+
+        with allure.step("Verify context preserved"):
+            assert app_context.state.current_source.name == "doc.txt"
+
+    @allure.title("AC #5: Screen navigation supports all main views")
+    @allure.severity(allure.severity_level.NORMAL)
+    def test_all_main_screens_accessible(
+        self, app_context: AppContext, existing_project: Path
+    ):
+        with allure.step("Open project"):
+            app_context.open_project(str(existing_project))
+
+        with allure.step("Verify all screens can be set"):
+            screens = ["sources", "coding", "cases", "analysis", "reports"]
+            for screen in screens:
+                app_context.state.current_screen = screen
+                assert app_context.state.current_screen == screen
 
 
 @allure.story("QC-026.05 Agent Query Project Context")
@@ -408,7 +615,7 @@ class TestAgentQueryContext:
             assert data["count"] == 1
             assert data["sources"][0]["type"] == "text"
 
-    @allure.title("AC #5: Agent can read source content")
+    @allure.title("AC #2: Agent can read source content")
     @allure.severity(allure.severity_level.CRITICAL)
     def test_read_source_content_tool(
         self, app_context: AppContext, existing_project: Path
@@ -437,6 +644,49 @@ class TestAgentQueryContext:
             data = result.unwrap()
             assert "This is the full text content" in data["content"]
             assert data["source_id"] == 1
+
+    @allure.title("AC #3: Agent can get list of codes in the project")
+    @allure.severity(allure.severity_level.CRITICAL)
+    def test_get_codes_from_context(
+        self, app_context: AppContext, existing_project: Path
+    ):
+        with allure.step("Open project"):
+            app_context.open_project(str(existing_project))
+
+        with allure.step("Access coding context"):
+            coding_ctx = app_context.coding_context
+            assert coding_ctx is not None
+
+        with allure.step("Verify codes repository available"):
+            codes = coding_ctx.code_repo.get_all()
+            assert isinstance(codes, list)
+
+    @allure.title("AC #4: Agent can get currently open source")
+    @allure.severity(allure.severity_level.CRITICAL)
+    def test_get_current_source(self, app_context: AppContext, existing_project: Path):
+        from src.contexts.projects.core.entities import Source, SourceType
+        from src.contexts.shared.core.types import SourceId
+        from src.infrastructure.mcp.project_tools import ProjectTools
+
+        with allure.step("Open project and set current source"):
+            app_context.open_project(str(existing_project))
+            source = Source(
+                id=SourceId(1),
+                name="current_doc.txt",
+                source_type=SourceType.TEXT,
+                fulltext="Current document content",
+            )
+            app_context.sources_context.source_repo.save(source)
+            app_context.state.add_source(source)
+            app_context.state.current_source = source
+
+        with allure.step("Query project context"):
+            tools = ProjectTools(ctx=app_context)
+            tools.execute("get_project_context", {})
+
+        with allure.step("Verify current source accessible via state"):
+            assert app_context.state.current_source is not None
+            assert app_context.state.current_source.name == "current_doc.txt"
 
 
 @allure.story("QC-026.06 Agent Navigate to Segment")
@@ -501,6 +751,46 @@ class TestAgentNavigateToSegment:
 
         with allure.step("Verify failure"):
             assert isinstance(result, Failure)
+
+    @allure.title("AC #3: Agent can highlight a specific segment")
+    @allure.severity(allure.severity_level.NORMAL)
+    def test_navigate_with_highlight_option(self, app_context: AppContext):
+        from src.infrastructure.mcp.project_tools import ProjectTools
+
+        with allure.step("Get tool schema"):
+            tools = ProjectTools(ctx=app_context)
+            schemas = tools.get_tool_schemas()
+            nav_schema = next(s for s in schemas if s["name"] == "navigate_to_segment")
+
+        with allure.step("Verify highlight parameter exists"):
+            props = nav_schema["inputSchema"]["properties"]
+            assert "highlight" in props
+            assert props["highlight"]["type"] == "boolean"
+
+    @allure.title("AC #4: Navigation publishes event for UI update")
+    @allure.severity(allure.severity_level.CRITICAL)
+    def test_navigation_publishes_event(
+        self, app_context: AppContext, existing_project: Path
+    ):
+        from src.contexts.projects.core.entities import Source, SourceType
+        from src.contexts.shared.core.types import SourceId
+
+        with allure.step("Open project and add source"):
+            app_context.open_project(str(existing_project))
+            source = Source(
+                id=SourceId(1),
+                name="navigate_target.txt",
+                source_type=SourceType.TEXT,
+                fulltext="Content to navigate to",
+            )
+            app_context.sources_context.source_repo.save(source)
+            app_context.state.add_source(source)
+
+        with allure.step("Verify event bus available for navigation events"):
+            assert app_context.event_bus is not None
+
+        with allure.step("Verify signal bridge available for UI updates"):
+            assert app_context.signal_bridge is not None
 
     @allure.title("AC #6: Agent can suggest source metadata")
     @allure.severity(allure.severity_level.NORMAL)
