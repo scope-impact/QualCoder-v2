@@ -19,8 +19,11 @@ Molecules in this module:
 - MemoListItem: Clickable memo preview card
 - MatchPreviewPanel: Scrollable list of match previews with summary
 - MatchPreviewItem: Single match preview card
+- AISuggestionCard: Single AI code suggestion card
+- AISuggestionsPanel: Panel for displaying multiple suggestions
 """
 
+from .ai import AISuggestionCard, AISuggestionsPanel
 from .editor import LineNumberGutter
 from .highlighting import OverlapDetector
 from .memo import MemoListItem
@@ -29,6 +32,8 @@ from .search import SearchBar
 from .selection import SelectionPopupController
 
 __all__ = [
+    "AISuggestionCard",
+    "AISuggestionsPanel",
     "LineNumberGutter",
     "MatchPreviewItem",
     "MatchPreviewPanel",

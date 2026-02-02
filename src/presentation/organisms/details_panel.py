@@ -6,6 +6,7 @@ A panel showing contextual details for the coding interface:
 - Overlapping codes warning
 - File memo
 - AI Assistant actions
+- AI Suggestions (when available)
 """
 
 from PySide6.QtCore import Qt, Signal
@@ -31,6 +32,8 @@ from design_system import (
     get_colors,
 )
 
+from ..molecules.ai import AISuggestionsPanel
+
 
 class DetailsPanel(QFrame):
     """
@@ -39,10 +42,16 @@ class DetailsPanel(QFrame):
     Signals:
         ai_chat_clicked: Emitted when AI chat button is clicked
         ai_suggest_clicked: Emitted when suggest codes button is clicked
+        suggestion_approved(str): A suggestion was approved (suggestion_id)
+        suggestion_rejected(str): A suggestion was rejected (suggestion_id)
+        suggestions_dismissed: All suggestions dismissed
     """
 
     ai_chat_clicked = Signal()
     ai_suggest_clicked = Signal()
+    suggestion_approved = Signal(str)
+    suggestion_rejected = Signal(str)
+    suggestions_dismissed = Signal()
 
     def __init__(self, colors: ColorPalette = None, parent=None):
         """
@@ -123,6 +132,18 @@ class DetailsPanel(QFrame):
         ai_content = self._create_ai_content()
         self._ai_card.set_content(ai_content)
         container_layout.addWidget(self._ai_card)
+
+        # AI Suggestions panel (hidden by default)
+        self._suggestions_panel = AISuggestionsPanel(colors=self._colors)
+        self._suggestions_panel.suggestion_approved.connect(
+            self.suggestion_approved.emit
+        )
+        self._suggestions_panel.suggestion_rejected.connect(
+            self.suggestion_rejected.emit
+        )
+        self._suggestions_panel.dismiss_all.connect(self._on_suggestions_dismissed)
+        self._suggestions_panel.setVisible(False)
+        container_layout.addWidget(self._suggestions_panel)
 
         container_layout.addStretch()
         scroll.setWidget(container)
@@ -319,3 +340,53 @@ class DetailsPanel(QFrame):
         self._memo_content = self._create_memo_content(memo_text, progress)
         self._memo_card.set_content(self._memo_content)
         old_content.deleteLater()
+
+    # =========================================================================
+    # AI Suggestions API
+    # =========================================================================
+
+    def show_suggestions_loading(self):
+        """Show loading state in suggestions panel."""
+        self._suggestions_panel.setVisible(True)
+        self._suggestions_panel.show_loading()
+
+    def set_suggestions(self, suggestions: list[dict]):
+        """
+        Set AI suggestions to display.
+
+        Args:
+            suggestions: List of suggestion dicts with:
+                - suggestion_id: str
+                - name: str
+                - color: str
+                - rationale: str
+                - confidence: float
+                - context_preview: str (optional)
+        """
+        self._suggestions_panel.setVisible(True)
+        self._suggestions_panel.set_suggestions(suggestions)
+
+    def show_suggestions_error(self, message: str):
+        """Show error in suggestions panel."""
+        self._suggestions_panel.setVisible(True)
+        self._suggestions_panel.show_error(message)
+
+    def remove_suggestion(self, suggestion_id: str):
+        """Remove a single suggestion from the display."""
+        self._suggestions_panel.remove_suggestion(suggestion_id)
+
+    def clear_suggestions(self):
+        """Clear all suggestions and hide the panel."""
+        self._suggestions_panel.clear()
+        self._suggestions_panel.setVisible(False)
+
+    def _on_suggestions_dismissed(self):
+        """Handle dismiss all action."""
+        self._suggestions_panel.clear()
+        self._suggestions_panel.setVisible(False)
+        self.suggestions_dismissed.emit()
+
+    @property
+    def suggestions_panel(self) -> AISuggestionsPanel:
+        """Get the suggestions panel for direct access if needed."""
+        return self._suggestions_panel

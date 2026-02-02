@@ -50,7 +50,7 @@ from ..dialogs.auto_code_dialog import AutoCodeDialog
 from ..dto import TextCodingDataDTO
 from ..pages import TextCodingPage
 from ..sample_data import create_sample_text_coding_data
-from ..viewmodels import TextCodingViewModel
+from ..viewmodels import AICodingViewModel, TextCodingViewModel
 
 
 @dataclass
@@ -134,6 +134,7 @@ class TextCodingScreen(QWidget):
         self,
         data: TextCodingDataDTO | None = None,
         viewmodel: TextCodingViewModel | None = None,
+        ai_viewmodel: AICodingViewModel | None = None,
         colors: ColorPalette = None,
         parent=None,
     ):
@@ -143,6 +144,7 @@ class TextCodingScreen(QWidget):
         Args:
             data: Data to display (uses sample data if None and no viewmodel)
             viewmodel: Optional viewmodel for data and signal routing
+            ai_viewmodel: Optional AI coding viewmodel for suggestions
             colors: Color palette to use
             parent: Parent widget
         """
@@ -150,6 +152,7 @@ class TextCodingScreen(QWidget):
         self._colors = colors or get_colors()
         self._data: TextCodingDataDTO | None = None
         self._viewmodel: TextCodingViewModel | None = viewmodel
+        self._ai_viewmodel: AICodingViewModel | None = ai_viewmodel
         self._source_id: int = 0
 
         # Initialize state variables
@@ -227,6 +230,10 @@ class TextCodingScreen(QWidget):
         # Connect to viewmodel if provided
         if self._viewmodel is not None:
             self._connect_viewmodel()
+
+        # Connect to AI viewmodel if provided
+        if self._ai_viewmodel is not None:
+            self._connect_ai_viewmodel()
 
     # =========================================================================
     # ViewModel Connection
@@ -311,6 +318,116 @@ class TextCodingScreen(QWidget):
         self._source_id = source_id
         if self._viewmodel is not None:
             self._viewmodel.set_current_source(source_id)
+
+    # =========================================================================
+    # AI ViewModel Connection
+    # =========================================================================
+
+    def _connect_ai_viewmodel(self):
+        """Connect AI coding viewmodel signals."""
+        if self._ai_viewmodel is None:
+            return
+
+        # Connect user action signals to AI viewmodel
+        self.ai_suggest_clicked.connect(self._on_ai_suggest_clicked)
+
+        # Connect AI viewmodel signals to UI updates
+        self._ai_viewmodel.suggestions_loading.connect(self._on_suggestions_loading)
+        self._ai_viewmodel.suggestions_received.connect(self._on_suggestions_received)
+        self._ai_viewmodel.suggestion_approved.connect(self._on_suggestion_approved)
+        self._ai_viewmodel.suggestion_rejected.connect(self._on_suggestion_rejected)
+        self._ai_viewmodel.error_occurred.connect(self._on_ai_error)
+
+        # Connect details panel signals to AI viewmodel
+        self._page.details_panel.suggestion_approved.connect(
+            self._on_panel_suggestion_approved
+        )
+        self._page.details_panel.suggestion_rejected.connect(
+            self._on_panel_suggestion_rejected
+        )
+        self._page.details_panel.suggestions_dismissed.connect(
+            self._on_panel_suggestions_dismissed
+        )
+
+    def _on_ai_suggest_clicked(self):
+        """Handle AI suggest button click."""
+        if self._ai_viewmodel is None:
+            return
+
+        # Get current text selection
+        text = self._text_selection.text
+        if not text or not text.strip():
+            # No selection - use entire document
+            if self._page and hasattr(self._page, "editor_panel"):
+                text = self._page.editor_panel.get_text() or ""
+            if not text:
+                print("TextCodingScreen: No text available for AI suggestions")
+                return
+
+        # Request suggestions
+        self._ai_viewmodel.request_suggestions(
+            text=text,
+            source_id=self._source_id,
+            max_suggestions=5,
+        )
+
+    def _on_suggestions_loading(self):
+        """Handle suggestions loading state."""
+        self._page.details_panel.show_suggestions_loading()
+
+    def _on_suggestions_received(self, suggestions: list):
+        """Handle suggestions received from AI."""
+        # Convert DTOs to dicts for panel
+        suggestion_dicts = [
+            {
+                "suggestion_id": s.suggestion_id,
+                "name": s.name,
+                "color": s.color,
+                "rationale": s.rationale,
+                "confidence": s.confidence,
+                "context_preview": s.context_preview,
+            }
+            for s in suggestions
+        ]
+        self._page.details_panel.set_suggestions(suggestion_dicts)
+
+    def _on_suggestion_approved(self, suggestion_id: str, _code_id: int):
+        """Handle suggestion approved - remove from panel."""
+        self._page.details_panel.remove_suggestion(suggestion_id)
+        # The code was created and code_created event will refresh the codes panel
+
+    def _on_suggestion_rejected(self, suggestion_id: str):
+        """Handle suggestion rejected - remove from panel."""
+        self._page.details_panel.remove_suggestion(suggestion_id)
+
+    def _on_ai_error(self, operation: str, message: str):
+        """Handle AI error."""
+        self._page.details_panel.show_suggestions_error(f"{operation}: {message}")
+
+    def _on_panel_suggestion_approved(self, suggestion_id: str):
+        """Handle approval from panel - route to viewmodel."""
+        if self._ai_viewmodel is not None:
+            self._ai_viewmodel.approve_suggestion(suggestion_id)
+
+    def _on_panel_suggestion_rejected(self, suggestion_id: str):
+        """Handle rejection from panel - route to viewmodel."""
+        if self._ai_viewmodel is not None:
+            self._ai_viewmodel.reject_suggestion(suggestion_id)
+
+    def _on_panel_suggestions_dismissed(self):
+        """Handle dismiss all from panel - route to viewmodel."""
+        if self._ai_viewmodel is not None:
+            self._ai_viewmodel.dismiss_all_suggestions()
+
+    def set_ai_viewmodel(self, ai_viewmodel: AICodingViewModel):
+        """
+        Set the AI coding viewmodel (can be set after construction).
+
+        Args:
+            ai_viewmodel: The AI coding viewmodel
+        """
+        self._ai_viewmodel = ai_viewmodel
+        self._connect_ai_viewmodel()
 
     # =========================================================================
     # Keyboard Shortcuts Setup (QC-007.10)

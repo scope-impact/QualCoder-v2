@@ -11,9 +11,11 @@ from src.presentation.viewmodels.settings_viewmodel import SettingsViewModel
 
 # Qt-dependent ViewModels - conditional import
 try:
+    from src.presentation.viewmodels.ai_coding_viewmodel import AICodingViewModel
     from src.presentation.viewmodels.text_coding_viewmodel import TextCodingViewModel
 
     __all__ = [
+        "AICodingViewModel",
         "TextCodingViewModel",
         "FileManagerViewModel",
         "SettingsViewModel",
