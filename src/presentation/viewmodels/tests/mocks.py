@@ -15,12 +15,12 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from returns.result import Failure, Result, Success
 
 from src.contexts.cases.core.entities import AttributeType, Case, CaseAttribute
-from src.contexts.shared.core.types import CaseId
+from src.contexts.shared.core.types import CaseId, SourceId
 from src.presentation.dto import CaseSummaryDTO
 
 if TYPE_CHECKING:
@@ -67,7 +67,252 @@ class MockConfig:
 
 
 # =============================================================================
-# Mock CaseManagerProvider
+# Mock Case Repository (for new ViewModel pattern per SKILL.md)
+# =============================================================================
+
+
+@dataclass
+class MockCaseRepository:
+    """
+    Pure mock implementation of CaseRepository protocol.
+
+    Follows SKILL.md pattern: ViewModels call repos directly for queries.
+    """
+
+    config: MockConfig = field(default_factory=MockConfig)
+
+    # Internal state
+    _cases: dict[int, Case] = field(default_factory=dict)
+    _next_id: int = 1
+
+    # Call tracking for verification
+    calls: list[tuple[str, dict]] = field(default_factory=list)
+
+    def _track_call(self, method: str, **kwargs: Any) -> None:
+        """Track method calls for test verification."""
+        self.calls.append((method, kwargs))
+
+    def reset(self) -> None:
+        """Reset mock state for next test."""
+        self._cases.clear()
+        self._next_id = 1
+        self.calls.clear()
+
+    def seed_case(
+        self,
+        name: str,
+        description: str | None = None,
+        memo: str | None = None,
+        attributes: tuple[CaseAttribute, ...] = (),
+        source_ids: tuple[int, ...] = (),
+    ) -> Case:
+        """Add a case to mock storage for testing."""
+        case_id = self._next_id
+        self._next_id += 1
+
+        case = Case(
+            id=CaseId(value=case_id),
+            name=name,
+            description=description,
+            memo=memo,
+            attributes=attributes,
+            source_ids=source_ids,
+            created_at=datetime.now(UTC),
+            updated_at=datetime.now(UTC),
+        )
+        self._cases[case_id] = case
+        return case
+
+    # =========================================================================
+    # Repository Protocol Methods
+    # =========================================================================
+
+    def get_all(self) -> list[Case]:
+        """Get all cases in the mock storage."""
+        self._track_call("get_all")
+        return list(self._cases.values())
+
+    def get_by_id(self, case_id: CaseId) -> Case | None:
+        """Get a case by ID."""
+        self._track_call("get_by_id", case_id=case_id)
+        return self._cases.get(case_id.value)
+
+    def get_by_name(self, name: str) -> Case | None:
+        """Get a case by name (case-insensitive)."""
+        self._track_call("get_by_name", name=name)
+        for case in self._cases.values():
+            if case.name.lower() == name.lower():
+                return case
+        return None
+
+    def save(self, case: Case) -> None:
+        """Save a case to the mock storage."""
+        self._track_call("save", case=case)
+        self._cases[case.id.value] = case
+
+    def delete(self, case_id: CaseId) -> bool:
+        """Delete a case from the mock storage."""
+        self._track_call("delete", case_id=case_id)
+        if case_id.value in self._cases:
+            del self._cases[case_id.value]
+            return True
+        return False
+
+    def count(self) -> int:
+        """Count cases in storage."""
+        return len(self._cases)
+
+    def link_source(self, case_id: CaseId, source_id: SourceId) -> bool:
+        """Link a source to a case."""
+        self._track_call("link_source", case_id=case_id, source_id=source_id)
+        case = self._cases.get(case_id.value)
+        if case is None:
+            return False
+        new_source_ids = tuple(set(case.source_ids) | {source_id.value})
+        updated = Case(
+            id=case.id,
+            name=case.name,
+            description=case.description,
+            memo=case.memo,
+            attributes=case.attributes,
+            source_ids=new_source_ids,
+            created_at=case.created_at,
+            updated_at=datetime.now(UTC),
+        )
+        self._cases[case_id.value] = updated
+        return True
+
+    def unlink_source(self, case_id: CaseId, source_id: SourceId) -> bool:
+        """Unlink a source from a case."""
+        self._track_call("unlink_source", case_id=case_id, source_id=source_id)
+        case = self._cases.get(case_id.value)
+        if case is None:
+            return False
+        new_source_ids = tuple(sid for sid in case.source_ids if sid != source_id.value)
+        updated = Case(
+            id=case.id,
+            name=case.name,
+            description=case.description,
+            memo=case.memo,
+            attributes=case.attributes,
+            source_ids=new_source_ids,
+            created_at=case.created_at,
+            updated_at=datetime.now(UTC),
+        )
+        self._cases[case_id.value] = updated
+        return True
+
+    def set_attribute(self, case_id: CaseId, attr: CaseAttribute) -> bool:
+        """Set an attribute on a case."""
+        self._track_call("set_attribute", case_id=case_id, attr=attr)
+        case = self._cases.get(case_id.value)
+        if case is None:
+            return False
+        new_attrs = tuple(a for a in case.attributes if a.name != attr.name) + (attr,)
+        updated = Case(
+            id=case.id,
+            name=case.name,
+            description=case.description,
+            memo=case.memo,
+            attributes=new_attrs,
+            source_ids=case.source_ids,
+            created_at=case.created_at,
+            updated_at=datetime.now(UTC),
+        )
+        self._cases[case_id.value] = updated
+        return True
+
+    def delete_attribute(self, case_id: CaseId, attr_name: str) -> bool:
+        """Delete an attribute from a case."""
+        self._track_call("delete_attribute", case_id=case_id, attr_name=attr_name)
+        case = self._cases.get(case_id.value)
+        if case is None:
+            return False
+        new_attrs = tuple(a for a in case.attributes if a.name != attr_name)
+        updated = Case(
+            id=case.id,
+            name=case.name,
+            description=case.description,
+            memo=case.memo,
+            attributes=new_attrs,
+            source_ids=case.source_ids,
+            created_at=case.created_at,
+            updated_at=datetime.now(UTC),
+        )
+        self._cases[case_id.value] = updated
+        return True
+
+
+# =============================================================================
+# Mock EventBus (for new ViewModel pattern per SKILL.md)
+# =============================================================================
+
+
+@dataclass
+class MockEventBus:
+    """Mock EventBus for testing - tracks published events."""
+
+    events: list[Any] = field(default_factory=list)
+    calls: list[tuple[str, dict]] = field(default_factory=list)
+
+    def publish(self, event: Any) -> None:
+        """Publish an event (stores for verification)."""
+        self.events.append(event)
+        self.calls.append(("publish", {"event": event}))
+
+    def subscribe(self, event_type: type, handler: Any) -> None:
+        """Subscribe to an event type (no-op for tests)."""
+        self.calls.append(("subscribe", {"event_type": event_type}))
+
+    def reset(self) -> None:
+        """Reset mock state."""
+        self.events.clear()
+        self.calls.clear()
+
+
+# =============================================================================
+# Mock ProjectState (for new ViewModel pattern per SKILL.md)
+# =============================================================================
+
+
+@dataclass
+class MockProjectState:
+    """Mock ProjectState for testing."""
+
+    project: Any = None  # Mock project
+    cases: list[Case] = field(default_factory=list)
+
+    def add_case(self, case: Case) -> None:
+        """Add a case to state."""
+        self.cases.append(case)
+
+    def remove_case(self, case_id: int) -> None:
+        """Remove a case from state."""
+        self.cases = [c for c in self.cases if c.id.value != case_id]
+
+    def update_case(self, case: Case) -> None:
+        """Update a case in state."""
+        self.cases = [c if c.id != case.id else case for c in self.cases]
+
+    def get_case(self, case_id: int) -> Case | None:
+        """Get a case by ID."""
+        return next((c for c in self.cases if c.id.value == case_id), None)
+
+
+# =============================================================================
+# Mock CasesContext (for new ViewModel pattern per SKILL.md)
+# =============================================================================
+
+
+@dataclass
+class MockCasesContext:
+    """Mock CasesContext wrapping the mock repository."""
+
+    case_repo: MockCaseRepository = field(default_factory=MockCaseRepository)
+
+
+# =============================================================================
+# Mock CaseManagerProvider (LEGACY - kept for backward compatibility)
 # =============================================================================
 
 

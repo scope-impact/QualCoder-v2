@@ -1,7 +1,7 @@
 """
 Case Manager ViewModel
 
-Connects the CaseManagerScreen to the case management service.
+Connects the CaseManagerScreen to case use cases and repositories.
 Handles data transformation between domain entities and UI DTOs.
 
 Implements QC-034 presentation layer:
@@ -10,10 +10,10 @@ Implements QC-034 presentation layer:
 - AC #3: Researcher can add case attributes
 - AC #4: Researcher can view all data for a case
 
-Architecture:
-    User Action → ViewModel → Provider (Service) → Use Cases → Domain → Events
-                                                                          ↓
-    UI Update ← ViewModel ← (refresh data) ←──────────────────────────────┘
+Architecture (per SKILL.md - calls use cases directly):
+    User Action → ViewModel → Use Cases → Domain → Events
+                      ↓                              ↓
+                    Repo (queries)          SignalBridge → UI Update
 """
 
 from __future__ import annotations
@@ -22,11 +22,41 @@ from typing import TYPE_CHECKING
 
 from returns.result import Success
 
+from src.application.cases.usecases import (
+    create_case,
+    link_source_to_case,
+    remove_case,
+    set_case_attribute,
+    unlink_source_from_case,
+    update_case,
+)
+from src.application.projects.commands import (
+    CreateCaseCommand,
+    LinkSourceToCaseCommand,
+    RemoveCaseCommand,
+    SetCaseAttributeCommand,
+    UnlinkSourceFromCaseCommand,
+    UpdateCaseCommand,
+)
+from src.contexts.shared.core.types import CaseId
 from src.presentation.dto import CaseAttributeDTO, CaseDTO, CaseSummaryDTO
 
 if TYPE_CHECKING:
+    from typing import Protocol
+
+    from src.application.contexts import CasesContext
+    from src.application.event_bus import EventBus
+    from src.application.state import ProjectState
     from src.contexts.cases.core.entities import Case
-    from src.presentation.viewmodels.protocols import CaseManagerProvider
+
+    class CaseRepository(Protocol):
+        """Protocol for case repository - allows mock injection for testing."""
+
+        def get_all(self) -> list[Case]: ...
+        def get_by_id(self, case_id: CaseId) -> Case | None: ...
+        def save(self, case: Case) -> None: ...
+        def delete(self, case_id: CaseId) -> bool: ...
+        def delete_attribute(self, case_id: CaseId, attr_name: str) -> bool: ...
 
 
 class CaseManagerViewModel:
@@ -35,11 +65,13 @@ class CaseManagerViewModel:
 
     Responsibilities:
     - Transform domain Case entities to UI DTOs
-    - Handle user actions by calling provider methods
-    - Provide filtering and search capabilities
+    - Handle user actions by calling use cases directly
+    - Provide filtering and search capabilities (via repo)
     - Track selection state
 
-    Uses CaseManagerProvider protocol for decoupled service access.
+    Follows SKILL.md pattern:
+    - Queries → Direct to repo (CQRS)
+    - Commands → Use cases
 
     This is a pure Python class (no Qt dependency) so it can be
     tested without a Qt event loop.
@@ -47,21 +79,31 @@ class CaseManagerViewModel:
 
     def __init__(
         self,
-        provider: CaseManagerProvider,
+        case_repo: CaseRepository,
+        state: ProjectState,
+        event_bus: EventBus,
+        cases_ctx: CasesContext | None = None,
     ) -> None:
         """
-        Initialize the ViewModel.
+        Initialize the ViewModel with direct dependencies.
 
         Args:
-            provider: Case management service implementing CaseManagerProvider protocol
+            case_repo: Repository for case queries
+            state: Project state cache
+            event_bus: Event bus for publishing events
+            cases_ctx: Cases context (for backward compatibility with use cases)
         """
-        self._provider = provider
+        self._case_repo = case_repo
+        self._state = state
+        self._event_bus = event_bus
+        # Use provided context or create minimal one from repo
+        self._cases_ctx = cases_ctx
 
         # Selection state
         self._selected_case_id: int | None = None
 
     # =========================================================================
-    # Load Data (AC #4)
+    # Load Data (AC #4) - Queries go direct to repo (CQRS)
     # =========================================================================
 
     def load_cases(self) -> list[CaseDTO]:
@@ -71,7 +113,7 @@ class CaseManagerViewModel:
         Returns:
             List of CaseDTO objects for UI display
         """
-        cases = self._provider.get_all_cases()
+        cases = self._case_repo.get_all()
         return [self._case_to_dto(c) for c in cases]
 
     def get_case(self, case_id: int) -> CaseDTO | None:
@@ -84,7 +126,7 @@ class CaseManagerViewModel:
         Returns:
             CaseDTO if found, None otherwise
         """
-        case = self._provider.get_case(case_id)
+        case = self._case_repo.get_by_id(CaseId(value=case_id))
         return self._case_to_dto(case) if case else None
 
     def get_summary(self) -> CaseSummaryDTO:
@@ -94,10 +136,27 @@ class CaseManagerViewModel:
         Returns:
             CaseSummaryDTO with counts
         """
-        return self._provider.get_summary()
+        cases = self._case_repo.get_all()
+
+        # Collect unique attribute names
+        unique_attrs: set[str] = set()
+        cases_with_sources = 0
+
+        for case in cases:
+            for attr in case.attributes:
+                unique_attrs.add(attr.name)
+            if case.source_ids:
+                cases_with_sources += 1
+
+        return CaseSummaryDTO(
+            total_cases=len(cases),
+            cases_with_sources=cases_with_sources,
+            total_attributes=sum(len(c.attributes) for c in cases),
+            unique_attribute_names=sorted(unique_attrs),
+        )
 
     # =========================================================================
-    # Create Case (AC #1)
+    # Create Case (AC #1) - Commands go through use cases
     # =========================================================================
 
     def create_case(
@@ -117,15 +176,22 @@ class CaseManagerViewModel:
         Returns:
             True if successful, False otherwise
         """
-        result = self._provider.create_case(
+        command = CreateCaseCommand(
             name=name,
             description=description,
             memo=memo,
         )
+
+        result = create_case(
+            command=command,
+            state=self._state,
+            cases_ctx=self._cases_ctx,
+            event_bus=self._event_bus,
+        )
         return isinstance(result, Success)
 
     # =========================================================================
-    # Update Case
+    # Update Case - Commands go through use cases
     # =========================================================================
 
     def update_case(
@@ -147,16 +213,23 @@ class CaseManagerViewModel:
         Returns:
             True if successful, False otherwise
         """
-        result = self._provider.update_case(
+        command = UpdateCaseCommand(
             case_id=case_id,
             name=name,
             description=description,
             memo=memo,
         )
+
+        result = update_case(
+            command=command,
+            state=self._state,
+            cases_ctx=self._cases_ctx,
+            event_bus=self._event_bus,
+        )
         return isinstance(result, Success)
 
     # =========================================================================
-    # Delete Case
+    # Delete Case - Commands go through use cases
     # =========================================================================
 
     def delete_case(self, case_id: int) -> bool:
@@ -169,7 +242,14 @@ class CaseManagerViewModel:
         Returns:
             True if successful, False otherwise
         """
-        result = self._provider.delete_case(case_id)
+        command = RemoveCaseCommand(case_id=case_id)
+
+        result = remove_case(
+            command=command,
+            state=self._state,
+            cases_ctx=self._cases_ctx,
+            event_bus=self._event_bus,
+        )
 
         if isinstance(result, Success):
             # Clear selection if deleted case was selected
@@ -180,7 +260,7 @@ class CaseManagerViewModel:
         return False
 
     # =========================================================================
-    # Link Source (AC #2)
+    # Link Source (AC #2) - Commands go through use cases
     # =========================================================================
 
     def link_source(self, case_id: int, source_id: int) -> bool:
@@ -194,7 +274,17 @@ class CaseManagerViewModel:
         Returns:
             True if successful, False otherwise
         """
-        result = self._provider.link_source(case_id, source_id)
+        command = LinkSourceToCaseCommand(
+            case_id=case_id,
+            source_id=source_id,
+        )
+
+        result = link_source_to_case(
+            command=command,
+            state=self._state,
+            cases_ctx=self._cases_ctx,
+            event_bus=self._event_bus,
+        )
         return isinstance(result, Success)
 
     def unlink_source(self, case_id: int, source_id: int) -> bool:
@@ -208,11 +298,21 @@ class CaseManagerViewModel:
         Returns:
             True if successful, False otherwise
         """
-        result = self._provider.unlink_source(case_id, source_id)
+        command = UnlinkSourceFromCaseCommand(
+            case_id=case_id,
+            source_id=source_id,
+        )
+
+        result = unlink_source_from_case(
+            command=command,
+            state=self._state,
+            cases_ctx=self._cases_ctx,
+            event_bus=self._event_bus,
+        )
         return isinstance(result, Success)
 
     # =========================================================================
-    # Add Attribute (AC #3)
+    # Add Attribute (AC #3) - Commands go through use cases
     # =========================================================================
 
     def add_attribute(
@@ -234,11 +334,18 @@ class CaseManagerViewModel:
         Returns:
             True if successful, False otherwise
         """
-        result = self._provider.add_attribute(
+        command = SetCaseAttributeCommand(
             case_id=case_id,
-            name=name,
+            attr_name=name,
             attr_type=attr_type,
-            value=value,
+            attr_value=value,
+        )
+
+        result = set_case_attribute(
+            command=command,
+            state=self._state,
+            cases_ctx=self._cases_ctx,
+            event_bus=self._event_bus,
         )
         return isinstance(result, Success)
 
@@ -253,8 +360,22 @@ class CaseManagerViewModel:
         Returns:
             True if successful, False otherwise
         """
-        result = self._provider.remove_attribute(case_id, name)
-        return isinstance(result, Success)
+        # Remove attribute via repo directly (no use case for this yet)
+        if self._case_repo is None:
+            return False
+
+        case = self._case_repo.get_by_id(CaseId(value=case_id))
+        if case is None:
+            return False
+
+        deleted = self._case_repo.delete_attribute(CaseId(value=case_id), name)
+
+        if deleted:
+            # Refresh state
+            self._state.cases = self._case_repo.get_all()
+            return True
+
+        return False
 
     # =========================================================================
     # Selection
@@ -278,7 +399,7 @@ class CaseManagerViewModel:
         self._selected_case_id = None
 
     # =========================================================================
-    # Search
+    # Search - Queries go direct to repo
     # =========================================================================
 
     def search_cases(self, query: str) -> list[CaseDTO]:
@@ -291,8 +412,10 @@ class CaseManagerViewModel:
         Returns:
             List of matching CaseDTO objects
         """
-        cases = self._provider.search_cases(query)
-        return [self._case_to_dto(c) for c in cases]
+        cases = self._case_repo.get_all()
+        query_lower = query.lower()
+        matching = [c for c in cases if query_lower in c.name.lower()]
+        return [self._case_to_dto(c) for c in matching]
 
     # =========================================================================
     # Private Helpers
