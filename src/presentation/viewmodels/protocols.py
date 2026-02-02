@@ -31,8 +31,12 @@ class FileManagerController(Protocol):
     Protocol for FileManagerViewModel's controller.
 
     Defines the exact interface that FileManagerViewModel needs.
-    This can be implemented by CoordinatorAdapter, mock objects for testing,
+    This can be implemented by FileManagerService, mock objects for testing,
     or any other class that provides these methods.
+
+    Naming convention:
+    - Protocol (this): FileManagerController - defines WHAT is needed (interface)
+    - Service: FileManagerService - provides HOW (implementation)
     """
 
     # =========================================================================

@@ -44,12 +44,17 @@ if TYPE_CHECKING:
     from src.contexts.projects.core.entities import Folder, Source
 
 
-class CoordinatorAdapter:
+class FileManagerService:
     """
-    Adapter implementing FileManagerController protocol.
+    Application Service implementing FileManagerController protocol.
 
-    Provides the interface that FileManagerViewModel expects by calling
-    use cases directly. This replaces the sub-coordinator pattern.
+    This service orchestrates use cases for file management operations
+    (sources, folders, cases). It provides the interface that
+    FileManagerViewModel expects.
+
+    Naming convention:
+    - Protocol: FileManagerController (defines WHAT methods are needed)
+    - Service: FileManagerService (provides HOW - the implementation)
     """
 
     def __init__(self, ctx: AppContext) -> None:
@@ -260,8 +265,8 @@ class QualCoderApp:
         self._ctx = get_app_context()
         self._dialog_service = DialogService(self._ctx)
         self._navigation_service = NavigationService(self._ctx)
-        # Adapter provides coordinator-like interface for ViewModels
-        self._coordinator_adapter = CoordinatorAdapter(self._ctx)
+        # Service implements FileManagerController protocol for ViewModel
+        self._file_manager_service = FileManagerService(self._ctx)
         self._shell: AppShell | None = None
         self._screens: dict = {}
         self._current_project_path: Path | None = None
@@ -271,9 +276,8 @@ class QualCoderApp:
         self._shell = AppShell(colors=self._colors)
 
         # Create ViewModels
-        # CoordinatorAdapter provides the sources/folders/cases/projects interface
         self._file_manager_viewmodel = FileManagerViewModel(
-            controller=self._coordinator_adapter,
+            controller=self._file_manager_service,  # Service implements protocol
             event_bus=self._ctx.event_bus,
         )
 
