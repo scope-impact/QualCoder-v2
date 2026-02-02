@@ -128,10 +128,18 @@ class FileManagerScreen(QWidget):
         self._page.open_for_coding.connect(self._on_open_for_coding)
         self._page.delete_sources.connect(self._on_delete_sources)
         self._page.export_sources.connect(self._on_export_sources)
+        self._page.view_metadata.connect(self._on_view_metadata)
 
         # Filtering
         self._page.filter_changed.connect(self._on_filter_changed)
         self._page.search_changed.connect(self._on_search_changed)
+
+        # Folder actions
+        self._page.folder_selected.connect(self._on_folder_selected)
+        self._page.create_folder_requested.connect(self._on_create_folder)
+        self._page.rename_folder_requested.connect(self._on_rename_folder)
+        self._page.delete_folder_requested.connect(self._on_delete_folder)
+        self._page.move_sources_to_folder.connect(self._on_move_sources_to_folder)
 
     # =========================================================================
     # Data Loading
@@ -149,6 +157,10 @@ class FileManagerScreen(QWidget):
         # Load sources
         sources = self._viewmodel.load_sources()
         self._page.set_sources(sources)
+
+        # Load folders
+        folders = self._viewmodel.get_folders()
+        self._page.set_folders(folders)
 
     def refresh(self):
         """Refresh data from viewmodel."""
@@ -298,6 +310,43 @@ class FileManagerScreen(QWidget):
         """Handle export sources request."""
         self._export_sources(source_ids)
 
+    def _on_view_metadata(self, source_id: str):
+        """Handle view metadata request - show metadata dialog."""
+        from ..dialogs.source_metadata_dialog import (
+            SourceMetadata,
+            SourceMetadataDialog,
+        )
+
+        # Get source info from viewmodel
+        if self._viewmodel:
+            source = self._viewmodel.get_source(int(source_id))
+            if source:
+                metadata = SourceMetadata(
+                    id=source.id,
+                    name=source.name,
+                    source_type=source.source_type,
+                    status=source.status,
+                    file_size=source.file_size or 0,
+                    code_count=source.code_count or 0,
+                    memo=source.memo,
+                    origin=source.origin,
+                )
+                dialog = SourceMetadataDialog(metadata, self._colors, self)
+                dialog.save_clicked.connect(
+                    lambda m: self._save_source_metadata(source_id, m)
+                )
+                dialog.exec()
+
+    def _save_source_metadata(self, source_id: str, metadata):
+        """Save updated source metadata."""
+        if self._viewmodel:
+            self._viewmodel.update_source(
+                int(source_id),
+                memo=metadata.memo,
+                origin=metadata.origin,
+            )
+            self._load_data()
+
     # =========================================================================
     # Filter Handlers
     # =========================================================================
@@ -330,6 +379,99 @@ class FileManagerScreen(QWidget):
                 sources = self._viewmodel.load_sources()
 
         self._page.set_sources(sources)
+
+    # =========================================================================
+    # Folder Action Handlers
+    # =========================================================================
+
+    def _on_folder_selected(self, folder_node):
+        """Handle folder selection in tree."""
+        # Could filter sources by folder here
+        pass
+
+    def _on_create_folder(self, parent_id):
+        """Handle create folder request."""
+        if not self._viewmodel:
+            return
+
+        # Show input dialog for folder name
+        from PySide6.QtWidgets import QInputDialog
+
+        name, ok = QInputDialog.getText(
+            self,
+            "Create Folder",
+            "Folder name:",
+        )
+
+        if ok and name:
+            parent_id_int = int(parent_id) if parent_id else None
+            if self._viewmodel.create_folder(name, parent_id_int):
+                self._load_folders()
+
+    def _on_rename_folder(self, folder_id: str):
+        """Handle rename folder request."""
+        if not self._viewmodel:
+            return
+
+        from PySide6.QtWidgets import QInputDialog
+
+        new_name, ok = QInputDialog.getText(
+            self,
+            "Rename Folder",
+            "New folder name:",
+        )
+
+        if ok and new_name and self._viewmodel.rename_folder(int(folder_id), new_name):
+            self._load_folders()
+
+    def _on_delete_folder(self, folder_id: str):
+        """Handle delete folder request."""
+        if not self._viewmodel:
+            return
+
+        reply = QMessageBox.question(
+            self,
+            "Confirm Delete",
+            "Are you sure you want to delete this folder?\n\nNote: Only empty folders can be deleted.",
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+            QMessageBox.StandardButton.No,
+        )
+
+        if reply == QMessageBox.StandardButton.Yes:
+            if self._viewmodel.delete_folder(int(folder_id)):
+                self._load_folders()
+            else:
+                QMessageBox.warning(
+                    self,
+                    "Delete Failed",
+                    "Could not delete folder. Make sure it is empty.",
+                )
+
+    def _on_move_sources_to_folder(self, source_ids: list[int], folder_id):
+        """Handle moving sources to a folder."""
+        if not self._viewmodel:
+            return
+
+        folder_id_int = int(folder_id) if folder_id is not None else None
+        success = True
+        for source_id in source_ids:
+            if not self._viewmodel.move_source_to_folder(source_id, folder_id_int):
+                success = False
+
+        if success:
+            self._load_data()
+        else:
+            QMessageBox.warning(
+                self,
+                "Move Failed",
+                "Some sources could not be moved.",
+            )
+
+    def _load_folders(self):
+        """Load folders from viewmodel and update tree."""
+        if self._viewmodel:
+            folders = self._viewmodel.get_folders()
+            self._page.set_folders(folders)
 
     # =========================================================================
     # Helper Methods

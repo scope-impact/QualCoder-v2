@@ -18,32 +18,32 @@ The pattern:
 
 ## Examining `derive_create_code`
 
-Open `src/domain/coding/derivers.py` and find `derive_create_code`:
+Open `src/contexts/coding/core/derivers.py` and find `derive_create_code`:
 
 ```python
 def derive_create_code(
     name: str,
     color: Color,
-    memo: Optional[str],
-    category_id: Optional[CategoryId],
-    owner: Optional[str],
+    memo: str | None,
+    category_id: CategoryId | None,
+    owner: str | None,
     state: CodingState,
-) -> CodeCreated | Failure:
+) -> CodeCreated | CodeNotCreated:
     """
-    Derive a CodeCreated event or failure.
+    Derive a CodeCreated event or failure event.
     """
     # Validate name
     if not is_valid_code_name(name):
-        return Failure(EmptyName())
+        return CodeNotCreated.empty_name()
 
     # Check uniqueness
     if not is_code_name_unique(name, state.existing_codes):
-        return Failure(DuplicateName(name))
+        return CodeNotCreated.duplicate_name(name)
 
     # Validate category exists if specified
     if category_id is not None:
         if not does_category_exist(category_id, state.existing_categories):
-            return Failure(CategoryNotFound(category_id))
+            return CodeNotCreated.category_not_found(category_id)
 
     # Generate new ID and create event
     new_id = CodeId.new()
@@ -59,26 +59,30 @@ def derive_create_code(
 ```
 
 Notice the pattern:
-1. **Validate** using invariants, return `Failure` early if invalid
+1. **Validate** using invariants, return a **failure event** early if invalid
 2. **Compute** any derived values (like generating an ID)
 3. **Return** the success event
 
 ## Adding Priority Validation
 
-Let's extend this deriver to validate priority. First, we need a failure type:
+Let's extend this deriver to validate priority. First, we need a failure event type. In QualCoder v2, failure events are defined in `src/contexts/coding/core/failure_events.py`:
 
 ```python
-# In derivers.py (or a shared types module)
+# In failure_events.py
 @dataclass(frozen=True)
-class InvalidPriority:
-    """Priority must be 1-5."""
-    value: int
-    message: str = ""
+class CodeNotCreated(FailureEvent):
+    """Code creation failed."""
 
-    def __post_init__(self) -> None:
-        object.__setattr__(
-            self, 'message',
-            f"Priority must be between 1 and 5, got {self.value}"
+    reason: str
+    name: str | None = None
+    category_id: CategoryId | None = None
+
+    @classmethod
+    def invalid_priority(cls, value: int) -> "CodeNotCreated":
+        return cls(
+            event_id=cls._generate_id(),
+            occurred_at=cls._now(),
+            reason=f"Priority must be between 1 and 5, got {value}",
         )
 ```
 
@@ -88,31 +92,31 @@ Now modify the deriver:
 def derive_create_code(
     name: str,
     color: Color,
-    memo: Optional[str],
-    category_id: Optional[CategoryId],
-    priority: Optional[int],  # NEW parameter
-    owner: Optional[str],
+    memo: str | None,
+    category_id: CategoryId | None,
+    priority: int | None,  # NEW parameter
+    owner: str | None,
     state: CodingState,
-) -> CodeCreated | Failure:
+) -> CodeCreated | CodeNotCreated:
     """
-    Derive a CodeCreated event or failure.
+    Derive a CodeCreated event or failure event.
     """
     # Validate name
     if not is_valid_code_name(name):
-        return Failure(EmptyName())
+        return CodeNotCreated.empty_name()
 
     # Check uniqueness
     if not is_code_name_unique(name, state.existing_codes):
-        return Failure(DuplicateName(name))
+        return CodeNotCreated.duplicate_name(name)
 
     # Validate category exists if specified
     if category_id is not None:
         if not does_category_exist(category_id, state.existing_categories):
-            return Failure(CategoryNotFound(category_id))
+            return CodeNotCreated.category_not_found(category_id)
 
     # NEW: Validate priority
     if not is_valid_priority(priority):
-        return Failure(InvalidPriority(priority))
+        return CodeNotCreated.invalid_priority(priority)
 
     # Generate new ID and create event
     new_id = CodeId.new()
@@ -132,7 +136,7 @@ We also need to update the event (see below).
 
 ## Updating the Event
 
-Open `src/domain/coding/events.py` and find `CodeCreated`:
+Open `src/contexts/coding/core/events.py` and find `CodeCreated`:
 
 ```python
 @dataclass(frozen=True)
@@ -176,7 +180,7 @@ def create(
 
 ## Testing the Deriver
 
-Open `src/domain/coding/tests/test_derivers.py`. Add tests for priority:
+Open `src/contexts/coding/core/tests/test_derivers.py`. Add tests for priority:
 
 ```python
 class TestDeriveCreateCodePriority:
@@ -213,7 +217,7 @@ class TestDeriveCreateCodePriority:
         assert result.priority is None
 
     def test_fails_with_invalid_priority(self, empty_state: CodingState):
-        """Should fail with priority outside 1-5."""
+        """Should return failure event with priority outside 1-5."""
         result = derive_create_code(
             name="Bad Priority Theme",
             color=Color(red=100, green=150, blue=200),
@@ -224,9 +228,8 @@ class TestDeriveCreateCodePriority:
             state=empty_state,
         )
 
-        assert isinstance(result, Failure)
-        assert isinstance(result.failure(), InvalidPriority)
-        assert result.failure().value == 10
+        assert isinstance(result, CodeNotCreated)
+        assert "Priority must be between 1 and 5" in result.reason
 ```
 
 ## The CodingState Container
@@ -254,7 +257,7 @@ Key points:
 
 This is crucial: the deriver is pure because all inputs are explicit. No hidden database calls.
 
-## Why Return `Failure` Instead of Raising?
+## Why Return Failure Events Instead of Raising Exceptions?
 
 You might ask: "Why not just raise an exception?"
 
@@ -271,10 +274,11 @@ Problems:
 2. **No type safety** - can't express "returns X or these errors" in types
 3. **Forces try/except** - clutters calling code
 
-With explicit `Failure`:
-1. **Visible in signature** - `-> CodeCreated | Failure`
-2. **Pattern matchable** - `if isinstance(result, Failure): ...`
+With explicit failure events:
+1. **Visible in signature** - `-> CodeCreated | CodeNotCreated`
+2. **Pattern matchable** - `if isinstance(result, CodeNotCreated): ...`
 3. **Composable** - can chain operations that might fail
+4. **Rich error data** - failure events carry context (reason, related IDs, etc.)
 
 ## Summary
 

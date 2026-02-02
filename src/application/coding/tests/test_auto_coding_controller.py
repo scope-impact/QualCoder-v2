@@ -13,8 +13,8 @@ from unittest.mock import Mock
 
 from returns.result import Failure, Success
 
-from src.domain.coding.services.text_matcher import MatchScope, MatchType
-from src.domain.shared.types import CodeId, SourceId
+from src.contexts.coding.core.services.text_matcher import MatchScope, MatchType
+from src.contexts.shared.core.types import CodeId, SourceId
 
 
 class TestFindMatches:
@@ -242,7 +242,7 @@ class TestApplyAutoCodeBatch:
     def test_apply_auto_code_batch_creates_segments(self):
         """Controller should create segments for all matches."""
         from src.application.coding.auto_coding_controller import AutoCodingController
-        from src.domain.coding.services.text_matcher import TextMatch
+        from src.contexts.coding.core.services.text_matcher import TextMatch
 
         # Mock segment repository
         segment_repo = Mock()
@@ -276,7 +276,7 @@ class TestApplyAutoCodeBatch:
     def test_apply_auto_code_batch_creates_batch_record(self):
         """Controller should create batch record for undo."""
         from src.application.coding.auto_coding_controller import AutoCodingController
-        from src.domain.coding.services.text_matcher import TextMatch
+        from src.contexts.coding.core.services.text_matcher import TextMatch
 
         segment_repo = Mock()
         event_bus = Mock()
@@ -303,7 +303,7 @@ class TestApplyAutoCodeBatch:
     def test_apply_auto_code_batch_publishes_event(self):
         """Controller should publish BatchCreated event."""
         from src.application.coding.auto_coding_controller import AutoCodingController
-        from src.domain.coding.services.text_matcher import TextMatch
+        from src.contexts.coding.core.services.text_matcher import TextMatch
 
         segment_repo = Mock()
         event_bus = Mock()
@@ -357,7 +357,7 @@ class TestUndoLastBatch:
     def test_undo_last_batch_removes_segments(self):
         """Controller should remove segments from last batch."""
         from src.application.coding.auto_coding_controller import AutoCodingController
-        from src.domain.coding.services.text_matcher import TextMatch
+        from src.contexts.coding.core.services.text_matcher import TextMatch
 
         segment_repo = Mock()
         segment_repo.delete = Mock()
@@ -389,7 +389,7 @@ class TestUndoLastBatch:
     def test_undo_last_batch_publishes_event(self):
         """Controller should publish BatchUndone event."""
         from src.application.coding.auto_coding_controller import AutoCodingController
-        from src.domain.coding.services.text_matcher import TextMatch
+        from src.contexts.coding.core.services.text_matcher import TextMatch
 
         segment_repo = Mock()
         event_bus = Mock()

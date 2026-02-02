@@ -45,13 +45,45 @@ class MockEventBus:
 
     def publish(self, event: Any) -> None:
         """Publish an event to subscribers."""
-        event_type = getattr(event, "event_type", type(event).__name__)
+        event_type = self._get_event_type(event)
         # Notify type-specific handlers
         for handler in self._handlers.get(event_type, []):
             handler(event)
         # Notify all-handlers
         for handler in self._all_handlers:
             handler(event)
+
+    def _get_event_type(self, event: Any) -> str:
+        """Get event type string, matching real EventBus logic."""
+        # Check for event_type attribute first
+        if hasattr(event, "event_type") and event.event_type:
+            return event.event_type
+
+        # Generate from module and class name (same as real EventBus)
+        event_class = type(event)
+        module = event_class.__module__
+
+        # Extract context from module path
+        # Handles both old (domain.projects.events) and new (contexts.projects.core.events)
+        parts = module.split(".")
+        if "contexts" in parts:
+            # New structure: src.contexts.projects.core.events -> "projects"
+            idx = parts.index("contexts")
+            context = parts[idx + 1] if idx + 1 < len(parts) else parts[-1]
+        elif "domain" in parts:
+            # Old structure: src.domain.projects.events -> "projects"
+            idx = parts.index("domain")
+            context = parts[idx + 1] if idx + 1 < len(parts) else parts[-1]
+        else:
+            context = parts[-1] if parts else "unknown"
+
+        # Convert class name from CamelCase to snake_case
+        class_name = event_class.__name__
+        snake_name = "".join(
+            f"_{c.lower()}" if c.isupper() else c for c in class_name
+        ).lstrip("_")
+
+        return f"{context}.{snake_name}"
 
     def clear(self) -> None:
         """Clear all subscriptions."""

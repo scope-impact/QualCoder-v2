@@ -5,14 +5,15 @@ from __future__ import annotations
 import pytest
 from sqlalchemy import create_engine
 
-from src.application.coding.controller import CodingControllerImpl
+from src.application.contexts.coding import CodingContext
 from src.application.event_bus import EventBus
-from src.infrastructure.coding.repositories import (
+from src.contexts.coding.infra.repositories import (
     SQLiteCategoryRepository,
     SQLiteCodeRepository,
     SQLiteSegmentRepository,
 )
-from src.infrastructure.coding.schema import create_all
+from src.contexts.coding.infra.schema import create_all
+from src.presentation.factory import CodingOperations
 
 
 @pytest.fixture
@@ -56,13 +57,19 @@ def event_bus() -> EventBus:
 
 
 @pytest.fixture
-def controller(
-    code_repo, category_repo, segment_repo, event_bus
-) -> CodingControllerImpl:
-    """Create a coding controller."""
-    return CodingControllerImpl(
+def coding_context(code_repo, category_repo, segment_repo) -> CodingContext:
+    """Create a coding context for use cases."""
+    return CodingContext(
         code_repo=code_repo,
         category_repo=category_repo,
         segment_repo=segment_repo,
+    )
+
+
+@pytest.fixture
+def controller(coding_context, event_bus) -> CodingOperations:
+    """Create a coding operations adapter (replaces old controller)."""
+    return CodingOperations(
+        coding_ctx=coding_context,
         event_bus=event_bus,
     )

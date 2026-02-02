@@ -1,7 +1,7 @@
 ---
 id: QC-038
 title: Settings and Preferences
-status: To Do
+status: Done
 assignee: []
 created_date: '2026-01-30 21:14'
 labels: []
@@ -16,10 +16,37 @@ Enable researchers to customize the application appearance, behavior, and backup
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 Researcher can change UI theme (dark, light, colors)
-- [ ] #2 Researcher can configure font size and family
-- [ ] #3 Researcher can select application language
-- [ ] #4 Researcher can configure automatic backups
-- [ ] #5 Researcher can set timestamp format for AV coding
-- [ ] #6 Researcher can configure speaker name format
+- [x] #1 Researcher can change UI theme (dark, light, colors)
+- [x] #2 Researcher can configure font size and family
+- [x] #3 Researcher can select application language
+- [x] #4 Researcher can configure automatic backups
+- [x] #5 Researcher can set timestamp format for AV coding
+- [x] #6 Researcher can configure speaker name format
 <!-- AC:END -->
+
+## Implementation Notes
+
+Settings feature fully implemented with DDD architecture:
+
+**Domain Layer** (`src/domain/settings/`):
+- Entities: ThemePreference, FontPreference, LanguagePreference, BackupConfig, AVCodingConfig, UserSettings
+- Events: ThemeChanged, FontChanged, LanguageChanged, BackupConfigChanged, AVCodingConfigChanged
+- Derivers: Pure validation functions for each setting type
+- Invariants: Valid values and validators
+
+**Infrastructure Layer** (`src/infrastructure/settings/`):
+- UserSettingsRepository: JSON file persistence with platform-specific paths
+
+**Application Layer** (`src/application/settings/`):
+- SettingsControllerImpl: 5-step controller pattern
+- Commands: ChangeTheme, ChangeFont, ChangeLanguage, ChangeBackupConfig, ChangeAVCodingConfig
+
+**Presentation Layer**:
+- SettingsDialog: Tabbed UI (Appearance, Language, Backup, AV Coding)
+- SettingsViewModel: Transforms domain to DTOs
+- AppShell integration: Settings button with gear icon in menu bar
+
+**Tests**:
+- 66 unit tests (derivers, repository, controller)
+- 17 E2E tests (dialog, persistence, round-trip)
+- 6 integration tests (AppShell settings button)

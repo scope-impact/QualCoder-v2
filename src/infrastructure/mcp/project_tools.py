@@ -14,9 +14,11 @@ These tools follow the MCP (Model Context Protocol) specification:
 
 Usage:
     from src.infrastructure.mcp import ProjectTools
+    from src.application.app_context import get_app_context
 
-    # Create tools with controller dependency
-    tools = ProjectTools(controller=project_controller)
+    # Create tools with AppContext dependency
+    ctx = get_app_context()
+    tools = ProjectTools(ctx=ctx)
 
     # Execute a tool
     result = tools.execute("get_project_context", {})
@@ -25,12 +27,43 @@ Usage:
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Protocol, runtime_checkable
 
 from returns.result import Failure, Result, Success
 
 if TYPE_CHECKING:
-    from src.application.projects.controller import ProjectControllerImpl
+    from src.application.navigation.service import NavigationService
+    from src.application.state import ProjectState
+
+
+@runtime_checkable
+class ProjectToolsContext(Protocol):
+    """
+    Protocol defining the context requirements for ProjectTools.
+
+    This protocol allows ProjectTools to work with both AppContext
+    (the target architecture) and CoordinatorInfrastructure (legacy).
+
+    Required properties:
+    - state: ProjectState for accessing sources, cases, project info
+    - event_bus: EventBus for publishing domain events
+    - signal_bridge: Optional ProjectSignalBridge for UI updates
+    """
+
+    @property
+    def state(self) -> ProjectState:
+        """Get the project state cache."""
+        ...
+
+    @property
+    def event_bus(self):
+        """Get the event bus for publishing domain events."""
+        ...
+
+    @property
+    def signal_bridge(self):
+        """Get the signal bridge for UI updates (optional)."""
+        ...
 
 
 # ============================================================
@@ -244,8 +277,10 @@ class ProjectTools:
     - List and filter project sources
 
     Example:
-        controller = ProjectControllerImpl(event_bus=EventBus())
-        tools = ProjectTools(controller=controller)
+        from src.application.app_context import get_app_context
+
+        ctx = get_app_context()
+        tools = ProjectTools(ctx=ctx)
 
         # Get available tools
         schemas = tools.get_tool_schemas()
@@ -254,14 +289,38 @@ class ProjectTools:
         result = tools.execute("get_project_context", {})
     """
 
-    def __init__(self, controller: ProjectControllerImpl) -> None:
+    def __init__(
+        self,
+        ctx: ProjectToolsContext | None = None,
+        *,
+        navigation_service: NavigationService | None = None,
+        # Legacy parameter for backward compatibility
+        coordinator=None,
+    ) -> None:
         """
-        Initialize project tools with controller dependency.
+        Initialize project tools with context dependency.
 
         Args:
-            controller: The project controller to delegate operations to
+            ctx: The context containing state, event_bus, and signal_bridge.
+                 Can be either AppContext or CoordinatorInfrastructure.
+            navigation_service: Optional pre-configured NavigationService. If not
+                provided, one will be created from ctx when needed.
+            coordinator: DEPRECATED. Use ctx instead. Accepts ApplicationCoordinator
+                for backward compatibility (will use its internal infrastructure).
         """
-        self._controller = controller
+        # Handle backward compatibility with old coordinator parameter
+        if ctx is None and coordinator is not None:
+            # ApplicationCoordinator has _infra which satisfies ProjectToolsContext
+            ctx = coordinator._infra
+
+        if ctx is None:
+            raise ValueError(
+                "ctx (AppContext or CoordinatorInfrastructure) is required"
+            )
+
+        self._ctx = ctx
+        self._navigation_service = navigation_service
+
         self._tools: dict[str, ToolDefinition] = {
             "get_project_context": get_project_context_tool,
             "list_sources": list_sources_tool,
@@ -269,6 +328,23 @@ class ProjectTools:
             "navigate_to_segment": navigate_to_segment_tool,
             "suggest_source_metadata": suggest_source_metadata_tool,
         }
+
+    @property
+    def _state(self):
+        """Get the project state from context."""
+        return self._ctx.state
+
+    def _get_navigation_service(self) -> NavigationService:
+        """
+        Get or create the navigation service.
+
+        Lazily creates NavigationService to avoid import issues during init.
+        """
+        if self._navigation_service is None:
+            from src.application.navigation.service import NavigationService
+
+            self._navigation_service = NavigationService(self._ctx)
+        return self._navigation_service
 
     def get_tool_schemas(self) -> list[dict[str, Any]]:
         """
@@ -328,7 +404,36 @@ class ProjectTools:
         - sources: list of source dicts
         - current_screen: str
         """
-        context = self._controller.get_project_context()
+        state = self._state
+
+        if state.project is None:
+            return Success({"project_open": False})
+
+        context = {
+            "project_open": True,
+            "project_name": state.project.name,
+            "project_path": str(state.project.path),
+            "source_count": len(state.sources),
+            "sources": [
+                {
+                    "id": s.id.value,
+                    "name": s.name,
+                    "type": s.source_type.value,
+                    "status": s.status.value,
+                }
+                for s in state.sources
+            ],
+            "case_count": len(state.cases),
+            "cases": [
+                {
+                    "id": c.id.value,
+                    "name": c.name,
+                    "description": c.description,
+                }
+                for c in state.cases
+            ],
+            "current_screen": state.current_screen,
+        }
         return Success(context)
 
     def _execute_list_sources(
@@ -344,11 +449,12 @@ class ProjectTools:
             Dict with sources list
         """
         source_type = arguments.get("source_type")
+        all_sources = list(self._state.sources)
 
         if source_type:
-            sources = self._controller.get_sources_by_type(source_type)
+            sources = [s for s in all_sources if s.source_type.value == source_type]
         else:
-            sources = self._controller.get_sources()
+            sources = all_sources
 
         return Success(
             {
@@ -389,8 +495,8 @@ class ProjectTools:
         if source_id is None:
             return Failure("Missing required parameter: source_id")
 
-        # Find the source
-        source = self._controller.get_source(int(source_id))
+        # Find the source from state
+        source = self._state.get_source(int(source_id))
         if source is None:
             return Failure(f"Source not found: {source_id}")
 
@@ -437,7 +543,7 @@ class ProjectTools:
         Returns:
             Success with navigation result, or Failure
         """
-        from src.application.projects.controller import NavigateToSegmentCommand
+        from src.application.projects.commands import NavigateToSegmentCommand
 
         # Validate required parameters
         source_id = arguments.get("source_id")
@@ -453,7 +559,7 @@ class ProjectTools:
 
         highlight = arguments.get("highlight", True)
 
-        # Create command and execute
+        # Create command and execute via NavigationService
         command = NavigateToSegmentCommand(
             source_id=int(source_id),
             start_pos=int(start_pos),
@@ -461,7 +567,8 @@ class ProjectTools:
             highlight=bool(highlight),
         )
 
-        result = self._controller.navigate_to_segment(command)
+        nav_service = self._get_navigation_service()
+        result = nav_service.navigate_to_segment(command)
 
         if isinstance(result, Failure):
             return result
@@ -475,7 +582,7 @@ class ProjectTools:
                     "end_pos": end_pos,
                     "highlight": highlight,
                 },
-                "current_screen": self._controller.get_current_screen(),
+                "current_screen": nav_service.get_current_screen(),
             }
         )
 
@@ -497,7 +604,7 @@ class ProjectTools:
             return Failure("Missing required parameter: source_id")
 
         # Verify source exists
-        source = self._controller.get_source(int(source_id))
+        source = self._state.get_source(int(source_id))
         if source is None:
             return Failure(f"Source not found: {source_id}")
 

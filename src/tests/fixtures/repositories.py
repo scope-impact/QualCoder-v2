@@ -12,12 +12,14 @@ from __future__ import annotations
 
 import pytest
 
-from src.infrastructure.projects.case_repository import SQLiteCaseRepository
-from src.infrastructure.projects.folder_repository import SQLiteFolderRepository
-from src.infrastructure.projects.settings_repository import (
+# Import repositories from new bounded context locations
+from src.contexts.cases.infra.case_repository import SQLiteCaseRepository
+from src.contexts.coding.infra.repositories import SQLiteSegmentRepository
+from src.contexts.projects.infra.settings_repository import (
     SQLiteProjectSettingsRepository,
 )
-from src.infrastructure.projects.source_repository import SQLiteSourceRepository
+from src.contexts.sources.infra.folder_repository import SQLiteFolderRepository
+from src.contexts.sources.infra.source_repository import SQLiteSourceRepository
 
 
 @pytest.fixture
@@ -42,3 +44,9 @@ def case_repo(db_connection):
 def folder_repo(db_connection):
     """Create a folder repository connected to the test database."""
     return SQLiteFolderRepository(db_connection)
+
+
+@pytest.fixture
+def segment_repo(db_connection):
+    """Create a segment repository connected to the test database."""
+    return SQLiteSegmentRepository(db_connection)

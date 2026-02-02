@@ -59,6 +59,16 @@ class OpenSourceCommand:
     source_id: int
 
 
+@dataclass(frozen=True)
+class UpdateSourceCommand:
+    """Command to update source metadata."""
+
+    source_id: int
+    memo: str | None = None
+    origin: str | None = None
+    status: str | None = None
+
+
 # ============================================================
 # Navigation Commands
 # ============================================================
@@ -136,3 +146,39 @@ class SetCaseAttributeCommand:
     attr_name: str
     attr_type: str  # text, number, date, boolean
     attr_value: Any
+
+
+# ============================================================
+# Folder Commands
+# ============================================================
+
+
+@dataclass(frozen=True)
+class CreateFolderCommand:
+    """Command to create a new folder."""
+
+    name: str
+    parent_id: int | None = None
+
+
+@dataclass(frozen=True)
+class RenameFolderCommand:
+    """Command to rename a folder."""
+
+    folder_id: int
+    new_name: str
+
+
+@dataclass(frozen=True)
+class DeleteFolderCommand:
+    """Command to delete an empty folder."""
+
+    folder_id: int
+
+
+@dataclass(frozen=True)
+class MoveSourceToFolderCommand:
+    """Command to move a source to a folder."""
+
+    source_id: int
+    folder_id: int | None  # None = move to root (no folder)

@@ -14,8 +14,8 @@ from datetime import UTC, datetime
 
 import pytest
 
-from src.domain.cases.entities import AttributeType, Case, CaseAttribute
-from src.domain.shared.types import CaseId, SourceId
+from src.contexts.cases.core.entities import AttributeType, Case, CaseAttribute
+from src.contexts.shared.core.types import CaseId, SourceId
 from src.presentation.dto import CaseDTO, CaseSummaryDTO
 
 # ============================================================

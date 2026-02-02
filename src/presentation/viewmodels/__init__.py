@@ -7,6 +7,7 @@ handling data transformation and event binding.
 
 # Pure Python ViewModels - always available
 from src.presentation.viewmodels.file_manager_viewmodel import FileManagerViewModel
+from src.presentation.viewmodels.settings_viewmodel import SettingsViewModel
 
 # Qt-dependent ViewModels - conditional import
 try:
@@ -15,9 +16,11 @@ try:
     __all__ = [
         "TextCodingViewModel",
         "FileManagerViewModel",
+        "SettingsViewModel",
     ]
 except ImportError:
     # Qt not available - only pure Python ViewModels are exported
     __all__ = [
         "FileManagerViewModel",
+        "SettingsViewModel",
     ]
