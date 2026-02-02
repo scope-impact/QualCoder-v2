@@ -308,7 +308,7 @@ class QualCoderApp:
         self._shell.load_and_apply_settings(self._ctx.settings_repo)
 
         # Connect settings button to open dialog with live updates
-        self._shell.settings_clicked.connect(self._shell.open_settings_dialog)
+        self._shell.settings_clicked.connect(self._on_settings_clicked)
 
         # Connect file manager navigation to coding screen
         self._screens["files"].navigate_to_coding.connect(self._on_navigate_to_coding)
@@ -334,6 +334,16 @@ class QualCoderApp:
         if menu_id in self._screens:
             self._shell.set_screen(self._screens[menu_id])
             self._shell.set_active_tab(tab_id)
+
+    def _on_settings_clicked(self):
+        """Handle settings button click with live UI updates."""
+        dialog = self._dialog_service.show_settings_dialog(
+            parent=self._shell,
+            colors=self._shell._colors,
+        )
+        # Live UI updates: re-apply theme/font after dialog closes
+        if dialog:
+            self._shell.load_and_apply_settings(self._ctx.settings_repo)
 
     def _on_open_project(self):
         """Handle open project request."""
