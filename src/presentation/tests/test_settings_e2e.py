@@ -491,33 +491,40 @@ class TestFullRoundTrip:
     Verifies all ACs together with persistence and reload.
     """
 
-    @allure.title("Complete workflow: Change settings, close, and reload")
+    @allure.title("Complete workflow: All 6 ACs persist to JSON and reload correctly")
     @allure.link("QC-038", name="Backlog Task")
-    def test_multiple_settings_persist_and_reload_after_restart(
+    def test_all_settings_persist_and_reload_after_restart(
         self, qapp, colors, temp_config_path
     ):
         """
-        E2E: Multiple setting changes persist to file and reload correctly.
+        E2E: All settings persist to JSON file and reload correctly.
 
-        This test simulates a complete user session:
-        1. Open settings dialog
-        2. Make changes to theme (AC #1), font (AC #2), and language (AC #3)
-        3. Close dialog (settings persisted)
-        4. "Restart" by creating new repository/dialog
-        5. Verify all settings loaded correctly from file
+        This test verifies complete round-trip for ALL 6 acceptance criteria:
+        - AC #1: Theme (dark)
+        - AC #2: Font size (16) and family (Roboto)
+        - AC #3: Language (German)
+        - AC #4: Backup enabled (True) and interval (45 minutes)
+        - AC #5: Timestamp format (MM:SS)
+        - AC #6: Speaker format (Interviewee {n})
+
+        Flow: Dialog1 → JSON File → Dialog2 (verify reload)
         """
         from src.contexts.settings.infra import UserSettingsRepository
         from src.presentation.dialogs.settings_dialog import SettingsDialog
         from src.presentation.services import SettingsService
         from src.presentation.viewmodels import SettingsViewModel
 
-        with allure.step("Step 1: Create first dialog session"):
+        # =========================================================================
+        # Session 1: Make changes to all settings
+        # =========================================================================
+
+        with allure.step("Create first dialog session"):
             repo1 = UserSettingsRepository(config_path=temp_config_path)
             provider1 = SettingsService(repo1)
             viewmodel1 = SettingsViewModel(settings_provider=provider1)
             dialog1 = SettingsDialog(viewmodel=viewmodel1, colors=colors)
 
-        with allure.step("Step 2: Change theme to dark (AC #1)"):
+        with allure.step("AC #1: Change theme to dark"):
             theme_buttons = [
                 btn
                 for btn in dialog1.findChildren(QPushButton)
@@ -525,37 +532,103 @@ class TestFullRoundTrip:
             ]
             theme_buttons[0].click()
 
-        with allure.step("Step 3: Change font size to 16 (AC #2)"):
+        with allure.step("AC #2: Change font size to 16"):
             dialog1._font_slider.setValue(16)
 
-        with allure.step("Step 4: Change language to German (AC #3)"):
-            dialog1._language_combo.setCurrentIndex(
-                dialog1._language_combo.findData("de")
-            )
+        with allure.step("AC #2: Change font family to Roboto"):
+            roboto_index = dialog1._font_combo.findData("Roboto")
+            dialog1._font_combo.setCurrentIndex(roboto_index)
 
-        with allure.step("Step 5: Close dialog (settings persisted)"):
+        with allure.step("AC #3: Change language to German"):
+            de_index = dialog1._language_combo.findData("de")
+            dialog1._language_combo.setCurrentIndex(de_index)
+
+        with allure.step("AC #4: Enable backup and set interval to 45 minutes"):
+            dialog1._backup_enabled.setChecked(True)
+            dialog1._backup_interval.setValue(45)
+
+        with allure.step("AC #5: Change timestamp format to MM:SS"):
+            mm_ss_index = dialog1._timestamp_combo.findData("MM:SS")
+            dialog1._timestamp_combo.setCurrentIndex(mm_ss_index)
+
+        with allure.step("AC #6: Change speaker format to custom"):
+            dialog1._speaker_format.setText("Interviewee {n}")
+
+        with allure.step("Close dialog (settings persisted to JSON)"):
             QApplication.processEvents()
             dialog1.close()
 
-        with allure.step("Step 6: Create NEW dialog session (simulates restart)"):
+        # =========================================================================
+        # Verify JSON file contains all settings
+        # =========================================================================
+
+        with allure.step("Verify all settings written to JSON file"):
+            settings = repo1.load()
+            assert settings.theme.name == "dark", "Theme not persisted"
+            assert settings.font.size == 16, "Font size not persisted"
+            assert settings.font.family == "Roboto", "Font family not persisted"
+            assert settings.language.code == "de", "Language not persisted"
+            assert settings.backup.enabled is True, "Backup enabled not persisted"
+            assert settings.backup.interval_minutes == 45, (
+                "Backup interval not persisted"
+            )
+            assert settings.av_coding.timestamp_format == "MM:SS", (
+                "Timestamp not persisted"
+            )
+            assert settings.av_coding.speaker_format == "Interviewee {n}", (
+                "Speaker format not persisted"
+            )
+
+        # =========================================================================
+        # Session 2: Create new dialog and verify settings loaded from JSON
+        # =========================================================================
+
+        with allure.step("Create NEW dialog session (simulates app restart)"):
             repo2 = UserSettingsRepository(config_path=temp_config_path)
             provider2 = SettingsService(repo2)
             viewmodel2 = SettingsViewModel(settings_provider=provider2)
             dialog2 = SettingsDialog(viewmodel=viewmodel2, colors=colors)
 
-        with allure.step("Step 7: Verify theme loaded as dark (AC #1)"):
+        with allure.step("AC #1: Verify theme loaded as dark"):
             dark_btn = next(
                 btn
                 for btn in dialog2.findChildren(QPushButton)
                 if btn.property("theme_value") == "dark"
             )
-            assert dark_btn.isChecked()
+            assert dark_btn.isChecked(), "Theme not loaded from JSON"
 
-        with allure.step("Step 8: Verify font size loaded as 16 (AC #2)"):
-            assert dialog2._font_slider.value() == 16
+        with allure.step("AC #2: Verify font size loaded as 16"):
+            assert dialog2._font_slider.value() == 16, "Font size not loaded from JSON"
 
-        with allure.step("Step 9: Verify language loaded as German (AC #3)"):
-            assert dialog2._language_combo.currentData() == "de"
+        with allure.step("AC #2: Verify font family loaded as Roboto"):
+            assert dialog2._font_combo.currentData() == "Roboto", (
+                "Font family not loaded from JSON"
+            )
 
-        with allure.step("Step 10: Close dialog"):
+        with allure.step("AC #3: Verify language loaded as German"):
+            assert dialog2._language_combo.currentData() == "de", (
+                "Language not loaded from JSON"
+            )
+
+        with allure.step("AC #4: Verify backup enabled loaded as True"):
+            assert dialog2._backup_enabled.isChecked() is True, (
+                "Backup enabled not loaded from JSON"
+            )
+
+        with allure.step("AC #4: Verify backup interval loaded as 45"):
+            assert dialog2._backup_interval.value() == 45, (
+                "Backup interval not loaded from JSON"
+            )
+
+        with allure.step("AC #5: Verify timestamp format loaded as MM:SS"):
+            assert dialog2._timestamp_combo.currentData() == "MM:SS", (
+                "Timestamp format not loaded from JSON"
+            )
+
+        with allure.step("AC #6: Verify speaker format loaded as custom"):
+            assert dialog2._speaker_format.text() == "Interviewee {n}", (
+                "Speaker format not loaded from JSON"
+            )
+
+        with allure.step("Close dialog"):
             dialog2.close()
