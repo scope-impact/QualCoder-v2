@@ -13,6 +13,7 @@ dependencies = [
     "pillow>=10.0",
     # Media playback (LGPL-2.1 - VLC bindings)
     "python-vlc>=3.0",
+    "allure-pytest>=2.15.3",
 ]
 
 [tool.uv.workspace]

@@ -1,6 +1,6 @@
-# Part 3: Understanding the Result Type
+# Part 3: Understanding Failure Events and the Result Type
 
-Why do we use `Success | Failure` instead of exceptions?
+Why do we use explicit failure events instead of exceptions?
 
 ## The Problem with Exceptions
 
@@ -67,32 +67,45 @@ except DuplicateNameError:
     ...
 ```
 
-## The Result Type Solution
+## The Failure Events Solution
 
-We use the [`returns`](https://returns.readthedocs.io/) library for proper monadic Result types. See `src/domain/shared/types.py`:
+QualCoder v2 uses **failure events** - domain events that represent failed operations. These are defined in `src/contexts/{context}/core/failure_events.py`:
 
 ```python
-from returns.result import Failure, Result, Success
+@dataclass(frozen=True)
+class CodeNotCreated(FailureEvent):
+    """Failure event: Code creation failed."""
 
-# Re-exported for use throughout the codebase
-__all__ = ["Success", "Failure", "Result"]
+    name: str | None = None
+    category_id: CategoryId | None = None
+
+    @classmethod
+    def empty_name(cls) -> CodeNotCreated:
+        return cls(
+            event_id=cls._generate_id(),
+            occurred_at=cls._now(),
+            event_type="CODE_NOT_CREATED/EMPTY_NAME",
+        )
+
+    @classmethod
+    def duplicate_name(cls, name: str) -> CodeNotCreated:
+        return cls(
+            event_id=cls._generate_id(),
+            occurred_at=cls._now(),
+            event_type="CODE_NOT_CREATED/DUPLICATE_NAME",
+            name=name,
+        )
 ```
-
-The `returns` library provides:
-- **`Success(value)`** - wraps a successful value
-- **`Failure(error)`** - wraps an error value
-- **`.unwrap()`** - extracts the success value (raises on failure)
-- **`.failure()`** - extracts the error value
-- **`.map(fn)`** - transforms the success value
-- **`.bind(fn)`** - chains operations that return Results
 
 Now our function signature is **honest**:
 
 ```python
-def derive_create_code(...) -> CodeCreated | Failure:
+def derive_create_code(...) -> CodeCreated | CodeNotCreated:
 ```
 
-The return type tells you: "You'll get a `CodeCreated` event OR a `Failure`."
+The return type tells you: "You'll get a `CodeCreated` success event OR a `CodeNotCreated` failure event."
+
+> **Note:** The codebase also re-exports the [`returns`](https://returns.readthedocs.io/) library's `Success`/`Failure` types from `src/contexts/shared/core/types.py` for use in other scenarios.
 
 ## Benefits
 
@@ -103,169 +116,160 @@ The caller **must** handle both cases:
 ```python
 result = derive_create_code(name, color, state)
 
-if isinstance(result, Failure):
+if isinstance(result, CodeNotCreated):
     # Handle error - can't accidentally ignore it
-    return handle_error(result.failure())
+    return handle_error(result)
 
 # result is CodeCreated here
 save_and_publish(result)
 ```
 
-### 2. Pattern Matching on Failure Types
+### 2. Pattern Matching on Failure Events
 
-Each failure is a dataclass you can match:
+Failure events have a `reason` property extracted from their `event_type`:
 
 ```python
 result = derive_create_code(name, color, state)
 
-if isinstance(result, Failure):
-    match result.failure():
-        case EmptyName():
+if isinstance(result, CodeNotCreated):
+    match result.reason:
+        case "EMPTY_NAME":
             show_error("Please enter a name")
-        case DuplicateName(name=name):
-            show_error(f"'{name}' already exists")
-        case InvalidPriority(value=value):
-            show_error(f"Priority {value} must be 1-5")
+        case "DUPLICATE_NAME":
+            show_error(f"'{result.name}' already exists")
+        case "CATEGORY_NOT_FOUND":
+            show_error(f"Category not found")
         case _:
-            show_error("Unknown error")
+            show_error(result.message)  # Fallback to human-readable message
 ```
 
-### 3. Failure Types are Data
+### 3. Failure Events are Data
 
-Failures carry context as data:
+Failure events carry context as data:
 
 ```python
 @dataclass(frozen=True)
-class DuplicateName:
-    name: str
-    message: str = ""
+class CodeNotCreated(FailureEvent):
+    name: str | None = None
+    category_id: CategoryId | None = None
 
-    def __post_init__(self):
-        object.__setattr__(self, 'message', f"Code name '{self.name}' already exists")
+    @property
+    def message(self) -> str:
+        match self.reason:
+            case "EMPTY_NAME":
+                return "Code name cannot be empty"
+            case "DUPLICATE_NAME":
+                return f"Code name '{self.name}' already exists"
+            case _:
+                return super().message
 ```
 
 You can:
-- Access `failure.name` for the conflicting name
-- Access `failure.message` for user-friendly text
-- Serialize it for logging/API responses
+- Access `result.name` for the conflicting name
+- Access `result.message` for user-friendly text
+- Access `result.reason` for programmatic handling
+- Publish failure events to the EventBus for policies to react
 
 ### 4. No Hidden Control Flow
 
 The function signature tells the whole story. No surprise exceptions.
 
-### 5. Composition with `returns`
+### 5. Composition with Explicit Checking
 
-The `returns` library enables elegant composition:
-
-```python
-# Using map for simple transformations
-result = Success(5).map(lambda x: x * 2)  # Success(10)
-
-# Using bind for chaining operations that return Results
-def validate_name(name: str) -> Result[str, EmptyName]:
-    if not name:
-        return Failure(EmptyName())
-    return Success(name)
-
-def check_unique(name: str) -> Result[str, DuplicateName]:
-    if name in existing_names:
-        return Failure(DuplicateName(name))
-    return Success(name)
-
-# Chain validations - stops at first failure
-result = validate_name(name).bind(check_unique)
-```
-
-For simpler cases, explicit checking works well:
+For chaining operations, explicit checking works well:
 
 ```python
 def create_and_apply(name, color, source_id, position, state):
     # First operation
     code_result = derive_create_code(name, color, state)
-    if isinstance(code_result, Failure):
-        return code_result  # Pass through the failure
+    if isinstance(code_result, CodeNotCreated):
+        return code_result  # Pass through the failure event
 
     # Second operation
-    segment_result = derive_apply_code(
+    segment_result = derive_apply_code_to_text(
         code_id=code_result.code_id,
         source_id=source_id,
-        position=position,
+        start=position.start,
+        end=position.end,
+        selected_text="...",
+        memo=None,
+        importance=0,
+        owner=None,
         state=state,
     )
 
-    return segment_result  # Could be success or failure
+    return segment_result  # Could be SegmentCoded or SegmentNotCoded
 ```
 
-## Failure Types in QualCoder
+> **Note:** The `returns` library (`Success`/`Failure`/`Result`) is also available from `src/contexts/shared/core/types.py` for scenarios where you need monadic composition.
 
-Look at the failure types in `src/domain/shared/types.py`:
+## Failure Events in QualCoder
+
+Look at the failure events in `src/contexts/coding/core/failure_events.py`:
 
 ```python
 @dataclass(frozen=True)
-class DuplicateName:
-    name: str
-    message: str = ""
+class CodeNotCreated(FailureEvent):
+    """Failure event: Code creation failed."""
+    name: str | None = None
+    category_id: CategoryId | None = None
+
+    @classmethod
+    def empty_name(cls) -> CodeNotCreated:
+        return cls(event_type="CODE_NOT_CREATED/EMPTY_NAME", ...)
+
+    @classmethod
+    def duplicate_name(cls, name: str) -> CodeNotCreated:
+        return cls(event_type="CODE_NOT_CREATED/DUPLICATE_NAME", name=name, ...)
 
 @dataclass(frozen=True)
-class CodeNotFound:
-    code_id: CodeId
-    message: str = ""
+class CodeNotDeleted(FailureEvent):
+    """Failure event: Code deletion failed."""
+    code_id: CodeId | None = None
+    reference_count: int = 0
 
-@dataclass(frozen=True)
-class InvalidPosition:
-    start: int
-    end: int
-    source_length: int
-    message: str = ""
+    @classmethod
+    def not_found(cls, code_id: CodeId) -> CodeNotDeleted:
+        return cls(event_type="CODE_NOT_DELETED/NOT_FOUND", code_id=code_id, ...)
 
-@dataclass(frozen=True)
-class EmptyName:
-    message: str = "Code name cannot be empty"
+    @classmethod
+    def has_references(cls, code_id: CodeId, count: int) -> CodeNotDeleted:
+        return cls(event_type="CODE_NOT_DELETED/HAS_REFERENCES", code_id=code_id, reference_count=count, ...)
 ```
 
-And in `src/domain/coding/derivers.py`:
-
-```python
-@dataclass(frozen=True)
-class CategoryNotFound:
-    category_id: CategoryId
-    message: str = ""
-
-@dataclass(frozen=True)
-class HasReferences:
-    entity_type: str
-    entity_id: int
-    reference_count: int
-    message: str = ""
-```
-
-Each failure type:
+Each failure event:
+- Inherits from `FailureEvent` base class
 - Is a frozen dataclass (immutable)
-- Carries relevant context
-- Has a `message` for human-readable output
+- Has factory methods for each failure reason
+- Carries relevant context (IDs, names, counts)
+- Has a `message` property for human-readable output
+- Has a `reason` property extracted from `event_type`
+- Can be published to the EventBus for policies to react
 
 ## When to Use Each
 
-**Use `Failure` for:**
+**Use failure events for:**
 - Business rule violations (duplicate name, invalid priority)
 - Missing entities (code not found, category not found)
 - Invalid state transitions
+- Any failure that policies or UI might need to react to
 
 **Use exceptions for:**
 - Programming errors (should never happen in production)
 - Infrastructure failures (database down, network error)
 - System-level issues (out of memory)
 
-The domain layer returns `Failure`. The infrastructure/application layers handle exceptions.
+The domain layer returns failure events. The infrastructure/application layers handle exceptions.
 
 ## Summary
 
-The Result type (`Success | Failure`) provides:
+Failure events (`CodeCreated | CodeNotCreated`) provide:
 
 - **Explicit error handling** - can't forget to check
 - **Type-safe** - errors are data, not exceptions
-- **Pattern matchable** - easy to handle different cases
-- **Composable** - chain operations cleanly
+- **Pattern matchable** - easy to handle different reasons
+- **Publishable** - failure events can be published to EventBus for policies
+- **Rich context** - carry IDs, names, and human-readable messages
 - **No hidden control flow** - signature tells all
 
 ## Next Steps

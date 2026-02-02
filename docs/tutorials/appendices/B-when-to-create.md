@@ -259,14 +259,14 @@ Used in:
 # Fine: Inline for obvious checks
 if category_id is not None:
     if not does_category_exist(category_id, state.existing_categories):
-        return Failure(CategoryNotFound(category_id))
+        return CodeNotCreated.category_not_found(category_id)
 ```
 
 The `category_id is not None` check doesn't need a named invariant.
 
-## Decision 5: New Failure Type vs. Reusing Existing
+## Decision 5: New Failure Event Reason vs. Reusing Existing
 
-**Question:** Should I create a new failure type, or reuse a generic one?
+**Question:** Should I create a new failure event reason, or reuse an existing one?
 
 ```mermaid
 flowchart TD
@@ -285,31 +285,38 @@ flowchart TD
     Q3 -->|No| GENERIC
 ```
 
-### Create New Failure Type When:
+### Create New Failure Event Reason When:
 
 - The error has specific context to capture
 - UI needs to handle it differently
 - It helps debugging/logging
 - The message needs specific field values
 
-**Example:** `InvalidPriority`
+**Example:** `CodeNotCreated.invalid_priority()`
 
 ```python
 @dataclass(frozen=True)
-class InvalidPriority:
-    value: int  # Capture the bad value
-    message: str = ""
+class CodeNotCreated(FailureEvent):
+    priority_value: int | None = None  # Capture the bad value
 
-    def __post_init__(self):
-        object.__setattr__(
-            self, 'message',
-            f"Priority must be 1-5, got {self.value}"
+    @classmethod
+    def invalid_priority(cls, value: int) -> "CodeNotCreated":
+        return cls(
+            event_type="CODE_NOT_CREATED/INVALID_PRIORITY",
+            priority_value=value,
+            ...
         )
+
+    @property
+    def message(self) -> str:
+        if self.reason == "INVALID_PRIORITY":
+            return f"Priority must be 1-5, got {self.priority_value}"
+        ...
 ```
 
 UI can show: "Priority must be 1-5, got 10" with the actual bad value.
 
-### Reuse Generic Failure When:
+### Reuse Existing Failure Event Reason When:
 
 - The error is truly generic
 - No specific context helps
@@ -318,11 +325,14 @@ UI can show: "Priority must be 1-5, got 10" with the actual bad value.
 **Example:** Generic validation error
 
 ```python
-# Sometimes fine for rare cases
-return Failure(ValidationError("Unexpected state"))
+# Sometimes fine for rare cases - use a generic reason
+return CodeNotCreated(
+    event_type="CODE_NOT_CREATED/VALIDATION_ERROR",
+    ...
+)
 ```
 
-But usually, a specific type is better.
+But usually, a specific reason is better for debugging and UI handling.
 
 ## Master Decision Tree
 

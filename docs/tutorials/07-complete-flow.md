@@ -81,14 +81,16 @@ flowchart TB
 ## Key Files
 
 ```
-src/domain/coding/
+src/contexts/coding/core/
 ├── invariants.py          # is_valid_priority()
 ├── derivers.py            # derive_create_code()
 ├── events.py              # CodeCreated (with priority)
+├── failure_events.py      # CodeNotCreated, CodeNotDeleted, etc.
 └── entities.py            # Code entity
 
-src/domain/shared/
-└── types.py               # Failure, InvalidPriority
+src/contexts/shared/core/
+├── types.py               # DomainEvent, typed IDs
+└── failure_events.py      # FailureEvent base class
 
 src/application/
 ├── event_bus.py           # EventBus
@@ -148,7 +150,7 @@ sequenceDiagram
         TV->>TV: Add code to tree
         AP->>AP: Show "Code created"
     else Validation fails
-        DV-->>C: Failure(reason)
+        DV-->>C: FailureEvent(reason)
         C-->>D: Failure
         D->>D: Show error message
     end
@@ -158,17 +160,17 @@ sequenceDiagram
 
 ```mermaid
 graph TB
-    subgraph INV ["Invariants (test_invariants.py)"]
+    subgraph INV ["Invariants (src/contexts/coding/core/tests/test_invariants.py)"]
         INV_TEST["def test_valid_priority():<br/>    assert is_valid_priority(3) is True<br/>    assert is_valid_priority(10) is False"]
         INV_PROPS["✓ No setup<br/>✓ No mocks<br/>✓ Microseconds"]
     end
 
-    subgraph DER ["Derivers (test_derivers.py)"]
+    subgraph DER ["Derivers (src/contexts/coding/core/tests/test_derivers.py)"]
         DER_TEST["def test_create_code_with_priority(empty_state):<br/>    result = derive_create_code(..., priority=3, state=empty_state)<br/>    assert isinstance(result, CodeCreated)<br/>    assert result.priority == 3"]
         DER_PROPS["✓ Data fixtures<br/>✓ No database<br/>✓ Fast"]
     end
 
-    subgraph CONV ["Converters (test_converters.py)"]
+    subgraph CONV ["Converters (src/application/signal_bridge/tests/test_payloads.py)"]
         CONV_TEST["def test_converter_includes_priority():<br/>    event = CodeCreated(..., priority=3)<br/>    payload = converter.convert(event)<br/>    assert payload.priority == 3"]
         CONV_PROPS["✓ Pure transformation<br/>✓ No Qt required"]
     end
@@ -188,23 +190,23 @@ To add a new field (like `priority`) to an existing flow:
 ```mermaid
 flowchart LR
     subgraph Step1 ["1. Invariant"]
-        I["invariants.py<br/>is_valid_priority()"]
+        I["core/invariants.py<br/>is_valid_priority()"]
     end
 
-    subgraph Step2 ["2. Failure Type"]
-        F["types.py<br/>InvalidPriority"]
+    subgraph Step2 ["2. Failure Event"]
+        F["core/failure_events.py<br/>CodeNotCreated.invalid_priority()"]
     end
 
     subgraph Step3 ["3. Deriver"]
-        D["derivers.py<br/>Add parameter<br/>Add validation"]
+        D["core/derivers.py<br/>Add parameter<br/>Add validation"]
     end
 
     subgraph Step4 ["4. Event"]
-        E["events.py<br/>Add field to CodeCreated"]
+        E["core/events.py<br/>Add field to CodeCreated"]
     end
 
     subgraph Step5 ["5. Payload"]
-        P["payloads.py<br/>Add field to payload"]
+        P["signal_bridge/payloads.py<br/>Add field to payload"]
     end
 
     subgraph Step6 ["6. Converter"]
@@ -212,7 +214,7 @@ flowchart LR
     end
 
     subgraph Step7 ["7. Tests"]
-        T["test_invariants.py<br/>test_derivers.py"]
+        T["core/tests/test_invariants.py<br/>core/tests/test_derivers.py"]
     end
 
     Step1 --> Step2 --> Step3 --> Step4 --> Step5 --> Step6 --> Step7
@@ -220,30 +222,30 @@ flowchart LR
 
 ### Checklist
 
-1. **Invariant** (`invariants.py`)
+1. **Invariant** (`src/contexts/coding/core/invariants.py`)
    - [ ] Add `is_valid_<field>()` pure predicate
 
-2. **Failure Type** (`derivers.py` or `types.py`)
-   - [ ] Add `Invalid<Field>` frozen dataclass
+2. **Failure Event** (`src/contexts/coding/core/failure_events.py`)
+   - [ ] Add factory method to existing failure event class (e.g., `CodeNotCreated.invalid_priority()`)
 
-3. **Deriver** (`derivers.py`)
+3. **Deriver** (`src/contexts/coding/core/derivers.py`)
    - [ ] Add parameter to function signature
    - [ ] Add validation call
-   - [ ] Return `Failure(Invalid<Field>())` if invalid
+   - [ ] Return failure event if invalid (e.g., `CodeNotCreated.invalid_priority(value)`)
 
-4. **Event** (`events.py`)
+4. **Event** (`src/contexts/coding/core/events.py`)
    - [ ] Add field to event dataclass
    - [ ] Add to `create()` factory method
 
-5. **Payload** (`payloads.py`)
+5. **Payload** (`src/application/signal_bridge/payloads.py`)
    - [ ] Add field to payload dataclass
 
 6. **Converter** (context-specific)
    - [ ] Map `event.<field>` to `payload.<field>`
 
 7. **Tests**
-   - [ ] `test_invariants.py`: Test the predicate
-   - [ ] `test_derivers.py`: Test valid/invalid cases
+   - [ ] `src/contexts/coding/core/tests/test_invariants.py`: Test the predicate
+   - [ ] `src/contexts/coding/core/tests/test_derivers.py`: Test valid/invalid cases
 
 ## You're Ready!
 

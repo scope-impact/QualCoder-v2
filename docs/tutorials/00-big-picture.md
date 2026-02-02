@@ -55,8 +55,8 @@ def test_duplicate_name_rejected():
 def test_duplicate_name_rejected():
     state = CodingState(existing_codes=(Code(name="Theme A", ...),))
     result = derive_create_code("Theme A", ..., state=state)
-    assert isinstance(result, Failure)
-    assert isinstance(result.failure(), DuplicateName)
+    assert isinstance(result, CodeNotCreated)
+    assert result.reason == "DUPLICATE_NAME"
 ```
 
 No database. No mocks. Just data in, data out.
@@ -136,18 +136,18 @@ Properties:
 Pure functions that compose invariants and derive events.
 
 ```python
-def derive_create_code(name, color, state) -> CodeCreated | Failure:
+def derive_create_code(name, color, state) -> CodeCreated | CodeNotCreated:
     if not is_valid_code_name(name):
-        return Failure(EmptyName())
+        return CodeNotCreated.empty_name()
     if not is_code_name_unique(name, state.existing_codes):
-        return Failure(DuplicateName(name))
-    return CodeCreated(name=name, color=color, ...)
+        return CodeNotCreated.duplicate_name(name)
+    return CodeCreated.create(name=name, color=color, ...)
 ```
 
 Properties:
-- Take command + state, return event or failure
+- Take command + state, return success event or failure event
 - Compose multiple invariants
-- Pattern: `(command, state) -> Success | Failure`
+- Pattern: `(command, state) -> SuccessEvent | FailureEvent`
 
 ### 3. Events
 
