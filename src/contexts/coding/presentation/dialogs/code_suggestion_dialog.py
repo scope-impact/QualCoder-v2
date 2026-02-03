@@ -241,6 +241,48 @@ class SuggestionCard(QFrame):
         """Handle reject button click."""
         self.reject_clicked.emit(self._suggestion_id, "")
 
+    # =========================================================================
+    # Public API for black-box testing
+    # =========================================================================
+
+    def set_name(self, name: str) -> None:
+        """
+        Set the name in the input field.
+
+        BLACK-BOX API: Encapsulates access to the private _name_input widget.
+
+        Args:
+            name: The name to set
+        """
+        self._name_input.setText(name)
+
+    def get_name(self) -> str:
+        """
+        Get the current name from the input field.
+
+        BLACK-BOX API: Encapsulates access to the private _name_input widget.
+
+        Returns:
+            The current name text
+        """
+        return self._name_input.text()
+
+    def approve(self) -> None:
+        """
+        Programmatically approve this suggestion.
+
+        BLACK-BOX API: Triggers approval as if the user clicked the approve button.
+        """
+        self._on_approve()
+
+    def reject(self) -> None:
+        """
+        Programmatically reject this suggestion.
+
+        BLACK-BOX API: Triggers rejection as if the user clicked the reject button.
+        """
+        self._on_reject()
+
 
 class CodeSuggestionDialog(QDialog):
     """
@@ -473,3 +515,73 @@ class CodeSuggestionDialog(QDialog):
         """Slot to receive error notifications."""
         # Could show error dialog here
         pass
+
+    # =========================================================================
+    # Public API for black-box testing
+    # =========================================================================
+
+    def get_suggestion_count(self) -> int:
+        """Get the number of suggestions currently displayed."""
+        return len(self._cards)
+
+    def set_suggestion_name(self, suggestion_id: str, name: str) -> None:
+        """
+        Set the name input for a suggestion card.
+
+        Args:
+            suggestion_id: ID of the suggestion
+            name: The name to set in the input field
+        """
+        if suggestion_id in self._cards:
+            self._cards[suggestion_id].set_name(name)
+
+    def get_suggestion_name(self, suggestion_id: str) -> str | None:
+        """
+        Get the current name from a suggestion card's input field.
+
+        Args:
+            suggestion_id: ID of the suggestion
+
+        Returns:
+            The current name in the input field, or None if suggestion not found
+        """
+        if suggestion_id in self._cards:
+            return self._cards[suggestion_id].get_name()
+        return None
+
+    def approve_suggestion(self, suggestion_id: str) -> None:
+        """
+        Programmatically approve a suggestion.
+
+        Triggers approval as if the user clicked the approve button on the card.
+
+        Args:
+            suggestion_id: ID of the suggestion to approve
+        """
+        if suggestion_id in self._cards:
+            self._cards[suggestion_id].approve()
+
+    def reject_suggestion(self, suggestion_id: str) -> None:
+        """
+        Programmatically reject a suggestion.
+
+        Triggers rejection as if the user clicked the reject button on the card.
+
+        Args:
+            suggestion_id: ID of the suggestion to reject
+        """
+        if suggestion_id in self._cards:
+            self._cards[suggestion_id].reject()
+
+    def approve_all(self) -> None:
+        """
+        Programmatically approve all suggestions.
+
+        This calls the internal _on_approve_all method as if the user clicked
+        the 'Approve All' button.
+        """
+        self._on_approve_all()
+
+    def is_empty_state_visible(self) -> bool:
+        """Check if the empty state label is currently visible."""
+        return self._empty_label.isVisible()

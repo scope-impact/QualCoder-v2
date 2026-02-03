@@ -565,3 +565,48 @@ class DuplicateCodesDialog(QDialog):
         """Slot to receive error notifications."""
         # Could show error dialog here
         pass
+
+    # =========================================================================
+    # Public API for black-box testing
+    # =========================================================================
+
+    def get_candidate_count(self) -> int:
+        """Get the number of duplicate candidate pairs currently displayed."""
+        return len(self._cards)
+
+    def request_merge(self, source_id: int, target_id: int) -> None:
+        """
+        Programmatically request a merge operation.
+
+        This emits the merge_requested signal as if the user clicked the merge button.
+
+        Args:
+            source_id: ID of the code to merge from (will be deleted)
+            target_id: ID of the code to merge into (will be kept)
+        """
+        self.merge_requested.emit(source_id, target_id)
+
+    def request_dismiss(self, code_a_id: int, code_b_id: int) -> None:
+        """
+        Programmatically request a dismiss operation.
+
+        This emits the dismiss_requested signal and removes the card from the UI.
+
+        Args:
+            code_a_id: ID of the first code in the pair
+            code_b_id: ID of the second code in the pair
+        """
+        self.dismiss_requested.emit(code_a_id, code_b_id, "")
+        self._remove_card(code_a_id, code_b_id)
+
+    def request_scan(self) -> None:
+        """
+        Programmatically request a scan for duplicates.
+
+        This calls the internal _on_scan method as if the user clicked the scan button.
+        """
+        self._on_scan()
+
+    def is_empty_state_visible(self) -> bool:
+        """Check if the empty state label is currently visible."""
+        return self._empty_label.isVisible()

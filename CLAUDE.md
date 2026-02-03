@@ -118,3 +118,46 @@ fix(coding): resolve segment overlap detection
 test(cases): add e2e tests for case manager
 docs: update CLAUDE.md
 ```
+
+---
+
+## Common Issues / Wiring Checklist
+
+### Screen ↔ ViewModel Wiring Pattern
+
+Every Screen that needs domain operations must be wired to its ViewModel in `main.py`:
+
+```python
+# In _wire_viewmodels() - called when project opens
+def _wire_viewmodels(self):
+    # 1. Create ViewModel with repos from context
+    viewmodel = SomeViewModel(
+        some_repo=self._ctx.some_context.some_repo,
+        event_bus=self._ctx.event_bus,
+        signal_bridge=self._some_signal_bridge,
+    )
+    # 2. Wire to screen
+    self._screens["screen_name"].set_viewmodel(viewmodel)
+```
+
+**Checklist when adding a new Screen:**
+- [ ] Screen has `set_viewmodel()` method
+- [ ] ViewModel created in `_wire_viewmodels()` with correct repos
+- [ ] Screen wired after project opens (repos need DB connection)
+- [ ] SignalBridge connected for reactive UI updates
+
+**Current wiring status in main.py:**
+| Screen | ViewModel | Wired | Status |
+|--------|-----------|-------|--------|
+| FileManagerScreen | FileManagerViewModel | ✅ | Working |
+| TextCodingScreen | TextCodingViewModel | ❌ | **NEEDS WIRING** |
+| CaseManagerScreen | CaseManagerViewModel | ❌ | Needs check |
+| ProjectScreen | — | N/A | Static UI |
+
+### Why UI clicks do nothing
+
+If clicking UI does nothing, check:
+1. **No ViewModel** — Screen created without viewmodel
+2. **ViewModel not wired** — `_wire_viewmodels()` missing the screen
+3. **Signal not connected** — Screen emits signal but nothing listens
+4. **Repos not available** — Project not opened yet (repos need DB)

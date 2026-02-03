@@ -1,19 +1,21 @@
 """
-Create Code Dialog
+Create Category Dialog
 
-Dialog for creating a new code with name and color selection.
+Dialog for creating a new code category.
 
-Implements QC-028.01 Create New Code:
-- AC #1: Enter code name
-- AC #2: Select color for the code
+Implements QC-028.02 Organize Codes into Categories:
+- AC #1: Enter category name
+- AC #2: Select parent category (optional)
 - AC #3: Add description/memo (optional)
 """
 
+from __future__ import annotations
+
 from PySide6.QtCore import Qt, Signal
 from PySide6.QtWidgets import (
+    QComboBox,
     QDialog,
     QFrame,
-    QGridLayout,
     QHBoxLayout,
     QLabel,
     QLineEdit,
@@ -31,56 +33,43 @@ from design_system import (
     get_colors,
 )
 
-# Preset colors for quick selection
-PRESET_COLORS = [
-    # Row 1: Reds and oranges
-    "#F44336",
-    "#E91E63",
-    "#FF5722",
-    "#FF9800",
-    # Row 2: Yellows and greens
-    "#FFEB3B",
-    "#CDDC39",
-    "#8BC34A",
-    "#4CAF50",
-    # Row 3: Blues and teals
-    "#009688",
-    "#00BCD4",
-    "#03A9F4",
-    "#2196F3",
-    # Row 4: Purples and grays
-    "#3F51B5",
-    "#673AB7",
-    "#9C27B0",
-    "#607D8B",
-]
 
-
-class CreateCodeDialog(QDialog):
+class CreateCategoryDialog(QDialog):
     """
-    Dialog for creating a new code.
+    Dialog for creating a new code category.
 
-    Provides input for code name, color selection, and optional memo.
+    Provides input for category name, parent selection, and optional memo.
 
     Signals:
-        code_created(str, str, str): Emitted when code is created (name, color, memo)
+        category_created(str, int | None, str): Emitted when category is created
+            (name, parent_id, memo)
     """
 
-    code_created = Signal(str, str, str)  # name, color, memo
+    category_created = Signal(str, object, str)  # name, parent_id (int|None), memo
 
     def __init__(
         self,
+        existing_categories: list[dict] | None = None,
         colors: ColorPalette = None,
         parent=None,
     ):
+        """
+        Initialize the dialog.
+
+        Args:
+            existing_categories: List of existing categories for parent selection.
+                Each dict should have 'id' and 'name' keys.
+            colors: Color palette for styling
+            parent: Parent widget
+        """
         super().__init__(parent)
         self._colors = colors or get_colors()
-        self._selected_color = PRESET_COLORS[0]
+        self._categories = existing_categories or []
 
-        self.setWindowTitle("Create New Code")
+        self.setWindowTitle("Create New Category")
         self.setModal(True)
-        self.setMinimumSize(400, 380)
-        self.setMaximumSize(500, 500)
+        self.setMinimumSize(400, 320)
+        self.setMaximumSize(500, 450)
 
         self._setup_ui()
 
@@ -112,8 +101,8 @@ class CreateCodeDialog(QDialog):
         )
         content_layout.setSpacing(SPACING.lg)
 
-        # Code name input
-        name_label = QLabel("Code Name")
+        # Category name input
+        name_label = QLabel("Category Name")
         name_label.setStyleSheet(f"""
             color: {self._colors.text_secondary};
             font-size: {TYPOGRAPHY.text_sm}px;
@@ -122,7 +111,7 @@ class CreateCodeDialog(QDialog):
         content_layout.addWidget(name_label)
 
         self._name_input = QLineEdit()
-        self._name_input.setPlaceholderText("Enter code name...")
+        self._name_input.setPlaceholderText("Enter category name...")
         self._name_input.setStyleSheet(f"""
             QLineEdit {{
                 background-color: {self._colors.surface_light};
@@ -139,16 +128,36 @@ class CreateCodeDialog(QDialog):
         self._name_input.textChanged.connect(self._validate)
         content_layout.addWidget(self._name_input)
 
-        # Color selection
-        color_label = QLabel("Color")
-        color_label.setStyleSheet(f"""
+        # Parent category selection
+        parent_label = QLabel("Parent Category (optional)")
+        parent_label.setStyleSheet(f"""
             color: {self._colors.text_secondary};
             font-size: {TYPOGRAPHY.text_sm}px;
             font-weight: {TYPOGRAPHY.weight_medium};
         """)
-        content_layout.addWidget(color_label)
+        content_layout.addWidget(parent_label)
 
-        self._setup_color_grid(content_layout)
+        self._parent_combo = QComboBox()
+        self._parent_combo.addItem("None (Top Level)", None)
+        for cat in self._categories:
+            self._parent_combo.addItem(cat["name"], cat["id"])
+        self._parent_combo.setStyleSheet(f"""
+            QComboBox {{
+                background-color: {self._colors.surface_light};
+                color: {self._colors.text_primary};
+                border: 1px solid {self._colors.border};
+                border-radius: {RADIUS.md}px;
+                padding: {SPACING.sm}px {SPACING.md}px;
+                font-size: {TYPOGRAPHY.text_sm}px;
+            }}
+            QComboBox:focus {{
+                border-color: {self._colors.primary};
+            }}
+            QComboBox::drop-down {{
+                border: none;
+            }}
+        """)
+        content_layout.addWidget(self._parent_combo)
 
         # Memo input (optional)
         memo_label = QLabel("Description (optional)")
@@ -160,7 +169,7 @@ class CreateCodeDialog(QDialog):
         content_layout.addWidget(memo_label)
 
         self._memo_input = QTextEdit()
-        self._memo_input.setPlaceholderText("Add a description for this code...")
+        self._memo_input.setPlaceholderText("Add a description for this category...")
         self._memo_input.setMaximumHeight(80)
         self._memo_input.setStyleSheet(f"""
             QTextEdit {{
@@ -196,7 +205,7 @@ class CreateCodeDialog(QDialog):
 
         # Icon
         icon = Icon(
-            "mdi6.label-outline",
+            "mdi6.folder-plus-outline",
             size=20,
             color=self._colors.primary,
             colors=self._colors,
@@ -204,7 +213,7 @@ class CreateCodeDialog(QDialog):
         header_layout.addWidget(icon)
 
         # Title
-        title_label = QLabel("Create New Code")
+        title_label = QLabel("Create New Category")
         title_label.setStyleSheet(f"""
             color: {self._colors.text_primary};
             font-size: {TYPOGRAPHY.text_lg}px;
@@ -214,60 +223,6 @@ class CreateCodeDialog(QDialog):
         header_layout.addStretch()
 
         layout.addWidget(header)
-
-    def _setup_color_grid(self, layout: QVBoxLayout):
-        """Setup the color selection grid."""
-        grid_frame = QFrame()
-        grid_layout = QGridLayout(grid_frame)
-        grid_layout.setContentsMargins(0, 0, 0, 0)
-        grid_layout.setSpacing(SPACING.xs)
-
-        self._color_buttons: list[QPushButton] = []
-
-        for i, color in enumerate(PRESET_COLORS):
-            row = i // 4
-            col = i % 4
-
-            btn = QPushButton()
-            btn.setFixedSize(36, 36)
-            btn.setCursor(Qt.CursorShape.PointingHandCursor)
-            btn.setProperty("color", color)
-            btn.setStyleSheet(self._get_color_button_style(color, selected=i == 0))
-            btn.clicked.connect(
-                lambda _checked, c=color, b=btn: self._on_color_click(c, b)
-            )
-
-            self._color_buttons.append(btn)
-            grid_layout.addWidget(btn, row, col)
-
-        layout.addWidget(grid_frame)
-
-    def _get_color_button_style(self, color: str, selected: bool = False) -> str:
-        """Get stylesheet for a color button."""
-        border = (
-            f"3px solid {self._colors.primary}" if selected else "2px solid transparent"
-        )
-        return f"""
-            QPushButton {{
-                background-color: {color};
-                border: {border};
-                border-radius: {RADIUS.md}px;
-            }}
-            QPushButton:hover {{
-                border: 2px solid {self._colors.text_secondary};
-            }}
-        """
-
-    def _on_color_click(self, color: str, button: QPushButton):
-        """Handle color button click."""
-        self._selected_color = color
-
-        # Update button styles
-        for btn in self._color_buttons:
-            btn_color = btn.property("color")
-            btn.setStyleSheet(
-                self._get_color_button_style(btn_color, selected=btn == button)
-            )
 
     def _setup_footer(self, layout: QVBoxLayout):
         """Setup the dialog footer with buttons."""
@@ -302,7 +257,7 @@ class CreateCodeDialog(QDialog):
         footer_layout.addWidget(self._cancel_btn)
 
         # Create button
-        self._create_btn = QPushButton("Create Code")
+        self._create_btn = QPushButton("Create Category")
         self._create_btn.setCursor(Qt.CursorShape.PointingHandCursor)
         self._create_btn.setEnabled(False)
         self._create_btn.setStyleSheet(f"""
@@ -336,33 +291,45 @@ class CreateCodeDialog(QDialog):
     def _on_create(self):
         """Handle create button click."""
         name = self._name_input.text().strip()
+        parent_id = self._parent_combo.currentData()
         memo = self._memo_input.toPlainText().strip()
 
         if name:
-            self.code_created.emit(name, self._selected_color, memo)
+            self.category_created.emit(name, parent_id, memo)
             self.accept()
 
-    def get_code_name(self) -> str:
-        """Get the entered code name."""
+    # =========================================================================
+    # Public API for black-box testing
+    # =========================================================================
+
+    def get_category_name(self) -> str:
+        """Get the entered category name."""
         return self._name_input.text().strip()
 
-    def get_code_color(self) -> str:
-        """Get the selected color."""
-        return self._selected_color
-
-    def get_code_memo(self) -> str:
-        """Get the entered memo."""
-        return self._memo_input.toPlainText().strip()
-
-    def set_code_name(self, name: str):
-        """Pre-fill the code name (e.g., for in-vivo coding)."""
+    def set_category_name(self, name: str) -> None:
+        """Set the category name."""
         self._name_input.setText(name)
         self._validate()
 
-    def set_code_memo(self, memo: str):
-        """
-        Set the memo text.
+    def get_parent_id(self) -> int | None:
+        """Get the selected parent category ID."""
+        return self._parent_combo.currentData()
 
-        BLACK-BOX API: Allows setting memo without accessing private _memo_input.
-        """
+    def set_parent_id(self, parent_id: int | None) -> None:
+        """Set the parent category by ID."""
+        for i in range(self._parent_combo.count()):
+            if self._parent_combo.itemData(i) == parent_id:
+                self._parent_combo.setCurrentIndex(i)
+                return
+
+    def get_category_memo(self) -> str:
+        """Get the entered memo."""
+        return self._memo_input.toPlainText().strip()
+
+    def set_category_memo(self, memo: str) -> None:
+        """Set the memo text."""
         self._memo_input.setPlainText(memo)
+
+    def get_parent_options_count(self) -> int:
+        """Get the number of parent category options."""
+        return self._parent_combo.count()
