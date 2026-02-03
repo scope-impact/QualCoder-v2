@@ -12,8 +12,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 from pathlib import Path
 
-from src.contexts.shared.core.failure_events import FailureEvent
-from src.contexts.shared.core.types import FolderId, SourceId
+from src.shared.common.failure_events import FailureEvent
+from src.shared.common.types import FolderId, SourceId
 
 # ============================================================
 # Project Failure Events

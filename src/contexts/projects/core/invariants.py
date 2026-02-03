@@ -17,8 +17,8 @@ from collections.abc import Callable, Iterable
 from pathlib import Path
 
 from src.contexts.projects.core.entities import Folder, Source, SourceType
-from src.contexts.shared.core.types import FolderId, SourceId
-from src.contexts.shared.core.validation import is_non_empty_string, is_within_length
+from src.shared.common.types import FolderId, SourceId
+from src.shared.core.validation import is_non_empty_string, is_within_length
 
 # ============================================================
 # File Extension Mappings
@@ -28,7 +28,7 @@ TEXT_EXTENSIONS = frozenset({".txt", ".docx", ".doc", ".odt", ".rtf", ".md", ".e
 AUDIO_EXTENSIONS = frozenset({".mp3", ".wav", ".m4a", ".ogg", ".flac", ".aac", ".wma"})
 VIDEO_EXTENSIONS = frozenset({".mp4", ".mov", ".avi", ".mkv", ".wmv", ".webm", ".m4v"})
 IMAGE_EXTENSIONS = frozenset(
-    {".jpg", ".jpeg", ".png", ".gif", ".bmp", ".tiff", ".webp"}
+    {".jpg", ".jpeg", ".png", ".gif", ".bmp", ".tiff", ".webp", ".heic", ".heif"}
 )
 PDF_EXTENSIONS = frozenset({".pdf"})
 

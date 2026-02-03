@@ -85,7 +85,7 @@ from src.contexts.projects.core.invariants import (
     is_valid_project_path,
     is_valid_source_name,
 )
-from src.contexts.shared.core.types import FolderId
+from src.shared.common.types import FolderId
 
 __all__ = [
     # Entities

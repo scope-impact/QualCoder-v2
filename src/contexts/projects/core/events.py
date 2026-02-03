@@ -4,15 +4,18 @@ Project Context: Domain Events
 Immutable event records representing state changes in the project domain.
 Events are produced by Derivers and consumed by the Application layer.
 All events inherit from DomainEvent base class.
+
+Event type convention: projects.{entity}_{action}
 """
 
 from __future__ import annotations
 
 from dataclasses import dataclass
 from pathlib import Path
+from typing import ClassVar
 
 from src.contexts.projects.core.entities import SourceType
-from src.contexts.shared.core.types import DomainEvent, FolderId, SourceId
+from src.shared.common.types import DomainEvent, FolderId, SourceId
 
 # ============================================================
 # Project Events
@@ -22,6 +25,8 @@ from src.contexts.shared.core.types import DomainEvent, FolderId, SourceId
 @dataclass(frozen=True)
 class ProjectCreated(DomainEvent):
     """Event: A new project was created."""
+
+    event_type: ClassVar[str] = "projects.project_created"
 
     name: str
     path: Path
@@ -51,6 +56,8 @@ class ProjectCreated(DomainEvent):
 class ProjectOpened(DomainEvent):
     """Event: An existing project was opened."""
 
+    event_type: ClassVar[str] = "projects.project_opened"
+
     path: Path
     name: str | None = None  # May be resolved later from DB
 
@@ -73,6 +80,8 @@ class ProjectOpened(DomainEvent):
 class ProjectClosed(DomainEvent):
     """Event: The current project was closed."""
 
+    event_type: ClassVar[str] = "projects.project_closed"
+
     path: Path
 
     @classmethod
@@ -87,6 +96,8 @@ class ProjectClosed(DomainEvent):
 @dataclass(frozen=True)
 class ProjectRenamed(DomainEvent):
     """Event: Project was renamed."""
+
+    event_type: ClassVar[str] = "projects.project_renamed"
 
     path: Path
     old_name: str
@@ -111,6 +122,8 @@ class ProjectRenamed(DomainEvent):
 @dataclass(frozen=True)
 class SourceAdded(DomainEvent):
     """Event: A source file was added to the project."""
+
+    event_type: ClassVar[str] = "projects.source_added"
 
     source_id: SourceId
     name: str
@@ -151,6 +164,8 @@ class SourceAdded(DomainEvent):
 class SourceRemoved(DomainEvent):
     """Event: A source file was removed from the project."""
 
+    event_type: ClassVar[str] = "projects.source_removed"
+
     source_id: SourceId
     name: str
     segments_removed: int
@@ -174,6 +189,8 @@ class SourceRemoved(DomainEvent):
 @dataclass(frozen=True)
 class SourceRenamed(DomainEvent):
     """Event: A source was renamed."""
+
+    event_type: ClassVar[str] = "projects.source_renamed"
 
     source_id: SourceId
     old_name: str
@@ -199,6 +216,8 @@ class SourceRenamed(DomainEvent):
 class SourceOpened(DomainEvent):
     """Event: A source was opened for viewing/coding."""
 
+    event_type: ClassVar[str] = "projects.source_opened"
+
     source_id: SourceId
     name: str
     source_type: SourceType
@@ -223,6 +242,8 @@ class SourceOpened(DomainEvent):
 class SourceStatusChanged(DomainEvent):
     """Event: Source processing status changed."""
 
+    event_type: ClassVar[str] = "projects.source_status_changed"
+
     source_id: SourceId
     old_status: str
     new_status: str
@@ -246,6 +267,8 @@ class SourceStatusChanged(DomainEvent):
 @dataclass(frozen=True)
 class SourceUpdated(DomainEvent):
     """Event: Source metadata was updated."""
+
+    event_type: ClassVar[str] = "projects.source_updated"
 
     source_id: SourceId
     memo: str | None
@@ -279,6 +302,8 @@ class SourceUpdated(DomainEvent):
 class FolderCreated(DomainEvent):
     """Event: A folder was created."""
 
+    event_type: ClassVar[str] = "projects.folder_created"
+
     folder_id: FolderId
     name: str
     parent_id: FolderId | None
@@ -302,6 +327,8 @@ class FolderCreated(DomainEvent):
 @dataclass(frozen=True)
 class FolderRenamed(DomainEvent):
     """Event: A folder was renamed."""
+
+    event_type: ClassVar[str] = "projects.folder_renamed"
 
     folder_id: FolderId
     old_name: str
@@ -327,6 +354,8 @@ class FolderRenamed(DomainEvent):
 class FolderDeleted(DomainEvent):
     """Event: A folder was deleted."""
 
+    event_type: ClassVar[str] = "projects.folder_deleted"
+
     folder_id: FolderId
     name: str
 
@@ -347,6 +376,8 @@ class FolderDeleted(DomainEvent):
 @dataclass(frozen=True)
 class SourceMovedToFolder(DomainEvent):
     """Event: A source was moved to a different folder."""
+
+    event_type: ClassVar[str] = "projects.source_moved_to_folder"
 
     source_id: SourceId
     old_folder_id: FolderId | None
@@ -377,6 +408,8 @@ class SourceMovedToFolder(DomainEvent):
 class ScreenChanged(DomainEvent):
     """Event: User navigated to a different screen."""
 
+    event_type: ClassVar[str] = "projects.screen_changed"
+
     from_screen: str | None
     to_screen: str
 
@@ -397,6 +430,8 @@ class ScreenChanged(DomainEvent):
 @dataclass(frozen=True)
 class NavigatedToSegment(DomainEvent):
     """Event: User/Agent navigated to a specific segment in a source."""
+
+    event_type: ClassVar[str] = "projects.navigated_to_segment"
 
     source_id: SourceId
     position_start: int

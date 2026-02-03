@@ -53,7 +53,7 @@ from src.contexts.projects.core.invariants import (
     is_valid_project_name,
     is_valid_project_path,
 )
-from src.contexts.shared.core.types import FolderId, SourceId
+from src.shared.common.types import FolderId, SourceId
 
 # ============================================================
 # State Container (Input to Derivers)
