@@ -2,20 +2,20 @@
 Create Code Use Case.
 
 Functional use case for creating a new code in the codebook.
+Returns OperationResult with error codes, suggestions, and rollback support.
 """
 
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from returns.result import Failure, Result, Success
-
 from src.application.coding.usecases._state import build_coding_state
-from src.application.protocols import CreateCodeCommand
+from src.application.protocols import CreateCodeCommand, DeleteCodeCommand
 from src.contexts.coding.core.derivers import derive_create_code
 from src.contexts.coding.core.entities import Code, Color
 from src.contexts.coding.core.events import CodeCreated
 from src.contexts.shared.core.failure_events import FailureEvent
+from src.contexts.shared.core.operation_result import OperationResult
 from src.contexts.shared.core.types import CategoryId
 
 if TYPE_CHECKING:
@@ -27,7 +27,7 @@ def create_code(
     command: CreateCodeCommand,
     coding_ctx: CodingContext,
     event_bus: EventBus,
-) -> Result[Code, str]:
+) -> OperationResult:
     """
     Create a new code in the codebook.
 
@@ -37,13 +37,17 @@ def create_code(
         event_bus: Event bus for publishing events
 
     Returns:
-        Success with created Code, or Failure with error message
+        OperationResult with Code on success, or error details on failure
     """
     # Parse color
     try:
         color = Color.from_hex(command.color)
     except ValueError as e:
-        return Failure(str(e))
+        return OperationResult.fail(
+            error=str(e),
+            error_code="CODE_NOT_CREATED/INVALID_COLOR",
+            suggestions=("Use a valid hex color like #FF0000",),
+        )
 
     # Build current state
     state = build_coding_state(coding_ctx)
@@ -61,10 +65,10 @@ def create_code(
         state=state,
     )
 
-    # Handle failure events (now returned as events, not Failure wrapper)
+    # Handle failure events
     if isinstance(result, FailureEvent):
-        event_bus.publish(result)  # Publish failure for policies
-        return Failure(result.message)
+        event_bus.publish(result)
+        return OperationResult.from_failure(result)
 
     event: CodeCreated = result
 
@@ -82,4 +86,7 @@ def create_code(
     # Publish event
     event_bus.publish(event)
 
-    return Success(code)
+    return OperationResult.ok(
+        data=code,
+        rollback=DeleteCodeCommand(code_id=code.id.value, delete_segments=False),
+    )

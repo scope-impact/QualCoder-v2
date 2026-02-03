@@ -2,19 +2,19 @@
 Update Code Memo Use Case.
 
 Functional use case for updating a code's memo.
+Returns OperationResult with error codes, suggestions, and rollback support.
 """
 
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from returns.result import Failure, Result, Success
-
 from src.application.coding.usecases._state import build_coding_state
 from src.application.protocols import UpdateCodeMemoCommand
 from src.contexts.coding.core.derivers import derive_update_code_memo
 from src.contexts.coding.core.events import CodeMemoUpdated
 from src.contexts.shared.core.failure_events import FailureEvent
+from src.contexts.shared.core.operation_result import OperationResult
 from src.contexts.shared.core.types import CodeId
 
 if TYPE_CHECKING:
@@ -26,7 +26,7 @@ def update_code_memo(
     command: UpdateCodeMemoCommand,
     coding_ctx: CodingContext,
     event_bus: EventBus,
-) -> Result[CodeMemoUpdated, str]:
+) -> OperationResult:
     """
     Update a code's memo.
 
@@ -36,7 +36,7 @@ def update_code_memo(
         event_bus: Event bus for publishing events
 
     Returns:
-        Success with CodeMemoUpdated event, or Failure with error message
+        OperationResult with CodeMemoUpdated event on success, or error details on failure
     """
     state = build_coding_state(coding_ctx)
     code_id = CodeId(value=command.code_id)
@@ -47,10 +47,10 @@ def update_code_memo(
         state=state,
     )
 
-    # Handle failure events (now returned as events, not Failure wrapper)
+    # Handle failure events
     if isinstance(result, FailureEvent):
-        event_bus.publish(result)  # Publish failure for policies
-        return Failure(result.message)
+        event_bus.publish(result)
+        return OperationResult.from_failure(result)
 
     event: CodeMemoUpdated = result
 
@@ -61,4 +61,10 @@ def update_code_memo(
         coding_ctx.code_repo.save(updated_code)
 
     event_bus.publish(event)
-    return Success(event)
+
+    return OperationResult.ok(
+        data=event,
+        rollback=UpdateCodeMemoCommand(
+            code_id=command.code_id, new_memo=event.old_memo
+        ),
+    )

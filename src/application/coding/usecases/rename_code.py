@@ -2,19 +2,19 @@
 Rename Code Use Case.
 
 Functional use case for renaming an existing code.
+Returns OperationResult with error codes, suggestions, and rollback support.
 """
 
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from returns.result import Failure, Result, Success
-
 from src.application.coding.usecases._state import build_coding_state
 from src.application.protocols import RenameCodeCommand
 from src.contexts.coding.core.derivers import derive_rename_code
 from src.contexts.coding.core.events import CodeRenamed
 from src.contexts.shared.core.failure_events import FailureEvent
+from src.contexts.shared.core.operation_result import OperationResult
 from src.contexts.shared.core.types import CodeId
 
 if TYPE_CHECKING:
@@ -26,7 +26,7 @@ def rename_code(
     command: RenameCodeCommand,
     coding_ctx: CodingContext,
     event_bus: EventBus,
-) -> Result[CodeRenamed, str]:
+) -> OperationResult:
     """
     Rename an existing code.
 
@@ -36,7 +36,7 @@ def rename_code(
         event_bus: Event bus for publishing events
 
     Returns:
-        Success with CodeRenamed event, or Failure with error message
+        OperationResult with CodeRenamed event on success, or error details on failure
     """
     state = build_coding_state(coding_ctx)
     code_id = CodeId(value=command.code_id)
@@ -47,10 +47,10 @@ def rename_code(
         state=state,
     )
 
-    # Handle failure events (now returned as events, not Failure wrapper)
+    # Handle failure events
     if isinstance(result, FailureEvent):
-        event_bus.publish(result)  # Publish failure for policies
-        return Failure(result.message)
+        event_bus.publish(result)
+        return OperationResult.from_failure(result)
 
     event: CodeRenamed = result
 
@@ -61,4 +61,8 @@ def rename_code(
         coding_ctx.code_repo.save(updated_code)
 
     event_bus.publish(event)
-    return Success(event)
+
+    return OperationResult.ok(
+        data=event,
+        rollback=RenameCodeCommand(code_id=command.code_id, new_name=event.old_name),
+    )

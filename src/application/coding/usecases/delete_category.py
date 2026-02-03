@@ -2,19 +2,19 @@
 Delete Category Use Case.
 
 Functional use case for deleting a code category.
+Returns OperationResult with error codes and suggestions.
 """
 
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from returns.result import Failure, Result, Success
-
 from src.application.coding.usecases._state import build_coding_state
 from src.application.protocols import DeleteCategoryCommand
 from src.contexts.coding.core.derivers import derive_delete_category
 from src.contexts.coding.core.events import CategoryDeleted
 from src.contexts.shared.core.failure_events import FailureEvent
+from src.contexts.shared.core.operation_result import OperationResult
 from src.contexts.shared.core.types import CategoryId
 
 if TYPE_CHECKING:
@@ -26,7 +26,7 @@ def delete_category(
     command: DeleteCategoryCommand,
     coding_ctx: CodingContext,
     event_bus: EventBus,
-) -> Result[CategoryDeleted, str]:
+) -> OperationResult:
     """
     Delete a code category.
 
@@ -36,7 +36,7 @@ def delete_category(
         event_bus: Event bus for publishing events
 
     Returns:
-        Success with CategoryDeleted event, or Failure with error message
+        OperationResult with CategoryDeleted event on success, or error details on failure
     """
     state = build_coding_state(coding_ctx)
     category_id = CategoryId(value=command.category_id)
@@ -47,10 +47,10 @@ def delete_category(
         state=state,
     )
 
-    # Handle failure events (now returned as events, not Failure wrapper)
+    # Handle failure events
     if isinstance(result, FailureEvent):
-        event_bus.publish(result)  # Publish failure for policies
-        return Failure(result.message)
+        event_bus.publish(result)
+        return OperationResult.from_failure(result)
 
     event: CategoryDeleted = result
 
@@ -67,4 +67,6 @@ def delete_category(
     coding_ctx.category_repo.delete(category_id)
 
     event_bus.publish(event)
-    return Success(event)
+
+    # No rollback for delete - would need to recreate category and reassign codes
+    return OperationResult.ok(data=event)

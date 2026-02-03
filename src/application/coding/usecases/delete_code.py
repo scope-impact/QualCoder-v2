@@ -2,19 +2,19 @@
 Delete Code Use Case.
 
 Functional use case for deleting a code from the codebook.
+Returns OperationResult with error codes and suggestions.
 """
 
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from returns.result import Failure, Result, Success
-
 from src.application.coding.usecases._state import build_coding_state
 from src.application.protocols import DeleteCodeCommand
 from src.contexts.coding.core.derivers import derive_delete_code
 from src.contexts.coding.core.events import CodeDeleted
 from src.contexts.shared.core.failure_events import FailureEvent
+from src.contexts.shared.core.operation_result import OperationResult
 from src.contexts.shared.core.types import CodeId
 
 if TYPE_CHECKING:
@@ -26,7 +26,7 @@ def delete_code(
     command: DeleteCodeCommand,
     coding_ctx: CodingContext,
     event_bus: EventBus,
-) -> Result[CodeDeleted, str]:
+) -> OperationResult:
     """
     Delete a code from the codebook.
 
@@ -36,7 +36,7 @@ def delete_code(
         event_bus: Event bus for publishing events
 
     Returns:
-        Success with CodeDeleted event, or Failure with error message
+        OperationResult with CodeDeleted event on success, or error details on failure
     """
     state = build_coding_state(coding_ctx)
     code_id = CodeId(value=command.code_id)
@@ -47,10 +47,10 @@ def delete_code(
         state=state,
     )
 
-    # Handle failure events (now returned as events, not Failure wrapper)
+    # Handle failure events
     if isinstance(result, FailureEvent):
-        event_bus.publish(result)  # Publish failure for policies
-        return Failure(result.message)
+        event_bus.publish(result)
+        return OperationResult.from_failure(result)
 
     event: CodeDeleted = result
 
@@ -62,4 +62,6 @@ def delete_code(
     coding_ctx.code_repo.delete(code_id)
 
     event_bus.publish(event)
-    return Success(event)
+
+    # No rollback for delete - would need to recreate code with all data
+    return OperationResult.ok(data=event)

@@ -2,20 +2,20 @@
 Create Category Use Case.
 
 Functional use case for creating a new code category.
+Returns OperationResult with error codes, suggestions, and rollback support.
 """
 
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from returns.result import Failure, Result, Success
-
 from src.application.coding.usecases._state import build_coding_state
-from src.application.protocols import CreateCategoryCommand
+from src.application.protocols import CreateCategoryCommand, DeleteCategoryCommand
 from src.contexts.coding.core.derivers import derive_create_category
 from src.contexts.coding.core.entities import Category
 from src.contexts.coding.core.events import CategoryCreated
 from src.contexts.shared.core.failure_events import FailureEvent
+from src.contexts.shared.core.operation_result import OperationResult
 from src.contexts.shared.core.types import CategoryId
 
 if TYPE_CHECKING:
@@ -27,7 +27,7 @@ def create_category(
     command: CreateCategoryCommand,
     coding_ctx: CodingContext,
     event_bus: EventBus,
-) -> Result[Category, str]:
+) -> OperationResult:
     """
     Create a new code category.
 
@@ -37,7 +37,7 @@ def create_category(
         event_bus: Event bus for publishing events
 
     Returns:
-        Success with created Category, or Failure with error message
+        OperationResult with Category on success, or error details on failure
     """
     state = build_coding_state(coding_ctx)
     parent_id = CategoryId(value=command.parent_id) if command.parent_id else None
@@ -50,10 +50,10 @@ def create_category(
         state=state,
     )
 
-    # Handle failure events (now returned as events, not Failure wrapper)
+    # Handle failure events
     if isinstance(result, FailureEvent):
-        event_bus.publish(result)  # Publish failure for policies
-        return Failure(result.message)
+        event_bus.publish(result)
+        return OperationResult.from_failure(result)
 
     event: CategoryCreated = result
 
@@ -67,4 +67,10 @@ def create_category(
     coding_ctx.category_repo.save(category)
 
     event_bus.publish(event)
-    return Success(category)
+
+    return OperationResult.ok(
+        data=category,
+        rollback=DeleteCategoryCommand(
+            category_id=category.id.value, orphan_strategy="move_to_parent"
+        ),
+    )

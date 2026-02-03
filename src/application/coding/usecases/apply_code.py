@@ -2,20 +2,20 @@
 Apply Code Use Case.
 
 Functional use case for applying a code to a text segment.
+Returns OperationResult with error codes, suggestions, and rollback support.
 """
 
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 
-from returns.result import Failure, Result, Success
-
 from src.application.coding.usecases._state import build_coding_state
-from src.application.protocols import ApplyCodeCommand
+from src.application.protocols import ApplyCodeCommand, RemoveCodeCommand
 from src.contexts.coding.core.derivers import derive_apply_code_to_text
 from src.contexts.coding.core.entities import TextSegment
 from src.contexts.coding.core.events import SegmentCoded
 from src.contexts.shared.core.failure_events import FailureEvent
+from src.contexts.shared.core.operation_result import OperationResult
 from src.contexts.shared.core.types import CodeId, SourceId
 
 if TYPE_CHECKING:
@@ -28,7 +28,7 @@ def apply_code(
     coding_ctx: CodingContext,
     event_bus: EventBus,
     source_content_provider: Any | None = None,
-) -> Result[TextSegment, str]:
+) -> OperationResult:
     """
     Apply a code to a text segment.
 
@@ -39,7 +39,7 @@ def apply_code(
         source_content_provider: Optional provider for source content
 
     Returns:
-        Success with created TextSegment, or Failure with error message
+        OperationResult with TextSegment on success, or error details on failure
     """
     code_id = CodeId(value=command.code_id)
     source_id = SourceId(value=command.source_id)
@@ -75,7 +75,7 @@ def apply_code(
     # Handle failure events (now returned as events, not Failure wrapper)
     if isinstance(result, FailureEvent):
         event_bus.publish(result)  # Publish failure for policies
-        return Failure(result.message)
+        return OperationResult.from_failure(result)
 
     event: SegmentCoded = result
 
@@ -93,7 +93,11 @@ def apply_code(
     coding_ctx.segment_repo.save(segment)
 
     event_bus.publish(event)
-    return Success(segment)
+
+    return OperationResult.ok(
+        data=segment,
+        rollback=RemoveCodeCommand(segment_id=segment.id.value),
+    )
 
 
 def _get_selected_text(

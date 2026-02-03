@@ -15,7 +15,6 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Protocol
 
 from PySide6.QtCore import QObject, Signal
-from returns.result import Success
 
 from src.application.coding import (
     CategoryPayload,
@@ -42,22 +41,23 @@ from src.presentation.dto import (
 )
 
 if TYPE_CHECKING:
-    from returns.result import Result
-
     from src.contexts.coding.core.entities import Code, TextSegment
+    from src.contexts.shared.core.operation_result import OperationResult
 
 
 class CodingProvider(Protocol):
     """Protocol for coding operations."""
 
-    def create_code(self, command: CreateCodeCommand) -> Result: ...
-    def rename_code(self, command: RenameCodeCommand) -> Result: ...
-    def delete_code(self, command: DeleteCodeCommand) -> Result: ...
-    def update_code_memo(self, command: UpdateCodeMemoCommand) -> Result: ...
-    def move_code_to_category(self, command: MoveCodeToCategoryCommand) -> Result: ...
-    def apply_code(self, command: ApplyCodeCommand) -> Result: ...
-    def remove_segment(self, command: RemoveCodeCommand) -> Result: ...
-    def create_category(self, command: CreateCategoryCommand) -> Result: ...
+    def create_code(self, command: CreateCodeCommand) -> OperationResult: ...
+    def rename_code(self, command: RenameCodeCommand) -> OperationResult: ...
+    def delete_code(self, command: DeleteCodeCommand) -> OperationResult: ...
+    def update_code_memo(self, command: UpdateCodeMemoCommand) -> OperationResult: ...
+    def move_code_to_category(
+        self, command: MoveCodeToCategoryCommand
+    ) -> OperationResult: ...
+    def apply_code(self, command: ApplyCodeCommand) -> OperationResult: ...
+    def remove_segment(self, command: RemoveCodeCommand) -> OperationResult: ...
+    def create_category(self, command: CreateCategoryCommand) -> OperationResult: ...
     def get_all_codes(self) -> list: ...
     def get_all_categories(self) -> list: ...
     def get_segments_for_source(self, source_id: int) -> list: ...
@@ -203,10 +203,10 @@ class TextCodingViewModel(QObject):
         )
         result = self._controller.create_code(command)
 
-        if isinstance(result, Success):
+        if result.is_success:
             return True
         else:
-            self.error_occurred.emit(str(result.failure()))
+            self.error_occurred.emit(result.error or "Create code failed")
             return False
 
     def rename_code(self, code_id: int, new_name: str) -> bool:
@@ -223,10 +223,10 @@ class TextCodingViewModel(QObject):
         command = RenameCodeCommand(code_id=code_id, new_name=new_name)
         result = self._controller.rename_code(command)
 
-        if isinstance(result, Success):
+        if result.is_success:
             return True
         else:
-            self.error_occurred.emit(str(result.failure()))
+            self.error_occurred.emit(result.error or "Rename code failed")
             return False
 
     def delete_code(self, code_id: int, delete_segments: bool = False) -> bool:
@@ -243,10 +243,10 @@ class TextCodingViewModel(QObject):
         command = DeleteCodeCommand(code_id=code_id, delete_segments=delete_segments)
         result = self._controller.delete_code(command)
 
-        if isinstance(result, Success):
+        if result.is_success:
             return True
         else:
-            self.error_occurred.emit(str(result.failure()))
+            self.error_occurred.emit(result.error or "Delete code failed")
             return False
 
     def update_code_memo(self, code_id: int, new_memo: str | None) -> bool:
@@ -263,10 +263,10 @@ class TextCodingViewModel(QObject):
         command = UpdateCodeMemoCommand(code_id=code_id, new_memo=new_memo)
         result = self._controller.update_code_memo(command)
 
-        if isinstance(result, Success):
+        if result.is_success:
             return True
         else:
-            self.error_occurred.emit(str(result.failure()))
+            self.error_occurred.emit(result.error or "Update code memo failed")
             return False
 
     def move_code_to_category(self, code_id: int, category_id: int | None) -> bool:
@@ -283,10 +283,10 @@ class TextCodingViewModel(QObject):
         command = MoveCodeToCategoryCommand(code_id=code_id, category_id=category_id)
         result = self._controller.move_code_to_category(command)
 
-        if isinstance(result, Success):
+        if result.is_success:
             return True
         else:
-            self.error_occurred.emit(str(result.failure()))
+            self.error_occurred.emit(result.error or "Move code failed")
             return False
 
     def apply_code_to_selection(
@@ -319,10 +319,10 @@ class TextCodingViewModel(QObject):
         )
         result = self._controller.apply_code(command)
 
-        if isinstance(result, Success):
+        if result.is_success:
             return True
         else:
-            self.error_occurred.emit(str(result.failure()))
+            self.error_occurred.emit(result.error or "Apply code failed")
             return False
 
     def remove_segment(self, segment_id: int) -> bool:
@@ -336,12 +336,12 @@ class TextCodingViewModel(QObject):
             True if successful
         """
         command = RemoveCodeCommand(segment_id=segment_id)
-        result = self._controller.remove_code(command)
+        result = self._controller.remove_segment(command)
 
-        if isinstance(result, Success):
+        if result.is_success:
             return True
         else:
-            self.error_occurred.emit(str(result.failure()))
+            self.error_occurred.emit(result.error or "Remove segment failed")
             return False
 
     def create_category(self, name: str, parent_id: int | None = None) -> bool:
@@ -358,10 +358,10 @@ class TextCodingViewModel(QObject):
         command = CreateCategoryCommand(name=name, parent_id=parent_id)
         result = self._controller.create_category(command)
 
-        if isinstance(result, Success):
+        if result.is_success:
             return True
         else:
-            self.error_occurred.emit(str(result.failure()))
+            self.error_occurred.emit(result.error or "Create category failed")
             return False
 
     def select_code(self, code_id: int) -> None:

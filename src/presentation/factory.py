@@ -9,7 +9,6 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from returns.result import Result
 from sqlalchemy import Connection, create_engine
 from sqlalchemy.engine import Engine
 
@@ -39,6 +38,7 @@ from src.contexts.coding.infra import (
     SQLiteSegmentRepository,
     create_all,
 )
+from src.contexts.shared.core.operation_result import OperationResult
 from src.presentation.viewmodels import TextCodingViewModel
 
 if TYPE_CHECKING:
@@ -50,6 +50,7 @@ class CodingOperations:
     Adapter that provides controller-like interface using functional use cases.
 
     This replaces the old CodingControllerImpl with use case delegation.
+    All operations return OperationResult for rich error handling.
     """
 
     def __init__(
@@ -60,51 +61,51 @@ class CodingOperations:
         self._coding_ctx = coding_ctx
         self._event_bus = event_bus
 
-    def create_code(self, command) -> Result:
+    def create_code(self, command) -> OperationResult:
         """Create a new code."""
         return create_code(command, self._coding_ctx, self._event_bus)
 
-    def rename_code(self, command) -> Result:
+    def rename_code(self, command) -> OperationResult:
         """Rename a code."""
         return rename_code(command, self._coding_ctx, self._event_bus)
 
-    def change_code_color(self, command) -> Result:
+    def change_code_color(self, command) -> OperationResult:
         """Change a code's color."""
         return change_code_color(command, self._coding_ctx, self._event_bus)
 
-    def delete_code(self, command) -> Result:
+    def delete_code(self, command) -> OperationResult:
         """Delete a code."""
         return delete_code(command, self._coding_ctx, self._event_bus)
 
-    def merge_codes(self, command) -> Result:
+    def merge_codes(self, command) -> OperationResult:
         """Merge codes."""
         return merge_codes(command, self._coding_ctx, self._event_bus)
 
-    def update_code_memo(self, command) -> Result:
+    def update_code_memo(self, command) -> OperationResult:
         """Update a code's memo."""
         return update_code_memo(command, self._coding_ctx, self._event_bus)
 
-    def move_code_to_category(self, command) -> Result:
+    def move_code_to_category(self, command) -> OperationResult:
         """Move a code to a category."""
         return move_code_to_category(command, self._coding_ctx, self._event_bus)
 
-    def apply_code(self, command) -> Result:
+    def apply_code(self, command) -> OperationResult:
         """Apply a code to a segment."""
         return apply_code(command, self._coding_ctx, self._event_bus)
 
-    def remove_segment(self, command) -> Result:
+    def remove_segment(self, command) -> OperationResult:
         """Remove a segment."""
         return remove_segment(command, self._coding_ctx, self._event_bus)
 
-    def remove_code(self, command) -> Result:
+    def remove_code(self, command) -> OperationResult:
         """Remove coding from a segment (alias for remove_segment)."""
         return remove_segment(command, self._coding_ctx, self._event_bus)
 
-    def create_category(self, command) -> Result:
+    def create_category(self, command) -> OperationResult:
         """Create a category."""
         return create_category(command, self._coding_ctx, self._event_bus)
 
-    def delete_category(self, command) -> Result:
+    def delete_category(self, command) -> OperationResult:
         """Delete a category."""
         return delete_category(command, self._coding_ctx, self._event_bus)
 

@@ -1,23 +1,15 @@
 """
 Settings Context: Domain Events
 
-Events emitted when settings are changed. All events are immutable.
+Events emitted when settings are changed. All events are immutable
+and inherit from DomainEvent base class.
 """
 
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from datetime import UTC, datetime
-from uuid import uuid4
 
-
-def _now() -> datetime:
-    return datetime.now(UTC)
-
-
-def _uuid() -> str:
-    return str(uuid4())
-
+from src.contexts.shared.core.types import DomainEvent
 
 # =============================================================================
 # Theme Events
@@ -25,14 +17,22 @@ def _uuid() -> str:
 
 
 @dataclass(frozen=True)
-class ThemeChanged:
+class ThemeChanged(DomainEvent):
     """Emitted when the user changes the application theme."""
 
     event_type: str = field(default="settings.theme_changed", init=False)
     old_theme: str = ""
     new_theme: str = ""
-    event_id: str = field(default_factory=_uuid)
-    occurred_at: datetime = field(default_factory=_now)
+
+    @classmethod
+    def create(cls, old_theme: str, new_theme: str) -> ThemeChanged:
+        """Factory method to create event with auto-generated metadata."""
+        return cls(
+            event_id=cls._generate_id(),
+            occurred_at=cls._now(),
+            old_theme=old_theme,
+            new_theme=new_theme,
+        )
 
 
 # =============================================================================
@@ -41,7 +41,7 @@ class ThemeChanged:
 
 
 @dataclass(frozen=True)
-class FontChanged:
+class FontChanged(DomainEvent):
     """Emitted when the user changes font settings."""
 
     event_type: str = field(default="settings.font_changed", init=False)
@@ -49,8 +49,24 @@ class FontChanged:
     old_size: int = 14
     family: str = ""
     size: int = 14
-    event_id: str = field(default_factory=_uuid)
-    occurred_at: datetime = field(default_factory=_now)
+
+    @classmethod
+    def create(
+        cls,
+        old_family: str,
+        old_size: int,
+        family: str,
+        size: int,
+    ) -> FontChanged:
+        """Factory method to create event with auto-generated metadata."""
+        return cls(
+            event_id=cls._generate_id(),
+            occurred_at=cls._now(),
+            old_family=old_family,
+            old_size=old_size,
+            family=family,
+            size=size,
+        )
 
 
 # =============================================================================
@@ -59,15 +75,29 @@ class FontChanged:
 
 
 @dataclass(frozen=True)
-class LanguageChanged:
+class LanguageChanged(DomainEvent):
     """Emitted when the user changes the application language."""
 
     event_type: str = field(default="settings.language_changed", init=False)
     old_language: str = ""
     new_language: str = ""
     language_name: str = ""
-    event_id: str = field(default_factory=_uuid)
-    occurred_at: datetime = field(default_factory=_now)
+
+    @classmethod
+    def create(
+        cls,
+        old_language: str,
+        new_language: str,
+        language_name: str,
+    ) -> LanguageChanged:
+        """Factory method to create event with auto-generated metadata."""
+        return cls(
+            event_id=cls._generate_id(),
+            occurred_at=cls._now(),
+            old_language=old_language,
+            new_language=new_language,
+            language_name=language_name,
+        )
 
 
 # =============================================================================
@@ -76,7 +106,7 @@ class LanguageChanged:
 
 
 @dataclass(frozen=True)
-class BackupConfigChanged:
+class BackupConfigChanged(DomainEvent):
     """Emitted when the user changes backup configuration."""
 
     event_type: str = field(default="settings.backup_config_changed", init=False)
@@ -88,8 +118,32 @@ class BackupConfigChanged:
     interval_minutes: int = 30
     max_backups: int = 5
     backup_path: str | None = None
-    event_id: str = field(default_factory=_uuid)
-    occurred_at: datetime = field(default_factory=_now)
+
+    @classmethod
+    def create(
+        cls,
+        old_enabled: bool,
+        old_interval_minutes: int,
+        old_max_backups: int,
+        old_backup_path: str | None,
+        enabled: bool,
+        interval_minutes: int,
+        max_backups: int,
+        backup_path: str | None,
+    ) -> BackupConfigChanged:
+        """Factory method to create event with auto-generated metadata."""
+        return cls(
+            event_id=cls._generate_id(),
+            occurred_at=cls._now(),
+            old_enabled=old_enabled,
+            old_interval_minutes=old_interval_minutes,
+            old_max_backups=old_max_backups,
+            old_backup_path=old_backup_path,
+            enabled=enabled,
+            interval_minutes=interval_minutes,
+            max_backups=max_backups,
+            backup_path=backup_path,
+        )
 
 
 # =============================================================================
@@ -98,7 +152,7 @@ class BackupConfigChanged:
 
 
 @dataclass(frozen=True)
-class AVCodingConfigChanged:
+class AVCodingConfigChanged(DomainEvent):
     """Emitted when the user changes AV coding configuration."""
 
     event_type: str = field(default="settings.av_coding_config_changed", init=False)
@@ -106,5 +160,21 @@ class AVCodingConfigChanged:
     old_speaker_format: str = ""
     timestamp_format: str = ""
     speaker_format: str = ""
-    event_id: str = field(default_factory=_uuid)
-    occurred_at: datetime = field(default_factory=_now)
+
+    @classmethod
+    def create(
+        cls,
+        old_timestamp_format: str,
+        old_speaker_format: str,
+        timestamp_format: str,
+        speaker_format: str,
+    ) -> AVCodingConfigChanged:
+        """Factory method to create event with auto-generated metadata."""
+        return cls(
+            event_id=cls._generate_id(),
+            occurred_at=cls._now(),
+            old_timestamp_format=old_timestamp_format,
+            old_speaker_format=old_speaker_format,
+            timestamp_format=timestamp_format,
+            speaker_format=speaker_format,
+        )

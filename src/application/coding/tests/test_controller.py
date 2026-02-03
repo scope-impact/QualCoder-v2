@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-from returns.result import Failure, Success
-
 from src.application.protocols import (
     ApplyCodeCommand,
     ChangeCodeColorCommand,
@@ -37,8 +35,8 @@ class TestCreateCode:
 
         result = controller.create_code(command)
 
-        assert isinstance(result, Success)
-        code = result.unwrap()
+        assert result.is_success
+        code = result.data
         assert code.name == "Test Code"
         assert code.color.to_hex() == "#ff0000"
 
@@ -53,7 +51,7 @@ class TestCreateCode:
 
         result = controller.create_code(command)
 
-        assert isinstance(result, Failure)
+        assert not result.is_success
 
     def test_fails_with_duplicate_name(self, controller):
         """Test failure with duplicate name."""
@@ -63,7 +61,7 @@ class TestCreateCode:
         controller.create_code(command1)
         result = controller.create_code(command2)
 
-        assert isinstance(result, Failure)
+        assert not result.is_success
 
     def test_fails_with_invalid_color(self, controller):
         """Test failure with invalid color."""
@@ -71,14 +69,14 @@ class TestCreateCode:
 
         result = controller.create_code(command)
 
-        assert isinstance(result, Failure)
+        assert not result.is_success
 
     def test_creates_code_with_category(self, controller):
         """Test creating code in a category."""
         # First create a category
         cat_command = CreateCategoryCommand(name="Category1")
         cat_result = controller.create_category(cat_command)
-        category = cat_result.unwrap()
+        category = cat_result.data
 
         # Create code in category
         command = CreateCodeCommand(
@@ -88,8 +86,8 @@ class TestCreateCode:
         )
         result = controller.create_code(command)
 
-        assert isinstance(result, Success)
-        code = result.unwrap()
+        assert result.is_success
+        code = result.data
         assert code.category_id == category.id
 
 
@@ -100,13 +98,13 @@ class TestRenameCode:
         """Test successful code rename."""
         # Create a code first
         create_cmd = CreateCodeCommand(name="Original", color="#ff0000")
-        code = controller.create_code(create_cmd).unwrap()
+        code = controller.create_code(create_cmd).data
 
         # Rename it
         rename_cmd = RenameCodeCommand(code_id=code.id.value, new_name="Renamed")
         result = controller.rename_code(rename_cmd)
 
-        assert isinstance(result, Success)
+        assert result.is_success
 
         # Verify the code was renamed
         updated = controller.get_code(code.id.value)
@@ -122,19 +120,19 @@ class TestRenameCode:
 
         result = controller.rename_code(command)
 
-        assert isinstance(result, Failure)
+        assert not result.is_success
 
     def test_fails_for_duplicate_name(self, controller):
         """Test failure when renaming to existing name."""
         controller.create_code(CreateCodeCommand(name="First", color="#ff0000"))
         code2 = controller.create_code(
             CreateCodeCommand(name="Second", color="#00ff00")
-        ).unwrap()
+        ).data
 
         command = RenameCodeCommand(code_id=code2.id.value, new_name="First")
         result = controller.rename_code(command)
 
-        assert isinstance(result, Failure)
+        assert not result.is_success
 
 
 class TestChangeCodeColor:
@@ -144,12 +142,12 @@ class TestChangeCodeColor:
         """Test successful color change."""
         code = controller.create_code(
             CreateCodeCommand(name="Test", color="#ff0000")
-        ).unwrap()
+        ).data
 
         command = ChangeCodeColorCommand(code_id=code.id.value, new_color="#00ff00")
         result = controller.change_code_color(command)
 
-        assert isinstance(result, Success)
+        assert result.is_success
 
         updated = controller.get_code(code.id.value)
         assert updated.color.to_hex() == "#00ff00"
@@ -161,12 +159,12 @@ class TestChangeCodeColor:
         """Test failure with invalid color."""
         code = controller.create_code(
             CreateCodeCommand(name="Test", color="#ff0000")
-        ).unwrap()
+        ).data
 
         command = ChangeCodeColorCommand(code_id=code.id.value, new_color="bad")
         result = controller.change_code_color(command)
 
-        assert isinstance(result, Failure)
+        assert not result.is_success
 
 
 class TestDeleteCode:
@@ -176,12 +174,12 @@ class TestDeleteCode:
         """Test successful code deletion."""
         code = controller.create_code(
             CreateCodeCommand(name="ToDelete", color="#ff0000")
-        ).unwrap()
+        ).data
 
         command = DeleteCodeCommand(code_id=code.id.value)
         result = controller.delete_code(command)
 
-        assert isinstance(result, Success)
+        assert result.is_success
         assert controller.get_code(code.id.value) is None
 
         history = event_bus.get_history()
@@ -191,7 +189,7 @@ class TestDeleteCode:
         """Test failure when code has segments and delete_segments=False."""
         code = controller.create_code(
             CreateCodeCommand(name="WithSegments", color="#ff0000")
-        ).unwrap()
+        ).data
 
         # Apply code to create a segment
         apply_cmd = ApplyCodeCommand(
@@ -206,13 +204,13 @@ class TestDeleteCode:
         delete_cmd = DeleteCodeCommand(code_id=code.id.value, delete_segments=False)
         result = controller.delete_code(delete_cmd)
 
-        assert isinstance(result, Failure)
+        assert not result.is_success
 
     def test_deletes_with_segments_when_forced(self, controller):
         """Test deletion with segments when delete_segments=True."""
         code = controller.create_code(
             CreateCodeCommand(name="WithSegments", color="#ff0000")
-        ).unwrap()
+        ).data
 
         apply_cmd = ApplyCodeCommand(
             code_id=code.id.value,
@@ -226,7 +224,7 @@ class TestDeleteCode:
         delete_cmd = DeleteCodeCommand(code_id=code.id.value, delete_segments=True)
         result = controller.delete_code(delete_cmd)
 
-        assert isinstance(result, Success)
+        assert result.is_success
         assert controller.get_code(code.id.value) is None
 
 
@@ -237,10 +235,10 @@ class TestMergeCodes:
         """Test successful code merge."""
         source = controller.create_code(
             CreateCodeCommand(name="Source", color="#ff0000")
-        ).unwrap()
+        ).data
         target = controller.create_code(
             CreateCodeCommand(name="Target", color="#00ff00")
-        ).unwrap()
+        ).data
 
         # Add segment to source
         controller.apply_code(
@@ -258,7 +256,7 @@ class TestMergeCodes:
         )
         result = controller.merge_codes(command)
 
-        assert isinstance(result, Success)
+        assert result.is_success
 
         # Source should be deleted
         assert controller.get_code(source.id.value) is None
@@ -278,7 +276,7 @@ class TestApplyCode:
         """Test successful code application."""
         code = controller.create_code(
             CreateCodeCommand(name="Test", color="#ff0000")
-        ).unwrap()
+        ).data
 
         command = ApplyCodeCommand(
             code_id=code.id.value,
@@ -289,8 +287,8 @@ class TestApplyCode:
         )
         result = controller.apply_code(command)
 
-        assert isinstance(result, Success)
-        segment = result.unwrap()
+        assert result.is_success
+        segment = result.data
         assert segment.code_id == code.id
         assert segment.position.start == 0
         assert segment.position.end == 10
@@ -308,7 +306,7 @@ class TestApplyCode:
         )
         result = controller.apply_code(command)
 
-        assert isinstance(result, Failure)
+        assert not result.is_success
 
 
 class TestRemoveCode:
@@ -318,7 +316,7 @@ class TestRemoveCode:
         """Test successful segment removal."""
         code = controller.create_code(
             CreateCodeCommand(name="Test", color="#ff0000")
-        ).unwrap()
+        ).data
 
         segment = controller.apply_code(
             ApplyCodeCommand(
@@ -327,12 +325,12 @@ class TestRemoveCode:
                 start_position=0,
                 end_position=10,
             )
-        ).unwrap()
+        ).data
 
         command = RemoveCodeCommand(segment_id=segment.id.value)
         result = controller.remove_code(command)
 
-        assert isinstance(result, Success)
+        assert result.is_success
 
         # Segment should be gone
         segments = controller.get_segments_for_code(code.id.value)
@@ -351,8 +349,8 @@ class TestCreateCategory:
 
         result = controller.create_category(command)
 
-        assert isinstance(result, Success)
-        category = result.unwrap()
+        assert result.is_success
+        category = result.data
         assert category.name == "Test Category"
         assert category.memo == "A memo"
 
@@ -361,15 +359,13 @@ class TestCreateCategory:
 
     def test_creates_nested_category(self, controller):
         """Test creating a nested category."""
-        parent = controller.create_category(
-            CreateCategoryCommand(name="Parent")
-        ).unwrap()
+        parent = controller.create_category(CreateCategoryCommand(name="Parent")).data
 
         child_cmd = CreateCategoryCommand(name="Child", parent_id=parent.id.value)
         result = controller.create_category(child_cmd)
 
-        assert isinstance(result, Success)
-        child = result.unwrap()
+        assert result.is_success
+        child = result.data
         assert child.parent_id == parent.id
 
 
@@ -380,12 +376,12 @@ class TestDeleteCategory:
         """Test successful category deletion."""
         category = controller.create_category(
             CreateCategoryCommand(name="ToDelete")
-        ).unwrap()
+        ).data
 
         command = DeleteCategoryCommand(category_id=category.id.value)
         result = controller.delete_category(command)
 
-        assert isinstance(result, Success)
+        assert result.is_success
 
         categories = controller.get_all_categories()
         assert len(categories) == 0
@@ -395,17 +391,15 @@ class TestDeleteCategory:
 
     def test_moves_codes_to_parent_on_delete(self, controller):
         """Test that codes are moved to parent when category is deleted."""
-        parent = controller.create_category(
-            CreateCategoryCommand(name="Parent")
-        ).unwrap()
+        parent = controller.create_category(CreateCategoryCommand(name="Parent")).data
         child = controller.create_category(
             CreateCategoryCommand(name="Child", parent_id=parent.id.value)
-        ).unwrap()
+        ).data
 
         # Create code in child category
         code = controller.create_code(
             CreateCodeCommand(name="Code", color="#ff0000", category_id=child.id.value)
-        ).unwrap()
+        ).data
 
         # Delete child category
         controller.delete_category(
@@ -437,7 +431,7 @@ class TestQueries:
         """Test getting segments by source."""
         code = controller.create_code(
             CreateCodeCommand(name="Test", color="#ff0000")
-        ).unwrap()
+        ).data
 
         controller.apply_code(
             ApplyCodeCommand(
