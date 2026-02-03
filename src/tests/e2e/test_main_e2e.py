@@ -21,6 +21,7 @@ def app_instance(qapp, colors):
     """Create a QualCoderApp instance for testing."""
     from src.application.app_context import get_app_context, reset_app_context
     from src.application.navigation.service import NavigationService
+    from src.application.projects.signal_bridge import ProjectSignalBridge
     from src.main import FileManagerService, QualCoderApp
     from src.presentation.services import DialogService
 
@@ -33,6 +34,9 @@ def app_instance(qapp, colors):
     app._dialog_service = DialogService(app._ctx)
     app._navigation_service = NavigationService(app._ctx)
     app._file_manager_service = FileManagerService(app._ctx)
+    # Create signal bridge for reactive UI updates
+    app._project_signal_bridge = ProjectSignalBridge.instance(app._ctx.event_bus)
+    app._project_signal_bridge.start()
     app._shell = None
     app._screens = {}
     app._current_project_path = None

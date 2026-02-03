@@ -16,6 +16,7 @@ from returns.result import Result
 from design_system import get_colors
 from src.application.app_context import AppContext, get_app_context
 from src.application.navigation.service import NavigationService
+from src.application.projects.signal_bridge import ProjectSignalBridge
 from src.contexts.projects.core.entities import ProjectSummary, SourceType
 from src.contexts.shared.core.operation_result import OperationResult
 from src.contexts.shared.core.types import SourceId
@@ -270,6 +271,9 @@ class QualCoderApp:
         self._navigation_service = NavigationService(self._ctx)
         # Service implements FileManagerController protocol for ViewModel
         self._file_manager_service = FileManagerService(self._ctx)
+        # Create signal bridge for reactive UI updates
+        self._project_signal_bridge = ProjectSignalBridge.instance(self._ctx.event_bus)
+        self._project_signal_bridge.start()
         self._shell: AppShell | None = None
         self._screens: dict = {}
         self._current_project_path: Path | None = None
@@ -282,6 +286,7 @@ class QualCoderApp:
         self._file_manager_viewmodel = FileManagerViewModel(
             controller=self._file_manager_service,  # Service implements protocol
             event_bus=self._ctx.event_bus,
+            signal_bridge=self._project_signal_bridge,
         )
 
         # Create screens
