@@ -87,7 +87,3 @@ class ProjectState:
 
         # Limit to 10 recent projects
         self.recent_projects = self.recent_projects[:10]
-
-
-# Alias for future migration
-SessionState = ProjectState

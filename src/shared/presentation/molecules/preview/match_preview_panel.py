@@ -251,7 +251,3 @@ class MatchPreviewPanel(Card):
     def get_summary_text(self) -> str:
         """Get the summary label text."""
         return self._summary_label.text()
-
-
-# Backward compatibility alias
-AutoCodePreview = MatchPreviewPanel

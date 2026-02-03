@@ -51,7 +51,6 @@ from src.shared.presentation.dto import FolderDTO, ProjectSummaryDTO, SourceDTO
 
 if TYPE_CHECKING:
     from src.contexts.cases.core.entities import Case
-    from src.shared.infra.app_context import CodingContext, SourcesContext
     from src.shared.infra.event_bus import EventBus
     from src.shared.infra.state import ProjectState
 
@@ -123,8 +122,6 @@ class FileManagerViewModel(QObject):
         case_repo: CaseRepository,
         state: ProjectState,
         event_bus: EventBus,
-        _sources_ctx: SourcesContext | None = None,
-        _coding_ctx: CodingContext | None = None,
         segment_repo: SegmentRepository | None = None,
         signal_bridge: ProjectSignalBridge | None = None,
         parent: QObject | None = None,
@@ -138,8 +135,6 @@ class FileManagerViewModel(QObject):
             case_repo: Repository for case queries (for source-case associations)
             state: Project state cache
             event_bus: Event bus for publishing events
-            _sources_ctx: DEPRECATED - no longer used, kept for backward compatibility
-            _coding_ctx: DEPRECATED - no longer used, kept for backward compatibility
             segment_repo: Segment repository for cascade deletion on source removal
             signal_bridge: Signal bridge for reactive updates (optional)
             parent: Qt parent object
@@ -151,8 +146,6 @@ class FileManagerViewModel(QObject):
         self._state = state
         self._event_bus = event_bus
         self._segment_repo = segment_repo
-        # Note: sources_ctx and coding_ctx parameters kept for backward compatibility
-        # but are no longer used - handlers now receive specific repos directly
         self._signal_bridge = signal_bridge
 
         # Selection state

@@ -124,7 +124,3 @@ class LineNumberGutter(QWidget):
         label.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
         label.setFixedHeight(self._line_height)
         return label
-
-
-# Backward compatibility alias
-LineNumberWidget = LineNumberGutter

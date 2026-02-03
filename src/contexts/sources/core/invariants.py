@@ -1,18 +1,13 @@
 """
 Sources Context: Invariants (Business Rule Predicates)
 
-Pure predicate functions that validate business rules for source operations.
-These are composed by Derivers to determine if an operation is valid.
-
-Note: For backward compatibility, the actual invariant definitions are in
-projects/core/invariants.py. This module re-exports them for use in the
-Sources bounded context. A future migration will move the definitions here.
+Re-exports source invariants from the projects context.
+Source invariants are defined in projects/core/invariants.py as sources
+are a core part of project management.
 """
 
 from __future__ import annotations
 
-# Re-export from projects for backward compatibility
-# These invariants conceptually belong to Sources but are currently defined in Projects
 from src.contexts.projects.core.invariants import (
     AUDIO_EXTENSIONS,
     IMAGE_EXTENSIONS,

@@ -163,13 +163,3 @@ class TestProjectStateRecentProjects:
         state.add_to_recent(project)
 
         assert state.recent_projects[0].last_opened is not None
-
-
-class TestSessionStateAlias:
-    """Test that SessionState is an alias for ProjectState."""
-
-    def test_session_state_is_project_state(self) -> None:
-        """SessionState should be an alias for ProjectState."""
-        from src.shared.infra.state import SessionState
-
-        assert SessionState is ProjectState

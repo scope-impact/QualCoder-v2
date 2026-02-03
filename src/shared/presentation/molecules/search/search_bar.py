@@ -216,7 +216,3 @@ class SearchBar(QFrame):
         """Focus the search input field."""
         self._search_input.setFocus()
         self._search_input.selectAll()
-
-
-# Backward compatibility alias
-SearchWidget = SearchBar

@@ -56,12 +56,7 @@ from design_system import (
 # Import molecules
 from src.shared.presentation.molecules.editor import LineNumberGutter
 from src.shared.presentation.molecules.highlighting import OverlapDetector
-from src.shared.presentation.molecules.search import SearchBar
 from src.shared.presentation.molecules.selection import SelectionPopupController
-
-# Backward compatibility aliases
-LineNumberWidget = LineNumberGutter
-SearchWidget = SearchBar
 
 
 @dataclass
@@ -167,7 +162,7 @@ class TextEditorPanel(QFrame):
         content_layout.setSpacing(0)
 
         # Line numbers (optional)
-        self._line_numbers = LineNumberWidget(colors=self._colors)
+        self._line_numbers = LineNumberGutter(colors=self._colors)
         self._line_numbers.setVisible(self._show_line_numbers)
         content_layout.addWidget(self._line_numbers)
 

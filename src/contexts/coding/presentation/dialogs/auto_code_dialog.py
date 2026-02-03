@@ -39,10 +39,6 @@ from design_system import (
     ColorPalette,
     get_colors,
 )
-from src.shared.presentation.molecules.preview import MatchPreviewPanel
-
-# Backward compatibility alias - MatchPreviewPanel is the extracted molecule
-AutoCodePreview = MatchPreviewPanel
 
 
 class AutoCodeDialog(QDialog):
@@ -64,7 +60,6 @@ class AutoCodeDialog(QDialog):
         find_matches_requested: Request to find matches
         detect_speakers_requested: Request to detect speakers
         apply_auto_code_requested: Request to apply auto-code
-        apply_clicked: Legacy signal for backward compatibility
     """
 
     # Request signals - emitted when user wants an operation
@@ -74,9 +69,6 @@ class AutoCodeDialog(QDialog):
     detect_speakers_requested = Signal(str)  # text
     get_speaker_segments_requested = Signal(str, str)  # text, speaker_name
     apply_auto_code_requested = Signal(dict)  # config dict
-
-    # Legacy signal for backward compatibility
-    apply_clicked = Signal(dict)
 
     def __init__(self, colors: ColorPalette = None, parent=None):
         super().__init__(parent)
@@ -332,9 +324,7 @@ class AutoCodeDialog(QDialog):
             "code": self._code,
         }
 
-        # Emit both signals for compatibility
         self.apply_auto_code_requested.emit(config)
-        self.apply_clicked.emit(config)
         self.accept()
 
     def _get_match_type_str(self) -> str:

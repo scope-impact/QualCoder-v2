@@ -133,8 +133,6 @@ class QualCoderApp:
             case_repo=self._ctx.cases_context.case_repo,
             state=self._ctx.state,
             event_bus=self._ctx.event_bus,
-            _sources_ctx=self._ctx.sources_context,
-            _coding_ctx=self._ctx.coding_context,
             segment_repo=(
                 self._ctx.coding_context.segment_repo
                 if self._ctx.coding_context
