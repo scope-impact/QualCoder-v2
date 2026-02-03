@@ -134,22 +134,6 @@ class SQLiteCodeRepository:
             else datetime.now(UTC),
         )
 
-    def _to_code_data(self, code: Code) -> dict:
-        """
-        Map domain Code entity to database format.
-
-        Returns a dict suitable for SQLAlchemy insert/update.
-        """
-        return {
-            "cid": code.id.value,
-            "name": code.name,
-            "color": code.color.to_hex(),
-            "memo": code.memo,
-            "catid": code.category_id.value if code.category_id else None,
-            "owner": code.owner,
-            "date": code.created_at.isoformat(),
-        }
-
 
 class SQLiteCategoryRepository:
     """
@@ -250,21 +234,6 @@ class SQLiteCategoryRepository:
             if row.date
             else datetime.now(UTC),
         )
-
-    def _to_category_data(self, category: Category) -> dict:
-        """
-        Map domain Category entity to database format.
-
-        Returns a dict suitable for SQLAlchemy insert/update.
-        """
-        return {
-            "catid": category.id.value,
-            "name": category.name,
-            "supercatid": category.parent_id.value if category.parent_id else None,
-            "memo": category.memo,
-            "owner": category.owner,
-            "date": category.created_at.isoformat(),
-        }
 
 
 class SQLiteSegmentRepository:
@@ -439,22 +408,3 @@ class SQLiteSegmentRepository:
             if row.date
             else datetime.now(UTC),
         )
-
-    def _to_segment_data(self, segment: TextSegment) -> dict:
-        """
-        Map domain TextSegment entity to database format.
-
-        Returns a dict suitable for SQLAlchemy insert/update.
-        """
-        return {
-            "ctid": segment.id.value,
-            "cid": segment.code_id.value,
-            "fid": segment.source_id.value,
-            "pos0": segment.position.start,
-            "pos1": segment.position.end,
-            "seltext": segment.selected_text,
-            "memo": segment.memo,
-            "owner": segment.owner,
-            "date": segment.created_at.isoformat(),
-            "important": segment.importance,
-        }

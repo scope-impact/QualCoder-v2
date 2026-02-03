@@ -343,9 +343,6 @@ class ProjectTools:
         Returns:
             Success with result dict, or Failure with error message
         """
-        if tool_name not in self._tools:
-            return Failure(f"Unknown tool: {tool_name}")
-
         handlers = {
             "get_project_context": self._execute_get_project_context,
             "list_sources": self._execute_list_sources,
@@ -356,7 +353,7 @@ class ProjectTools:
 
         handler = handlers.get(tool_name)
         if handler is None:
-            return Failure(f"No handler for tool: {tool_name}")
+            return Failure(f"Unknown tool: {tool_name}")
 
         try:
             return handler(arguments)

@@ -11,6 +11,7 @@ from typing import TYPE_CHECKING
 
 from returns.result import Failure, Result, Success
 
+from src.contexts.settings.core.commandHandlers._helpers import extract_failure_message
 from src.contexts.settings.core.commands import ConfigureAVCodingCommand
 from src.contexts.settings.core.derivers import derive_av_coding_config_change
 from src.contexts.settings.core.entities import AVCodingConfig
@@ -55,11 +56,7 @@ def configure_av_coding(
     )
 
     if isinstance(result, Failure):
-        # Extract message from failure reason
-        failure_reason = result.failure()
-        if hasattr(failure_reason, "message"):
-            return Failure(failure_reason.message)
-        return Failure(str(failure_reason))
+        return Failure(extract_failure_message(result.failure()))
 
     event: AVCodingConfigChanged = result
 

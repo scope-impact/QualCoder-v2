@@ -109,9 +109,9 @@ class CaseUpdatedConverter(EventConverter[CaseUpdated, CasePayload]):
             case_id=event.case_id.value
             if hasattr(event.case_id, "value")
             else int(event.case_id),
-            name=getattr(event, "name", ""),
-            description=getattr(event, "new_description", None),
-            memo=getattr(event, "new_memo", None),
+            name=event.name,
+            description=event.description,
+            memo=event.memo,
         )
 
 

@@ -41,6 +41,7 @@ from src.contexts.sources.core.commandHandlers import (
     remove_source,
     update_source,
 )
+from src.shared.common.types import SourceId
 from src.shared.infra.signal_bridge.projects import (
     FolderPayload,
     ProjectSignalBridge,
@@ -291,9 +292,6 @@ class FileManagerViewModel(QObject):
         if self._current_source_id is None:
             return None
 
-        # Use repo (source of truth) instead of state cache
-        from src.shared.common.types import SourceId
-
         source = self._source_repo.get_by_id(SourceId(value=self._current_source_id))
         return self._source_to_dto(source) if source else None
 
@@ -307,9 +305,6 @@ class FileManagerViewModel(QObject):
         Returns:
             SourceDTO if found, None otherwise
         """
-        # Use repo (source of truth) instead of state cache
-        from src.shared.common.types import SourceId
-
         source = self._source_repo.get_by_id(SourceId(value=source_id))
         return self._source_to_dto(source) if source else None
 
@@ -407,8 +402,6 @@ class FileManagerViewModel(QObject):
             Number of coded segments for this source
         """
         if self._segment_repo:
-            from src.shared.common.types import SourceId
-
             return self._segment_repo.count_by_source(SourceId(value=source_id))
         return 0
 

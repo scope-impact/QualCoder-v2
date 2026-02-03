@@ -163,28 +163,7 @@ class SQLiteCaseRepository:
             )
         )
 
-        # Insert new attribute
-        values = {
-            "case_id": case_id.value,
-            "name": attribute.name,
-            "attr_type": attribute.attr_type.value,
-            "value_text": None,
-            "value_number": None,
-            "value_date": None,
-        }
-
-        # Set appropriate value column based on type
-        if attribute.attr_type == AttributeType.TEXT:
-            values["value_text"] = str(attribute.value) if attribute.value else None
-        elif attribute.attr_type == AttributeType.NUMBER:
-            values["value_number"] = int(attribute.value) if attribute.value else None
-        elif attribute.attr_type == AttributeType.DATE:
-            values["value_date"] = attribute.value
-        elif attribute.attr_type == AttributeType.BOOLEAN:
-            values["value_text"] = (
-                str(attribute.value).lower() if attribute.value is not None else None
-            )
-
+        values = self._attribute_to_values(case_id, attribute)
         self._conn.execute(cas_attribute.insert().values(**values))
         self._conn.commit()
 
@@ -264,25 +243,7 @@ class SQLiteCaseRepository:
 
         # Insert new attributes
         for attr in attributes:
-            values = {
-                "case_id": case_id.value,
-                "name": attr.name,
-                "attr_type": attr.attr_type.value,
-                "value_text": None,
-                "value_number": None,
-                "value_date": None,
-            }
-
-            # Set appropriate value column based on type
-            if attr.attr_type == AttributeType.TEXT:
-                values["value_text"] = str(attr.value) if attr.value else None
-            elif attr.attr_type == AttributeType.NUMBER:
-                values["value_number"] = int(attr.value) if attr.value else None
-            elif attr.attr_type == AttributeType.DATE:
-                values["value_date"] = attr.value
-            elif attr.attr_type == AttributeType.BOOLEAN:
-                values["value_text"] = str(attr.value).lower() if attr.value else None
-
+            values = self._attribute_to_values(case_id, attr)
             self._conn.execute(cas_attribute.insert().values(**values))
 
     def _save_source_links(self, case_id: CaseId, source_ids: tuple[int, ...]) -> None:
@@ -371,3 +332,28 @@ class SQLiteCaseRepository:
             attr_type=attr_type,
             value=value,
         )
+
+    def _attribute_to_values(self, case_id: CaseId, attr: CaseAttribute) -> dict:
+        """Convert a CaseAttribute to database column values."""
+        values = {
+            "case_id": case_id.value,
+            "name": attr.name,
+            "attr_type": attr.attr_type.value,
+            "value_text": None,
+            "value_number": None,
+            "value_date": None,
+        }
+
+        # Set appropriate value column based on type
+        if attr.attr_type == AttributeType.TEXT:
+            values["value_text"] = str(attr.value) if attr.value else None
+        elif attr.attr_type == AttributeType.NUMBER:
+            values["value_number"] = int(attr.value) if attr.value else None
+        elif attr.attr_type == AttributeType.DATE:
+            values["value_date"] = attr.value
+        elif attr.attr_type == AttributeType.BOOLEAN:
+            values["value_text"] = (
+                str(attr.value).lower() if attr.value is not None else None
+            )
+
+        return values

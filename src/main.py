@@ -7,7 +7,6 @@ Run with: uv run python -m src.main
 from __future__ import annotations
 
 import sys
-from pathlib import Path
 
 from PySide6.QtWidgets import QApplication, QMessageBox
 
@@ -18,6 +17,7 @@ from src.contexts.cases.presentation import CaseManagerScreen
 from src.contexts.coding.presentation import TextCodingScreen
 from src.contexts.projects.presentation import ProjectScreen
 from src.contexts.sources.presentation import FileManagerScreen, FileManagerViewModel
+from src.shared.common.types import SourceId
 from src.shared.infra.app_context import create_app_context
 from src.shared.infra.signal_bridge.projects import ProjectSignalBridge
 from src.shared.presentation import create_empty_text_coding_data
@@ -47,7 +47,6 @@ class QualCoderApp:
         self._project_signal_bridge.start()
         self._shell: AppShell | None = None
         self._screens: dict = {}
-        self._current_project_path: Path | None = None
 
     def _setup_shell(self):
         """Create and configure the main application shell."""
@@ -191,11 +190,8 @@ class QualCoderApp:
 
     def _on_navigate_to_coding(self, source_id: str):
         """Handle navigation to coding screen with a specific source."""
-        # Get the source from repo (source of truth)
         try:
             source_id_int = int(source_id)
-            from src.shared.common.types import SourceId
-
             sources_ctx = self._ctx.sources_context
             if sources_ctx:
                 source = sources_ctx.source_repo.get_by_id(

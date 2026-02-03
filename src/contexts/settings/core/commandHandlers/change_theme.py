@@ -11,6 +11,7 @@ from typing import TYPE_CHECKING
 
 from returns.result import Failure, Result, Success
 
+from src.contexts.settings.core.commandHandlers._helpers import extract_failure_message
 from src.contexts.settings.core.commands import ChangeThemeCommand
 from src.contexts.settings.core.derivers import derive_theme_change
 from src.contexts.settings.core.entities import ThemePreference
@@ -54,11 +55,7 @@ def change_theme(
     )
 
     if isinstance(result, Failure):
-        # Extract message from failure reason
-        failure_reason = result.failure()
-        if hasattr(failure_reason, "message"):
-            return Failure(failure_reason.message)
-        return Failure(str(failure_reason))
+        return Failure(extract_failure_message(result.failure()))
 
     event: ThemeChanged = result
 

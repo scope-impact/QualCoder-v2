@@ -83,12 +83,10 @@ def move_source_to_folder(
     event: SourceMovedToFolder = result
 
     # Find and update the source
-    source = source_repo.get_by_id(source_id) if source_repo else None
-    if source:
-        updated_source = source.with_folder(event.new_folder_id)
-
-        # Persist to repository (source of truth)
-        if source_repo:
+    if source_repo:
+        source = source_repo.get_by_id(source_id)
+        if source:
+            updated_source = source.with_folder(event.new_folder_id)
             source_repo.save(updated_source)
 
     # Publish event
