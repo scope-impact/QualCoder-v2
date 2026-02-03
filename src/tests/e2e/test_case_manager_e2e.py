@@ -6,9 +6,9 @@ Tests the complete flow: UI action → ViewModel → Use Cases → Repository �
 
 These tests use NO MOCKS:
 1. Create real in-memory SQLite database with case tables
-2. Wire up CaseManagerViewModel with real repos, state, and use cases
+2. Wire up CaseManagerViewModel with real repos, state, use cases, and SignalBridge
 3. Create CaseManagerScreen with real viewmodel
-4. Test full round-trip data flows
+4. Test full round-trip data flows including reactive updates
 
 Implements QC-034 Manage Cases:
 - AC #1: Researcher can create cases
@@ -29,6 +29,7 @@ from PySide6.QtTest import QSignalSpy
 from PySide6.QtWidgets import QApplication, QMainWindow, QVBoxLayout, QWidget
 from sqlalchemy import create_engine
 
+from src.application.cases.signal_bridge import CasesSignalBridge
 from src.application.event_bus import EventBus
 from src.application.state import ProjectState
 from src.contexts.cases.core.entities import AttributeType, Case, CaseAttribute
@@ -89,6 +90,18 @@ def event_bus():
 
 
 @pytest.fixture
+def signal_bridge(event_bus):
+    """Create and start CasesSignalBridge for reactive UI updates."""
+    # Clear any existing singleton instance for test isolation
+    CasesSignalBridge.clear_instance()
+    bridge = CasesSignalBridge.instance(event_bus)
+    bridge.start()
+    yield bridge
+    bridge.stop()
+    CasesSignalBridge.clear_instance()
+
+
+@pytest.fixture
 def state():
     """Create project state with mock project."""
 
@@ -110,13 +123,14 @@ def cases_ctx(case_repo):
 
 
 @pytest.fixture
-def viewmodel(case_repo, state, event_bus, cases_ctx):
-    """Create CaseManagerViewModel with real infrastructure."""
+def viewmodel(case_repo, state, event_bus, cases_ctx, signal_bridge):
+    """Create CaseManagerViewModel with real infrastructure and SignalBridge."""
     return CaseManagerViewModel(
         case_repo=case_repo,
         state=state,
         event_bus=event_bus,
         cases_ctx=cases_ctx,
+        signal_bridge=signal_bridge,
     )
 
 
@@ -193,8 +207,8 @@ def seeded_state(case_repo, seeded_cases, state):
 
 
 @pytest.fixture
-def seeded_viewmodel(case_repo, seeded_state, event_bus, seeded_cases):
-    """Create viewmodel with seeded test data."""
+def seeded_viewmodel(case_repo, seeded_state, event_bus, seeded_cases, signal_bridge):
+    """Create viewmodel with seeded test data and SignalBridge."""
     from dataclasses import dataclass
 
     @dataclass
@@ -207,6 +221,7 @@ def seeded_viewmodel(case_repo, seeded_state, event_bus, seeded_cases):
         state=seeded_state,
         event_bus=event_bus,
         cases_ctx=cases_ctx,
+        signal_bridge=signal_bridge,
     )
 
 
@@ -932,3 +947,149 @@ class TestSelectionManagement:
         viewmodel.delete_case(2)
 
         assert viewmodel.get_selected_case_id() is None
+
+
+class TestReactiveSignalBridgeFlow:
+    """
+    E2E tests for reactive SignalBridge updates.
+
+    Verifies the full reactive flow:
+    User Action → ViewModel → Use Cases → Domain → Events → SignalBridge → ViewModel signals
+
+    These tests ensure that domain events properly propagate through the SignalBridge
+    to trigger ViewModel signal emissions for UI updates.
+    """
+
+    def test_create_case_emits_cases_changed_signal(self, viewmodel, qapp):
+        """
+        E2E: Creating a case emits cases_changed signal via SignalBridge.
+
+        Flow: create_case() → CaseCreated event → SignalBridge → ViewModel.cases_changed
+        """
+        # Set up signal spy
+        spy = QSignalSpy(viewmodel.cases_changed)
+
+        # Create a case
+        result = viewmodel.create_case(name="Reactive Test Case")
+        assert result is True
+
+        # Process Qt events to allow signal propagation
+        QApplication.processEvents()
+
+        # Verify signal was emitted
+        assert spy.count() == 1, "cases_changed signal should be emitted once"
+
+    def test_create_case_emits_summary_changed_signal(self, viewmodel, qapp):
+        """
+        E2E: Creating a case also emits summary_changed signal.
+
+        Flow: create_case() → CaseCreated event → SignalBridge → ViewModel.summary_changed
+        """
+        spy = QSignalSpy(viewmodel.summary_changed)
+
+        viewmodel.create_case(name="Summary Test Case")
+        QApplication.processEvents()
+
+        assert spy.count() == 1, "summary_changed signal should be emitted once"
+
+    def test_delete_case_emits_cases_changed_signal(self, viewmodel, qapp):
+        """
+        E2E: Deleting a case emits cases_changed signal via SignalBridge.
+
+        Flow: delete_case() → CaseRemoved event → SignalBridge → ViewModel.cases_changed
+        """
+        # First create a case to delete
+        viewmodel.create_case(name="Case To Delete")
+        QApplication.processEvents()
+
+        cases = viewmodel.load_cases()
+        case_id = int(cases[0].id)
+
+        # Set up spy after creation
+        spy = QSignalSpy(viewmodel.cases_changed)
+
+        # Delete the case
+        result = viewmodel.delete_case(case_id)
+        assert result is True
+        QApplication.processEvents()
+
+        assert spy.count() == 1, "cases_changed signal should be emitted on delete"
+
+    def test_update_case_emits_case_updated_signal(self, viewmodel, qapp):
+        """
+        E2E: Updating a case emits case_updated signal via SignalBridge.
+
+        Flow: update_case() → CaseUpdated event → SignalBridge → ViewModel.case_updated
+        """
+        # Create a case first
+        viewmodel.create_case(name="Original Name")
+        QApplication.processEvents()
+
+        cases = viewmodel.load_cases()
+        case_id = int(cases[0].id)
+
+        # Set up spy after creation
+        spy = QSignalSpy(viewmodel.case_updated)
+
+        # Update the case
+        result = viewmodel.update_case(case_id, name="Updated Name")
+        assert result is True
+        QApplication.processEvents()
+
+        assert spy.count() == 1, "case_updated signal should be emitted"
+        # Verify payload contains updated case DTO
+        emitted_dto = spy.at(0)[0]
+        assert emitted_dto.name == "Updated Name"
+
+    def test_add_attribute_emits_case_updated_signal(self, viewmodel, qapp):
+        """
+        E2E: Adding an attribute emits case_updated signal via SignalBridge.
+
+        Flow: add_attribute() → CaseAttributeSet event → SignalBridge → ViewModel.case_updated
+        """
+        # Create a case first
+        viewmodel.create_case(name="Attribute Test Case")
+        QApplication.processEvents()
+
+        cases = viewmodel.load_cases()
+        case_id = int(cases[0].id)
+
+        # Set up spy after creation
+        spy = QSignalSpy(viewmodel.case_updated)
+
+        # Add attribute
+        result = viewmodel.add_attribute(case_id, "age", "number", 25)
+        assert result is True
+        QApplication.processEvents()
+
+        assert spy.count() == 1, (
+            "case_updated signal should be emitted for attribute change"
+        )
+
+    def test_signal_bridge_required_for_reactive_updates(
+        self, case_repo, state, event_bus, cases_ctx, qapp
+    ):
+        """
+        E2E: ViewModel without SignalBridge does NOT receive reactive updates.
+
+        This test verifies that SignalBridge is required for the reactive flow.
+        """
+        # Create viewmodel WITHOUT signal_bridge
+        vm_no_bridge = CaseManagerViewModel(
+            case_repo=case_repo,
+            state=state,
+            event_bus=event_bus,
+            cases_ctx=cases_ctx,
+            signal_bridge=None,  # No bridge
+        )
+
+        spy = QSignalSpy(vm_no_bridge.cases_changed)
+
+        # Create a case - event is published but no signal emitted
+        vm_no_bridge.create_case(name="No Bridge Case")
+        QApplication.processEvents()
+
+        # Signal NOT emitted because no SignalBridge is connected
+        assert spy.count() == 0, (
+            "Without SignalBridge, no reactive signal should be emitted"
+        )
