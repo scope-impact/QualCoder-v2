@@ -1,7 +1,7 @@
 ---
 name: developer
 description: |
-  QualCoder v2 development conventions following Functional DDD architecture.
+  QualCoder v2 development conventions following DDD-workshop vertical slice architecture.
   AI-agent-first design where both humans and AI are first-class consumers.
 
   **Invoke when:**
@@ -16,30 +16,75 @@ description: |
 
 ## Architecture Overview
 
+Following the **DDD-workshop vertical slice pattern**, each bounded context is a complete vertical slice:
+
 ```
 src/
-├── contexts/{name}/core/    # Domain: invariants, derivers, events (PURE - no I/O)
-├── contexts/{name}/infra/   # Infrastructure: repositories, schema
-├── application/             # Use cases, EventBus, Signal Bridges
-├── presentation/            # ViewModels, MCP Tools, PySide6 widgets
-design_system/               # Reusable UI components, tokens
+├── contexts/{name}/              # Bounded context (vertical slice)
+│   ├── core/                     # Domain: invariants, derivers, events (PURE - no I/O)
+│   │   ├── commandHandlers/      # Use cases (orchestration)
+│   │   ├── entities.py
+│   │   ├── events.py
+│   │   ├── invariants.py
+│   │   └── derivers.py
+│   ├── infra/                    # Infrastructure: repositories, schema
+│   ├── interface/                # MCP tools for AI agents
+│   └── presentation/             # ViewModels, screens, dialogs, pages
+│       ├── viewmodels/
+│       ├── screens/
+│       ├── dialogs/
+│       └── pages/
+├── shared/                       # Cross-cutting concerns ONLY
+│   ├── common/                   # Types, Result monad, failure events
+│   ├── core/                     # Shared validation, policies
+│   ├── infra/                    # EventBus, AppContext, SignalBridges
+│   │   ├── event_bus.py
+│   │   ├── app_context.py
+│   │   └── signal_bridge/        # Event → Qt Signal bridges
+│   │       ├── coding.py
+│   │       ├── cases.py
+│   │       └── projects.py
+│   └── presentation/             # Shared UI components
+│       ├── dto.py                # Cross-context DTOs
+│       ├── organisms/            # Reusable complex widgets
+│       ├── molecules/            # Reusable small widgets
+│       ├── templates/            # AppShell, layouts
+│       └── services/             # DialogService
+design_system/                    # Design tokens, atoms, base components
 ```
+
+### Bounded Contexts
+
+| Context | Purpose |
+|---------|---------|
+| `coding` | Code creation, text segments, categories |
+| `cases` | Case management, attributes, source links |
+| `sources` | File import, source management |
+| `folders` | Folder organization |
+| `projects` | Project lifecycle, settings |
+| `settings` | User preferences |
 
 ### Layer Responsibilities
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│ Presentation (ViewModel, MCP Tools, Qt Widgets)                 │
+│ Presentation (ViewModel, Screens, MCP Tools)                    │
 │ → UI state, AI tool interface, rendering                        │
+│ → Location: src/contexts/{name}/presentation/                   │
+│ → Shared: src/shared/presentation/ (organisms, templates)       │
 ├─────────────────────────────────────────────────────────────────┤
-│ Application (Use Cases, EventBus, SignalBridge)                 │
+│ Application (Command Handlers, EventBus, SignalBridge)          │
 │ → Orchestration only, NO business logic                         │
+│ → Location: src/contexts/{name}/core/commandHandlers/           │
+│ → Shared: src/shared/infra/ (EventBus, SignalBridges)           │
 ├─────────────────────────────────────────────────────────────────┤
 │ Domain (Entities, Derivers, Events, Invariants)                 │
 │ → Pure functions, ALL business logic, NO I/O                    │
+│ → Location: src/contexts/{name}/core/                           │
 ├─────────────────────────────────────────────────────────────────┤
 │ Infrastructure (Repositories, DB, External Services)            │
 │ → Persistence, external APIs                                    │
+│ → Location: src/contexts/{name}/infra/                          │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
@@ -69,17 +114,17 @@ design_system/               # Reusable UI components, tokens
 
 ```
 Human UI ──→ ViewModel ──┐
-                         ├──→ Use Cases ──→ Domain (pure)
+                         ├──→ Command Handlers ──→ Domain (pure)
 AI Agent ──→ MCP Tools ──┘
 ```
 
-Both call use cases directly. No intermediate "Operations Layer."
+Both call command handlers directly. No intermediate "Operations Layer."
 
 ### 3. CQRS: Commands vs Queries
 
 | Operation | Goes Through | Why |
 |-----------|--------------|-----|
-| Commands (writes) | Use Cases | Domain logic, events, validation |
+| Commands (writes) | Command Handlers | Domain logic, events, validation |
 | Queries (reads) | Direct to Repo | No business logic needed |
 
 ---
@@ -186,16 +231,17 @@ class OperationResult:
     rollback_command: Any | None = None  # For undo
 ```
 
-### Use Case Pattern (Orchestration Only)
+### Command Handler Pattern (Orchestration Only)
 
 ```python
+# src/contexts/coding/core/commandHandlers/create_code.py
 def create_code(
     cmd: CreateCodeCommand,
     code_repo: CodeRepository,
     event_bus: EventBus,
 ) -> OperationResult:
     """
-    Use case - orchestration only.
+    Command handler - orchestration only.
 
     1. Load state (I/O)
     2. Call domain (pure) - DOMAIN DECIDES
@@ -261,25 +307,28 @@ def batch_apply_codes(
 
 ### Signal Bridge (Event → Qt Signal)
 
+Signal bridges live in `src/shared/infra/signal_bridge/`:
+
 ```python
-class CodingSignalBridge(QObject):
-    code_created = Signal(CodePayload)
+# src/shared/infra/signal_bridge/coding.py
+class CodingSignalBridge(BaseSignalBridge):
+    code_created = Signal(object)
+    segment_coded = Signal(object)
 
-    def __init__(self, event_bus: EventBus):
-        super().__init__()
-        event_bus.subscribe(CodeCreated, self._on_code_created)
+    def _get_context_name(self) -> str:
+        return "coding"
 
-    def _on_code_created(self, event: CodeCreated):
-        # Qt signals are thread-safe - auto-queued to main thread
-        self.code_created.emit(CodePayload(
-            code_id=event.code_id,
-            name=event.name,
-            color=event.color,
-        ))
+    def _register_converters(self) -> None:
+        self.register_converter(
+            "coding.code_created",
+            CodeCreatedConverter(),
+            "code_created",
+        )
 
 @dataclass(frozen=True)
 class CodePayload:
     """UI payload - primitives only, no domain objects."""
+    event_type: str
     code_id: int
     name: str
     color: str
@@ -289,14 +338,17 @@ class CodePayload:
 
 ## Presentation Layer Patterns
 
-### ViewModel (Calls Use Cases Directly)
+### ViewModel (Calls Command Handlers Directly)
+
+ViewModels live in `src/contexts/{name}/presentation/viewmodels/`:
 
 ```python
+# src/contexts/coding/presentation/viewmodels/text_coding_viewmodel.py
 class TextCodingViewModel:
     """
     ViewModel for human UI.
 
-    - Calls use cases directly (no intermediate service)
+    - Calls command handlers directly (no intermediate service)
     - Has repos for queries (CQRS)
     - Manages UI state (selection, undo)
     """
@@ -306,7 +358,7 @@ class TextCodingViewModel:
         code_repo: CodeRepository,      # For queries
         segment_repo: SegmentRepository,
         event_bus: EventBus,            # For commands
-        signal_bridge: SignalBridge,    # For reactive updates
+        signal_bridge: CodingSignalBridge,  # For reactive updates
     ):
         self._code_repo = code_repo
         self._segment_repo = segment_repo
@@ -317,8 +369,10 @@ class TextCodingViewModel:
         # Subscribe to updates
         self._bridge.code_created.connect(self._on_code_created)
 
-    # Commands → Use cases
+    # Commands → Command handlers
     def create_code(self, name: str, color: str) -> bool:
+        from src.contexts.coding.core.commandHandlers import create_code
+
         result = create_code(
             CreateCodeCommand(name=name, color=color),
             self._code_repo,
@@ -336,19 +390,19 @@ class TextCodingViewModel:
     # Queries → Direct repo (CQRS)
     def get_codes(self) -> list[CodeDTO]:
         return [self._to_dto(c) for c in self._code_repo.get_all()]
-
-    def get_last_error(self) -> tuple[str, list[str]]:
-        return (self._last_error, self._last_suggestions or [])
 ```
 
-### MCP Tools (Calls Use Cases Directly)
+### MCP Tools (Calls Command Handlers Directly)
+
+MCP tools live in `src/contexts/{name}/interface/`:
 
 ```python
+# src/contexts/coding/interface/mcp_tools.py
 class CodingMCPTools:
     """
     MCP tools for AI agents.
 
-    Calls SAME use cases as ViewModel.
+    Calls SAME command handlers as ViewModel.
     Shared EventBus = UI updates automatically when AI acts.
     """
 
@@ -362,25 +416,10 @@ class CodingMCPTools:
         self._segment_repo = segment_repo
         self._event_bus = event_bus
 
-    def get_tools(self) -> list[Tool]:
-        return [
-            Tool(
-                name="create_code",
-                description="Create a new code for tagging qualitative data",
-                parameters={
-                    "name": {"type": "string", "description": "Unique code name"},
-                    "color": {"type": "string", "description": "Hex color (#FF5733)"},
-                },
-            ),
-            Tool(
-                name="batch_apply_codes",
-                description="Apply multiple codes at once (efficient for AI)",
-                parameters={...},
-            ),
-        ]
-
     def handle_create_code(self, params: dict) -> ToolResult:
-        result = create_code(  # Same use case as ViewModel!
+        from src.contexts.coding.core.commandHandlers import create_code
+
+        result = create_code(  # Same handler as ViewModel!
             CreateCodeCommand(name=params["name"], color=params["color"]),
             self._code_repo,
             self._event_bus,
@@ -395,38 +434,19 @@ class CodingMCPTools:
         )
 ```
 
-### MCP In-Process = Automatic UI Updates
+### Shared Presentation Components
+
+Cross-cutting UI components in `src/shared/presentation/`:
 
 ```python
-def create_app():
-    """Wire everything with shared instances."""
-    # Shared infrastructure
-    event_bus = EventBus()
-    code_repo = SQLiteCodeRepository(connection)
+# Import shared DTOs
+from src.shared.presentation.dto import TextCodingDataDTO, SourceDTO
 
-    # Signal bridge listens to event_bus
-    signal_bridge = CodingSignalBridge(event_bus)
+# Import shared organisms
+from src.shared.presentation.organisms import SourceTable, TextEditorPanel
 
-    # ViewModel (for human UI)
-    viewmodel = TextCodingViewModel(
-        code_repo=code_repo,
-        event_bus=event_bus,  # Shared
-        signal_bridge=signal_bridge,
-    )
-
-    # MCP Tools (for AI) - SAME event_bus
-    mcp_tools = CodingMCPTools(
-        code_repo=code_repo,
-        event_bus=event_bus,  # Same instance → UI updates when AI acts
-    )
-
-    # When AI creates a code:
-    # 1. Use case publishes to event_bus
-    # 2. SignalBridge receives, emits Qt signal
-    # 3. ViewModel receives, updates state
-    # 4. UI re-renders
-    #
-    # No extra code needed!
+# Import shared templates
+from src.shared.presentation.templates import AppShell, ThreePanelLayout
 ```
 
 ---
@@ -482,7 +502,7 @@ import re                                     # 2. Stdlib
 from returns.result import Result             # 3. Third-party
 from src.contexts.coding.core.entities import Code  # 4. Local
 if TYPE_CHECKING:                             # 5. Type-checking only
-    from src.application.event_bus import EventBus
+    from src.shared.infra.event_bus import EventBus
 ```
 
 ### Naming Conventions
@@ -494,7 +514,7 @@ if TYPE_CHECKING:                             # 5. Type-checking only
 | Invariants | `is_*` / `can_*` | `is_valid_code_name()` |
 | Derivers | `derive_*` | `derive_create_code()` |
 | Events | PastTense | `CodeCreated`, `CodeCreationFailed` |
-| Use Cases | verb_noun | `create_code()`, `apply_code()` |
+| Command Handlers | verb_noun | `create_code()`, `apply_code()` |
 
 ---
 
@@ -556,14 +576,14 @@ def test_handles_db_failure():
 - [ ] Failure events have error_code and suggestions
 
 ### Application
-- [ ] Use cases return `OperationResult` (not just `Result`)
-- [ ] Use cases orchestrate only, domain decides
+- [ ] Command handlers return `OperationResult` (not just `Result`)
+- [ ] Command handlers orchestrate only, domain decides
 - [ ] Batch operations exist for AI efficiency
 
 ### Presentation
-- [ ] ViewModel calls use cases directly (no service layer)
+- [ ] ViewModel calls command handlers directly (no service layer)
 - [ ] ViewModel has repos for queries (CQRS)
-- [ ] MCP Tools call same use cases as ViewModel
+- [ ] MCP Tools call same command handlers as ViewModel
 - [ ] Shared EventBus for automatic UI updates
 - [ ] Signal payloads use primitives only
 
@@ -571,6 +591,7 @@ def test_handles_db_failure():
 - [ ] No unnecessary Protocol/Service layers
 - [ ] Provider pattern only for external services
 - [ ] AI and UI are both presentation adapters
+- [ ] Each bounded context is a complete vertical slice
 
 ---
 
@@ -578,4 +599,5 @@ def test_handles_db_failure():
 
 - **Tutorials:** `docs/tutorials/` - Hands-on learning
 - **E2E Tests:** `src/tests/e2e/`
-- **Sub-agents:** `.claude/agents/` - Layer-specific prompts
+- **Signal Bridges:** `src/shared/infra/signal_bridge/`
+- **Shared Presentation:** `src/shared/presentation/`
