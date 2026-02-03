@@ -2,19 +2,19 @@
 Delete Folder Use Case
 
 Functional use case for deleting an empty folder.
+Returns OperationResult with error codes and suggestions.
 """
 
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from returns.result import Failure, Result, Success
-
 from src.application.projects.commands import DeleteFolderCommand
 from src.application.state import ProjectState
 from src.contexts.projects.core.derivers import FolderState, derive_delete_folder
 from src.contexts.projects.core.events import FolderDeleted
 from src.contexts.projects.core.failure_events import FolderNotDeleted
+from src.contexts.shared.core.operation_result import OperationResult
 from src.contexts.shared.core.types import FolderId
 
 if TYPE_CHECKING:
@@ -27,7 +27,7 @@ def delete_folder(
     state: ProjectState,
     sources_ctx: SourcesContext,
     event_bus: EventBus,
-) -> Result[FolderDeleted, str]:
+) -> OperationResult:
     """
     Delete an empty folder.
 
@@ -38,10 +38,14 @@ def delete_folder(
         event_bus: Event bus for publishing events
 
     Returns:
-        Success with FolderDeleted event, or Failure with error message
+        OperationResult with FolderDeleted event on success, or error details on failure
     """
     if state.project is None:
-        return Failure("No project is currently open")
+        return OperationResult.fail(
+            error="No project is currently open",
+            error_code="FOLDER_NOT_DELETED/NO_PROJECT",
+            suggestions=("Open a project first",),
+        )
 
     folder_id = FolderId(value=command.folder_id)
 
@@ -54,7 +58,10 @@ def delete_folder(
     result = derive_delete_folder(folder_id=folder_id, state=folder_state)
 
     if isinstance(result, FolderNotDeleted):
-        return Failure(result.reason)
+        return OperationResult.fail(
+            error=result.reason,
+            error_code=f"FOLDER_NOT_DELETED/{result.event_type.upper()}",
+        )
 
     event: FolderDeleted = result
 
@@ -67,4 +74,5 @@ def delete_folder(
     # Publish event
     event_bus.publish(event)
 
-    return Success(event)
+    # No rollback - would need to recreate folder
+    return OperationResult.ok(data=event)

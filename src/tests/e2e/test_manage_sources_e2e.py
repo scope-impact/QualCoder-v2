@@ -628,8 +628,8 @@ class TestOrganizeSources:
             folder_result = create_folder(
                 cmd, ctx.state, ctx.sources_context, ctx.event_bus
             )
-            assert isinstance(folder_result, Success)
-            folder = folder_result.unwrap()
+            assert folder_result.is_success
+            folder = folder_result.data
 
             # Create source in that folder
             source = Source(

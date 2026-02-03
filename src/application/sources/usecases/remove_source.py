@@ -2,13 +2,12 @@
 Remove Source Use Case
 
 Functional use case for removing a source from the project.
+Returns OperationResult with error codes and suggestions.
 """
 
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
-
-from returns.result import Failure, Result, Success
 
 from src.application.projects.commands import RemoveSourceCommand
 from src.application.state import ProjectState
@@ -16,6 +15,7 @@ from src.contexts.projects.core.derivers import ProjectState as DomainProjectSta
 from src.contexts.projects.core.derivers import derive_remove_source
 from src.contexts.projects.core.events import SourceRemoved
 from src.contexts.projects.core.failure_events import SourceNotRemoved
+from src.contexts.shared.core.operation_result import OperationResult
 from src.contexts.shared.core.types import SourceId
 
 if TYPE_CHECKING:
@@ -29,7 +29,7 @@ def remove_source(
     sources_ctx: SourcesContext,
     coding_ctx: CodingContext | None,
     event_bus: EventBus,
-) -> Result[SourceRemoved, str]:
+) -> OperationResult:
     """
     Remove a source from the current project.
 
@@ -48,11 +48,15 @@ def remove_source(
         event_bus: Event bus for publishing events
 
     Returns:
-        Success with SourceRemoved event, or Failure with error message
+        OperationResult with SourceRemoved event on success, or error details on failure
     """
     # Step 1: Validate
     if state.project is None:
-        return Failure("No project is currently open")
+        return OperationResult.fail(
+            error="No project is currently open",
+            error_code="SOURCE_NOT_REMOVED/NO_PROJECT",
+            suggestions=("Open a project first",),
+        )
 
     source_id = SourceId(value=command.source_id)
 
@@ -66,7 +70,10 @@ def remove_source(
     result = derive_remove_source(source_id=source_id, state=domain_state)
 
     if isinstance(result, SourceNotRemoved):
-        return Failure(result.reason)
+        return OperationResult.fail(
+            error=result.reason,
+            error_code=f"SOURCE_NOT_REMOVED/{result.event_type.upper()}",
+        )
 
     event: SourceRemoved = result
 
@@ -83,4 +90,5 @@ def remove_source(
     # Step 5: Publish event
     event_bus.publish(event)
 
-    return Success(event)
+    # No rollback - would need to recreate source with all data
+    return OperationResult.ok(data=event)

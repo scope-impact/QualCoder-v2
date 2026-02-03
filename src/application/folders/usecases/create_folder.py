@@ -2,20 +2,20 @@
 Create Folder Use Case
 
 Functional use case for creating a new folder.
+Returns OperationResult with error codes, suggestions, and rollback support.
 """
 
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from returns.result import Failure, Result, Success
-
-from src.application.projects.commands import CreateFolderCommand
+from src.application.projects.commands import CreateFolderCommand, DeleteFolderCommand
 from src.application.state import ProjectState
 from src.contexts.projects.core.derivers import FolderState, derive_create_folder
 from src.contexts.projects.core.entities import Folder
 from src.contexts.projects.core.events import FolderCreated
 from src.contexts.projects.core.failure_events import FolderNotCreated
+from src.contexts.shared.core.operation_result import OperationResult
 from src.contexts.shared.core.types import FolderId
 
 if TYPE_CHECKING:
@@ -28,7 +28,7 @@ def create_folder(
     state: ProjectState,
     sources_ctx: SourcesContext,
     event_bus: EventBus,
-) -> Result[Folder, str]:
+) -> OperationResult:
     """
     Create a new folder in the current project.
 
@@ -39,10 +39,14 @@ def create_folder(
         event_bus: Event bus for publishing events
 
     Returns:
-        Success with Folder entity, or Failure with error message
+        OperationResult with Folder on success, or error details on failure
     """
     if state.project is None:
-        return Failure("No project is currently open")
+        return OperationResult.fail(
+            error="No project is currently open",
+            error_code="FOLDER_NOT_CREATED/NO_PROJECT",
+            suggestions=("Open a project first",),
+        )
 
     parent_id = FolderId(value=command.parent_id) if command.parent_id else None
 
@@ -59,7 +63,10 @@ def create_folder(
     )
 
     if isinstance(result, FolderNotCreated):
-        return Failure(result.reason)
+        return OperationResult.fail(
+            error=result.reason,
+            error_code=f"FOLDER_NOT_CREATED/{result.event_type.upper()}",
+        )
 
     event: FolderCreated = result
 
@@ -80,4 +87,7 @@ def create_folder(
     # Publish event
     event_bus.publish(event)
 
-    return Success(folder)
+    return OperationResult.ok(
+        data=folder,
+        rollback=DeleteFolderCommand(folder_id=folder.id.value),
+    )

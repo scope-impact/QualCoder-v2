@@ -14,8 +14,6 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from returns.result import Success
-
 from src.application.projects.commands import (
     AddSourceCommand,
     CreateFolderCommand,
@@ -170,7 +168,7 @@ class FileManagerViewModel:
 
         result = self._controller.add_source(command)
 
-        return isinstance(result, Success)
+        return result.is_success
 
     def remove_source(self, source_id: int) -> bool:
         """
@@ -185,7 +183,7 @@ class FileManagerViewModel:
         command = RemoveSourceCommand(source_id=source_id)
         result = self._controller.remove_source(command)
 
-        if isinstance(result, Success):
+        if result.is_success:
             self._selected_source_ids.discard(source_id)
             if self._current_source_id == source_id:
                 self._current_source_id = None
@@ -237,7 +235,7 @@ class FileManagerViewModel:
         command = OpenSourceCommand(source_id=source_id)
         result = self._controller.open_source(command)
 
-        if isinstance(result, Success):
+        if result.is_success:
             self._current_source_id = source_id
             return True
 
@@ -271,7 +269,7 @@ class FileManagerViewModel:
 
         result = self._controller.update_source(command)
 
-        return isinstance(result, Success)
+        return result.is_success
 
     # =========================================================================
     # Selection
@@ -384,7 +382,7 @@ class FileManagerViewModel:
         command = CreateFolderCommand(name=name, parent_id=parent_id)
         result = self._controller.create_folder(command)
 
-        return isinstance(result, Success)
+        return result.is_success
 
     def rename_folder(self, folder_id: int, new_name: str) -> bool:
         """
@@ -400,7 +398,7 @@ class FileManagerViewModel:
         command = RenameFolderCommand(folder_id=folder_id, new_name=new_name)
         result = self._controller.rename_folder(command)
 
-        return isinstance(result, Success)
+        return result.is_success
 
     def delete_folder(self, folder_id: int) -> bool:
         """
@@ -415,7 +413,7 @@ class FileManagerViewModel:
         command = DeleteFolderCommand(folder_id=folder_id)
         result = self._controller.delete_folder(command)
 
-        return isinstance(result, Success)
+        return result.is_success
 
     def move_source_to_folder(self, source_id: int, folder_id: int | None) -> bool:
         """
@@ -431,7 +429,7 @@ class FileManagerViewModel:
         command = MoveSourceToFolderCommand(source_id=source_id, folder_id=folder_id)
         result = self._controller.move_source_to_folder(command)
 
-        return isinstance(result, Success)
+        return result.is_success
 
     def get_folders(self) -> list[FolderDTO]:
         """

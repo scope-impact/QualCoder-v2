@@ -15,6 +15,8 @@ from typing import TYPE_CHECKING, Protocol
 
 from returns.result import Result
 
+from src.contexts.shared.core.operation_result import OperationResult
+
 if TYPE_CHECKING:
     from src.application.projects.commands import (
         AddSourceCommand,
@@ -61,19 +63,19 @@ class FileManagerController(Protocol):
         """Get a specific source by ID."""
         ...
 
-    def add_source(self, command: AddSourceCommand) -> Result:
+    def add_source(self, command: AddSourceCommand) -> OperationResult:
         """Add a source file to the current project."""
         ...
 
-    def remove_source(self, command: RemoveSourceCommand) -> Result:
+    def remove_source(self, command: RemoveSourceCommand) -> OperationResult:
         """Remove a source from the current project."""
         ...
 
-    def open_source(self, command: OpenSourceCommand) -> Result:
+    def open_source(self, command: OpenSourceCommand) -> OperationResult:
         """Open a source for viewing/coding."""
         ...
 
-    def update_source(self, command: UpdateSourceCommand) -> Result:
+    def update_source(self, command: UpdateSourceCommand) -> OperationResult:
         """Update source metadata."""
         ...
 
@@ -89,19 +91,21 @@ class FileManagerController(Protocol):
         """Get all folders in the current project."""
         ...
 
-    def create_folder(self, command: CreateFolderCommand) -> Result:
+    def create_folder(self, command: CreateFolderCommand) -> OperationResult:
         """Create a new folder."""
         ...
 
-    def rename_folder(self, command: RenameFolderCommand) -> Result:
+    def rename_folder(self, command: RenameFolderCommand) -> OperationResult:
         """Rename a folder."""
         ...
 
-    def delete_folder(self, command: DeleteFolderCommand) -> Result:
+    def delete_folder(self, command: DeleteFolderCommand) -> OperationResult:
         """Delete an empty folder."""
         ...
 
-    def move_source_to_folder(self, command: MoveSourceToFolderCommand) -> Result:
+    def move_source_to_folder(
+        self, command: MoveSourceToFolderCommand
+    ) -> OperationResult:
         """Move a source to a folder."""
         ...
 

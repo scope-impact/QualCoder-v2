@@ -2,20 +2,21 @@
 Update Source Use Case
 
 Functional use case for updating source metadata.
+Returns OperationResult with error codes and suggestions.
 """
 
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from returns.result import Failure, Result, Success
-
 from src.application.projects.commands import UpdateSourceCommand
 from src.application.state import ProjectState
 from src.contexts.projects.core.derivers import ProjectState as DomainProjectState
 from src.contexts.projects.core.derivers import derive_update_source
-from src.contexts.projects.core.entities import Source, SourceStatus
+from src.contexts.projects.core.entities import SourceStatus
 from src.contexts.projects.core.events import SourceUpdated
+from src.contexts.projects.core.failure_events import SourceNotUpdated
+from src.contexts.shared.core.operation_result import OperationResult
 from src.contexts.shared.core.types import SourceId
 
 if TYPE_CHECKING:
@@ -28,7 +29,7 @@ def update_source(
     state: ProjectState,
     sources_ctx: SourcesContext,
     event_bus: EventBus,
-) -> Result[Source, str]:
+) -> OperationResult:
     """
     Update source metadata (memo, origin, status).
 
@@ -46,11 +47,15 @@ def update_source(
         event_bus: Event bus for publishing events
 
     Returns:
-        Success with updated Source, or Failure with error message
+        OperationResult with updated Source on success, or error details on failure
     """
     # Step 1: Validate
     if state.project is None:
-        return Failure("No project is currently open")
+        return OperationResult.fail(
+            error="No project is currently open",
+            error_code="SOURCE_NOT_UPDATED/NO_PROJECT",
+            suggestions=("Open a project first",),
+        )
 
     source_id = SourceId(value=command.source_id)
 
@@ -69,15 +74,21 @@ def update_source(
         state=domain_state,
     )
 
-    if isinstance(result, Failure):
-        return result
+    if isinstance(result, SourceNotUpdated):
+        return OperationResult.fail(
+            error=result.reason,
+            error_code=f"SOURCE_NOT_UPDATED/{result.event_type.upper()}",
+        )
 
     event: SourceUpdated = result
 
     # Step 3: Find and update the source entity
     source = state.get_source(command.source_id)
     if source is None:
-        return Failure(f"Source {command.source_id} not found")
+        return OperationResult.fail(
+            error=f"Source {command.source_id} not found",
+            error_code="SOURCE_NOT_UPDATED/NOT_FOUND",
+        )
 
     # Apply updates
     updated_source = source
@@ -97,4 +108,4 @@ def update_source(
     # Step 5: Publish event
     event_bus.publish(event)
 
-    return Success(updated_source)
+    return OperationResult.ok(data=updated_source)

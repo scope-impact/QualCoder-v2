@@ -17,6 +17,7 @@ from design_system import get_colors
 from src.application.app_context import AppContext, get_app_context
 from src.application.navigation.service import NavigationService
 from src.contexts.projects.core.entities import ProjectSummary, SourceType
+from src.contexts.shared.core.operation_result import OperationResult
 from src.contexts.shared.core.types import SourceId
 from src.presentation.screens import (
     CaseManagerScreen,
@@ -78,7 +79,7 @@ class FileManagerService:
         """Get a specific source by ID."""
         return self._ctx.state.get_source(source_id)
 
-    def add_source(self, command: AddSourceCommand) -> Result:
+    def add_source(self, command: AddSourceCommand) -> OperationResult:
         """Add a source file to the current project."""
         from src.application.sources.usecases import add_source
 
@@ -89,7 +90,7 @@ class FileManagerService:
             event_bus=self._ctx.event_bus,
         )
 
-    def remove_source(self, command: RemoveSourceCommand) -> Result:
+    def remove_source(self, command: RemoveSourceCommand) -> OperationResult:
         """Remove a source from the current project."""
         from src.application.sources.usecases import remove_source
 
@@ -101,7 +102,7 @@ class FileManagerService:
             event_bus=self._ctx.event_bus,
         )
 
-    def open_source(self, command: OpenSourceCommand) -> Result:
+    def open_source(self, command: OpenSourceCommand) -> OperationResult:
         """Open a source for viewing/coding."""
         from src.application.sources.usecases import open_source
 
@@ -111,7 +112,7 @@ class FileManagerService:
             event_bus=self._ctx.event_bus,
         )
 
-    def update_source(self, command: UpdateSourceCommand) -> Result:
+    def update_source(self, command: UpdateSourceCommand) -> OperationResult:
         """Update source metadata."""
         from src.application.sources.usecases import update_source
 
@@ -139,7 +140,7 @@ class FileManagerService:
         """Get all folders in the current project."""
         return list(self._ctx.state.folders)
 
-    def create_folder(self, command: CreateFolderCommand) -> Result:
+    def create_folder(self, command: CreateFolderCommand) -> OperationResult:
         """Create a new folder."""
         from src.application.folders.usecases import create_folder
 
@@ -150,7 +151,7 @@ class FileManagerService:
             event_bus=self._ctx.event_bus,
         )
 
-    def rename_folder(self, command: RenameFolderCommand) -> Result:
+    def rename_folder(self, command: RenameFolderCommand) -> OperationResult:
         """Rename a folder."""
         from src.application.folders.usecases import rename_folder
 
@@ -161,7 +162,7 @@ class FileManagerService:
             event_bus=self._ctx.event_bus,
         )
 
-    def delete_folder(self, command: DeleteFolderCommand) -> Result:
+    def delete_folder(self, command: DeleteFolderCommand) -> OperationResult:
         """Delete an empty folder."""
         from src.application.folders.usecases import delete_folder
 
@@ -172,7 +173,9 @@ class FileManagerService:
             event_bus=self._ctx.event_bus,
         )
 
-    def move_source_to_folder(self, command: MoveSourceToFolderCommand) -> Result:
+    def move_source_to_folder(
+        self, command: MoveSourceToFolderCommand
+    ) -> OperationResult:
         """Move a source to a folder."""
         from src.application.folders.usecases import move_source_to_folder
 

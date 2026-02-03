@@ -2,6 +2,7 @@
 Add Source Use Case
 
 Functional use case for adding a source file to the project.
+Returns OperationResult with error codes, suggestions, and rollback support.
 """
 
 from __future__ import annotations
@@ -9,15 +10,16 @@ from __future__ import annotations
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-from returns.result import Failure, Result, Success
+from returns.result import Success
 
-from src.application.projects.commands import AddSourceCommand
+from src.application.projects.commands import AddSourceCommand, RemoveSourceCommand
 from src.application.state import ProjectState
 from src.contexts.projects.core.derivers import ProjectState as DomainProjectState
 from src.contexts.projects.core.derivers import derive_add_source
 from src.contexts.projects.core.entities import Source, SourceStatus, SourceType
 from src.contexts.projects.core.events import SourceAdded
 from src.contexts.projects.core.failure_events import SourceNotAdded
+from src.contexts.shared.core.operation_result import OperationResult
 from src.contexts.sources.infra.pdf_extractor import PdfExtractor
 from src.contexts.sources.infra.text_extractor import TextExtractor
 
@@ -31,7 +33,7 @@ def add_source(
     state: ProjectState,
     sources_ctx: SourcesContext,
     event_bus: EventBus,
-) -> Result[Source, str]:
+) -> OperationResult:
     """
     Add a source file to the current project.
 
@@ -49,11 +51,15 @@ def add_source(
         event_bus: Event bus for publishing events
 
     Returns:
-        Success with Source entity, or Failure with error message
+        OperationResult with Source entity on success, or error details on failure
     """
     # Step 1: Validate
     if state.project is None:
-        return Failure("No project is currently open")
+        return OperationResult.fail(
+            error="No project is currently open",
+            error_code="SOURCE_NOT_ADDED/NO_PROJECT",
+            suggestions=("Open a project first",),
+        )
 
     source_path = Path(command.source_path)
 
@@ -73,7 +79,10 @@ def add_source(
     )
 
     if isinstance(result, SourceNotAdded):
-        return Failure(result.reason)
+        return OperationResult.fail(
+            error=result.reason,
+            error_code=f"SOURCE_NOT_ADDED/{result.event_type.upper()}",
+        )
 
     event: SourceAdded = result
 
@@ -121,4 +130,7 @@ def add_source(
     # Step 5: Publish event
     event_bus.publish(event)
 
-    return Success(source)
+    return OperationResult.ok(
+        data=source,
+        rollback=RemoveSourceCommand(source_id=source.id.value),
+    )

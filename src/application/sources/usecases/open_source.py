@@ -2,13 +2,12 @@
 Open Source Use Case
 
 Functional use case for opening a source for viewing/coding.
+Returns OperationResult with error codes and suggestions.
 """
 
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
-
-from returns.result import Failure, Result, Success
 
 from src.application.projects.commands import OpenSourceCommand
 from src.application.state import ProjectState
@@ -16,6 +15,7 @@ from src.contexts.projects.core.derivers import ProjectState as DomainProjectSta
 from src.contexts.projects.core.derivers import derive_open_source
 from src.contexts.projects.core.events import ScreenChanged, SourceOpened
 from src.contexts.projects.core.failure_events import SourceNotOpened
+from src.contexts.shared.core.operation_result import OperationResult
 from src.contexts.shared.core.types import SourceId
 
 if TYPE_CHECKING:
@@ -26,7 +26,7 @@ def open_source(
     command: OpenSourceCommand,
     state: ProjectState,
     event_bus: EventBus,
-) -> Result[SourceOpened, str]:
+) -> OperationResult:
     """
     Open a source for viewing/coding.
 
@@ -43,11 +43,15 @@ def open_source(
         event_bus: Event bus for publishing events
 
     Returns:
-        Success with SourceOpened event, or Failure with error message
+        OperationResult with SourceOpened event on success, or error details on failure
     """
     # Step 1: Validate
     if state.project is None:
-        return Failure("No project is currently open")
+        return OperationResult.fail(
+            error="No project is currently open",
+            error_code="SOURCE_NOT_OPENED/NO_PROJECT",
+            suggestions=("Open a project first",),
+        )
 
     source_id = SourceId(value=command.source_id)
 
@@ -61,7 +65,10 @@ def open_source(
     result = derive_open_source(source_id=source_id, state=domain_state)
 
     if isinstance(result, SourceNotOpened):
-        return Failure(result.reason)
+        return OperationResult.fail(
+            error=result.reason,
+            error_code=f"SOURCE_NOT_OPENED/{result.event_type.upper()}",
+        )
 
     event: SourceOpened = result
 
@@ -84,4 +91,4 @@ def open_source(
     )
     event_bus.publish(screen_event)
 
-    return Success(event)
+    return OperationResult.ok(data=event)
