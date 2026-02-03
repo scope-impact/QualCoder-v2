@@ -1,1 +1,1 @@
-"""Tests for Coding infrastructure layer."""
+"""Tests for AI infrastructure layer."""

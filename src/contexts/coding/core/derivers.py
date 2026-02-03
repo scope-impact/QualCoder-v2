@@ -70,7 +70,7 @@ from src.contexts.coding.core.invariants import (
     is_valid_code_name,
     is_valid_text_position,
 )
-from src.contexts.shared.core.types import (
+from src.shared.common.types import (
     CategoryId,
     CodeId,
     SegmentId,

@@ -1,0 +1,125 @@
+"""
+Apply Code Use Case.
+
+Functional use case for applying a code to a text segment.
+Returns OperationResult with error codes, suggestions, and rollback support.
+"""
+
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, Any
+
+from src.contexts.coding.core.commandHandlers._state import (
+    CategoryRepository,
+    CodeRepository,
+    SegmentRepository,
+    build_coding_state,
+)
+from src.contexts.coding.core.commands import ApplyCodeCommand, RemoveCodeCommand
+from src.contexts.coding.core.derivers import derive_apply_code_to_text
+from src.contexts.coding.core.entities import TextSegment
+from src.contexts.coding.core.events import SegmentCoded
+from src.shared.common.failure_events import FailureEvent
+from src.shared.common.operation_result import OperationResult
+from src.shared.common.types import CodeId, SourceId
+
+if TYPE_CHECKING:
+    from src.shared.infra.event_bus import EventBus
+
+
+def apply_code(
+    command: ApplyCodeCommand,
+    code_repo: CodeRepository,
+    category_repo: CategoryRepository,
+    segment_repo: SegmentRepository,
+    event_bus: EventBus,
+    source_content_provider: Any | None = None,
+) -> OperationResult:
+    """
+    Apply a code to a text segment.
+
+    Args:
+        command: Command with code ID, source ID, and position
+        code_repo: Repository for codes
+        category_repo: Repository for categories
+        segment_repo: Repository for segments
+        event_bus: Event bus for publishing events
+        source_content_provider: Optional provider for source content
+
+    Returns:
+        OperationResult with TextSegment on success, or error details on failure
+    """
+    code_id = CodeId(value=command.code_id)
+    source_id = SourceId(value=command.source_id)
+
+    # Get source content for the selected text
+    selected_text = _get_selected_text(
+        source_content_provider,
+        source_id,
+        command.start_position,
+        command.end_position,
+    )
+
+    # Build state with source info
+    state = build_coding_state(
+        code_repo,
+        category_repo,
+        segment_repo,
+        source_id=source_id,
+        source_exists=True,
+        source_content_provider=source_content_provider,
+    )
+
+    result = derive_apply_code_to_text(
+        code_id=code_id,
+        source_id=source_id,
+        start=command.start_position,
+        end=command.end_position,
+        selected_text=selected_text,
+        memo=command.memo,
+        importance=command.importance,
+        owner=None,
+        state=state,
+    )
+
+    # Handle failure events (now returned as events, not Failure wrapper)
+    if isinstance(result, FailureEvent):
+        event_bus.publish(result)  # Publish failure for policies
+        return OperationResult.from_failure(result)
+
+    event: SegmentCoded = result
+
+    # Create and persist segment
+    segment = TextSegment(
+        id=event.segment_id,
+        source_id=source_id,
+        code_id=code_id,
+        position=event.position,
+        selected_text=event.selected_text,
+        memo=event.memo,
+        importance=command.importance,
+        owner=event.owner,
+    )
+    segment_repo.save(segment)
+
+    event_bus.publish(event)
+
+    return OperationResult.ok(
+        data=segment,
+        rollback=RemoveCodeCommand(segment_id=segment.id.value),
+    )
+
+
+def _get_selected_text(
+    source_provider: Any | None,
+    source_id: SourceId,
+    start: int,
+    end: int,
+) -> str:
+    """Get the selected text from a source."""
+    if source_provider:
+        content = source_provider.get_content(source_id)
+        if content:
+            return content[start:end]
+    # Fallback: return placeholder
+    return f"[text from {start} to {end}]"

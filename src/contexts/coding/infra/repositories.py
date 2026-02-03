@@ -20,7 +20,7 @@ from src.contexts.coding.core.entities import (
     TextSegment,
 )
 from src.contexts.coding.infra.schema import code_cat, code_name, code_text
-from src.contexts.shared.core.types import CategoryId, CodeId, SegmentId, SourceId
+from src.shared.common.types import CategoryId, CodeId, SegmentId, SourceId
 
 if TYPE_CHECKING:
     from sqlalchemy import Connection

@@ -12,8 +12,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 from src.contexts.coding.core.entities import BatchId
-from src.contexts.shared.core.failure_events import FailureEvent
-from src.contexts.shared.core.types import CategoryId, CodeId, SegmentId, SourceId
+from src.shared.common.failure_events import FailureEvent
+from src.shared.common.types import CategoryId, CodeId, SegmentId, SourceId
 
 # ============================================================
 # Code Failure Events

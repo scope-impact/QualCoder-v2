@@ -4,12 +4,15 @@ Immutable records of things that happened in the domain.
 
 These form the CONTRACT (Published Language) between contexts.
 Other contexts subscribe to these events to react to changes.
+
+Event type convention: coding.{entity}_{action}
 """
 
 from dataclasses import dataclass
+from typing import ClassVar
 
 from src.contexts.coding.core.entities import BatchId, Color, TextPosition
-from src.contexts.shared.core.types import (
+from src.shared.common.types import (
     CategoryId,
     CodeId,
     DomainEvent,
@@ -25,6 +28,8 @@ from src.contexts.shared.core.types import (
 @dataclass(frozen=True)
 class CodeCreated(DomainEvent):
     """A new code was created in the codebook"""
+
+    event_type: ClassVar[str] = "coding.code_created"
 
     code_id: CodeId
     name: str
@@ -59,6 +64,8 @@ class CodeCreated(DomainEvent):
 class CodeRenamed(DomainEvent):
     """A code's name was changed"""
 
+    event_type: ClassVar[str] = "coding.code_renamed"
+
     code_id: CodeId
     old_name: str
     new_name: str
@@ -77,6 +84,8 @@ class CodeRenamed(DomainEvent):
 @dataclass(frozen=True)
 class CodeColorChanged(DomainEvent):
     """A code's color was changed"""
+
+    event_type: ClassVar[str] = "coding.code_color_changed"
 
     code_id: CodeId
     old_color: Color
@@ -99,6 +108,8 @@ class CodeColorChanged(DomainEvent):
 class CodeMemoUpdated(DomainEvent):
     """A code's memo was updated"""
 
+    event_type: ClassVar[str] = "coding.code_memo_updated"
+
     code_id: CodeId
     old_memo: str | None
     new_memo: str | None
@@ -120,6 +131,8 @@ class CodeMemoUpdated(DomainEvent):
 class CodeDeleted(DomainEvent):
     """A code was removed from the codebook"""
 
+    event_type: ClassVar[str] = "coding.code_deleted"
+
     code_id: CodeId
     name: str
     segments_removed: int = 0
@@ -140,6 +153,8 @@ class CodeDeleted(DomainEvent):
 @dataclass(frozen=True)
 class CodesMerged(DomainEvent):
     """Two codes were merged into one"""
+
+    event_type: ClassVar[str] = "coding.codes_merged"
 
     source_code_id: CodeId
     source_code_name: str
@@ -171,6 +186,8 @@ class CodesMerged(DomainEvent):
 class CodeMovedToCategory(DomainEvent):
     """A code was moved to a different category"""
 
+    event_type: ClassVar[str] = "coding.code_moved_to_category"
+
     code_id: CodeId
     old_category_id: CategoryId | None
     new_category_id: CategoryId | None
@@ -200,6 +217,8 @@ class CodeMovedToCategory(DomainEvent):
 class CategoryCreated(DomainEvent):
     """A new category was created"""
 
+    event_type: ClassVar[str] = "coding.category_created"
+
     category_id: CategoryId
     name: str
     parent_id: CategoryId | None = None
@@ -227,6 +246,8 @@ class CategoryCreated(DomainEvent):
 class CategoryRenamed(DomainEvent):
     """A category was renamed"""
 
+    event_type: ClassVar[str] = "coding.category_renamed"
+
     category_id: CategoryId
     old_name: str
     new_name: str
@@ -247,6 +268,8 @@ class CategoryRenamed(DomainEvent):
 @dataclass(frozen=True)
 class CategoryDeleted(DomainEvent):
     """A category was deleted"""
+
+    event_type: ClassVar[str] = "coding.category_deleted"
 
     category_id: CategoryId
     name: str
@@ -273,6 +296,8 @@ class CategoryDeleted(DomainEvent):
 @dataclass(frozen=True)
 class SegmentCoded(DomainEvent):
     """A code was applied to a segment of content"""
+
+    event_type: ClassVar[str] = "coding.segment_coded"
 
     segment_id: SegmentId
     code_id: CodeId
@@ -316,6 +341,8 @@ class SegmentCoded(DomainEvent):
 class SegmentUncoded(DomainEvent):
     """A code was removed from a segment"""
 
+    event_type: ClassVar[str] = "coding.segment_uncoded"
+
     segment_id: SegmentId
     code_id: CodeId
     source_id: SourceId
@@ -336,6 +363,8 @@ class SegmentUncoded(DomainEvent):
 @dataclass(frozen=True)
 class SegmentMemoUpdated(DomainEvent):
     """A segment's memo was updated"""
+
+    event_type: ClassVar[str] = "coding.segment_memo_updated"
 
     segment_id: SegmentId
     old_memo: str | None
@@ -362,6 +391,8 @@ class SegmentMemoUpdated(DomainEvent):
 @dataclass(frozen=True)
 class BatchCreated(DomainEvent):
     """An auto-code batch was created with multiple segments."""
+
+    event_type: ClassVar[str] = "coding.batch_created"
 
     batch_id: BatchId
     code_id: CodeId
@@ -392,6 +423,8 @@ class BatchCreated(DomainEvent):
 @dataclass(frozen=True)
 class BatchUndone(DomainEvent):
     """An auto-code batch was undone, removing all its segments."""
+
+    event_type: ClassVar[str] = "coding.batch_undone"
 
     batch_id: BatchId
     segments_removed: int

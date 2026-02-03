@@ -25,8 +25,8 @@ from src.contexts.coding.core.entities import (
     TextSegment,
     TimeRange,
 )
-from src.contexts.shared.core.types import CategoryId, CodeId, SourceId
-from src.contexts.shared.core.validation import (
+from src.shared.common.types import CategoryId, CodeId, SourceId
+from src.shared.core.validation import (
     is_acyclic_hierarchy,
     is_in_range,
     is_non_empty_string,
