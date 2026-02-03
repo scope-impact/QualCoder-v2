@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>QualCoder v2 - UI Mockups</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/design-system.css">
+  <style>
+    body {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: var(--space-8);
+    }
+
+    .hero {
+      text-align: center;
+      max-width: 800px;
+      margin-bottom: var(--space-8);
+    }
+
+    .hero-logo {
+      width: 80px;
+      height: 80px;
+      background: linear-gradient(135deg, var(--color-primary-500), var(--color-accent-500));
+      border-radius: var(--radius-xl);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: var(--font-size-2xl);
+      font-weight: var(--font-weight-bold);
+      margin: 0 auto var(--space-5);
+      box-shadow: var(--shadow-lg);
+    }
+
+    .hero-title {
+      font-size: var(--font-size-3xl);
+      font-weight: var(--font-weight-bold);
+      margin-bottom: var(--space-3);
+      background: linear-gradient(135deg, var(--color-primary-600), var(--color-accent-600));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .hero-subtitle {
+      font-size: var(--font-size-lg);
+      color: var(--text-secondary);
+      margin-bottom: var(--space-6);
+    }
+
+    .hero-description {
+      font-size: var(--font-size-base);
+      color: var(--text-secondary);
+      line-height: 1.7;
+      margin-bottom: var(--space-6);
+    }
+
+    .mockup-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: var(--space-4);
+      width: 100%;
+      max-width: 1200px;
+    }
+
+    .mockup-card {
+      background-color: var(--surface-card);
+      border: 1px solid var(--surface-border);
+      border-radius: var(--radius-lg);
+      padding: var(--space-5);
+      text-decoration: none;
+      color: inherit;
+      transition: all var(--transition-fast);
+    }
+
+    .mockup-card:hover {
+      border-color: var(--color-primary-300);
+      box-shadow: var(--shadow-lg);
+      transform: translateY(-4px);
+    }
+
+    .mockup-card-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: var(--radius-lg);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: var(--space-4);
+    }
+
+    .mockup-card:nth-child(1) .mockup-card-icon { background-color: var(--color-primary-100); color: var(--color-primary-600); }
+    .mockup-card:nth-child(2) .mockup-card-icon { background-color: var(--color-info-50); color: var(--color-info-600); }
+    .mockup-card:nth-child(3) .mockup-card-icon { background-color: var(--color-accent-100); color: var(--color-accent-600); }
+    .mockup-card:nth-child(4) .mockup-card-icon { background-color: var(--color-success-50); color: var(--color-success-600); }
+    .mockup-card:nth-child(5) .mockup-card-icon { background-color: var(--color-warning-50); color: var(--color-warning-600); }
+
+    .mockup-card-title {
+      font-size: var(--font-size-md);
+      font-weight: var(--font-weight-semibold);
+      margin-bottom: var(--space-2);
+    }
+
+    .mockup-card-description {
+      font-size: var(--font-size-sm);
+      color: var(--text-secondary);
+      line-height: 1.5;
+    }
+
+    .theme-toggle {
+      position: fixed;
+      top: var(--space-4);
+      right: var(--space-4);
+    }
+
+    .features-section {
+      max-width: 1200px;
+      width: 100%;
+      margin-top: var(--space-10);
+      padding-top: var(--space-8);
+      border-top: 1px solid var(--surface-border);
+    }
+
+    .features-title {
+      text-align: center;
+      font-size: var(--font-size-xl);
+      font-weight: var(--font-weight-semibold);
+      margin-bottom: var(--space-6);
+    }
+
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: var(--space-5);
+    }
+
+    .feature-item {
+      text-align: center;
+      padding: var(--space-4);
+    }
+
+    .feature-icon {
+      width: 40px;
+      height: 40px;
+      margin: 0 auto var(--space-3);
+      color: var(--color-primary-500);
+    }
+
+    .feature-title {
+      font-weight: var(--font-weight-medium);
+      margin-bottom: var(--space-2);
+    }
+
+    .feature-description {
+      font-size: var(--font-size-sm);
+      color: var(--text-secondary);
+    }
+  </style>
+</head>
+<body>
+  <button class="btn btn-ghost btn-icon theme-toggle" onclick="toggleTheme()">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <circle cx="12" cy="12" r="5"/>
+      <line x1="12" y1="1" x2="12" y2="3"/>
+      <line x1="12" y1="21" x2="12" y2="23"/>
+      <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/>
+      <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+      <line x1="1" y1="12" x2="3" y2="12"/>
+      <line x1="21" y1="12" x2="23" y2="12"/>
+      <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/>
+      <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+    </svg>
+  </button>
+
+  <div class="hero">
+    <div class="hero-logo">Q</div>
+    <h1 class="hero-title">QualCoder v2</h1>
+    <p class="hero-subtitle">Reimagined UI/UX for Qualitative Data Analysis</p>
+    <p class="hero-description">
+      A modern, intuitive interface design for qualitative researchers. Featuring AI-powered coding assistance,
+      streamlined workflows, and beautiful visualizations. Built with accessibility and efficiency in mind.
+    </p>
+  </div>
+
+  <div class="mockup-grid">
+    <a href="dashboard.html" class="mockup-card">
+      <div class="mockup-card-icon">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="3" y="3" width="7" height="7" rx="1"/>
+          <rect x="14" y="3" width="7" height="7" rx="1"/>
+          <rect x="3" y="14" width="7" height="7" rx="1"/>
+          <rect x="14" y="14" width="7" height="7" rx="1"/>
+        </svg>
+      </div>
+      <h2 class="mockup-card-title">Dashboard</h2>
+      <p class="mockup-card-description">
+        Project overview with quick actions, recent activity, coding progress, and AI-powered suggestions at a glance.
+      </p>
+    </a>
+
+    <a href="sources.html" class="mockup-card">
+      <div class="mockup-card-icon">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/>
+          <polyline points="14,2 14,8 20,8"/>
+        </svg>
+      </div>
+      <h2 class="mockup-card-title">Sources Manager</h2>
+      <p class="mockup-card-description">
+        Modern file management with grid/list views, drag-and-drop folders, type filters, and bulk operations.
+      </p>
+    </a>
+
+    <a href="coding.html" class="mockup-card">
+      <div class="mockup-card-icon">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="16,18 22,12 16,6"/>
+          <polyline points="8,6 2,12 8,18"/>
+        </svg>
+      </div>
+      <h2 class="mockup-card-title">Coding Workspace</h2>
+      <p class="mockup-card-description">
+        Three-panel coding interface with code tree, text editor with highlighting, and contextual details panel.
+      </p>
+    </a>
+
+    <a href="cases.html" class="mockup-card">
+      <div class="mockup-card-icon">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+          <circle cx="9" cy="7" r="4"/>
+          <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+          <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+        </svg>
+      </div>
+      <h2 class="mockup-card-title">Case Manager</h2>
+      <p class="mockup-card-description">
+        Participant and case management with attributes, linked sources, and detailed case views.
+      </p>
+    </a>
+
+    <a href="analysis.html" class="mockup-card">
+      <div class="mockup-card-icon">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="18" y1="20" x2="18" y2="10"/>
+          <line x1="12" y1="20" x2="12" y2="4"/>
+          <line x1="6" y1="20" x2="6" y2="14"/>
+        </svg>
+      </div>
+      <h2 class="mockup-card-title">Analysis & Insights</h2>
+      <p class="mockup-card-description">
+        Data visualizations, code frequency charts, co-occurrence matrices, themes, and AI-generated insights.
+      </p>
+    </a>
+  </div>
+
+  <div class="features-section">
+    <h2 class="features-title">Design Highlights</h2>
+    <div class="features-grid">
+      <div class="feature-item">
+        <svg class="feature-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M12 2L2 7l10 5 10-5-10-5z"/>
+          <path d="M2 17l10 5 10-5"/>
+          <path d="M2 12l10 5 10-5"/>
+        </svg>
+        <h3 class="feature-title">AI-Native Design</h3>
+        <p class="feature-description">AI coding suggestions and insights integrated throughout the interface</p>
+      </div>
+      <div class="feature-item">
+        <svg class="feature-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="5"/>
+          <line x1="12" y1="1" x2="12" y2="3"/>
+          <line x1="12" y1="21" x2="12" y2="23"/>
+        </svg>
+        <h3 class="feature-title">Dark & Light Modes</h3>
+        <p class="feature-description">Full theme support with carefully designed color palettes for both modes</p>
+      </div>
+      <div class="feature-item">
+        <svg class="feature-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="2" y="4" width="20" height="16" rx="2"/>
+          <path d="M6 8h.01"/>
+          <path d="M10 8h.01"/>
+          <path d="M14 8h.01"/>
+        </svg>
+        <h3 class="feature-title">Keyboard-First</h3>
+        <p class="feature-description">Comprehensive keyboard shortcuts for efficient coding workflows</p>
+      </div>
+      <div class="feature-item">
+        <svg class="feature-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="3" y="3" width="18" height="18" rx="2"/>
+          <line x1="9" y1="3" x2="9" y2="21"/>
+        </svg>
+        <h3 class="feature-title">Flexible Layouts</h3>
+        <p class="feature-description">Resizable panels and collapsible sidebar for personalized workspace</p>
+      </div>
+      <div class="feature-item">
+        <svg class="feature-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="18" y1="20" x2="18" y2="10"/>
+          <line x1="12" y1="20" x2="12" y2="4"/>
+          <line x1="6" y1="20" x2="6" y2="14"/>
+        </svg>
+        <h3 class="feature-title">Rich Visualizations</h3>
+        <p class="feature-description">Interactive charts, word clouds, and co-occurrence matrices</p>
+      </div>
+      <div class="feature-item">
+        <svg class="feature-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"/>
+          <path d="M12 16v-4"/>
+          <path d="M12 8h.01"/>
+        </svg>
+        <h3 class="feature-title">Accessible</h3>
+        <p class="feature-description">WCAG 2.1 AA compliant with proper contrast and focus states</p>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/app.js"></script>
+</body>
+</html>
