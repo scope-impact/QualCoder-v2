@@ -428,6 +428,23 @@ class TextCodingScreen(QWidget):
         self._ai_viewmodel = ai_viewmodel
         self._connect_ai_viewmodel()
 
+    def set_viewmodel(self, viewmodel: TextCodingViewModel):
+        """
+        Set the text coding viewmodel (can be set after construction).
+
+        This allows wiring the viewmodel after the screen is created,
+        which is needed when repos are only available after project opens.
+
+        Args:
+            viewmodel: The text coding viewmodel
+        """
+        self._viewmodel = viewmodel
+        self._connect_viewmodel()
+
+        # Load initial data from viewmodel
+        data = viewmodel.load_initial_data()
+        self.load_data(data)
+
     # =========================================================================
     # Keyboard Shortcuts Setup (QC-007.10)
     # =========================================================================
@@ -749,6 +766,14 @@ class TextCodingScreen(QWidget):
         """Check if recent codes menu is visible."""
         return self._recent_codes_menu_visible
 
+    def get_recent_codes_count(self) -> int:
+        """
+        Get the number of recent codes.
+
+        BLACK-BOX API: Returns count for verification without exposing internal list.
+        """
+        return len(self._recent_codes)
+
     def apply_recent_code(self, code_id: str):
         """Apply a code from the recent codes list."""
         # Find the code in recent
@@ -837,6 +862,14 @@ class TextCodingScreen(QWidget):
             start=history.start,
             end=history.end,
         )
+
+    def can_undo_unmark(self) -> bool:
+        """
+        Check if undo unmark is available.
+
+        BLACK-BOX API: Returns whether undo is possible without exposing history.
+        """
+        return len(self._unmark_history) > 0
 
     # =========================================================================
     # New Code Dialog (QC-007.10 AC #3)
@@ -1585,7 +1618,16 @@ class TextCodingScreen(QWidget):
 
     def set_document(self, title: str, badge: str = None, text: str = ""):
         """Set the document."""
+        self._document_title = title
         self._page.set_document(title, badge, text)
+
+    def get_document_title(self) -> str:
+        """
+        Get the current document title.
+
+        BLACK-BOX API: Returns the title displayed in the editor.
+        """
+        return getattr(self, "_document_title", "")
 
     @property
     def page(self) -> TextCodingPage:

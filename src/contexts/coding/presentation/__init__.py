@@ -4,6 +4,7 @@ Coding Presentation Layer.
 UI components for the coding bounded context.
 """
 
+from src.contexts.coding.presentation.coordinator import CodingCoordinator
 from src.contexts.coding.presentation.screens.text_coding import TextCodingScreen
 from src.contexts.coding.presentation.viewmodels.ai_coding_viewmodel import (
     AICodingViewModel,
@@ -16,4 +17,5 @@ __all__ = [
     "TextCodingScreen",
     "TextCodingViewModel",
     "AICodingViewModel",
+    "CodingCoordinator",
 ]

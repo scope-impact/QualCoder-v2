@@ -43,6 +43,7 @@ def fresh_app(qapp, colors):
     - Bounded contexts are None
     - App starts on project screen
     """
+    from src.contexts.coding.interface.signal_bridge import CodingSignalBridge
     from src.main import QualCoderApp
     from src.shared.infra.app_context import create_app_context
     from src.shared.infra.signal_bridge.projects import ProjectSignalBridge
@@ -56,6 +57,8 @@ def fresh_app(qapp, colors):
     app._dialog_service = DialogService(app._ctx)
     app._project_signal_bridge = ProjectSignalBridge.instance(app._ctx.event_bus)
     app._project_signal_bridge.start()
+    app._coding_signal_bridge = CodingSignalBridge.instance(app._ctx.event_bus)
+    app._coding_signal_bridge.start()
     app._shell = None
     app._screens = {}
     app._current_project_path = None
@@ -258,6 +261,8 @@ class TestSmokeProjectLifecycle:
 
         # File manager should have no viewmodel initially
         assert fresh_app._screens["files"]._viewmodel is None
+        # Coding screen should have no viewmodel initially
+        assert fresh_app._screens["coding"]._viewmodel is None
 
         # Create and open a project
         with tempfile.TemporaryDirectory() as tmp_dir:
@@ -270,6 +275,51 @@ class TestSmokeProjectLifecycle:
 
             # File manager should now have a viewmodel
             assert fresh_app._screens["files"]._viewmodel is not None
+            # Coding screen should now have a viewmodel
+            assert fresh_app._screens["coding"]._viewmodel is not None
+
+    @allure.title("TextCodingScreen viewmodel is properly connected to signal bridge")
+    @allure.severity(allure.severity_level.CRITICAL)
+    def test_text_coding_viewmodel_signal_connections(self, fresh_app):
+        """
+        TextCodingViewModel should connect to all CodingSignalBridge signals.
+
+        This catches wiring issues where the viewmodel expects signals that
+        don't exist on the signal bridge.
+        """
+        fresh_app._setup_shell()
+
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            project_path = Path(tmp_dir) / "test_project.qda"
+            fresh_app._ctx.create_project("Test", str(project_path))
+            fresh_app._ctx.open_project(str(project_path))
+
+            # This should NOT raise AttributeError for missing signals
+            fresh_app._wire_viewmodels()
+
+            # Verify viewmodel is connected
+            coding_screen = fresh_app._screens["coding"]
+            assert coding_screen._viewmodel is not None
+
+            # Verify signal bridge has all expected signals
+            signal_bridge = fresh_app._coding_signal_bridge
+            expected_signals = [
+                "code_created",
+                "code_deleted",
+                "code_renamed",
+                "code_color_changed",
+                "code_memo_updated",
+                "code_moved",
+                "codes_merged",
+                "category_created",
+                "category_deleted",
+                "segment_coded",
+                "segment_uncoded",
+            ]
+            for signal_name in expected_signals:
+                assert hasattr(signal_bridge, signal_name), (
+                    f"CodingSignalBridge missing signal: {signal_name}"
+                )
 
 
 @allure.story("QC-026.01 Open Existing Project")

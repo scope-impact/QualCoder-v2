@@ -150,7 +150,7 @@ def _wire_viewmodels(self):
 | Screen | ViewModel | Wired | Status |
 |--------|-----------|-------|--------|
 | FileManagerScreen | FileManagerViewModel | ✅ | Working |
-| TextCodingScreen | TextCodingViewModel | ❌ | **NEEDS WIRING** |
+| TextCodingScreen | TextCodingViewModel | ✅ | Working |
 | CaseManagerScreen | CaseManagerViewModel | ❌ | Needs check |
 | ProjectScreen | — | N/A | Static UI |
 

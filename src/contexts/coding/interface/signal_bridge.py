@@ -26,7 +26,9 @@ from src.contexts.coding.core.events import (
     CodeColorChanged,
     CodeCreated,
     CodeDeleted,
+    CodeMemoUpdated,
     CodeRenamed,
+    CodesMerged,
     SegmentCoded,
     SegmentUncoded,
 )
@@ -138,6 +140,42 @@ class CodeColorChangedConverter(EventConverter[CodeColorChanged, CodePayload]):
         )
 
 
+class CodeMemoUpdatedConverter(EventConverter[CodeMemoUpdated, CodePayload]):
+    """Convert CodeMemoUpdated event to CodePayload."""
+
+    def convert(self, event: CodeMemoUpdated) -> CodePayload:
+        return CodePayload(
+            event_type="code_memo_updated",
+            code_id=event.code_id,
+            name=getattr(event, "name", ""),
+            color=getattr(event, "color", ""),
+            memo=event.new_memo,
+        )
+
+
+@dataclass(frozen=True)
+class CodesMergedPayload:
+    """Payload for codes merged signal."""
+
+    event_type: str
+    source_code_id: int
+    target_code_id: int
+    segments_moved: int
+    timestamp: datetime = field(default_factory=_now)
+
+
+class CodesMergedConverter(EventConverter[CodesMerged, CodesMergedPayload]):
+    """Convert CodesMerged event to CodesMergedPayload."""
+
+    def convert(self, event: CodesMerged) -> CodesMergedPayload:
+        return CodesMergedPayload(
+            event_type="codes_merged",
+            source_code_id=event.source_code_id.value,
+            target_code_id=event.target_code_id.value,
+            segments_moved=event.segments_moved,
+        )
+
+
 class CategoryCreatedConverter(EventConverter[CategoryCreated, CategoryPayload]):
     """Convert CategoryCreated event to CategoryPayload."""
 
@@ -220,6 +258,7 @@ class CodingSignalBridge(BaseSignalBridge):
     code_color_changed = Signal(object)
     code_memo_updated = Signal(object)
     code_moved = Signal(object)
+    codes_merged = Signal(object)
 
     # Category signals
     category_created = Signal(object)
@@ -255,6 +294,16 @@ class CodingSignalBridge(BaseSignalBridge):
             "coding.code_color_changed",
             CodeColorChangedConverter(),
             "code_color_changed",
+        )
+        self.register_converter(
+            "coding.code_memo_updated",
+            CodeMemoUpdatedConverter(),
+            "code_memo_updated",
+        )
+        self.register_converter(
+            "coding.codes_merged",
+            CodesMergedConverter(),
+            "codes_merged",
         )
 
         # Category events

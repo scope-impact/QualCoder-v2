@@ -14,7 +14,12 @@ from design_system import get_colors
 from src.contexts.cases.presentation import CaseManagerScreen
 
 # Context-specific presentation imports
-from src.contexts.coding.presentation import TextCodingScreen
+from src.contexts.coding.interface.signal_bridge import CodingSignalBridge
+from src.contexts.coding.presentation import (
+    CodingCoordinator,
+    TextCodingScreen,
+    TextCodingViewModel,
+)
 from src.contexts.projects.presentation import ProjectScreen
 from src.contexts.sources.presentation import FileManagerScreen, FileManagerViewModel
 from src.shared.common.types import SourceId
@@ -42,9 +47,11 @@ class QualCoderApp:
         self._colors = get_colors()
         self._ctx = create_app_context()
         self._dialog_service = DialogService(self._ctx)
-        # Create signal bridge for reactive UI updates
+        # Create signal bridges for reactive UI updates
         self._project_signal_bridge = ProjectSignalBridge.instance(self._ctx.event_bus)
         self._project_signal_bridge.start()
+        self._coding_signal_bridge = CodingSignalBridge.instance(self._ctx.event_bus)
+        self._coding_signal_bridge.start()
         self._shell: AppShell | None = None
         self._screens: dict = {}
 
@@ -140,6 +147,20 @@ class QualCoderApp:
             signal_bridge=self._project_signal_bridge,
         )
         self._screens["files"].set_viewmodel(file_manager_viewmodel)
+
+        # Create TextCodingViewModel with CodingCoordinator
+        if self._ctx.coding_context:
+            coding_coordinator = CodingCoordinator(
+                code_repo=self._ctx.coding_context.code_repo,
+                category_repo=self._ctx.coding_context.category_repo,
+                segment_repo=self._ctx.coding_context.segment_repo,
+                event_bus=self._ctx.event_bus,
+            )
+            text_coding_viewmodel = TextCodingViewModel(
+                controller=coding_coordinator,
+                signal_bridge=self._coding_signal_bridge,
+            )
+            self._screens["coding"].set_viewmodel(text_coding_viewmodel)
 
     def _on_open_project(self):
         """Handle open project request."""
