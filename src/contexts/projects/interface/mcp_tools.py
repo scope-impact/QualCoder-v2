@@ -548,6 +548,12 @@ class ProjectTools:
 
         highlight = arguments.get("highlight", True)
 
+        # Validate source exists
+        source_repo = self._ctx.sources_context.source_repo
+        source = source_repo.get(int(source_id))
+        if source is None:
+            return Failure(f"Source not found: {source_id}")
+
         # Create command for navigation
         _command = NavigateToSegmentCommand(
             source_id=int(source_id),
