@@ -282,6 +282,10 @@ class QualCoderApp:
         """Create and configure the main application shell."""
         self._shell = AppShell(colors=self._colors)
 
+        # Load and apply saved settings at startup BEFORE setting screens
+        # (apply_theme calls _refresh_ui which rebuilds the UI)
+        self._shell.load_and_apply_settings(self._ctx.settings_repo)
+
         # Create ViewModels
         self._file_manager_viewmodel = FileManagerViewModel(
             controller=self._file_manager_service,  # Service implements protocol
@@ -311,9 +315,6 @@ class QualCoderApp:
         # Connect navigation
         self._shell.menu_clicked.connect(self._on_menu_click)
         self._shell.tab_clicked.connect(self._on_tab_click)
-
-        # Load and apply saved settings at startup
-        self._shell.load_and_apply_settings(self._ctx.settings_repo)
 
         # Connect settings button to open dialog with live updates
         self._shell.settings_clicked.connect(self._on_settings_clicked)
