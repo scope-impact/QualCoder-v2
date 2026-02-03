@@ -7,12 +7,16 @@ Handles data transformation between domain entities and UI DTOs.
 Architecture:
     User Action → ViewModel → Controller → Use Case → Domain → Events
                                                                    ↓
-    UI Update ← ViewModel ← EventBus ←────────────────────────────┘
+    UI Update ← ViewModel ← SignalBridge ←─────────────────────────┘
+                    ↓
+    ViewModel signals → Screen
 """
 
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
+
+from PySide6.QtCore import QObject, Signal
 
 from src.application.projects.commands import (
     AddSourceCommand,
@@ -24,6 +28,12 @@ from src.application.projects.commands import (
     RenameFolderCommand,
     UpdateSourceCommand,
 )
+from src.application.projects.signal_bridge import (
+    FolderPayload,
+    ProjectSignalBridge,
+    SourceMovedPayload,
+    SourcePayload,
+)
 from src.contexts.projects.core.entities import Folder, Source
 from src.presentation.dto import FolderDTO, ProjectSummaryDTO, SourceDTO
 from src.presentation.viewmodels.protocols import FileManagerController
@@ -32,25 +42,47 @@ if TYPE_CHECKING:
     from src.application.event_bus import EventBus
 
 
-class FileManagerViewModel:
+class FileManagerViewModel(QObject):
     """
     ViewModel for the File Manager screen.
 
     Responsibilities:
     - Transform domain Source entities to UI DTOs
     - Handle user actions by calling controller commands
-    - React to domain events via EventBus
+    - React to domain events via SignalBridge
     - Provide filtering and search capabilities
     - Track selection state for bulk operations
 
-    This is a pure Python class (no Qt dependency) so it can be
-    tested without a Qt event loop.
+    Follows SKILL.md pattern:
+    - Queries → Direct to controller (which queries repo)
+    - Commands → Controller use cases
+    - Events → SignalBridge → ViewModel signals → Screen
+
+    Signals:
+        sources_changed: Emitted when source list changes (add/remove)
+        source_updated: Emitted when a source is updated (payload: SourceDTO)
+        source_opened: Emitted when a source is opened (payload: SourceDTO)
+        folders_changed: Emitted when folder list changes (create/delete/rename)
+        source_moved: Emitted when a source is moved to a folder
+        summary_changed: Emitted when summary statistics change
+        error_occurred: Emitted on errors (payload: str)
     """
+
+    # Signals for UI updates
+    sources_changed = Signal()  # Emitted when source list changes
+    source_updated = Signal(object)  # SourceDTO
+    source_opened = Signal(object)  # SourceDTO
+    folders_changed = Signal()  # Emitted when folder list changes
+    source_moved = Signal(object)  # SourceMovedPayload
+    summary_changed = Signal()  # Emitted when summary changes
+    error_occurred = Signal(str)  # Error message
 
     def __init__(
         self,
         controller: FileManagerController,
         event_bus: EventBus,
+        signal_bridge: ProjectSignalBridge | None = None,
+        parent: QObject | None = None,
     ) -> None:
         """
         Initialize the ViewModel.
@@ -58,23 +90,96 @@ class FileManagerViewModel:
         Args:
             controller: Controller implementing FileManagerController protocol
             event_bus: The event bus for reactive updates
+            signal_bridge: Signal bridge for reactive updates (optional)
+            parent: Qt parent object
         """
+        super().__init__(parent)
         self._controller = controller
         self._event_bus = event_bus
+        self._signal_bridge = signal_bridge
 
         # Selection state
         self._selected_source_ids: set[int] = set()
         self._current_source_id: int | None = None
 
-        # Connect to events
-        self._connect_events()
+        # Connect to signal bridge if provided
+        if self._signal_bridge is not None:
+            self._connect_signals()
 
-    def _connect_events(self) -> None:
-        """Connect to relevant domain events."""
-        # Events will trigger UI updates via callbacks
-        # For now, this is a placeholder - actual connections
-        # would be made when using Qt signals
-        pass
+    def _connect_signals(self) -> None:
+        """Connect to ProjectSignalBridge signals for reactive updates."""
+        if self._signal_bridge is None:
+            return
+
+        # Source events
+        self._signal_bridge.source_added.connect(self._on_source_added)
+        self._signal_bridge.source_removed.connect(self._on_source_removed)
+        self._signal_bridge.source_renamed.connect(self._on_source_renamed)
+        self._signal_bridge.source_opened.connect(self._on_source_opened)
+        self._signal_bridge.source_status_changed.connect(
+            self._on_source_status_changed
+        )
+
+        # Folder events
+        self._signal_bridge.folder_created.connect(self._on_folder_created)
+        self._signal_bridge.folder_renamed.connect(self._on_folder_renamed)
+        self._signal_bridge.folder_deleted.connect(self._on_folder_deleted)
+        self._signal_bridge.source_moved.connect(self._on_source_moved)
+
+    # =========================================================================
+    # Signal Bridge Handlers - React to domain events
+    # =========================================================================
+
+    def _on_source_added(self, _payload: SourcePayload) -> None:
+        """Handle source added event."""
+        self.sources_changed.emit()
+        self.summary_changed.emit()
+
+    def _on_source_removed(self, payload: SourcePayload) -> None:
+        """Handle source removed event."""
+        # Clear selection if deleted source was selected
+        self._selected_source_ids.discard(payload.source_id)
+        if self._current_source_id == payload.source_id:
+            self._current_source_id = None
+        self.sources_changed.emit()
+        self.summary_changed.emit()
+
+    def _on_source_renamed(self, payload: SourcePayload) -> None:
+        """Handle source renamed event."""
+        source_dto = self.get_source(payload.source_id)
+        if source_dto:
+            self.source_updated.emit(source_dto)
+
+    def _on_source_opened(self, payload: SourcePayload) -> None:
+        """Handle source opened event."""
+        self._current_source_id = payload.source_id
+        source_dto = self.get_source(payload.source_id)
+        if source_dto:
+            self.source_opened.emit(source_dto)
+
+    def _on_source_status_changed(self, payload: SourcePayload) -> None:
+        """Handle source status changed event."""
+        source_dto = self.get_source(payload.source_id)
+        if source_dto:
+            self.source_updated.emit(source_dto)
+        self.summary_changed.emit()
+
+    def _on_folder_created(self, _payload: FolderPayload) -> None:
+        """Handle folder created event."""
+        self.folders_changed.emit()
+
+    def _on_folder_renamed(self, _payload: FolderPayload) -> None:
+        """Handle folder renamed event."""
+        self.folders_changed.emit()
+
+    def _on_folder_deleted(self, _payload: FolderPayload) -> None:
+        """Handle folder deleted event."""
+        self.folders_changed.emit()
+
+    def _on_source_moved(self, payload: SourceMovedPayload) -> None:
+        """Handle source moved to folder event."""
+        self.source_moved.emit(payload)
+        self.folders_changed.emit()  # Folder source counts changed
 
     # =========================================================================
     # Load Data
