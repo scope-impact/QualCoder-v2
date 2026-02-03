@@ -6,32 +6,73 @@
   <title>QualCoder v2 - Analysis & Insights</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,400&family=Instrument+Sans:wght@400;500;600;700&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,500;0,8..60,600;1,8..60,400&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/design-system.css">
   <link rel="stylesheet" href="css/layout.css">
-  <link rel="stylesheet" href="css/components.css">
   <style>
-    .analysis-header {
+    /* ========================================
+       ANALYSIS PAGE - RESEARCH ATELIER EDITION
+       ======================================== */
+
+    .analysis-container {
       display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: var(--space-5);
-      background-color: var(--surface-card);
+      flex-direction: column;
+      flex: 1;
+      overflow: hidden;
+    }
+
+    /* ----------------------------------------
+       ANALYSIS HEADER
+       ---------------------------------------- */
+    .analysis-header {
+      padding: var(--space-6);
+      background: linear-gradient(135deg, var(--color-accent-50) 0%, var(--surface-main) 100%);
       border-bottom: 1px solid var(--surface-border);
     }
 
+    .analysis-header-top {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      margin-bottom: var(--space-4);
+    }
+
+    .analysis-title {
+      font-family: var(--font-display);
+      font-size: var(--font-size-2xl);
+      font-weight: 600;
+      color: var(--text-primary);
+      letter-spacing: -0.01em;
+    }
+
+    .analysis-subtitle {
+      font-family: var(--font-serif);
+      font-size: var(--font-size-base);
+      color: var(--text-secondary);
+      margin-top: var(--space-1);
+    }
+
+    .analysis-actions {
+      display: flex;
+      align-items: center;
+      gap: var(--space-3);
+    }
+
+    /* ----------------------------------------
+       ANALYSIS TABS
+       ---------------------------------------- */
     .analysis-tabs {
       display: flex;
       gap: var(--space-1);
-      padding: 0 var(--space-5);
-      background-color: var(--surface-card);
+      padding: 0 var(--space-6);
       border-bottom: 1px solid var(--surface-border);
+      background: var(--surface-card);
     }
 
     .analysis-tab {
-      padding: var(--space-3) var(--space-4);
+      padding: var(--space-3) var(--space-5);
       font-size: var(--font-size-sm);
-      font-weight: var(--font-weight-medium);
+      font-weight: 500;
       color: var(--text-secondary);
       background: none;
       border: none;
@@ -49,9 +90,13 @@
       border-bottom-color: var(--color-primary-600);
     }
 
+    /* ----------------------------------------
+       ANALYSIS CONTENT
+       ---------------------------------------- */
     .analysis-content {
-      padding: var(--space-5);
+      flex: 1;
       overflow-y: auto;
+      padding: var(--space-6);
     }
 
     .analysis-grid {
@@ -69,41 +114,148 @@
       .col-4, .col-6, .col-8 { grid-column: span 12; }
     }
 
-    .insight-card {
-      background-color: var(--surface-card);
-      border: 1px solid var(--surface-border);
-      border-radius: var(--radius-lg);
+    /* ----------------------------------------
+       AI INSIGHT BANNER
+       ---------------------------------------- */
+    .ai-insight-banner {
+      background: linear-gradient(135deg, var(--color-accent-50), var(--color-primary-50));
+      border: 1px solid var(--color-accent-200);
+      border-radius: var(--radius-xl);
+      padding: var(--space-5);
+      position: relative;
       overflow: hidden;
+    }
+
+    .ai-insight-banner::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+      background: linear-gradient(90deg, var(--color-accent-500), var(--color-primary-500));
+    }
+
+    .ai-insight-header {
+      display: flex;
+      align-items: center;
+      gap: var(--space-3);
+      margin-bottom: var(--space-4);
+    }
+
+    .ai-insight-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: var(--radius-lg);
+      background: linear-gradient(135deg, var(--color-accent-500), var(--color-primary-500));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+    }
+
+    .ai-insight-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--space-1);
+      padding: var(--space-1) var(--space-2);
+      background: var(--color-accent-100);
+      border-radius: var(--radius-full);
+      font-size: var(--font-size-xs);
+      font-weight: 600;
+      color: var(--color-accent-700);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .ai-insight-badge::before {
+      content: '';
+      width: 6px;
+      height: 6px;
+      background: var(--color-accent-500);
+      border-radius: var(--radius-full);
+      animation: pulse 2s infinite;
+    }
+
+    .ai-insight-title {
+      font-family: var(--font-display);
+      font-size: var(--font-size-lg);
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .ai-insight-body {
+      font-family: var(--font-serif);
+      font-size: var(--font-size-base);
+      color: var(--text-secondary);
+      line-height: 1.7;
+      margin-bottom: var(--space-4);
+    }
+
+    .ai-insight-body strong {
+      color: var(--color-primary-700);
+      font-weight: 600;
+    }
+
+    .ai-insight-actions {
+      display: flex;
+      gap: var(--space-3);
+      flex-wrap: wrap;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.4; }
+    }
+
+    /* ----------------------------------------
+       INSIGHT CARDS
+       ---------------------------------------- */
+    .insight-card {
+      background: var(--surface-card);
+      border: 1px solid var(--surface-border);
+      border-radius: var(--radius-xl);
+      overflow: hidden;
+      transition: all var(--transition-base);
+    }
+
+    .insight-card:hover {
+      box-shadow: var(--shadow-md);
     }
 
     .insight-card-header {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: var(--space-4);
+      padding: var(--space-4) var(--space-5);
       border-bottom: 1px solid var(--surface-border);
+      background: var(--surface-section);
     }
 
     .insight-card-title {
-      font-weight: var(--font-weight-semibold);
-      font-size: var(--font-size-sm);
+      font-family: var(--font-display);
+      font-weight: 600;
+      font-size: var(--font-size-base);
+      color: var(--text-primary);
     }
 
     .insight-card-body {
-      padding: var(--space-4);
+      padding: var(--space-5);
     }
 
-    /* Code Frequency Chart */
+    /* ----------------------------------------
+       CODE FREQUENCY CHART
+       ---------------------------------------- */
     .frequency-chart {
       display: flex;
       flex-direction: column;
-      gap: var(--space-3);
+      gap: var(--space-4);
     }
 
     .frequency-bar {
       display: flex;
       align-items: center;
-      gap: var(--space-3);
+      gap: var(--space-4);
     }
 
     .frequency-label {
@@ -114,291 +266,93 @@
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
+      flex-shrink: 0;
     }
 
     .frequency-track {
       flex: 1;
-      height: 28px;
-      background-color: var(--surface-section);
-      border-radius: var(--radius-sm);
+      height: 32px;
+      background: var(--surface-section);
+      border-radius: var(--radius-md);
       overflow: hidden;
       position: relative;
     }
 
     .frequency-fill {
       height: 100%;
-      border-radius: var(--radius-sm);
+      border-radius: var(--radius-md);
       display: flex;
       align-items: center;
-      padding-left: var(--space-2);
+      padding-left: var(--space-3);
       font-size: var(--font-size-xs);
-      font-weight: var(--font-weight-medium);
+      font-weight: 600;
       color: white;
-      transition: width 0.5s ease;
+      transition: width 0.8s ease;
     }
 
     .frequency-value {
       width: 40px;
       text-align: right;
-      font-size: var(--font-size-sm);
-      font-weight: var(--font-weight-medium);
+      font-family: var(--font-display);
+      font-size: var(--font-size-base);
+      font-weight: 600;
+      color: var(--text-primary);
+      flex-shrink: 0;
     }
 
-    /* Code Co-occurrence Matrix */
-    .matrix-container {
-      overflow-x: auto;
-    }
-
-    .co-occurrence-matrix {
-      display: grid;
-      gap: 2px;
-      min-width: 400px;
-    }
-
-    .matrix-header-cell {
-      font-size: var(--font-size-xs);
-      font-weight: var(--font-weight-medium);
-      padding: var(--space-2);
-      text-align: center;
-      transform: rotate(-45deg);
-      white-space: nowrap;
-      height: 80px;
-      display: flex;
-      align-items: flex-end;
-      justify-content: center;
-    }
-
-    .matrix-row-label {
-      font-size: var(--font-size-xs);
-      padding: var(--space-2);
-      text-align: right;
-      white-space: nowrap;
-    }
-
-    .matrix-cell {
-      width: 40px;
-      height: 40px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: var(--font-size-xs);
-      font-weight: var(--font-weight-medium);
-      border-radius: var(--radius-sm);
-      cursor: pointer;
-      transition: transform var(--transition-fast);
-    }
-
-    .matrix-cell:hover {
-      transform: scale(1.1);
-      z-index: 1;
-    }
-
-    /* Word Cloud Placeholder */
-    .word-cloud {
-      display: flex;
-      flex-wrap: wrap;
-      gap: var(--space-2);
-      justify-content: center;
-      align-items: center;
-      padding: var(--space-4);
-      min-height: 200px;
-    }
-
-    .word-cloud-word {
-      padding: var(--space-1) var(--space-2);
-      border-radius: var(--radius-sm);
-      cursor: pointer;
-      transition: all var(--transition-fast);
-    }
-
-    .word-cloud-word:hover {
-      background-color: var(--color-primary-100);
-    }
-
-    /* Timeline */
-    .coding-timeline {
-      position: relative;
-      padding-left: var(--space-6);
-    }
-
-    .coding-timeline::before {
-      content: '';
-      position: absolute;
-      left: 11px;
-      top: 0;
-      bottom: 0;
-      width: 2px;
-      background-color: var(--surface-border);
-    }
-
-    .timeline-item {
-      position: relative;
-      padding-bottom: var(--space-4);
-    }
-
-    .timeline-item:last-child {
-      padding-bottom: 0;
-    }
-
-    .timeline-item::before {
-      content: '';
-      position: absolute;
-      left: calc(-1 * var(--space-6) + 8px);
-      top: 2px;
-      width: 10px;
-      height: 10px;
-      border-radius: var(--radius-full);
-      background-color: var(--color-primary-500);
-    }
-
-    .timeline-date {
-      font-size: var(--font-size-xs);
-      color: var(--text-muted);
-      margin-bottom: var(--space-1);
-    }
-
-    .timeline-content {
-      font-size: var(--font-size-sm);
-    }
-
-    .timeline-stats {
-      display: flex;
-      gap: var(--space-4);
-      margin-top: var(--space-2);
-      font-size: var(--font-size-xs);
-      color: var(--text-muted);
-    }
-
-    /* Theme Summary Cards */
-    .theme-card {
-      background-color: var(--surface-section);
-      border-radius: var(--radius-md);
-      padding: var(--space-3);
-      margin-bottom: var(--space-3);
-    }
-
-    .theme-card-header {
-      display: flex;
-      align-items: center;
-      gap: var(--space-2);
-      margin-bottom: var(--space-2);
-    }
-
-    .theme-color {
-      width: 12px;
-      height: 12px;
-      border-radius: var(--radius-sm);
-    }
-
-    .theme-name {
-      font-weight: var(--font-weight-medium);
-      font-size: var(--font-size-sm);
-    }
-
-    .theme-count {
-      margin-left: auto;
-      font-size: var(--font-size-xs);
-      color: var(--text-muted);
-    }
-
-    .theme-description {
-      font-size: var(--font-size-sm);
-      color: var(--text-secondary);
-      margin-bottom: var(--space-2);
-    }
-
-    .theme-codes {
-      display: flex;
-      flex-wrap: wrap;
-      gap: var(--space-1);
-    }
-
-    /* AI Insights Panel */
-    .ai-insight {
-      background: linear-gradient(135deg, var(--color-accent-50), var(--color-primary-50));
-      border: 1px solid var(--color-accent-200);
-      border-radius: var(--radius-lg);
-      padding: var(--space-4);
-      margin-bottom: var(--space-4);
-    }
-
-    .ai-insight-header {
-      display: flex;
-      align-items: center;
-      gap: var(--space-2);
-      margin-bottom: var(--space-3);
-    }
-
-    .ai-insight-icon {
-      width: 24px;
-      height: 24px;
-      color: var(--color-accent-600);
-    }
-
-    .ai-insight-title {
-      font-weight: var(--font-weight-semibold);
-      font-size: var(--font-size-sm);
-      color: var(--color-accent-700);
-    }
-
-    .ai-insight-body {
-      font-size: var(--font-size-sm);
-      color: var(--text-secondary);
-      line-height: 1.6;
-    }
-
-    .ai-insight-actions {
-      display: flex;
-      gap: var(--space-2);
-      margin-top: var(--space-3);
-    }
-
-    /* Donut Chart Placeholder */
-    .donut-chart-placeholder {
+    /* ----------------------------------------
+       DONUT CHART
+       ---------------------------------------- */
+    .donut-chart-container {
       display: flex;
       flex-direction: column;
       align-items: center;
-      justify-content: center;
-      padding: var(--space-6);
+      padding: var(--space-4);
     }
 
     .donut-visual {
-      width: 160px;
-      height: 160px;
+      width: 180px;
+      height: 180px;
       border-radius: var(--radius-full);
       background: conic-gradient(
-        var(--code-color-1) 0deg 90deg,
-        var(--code-color-2) 90deg 160deg,
-        var(--code-color-3) 160deg 220deg,
-        var(--code-color-4) 220deg 270deg,
-        var(--code-color-5) 270deg 310deg,
+        var(--color-primary-500) 0deg 90deg,
+        var(--color-accent-500) 90deg 160deg,
+        var(--color-info-500) 160deg 220deg,
+        var(--color-warning-500) 220deg 270deg,
+        var(--color-success-500) 270deg 310deg,
         var(--surface-section) 310deg 360deg
       );
       display: flex;
       align-items: center;
       justify-content: center;
-      margin-bottom: var(--space-4);
+      margin-bottom: var(--space-5);
+      box-shadow: var(--shadow-lg);
     }
 
     .donut-inner {
-      width: 100px;
-      height: 100px;
+      width: 110px;
+      height: 110px;
       border-radius: var(--radius-full);
-      background-color: var(--surface-card);
+      background: var(--surface-card);
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
+      box-shadow: inset 0 2px 4px rgba(0,0,0,0.05);
     }
 
     .donut-value {
-      font-size: var(--font-size-xl);
-      font-weight: var(--font-weight-bold);
+      font-family: var(--font-display);
+      font-size: var(--font-size-2xl);
+      font-weight: 600;
+      color: var(--text-primary);
     }
 
     .donut-label {
       font-size: var(--font-size-xs);
       color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
     }
 
     .donut-legend {
@@ -411,490 +365,713 @@
     .legend-item {
       display: flex;
       align-items: center;
-      gap: var(--space-1);
+      gap: var(--space-2);
       font-size: var(--font-size-xs);
+      color: var(--text-secondary);
     }
 
     .legend-color {
-      width: 10px;
-      height: 10px;
+      width: 12px;
+      height: 12px;
       border-radius: var(--radius-sm);
+    }
+
+    /* ----------------------------------------
+       EMERGING THEMES
+       ---------------------------------------- */
+    .theme-card {
+      background: var(--surface-section);
+      border-radius: var(--radius-lg);
+      padding: var(--space-4);
+      margin-bottom: var(--space-4);
+      border-left: 4px solid var(--color-primary-500);
+      transition: all var(--transition-fast);
+    }
+
+    .theme-card:hover {
+      background: var(--color-primary-50);
+    }
+
+    .theme-card-header {
+      display: flex;
+      align-items: center;
+      gap: var(--space-3);
+      margin-bottom: var(--space-3);
+    }
+
+    .theme-color {
+      width: 14px;
+      height: 14px;
+      border-radius: var(--radius-sm);
+    }
+
+    .theme-name {
+      font-family: var(--font-display);
+      font-weight: 600;
+      font-size: var(--font-size-base);
+      color: var(--text-primary);
+      flex: 1;
+    }
+
+    .theme-count {
+      font-size: var(--font-size-xs);
+      color: var(--text-muted);
+      background: var(--surface-card);
+      padding: var(--space-1) var(--space-2);
+      border-radius: var(--radius-full);
+    }
+
+    .theme-description {
+      font-family: var(--font-serif);
+      font-size: var(--font-size-sm);
+      color: var(--text-secondary);
+      line-height: 1.6;
+      margin-bottom: var(--space-3);
+    }
+
+    .theme-codes {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--space-2);
+    }
+
+    .theme-code-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--space-1);
+      padding: var(--space-1) var(--space-2);
+      background: var(--surface-card);
+      border: 1px solid var(--surface-border);
+      border-radius: var(--radius-full);
+      font-size: var(--font-size-xs);
+      color: var(--text-secondary);
+    }
+
+    .theme-code-badge::before {
+      content: '';
+      width: 6px;
+      height: 6px;
+      border-radius: var(--radius-full);
+      background: var(--color-primary-500);
+    }
+
+    /* ----------------------------------------
+       CODING TIMELINE
+       ---------------------------------------- */
+    .coding-timeline {
+      position: relative;
+      padding-left: var(--space-6);
+    }
+
+    .coding-timeline::before {
+      content: '';
+      position: absolute;
+      left: 11px;
+      top: 8px;
+      bottom: 8px;
+      width: 2px;
+      background: linear-gradient(180deg, var(--color-primary-300), var(--color-accent-300));
+      border-radius: var(--radius-full);
+    }
+
+    .timeline-item {
+      position: relative;
+      padding-bottom: var(--space-5);
+    }
+
+    .timeline-item:last-child {
+      padding-bottom: 0;
+    }
+
+    .timeline-item::before {
+      content: '';
+      position: absolute;
+      left: calc(-1 * var(--space-6) + 6px);
+      top: 4px;
+      width: 12px;
+      height: 12px;
+      border-radius: var(--radius-full);
+      background: var(--color-primary-500);
+      border: 2px solid var(--surface-card);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .timeline-date {
+      font-size: var(--font-size-xs);
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: var(--space-1);
+    }
+
+    .timeline-content {
+      font-size: var(--font-size-sm);
+      color: var(--text-primary);
+      line-height: 1.5;
+    }
+
+    .timeline-content strong {
+      color: var(--color-primary-700);
+    }
+
+    .timeline-stats {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--space-3);
+      margin-top: var(--space-2);
+      font-size: var(--font-size-xs);
+      color: var(--text-muted);
+    }
+
+    /* ----------------------------------------
+       WORD CLOUD
+       ---------------------------------------- */
+    .word-cloud {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--space-2);
+      justify-content: center;
+      align-items: center;
+      padding: var(--space-4);
+      min-height: 220px;
+    }
+
+    .word-cloud-word {
+      padding: var(--space-1) var(--space-2);
+      border-radius: var(--radius-md);
+      cursor: pointer;
+      transition: all var(--transition-fast);
+      font-family: var(--font-serif);
+    }
+
+    .word-cloud-word:hover {
+      background: var(--color-primary-100);
+      transform: scale(1.1);
+    }
+
+    /* ----------------------------------------
+       CASE COMPARISON TABLE
+       ---------------------------------------- */
+    .comparison-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .comparison-table th {
+      text-align: left;
+      padding: var(--space-3);
+      font-size: var(--font-size-xs);
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-muted);
+      border-bottom: 2px solid var(--surface-border);
+    }
+
+    .comparison-table td {
+      padding: var(--space-3);
+      font-size: var(--font-size-sm);
+      border-bottom: 1px solid var(--surface-border);
+    }
+
+    .comparison-table tr:last-child td {
+      border-bottom: none;
+    }
+
+    .comparison-table tr:hover td {
+      background: var(--surface-hover);
+    }
+
+    .case-name-cell {
+      font-weight: 500;
+      color: var(--text-primary);
+    }
+
+    .segments-cell {
+      font-family: var(--font-display);
+      font-weight: 600;
+    }
+
+    .top-code-cell {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--space-2);
+      padding: var(--space-1) var(--space-2);
+      background: var(--color-primary-50);
+      border-radius: var(--radius-full);
+      font-size: var(--font-size-xs);
+      color: var(--color-primary-700);
+    }
+
+    .top-code-cell::before {
+      content: '';
+      width: 8px;
+      height: 8px;
+      border-radius: var(--radius-full);
+      background: var(--color-primary-500);
+    }
+
+    /* ----------------------------------------
+       ANIMATIONS
+       ---------------------------------------- */
+    .animate-in {
+      animation: fadeSlideIn 0.4s ease-out forwards;
+    }
+
+    .stagger-1 { animation-delay: 0.05s; opacity: 0; }
+    .stagger-2 { animation-delay: 0.1s; opacity: 0; }
+    .stagger-3 { animation-delay: 0.15s; opacity: 0; }
+    .stagger-4 { animation-delay: 0.2s; opacity: 0; }
+    .stagger-5 { animation-delay: 0.25s; opacity: 0; }
+    .stagger-6 { animation-delay: 0.3s; opacity: 0; }
+
+    @keyframes fadeSlideIn {
+      from {
+        opacity: 0;
+        transform: translateY(12px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
     }
   </style>
 </head>
 <body>
-  <div class="app">
+  <div class="app-shell">
     <!-- Sidebar Navigation -->
     <aside class="sidebar" id="sidebar">
       <div class="sidebar-header">
-        <a href="dashboard.html" class="sidebar-logo">
-          <div class="sidebar-logo-icon">Q</div>
-          <span class="sidebar-logo-text">QualCoder</span>
-        </a>
-      </div>
-
-      <div class="sidebar-user">
-        <div class="sidebar-user-avatar">JD</div>
-        <div class="sidebar-user-info">
-          <div class="sidebar-user-name">Jane Doe</div>
-          <div class="sidebar-user-role">Primary Researcher</div>
-        </div>
+        <a href="index.html" class="sidebar-logo-mark">Q</a>
       </div>
 
       <nav class="sidebar-nav">
-        <div class="sidebar-nav-section">
-          <div class="sidebar-nav-title">Workspace</div>
-          <a href="dashboard.html" class="sidebar-nav-item">
-            <svg class="sidebar-nav-item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <rect x="3" y="3" width="7" height="7" rx="1"/>
-              <rect x="14" y="3" width="7" height="7" rx="1"/>
-              <rect x="3" y="14" width="7" height="7" rx="1"/>
-              <rect x="14" y="14" width="7" height="7" rx="1"/>
-            </svg>
-            <span class="sidebar-nav-item-text">Dashboard</span>
-          </a>
-          <a href="sources.html" class="sidebar-nav-item">
-            <svg class="sidebar-nav-item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/>
-              <polyline points="14,2 14,8 20,8"/>
-            </svg>
-            <span class="sidebar-nav-item-text">Sources</span>
-            <span class="sidebar-nav-item-badge">24</span>
-          </a>
-          <a href="coding.html" class="sidebar-nav-item">
-            <svg class="sidebar-nav-item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <polyline points="16,18 22,12 16,6"/>
-              <polyline points="8,6 2,12 8,18"/>
-            </svg>
-            <span class="sidebar-nav-item-text">Coding</span>
-          </a>
-          <a href="cases.html" class="sidebar-nav-item">
-            <svg class="sidebar-nav-item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
-              <circle cx="9" cy="7" r="4"/>
-            </svg>
-            <span class="sidebar-nav-item-text">Cases</span>
-            <span class="sidebar-nav-item-badge">12</span>
-          </a>
-        </div>
-
-        <div class="sidebar-nav-section">
-          <div class="sidebar-nav-title">Analysis</div>
-          <a href="analysis.html" class="sidebar-nav-item active">
-            <svg class="sidebar-nav-item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <line x1="18" y1="20" x2="18" y2="10"/>
-              <line x1="12" y1="20" x2="12" y2="4"/>
-              <line x1="6" y1="20" x2="6" y2="14"/>
-            </svg>
-            <span class="sidebar-nav-item-text">Insights</span>
-          </a>
-          <a href="#" class="sidebar-nav-item">
-            <svg class="sidebar-nav-item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <circle cx="12" cy="12" r="10"/>
-              <path d="M12 6v6l4 2"/>
-            </svg>
-            <span class="sidebar-nav-item-text">Reports</span>
-          </a>
-        </div>
-
-        <div class="sidebar-nav-section">
-          <div class="sidebar-nav-title">AI Assistant</div>
-          <a href="#" class="sidebar-nav-item">
-            <svg class="sidebar-nav-item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M12 2L2 7l10 5 10-5-10-5z"/>
-              <path d="M2 17l10 5 10-5"/>
-              <path d="M2 12l10 5 10-5"/>
-            </svg>
-            <span class="sidebar-nav-item-text">AI Coding</span>
-          </a>
-        </div>
+        <a href="dashboard.html" class="sidebar-nav-item" title="Dashboard">
+          <svg class="sidebar-nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="3" width="7" height="7" rx="1"/>
+            <rect x="14" y="3" width="7" height="7" rx="1"/>
+            <rect x="3" y="14" width="7" height="7" rx="1"/>
+            <rect x="14" y="14" width="7" height="7" rx="1"/>
+          </svg>
+        </a>
+        <a href="sources.html" class="sidebar-nav-item" title="Sources">
+          <svg class="sidebar-nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/>
+            <polyline points="14,2 14,8 20,8"/>
+          </svg>
+        </a>
+        <a href="coding.html" class="sidebar-nav-item" title="Coding">
+          <svg class="sidebar-nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="16,18 22,12 16,6"/>
+            <polyline points="8,6 2,12 8,18"/>
+          </svg>
+        </a>
+        <a href="cases.html" class="sidebar-nav-item" title="Cases">
+          <svg class="sidebar-nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+            <circle cx="9" cy="7" r="4"/>
+            <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+            <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+          </svg>
+        </a>
+        <a href="analysis.html" class="sidebar-nav-item active" title="Analysis">
+          <svg class="sidebar-nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="20" x2="18" y2="10"/>
+            <line x1="12" y1="20" x2="12" y2="4"/>
+            <line x1="6" y1="20" x2="6" y2="14"/>
+          </svg>
+        </a>
       </nav>
 
       <div class="sidebar-footer">
-        <a href="#" class="sidebar-nav-item">
-          <svg class="sidebar-nav-item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <circle cx="12" cy="12" r="3"/>
-            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4"/>
-          </svg>
-          <span class="sidebar-nav-item-text">Settings</span>
-        </a>
-        <button class="sidebar-toggle" onclick="toggleSidebar()">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <polyline points="11,17 6,12 11,7"/>
-            <polyline points="18,17 13,12 18,7"/>
+        <button class="sidebar-nav-item" onclick="toggleTheme()" title="Toggle Theme">
+          <svg class="sidebar-nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="5"/>
+            <line x1="12" y1="1" x2="12" y2="3"/>
+            <line x1="12" y1="21" x2="12" y2="23"/>
+            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/>
+            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+            <line x1="1" y1="12" x2="3" y2="12"/>
+            <line x1="21" y1="12" x2="23" y2="12"/>
           </svg>
         </button>
       </div>
     </aside>
 
     <!-- Main Content -->
-    <main class="main">
-      <!-- Header -->
-      <div class="analysis-header">
-        <div class="flex items-center gap-3">
-          <h1 class="text-lg font-semibold">Analysis & Insights</h1>
-        </div>
-        <div class="flex items-center gap-2">
-          <button class="btn btn-ghost btn-icon" onclick="toggleTheme()">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <circle cx="12" cy="12" r="5"/>
-              <line x1="12" y1="1" x2="12" y2="3"/>
-            </svg>
-          </button>
-          <button class="btn btn-secondary">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-              <polyline points="7,10 12,15 17,10"/>
-              <line x1="12" y1="15" x2="12" y2="3"/>
-            </svg>
-            Export Report
-          </button>
-          <button class="btn btn-primary">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M12 2L2 7l10 5 10-5-10-5z"/>
-              <path d="M2 17l10 5 10-5"/>
-            </svg>
-            AI Analysis
-          </button>
-        </div>
-      </div>
-
-      <!-- Tabs -->
-      <div class="analysis-tabs">
-        <button class="analysis-tab active">Overview</button>
-        <button class="analysis-tab">Code Frequency</button>
-        <button class="analysis-tab">Co-occurrence</button>
-        <button class="analysis-tab">By Case</button>
-        <button class="analysis-tab">Timeline</button>
-      </div>
-
-      <!-- Content -->
-      <div class="analysis-content">
-        <div class="analysis-grid">
-          <!-- AI Insights -->
-          <div class="col-12">
-            <div class="ai-insight">
-              <div class="ai-insight-header">
-                <svg class="ai-insight-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+    <main class="main-content">
+      <div class="analysis-container">
+        <!-- Header -->
+        <div class="analysis-header animate-in">
+          <div class="analysis-header-top">
+            <div>
+              <h1 class="analysis-title">Analysis & Insights</h1>
+              <p class="analysis-subtitle">Discover patterns, themes, and connections in your qualitative data</p>
+            </div>
+            <div class="analysis-actions">
+              <button class="btn btn-secondary">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                  <polyline points="7,10 12,15 17,10"/>
+                  <line x1="12" y1="15" x2="12" y2="3"/>
+                </svg>
+                Export Report
+              </button>
+              <button class="btn btn-accent">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <path d="M12 2L2 7l10 5 10-5-10-5z"/>
                   <path d="M2 17l10 5 10-5"/>
                   <path d="M2 12l10 5 10-5"/>
                 </svg>
-                <span class="ai-insight-title">AI-Generated Insight</span>
-              </div>
-              <div class="ai-insight-body">
-                Based on your coding patterns, there appears to be a strong thematic connection between <strong>"work-life balance"</strong> and <strong>"remote challenges"</strong>. These codes co-occur in 68% of cases, suggesting participants frequently discuss these topics together. Consider creating a parent category to group these related themes.
-              </div>
-              <div class="ai-insight-actions">
-                <button class="btn btn-sm btn-accent">Create Category</button>
-                <button class="btn btn-sm btn-secondary">View Co-occurrences</button>
-                <button class="btn btn-sm btn-ghost">Dismiss</button>
-              </div>
+                AI Analysis
+              </button>
             </div>
           </div>
+        </div>
 
-          <!-- Code Frequency -->
-          <div class="col-8">
-            <div class="insight-card">
-              <div class="insight-card-header">
-                <span class="insight-card-title">Code Frequency</span>
-                <button class="btn btn-ghost btn-sm">View all</button>
-              </div>
-              <div class="insight-card-body">
-                <div class="frequency-chart">
-                  <div class="frequency-bar">
-                    <span class="frequency-label">Work-life balance</span>
-                    <div class="frequency-track">
-                      <div class="frequency-fill" style="width: 85%; background-color: var(--code-color-1);">45</div>
-                    </div>
-                    <span class="frequency-value">45</span>
+        <!-- Tabs -->
+        <div class="analysis-tabs animate-in stagger-1">
+          <button class="analysis-tab active">Overview</button>
+          <button class="analysis-tab">Code Frequency</button>
+          <button class="analysis-tab">Co-occurrence</button>
+          <button class="analysis-tab">By Case</button>
+          <button class="analysis-tab">Timeline</button>
+        </div>
+
+        <!-- Content -->
+        <div class="analysis-content">
+          <div class="analysis-grid">
+            <!-- AI Insights Banner -->
+            <div class="col-12 animate-in stagger-2">
+              <div class="ai-insight-banner">
+                <div class="ai-insight-header">
+                  <div class="ai-insight-icon">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M12 2L2 7l10 5 10-5-10-5z"/>
+                      <path d="M2 17l10 5 10-5"/>
+                      <path d="M2 12l10 5 10-5"/>
+                    </svg>
                   </div>
-                  <div class="frequency-bar">
-                    <span class="frequency-label">Remote challenges</span>
-                    <div class="frequency-track">
-                      <div class="frequency-fill" style="width: 72%; background-color: var(--code-color-2);">38</div>
-                    </div>
-                    <span class="frequency-value">38</span>
+                  <div>
+                    <span class="ai-insight-badge">AI Generated</span>
+                    <h3 class="ai-insight-title">Emerging Pattern Detected</h3>
                   </div>
-                  <div class="frequency-bar">
-                    <span class="frequency-label">Team collaboration</span>
-                    <div class="frequency-track">
-                      <div class="frequency-fill" style="width: 60%; background-color: var(--code-color-3);">32</div>
-                    </div>
-                    <span class="frequency-value">32</span>
-                  </div>
-                  <div class="frequency-bar">
-                    <span class="frequency-label">Meeting fatigue</span>
-                    <div class="frequency-track">
-                      <div class="frequency-fill" style="width: 50%; background-color: var(--code-color-4);">26</div>
-                    </div>
-                    <span class="frequency-value">26</span>
-                  </div>
-                  <div class="frequency-bar">
-                    <span class="frequency-label">Technology issues</span>
-                    <div class="frequency-track">
-                      <div class="frequency-fill" style="width: 47%; background-color: var(--code-color-5);">25</div>
-                    </div>
-                    <span class="frequency-value">25</span>
-                  </div>
-                  <div class="frequency-bar">
-                    <span class="frequency-label">Flexibility benefits</span>
-                    <div class="frequency-track">
-                      <div class="frequency-fill" style="width: 40%; background-color: var(--code-color-6);">21</div>
-                    </div>
-                    <span class="frequency-value">21</span>
-                  </div>
-                  <div class="frequency-bar">
-                    <span class="frequency-label">Management support</span>
-                    <div class="frequency-track">
-                      <div class="frequency-fill" style="width: 36%; background-color: var(--code-color-7);">19</div>
-                    </div>
-                    <span class="frequency-value">19</span>
-                  </div>
+                </div>
+                <p class="ai-insight-body">
+                  Based on your coding patterns, there appears to be a strong thematic connection between <strong>"work-life balance"</strong> and <strong>"remote challenges"</strong>. These codes co-occur in 68% of cases, suggesting participants frequently discuss these topics together. Consider creating a parent category to group these related themes for deeper analysis.
+                </p>
+                <div class="ai-insight-actions">
+                  <button class="btn btn-accent">Create Category</button>
+                  <button class="btn btn-secondary">View Co-occurrences</button>
+                  <button class="btn btn-ghost">Dismiss</button>
                 </div>
               </div>
             </div>
-          </div>
 
-          <!-- Distribution Donut -->
-          <div class="col-4">
-            <div class="insight-card">
-              <div class="insight-card-header">
-                <span class="insight-card-title">Code Distribution</span>
-              </div>
-              <div class="insight-card-body">
-                <div class="donut-chart-placeholder">
-                  <div class="donut-visual">
-                    <div class="donut-inner">
-                      <span class="donut-value">892</span>
-                      <span class="donut-label">segments</span>
+            <!-- Code Frequency -->
+            <div class="col-8 animate-in stagger-3">
+              <div class="insight-card">
+                <div class="insight-card-header">
+                  <span class="insight-card-title">Code Frequency Distribution</span>
+                  <button class="btn btn-ghost btn-sm">View all</button>
+                </div>
+                <div class="insight-card-body">
+                  <div class="frequency-chart">
+                    <div class="frequency-bar">
+                      <span class="frequency-label">Work-life balance</span>
+                      <div class="frequency-track">
+                        <div class="frequency-fill" style="width: 85%; background: var(--color-primary-500);">45</div>
+                      </div>
+                      <span class="frequency-value">45</span>
                     </div>
-                  </div>
-                  <div class="donut-legend">
-                    <div class="legend-item">
-                      <span class="legend-color" style="background-color: var(--code-color-1);"></span>
-                      <span>Work-life (25%)</span>
+                    <div class="frequency-bar">
+                      <span class="frequency-label">Remote challenges</span>
+                      <div class="frequency-track">
+                        <div class="frequency-fill" style="width: 72%; background: var(--color-accent-500);">38</div>
+                      </div>
+                      <span class="frequency-value">38</span>
                     </div>
-                    <div class="legend-item">
-                      <span class="legend-color" style="background-color: var(--code-color-2);"></span>
-                      <span>Remote (19%)</span>
+                    <div class="frequency-bar">
+                      <span class="frequency-label">Team collaboration</span>
+                      <div class="frequency-track">
+                        <div class="frequency-fill" style="width: 60%; background: var(--color-info-500);">32</div>
+                      </div>
+                      <span class="frequency-value">32</span>
                     </div>
-                    <div class="legend-item">
-                      <span class="legend-color" style="background-color: var(--code-color-3);"></span>
-                      <span>Team (17%)</span>
+                    <div class="frequency-bar">
+                      <span class="frequency-label">Meeting fatigue</span>
+                      <div class="frequency-track">
+                        <div class="frequency-fill" style="width: 50%; background: var(--color-warning-500);">26</div>
+                      </div>
+                      <span class="frequency-value">26</span>
                     </div>
-                    <div class="legend-item">
-                      <span class="legend-color" style="background-color: var(--code-color-4);"></span>
-                      <span>Meetings (14%)</span>
+                    <div class="frequency-bar">
+                      <span class="frequency-label">Technology issues</span>
+                      <div class="frequency-track">
+                        <div class="frequency-fill" style="width: 47%; background: var(--color-success-500);">25</div>
+                      </div>
+                      <span class="frequency-value">25</span>
                     </div>
-                    <div class="legend-item">
-                      <span class="legend-color" style="background-color: var(--code-color-5);"></span>
-                      <span>Tech (11%)</span>
+                    <div class="frequency-bar">
+                      <span class="frequency-label">Flexibility benefits</span>
+                      <div class="frequency-track">
+                        <div class="frequency-fill" style="width: 40%; background: var(--color-primary-400);">21</div>
+                      </div>
+                      <span class="frequency-value">21</span>
                     </div>
-                    <div class="legend-item">
-                      <span class="legend-color" style="background-color: var(--surface-section);"></span>
-                      <span>Other (14%)</span>
+                    <div class="frequency-bar">
+                      <span class="frequency-label">Management support</span>
+                      <div class="frequency-track">
+                        <div class="frequency-fill" style="width: 36%; background: var(--color-accent-400);">19</div>
+                      </div>
+                      <span class="frequency-value">19</span>
                     </div>
                   </div>
                 </div>
               </div>
             </div>
-          </div>
 
-          <!-- Emerging Themes -->
-          <div class="col-6">
-            <div class="insight-card">
-              <div class="insight-card-header">
-                <span class="insight-card-title">Emerging Themes</span>
-                <button class="btn btn-ghost btn-sm">Edit themes</button>
-              </div>
-              <div class="insight-card-body">
-                <div class="theme-card">
-                  <div class="theme-card-header">
-                    <span class="theme-color" style="background-color: var(--code-color-1);"></span>
-                    <span class="theme-name">Remote Work Adaptation</span>
-                    <span class="theme-count">156 segments</span>
-                  </div>
-                  <div class="theme-description">
-                    Experiences and strategies for adapting to remote work environments
-                  </div>
-                  <div class="theme-codes">
-                    <span class="badge badge-primary">Work-life balance</span>
-                    <span class="badge badge-primary">Remote challenges</span>
-                    <span class="badge badge-primary">Flexibility benefits</span>
-                  </div>
+            <!-- Distribution Donut -->
+            <div class="col-4 animate-in stagger-4">
+              <div class="insight-card">
+                <div class="insight-card-header">
+                  <span class="insight-card-title">Code Distribution</span>
                 </div>
-
-                <div class="theme-card">
-                  <div class="theme-card-header">
-                    <span class="theme-color" style="background-color: var(--code-color-2);"></span>
-                    <span class="theme-name">Communication Dynamics</span>
-                    <span class="theme-count">98 segments</span>
-                  </div>
-                  <div class="theme-description">
-                    Changes in team communication patterns and challenges
-                  </div>
-                  <div class="theme-codes">
-                    <span class="badge badge-primary">Team collaboration</span>
-                    <span class="badge badge-primary">Meeting fatigue</span>
-                    <span class="badge badge-primary">Async communication</span>
-                  </div>
-                </div>
-
-                <div class="theme-card">
-                  <div class="theme-card-header">
-                    <span class="theme-color" style="background-color: var(--code-color-3);"></span>
-                    <span class="theme-name">Organizational Support</span>
-                    <span class="theme-count">72 segments</span>
-                  </div>
-                  <div class="theme-description">
-                    Role of management and organizational policies in remote work success
-                  </div>
-                  <div class="theme-codes">
-                    <span class="badge badge-primary">Management support</span>
-                    <span class="badge badge-primary">Company policies</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Coding Timeline -->
-          <div class="col-6">
-            <div class="insight-card">
-              <div class="insight-card-header">
-                <span class="insight-card-title">Coding Activity</span>
-              </div>
-              <div class="insight-card-body">
-                <div class="coding-timeline">
-                  <div class="timeline-item">
-                    <div class="timeline-date">Today</div>
-                    <div class="timeline-content">
-                      Applied 12 codes to <strong>Interview_P08.txt</strong>
+                <div class="insight-card-body">
+                  <div class="donut-chart-container">
+                    <div class="donut-visual">
+                      <div class="donut-inner">
+                        <span class="donut-value">892</span>
+                        <span class="donut-label">Segments</span>
+                      </div>
                     </div>
-                    <div class="timeline-stats">
-                      <span>+8 Work-life balance</span>
-                      <span>+4 Remote challenges</span>
-                    </div>
-                  </div>
-                  <div class="timeline-item">
-                    <div class="timeline-date">Yesterday</div>
-                    <div class="timeline-content">
-                      Completed coding for <strong>Interview_P07.txt</strong>
-                    </div>
-                    <div class="timeline-stats">
-                      <span>42 total codes</span>
-                      <span>2 new codes created</span>
-                    </div>
-                  </div>
-                  <div class="timeline-item">
-                    <div class="timeline-date">2 days ago</div>
-                    <div class="timeline-content">
-                      Imported 3 new sources to <strong>Round 2</strong> folder
-                    </div>
-                    <div class="timeline-stats">
-                      <span>Interview_P10.txt</span>
-                      <span>Interview_P11.txt</span>
-                      <span>Interview_P12.txt</span>
-                    </div>
-                  </div>
-                  <div class="timeline-item">
-                    <div class="timeline-date">3 days ago</div>
-                    <div class="timeline-content">
-                      Created theme <strong>"Remote Work Adaptation"</strong>
-                    </div>
-                    <div class="timeline-stats">
-                      <span>Grouped 5 codes</span>
-                    </div>
-                  </div>
-                  <div class="timeline-item">
-                    <div class="timeline-date">1 week ago</div>
-                    <div class="timeline-content">
-                      AI auto-coded <strong>Survey_OpenEnded.txt</strong>
-                    </div>
-                    <div class="timeline-stats">
-                      <span>28 suggestions applied</span>
-                      <span>6 dismissed</span>
+                    <div class="donut-legend">
+                      <div class="legend-item">
+                        <span class="legend-color" style="background: var(--color-primary-500);"></span>
+                        <span>Work-life (25%)</span>
+                      </div>
+                      <div class="legend-item">
+                        <span class="legend-color" style="background: var(--color-accent-500);"></span>
+                        <span>Remote (19%)</span>
+                      </div>
+                      <div class="legend-item">
+                        <span class="legend-color" style="background: var(--color-info-500);"></span>
+                        <span>Team (17%)</span>
+                      </div>
+                      <div class="legend-item">
+                        <span class="legend-color" style="background: var(--color-warning-500);"></span>
+                        <span>Meetings (14%)</span>
+                      </div>
+                      <div class="legend-item">
+                        <span class="legend-color" style="background: var(--color-success-500);"></span>
+                        <span>Tech (11%)</span>
+                      </div>
+                      <div class="legend-item">
+                        <span class="legend-color" style="background: var(--surface-section);"></span>
+                        <span>Other (14%)</span>
+                      </div>
                     </div>
                   </div>
                 </div>
               </div>
             </div>
-          </div>
 
-          <!-- Word Cloud / Key Terms -->
-          <div class="col-6">
-            <div class="insight-card">
-              <div class="insight-card-header">
-                <span class="insight-card-title">Key Terms in Coded Segments</span>
-              </div>
-              <div class="insight-card-body">
-                <div class="word-cloud">
-                  <span class="word-cloud-word" style="font-size: 24px; color: var(--code-color-1);">work-life</span>
-                  <span class="word-cloud-word" style="font-size: 22px; color: var(--code-color-2);">remote</span>
-                  <span class="word-cloud-word" style="font-size: 20px; color: var(--code-color-3);">flexibility</span>
-                  <span class="word-cloud-word" style="font-size: 18px; color: var(--code-color-4);">meetings</span>
-                  <span class="word-cloud-word" style="font-size: 18px; color: var(--code-color-5);">communication</span>
-                  <span class="word-cloud-word" style="font-size: 16px; color: var(--text-secondary);">balance</span>
-                  <span class="word-cloud-word" style="font-size: 16px; color: var(--code-color-6);">team</span>
-                  <span class="word-cloud-word" style="font-size: 15px; color: var(--text-secondary);">challenges</span>
-                  <span class="word-cloud-word" style="font-size: 15px; color: var(--code-color-7);">home</span>
-                  <span class="word-cloud-word" style="font-size: 14px; color: var(--text-secondary);">office</span>
-                  <span class="word-cloud-word" style="font-size: 14px; color: var(--text-muted);">family</span>
-                  <span class="word-cloud-word" style="font-size: 14px; color: var(--text-secondary);">boundaries</span>
-                  <span class="word-cloud-word" style="font-size: 13px; color: var(--text-muted);">schedule</span>
-                  <span class="word-cloud-word" style="font-size: 13px; color: var(--text-muted);">productivity</span>
-                  <span class="word-cloud-word" style="font-size: 12px; color: var(--text-muted);">technology</span>
-                  <span class="word-cloud-word" style="font-size: 12px; color: var(--text-muted);">Zoom</span>
-                  <span class="word-cloud-word" style="font-size: 12px; color: var(--text-muted);">Slack</span>
+            <!-- Emerging Themes -->
+            <div class="col-6 animate-in stagger-5">
+              <div class="insight-card">
+                <div class="insight-card-header">
+                  <span class="insight-card-title">Emerging Themes</span>
+                  <button class="btn btn-ghost btn-sm">Edit themes</button>
+                </div>
+                <div class="insight-card-body">
+                  <div class="theme-card" style="border-left-color: var(--color-primary-500);">
+                    <div class="theme-card-header">
+                      <span class="theme-color" style="background: var(--color-primary-500);"></span>
+                      <span class="theme-name">Remote Work Adaptation</span>
+                      <span class="theme-count">156 segments</span>
+                    </div>
+                    <p class="theme-description">
+                      Experiences and strategies for adapting to remote work environments, including benefits and challenges of the transition.
+                    </p>
+                    <div class="theme-codes">
+                      <span class="theme-code-badge">Work-life balance</span>
+                      <span class="theme-code-badge">Remote challenges</span>
+                      <span class="theme-code-badge">Flexibility benefits</span>
+                    </div>
+                  </div>
+
+                  <div class="theme-card" style="border-left-color: var(--color-accent-500);">
+                    <div class="theme-card-header">
+                      <span class="theme-color" style="background: var(--color-accent-500);"></span>
+                      <span class="theme-name">Communication Dynamics</span>
+                      <span class="theme-count">98 segments</span>
+                    </div>
+                    <p class="theme-description">
+                      Changes in team communication patterns, challenges with virtual meetings, and asynchronous collaboration.
+                    </p>
+                    <div class="theme-codes">
+                      <span class="theme-code-badge">Team collaboration</span>
+                      <span class="theme-code-badge">Meeting fatigue</span>
+                      <span class="theme-code-badge">Async communication</span>
+                    </div>
+                  </div>
+
+                  <div class="theme-card" style="border-left-color: var(--color-info-500);">
+                    <div class="theme-card-header">
+                      <span class="theme-color" style="background: var(--color-info-500);"></span>
+                      <span class="theme-name">Organizational Support</span>
+                      <span class="theme-count">72 segments</span>
+                    </div>
+                    <p class="theme-description">
+                      Role of management and organizational policies in enabling successful remote work arrangements.
+                    </p>
+                    <div class="theme-codes">
+                      <span class="theme-code-badge">Management support</span>
+                      <span class="theme-code-badge">Company policies</span>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
 
-          <!-- Case Comparison -->
-          <div class="col-6">
-            <div class="insight-card">
-              <div class="insight-card-header">
-                <span class="insight-card-title">Code Distribution by Case</span>
+            <!-- Coding Timeline -->
+            <div class="col-6 animate-in stagger-6">
+              <div class="insight-card">
+                <div class="insight-card-header">
+                  <span class="insight-card-title">Coding Activity</span>
+                </div>
+                <div class="insight-card-body">
+                  <div class="coding-timeline">
+                    <div class="timeline-item">
+                      <div class="timeline-date">Today</div>
+                      <div class="timeline-content">
+                        Applied 12 codes to <strong>Interview_P08.txt</strong>
+                      </div>
+                      <div class="timeline-stats">
+                        <span>+8 Work-life balance</span>
+                        <span>+4 Remote challenges</span>
+                      </div>
+                    </div>
+                    <div class="timeline-item">
+                      <div class="timeline-date">Yesterday</div>
+                      <div class="timeline-content">
+                        Completed coding for <strong>Interview_P07.txt</strong>
+                      </div>
+                      <div class="timeline-stats">
+                        <span>42 total codes</span>
+                        <span>2 new codes created</span>
+                      </div>
+                    </div>
+                    <div class="timeline-item">
+                      <div class="timeline-date">2 Days Ago</div>
+                      <div class="timeline-content">
+                        Imported 3 new sources to <strong>Round 2</strong> folder
+                      </div>
+                      <div class="timeline-stats">
+                        <span>Interview_P10.txt</span>
+                        <span>Interview_P11.txt</span>
+                        <span>Interview_P12.txt</span>
+                      </div>
+                    </div>
+                    <div class="timeline-item">
+                      <div class="timeline-date">3 Days Ago</div>
+                      <div class="timeline-content">
+                        Created theme <strong>"Remote Work Adaptation"</strong>
+                      </div>
+                      <div class="timeline-stats">
+                        <span>Grouped 5 codes</span>
+                      </div>
+                    </div>
+                    <div class="timeline-item">
+                      <div class="timeline-date">1 Week Ago</div>
+                      <div class="timeline-content">
+                        AI auto-coded <strong>Survey_OpenEnded.txt</strong>
+                      </div>
+                      <div class="timeline-stats">
+                        <span>28 suggestions applied</span>
+                        <span>6 dismissed</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </div>
-              <div class="insight-card-body">
-                <table class="table table-sm">
-                  <thead>
-                    <tr>
-                      <th>Case</th>
-                      <th>Segments</th>
-                      <th>Top Code</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr>
-                      <td class="font-medium">Participant 01</td>
-                      <td>28</td>
-                      <td><span class="badge badge-primary">Flexibility benefits</span></td>
-                    </tr>
-                    <tr>
-                      <td class="font-medium">Participant 02</td>
-                      <td>42</td>
-                      <td><span class="badge badge-primary">Team collaboration</span></td>
-                    </tr>
-                    <tr>
-                      <td class="font-medium">Participant 03</td>
-                      <td>15</td>
-                      <td><span class="badge badge-primary">Work-life balance</span></td>
-                    </tr>
-                    <tr>
-                      <td class="font-medium">Participant 04</td>
-                      <td>31</td>
-                      <td><span class="badge badge-primary">Remote challenges</span></td>
-                    </tr>
-                    <tr>
-                      <td class="font-medium">Participant 05</td>
-                      <td>18</td>
-                      <td><span class="badge badge-primary">Management support</span></td>
-                    </tr>
-                  </tbody>
-                </table>
+            </div>
+
+            <!-- Word Cloud / Key Terms -->
+            <div class="col-6 animate-in stagger-6">
+              <div class="insight-card">
+                <div class="insight-card-header">
+                  <span class="insight-card-title">Key Terms in Coded Segments</span>
+                </div>
+                <div class="insight-card-body">
+                  <div class="word-cloud">
+                    <span class="word-cloud-word" style="font-size: 26px; color: var(--color-primary-600);">work-life</span>
+                    <span class="word-cloud-word" style="font-size: 24px; color: var(--color-accent-600);">remote</span>
+                    <span class="word-cloud-word" style="font-size: 22px; color: var(--color-info-600);">flexibility</span>
+                    <span class="word-cloud-word" style="font-size: 20px; color: var(--color-warning-600);">meetings</span>
+                    <span class="word-cloud-word" style="font-size: 19px; color: var(--color-primary-500);">communication</span>
+                    <span class="word-cloud-word" style="font-size: 18px; color: var(--text-secondary);">balance</span>
+                    <span class="word-cloud-word" style="font-size: 17px; color: var(--color-success-600);">team</span>
+                    <span class="word-cloud-word" style="font-size: 16px; color: var(--text-secondary);">challenges</span>
+                    <span class="word-cloud-word" style="font-size: 16px; color: var(--color-accent-500);">home</span>
+                    <span class="word-cloud-word" style="font-size: 15px; color: var(--text-secondary);">office</span>
+                    <span class="word-cloud-word" style="font-size: 14px; color: var(--text-muted);">family</span>
+                    <span class="word-cloud-word" style="font-size: 14px; color: var(--text-secondary);">boundaries</span>
+                    <span class="word-cloud-word" style="font-size: 13px; color: var(--text-muted);">schedule</span>
+                    <span class="word-cloud-word" style="font-size: 13px; color: var(--text-muted);">productivity</span>
+                    <span class="word-cloud-word" style="font-size: 12px; color: var(--text-muted);">technology</span>
+                    <span class="word-cloud-word" style="font-size: 12px; color: var(--text-muted);">Zoom</span>
+                    <span class="word-cloud-word" style="font-size: 12px; color: var(--text-muted);">Slack</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Case Comparison -->
+            <div class="col-6 animate-in stagger-6">
+              <div class="insight-card">
+                <div class="insight-card-header">
+                  <span class="insight-card-title">Code Distribution by Case</span>
+                </div>
+                <div class="insight-card-body">
+                  <table class="comparison-table">
+                    <thead>
+                      <tr>
+                        <th>Case</th>
+                        <th>Segments</th>
+                        <th>Top Code</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td class="case-name-cell">Participant 01</td>
+                        <td class="segments-cell">28</td>
+                        <td><span class="top-code-cell">Flexibility benefits</span></td>
+                      </tr>
+                      <tr>
+                        <td class="case-name-cell">Participant 02</td>
+                        <td class="segments-cell">42</td>
+                        <td><span class="top-code-cell">Team collaboration</span></td>
+                      </tr>
+                      <tr>
+                        <td class="case-name-cell">Participant 03</td>
+                        <td class="segments-cell">15</td>
+                        <td><span class="top-code-cell">Work-life balance</span></td>
+                      </tr>
+                      <tr>
+                        <td class="case-name-cell">Participant 04</td>
+                        <td class="segments-cell">31</td>
+                        <td><span class="top-code-cell">Remote challenges</span></td>
+                      </tr>
+                      <tr>
+                        <td class="case-name-cell">Participant 05</td>
+                        <td class="segments-cell">18</td>
+                        <td><span class="top-code-cell">Management support</span></td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
               </div>
             </div>
           </div>

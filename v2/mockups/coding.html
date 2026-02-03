@@ -4,19 +4,16 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>QualCoder v2 - Coding Workspace</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/design-system.css">
   <link rel="stylesheet" href="css/layout.css">
-  <link rel="stylesheet" href="css/components.css">
   <style>
-    /* Coding-specific styles */
+    /* Coding Workspace - Editorial Three-Panel Design */
+
     .coding-toolbar {
       display: flex;
       align-items: center;
-      gap: var(--space-3);
-      padding: var(--space-2) var(--space-4);
+      gap: var(--space-4);
+      padding: var(--space-3) var(--space-5);
       background-color: var(--surface-card);
       border-bottom: 1px solid var(--surface-border);
     }
@@ -25,86 +22,355 @@
       display: flex;
       align-items: center;
       gap: var(--space-2);
-      padding: var(--space-2) var(--space-3);
-      background-color: var(--surface-section);
-      border-radius: var(--radius-md);
-      font-size: var(--font-size-sm);
+      padding: var(--space-2) var(--space-4);
+      background-color: var(--surface-paper);
+      border: 1px solid var(--surface-border);
+      border-radius: var(--radius-lg);
+      font-family: var(--font-ui);
+      font-size: var(--text-sm);
+      font-weight: var(--font-medium);
+      color: var(--text-primary);
       cursor: pointer;
+      transition: all var(--duration-fast) var(--ease-out);
     }
 
     .source-selector:hover {
+      border-color: var(--color-primary-300);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .toolbar-divider {
+      width: 1px;
+      height: 24px;
+      background-color: var(--surface-border);
+    }
+
+    .toolbar-group {
+      display: flex;
+      align-items: center;
+      gap: var(--space-2);
+    }
+
+    .toolbar-nav {
+      display: flex;
+      align-items: center;
+      gap: var(--space-1);
+      font-size: var(--text-sm);
+      color: var(--text-secondary);
+    }
+
+    .active-code-pill {
+      display: flex;
+      align-items: center;
+      gap: var(--space-2);
+      padding: var(--space-2) var(--space-4);
+      background: linear-gradient(135deg, var(--color-primary-50), var(--color-primary-100));
+      border: 1px solid var(--color-primary-200);
+      border-radius: var(--radius-full);
+      font-size: var(--text-sm);
+      font-weight: var(--font-medium);
+    }
+
+    .active-code-pill .color-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: var(--radius-full);
+      box-shadow: 0 0 0 2px rgba(255,255,255,0.8);
+    }
+
+    .kbd {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 20px;
+      height: 20px;
+      padding: 0 var(--space-2);
+      font-family: var(--font-mono);
+      font-size: 10px;
+      font-weight: var(--font-medium);
+      background-color: var(--surface-paper);
+      border: 1px solid var(--surface-border);
+      border-radius: var(--radius-sm);
+      color: var(--text-tertiary);
+    }
+
+    /* Three Panel Layout */
+    .coding-layout {
+      display: flex;
+      flex: 1;
+      overflow: hidden;
+    }
+
+    /* Left Panel - Sources & Codes */
+    .panel-left {
+      width: 280px;
+      min-width: 240px;
+      max-width: 400px;
+      display: flex;
+      flex-direction: column;
+      background-color: var(--surface-card);
+      border-right: 1px solid var(--surface-border);
+    }
+
+    .panel-section {
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .panel-section-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: var(--space-4);
+      background-color: var(--surface-paper);
+      border-bottom: 1px solid var(--surface-border-subtle);
+    }
+
+    .panel-section-title {
+      font-family: var(--font-ui);
+      font-size: var(--text-xs);
+      font-weight: var(--font-semibold);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--text-tertiary);
+    }
+
+    .panel-search {
+      padding: var(--space-3);
+      border-bottom: 1px solid var(--surface-border-subtle);
+    }
+
+    .panel-search .input {
+      font-size: var(--text-xs);
+      padding: var(--space-2) var(--space-3);
+    }
+
+    .panel-content {
+      flex: 1;
+      overflow-y: auto;
+    }
+
+    /* Source List */
+    .source-list {
+      list-style: none;
+    }
+
+    .source-item {
+      display: flex;
+      align-items: center;
+      gap: var(--space-3);
+      padding: var(--space-3) var(--space-4);
+      cursor: pointer;
+      transition: all var(--duration-fast) var(--ease-out);
+      border-left: 3px solid transparent;
+    }
+
+    .source-item:hover {
       background-color: var(--surface-hover);
     }
 
-    .code-panel-search {
-      padding: var(--space-3);
-      border-bottom: 1px solid var(--surface-border);
+    .source-item.active {
+      background-color: var(--color-primary-50);
+      border-left-color: var(--color-primary-500);
     }
 
-    .code-panel-filters {
+    .source-item-icon {
+      width: 32px;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background-color: var(--surface-paper);
+      border: 1px solid var(--surface-border);
+      border-radius: var(--radius-md);
+      color: var(--text-tertiary);
+      flex-shrink: 0;
+    }
+
+    .source-item.active .source-item-icon {
+      background-color: var(--color-primary-100);
+      border-color: var(--color-primary-200);
+      color: var(--color-primary-600);
+    }
+
+    .source-item-info {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .source-item-name {
+      font-size: var(--text-sm);
+      font-weight: var(--font-medium);
+      color: var(--text-primary);
+      margin-bottom: 2px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .source-item-meta {
+      font-size: var(--text-xs);
+      color: var(--text-muted);
+    }
+
+    /* Code Tree */
+    .code-tree {
+      padding: var(--space-2) 0;
+    }
+
+    .code-tree-category {
+      margin-bottom: var(--space-1);
+    }
+
+    .code-tree-category-header {
+      display: flex;
+      align-items: center;
+      gap: var(--space-2);
+      padding: var(--space-2) var(--space-4);
+      cursor: pointer;
+      transition: background-color var(--duration-fast) var(--ease-out);
+    }
+
+    .code-tree-category-header:hover {
+      background-color: var(--surface-hover);
+    }
+
+    .code-tree-expand {
+      width: 16px;
+      height: 16px;
+      color: var(--text-muted);
+      transition: transform var(--duration-fast) var(--ease-out);
+    }
+
+    .code-tree-category.expanded .code-tree-expand {
+      transform: rotate(90deg);
+    }
+
+    .code-tree-category-name {
+      flex: 1;
+      font-size: var(--text-sm);
+      font-weight: var(--font-medium);
+      color: var(--text-secondary);
+    }
+
+    .code-tree-category-count {
+      font-size: var(--text-xs);
+      color: var(--text-muted);
+      background-color: var(--surface-paper);
+      padding: 2px 8px;
+      border-radius: var(--radius-full);
+    }
+
+    .code-tree-items {
+      display: none;
+      padding-left: var(--space-5);
+    }
+
+    .code-tree-category.expanded .code-tree-items {
+      display: block;
+    }
+
+    .code-tree-item {
       display: flex;
       align-items: center;
       gap: var(--space-2);
       padding: var(--space-2) var(--space-3);
-      background-color: var(--surface-section);
-      border-bottom: 1px solid var(--surface-border);
-    }
-
-    .filter-btn {
-      display: flex;
-      align-items: center;
-      gap: var(--space-1);
-      padding: var(--space-1) var(--space-2);
-      font-size: var(--font-size-xs);
-      background: none;
-      border: 1px solid var(--surface-border);
-      border-radius: var(--radius-full);
+      border-radius: var(--radius-md);
       cursor: pointer;
-      transition: all var(--transition-fast);
+      transition: all var(--duration-fast) var(--ease-out);
+      margin: 2px var(--space-2);
     }
 
-    .filter-btn:hover {
+    .code-tree-item:hover {
       background-color: var(--surface-hover);
     }
 
-    .filter-btn.active {
-      background-color: var(--color-primary-100);
-      border-color: var(--color-primary-300);
-      color: var(--color-primary-700);
+    .code-tree-item.selected {
+      background-color: var(--color-primary-50);
     }
 
-    .text-editor-header {
+    .code-tree-item-color {
+      width: 12px;
+      height: 12px;
+      border-radius: var(--radius-sm);
+      flex-shrink: 0;
+    }
+
+    .code-tree-item-name {
+      flex: 1;
+      font-size: var(--text-sm);
+      color: var(--text-primary);
+    }
+
+    .code-tree-item-count {
+      font-size: var(--text-xs);
+      color: var(--text-muted);
+    }
+
+    /* Resize Handle */
+    .resize-handle {
+      width: 4px;
+      background-color: transparent;
+      cursor: col-resize;
+      transition: background-color var(--duration-fast) var(--ease-out);
+    }
+
+    .resize-handle:hover {
+      background-color: var(--color-primary-200);
+    }
+
+    .resize-handle-h {
+      height: 4px;
+      width: 100%;
+      cursor: row-resize;
+    }
+
+    /* Center Panel - Text Editor */
+    .panel-center {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-width: 400px;
+      overflow: hidden;
+    }
+
+    .editor-header {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: var(--space-3) var(--space-4);
+      padding: var(--space-4) var(--space-5);
       background-color: var(--surface-card);
       border-bottom: 1px solid var(--surface-border);
     }
 
-    .document-info {
+    .editor-doc-info {
       display: flex;
       align-items: center;
-      gap: var(--space-3);
+      gap: var(--space-4);
     }
 
-    .document-icon {
-      width: 36px;
-      height: 36px;
+    .editor-doc-icon {
+      width: 40px;
+      height: 40px;
       display: flex;
       align-items: center;
       justify-content: center;
-      background-color: var(--color-info-50);
-      color: var(--color-info-600);
-      border-radius: var(--radius-md);
+      background: linear-gradient(135deg, var(--color-sage-100), var(--color-sage-200));
+      border-radius: var(--radius-lg);
+      color: var(--color-sage-500);
     }
 
-    .document-title {
-      font-weight: var(--font-weight-semibold);
+    .editor-doc-title {
+      font-family: var(--font-display);
+      font-size: var(--text-lg);
+      font-weight: var(--font-medium);
+      color: var(--text-primary);
+      margin-bottom: 2px;
     }
 
-    .document-meta {
-      font-size: var(--font-size-xs);
+    .editor-doc-meta {
+      font-size: var(--text-xs);
       color: var(--text-muted);
     }
 
@@ -114,223 +380,317 @@
       gap: var(--space-2);
     }
 
-    .text-content-wrapper {
+    .badge-status {
+      padding: var(--space-1) var(--space-3);
+      font-size: var(--text-xs);
+      font-weight: var(--font-medium);
+      background-color: var(--color-highlight-100);
+      color: var(--color-highlight-500);
+      border-radius: var(--radius-full);
+    }
+
+    /* Text Content Area */
+    .editor-content {
       flex: 1;
       display: flex;
       overflow: hidden;
     }
 
-    .line-numbers {
+    .line-gutter {
       width: 48px;
-      padding: var(--space-4) 0;
-      background-color: var(--surface-section);
-      border-right: 1px solid var(--surface-border);
+      padding: var(--space-5) 0;
+      background-color: var(--surface-paper);
+      border-right: 1px solid var(--surface-border-subtle);
       text-align: right;
       user-select: none;
       overflow-y: auto;
     }
 
     .line-number {
-      padding: 0 var(--space-3);
-      font-family: var(--font-family-mono);
-      font-size: var(--font-size-sm);
-      line-height: 1.75;
+      padding-right: var(--space-3);
+      font-family: var(--font-mono);
+      font-size: var(--text-xs);
+      line-height: 1.8;
       color: var(--text-muted);
     }
 
-    .text-content {
+    .text-area {
       flex: 1;
-      padding: var(--space-4);
+      padding: var(--space-5);
       overflow-y: auto;
-      font-family: var(--font-family-mono);
-      font-size: var(--font-size-sm);
-      line-height: 1.75;
+      font-family: var(--font-body);
+      font-size: var(--text-base);
+      line-height: 1.8;
+      color: var(--text-secondary);
     }
 
-    .text-content p {
-      margin-bottom: var(--space-4);
+    .text-area p {
+      margin-bottom: var(--space-5);
     }
 
-    .coded-text {
+    .text-area strong {
+      font-weight: var(--font-semibold);
+      color: var(--text-primary);
+    }
+
+    /* Coded Text Segments */
+    .coded-segment {
       position: relative;
       padding: 2px 4px;
       margin: 0 -4px;
-      border-radius: 3px;
+      border-radius: 4px;
       cursor: pointer;
-      transition: filter var(--transition-fast);
+      transition: filter var(--duration-fast) var(--ease-out);
     }
 
-    .coded-text:hover {
-      filter: brightness(0.92);
+    .coded-segment:hover {
+      filter: brightness(0.95);
     }
 
-    .coded-text.has-memo::after {
+    .coded-segment.has-memo::after {
       content: '';
       position: absolute;
       bottom: 0;
-      left: 0;
-      right: 0;
+      left: 4px;
+      right: 4px;
       height: 2px;
       background: repeating-linear-gradient(
         90deg,
         currentColor,
-        currentColor 3px,
-        transparent 3px,
-        transparent 6px
+        currentColor 4px,
+        transparent 4px,
+        transparent 8px
       );
+      opacity: 0.5;
     }
 
-    .overlap-indicator {
-      position: absolute;
-      bottom: -2px;
-      left: 0;
-      right: 0;
-      height: 3px;
-      background: linear-gradient(90deg, var(--code-color-1), var(--code-color-2));
-      border-radius: 2px;
+    /* Overlap indicator */
+    .coded-segment.overlap {
+      border-bottom: 3px solid;
+      border-image: linear-gradient(90deg, var(--color-primary-400), var(--color-accent-400)) 1;
     }
 
-    .right-panel-tabs {
+    /* Editor Status Bar */
+    .editor-statusbar {
       display: flex;
-      border-bottom: 1px solid var(--surface-border);
-      background-color: var(--surface-card);
+      align-items: center;
+      justify-content: space-between;
+      padding: var(--space-2) var(--space-4);
+      background-color: var(--surface-paper);
+      border-top: 1px solid var(--surface-border);
+      font-size: var(--text-xs);
+      color: var(--text-muted);
     }
 
-    .right-panel-tab {
+    .statusbar-group {
+      display: flex;
+      align-items: center;
+      gap: var(--space-4);
+    }
+
+    .statusbar-shortcuts {
+      display: flex;
+      align-items: center;
+      gap: var(--space-3);
+    }
+
+    .statusbar-shortcuts span {
+      display: flex;
+      align-items: center;
+      gap: var(--space-1);
+    }
+
+    /* Right Panel - Details */
+    .panel-right {
+      width: 320px;
+      min-width: 280px;
+      max-width: 400px;
+      display: flex;
+      flex-direction: column;
+      background-color: var(--surface-card);
+      border-left: 1px solid var(--surface-border);
+    }
+
+    .panel-tabs {
+      display: flex;
+      background-color: var(--surface-paper);
+      border-bottom: 1px solid var(--surface-border);
+    }
+
+    .panel-tab {
       flex: 1;
-      padding: var(--space-3);
-      font-size: var(--font-size-xs);
-      font-weight: var(--font-weight-medium);
+      padding: var(--space-3) var(--space-4);
+      font-family: var(--font-ui);
+      font-size: var(--text-xs);
+      font-weight: var(--font-medium);
       text-align: center;
-      color: var(--text-secondary);
+      color: var(--text-tertiary);
       background: none;
       border: none;
       border-bottom: 2px solid transparent;
       cursor: pointer;
-      transition: all var(--transition-fast);
+      transition: all var(--duration-fast) var(--ease-out);
     }
 
-    .right-panel-tab:hover {
-      color: var(--text-primary);
+    .panel-tab:hover {
+      color: var(--text-secondary);
       background-color: var(--surface-hover);
     }
 
-    .right-panel-tab.active {
+    .panel-tab.active {
       color: var(--color-primary-600);
-      border-bottom-color: var(--color-primary-600);
+      border-bottom-color: var(--color-primary-500);
     }
 
-    .selected-code-info {
-      padding: var(--space-4);
-      border-bottom: 1px solid var(--surface-border);
+    /* Code Detail Card */
+    .code-detail {
+      padding: var(--space-5);
+      border-bottom: 1px solid var(--surface-border-subtle);
     }
 
-    .selected-code-header {
+    .code-detail-header {
       display: flex;
       align-items: flex-start;
       gap: var(--space-3);
-      margin-bottom: var(--space-3);
+      margin-bottom: var(--space-4);
     }
 
-    .selected-code-color {
-      width: 24px;
-      height: 24px;
-      border-radius: var(--radius-md);
+    .code-detail-color {
+      width: 28px;
+      height: 28px;
+      border-radius: var(--radius-lg);
       flex-shrink: 0;
+      box-shadow: var(--shadow-sm);
     }
 
-    .selected-code-name {
-      font-weight: var(--font-weight-semibold);
-      margin-bottom: var(--space-1);
+    .code-detail-info {
+      flex: 1;
     }
 
-    .selected-code-category {
-      font-size: var(--font-size-xs);
+    .code-detail-name {
+      font-family: var(--font-display);
+      font-size: var(--text-lg);
+      font-weight: var(--font-medium);
+      color: var(--text-primary);
+      margin-bottom: 2px;
+    }
+
+    .code-detail-category {
+      font-size: var(--text-xs);
       color: var(--text-muted);
     }
 
-    .selected-code-stats {
+    .code-stats {
       display: flex;
       gap: var(--space-4);
       padding: var(--space-3);
-      background-color: var(--surface-section);
-      border-radius: var(--radius-md);
-      font-size: var(--font-size-xs);
+      background-color: var(--surface-paper);
+      border-radius: var(--radius-lg);
     }
 
     .code-stat {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
+      flex: 1;
+      text-align: center;
     }
 
     .code-stat-value {
-      font-size: var(--font-size-md);
-      font-weight: var(--font-weight-semibold);
+      font-family: var(--font-display);
+      font-size: var(--text-xl);
+      font-weight: var(--font-medium);
+      color: var(--text-primary);
     }
 
     .code-stat-label {
+      font-size: var(--text-xs);
       color: var(--text-muted);
     }
 
+    /* Code Memo Section */
+    .detail-section {
+      padding: var(--space-4) var(--space-5);
+      border-bottom: 1px solid var(--surface-border-subtle);
+    }
+
+    .detail-section-title {
+      font-family: var(--font-ui);
+      font-size: var(--text-xs);
+      font-weight: var(--font-semibold);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--text-muted);
+      margin-bottom: var(--space-3);
+    }
+
+    .detail-section p {
+      font-family: var(--font-body);
+      font-size: var(--text-sm);
+      line-height: var(--leading-relaxed);
+      color: var(--text-secondary);
+    }
+
+    /* Quotes */
+    .quote-item {
+      position: relative;
+      padding-left: var(--space-4);
+      margin-bottom: var(--space-3);
+      font-family: var(--font-body);
+      font-size: var(--text-sm);
+      font-style: italic;
+      color: var(--text-secondary);
+      line-height: var(--leading-relaxed);
+    }
+
+    .quote-item::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 3px;
+      border-radius: 2px;
+    }
+
+    /* Overlapping Codes */
     .overlap-list {
-      padding: var(--space-3);
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-2);
     }
 
     .overlap-item {
       display: flex;
       align-items: center;
       gap: var(--space-2);
-      padding: var(--space-2);
-      border-radius: var(--radius-sm);
+      padding: var(--space-2) var(--space-3);
+      background-color: var(--surface-paper);
+      border-radius: var(--radius-md);
       cursor: pointer;
-      transition: background-color var(--transition-fast);
+      transition: all var(--duration-fast) var(--ease-out);
     }
 
     .overlap-item:hover {
       background-color: var(--surface-hover);
     }
 
-    .overlap-color {
-      width: 12px;
-      height: 12px;
-      border-radius: var(--radius-sm);
-    }
-
-    .overlap-name {
-      font-size: var(--font-size-sm);
-    }
-
-    .keyboard-hint {
-      display: inline-flex;
-      align-items: center;
-      gap: var(--space-1);
-      padding: var(--space-1) var(--space-2);
-      font-size: var(--font-size-xs);
-      font-family: var(--font-family-mono);
-      background-color: var(--surface-section);
-      border: 1px solid var(--surface-border);
-      border-radius: var(--radius-sm);
-      color: var(--text-muted);
-    }
-
-    .active-code-indicator {
-      display: flex;
-      align-items: center;
-      gap: var(--space-2);
-      padding: var(--space-2) var(--space-3);
-      background-color: var(--color-primary-50);
-      border: 1px solid var(--color-primary-200);
-      border-radius: var(--radius-md);
-      font-size: var(--font-size-sm);
-    }
-
-    .active-code-indicator .color-dot {
+    .overlap-item-color {
       width: 10px;
       height: 10px;
       border-radius: var(--radius-sm);
     }
 
+    .overlap-item-name {
+      font-size: var(--text-sm);
+      color: var(--text-primary);
+    }
+
+    /* Action Buttons */
+    .detail-actions {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-2);
+    }
+
+    /* Selection Popup */
     .selection-popup {
       position: fixed;
       display: none;
@@ -339,80 +699,160 @@
       padding: var(--space-2);
       background-color: var(--surface-card);
       border: 1px solid var(--surface-border);
-      border-radius: var(--radius-lg);
+      border-radius: var(--radius-xl);
       box-shadow: var(--shadow-lg);
-      z-index: var(--z-popover);
+      z-index: 100;
     }
 
     .selection-popup.visible {
       display: flex;
     }
+
+    .selection-popup-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 36px;
+      height: 36px;
+      background: none;
+      border: none;
+      border-radius: var(--radius-lg);
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: all var(--duration-fast) var(--ease-out);
+    }
+
+    .selection-popup-btn:hover {
+      background-color: var(--surface-hover);
+      color: var(--text-primary);
+    }
+
+    .selection-popup-btn.primary {
+      background-color: var(--color-primary-100);
+      color: var(--color-primary-700);
+    }
+
+    .selection-popup-btn.primary:hover {
+      background-color: var(--color-primary-200);
+    }
+
+    /* AI Suggestions Panel */
+    .ai-suggestion {
+      padding: var(--space-4);
+      margin: var(--space-3);
+      background: linear-gradient(135deg, rgba(224, 115, 86, 0.06), rgba(26, 58, 47, 0.06));
+      border: 1px solid var(--color-accent-200);
+      border-radius: var(--radius-xl);
+    }
+
+    .ai-suggestion-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--space-1);
+      padding: var(--space-1) var(--space-2);
+      background-color: var(--color-accent-100);
+      color: var(--color-accent-700);
+      border-radius: var(--radius-full);
+      font-size: 10px;
+      font-weight: var(--font-semibold);
+      margin-bottom: var(--space-3);
+    }
+
+    .ai-suggestion-badge::before {
+      content: '';
+      width: 6px;
+      height: 6px;
+      background-color: var(--color-accent-500);
+      border-radius: var(--radius-full);
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.4; }
+    }
+
+    .ai-suggestion-text {
+      font-family: var(--font-body);
+      font-size: var(--text-sm);
+      color: var(--text-secondary);
+      line-height: var(--leading-relaxed);
+      margin-bottom: var(--space-3);
+    }
+
+    .ai-suggestion-actions {
+      display: flex;
+      gap: var(--space-2);
+    }
   </style>
 </head>
 <body>
   <div class="app">
-    <!-- Sidebar Navigation (collapsed by default for coding) -->
+    <!-- Sidebar -->
     <aside class="sidebar collapsed" id="sidebar">
       <div class="sidebar-header">
-        <a href="dashboard.html" class="sidebar-logo">
-          <div class="sidebar-logo-icon">Q</div>
+        <a href="index.html" class="sidebar-logo">
+          <div class="sidebar-logo-mark"><span>Q</span></div>
           <span class="sidebar-logo-text">QualCoder</span>
         </a>
       </div>
 
       <nav class="sidebar-nav">
         <div class="sidebar-nav-section">
-          <div class="sidebar-nav-title">Workspace</div>
+          <div class="sidebar-nav-label">Workspace</div>
           <a href="dashboard.html" class="sidebar-nav-item">
-            <svg class="sidebar-nav-item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <rect x="3" y="3" width="7" height="7" rx="1"/>
-              <rect x="14" y="3" width="7" height="7" rx="1"/>
-              <rect x="3" y="14" width="7" height="7" rx="1"/>
-              <rect x="14" y="14" width="7" height="7" rx="1"/>
+            <svg class="sidebar-nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75">
+              <rect x="3" y="3" width="7" height="7" rx="1.5"/>
+              <rect x="14" y="3" width="7" height="7" rx="1.5"/>
+              <rect x="3" y="14" width="7" height="7" rx="1.5"/>
+              <rect x="14" y="14" width="7" height="7" rx="1.5"/>
             </svg>
-            <span class="sidebar-nav-item-text">Dashboard</span>
+            <span class="sidebar-nav-text">Dashboard</span>
           </a>
           <a href="sources.html" class="sidebar-nav-item">
-            <svg class="sidebar-nav-item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/>
-              <polyline points="14,2 14,8 20,8"/>
+            <svg class="sidebar-nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+              <polyline points="14 2 14 8 20 8"/>
             </svg>
-            <span class="sidebar-nav-item-text">Sources</span>
-            <span class="sidebar-nav-item-badge">24</span>
+            <span class="sidebar-nav-text">Sources</span>
+            <span class="sidebar-nav-badge">24</span>
           </a>
           <a href="coding.html" class="sidebar-nav-item active">
-            <svg class="sidebar-nav-item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <polyline points="16,18 22,12 16,6"/>
-              <polyline points="8,6 2,12 8,18"/>
+            <svg class="sidebar-nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75">
+              <polyline points="16 18 22 12 16 6"/>
+              <polyline points="8 6 2 12 8 18"/>
             </svg>
-            <span class="sidebar-nav-item-text">Coding</span>
+            <span class="sidebar-nav-text">Coding</span>
           </a>
           <a href="cases.html" class="sidebar-nav-item">
-            <svg class="sidebar-nav-item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <svg class="sidebar-nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75">
               <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
               <circle cx="9" cy="7" r="4"/>
+              <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+              <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
             </svg>
-            <span class="sidebar-nav-item-text">Cases</span>
+            <span class="sidebar-nav-text">Cases</span>
           </a>
         </div>
+
         <div class="sidebar-nav-section">
-          <div class="sidebar-nav-title">Analysis</div>
+          <div class="sidebar-nav-label">Analysis</div>
           <a href="analysis.html" class="sidebar-nav-item">
-            <svg class="sidebar-nav-item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <svg class="sidebar-nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75">
               <line x1="18" y1="20" x2="18" y2="10"/>
               <line x1="12" y1="20" x2="12" y2="4"/>
               <line x1="6" y1="20" x2="6" y2="14"/>
             </svg>
-            <span class="sidebar-nav-item-text">Insights</span>
+            <span class="sidebar-nav-text">Insights</span>
           </a>
         </div>
       </nav>
 
       <div class="sidebar-footer">
         <button class="sidebar-toggle" onclick="toggleSidebar()">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <polyline points="13,17 18,12 13,7"/>
-            <polyline points="6,17 11,12 6,7"/>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75">
+            <polyline points="13 17 18 12 13 7"/>
+            <polyline points="6 17 11 12 6 7"/>
           </svg>
         </button>
       </div>
@@ -422,70 +862,63 @@
     <main class="main">
       <!-- Coding Toolbar -->
       <div class="coding-toolbar">
-        <div class="source-selector" onclick="toggleSourceDropdown()">
+        <div class="source-selector">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/>
           </svg>
           <span>Interview_P08.txt</span>
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <polyline points="6,9 12,15 18,9"/>
+            <polyline points="6 9 12 15 18 9"/>
           </svg>
         </div>
 
-        <div class="toolbar-separator"></div>
+        <div class="toolbar-divider"></div>
 
-        <div class="toolbar-group">
-          <button class="btn btn-ghost btn-sm tooltip" data-tooltip="Previous (Alt+Left)">
+        <div class="toolbar-nav">
+          <button class="btn btn-ghost btn-icon btn-sm">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <polyline points="15,18 9,12 15,6"/>
+              <polyline points="15 18 9 12 15 6"/>
             </svg>
           </button>
-          <span class="text-sm text-muted">3 of 24</span>
-          <button class="btn btn-ghost btn-sm tooltip" data-tooltip="Next (Alt+Right)">
+          <span>3 of 24</span>
+          <button class="btn btn-ghost btn-icon btn-sm">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <polyline points="9,18 15,12 9,6"/>
+              <polyline points="9 18 15 12 9 6"/>
             </svg>
           </button>
         </div>
 
-        <div class="toolbar-separator"></div>
+        <div class="toolbar-divider"></div>
 
-        <div class="active-code-indicator">
-          <span class="color-dot" style="background-color: var(--code-color-1);"></span>
+        <div class="active-code-pill">
+          <span class="color-dot" style="background-color: #1a3a2f;"></span>
           <span>Work-life balance</span>
-          <span class="keyboard-hint">Q to apply</span>
+          <span class="kbd">Q</span>
         </div>
 
         <div class="ml-auto flex items-center gap-2">
-          <button class="btn btn-ghost btn-sm tooltip" data-tooltip="Undo (Ctrl+Z)">
+          <button class="btn btn-ghost btn-icon btn-sm">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <path d="M3 7v6h6"/>
               <path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13"/>
             </svg>
           </button>
-          <button class="btn btn-ghost btn-sm tooltip" data-tooltip="Redo (Ctrl+Y)">
+          <button class="btn btn-ghost btn-icon btn-sm">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <path d="M21 7v6h-6"/>
               <path d="M3 17a9 9 0 0 1 9-9 9 9 0 0 1 6 2.3L21 13"/>
             </svg>
           </button>
 
-          <div class="toolbar-separator"></div>
+          <div class="toolbar-divider"></div>
 
-          <button class="btn btn-ghost btn-sm tooltip" data-tooltip="Text size">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M4 7V4h16v3"/>
-              <path d="M9 20h6"/>
-              <path d="M12 4v16"/>
-            </svg>
-          </button>
-          <button class="btn btn-ghost btn-sm tooltip" data-tooltip="Search (Ctrl+F)">
+          <button class="btn btn-ghost btn-icon btn-sm">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <circle cx="11" cy="11" r="8"/>
               <line x1="21" y1="21" x2="16.65" y2="16.65"/>
             </svg>
           </button>
-          <button class="btn btn-ghost btn-sm tooltip" data-tooltip="AI Auto-code">
+          <button class="btn btn-ghost btn-icon btn-sm">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <path d="M12 2L2 7l10 5 10-5-10-5z"/>
               <path d="M2 17l10 5 10-5"/>
@@ -493,221 +926,174 @@
             </svg>
           </button>
 
-          <div class="toolbar-separator"></div>
+          <div class="toolbar-divider"></div>
 
-          <button class="btn btn-ghost btn-icon" onclick="toggleTheme()">
+          <button class="btn btn-ghost btn-icon btn-sm" onclick="toggleTheme()">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <circle cx="12" cy="12" r="5"/>
               <line x1="12" y1="1" x2="12" y2="3"/>
               <line x1="12" y1="21" x2="12" y2="23"/>
-              <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/>
-              <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
-              <line x1="1" y1="12" x2="3" y2="12"/>
-              <line x1="21" y1="12" x2="23" y2="12"/>
-            </svg>
-          </button>
-          <button class="btn btn-ghost btn-sm tooltip" data-tooltip="Keyboard shortcuts">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <rect x="2" y="4" width="20" height="16" rx="2"/>
-              <path d="M6 8h.01"/>
-              <path d="M10 8h.01"/>
-              <path d="M14 8h.01"/>
-              <path d="M18 8h.01"/>
-              <path d="M8 12h.01"/>
-              <path d="M12 12h.01"/>
-              <path d="M16 12h.01"/>
-              <path d="M7 16h10"/>
             </svg>
           </button>
         </div>
       </div>
 
       <!-- Three Panel Layout -->
-      <div class="layout-three-panel">
-        <!-- Left Panel: Files & Codes -->
+      <div class="coding-layout">
+        <!-- Left Panel -->
         <div class="panel-left">
-          <div class="split-vertical">
-            <!-- Files Panel -->
-            <div class="panel-top" style="flex: 0.4;">
-              <div class="panel-header">
-                <span class="panel-title">Sources</span>
-                <button class="btn btn-ghost btn-sm btn-icon">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <line x1="12" y1="5" x2="12" y2="19"/>
-                    <line x1="5" y1="12" x2="19" y2="12"/>
-                  </svg>
-                </button>
-              </div>
-              <div class="code-panel-search">
-                <input type="text" class="input input-sm search-input" placeholder="Search sources...">
-              </div>
-              <div class="panel-content no-padding">
-                <ul class="file-list">
-                  <li class="file-list-item">
-                    <div class="file-icon text">
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/>
-                      </svg>
-                    </div>
-                    <div class="file-info">
-                      <div class="file-name">Interview_P07.txt</div>
-                      <div class="file-meta">12 codes</div>
-                    </div>
-                  </li>
-                  <li class="file-list-item active">
-                    <div class="file-icon text">
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/>
-                      </svg>
-                    </div>
-                    <div class="file-info">
-                      <div class="file-name">Interview_P08.txt</div>
-                      <div class="file-meta">8 codes - In progress</div>
-                    </div>
-                  </li>
-                  <li class="file-list-item">
-                    <div class="file-icon text">
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/>
-                      </svg>
-                    </div>
-                    <div class="file-info">
-                      <div class="file-name">Interview_P09.txt</div>
-                      <div class="file-meta">Not started</div>
-                    </div>
-                  </li>
-                  <li class="file-list-item">
-                    <div class="file-icon pdf">
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/>
-                      </svg>
-                    </div>
-                    <div class="file-info">
-                      <div class="file-name">Survey_Report.pdf</div>
-                      <div class="file-meta">5 codes</div>
-                    </div>
-                  </li>
-                </ul>
-              </div>
+          <!-- Sources Section -->
+          <div class="panel-section" style="flex: 0 0 40%;">
+            <div class="panel-section-header">
+              <span class="panel-section-title">Sources</span>
+              <button class="btn btn-ghost btn-icon btn-sm">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <line x1="12" y1="5" x2="12" y2="19"/>
+                  <line x1="5" y1="12" x2="19" y2="12"/>
+                </svg>
+              </button>
             </div>
-
-            <div class="resize-handle-horizontal"></div>
-
-            <!-- Codes Panel -->
-            <div class="panel-bottom" style="flex: 0.6;">
-              <div class="panel-header">
-                <span class="panel-title">Codes</span>
-                <div class="panel-actions">
-                  <button class="btn btn-ghost btn-sm btn-icon tooltip" data-tooltip="Create code (N)">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                      <line x1="12" y1="5" x2="12" y2="19"/>
-                      <line x1="5" y1="12" x2="19" y2="12"/>
+            <div class="panel-search">
+              <input type="text" class="input input-search" placeholder="Search sources...">
+            </div>
+            <div class="panel-content">
+              <ul class="source-list">
+                <li class="source-item">
+                  <div class="source-item-icon">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/>
                     </svg>
-                  </button>
-                </div>
-              </div>
-              <div class="code-panel-search">
-                <input type="text" class="input input-sm search-input" placeholder="Search codes...">
-              </div>
-              <div class="code-panel-filters">
-                <button class="filter-btn active">All (156)</button>
-                <button class="filter-btn">
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26"/>
-                  </svg>
-                  Important
-                </button>
-                <button class="filter-btn">
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <circle cx="12" cy="12" r="10"/>
-                    <path d="M12 6v6l4 2"/>
-                  </svg>
-                  Recent
-                </button>
-              </div>
-              <div class="panel-content no-padding">
-                <div class="code-tree">
-                  <!-- Category: Workplace -->
-                  <div class="code-tree-item expanded">
-                    <div class="code-tree-node">
-                      <div class="code-tree-expand">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                          <polyline points="9,18 15,12 9,6"/>
-                        </svg>
-                      </div>
-                      <div class="code-tree-color" style="background-color: var(--color-gray-400);"></div>
-                      <span class="code-tree-label">Workplace Experience</span>
-                      <span class="code-tree-count">89</span>
+                  </div>
+                  <div class="source-item-info">
+                    <div class="source-item-name">Interview_P07.txt</div>
+                    <div class="source-item-meta">12 codes</div>
+                  </div>
+                </li>
+                <li class="source-item active">
+                  <div class="source-item-icon">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/>
+                    </svg>
+                  </div>
+                  <div class="source-item-info">
+                    <div class="source-item-name">Interview_P08.txt</div>
+                    <div class="source-item-meta">8 codes - In progress</div>
+                  </div>
+                </li>
+                <li class="source-item">
+                  <div class="source-item-icon">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/>
+                    </svg>
+                  </div>
+                  <div class="source-item-info">
+                    <div class="source-item-name">Interview_P09.txt</div>
+                    <div class="source-item-meta">Not started</div>
+                  </div>
+                </li>
+                <li class="source-item">
+                  <div class="source-item-icon">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/>
+                    </svg>
+                  </div>
+                  <div class="source-item-info">
+                    <div class="source-item-name">Survey_Report.pdf</div>
+                    <div class="source-item-meta">5 codes</div>
+                  </div>
+                </li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="resize-handle resize-handle-h"></div>
+
+          <!-- Codes Section -->
+          <div class="panel-section" style="flex: 1;">
+            <div class="panel-section-header">
+              <span class="panel-section-title">Codes</span>
+              <button class="btn btn-ghost btn-icon btn-sm">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <line x1="12" y1="5" x2="12" y2="19"/>
+                  <line x1="5" y1="12" x2="19" y2="12"/>
+                </svg>
+              </button>
+            </div>
+            <div class="panel-search">
+              <input type="text" class="input input-search" placeholder="Search codes...">
+            </div>
+            <div class="panel-content">
+              <div class="code-tree">
+                <!-- Workplace Experience -->
+                <div class="code-tree-category expanded">
+                  <div class="code-tree-category-header">
+                    <svg class="code-tree-expand" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <polyline points="9 18 15 12 9 6"/>
+                    </svg>
+                    <span class="code-tree-category-name">Workplace Experience</span>
+                    <span class="code-tree-category-count">89</span>
+                  </div>
+                  <div class="code-tree-items">
+                    <div class="code-tree-item selected">
+                      <div class="code-tree-item-color" style="background-color: #1a3a2f;"></div>
+                      <span class="code-tree-item-name">Work-life balance</span>
+                      <span class="code-tree-item-count">45</span>
                     </div>
-                    <div class="code-tree-children">
-                      <div class="code-tree-item">
-                        <div class="code-tree-node selected">
-                          <div class="code-tree-expand" style="visibility: hidden;">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                              <polyline points="9,18 15,12 9,6"/>
-                            </svg>
-                          </div>
-                          <div class="code-tree-color" style="background-color: var(--code-color-1);"></div>
-                          <span class="code-tree-label">Work-life balance</span>
-                          <span class="code-tree-count">45</span>
-                        </div>
-                      </div>
-                      <div class="code-tree-item">
-                        <div class="code-tree-node">
-                          <div class="code-tree-expand" style="visibility: hidden;"></div>
-                          <div class="code-tree-color" style="background-color: var(--code-color-2);"></div>
-                          <span class="code-tree-label">Remote challenges</span>
-                          <span class="code-tree-count">38</span>
-                        </div>
-                      </div>
-                      <div class="code-tree-item">
-                        <div class="code-tree-node">
-                          <div class="code-tree-expand" style="visibility: hidden;"></div>
-                          <div class="code-tree-color" style="background-color: var(--code-color-3);"></div>
-                          <span class="code-tree-label">Flexibility benefits</span>
-                          <span class="code-tree-count">6</span>
-                        </div>
-                      </div>
+                    <div class="code-tree-item">
+                      <div class="code-tree-item-color" style="background-color: #0369a1;"></div>
+                      <span class="code-tree-item-name">Remote challenges</span>
+                      <span class="code-tree-item-count">38</span>
+                    </div>
+                    <div class="code-tree-item">
+                      <div class="code-tree-item-color" style="background-color: #047857;"></div>
+                      <span class="code-tree-item-name">Flexibility benefits</span>
+                      <span class="code-tree-item-count">6</span>
                     </div>
                   </div>
+                </div>
 
-                  <!-- Category: Communication -->
-                  <div class="code-tree-item expanded">
-                    <div class="code-tree-node">
-                      <div class="code-tree-expand">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                          <polyline points="9,18 15,12 9,6"/>
-                        </svg>
-                      </div>
-                      <div class="code-tree-color" style="background-color: var(--color-gray-400);"></div>
-                      <span class="code-tree-label">Communication</span>
-                      <span class="code-tree-count">67</span>
+                <!-- Communication -->
+                <div class="code-tree-category expanded">
+                  <div class="code-tree-category-header">
+                    <svg class="code-tree-expand" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <polyline points="9 18 15 12 9 6"/>
+                    </svg>
+                    <span class="code-tree-category-name">Communication</span>
+                    <span class="code-tree-category-count">67</span>
+                  </div>
+                  <div class="code-tree-items">
+                    <div class="code-tree-item">
+                      <div class="code-tree-item-color" style="background-color: #d15a3a;"></div>
+                      <span class="code-tree-item-name">Team collaboration</span>
+                      <span class="code-tree-item-count">32</span>
                     </div>
-                    <div class="code-tree-children">
-                      <div class="code-tree-item">
-                        <div class="code-tree-node">
-                          <div class="code-tree-expand" style="visibility: hidden;"></div>
-                          <div class="code-tree-color" style="background-color: var(--code-color-4);"></div>
-                          <span class="code-tree-label">Team collaboration</span>
-                          <span class="code-tree-count">32</span>
-                        </div>
-                      </div>
-                      <div class="code-tree-item">
-                        <div class="code-tree-node">
-                          <div class="code-tree-expand" style="visibility: hidden;"></div>
-                          <div class="code-tree-color" style="background-color: var(--code-color-5);"></div>
-                          <span class="code-tree-label">Meeting fatigue</span>
-                          <span class="code-tree-count">21</span>
-                        </div>
-                      </div>
-                      <div class="code-tree-item">
-                        <div class="code-tree-node">
-                          <div class="code-tree-expand" style="visibility: hidden;"></div>
-                          <div class="code-tree-color" style="background-color: var(--code-color-6);"></div>
-                          <span class="code-tree-label">Async communication</span>
-                          <span class="code-tree-count">14</span>
-                        </div>
-                      </div>
+                    <div class="code-tree-item">
+                      <div class="code-tree-item-color" style="background-color: #b45309;"></div>
+                      <span class="code-tree-item-name">Meeting fatigue</span>
+                      <span class="code-tree-item-count">21</span>
+                    </div>
+                    <div class="code-tree-item">
+                      <div class="code-tree-item-color" style="background-color: #6d28d9;"></div>
+                      <span class="code-tree-item-name">Async communication</span>
+                      <span class="code-tree-item-count">14</span>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Infrastructure -->
+                <div class="code-tree-category">
+                  <div class="code-tree-category-header">
+                    <svg class="code-tree-expand" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <polyline points="9 18 15 12 9 6"/>
+                    </svg>
+                    <span class="code-tree-category-name">Infrastructure</span>
+                    <span class="code-tree-category-count">25</span>
+                  </div>
+                  <div class="code-tree-items">
+                    <div class="code-tree-item">
+                      <div class="code-tree-item-color" style="background-color: #be185d;"></div>
+                      <span class="code-tree-item-name">Technology issues</span>
+                      <span class="code-tree-item-count">25</span>
                     </div>
                   </div>
                 </div>
@@ -716,32 +1102,33 @@
           </div>
         </div>
 
-        <!-- Center Panel: Text Editor -->
+        <div class="resize-handle"></div>
+
+        <!-- Center Panel - Editor -->
         <div class="panel-center">
-          <div class="text-editor-header">
-            <div class="document-info">
-              <div class="document-icon">
+          <div class="editor-header">
+            <div class="editor-doc-info">
+              <div class="editor-doc-icon">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/>
                 </svg>
               </div>
               <div>
-                <div class="document-title">Interview_P08.txt</div>
-                <div class="document-meta">2,450 words - 8 codes applied - Last edited 2h ago</div>
+                <div class="editor-doc-title">Interview_P08.txt</div>
+                <div class="editor-doc-meta">2,450 words - 8 codes applied - Last edited 2h ago</div>
               </div>
             </div>
             <div class="editor-actions">
-              <span class="badge badge-info">In Progress</span>
-              <button class="btn btn-ghost btn-sm tooltip" data-tooltip="Document memo">
+              <span class="badge-status">In Progress</span>
+              <button class="btn btn-ghost btn-icon btn-sm">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-                  <polyline points="14,2 14,8 20,8"/>
+                  <polyline points="14 2 14 8 20 8"/>
                   <line x1="16" y1="13" x2="8" y2="13"/>
                   <line x1="16" y1="17" x2="8" y2="17"/>
-                  <line x1="10" y1="9" x2="8" y2="9"/>
                 </svg>
               </button>
-              <button class="btn btn-ghost btn-sm tooltip" data-tooltip="Link to case">
+              <button class="btn btn-ghost btn-icon btn-sm">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
                   <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
@@ -750,8 +1137,8 @@
             </div>
           </div>
 
-          <div class="text-content-wrapper">
-            <div class="line-numbers">
+          <div class="editor-content">
+            <div class="line-gutter">
               <div class="line-number">1</div>
               <div class="line-number">2</div>
               <div class="line-number">3</div>
@@ -773,111 +1160,114 @@
               <div class="line-number">19</div>
               <div class="line-number">20</div>
             </div>
-            <div class="text-content" id="textContent">
+            <div class="text-area" id="textContent">
               <p><strong>Interviewer:</strong> Can you tell me about your experience working from home during the past year?</p>
 
-              <p><strong>P08:</strong> Sure. It's been quite a journey, honestly. At first, I was excited about the flexibility. <span class="coded-text" style="background-color: rgba(139, 92, 246, 0.3);">I could finally have breakfast with my family and skip the long commute</span>. That alone was a huge improvement for my quality of life.</p>
+              <p><strong>P08:</strong> Sure. It's been quite a journey, honestly. At first, I was excited about the flexibility. <span class="coded-segment" style="background-color: rgba(26, 58, 47, 0.2);">I could finally have breakfast with my family and skip the long commute</span>. That alone was a huge improvement for my quality of life.</p>
 
               <p><strong>Interviewer:</strong> That sounds positive. Were there any challenges?</p>
 
-              <p><strong>P08:</strong> Oh, definitely. <span class="coded-text has-memo" style="background-color: rgba(20, 184, 166, 0.3);">The biggest challenge is that we can't just walk over to someone's desk anymore. Messages get lost in Slack, and sometimes you wait hours for a response that would have taken 30 seconds in person</span>. It really slows things down.</p>
+              <p><strong>P08:</strong> Oh, definitely. <span class="coded-segment has-memo" style="background-color: rgba(3, 105, 161, 0.2); color: #0369a1;">The biggest challenge is that we can't just walk over to someone's desk anymore. Messages get lost in Slack, and sometimes you wait hours for a response that would have taken 30 seconds in person</span>. It really slows things down.</p>
 
-              <p>And then there's the meeting fatigue. <span class="coded-text" style="background-color: rgba(245, 158, 11, 0.3);">We have back-to-back video calls all day. By 3pm, I'm completely drained. My eyes hurt, my back hurts from sitting, and I feel like I haven't accomplished anything meaningful</span>.</p>
+              <p>And then there's the meeting fatigue. <span class="coded-segment" style="background-color: rgba(180, 83, 9, 0.2);">We have back-to-back video calls all day. By 3pm, I'm completely drained. My eyes hurt, my back hurts from sitting, and I feel like I haven't accomplished anything meaningful</span>.</p>
 
               <p><strong>Interviewer:</strong> How do you manage the work-life balance?</p>
 
-              <p><strong>P08:</strong> <span class="coded-text" style="background-color: rgba(139, 92, 246, 0.3); position: relative;">That's the tricky part. When your home is your office, it's hard to disconnect. I find myself checking emails at 9pm, or starting work at 7am because the laptop is right there<span class="overlap-indicator"></span></span>. My partner has started hiding my laptop after dinner just to force me to stop.</p>
+              <p><strong>P08:</strong> <span class="coded-segment overlap" style="background-color: rgba(26, 58, 47, 0.2);">That's the tricky part. When your home is your office, it's hard to disconnect. I find myself checking emails at 9pm, or starting work at 7am because the laptop is right there</span>. My partner has started hiding my laptop after dinner just to force me to stop.</p>
 
-              <p>But I've also learned to set better boundaries. <span class="coded-text" style="background-color: rgba(34, 197, 94, 0.3);">I now have a dedicated workspace, and when I leave that room, work is done. I've also blocked my calendar from 12-1pm for lunch - no meetings allowed</span>.</p>
+              <p>But I've also learned to set better boundaries. <span class="coded-segment" style="background-color: rgba(4, 120, 87, 0.2);">I now have a dedicated workspace, and when I leave that room, work is done. I've also blocked my calendar from 12-1pm for lunch - no meetings allowed</span>.</p>
 
               <p><strong>Interviewer:</strong> That's a great strategy. What about team collaboration?</p>
 
-              <p><strong>P08:</strong> We've had to completely reinvent how we work together. <span class="coded-text" style="background-color: rgba(239, 68, 68, 0.3);">The spontaneous hallway conversations where great ideas were born - those don't happen anymore. We've tried virtual coffee chats, but it's not the same</span>.</p>
+              <p><strong>P08:</strong> We've had to completely reinvent how we work together. <span class="coded-segment" style="background-color: rgba(209, 90, 58, 0.2);">The spontaneous hallway conversations where great ideas were born - those don't happen anymore. We've tried virtual coffee chats, but it's not the same</span>.</p>
             </div>
           </div>
 
-          <!-- Editor Status Bar -->
-          <div style="display: flex; align-items: center; justify-content: space-between; padding: var(--space-2) var(--space-4); background-color: var(--surface-section); border-top: 1px solid var(--surface-border); font-size: var(--font-size-xs); color: var(--text-muted);">
-            <div class="flex items-center gap-4">
+          <div class="editor-statusbar">
+            <div class="statusbar-group">
               <span>Line 8, Col 45</span>
-              <span>|</span>
               <span>8 segments coded</span>
-              <span>|</span>
               <span>2 overlaps</span>
             </div>
-            <div class="flex items-center gap-2">
-              <span class="keyboard-hint">Q</span> Apply code
-              <span class="keyboard-hint">N</span> New code
-              <span class="keyboard-hint">M</span> Memo
-              <span class="keyboard-hint">?</span> Help
+            <div class="statusbar-shortcuts">
+              <span><span class="kbd">Q</span> Apply code</span>
+              <span><span class="kbd">N</span> New code</span>
+              <span><span class="kbd">M</span> Memo</span>
+              <span><span class="kbd">?</span> Help</span>
             </div>
           </div>
         </div>
 
-        <!-- Right Panel: Details & AI -->
+        <div class="resize-handle"></div>
+
+        <!-- Right Panel -->
         <div class="panel-right">
-          <div class="right-panel-tabs">
-            <button class="right-panel-tab active">Selected Code</button>
-            <button class="right-panel-tab">Overlaps</button>
-            <button class="right-panel-tab">AI Suggest</button>
+          <div class="panel-tabs">
+            <button class="panel-tab active">Selected Code</button>
+            <button class="panel-tab">Overlaps</button>
+            <button class="panel-tab">AI Suggest</button>
           </div>
 
-          <!-- Selected Code Details -->
           <div class="panel-content">
-            <div class="selected-code-info">
-              <div class="selected-code-header">
-                <div class="selected-code-color" style="background-color: var(--code-color-1);"></div>
-                <div>
-                  <div class="selected-code-name">Work-life balance</div>
-                  <div class="selected-code-category">Workplace Experience</div>
+            <!-- Code Detail -->
+            <div class="code-detail">
+              <div class="code-detail-header">
+                <div class="code-detail-color" style="background-color: #1a3a2f;"></div>
+                <div class="code-detail-info">
+                  <div class="code-detail-name">Work-life balance</div>
+                  <div class="code-detail-category">Workplace Experience</div>
                 </div>
               </div>
-              <div class="selected-code-stats">
+              <div class="code-stats">
                 <div class="code-stat">
-                  <span class="code-stat-value">45</span>
-                  <span class="code-stat-label">Segments</span>
+                  <div class="code-stat-value">45</div>
+                  <div class="code-stat-label">Segments</div>
                 </div>
                 <div class="code-stat">
-                  <span class="code-stat-value">12</span>
-                  <span class="code-stat-label">Sources</span>
+                  <div class="code-stat-value">12</div>
+                  <div class="code-stat-label">Sources</div>
                 </div>
                 <div class="code-stat">
-                  <span class="code-stat-value">8</span>
-                  <span class="code-stat-label">Cases</span>
+                  <div class="code-stat-value">8</div>
+                  <div class="code-stat-label">Cases</div>
                 </div>
               </div>
             </div>
 
-            <div style="padding: var(--space-4);">
-              <h4 class="text-xs font-semibold text-muted mb-3">CODE MEMO</h4>
-              <p class="text-sm text-secondary mb-4">Experiences related to balancing work responsibilities with personal life, including time management, boundaries, and family time.</p>
+            <div class="detail-section">
+              <div class="detail-section-title">Code Memo</div>
+              <p>Experiences related to balancing work responsibilities with personal life, including time management, boundaries, and family time.</p>
+            </div>
 
-              <h4 class="text-xs font-semibold text-muted mb-3">EXAMPLE QUOTES</h4>
-              <div class="text-sm text-secondary" style="border-left: 3px solid var(--code-color-1); padding-left: var(--space-3); margin-bottom: var(--space-3);">
+            <div class="detail-section">
+              <div class="detail-section-title">Example Quotes</div>
+              <div class="quote-item" style="--quote-color: #1a3a2f;">
+                <span style="border-left: 3px solid #1a3a2f; position: absolute; top: 0; bottom: 0; left: 0;"></span>
                 "I could finally have breakfast with my family and skip the long commute"
               </div>
-              <div class="text-sm text-secondary" style="border-left: 3px solid var(--code-color-1); padding-left: var(--space-3);">
+              <div class="quote-item" style="--quote-color: #1a3a2f;">
+                <span style="border-left: 3px solid #1a3a2f; position: absolute; top: 0; bottom: 0; left: 0;"></span>
                 "When your home is your office, it's hard to disconnect"
               </div>
             </div>
 
-            <div style="padding: var(--space-4); border-top: 1px solid var(--surface-border);">
-              <h4 class="text-xs font-semibold text-muted mb-3">OVERLAPPING CODES</h4>
+            <div class="detail-section">
+              <div class="detail-section-title">Overlapping Codes</div>
               <div class="overlap-list">
                 <div class="overlap-item">
-                  <div class="overlap-color" style="background-color: var(--code-color-2);"></div>
-                  <span class="overlap-name">Remote challenges</span>
+                  <div class="overlap-item-color" style="background-color: #0369a1;"></div>
+                  <span class="overlap-item-name">Remote challenges</span>
                 </div>
                 <div class="overlap-item">
-                  <div class="overlap-color" style="background-color: var(--code-color-5);"></div>
-                  <span class="overlap-name">Meeting fatigue</span>
+                  <div class="overlap-item-color" style="background-color: #b45309;"></div>
+                  <span class="overlap-item-name">Meeting fatigue</span>
                 </div>
               </div>
             </div>
 
-            <div style="padding: var(--space-4); border-top: 1px solid var(--surface-border);">
-              <h4 class="text-xs font-semibold text-muted mb-3">ACTIONS</h4>
-              <div class="flex flex-col gap-2">
+            <div class="detail-section">
+              <div class="detail-section-title">Actions</div>
+              <div class="detail-actions">
                 <button class="btn btn-secondary btn-sm w-full">
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
@@ -892,7 +1282,7 @@
                   </svg>
                   Find Similar
                 </button>
-                <button class="btn btn-secondary btn-sm w-full">
+                <button class="btn btn-accent btn-sm w-full">
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <path d="M12 2L2 7l10 5 10-5-10-5z"/>
                     <path d="M2 17l10 5 10-5"/>
@@ -901,35 +1291,47 @@
                 </button>
               </div>
             </div>
+
+            <!-- AI Suggestion -->
+            <div class="ai-suggestion animate-in">
+              <div class="ai-suggestion-badge">AI Insight</div>
+              <p class="ai-suggestion-text">
+                Found <strong>3 similar passages</strong> in other interviews that might relate to "Work-life balance". Would you like to review them?
+              </p>
+              <div class="ai-suggestion-actions">
+                <button class="btn btn-primary btn-sm">Review</button>
+                <button class="btn btn-ghost btn-sm">Dismiss</button>
+              </div>
+            </div>
           </div>
         </div>
       </div>
     </main>
   </div>
 
-  <!-- Selection Popup (shown when text is selected) -->
+  <!-- Selection Popup -->
   <div class="selection-popup" id="selectionPopup">
-    <button class="selection-popup-btn primary tooltip" data-tooltip="Apply code (Q)">
+    <button class="selection-popup-btn primary">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <polyline points="16,18 22,12 16,6"/>
-        <polyline points="8,6 2,12 8,18"/>
+        <polyline points="16 18 22 12 16 6"/>
+        <polyline points="8 6 2 12 8 18"/>
       </svg>
     </button>
-    <button class="selection-popup-btn tooltip" data-tooltip="New code from selection (V)">
+    <button class="selection-popup-btn">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
         <line x1="12" y1="5" x2="12" y2="19"/>
         <line x1="5" y1="12" x2="19" y2="12"/>
       </svg>
     </button>
-    <button class="selection-popup-btn tooltip" data-tooltip="Add memo (M)">
+    <button class="selection-popup-btn">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
         <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-        <polyline points="14,2 14,8 20,8"/>
+        <polyline points="14 2 14 8 20 8"/>
         <line x1="16" y1="13" x2="8" y2="13"/>
         <line x1="16" y1="17" x2="8" y2="17"/>
       </svg>
     </button>
-    <button class="selection-popup-btn tooltip" data-tooltip="Search for similar">
+    <button class="selection-popup-btn">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
         <circle cx="11" cy="11" r="8"/>
         <line x1="21" y1="21" x2="16.65" y2="16.65"/>
@@ -939,7 +1341,7 @@
 
   <script src="js/app.js"></script>
   <script>
-    // Show selection popup when text is selected
+    // Selection popup behavior
     const textContent = document.getElementById('textContent');
     const selectionPopup = document.getElementById('selectionPopup');
 
@@ -960,6 +1362,13 @@
       if (!selectionPopup.contains(e.target)) {
         selectionPopup.classList.remove('visible');
       }
+    });
+
+    // Code tree toggle
+    document.querySelectorAll('.code-tree-category-header').forEach(header => {
+      header.addEventListener('click', () => {
+        header.closest('.code-tree-category').classList.toggle('expanded');
+      });
     });
   </script>
 </body>
