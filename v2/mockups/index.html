@@ -6,9 +6,13 @@
   <title>QualCoder v2 - UI Mockups</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,400&family=Instrument+Sans:wght@400;500;600;700&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,500;0,8..60,600;1,8..60,400&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/design-system.css">
   <style>
+    /* ========================================
+       INDEX PAGE - RESEARCH ATELIER EDITION
+       ======================================== */
+
     body {
       min-height: 100vh;
       display: flex;
@@ -16,129 +20,289 @@
       align-items: center;
       justify-content: center;
       padding: var(--space-8);
+      background: linear-gradient(180deg, var(--surface-main) 0%, var(--color-primary-50) 100%);
     }
 
+    /* ----------------------------------------
+       HERO SECTION
+       ---------------------------------------- */
     .hero {
       text-align: center;
       max-width: 800px;
-      margin-bottom: var(--space-8);
+      margin-bottom: var(--space-10);
+      animation: fadeIn 0.8s ease-out;
     }
 
     .hero-logo {
-      width: 80px;
-      height: 80px;
-      background: linear-gradient(135deg, var(--color-primary-500), var(--color-accent-500));
+      width: 100px;
+      height: 100px;
+      background: linear-gradient(135deg, var(--color-primary-600), var(--color-accent-500));
       border-radius: var(--radius-xl);
       display: flex;
       align-items: center;
       justify-content: center;
       color: white;
-      font-size: var(--font-size-2xl);
-      font-weight: var(--font-weight-bold);
-      margin: 0 auto var(--space-5);
-      box-shadow: var(--shadow-lg);
+      font-family: var(--font-display);
+      font-size: var(--font-size-3xl);
+      font-weight: 700;
+      margin: 0 auto var(--space-6);
+      box-shadow: var(--shadow-xl), 0 20px 40px rgba(26, 58, 47, 0.15);
+      position: relative;
+    }
+
+    .hero-logo::after {
+      content: '';
+      position: absolute;
+      inset: -4px;
+      border: 2px solid var(--color-primary-200);
+      border-radius: calc(var(--radius-xl) + 4px);
+      opacity: 0.5;
     }
 
     .hero-title {
-      font-size: var(--font-size-3xl);
-      font-weight: var(--font-weight-bold);
+      font-family: var(--font-display);
+      font-size: 3.5rem;
+      font-weight: 700;
       margin-bottom: var(--space-3);
-      background: linear-gradient(135deg, var(--color-primary-600), var(--color-accent-600));
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
+      color: var(--color-primary-800);
+      letter-spacing: -0.02em;
+      line-height: 1.1;
+    }
+
+    .hero-title span {
+      color: var(--color-accent-600);
     }
 
     .hero-subtitle {
-      font-size: var(--font-size-lg);
+      font-family: var(--font-serif);
+      font-size: var(--font-size-xl);
+      font-style: italic;
       color: var(--text-secondary);
-      margin-bottom: var(--space-6);
+      margin-bottom: var(--space-5);
     }
 
     .hero-description {
-      font-size: var(--font-size-base);
+      font-family: var(--font-serif);
+      font-size: var(--font-size-lg);
       color: var(--text-secondary);
-      line-height: 1.7;
+      line-height: 1.8;
       margin-bottom: var(--space-6);
     }
 
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--space-2);
+      padding: var(--space-2) var(--space-4);
+      background: var(--color-accent-100);
+      border: 1px solid var(--color-accent-200);
+      border-radius: var(--radius-full);
+      font-size: var(--font-size-sm);
+      font-weight: 500;
+      color: var(--color-accent-700);
+      margin-bottom: var(--space-6);
+    }
+
+    .hero-badge::before {
+      content: '';
+      width: 8px;
+      height: 8px;
+      background: var(--color-accent-500);
+      border-radius: var(--radius-full);
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.5; transform: scale(0.9); }
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* ----------------------------------------
+       MOCKUP GRID
+       ---------------------------------------- */
     .mockup-grid {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-      gap: var(--space-4);
+      gap: var(--space-5);
       width: 100%;
       max-width: 1200px;
+      margin-bottom: var(--space-12);
     }
 
     .mockup-card {
-      background-color: var(--surface-card);
+      background: var(--surface-card);
       border: 1px solid var(--surface-border);
-      border-radius: var(--radius-lg);
-      padding: var(--space-5);
+      border-radius: var(--radius-xl);
+      padding: var(--space-6);
       text-decoration: none;
       color: inherit;
-      transition: all var(--transition-fast);
+      transition: all var(--transition-base);
+      position: relative;
+      overflow: hidden;
+      animation: cardFadeIn 0.6s ease-out forwards;
+      opacity: 0;
+    }
+
+    .mockup-card:nth-child(1) { animation-delay: 0.1s; }
+    .mockup-card:nth-child(2) { animation-delay: 0.2s; }
+    .mockup-card:nth-child(3) { animation-delay: 0.3s; }
+    .mockup-card:nth-child(4) { animation-delay: 0.4s; }
+    .mockup-card:nth-child(5) { animation-delay: 0.5s; }
+
+    @keyframes cardFadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .mockup-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+      background: linear-gradient(90deg, var(--color-primary-500), var(--color-accent-500));
+      opacity: 0;
+      transition: opacity var(--transition-fast);
     }
 
     .mockup-card:hover {
       border-color: var(--color-primary-300);
-      box-shadow: var(--shadow-lg);
-      transform: translateY(-4px);
+      box-shadow: var(--shadow-xl);
+      transform: translateY(-6px);
+    }
+
+    .mockup-card:hover::before {
+      opacity: 1;
     }
 
     .mockup-card-icon {
-      width: 48px;
-      height: 48px;
+      width: 56px;
+      height: 56px;
       border-radius: var(--radius-lg);
       display: flex;
       align-items: center;
       justify-content: center;
       margin-bottom: var(--space-4);
+      transition: transform var(--transition-base);
     }
 
-    .mockup-card:nth-child(1) .mockup-card-icon { background-color: var(--color-primary-100); color: var(--color-primary-600); }
-    .mockup-card:nth-child(2) .mockup-card-icon { background-color: var(--color-info-50); color: var(--color-info-600); }
-    .mockup-card:nth-child(3) .mockup-card-icon { background-color: var(--color-accent-100); color: var(--color-accent-600); }
-    .mockup-card:nth-child(4) .mockup-card-icon { background-color: var(--color-success-50); color: var(--color-success-600); }
-    .mockup-card:nth-child(5) .mockup-card-icon { background-color: var(--color-warning-50); color: var(--color-warning-600); }
+    .mockup-card:hover .mockup-card-icon {
+      transform: scale(1.1);
+    }
+
+    .mockup-card:nth-child(1) .mockup-card-icon {
+      background: linear-gradient(135deg, var(--color-primary-100), var(--color-primary-200));
+      color: var(--color-primary-600);
+    }
+    .mockup-card:nth-child(2) .mockup-card-icon {
+      background: linear-gradient(135deg, var(--color-info-50), var(--color-info-100));
+      color: var(--color-info-600);
+    }
+    .mockup-card:nth-child(3) .mockup-card-icon {
+      background: linear-gradient(135deg, var(--color-accent-100), var(--color-accent-200));
+      color: var(--color-accent-600);
+    }
+    .mockup-card:nth-child(4) .mockup-card-icon {
+      background: linear-gradient(135deg, var(--color-success-50), var(--color-success-100));
+      color: var(--color-success-600);
+    }
+    .mockup-card:nth-child(5) .mockup-card-icon {
+      background: linear-gradient(135deg, var(--color-warning-50), var(--color-warning-100));
+      color: var(--color-warning-600);
+    }
 
     .mockup-card-title {
-      font-size: var(--font-size-md);
-      font-weight: var(--font-weight-semibold);
+      font-family: var(--font-display);
+      font-size: var(--font-size-lg);
+      font-weight: 600;
       margin-bottom: var(--space-2);
+      color: var(--text-primary);
     }
 
     .mockup-card-description {
+      font-family: var(--font-serif);
       font-size: var(--font-size-sm);
       color: var(--text-secondary);
-      line-height: 1.5;
+      line-height: 1.6;
     }
 
-    .theme-toggle {
-      position: fixed;
-      top: var(--space-4);
-      right: var(--space-4);
+    .mockup-card-arrow {
+      position: absolute;
+      bottom: var(--space-5);
+      right: var(--space-5);
+      width: 32px;
+      height: 32px;
+      border-radius: var(--radius-full);
+      background: var(--surface-section);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-muted);
+      transition: all var(--transition-fast);
     }
 
+    .mockup-card:hover .mockup-card-arrow {
+      background: var(--color-primary-500);
+      color: white;
+      transform: translateX(4px);
+    }
+
+    /* ----------------------------------------
+       FEATURES SECTION
+       ---------------------------------------- */
     .features-section {
       max-width: 1200px;
       width: 100%;
-      margin-top: var(--space-10);
-      padding-top: var(--space-8);
+      padding-top: var(--space-10);
       border-top: 1px solid var(--surface-border);
+      animation: fadeIn 0.8s ease-out;
+      animation-delay: 0.6s;
+      animation-fill-mode: forwards;
+      opacity: 0;
+    }
+
+    .features-header {
+      text-align: center;
+      margin-bottom: var(--space-8);
     }
 
     .features-title {
-      text-align: center;
-      font-size: var(--font-size-xl);
-      font-weight: var(--font-weight-semibold);
-      margin-bottom: var(--space-6);
+      font-family: var(--font-display);
+      font-size: var(--font-size-2xl);
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: var(--space-2);
+    }
+
+    .features-subtitle {
+      font-family: var(--font-serif);
+      font-size: var(--font-size-base);
+      color: var(--text-secondary);
+      font-style: italic;
     }
 
     .features-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-      gap: var(--space-5);
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: var(--space-6);
     }
 
     .feature-item {
@@ -147,25 +311,76 @@
     }
 
     .feature-icon {
-      width: 40px;
-      height: 40px;
-      margin: 0 auto var(--space-3);
+      width: 48px;
+      height: 48px;
+      margin: 0 auto var(--space-4);
       color: var(--color-primary-500);
     }
 
     .feature-title {
-      font-weight: var(--font-weight-medium);
+      font-family: var(--font-display);
+      font-weight: 600;
+      font-size: var(--font-size-base);
       margin-bottom: var(--space-2);
+      color: var(--text-primary);
     }
 
     .feature-description {
+      font-family: var(--font-serif);
       font-size: var(--font-size-sm);
       color: var(--text-secondary);
+      line-height: 1.6;
+    }
+
+    /* ----------------------------------------
+       THEME TOGGLE
+       ---------------------------------------- */
+    .theme-toggle {
+      position: fixed;
+      top: var(--space-4);
+      right: var(--space-4);
+      width: 44px;
+      height: 44px;
+      border-radius: var(--radius-full);
+      background: var(--surface-card);
+      border: 1px solid var(--surface-border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: all var(--transition-fast);
+      box-shadow: var(--shadow-md);
+    }
+
+    .theme-toggle:hover {
+      border-color: var(--color-primary-300);
+      color: var(--color-primary-600);
+      transform: rotate(15deg);
+    }
+
+    /* ----------------------------------------
+       FOOTER
+       ---------------------------------------- */
+    .footer {
+      margin-top: var(--space-10);
+      text-align: center;
+      font-size: var(--font-size-sm);
+      color: var(--text-muted);
+    }
+
+    .footer a {
+      color: var(--color-primary-600);
+      text-decoration: none;
+    }
+
+    .footer a:hover {
+      text-decoration: underline;
     }
   </style>
 </head>
 <body>
-  <button class="btn btn-ghost btn-icon theme-toggle" onclick="toggleTheme()">
+  <button class="theme-toggle" onclick="toggleTheme()">
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
       <circle cx="12" cy="12" r="5"/>
       <line x1="12" y1="1" x2="12" y2="3"/>
@@ -180,19 +395,20 @@
   </button>
 
   <div class="hero">
+    <div class="hero-badge">Research Atelier Design System</div>
     <div class="hero-logo">Q</div>
-    <h1 class="hero-title">QualCoder v2</h1>
+    <h1 class="hero-title">QualCoder <span>v2</span></h1>
     <p class="hero-subtitle">Reimagined UI/UX for Qualitative Data Analysis</p>
     <p class="hero-description">
-      A modern, intuitive interface design for qualitative researchers. Featuring AI-powered coding assistance,
-      streamlined workflows, and beautiful visualizations. Built with accessibility and efficiency in mind.
+      A modern, scholarly interface design for qualitative researchers. Featuring AI-powered coding assistance,
+      streamlined workflows, and beautiful visualizations. Built with accessibility, warmth, and efficiency in mind.
     </p>
   </div>
 
   <div class="mockup-grid">
     <a href="dashboard.html" class="mockup-card">
       <div class="mockup-card-icon">
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <rect x="3" y="3" width="7" height="7" rx="1"/>
           <rect x="14" y="3" width="7" height="7" rx="1"/>
           <rect x="3" y="14" width="7" height="7" rx="1"/>
@@ -203,11 +419,17 @@
       <p class="mockup-card-description">
         Project overview with quick actions, recent activity, coding progress, and AI-powered suggestions at a glance.
       </p>
+      <div class="mockup-card-arrow">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="5" y1="12" x2="19" y2="12"/>
+          <polyline points="12,5 19,12 12,19"/>
+        </svg>
+      </div>
     </a>
 
     <a href="sources.html" class="mockup-card">
       <div class="mockup-card-icon">
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/>
           <polyline points="14,2 14,8 20,8"/>
         </svg>
@@ -216,11 +438,17 @@
       <p class="mockup-card-description">
         Modern file management with grid/list views, drag-and-drop folders, type filters, and bulk operations.
       </p>
+      <div class="mockup-card-arrow">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="5" y1="12" x2="19" y2="12"/>
+          <polyline points="12,5 19,12 12,19"/>
+        </svg>
+      </div>
     </a>
 
     <a href="coding.html" class="mockup-card">
       <div class="mockup-card-icon">
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <polyline points="16,18 22,12 16,6"/>
           <polyline points="8,6 2,12 8,18"/>
         </svg>
@@ -229,11 +457,17 @@
       <p class="mockup-card-description">
         Three-panel coding interface with code tree, text editor with highlighting, and contextual details panel.
       </p>
+      <div class="mockup-card-arrow">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="5" y1="12" x2="19" y2="12"/>
+          <polyline points="12,5 19,12 12,19"/>
+        </svg>
+      </div>
     </a>
 
     <a href="cases.html" class="mockup-card">
       <div class="mockup-card-icon">
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
           <circle cx="9" cy="7" r="4"/>
           <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
@@ -242,13 +476,19 @@
       </div>
       <h2 class="mockup-card-title">Case Manager</h2>
       <p class="mockup-card-description">
-        Participant and case management with attributes, linked sources, and detailed case views.
+        Participant and case management with attributes, linked sources, memos, and detailed case views.
       </p>
+      <div class="mockup-card-arrow">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="5" y1="12" x2="19" y2="12"/>
+          <polyline points="12,5 19,12 12,19"/>
+        </svg>
+      </div>
     </a>
 
     <a href="analysis.html" class="mockup-card">
       <div class="mockup-card-icon">
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <line x1="18" y1="20" x2="18" y2="10"/>
           <line x1="12" y1="20" x2="12" y2="4"/>
           <line x1="6" y1="20" x2="6" y2="14"/>
@@ -258,11 +498,20 @@
       <p class="mockup-card-description">
         Data visualizations, code frequency charts, co-occurrence matrices, themes, and AI-generated insights.
       </p>
+      <div class="mockup-card-arrow">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="5" y1="12" x2="19" y2="12"/>
+          <polyline points="12,5 19,12 12,19"/>
+        </svg>
+      </div>
     </a>
   </div>
 
   <div class="features-section">
-    <h2 class="features-title">Design Highlights</h2>
+    <div class="features-header">
+      <h2 class="features-title">Design Highlights</h2>
+      <p class="features-subtitle">Crafted with care for qualitative researchers</p>
+    </div>
     <div class="features-grid">
       <div class="feature-item">
         <svg class="feature-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -280,7 +529,7 @@
           <line x1="12" y1="21" x2="12" y2="23"/>
         </svg>
         <h3 class="feature-title">Dark & Light Modes</h3>
-        <p class="feature-description">Full theme support with carefully designed color palettes for both modes</p>
+        <p class="feature-description">Full theme support with scholarly, warm color palettes for both modes</p>
       </div>
       <div class="feature-item">
         <svg class="feature-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -320,6 +569,10 @@
       </div>
     </div>
   </div>
+
+  <footer class="footer">
+    <p>QualCoder v2 UI Mockups &bull; <a href="https://github.com/ccbogel/QualCoder">View on GitHub</a></p>
+  </footer>
 
   <script src="js/app.js"></script>
 </body>
