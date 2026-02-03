@@ -308,42 +308,48 @@ QualCoder v2
 
 ```
 src/
-├── domain/                     # C2: Domain Core (Pure)
-│   ├── coding/                 # Bounded Context
-│   │   ├── entities.py         # Code, Category, Segment
-│   │   ├── invariants.py       # is_valid_*, can_*
-│   │   ├── derivers.py         # derive_*
-│   │   ├── events.py           # *Created, *Deleted
-│   │   └── tests/              # No mocks needed
+├── contexts/                   # Bounded Contexts (vertical slices)
+│   ├── coding/                 # Coding Context
+│   │   ├── core/               # Domain (Pure)
+│   │   │   ├── entities.py
+│   │   │   ├── invariants.py
+│   │   │   ├── derivers.py
+│   │   │   ├── events.py
+│   │   │   └── tests/
+│   │   ├── infra/              # Repositories
+│   │   ├── interface/          # Use cases, commands
+│   │   └── presentation/       # Context-specific UI
 │   ├── sources/
 │   ├── cases/
-│   ├── analysis/
 │   ├── projects/
-│   ├── collaboration/
-│   ├── ai_services/
-│   └── shared/
-│       ├── types.py            # Result, DomainEvent, IDs
-│       └── validation.py       # Reusable helpers
+│   ├── settings/
+│   ├── folders/
+│   └── ai_services/
 │
-├── application/                # C3: Application Shell
-│   ├── event_bus.py            # Pub/sub infrastructure
-│   ├── signal_bridge/
-│   │   ├── base.py             # Thread-safe bridge
-│   │   └── payloads.py         # Qt-friendly DTOs
-│   ├── controllers/            # Command handlers
-│   └── queries/                # Read-side
+├── shared/                     # Cross-cutting concerns
+│   ├── common/                 # Shared types
+│   │   ├── types.py            # DomainEvent, typed IDs
+│   │   ├── operation_result.py # OperationResult pattern
+│   │   └── failure_events.py   # Base failure types
+│   ├── core/                   # Shared domain logic
+│   │   ├── validation.py       # Reusable helpers
+│   │   └── policies/           # Cross-context policies
+│   ├── infra/                  # Shared infrastructure
+│   │   ├── event_bus.py        # Pub/sub infrastructure
+│   │   ├── signal_bridge/      # Thread-safe Qt bridge
+│   │   ├── app_context.py      # Application context
+│   │   └── state.py            # Project state
+│   └── presentation/           # Shared UI components
+│       ├── organisms/          # Reusable complex widgets
+│       ├── molecules/          # Small composite widgets
+│       └── templates/          # Page layouts
 │
-├── infrastructure/             # Repositories, Adapters
-│   ├── repositories/           # SQLite access
-│   └── adapters/               # File I/O, LLM clients
+├── tests/                      # E2E tests
+│   └── e2e/
 │
-├── presentation/               # C1: Desktop App (PySide6)
-│   ├── organisms/              # Complex widgets
-│   ├── pages/                  # Page layouts
-│   └── screens/                # Top-level windows
-│
-└── agent_context/              # C5: Agent Context (MCP)
-    └── schemas/                # Tool definitions
+└── main.py                     # Application entry point
+
+design_system/                  # Reusable UI components, tokens
 ```
 
 ---
@@ -382,8 +388,6 @@ src/
 | SignalBridge | No library for domain to Qt threading | None available |
 | Result Type | Minimal, no dependency | returns library |
 
-See [Decision: Library Alternatives](../decisions/decision-002%20library-alternatives-analysis.md) for details.
-
 ---
 
 ## 11. Further Reading
@@ -407,7 +411,6 @@ Start with the [Onboarding Tutorial](./tutorials/README.md) - a progressive guid
 
 - [Common Patterns and Recipes](./tutorials/appendices/A-common-patterns.md)
 - [When to Create New Patterns](./tutorials/appendices/B-when-to-create.md)
-- [Library Alternatives Analysis](../decisions/decision-002%20library-alternatives-analysis.md)
 
 ### C4 Model References
 

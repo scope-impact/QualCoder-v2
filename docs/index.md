@@ -42,7 +42,9 @@ graph TB
 | [Architecture](ARCHITECTURE.md) | C4 model, bounded contexts, data flow, design decisions |
 | [Tutorials](tutorials/README.md) | Hands-on fDDD onboarding through a practical example |
 | [Design System](api/index.md) | 180+ PySide6 components, tokens, and patterns |
-| [Design Documents](design/FUNCTIONAL_DDD_DESIGN.md) | Detailed specs for major features |
+| [Design Documents](design/) | Detailed specs for major features |
+| [AI Plans](ai/) | AI-generated refactoring and alignment plans (historical) |
+| [Archive](archive/) | Historical planning documents |
 
 ## Quick Start
 
