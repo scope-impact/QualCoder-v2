@@ -2,6 +2,7 @@
 Create Project Use Case
 
 Functional use case for creating a new project.
+Returns OperationResult with error codes and suggestions.
 """
 
 from __future__ import annotations
@@ -9,7 +10,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-from returns.result import Failure, Result, Success
+from returns.result import Failure
 
 from src.application.lifecycle import ProjectLifecycle
 from src.application.projects.commands import CreateProjectCommand
@@ -17,10 +18,10 @@ from src.application.state import ProjectState
 from src.contexts.projects.core.derivers import ProjectState as DomainProjectState
 from src.contexts.projects.core.derivers import derive_create_project
 from src.contexts.projects.core.events import ProjectCreated
+from src.contexts.shared.core.operation_result import OperationResult
 
 if TYPE_CHECKING:
     from src.application.event_bus import EventBus
-    from src.contexts.projects.core.entities import Project
 
 
 def create_project(
@@ -28,7 +29,7 @@ def create_project(
     lifecycle: ProjectLifecycle,
     state: ProjectState,
     event_bus: EventBus,
-) -> Result[Project, str]:
+) -> OperationResult:
     """
     Create a new project file.
 
@@ -46,13 +47,16 @@ def create_project(
         event_bus: Event bus for publishing events
 
     Returns:
-        Success with Project entity, or Failure with error message
+        OperationResult with Project entity on success, or error details on failure
     """
     path = Path(command.path)
 
     # Step 1: Validate
     if not command.name or not command.name.strip():
-        return Failure("Project name cannot be empty")
+        return OperationResult.fail(
+            error="Project name cannot be empty",
+            error_code="PROJECT_NOT_CREATED/EMPTY_NAME",
+        )
 
     # Step 2: Build domain state and derive event
     domain_state = DomainProjectState(
@@ -69,14 +73,20 @@ def create_project(
     )
 
     if isinstance(result, Failure):
-        return result
+        return OperationResult.fail(
+            error=result.failure(),
+            error_code="PROJECT_NOT_CREATED/DERIVER_FAILED",
+        )
 
     event: ProjectCreated = result
 
     # Step 3: Create database file
     create_result = lifecycle.create_database(path, command.name.strip())
     if isinstance(create_result, Failure):
-        return create_result
+        return OperationResult.fail(
+            error=create_result.failure(),
+            error_code="PROJECT_NOT_CREATED/DB_CREATION_FAILED",
+        )
 
     project = create_result.unwrap()
 
@@ -88,4 +98,4 @@ def create_project(
     # Step 5: Publish event
     event_bus.publish(event)
 
-    return Success(project)
+    return OperationResult.ok(data=project)

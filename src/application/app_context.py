@@ -25,8 +25,6 @@ import logging
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING
 
-from returns.result import Result, Success
-
 from src.application.event_bus import EventBus
 from src.application.lifecycle import ProjectLifecycle
 from src.application.policies import PolicyExecutor
@@ -34,6 +32,7 @@ from src.application.policies.coding_policies import configure_coding_policies
 from src.application.policies.projects_policies import configure_projects_policies
 from src.application.state import ProjectState
 from src.application.sync import SourceSyncHandler
+from src.contexts.shared.core.operation_result import OperationResult
 
 # Conditional imports for Qt (allows non-Qt tests to pass)
 try:
@@ -51,7 +50,6 @@ if TYPE_CHECKING:
         ProjectsContext,
         SourcesContext,
     )
-    from src.contexts.projects.core.entities import Project
     from src.contexts.settings.infra import UserSettingsRepository
 
 logger = logging.getLogger(__name__)
@@ -166,7 +164,7 @@ class AppContext:
     # Project Lifecycle
     # =========================================================================
 
-    def open_project(self, path: str) -> Result[Project, str]:
+    def open_project(self, path: str) -> OperationResult:
         """
         Open a project and initialize bounded contexts.
 
@@ -174,7 +172,7 @@ class AppContext:
             path: Path to the project file (.qda)
 
         Returns:
-            Success with Project entity, or Failure with error message
+            OperationResult with Project entity on success, or error details on failure
         """
         from src.application.projects.commands import OpenProjectCommand
         from src.application.projects.usecases import open_project
@@ -188,13 +186,13 @@ class AppContext:
             get_contexts=self._create_contexts,
         )
 
-        if isinstance(result, Success):
+        if result.is_success:
             # Wire sync handler with newly created contexts
             self._wire_sync_handler()
 
         return result
 
-    def create_project(self, name: str, path: str) -> Result[Project, str]:
+    def create_project(self, name: str, path: str) -> OperationResult:
         """
         Create a new project.
 
@@ -207,7 +205,7 @@ class AppContext:
             path: Path where the project file will be created
 
         Returns:
-            Success with Project entity, or Failure with error message
+            OperationResult with Project entity on success, or error details on failure
         """
         from src.application.projects.commands import CreateProjectCommand
         from src.application.projects.usecases import create_project
@@ -220,12 +218,12 @@ class AppContext:
             event_bus=self.event_bus,
         )
 
-    def close_project(self) -> Result[None, str]:
+    def close_project(self) -> OperationResult:
         """
         Close the current project and cleanup contexts.
 
         Returns:
-            Success with None, or Failure with error message
+            OperationResult with None on success, or error details on failure
         """
         from src.application.projects.usecases import close_project
 

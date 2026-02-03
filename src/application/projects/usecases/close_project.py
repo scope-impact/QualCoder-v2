@@ -2,17 +2,17 @@
 Close Project Use Case
 
 Functional use case for closing the current project.
+Returns OperationResult with error codes and suggestions.
 """
 
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from returns.result import Failure, Result, Success
-
 from src.application.lifecycle import ProjectLifecycle
 from src.application.state import ProjectState
 from src.contexts.projects.core.events import ProjectClosed
+from src.contexts.shared.core.operation_result import OperationResult
 
 if TYPE_CHECKING:
     from src.application.event_bus import EventBus
@@ -22,7 +22,7 @@ def close_project(
     lifecycle: ProjectLifecycle,
     state: ProjectState,
     event_bus: EventBus,
-) -> Result[None, str]:
+) -> OperationResult:
     """
     Close the current project.
 
@@ -39,11 +39,14 @@ def close_project(
         event_bus: Event bus for publishing events
 
     Returns:
-        Success with None, or Failure with error message
+        OperationResult with None on success, or error details on failure
     """
     # Step 1: Validate
     if state.project is None:
-        return Failure("No project is currently open")
+        return OperationResult.fail(
+            error="No project is currently open",
+            error_code="PROJECT_NOT_CLOSED/NO_PROJECT",
+        )
 
     # Step 2: Get path for event
     path = state.project.path
@@ -58,4 +61,4 @@ def close_project(
     event = ProjectClosed.create(path=path)
     event_bus.publish(event)
 
-    return Success(None)
+    return OperationResult.ok()

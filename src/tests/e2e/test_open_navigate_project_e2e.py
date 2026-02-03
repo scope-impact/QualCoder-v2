@@ -38,7 +38,7 @@ def temp_project_path(tmp_path: Path) -> Path:
 def existing_project(app_context: AppContext, tmp_path: Path) -> Path:
     project_path = tmp_path / "existing_project.qda"
     result = app_context.create_project(name="Existing Project", path=str(project_path))
-    assert isinstance(result, Success)
+    assert result.is_success
     app_context.close_project()
     return project_path
 
@@ -75,8 +75,8 @@ class TestOpenExistingProject:
             result = app_context.open_project(str(existing_project))
 
         with allure.step("Verify project opened successfully"):
-            assert isinstance(result, Success)
-            project = result.unwrap()
+            assert result.is_success
+            project = result.data
             assert project.name == "Existing Project"
             assert project.path == existing_project
 
@@ -95,7 +95,7 @@ class TestOpenExistingProject:
             result = app_context.open_project(str(nonexistent))
 
         with allure.step("Verify failure returned"):
-            assert isinstance(result, Failure)
+            assert not result.is_success
 
     @allure.title("AC #1: Open project validates database before opening")
     @allure.severity(allure.severity_level.NORMAL)
@@ -119,7 +119,7 @@ class TestOpenExistingProject:
     ):
         with allure.step("Open project"):
             result = app_context.open_project(str(existing_project))
-            assert isinstance(result, Success)
+            assert result.is_success
 
         with allure.step("Verify bounded contexts are available"):
             assert app_context.sources_context is not None
@@ -134,7 +134,7 @@ class TestOpenExistingProject:
     ):
         with allure.step("Open project with existing data"):
             result = app_context.open_project(str(project_with_data))
-            assert isinstance(result, Success)
+            assert result.is_success
 
         with allure.step("Verify previously saved sources are in state"):
             sources = list(app_context.state.sources)
@@ -148,10 +148,10 @@ class TestOpenExistingProject:
     ):
         with allure.step("Open project"):
             result = app_context.open_project(str(existing_project))
-            assert isinstance(result, Success)
+            assert result.is_success
 
         with allure.step("Add to recent projects"):
-            project = result.unwrap()
+            project = result.data
             app_context.state.add_to_recent(project)
 
         with allure.step("Verify project in recent list"):
@@ -174,8 +174,8 @@ class TestCreateNewProject:
             )
 
         with allure.step("Verify project created with specified name"):
-            assert isinstance(result, Success)
-            project = result.unwrap()
+            assert result.is_success
+            project = result.data
             assert project.name == "My Research Project"
             assert project.path == temp_project_path
 
@@ -194,7 +194,7 @@ class TestCreateNewProject:
             )
 
         with allure.step("Verify failure returned"):
-            assert isinstance(result, Failure)
+            assert not result.is_success
 
     @allure.title("AC #2: New empty project is created with valid schema")
     @allure.severity(allure.severity_level.CRITICAL)
@@ -209,7 +209,7 @@ class TestCreateNewProject:
             result = app_context.create_project(
                 name="Schema Test", path=str(temp_project_path)
             )
-            assert isinstance(result, Success)
+            assert result.is_success
 
         with allure.step("Validate database schema"):
             repo = SQLiteProjectRepository()
@@ -243,14 +243,14 @@ class TestCreateNewProject:
             create_result = app_context.create_project(
                 name="Open After Create", path=str(temp_project_path)
             )
-            assert isinstance(create_result, Success)
+            assert create_result.is_success
 
         with allure.step("Close and reopen project"):
             app_context.close_project()
             open_result = app_context.open_project(str(temp_project_path))
 
         with allure.step("Verify workspace ready (contexts available)"):
-            assert isinstance(open_result, Success)
+            assert open_result.is_success
             assert app_context.has_project
             assert app_context.sources_context is not None
 
@@ -265,7 +265,7 @@ class TestViewSourcesList:
     ):
         with allure.step("Open project"):
             result = app_context.open_project(str(existing_project))
-            assert isinstance(result, Success)
+            assert result.is_success
 
         with allure.step("Get sources from state"):
             sources = list(app_context.state.sources)
@@ -283,7 +283,7 @@ class TestViewSourcesList:
 
         with allure.step("Open project"):
             result = app_context.open_project(str(existing_project))
-            assert isinstance(result, Success)
+            assert result.is_success
 
         with allure.step("Add source via repository and state"):
             source = Source(
@@ -310,7 +310,7 @@ class TestViewSourcesList:
 
         with allure.step("Open project"):
             result = app_context.open_project(str(existing_project))
-            assert isinstance(result, Success)
+            assert result.is_success
 
         with allure.step("Add source with all attributes"):
             source = Source(
@@ -340,7 +340,7 @@ class TestViewSourcesList:
 
         with allure.step("Open project"):
             result = app_context.open_project(str(existing_project))
-            assert isinstance(result, Success)
+            assert result.is_success
 
         with allure.step("Add sources of different types"):
             text_source = Source(
@@ -523,7 +523,7 @@ class TestAgentQueryContext:
 
         with allure.step("Open project"):
             result = app_context.open_project(str(existing_project))
-            assert isinstance(result, Success)
+            assert result.is_success
 
         with allure.step("Initialize ProjectTools"):
             tools = ProjectTools(ctx=app_context)
@@ -846,12 +846,12 @@ class TestProjectWorkflowIntegration:
             create_result = app_context.create_project(
                 name="Workflow Test Project", path=str(project_path)
             )
-            assert isinstance(create_result, Success)
+            assert create_result.is_success
 
         with allure.step("Step 2: Close and reopen project"):
             app_context.close_project()
             open_result = app_context.open_project(str(project_path))
-            assert isinstance(open_result, Success)
+            assert open_result.is_success
 
         with allure.step("Step 3: Add multiple sources"):
             sources = []
@@ -883,7 +883,7 @@ class TestProjectWorkflowIntegration:
 
         with allure.step("Step 7: Close project"):
             close_result = app_context.close_project()
-            assert isinstance(close_result, Success)
+            assert close_result.is_success
             assert not app_context.has_project
 
     @allure.title("Project state cleared after close")

@@ -603,7 +603,6 @@ class TestOrganizeSources:
         """
         E2E test: Create folder, move source to folder, verify persistence.
         """
-        from returns.result import Success
 
         from src.application.app_context import create_app_context, reset_app_context
         from src.application.projects.commands import CreateFolderCommand
@@ -618,7 +617,7 @@ class TestOrganizeSources:
             ctx.start()
 
             result = ctx.create_project(name="Folder Test", path=str(project_path))
-            assert isinstance(result, Success)
+            assert result.is_success
             ctx.open_project(str(project_path))
 
             # Create folder using use case
@@ -652,7 +651,7 @@ class TestOrganizeSources:
             ctx2 = create_app_context()
             ctx2.start()
             open_result = ctx2.open_project(str(project_path))
-            assert isinstance(open_result, Success)
+            assert open_result.is_success
 
         with allure.step("Step 4: Verify folder persisted"):
             assert len(ctx2.state.folders) == 1
@@ -911,7 +910,6 @@ class TestSourceManagementIntegration:
         Verifies: name, source_type, memo, origin, and fulltext all persist.
         Note: code_count is computed from coding relationships, not persisted.
         """
-        from returns.result import Success
 
         from src.application.app_context import create_app_context, reset_app_context
         from src.contexts.projects.core.entities import Source, SourceType
@@ -925,7 +923,7 @@ class TestSourceManagementIntegration:
             ctx.start()
 
             result = ctx.create_project(name="Persist Test", path=str(project_path))
-            assert isinstance(result, Success)
+            assert result.is_success
             ctx.open_project(str(project_path))
 
             source = Source(
@@ -949,7 +947,7 @@ class TestSourceManagementIntegration:
             ctx2 = create_app_context()
             ctx2.start()
             open_result = ctx2.open_project(str(project_path))
-            assert isinstance(open_result, Success)
+            assert open_result.is_success
 
         with allure.step("Step 4: Verify source and content persisted"):
             # Source should be loaded from database
@@ -976,7 +974,6 @@ class TestSourceManagementIntegration:
         Critical test: Verify image/audio/video sources persist file_path.
         Media sources use file_path (mediapath) instead of fulltext.
         """
-        from returns.result import Success
 
         from src.application.app_context import create_app_context, reset_app_context
         from src.contexts.projects.core.entities import Source, SourceType
@@ -992,7 +989,7 @@ class TestSourceManagementIntegration:
             result = ctx.create_project(
                 name="Media Persist Test", path=str(project_path)
             )
-            assert isinstance(result, Success)
+            assert result.is_success
             ctx.open_project(str(project_path))
 
             # Create image source with file_path
@@ -1028,7 +1025,7 @@ class TestSourceManagementIntegration:
             ctx2 = create_app_context()
             ctx2.start()
             open_result = ctx2.open_project(str(project_path))
-            assert isinstance(open_result, Success)
+            assert open_result.is_success
 
         with allure.step("Step 4: Verify media sources persisted"):
             assert len(ctx2.state.sources) == 2
@@ -1388,14 +1385,12 @@ class TestAgentListSources:
 
     @pytest.fixture
     def project_with_sources(self, app_context, tmp_path):
-        from returns.result import Success
-
         from src.contexts.projects.core.entities import Source, SourceType
         from src.contexts.shared.core.types import SourceId
 
         project_path = tmp_path / "sources_test.qda"
         result = app_context.create_project(name="Sources Test", path=str(project_path))
-        assert isinstance(result, Success)
+        assert result.is_success
         app_context.open_project(str(project_path))
 
         # Add sources of different types
@@ -1541,14 +1536,12 @@ class TestAgentReadSourceContent:
 
     @pytest.fixture
     def project_with_content(self, app_context, tmp_path):
-        from returns.result import Success
-
         from src.contexts.projects.core.entities import Source, SourceType
         from src.contexts.shared.core.types import SourceId
 
         project_path = tmp_path / "content_test.qda"
         result = app_context.create_project(name="Content Test", path=str(project_path))
-        assert isinstance(result, Success)
+        assert result.is_success
         app_context.open_project(str(project_path))
 
         # Add a source with content
@@ -1681,8 +1674,6 @@ class TestAgentExtractMetadata:
 
     @pytest.fixture
     def project_with_source(self, app_context, tmp_path):
-        from returns.result import Success
-
         from src.contexts.projects.core.entities import Source, SourceType
         from src.contexts.shared.core.types import SourceId
 
@@ -1690,7 +1681,7 @@ class TestAgentExtractMetadata:
         result = app_context.create_project(
             name="Metadata Test", path=str(project_path)
         )
-        assert isinstance(result, Success)
+        assert result.is_success
         app_context.open_project(str(project_path))
 
         source = Source(

@@ -2,6 +2,7 @@
 Open Project Use Case
 
 Functional use case for opening an existing project.
+Returns OperationResult with error codes and suggestions.
 """
 
 from __future__ import annotations
@@ -9,7 +10,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-from returns.result import Failure, Result, Success
+from returns.result import Failure
 
 from src.application.lifecycle import ProjectLifecycle
 from src.application.projects.commands import OpenProjectCommand
@@ -18,6 +19,7 @@ from src.contexts.projects.core.derivers import ProjectState as DomainProjectSta
 from src.contexts.projects.core.derivers import derive_open_project
 from src.contexts.projects.core.entities import Project, ProjectId
 from src.contexts.projects.core.events import ProjectOpened
+from src.contexts.shared.core.operation_result import OperationResult
 
 if TYPE_CHECKING:
     from src.application.event_bus import EventBus
@@ -29,7 +31,7 @@ def open_project(
     state: ProjectState,
     event_bus: EventBus,
     get_contexts: callable,
-) -> Result[Project, str]:
+) -> OperationResult:
     """
     Open an existing project file.
 
@@ -48,7 +50,7 @@ def open_project(
         get_contexts: Callback to get bounded contexts after connection is established
 
     Returns:
-        Success with Project entity, or Failure with error message
+        OperationResult with Project entity on success, or error details on failure
     """
     path = Path(command.path)
 
@@ -61,14 +63,20 @@ def open_project(
     result = derive_open_project(path=path, state=domain_state)
 
     if isinstance(result, Failure):
-        return result
+        return OperationResult.fail(
+            error=result.failure(),
+            error_code="PROJECT_NOT_OPENED/DERIVER_FAILED",
+        )
 
     event: ProjectOpened = result
 
     # Step 3: Open database
     open_result = lifecycle.open_database(path)
     if isinstance(open_result, Failure):
-        return open_result
+        return OperationResult.fail(
+            error=open_result.failure(),
+            error_code="PROJECT_NOT_OPENED/DB_OPEN_FAILED",
+        )
 
     connection = open_result.unwrap()
 
@@ -112,4 +120,4 @@ def open_project(
     # Step 5: Publish event
     event_bus.publish(event)
 
-    return Success(project)
+    return OperationResult.ok(data=project)
