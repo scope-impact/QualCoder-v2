@@ -56,6 +56,8 @@ class SettingsProvider(Protocol):
         timestamp_format: str,
         speaker_format: str,
     ) -> Result: ...
+    def change_backend(self, backend_type: str) -> Result: ...
+    def set_convex_url(self, url: str | None) -> Result: ...
 
 
 class SettingsViewModel:
@@ -108,6 +110,8 @@ class SettingsViewModel:
             backup_path=settings.backup.backup_path,
             timestamp_format=settings.av_coding.timestamp_format,
             speaker_format=settings.av_coding.speaker_format,
+            backend_type=settings.backend.backend_type,
+            convex_url=settings.backend.convex_url,
         )
 
     # =========================================================================
@@ -271,3 +275,33 @@ class SettingsViewModel:
             return format_str.replace("{n}", str(speaker_num))
         except Exception:
             return format_str
+
+    # =========================================================================
+    # Backend Actions
+    # =========================================================================
+
+    def change_backend(self, backend_type: str) -> bool:
+        """
+        Change the database backend type.
+
+        Args:
+            backend_type: Backend type ("sqlite" or "convex")
+
+        Returns:
+            True if successful, False otherwise
+        """
+        result = self._provider.change_backend(backend_type)
+        return isinstance(result, Success)
+
+    def set_convex_url(self, url: str | None) -> bool:
+        """
+        Set the Convex deployment URL.
+
+        Args:
+            url: Convex deployment URL or None to clear
+
+        Returns:
+            True if successful, False otherwise
+        """
+        result = self._provider.set_convex_url(url)
+        return isinstance(result, Success)

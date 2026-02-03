@@ -140,6 +140,53 @@ class AVCodingConfig:
         )
 
 
+@dataclass(frozen=True)
+class BackendConfig:
+    """
+    Database backend configuration value object.
+
+    Controls which database backend to use (SQLite or Convex).
+    """
+
+    backend_type: str = "sqlite"  # "sqlite" or "convex"
+    convex_url: str | None = None  # Convex deployment URL
+    convex_project_id: str | None = None  # Convex project ID for the current project
+
+    @property
+    def is_convex(self) -> bool:
+        """Check if using Convex backend."""
+        return self.backend_type == "convex"
+
+    @property
+    def is_sqlite(self) -> bool:
+        """Check if using SQLite backend."""
+        return self.backend_type == "sqlite"
+
+    def with_backend_type(self, backend_type: str) -> BackendConfig:
+        """Return new BackendConfig with updated backend type."""
+        return BackendConfig(
+            backend_type=backend_type,
+            convex_url=self.convex_url,
+            convex_project_id=self.convex_project_id,
+        )
+
+    def with_convex_url(self, convex_url: str | None) -> BackendConfig:
+        """Return new BackendConfig with updated Convex URL."""
+        return BackendConfig(
+            backend_type=self.backend_type,
+            convex_url=convex_url,
+            convex_project_id=self.convex_project_id,
+        )
+
+    def with_convex_project_id(self, project_id: str | None) -> BackendConfig:
+        """Return new BackendConfig with updated Convex project ID."""
+        return BackendConfig(
+            backend_type=self.backend_type,
+            convex_url=self.convex_url,
+            convex_project_id=project_id,
+        )
+
+
 # =============================================================================
 # Aggregate Root
 # =============================================================================
@@ -158,6 +205,7 @@ class UserSettings:
     language: LanguagePreference = field(default_factory=LanguagePreference)
     backup: BackupConfig = field(default_factory=BackupConfig)
     av_coding: AVCodingConfig = field(default_factory=AVCodingConfig)
+    backend: BackendConfig = field(default_factory=BackendConfig)
 
     @classmethod
     def default(cls) -> UserSettings:
@@ -172,6 +220,7 @@ class UserSettings:
             language=self.language,
             backup=self.backup,
             av_coding=self.av_coding,
+            backend=self.backend,
         )
 
     def with_font(self, font: FontPreference) -> UserSettings:
@@ -182,6 +231,7 @@ class UserSettings:
             language=self.language,
             backup=self.backup,
             av_coding=self.av_coding,
+            backend=self.backend,
         )
 
     def with_language(self, language: LanguagePreference) -> UserSettings:
@@ -192,6 +242,7 @@ class UserSettings:
             language=language,
             backup=self.backup,
             av_coding=self.av_coding,
+            backend=self.backend,
         )
 
     def with_backup(self, backup: BackupConfig) -> UserSettings:
@@ -202,6 +253,7 @@ class UserSettings:
             language=self.language,
             backup=backup,
             av_coding=self.av_coding,
+            backend=self.backend,
         )
 
     def with_av_coding(self, av_coding: AVCodingConfig) -> UserSettings:
@@ -212,4 +264,16 @@ class UserSettings:
             language=self.language,
             backup=self.backup,
             av_coding=av_coding,
+            backend=self.backend,
+        )
+
+    def with_backend(self, backend: BackendConfig) -> UserSettings:
+        """Return new UserSettings with updated backend config."""
+        return UserSettings(
+            theme=self.theme,
+            font=self.font,
+            language=self.language,
+            backup=self.backup,
+            av_coding=self.av_coding,
+            backend=backend,
         )

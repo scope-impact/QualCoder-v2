@@ -19,6 +19,7 @@ from typing import TYPE_CHECKING
 from src.shared.common.operation_result import OperationResult
 from src.shared.infra.event_bus import EventBus
 from src.shared.infra.lifecycle import ProjectLifecycle
+from src.shared.infra.repositories import BackendType
 from src.shared.infra.state import ProjectState
 
 from .bounded_contexts import (
@@ -40,6 +41,7 @@ except ImportError:
 if TYPE_CHECKING:
     from src.contexts.settings.infra import UserSettingsRepository
     from src.shared.core.sync import SourceSyncHandler
+    from src.shared.infra.convex import ConvexClientWrapper
 
 logger = logging.getLogger(__name__)
 
@@ -74,6 +76,9 @@ class AppContext:
 
     # Optional Qt integration
     signal_bridge: ProjectSignalBridge | None = None
+
+    # Optional Convex client for cloud backend
+    convex_client: ConvexClientWrapper | None = None
 
     # Bounded contexts (None when no project is open)
     sources_context: SourcesContext | None = None
@@ -222,6 +227,7 @@ class AppContext:
         Create bounded context objects for the open project.
 
         Called by open_project use case after connection is established.
+        Uses the configured backend type from settings.
 
         Args:
             connection: SQLAlchemy Connection object
@@ -229,12 +235,48 @@ class AppContext:
         Returns:
             Dict of context name to context object
         """
-        self.sources_context = SourcesContext.create(connection)
-        self.coding_context = CodingContext.create(connection)
-        self.cases_context = CasesContext.create(connection)
-        self.projects_context = ProjectsContext.create(connection)
+        # Determine backend type from settings
+        backend_config = self.settings_repo.get_backend_config()
+        backend_type = (
+            BackendType.CONVEX if backend_config.is_convex else BackendType.SQLITE
+        )
 
-        logger.debug("Created bounded contexts for project")
+        # Initialize Convex client if needed
+        if backend_type == BackendType.CONVEX and self.convex_client is None:
+            from src.shared.infra.convex import ConvexClientWrapper
+
+            if backend_config.convex_url:
+                self.convex_client = ConvexClientWrapper(backend_config.convex_url)
+            else:
+                logger.warning(
+                    "Convex backend configured but no URL provided, falling back to SQLite"
+                )
+                backend_type = BackendType.SQLITE
+
+        # Create contexts with appropriate backend
+        self.sources_context = SourcesContext.create(
+            connection=connection,
+            convex_client=self.convex_client,
+            backend_type=backend_type,
+        )
+        self.coding_context = CodingContext.create(
+            connection=connection,
+            convex_client=self.convex_client,
+            backend_type=backend_type,
+        )
+        self.cases_context = CasesContext.create(
+            connection=connection,
+            convex_client=self.convex_client,
+            backend_type=backend_type,
+        )
+        # ProjectsContext always uses SQLite for local project file management
+        self.projects_context = ProjectsContext.create(
+            connection=connection,
+            convex_client=self.convex_client,
+            backend_type=BackendType.SQLITE,  # Always SQLite for project management
+        )
+
+        logger.debug(f"Created bounded contexts for project (backend: {backend_type.value})")
 
         return {
             "sources": self.sources_context,
@@ -250,6 +292,12 @@ class AppContext:
         self.cases_context = None
         self.coding_context = None
         self.projects_context = None
+
+        # Close Convex client if open
+        if self.convex_client is not None:
+            self.convex_client.close()
+            self.convex_client = None
+
         logger.debug("Cleared bounded contexts")
 
     def _wire_sync_handler(self) -> None:

@@ -17,6 +17,7 @@ from typing import Any
 from src.contexts.projects.core import RecentProject
 from src.contexts.settings.core.entities import (
     AVCodingConfig,
+    BackendConfig,
     BackupConfig,
     FontPreference,
     LanguagePreference,
@@ -173,6 +174,29 @@ class UserSettingsRepository:
         self.save(settings.with_av_coding(av_coding))
 
     # =========================================================================
+    # Backend Operations
+    # =========================================================================
+
+    def get_backend_config(self) -> BackendConfig:
+        """Get current backend configuration."""
+        return self.load().backend
+
+    def set_backend_config(self, backend: BackendConfig) -> None:
+        """Set backend configuration."""
+        settings = self.load()
+        self.save(settings.with_backend(backend))
+
+    def set_backend_type(self, backend_type: str) -> None:
+        """Set the backend type (sqlite or convex)."""
+        config = self.get_backend_config()
+        self.set_backend_config(config.with_backend_type(backend_type))
+
+    def set_convex_url(self, convex_url: str | None) -> None:
+        """Set the Convex deployment URL."""
+        config = self.get_backend_config()
+        self.set_backend_config(config.with_convex_url(convex_url))
+
+    # =========================================================================
     # Recent Projects Operations
     # =========================================================================
 
@@ -320,6 +344,11 @@ class UserSettingsRepository:
                 "timestamp_format": settings.av_coding.timestamp_format,
                 "speaker_format": settings.av_coding.speaker_format,
             },
+            "backend": {
+                "backend_type": settings.backend.backend_type,
+                "convex_url": settings.backend.convex_url,
+                "convex_project_id": settings.backend.convex_project_id,
+            },
         }
 
     def _from_dict(self, data: dict[str, Any]) -> UserSettings:
@@ -329,6 +358,7 @@ class UserSettingsRepository:
         language_data = data.get("language", {})
         backup_data = data.get("backup", {})
         av_coding_data = data.get("av_coding", {})
+        backend_data = data.get("backend", {})
 
         return UserSettings(
             theme=ThemePreference(
@@ -351,5 +381,10 @@ class UserSettingsRepository:
             av_coding=AVCodingConfig(
                 timestamp_format=av_coding_data.get("timestamp_format", "HH:MM:SS"),
                 speaker_format=av_coding_data.get("speaker_format", "Speaker {n}"),
+            ),
+            backend=BackendConfig(
+                backend_type=backend_data.get("backend_type", "sqlite"),
+                convex_url=backend_data.get("convex_url"),
+                convex_project_id=backend_data.get("convex_project_id"),
             ),
         )

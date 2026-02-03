@@ -1,0 +1,14 @@
+{
+  "name": "qualcoder-v2-convex",
+  "version": "0.2.0",
+  "description": "Convex backend for QualCoder v2",
+  "private": true,
+  "scripts": {
+    "convex:dev": "convex dev",
+    "convex:deploy": "convex deploy"
+  },
+  "devDependencies": {
+    "convex": "^1.17.0",
+    "typescript": "^5.3.0"
+  }
+}

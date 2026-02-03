@@ -133,6 +133,7 @@ class SettingsDialog(QDialog):
         self._content_stack.addWidget(self._create_language_section())
         self._content_stack.addWidget(self._create_backup_section())
         self._content_stack.addWidget(self._create_av_coding_section())
+        self._content_stack.addWidget(self._create_database_section())
 
         # Sidebar navigation (created after content stack)
         self._sidebar = self._create_sidebar()
@@ -206,6 +207,7 @@ class SettingsDialog(QDialog):
             ("Language", "mdi6.translate"),
             ("Backup", "mdi6.backup-restore"),
             ("AV Coding", "mdi6.video"),
+            ("Database", "mdi6.database"),
         ]
 
         for name, icon_name in sections:
@@ -552,6 +554,120 @@ class SettingsDialog(QDialog):
 
         return widget
 
+    def _create_database_section(self) -> QWidget:
+        """Create the Database backend settings section."""
+        widget = QWidget()
+        layout = QVBoxLayout(widget)
+        layout.setContentsMargins(SPACING.lg, SPACING.lg, SPACING.lg, SPACING.lg)
+        layout.setSpacing(SPACING.lg)
+
+        # Backend header
+        backend_label = QLabel("Database Backend")
+        backend_label.setStyleSheet(f"""
+            color: {self._colors.text_primary};
+            font-size: {TYPOGRAPHY.text_sm}px;
+            font-weight: {TYPOGRAPHY.weight_semibold};
+        """)
+        layout.addWidget(backend_label)
+
+        # Backend selection
+        backend_frame = QFrame()
+        backend_layout = QHBoxLayout(backend_frame)
+        backend_layout.setContentsMargins(0, 0, 0, 0)
+        backend_layout.setSpacing(SPACING.md)
+
+        self._backend_group = QButtonGroup(self)
+        backends = [("SQLite (Local)", "sqlite"), ("Convex (Cloud)", "convex")]
+
+        for display_name, value in backends:
+            btn = QPushButton(display_name)
+            btn.setCheckable(True)
+            btn.setProperty("backend_value", value)
+            btn.setCursor(Qt.CursorShape.PointingHandCursor)
+            btn.setStyleSheet(self._get_toggle_button_style())
+            btn.clicked.connect(lambda _checked, v=value: self._on_backend_changed(v))
+            self._backend_group.addButton(btn)
+            backend_layout.addWidget(btn)
+
+        backend_layout.addStretch()
+        layout.addWidget(backend_frame)
+
+        # Description
+        desc_label = QLabel(
+            "SQLite stores data locally in .qda project files.\n"
+            "Convex stores data in the cloud for real-time collaboration."
+        )
+        desc_label.setStyleSheet(f"""
+            color: {self._colors.text_secondary};
+            font-size: {TYPOGRAPHY.text_xs}px;
+        """)
+        layout.addWidget(desc_label)
+
+        # Convex configuration (shown only when Convex is selected)
+        self._convex_config_frame = QFrame()
+        convex_layout = QVBoxLayout(self._convex_config_frame)
+        convex_layout.setContentsMargins(0, SPACING.md, 0, 0)
+        convex_layout.setSpacing(SPACING.sm)
+
+        convex_header = QLabel("Convex Configuration")
+        convex_header.setStyleSheet(f"""
+            color: {self._colors.text_primary};
+            font-size: {TYPOGRAPHY.text_sm}px;
+            font-weight: {TYPOGRAPHY.weight_semibold};
+            margin-top: {SPACING.md}px;
+        """)
+        convex_layout.addWidget(convex_header)
+
+        # Deployment URL
+        url_frame = QFrame()
+        url_layout = QHBoxLayout(url_frame)
+        url_layout.setContentsMargins(0, 0, 0, 0)
+        url_layout.setSpacing(SPACING.sm)
+
+        url_label = QLabel("Deployment URL:")
+        url_label.setStyleSheet(f"""
+            color: {self._colors.text_secondary};
+            font-size: {TYPOGRAPHY.text_sm}px;
+        """)
+        url_layout.addWidget(url_label)
+
+        self._convex_url = QLineEdit()
+        self._convex_url.setPlaceholderText("https://your-project.convex.cloud")
+        self._convex_url.setStyleSheet(self._get_input_style())
+        self._convex_url.textChanged.connect(self._on_convex_url_changed)
+        url_layout.addWidget(self._convex_url, 1)
+
+        convex_layout.addWidget(url_frame)
+
+        # Help text
+        help_label = QLabel(
+            "Get your deployment URL from the Convex dashboard at convex.dev"
+        )
+        help_label.setStyleSheet(f"""
+            color: {self._colors.text_secondary};
+            font-size: {TYPOGRAPHY.text_xs}px;
+        """)
+        convex_layout.addWidget(help_label)
+
+        layout.addWidget(self._convex_config_frame)
+        self._convex_config_frame.hide()  # Hidden by default
+
+        # Warning note
+        warning_label = QLabel(
+            "Note: Changing the database backend requires reopening the project."
+        )
+        warning_label.setStyleSheet(f"""
+            color: {self._colors.warning};
+            font-size: {TYPOGRAPHY.text_xs}px;
+            font-style: italic;
+            margin-top: {SPACING.md}px;
+        """)
+        layout.addWidget(warning_label)
+
+        layout.addStretch()
+
+        return widget
+
     def _setup_footer(self, layout: QVBoxLayout) -> None:
         """Setup the dialog footer with buttons."""
         footer = QFrame()
@@ -620,6 +736,17 @@ class SettingsDialog(QDialog):
             self._timestamp_combo.setCurrentIndex(ts_index)
         self._speaker_format.setText(settings.speaker_format)
         self._update_speaker_preview()
+
+        # Database backend
+        backend_type = getattr(settings, "backend_type", "sqlite")
+        for btn in self._backend_group.buttons():
+            if btn.property("backend_value") == backend_type:
+                btn.setChecked(True)
+                break
+        self._convex_config_frame.setVisible(backend_type == "convex")
+        convex_url = getattr(settings, "convex_url", "")
+        if convex_url:
+            self._convex_url.setText(convex_url)
 
     # =========================================================================
     # Event Handlers
@@ -711,6 +838,17 @@ class SettingsDialog(QDialog):
             for i in range(1, 4)
         ]
         self._speaker_preview.setText(", ".join(previews))
+
+    def _on_backend_changed(self, backend_type: str) -> None:
+        """Handle database backend selection."""
+        self._convex_config_frame.setVisible(backend_type == "convex")
+        self._viewmodel.change_backend(backend_type)
+        self.settings_changed.emit()
+
+    def _on_convex_url_changed(self, url: str) -> None:
+        """Handle Convex URL change."""
+        self._viewmodel.set_convex_url(url if url else None)
+        self.settings_changed.emit()
 
     def _on_ok(self) -> None:
         """Handle OK button click."""
