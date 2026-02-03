@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
-from src.contexts.shared.core.types import DomainEvent
+from src.shared.common.types import DomainEvent
 
 # =============================================================================
 # Theme Events
