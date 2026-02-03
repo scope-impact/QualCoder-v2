@@ -13,8 +13,8 @@ from typing import TYPE_CHECKING
 from sqlalchemy import delete, func, select, update
 
 from src.contexts.projects.core.entities import Source, SourceStatus, SourceType
-from src.contexts.shared.core.types import FolderId, SourceId
 from src.contexts.sources.infra.schema import src_source
+from src.shared.common.types import FolderId, SourceId
 
 if TYPE_CHECKING:
     from sqlalchemy import Connection

@@ -20,7 +20,11 @@ from typing import Any
 
 from PIL import Image
 from PIL.ExifTags import TAGS
+from pillow_heif import register_heif_opener
 from returns.result import Failure, Result, Success
+
+# Register HEIC/HEIF support with Pillow
+register_heif_opener()
 
 # ============================================================
 # Data Types
@@ -53,6 +57,8 @@ IMAGE_EXTENSIONS = frozenset(
         ".tiff",
         ".tif",
         ".webp",
+        ".heic",
+        ".heif",
     }
 )
 
@@ -73,6 +79,7 @@ class ImageExtractor:
     - BMP (.bmp)
     - TIFF (.tiff, .tif)
     - WebP (.webp)
+    - HEIC/HEIF (.heic, .heif)
 
     Example:
         extractor = ImageExtractor()
