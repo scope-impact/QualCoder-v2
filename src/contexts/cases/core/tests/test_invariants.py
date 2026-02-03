@@ -64,7 +64,7 @@ class TestCaseNameUniqueness:
         """Duplicate names should be detected (case-insensitive)."""
         from src.contexts.cases.core.entities import Case
         from src.contexts.cases.core.invariants import is_case_name_unique
-        from src.contexts.shared import CaseId
+        from src.shared import CaseId
 
         existing = [
             Case(

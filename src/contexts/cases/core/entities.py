@@ -12,7 +12,7 @@ from datetime import UTC, datetime
 from enum import Enum
 from typing import Any
 
-from src.contexts.shared import CaseId
+from src.shared import CaseId
 
 
 class AttributeType(str, Enum):

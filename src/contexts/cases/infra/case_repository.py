@@ -13,7 +13,7 @@ from sqlalchemy import delete, func, select, update
 
 from src.contexts.cases.core.entities import AttributeType, Case, CaseAttribute
 from src.contexts.cases.infra.schema import cas_attribute, cas_case, cas_source_link
-from src.contexts.shared import CaseId, SourceId
+from src.shared import CaseId, SourceId
 
 if TYPE_CHECKING:
     from sqlalchemy import Connection

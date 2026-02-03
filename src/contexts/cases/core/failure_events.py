@@ -11,7 +11,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from src.contexts.shared.core.failure_events import FailureEvent
+from src.shared.common.failure_events import FailureEvent
 
 # =============================================================================
 # Case Creation Failures
@@ -259,6 +259,54 @@ class AttributeSetFailed(FailureEvent):
             return f"Invalid attribute type '{self.attr_type}'. Must be: text, number, date, boolean"
         if reason == "INVALID_VALUE":
             return f"Value for attribute '{self.attr_name}' is not a valid {self.attr_type}"
+        return super().message
+
+
+@dataclass(frozen=True)
+class AttributeRemovalFailed(FailureEvent):
+    """Failure event when removing case attribute fails."""
+
+    case_id: int = 0
+    attr_name: str = ""
+    suggestions: tuple[str, ...] = ()
+
+    @classmethod
+    def case_not_found(cls, case_id: int, attr_name: str) -> AttributeRemovalFailed:
+        """Case with given ID not found."""
+        return cls(
+            event_id=cls._generate_id(),
+            occurred_at=cls._now(),
+            event_type="ATTRIBUTE_NOT_REMOVED/CASE_NOT_FOUND",
+            case_id=case_id,
+            attr_name=attr_name,
+            suggestions=("Verify the case ID is correct",),
+        )
+
+    @classmethod
+    def attribute_not_found(
+        cls, case_id: int, attr_name: str
+    ) -> AttributeRemovalFailed:
+        """Attribute does not exist on case."""
+        return cls(
+            event_id=cls._generate_id(),
+            occurred_at=cls._now(),
+            event_type="ATTRIBUTE_NOT_REMOVED/ATTRIBUTE_NOT_FOUND",
+            case_id=case_id,
+            attr_name=attr_name,
+            suggestions=(
+                f"Attribute '{attr_name}' does not exist on this case",
+                "Refresh the attribute list",
+            ),
+        )
+
+    @property
+    def message(self) -> str:
+        """Human-readable error message."""
+        reason = self.reason
+        if reason == "CASE_NOT_FOUND":
+            return f"Case with id {self.case_id} not found"
+        if reason == "ATTRIBUTE_NOT_FOUND":
+            return f"Attribute '{self.attr_name}' not found on case {self.case_id}"
         return super().message
 
 

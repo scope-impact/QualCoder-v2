@@ -10,7 +10,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any
 
-from src.contexts.shared.core.types import CaseId, DomainEvent
+from src.shared.common.types import CaseId, DomainEvent
 
 # =============================================================================
 # Case Lifecycle Events
