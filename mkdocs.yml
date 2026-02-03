@@ -123,8 +123,13 @@ nav:
 
   - Design Documents:
       - Functional DDD: design/FUNCTIONAL_DDD_DESIGN.md
-      - Screen Stories: design/SCREEN_STORIES_PLAN.md
       - Agent Context: design/AGENT_CONTEXT_DESIGN.md
+
+  - AI Plans (Historical):
+      - ai/README.md
+
+  - Archive (Historical):
+      - archive/README.md
 
 extra:
   social:

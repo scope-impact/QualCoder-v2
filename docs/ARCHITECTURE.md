@@ -93,40 +93,32 @@ Organized by **Bounded Contexts** - each context is a cohesive business capabili
 ```mermaid
 graph TB
     subgraph Core Domain
-        COD[CODING<br>Codes, Categories, Segments<br>Apply codes to research data]
-        ANA[ANALYSIS<br>Reports, Insights<br>Generate research findings]
+        COD[CODING<br>Codes, Categories, Segments<br>Apply codes to research data<br>+ AI suggestions]
     end
 
     subgraph Supporting Domain
         SRC[SOURCES<br>Documents, Audio, Video<br>Manage research materials]
         CAS[CASES<br>Grouping, Attributes<br>Organize by participant]
         PRJ[PROJECTS<br>Settings, Lifecycle<br>Project management]
-        COL[COLLABORATION<br>Coders, Merging<br>Multi-coder workflows]
+        FLD[FOLDERS<br>Organization<br>Group sources]
+        SET[SETTINGS<br>Preferences<br>Theme, font, language]
     end
 
-    subgraph Generic Domain
-        AI[AI SERVICES<br>LLM, Embeddings<br>AI-assisted coding]
-        EXP[EXPORT<br>Reports, Charts<br>Output generation]
-    end
-
-    COD -->|"SegmentCoded / DomainEvent"| ANA
     SRC -->|"SourceImported / DomainEvent"| COD
     CAS -->|"CaseLinked / DomainEvent"| COD
-    AI <-->|"SuggestionGenerated / Async"| COD
+    FLD -->|"SourceMoved / DomainEvent"| SRC
 ```
 
 ### Bounded Context Summary
 
 | Context | Entities | Key Operations |
 |---------|----------|----------------|
-| **Coding** | Code, Category, Segment | Create code, apply to text, merge codes |
-| **Analysis** | Report, Insight, Matrix | Generate frequency, co-occurrence |
-| **Sources** | Source, Speaker, Transcript | Import files, detect speakers |
+| **Coding** | Code, Category, Segment, AISuggestion | Create code, apply to text, merge codes, AI suggestions |
+| **Sources** | Source, Folder | Import files, manage folders |
 | **Cases** | Case, CaseAttribute | Link sources, assign attributes |
-| **Projects** | Project, Settings | Open, save, export project |
-| **Collaboration** | Coder, CodingSession | Switch coder, compare, merge |
-| **AI Services** | Embedding, Suggestion | Generate suggestions, search |
-| **Export** | ExportJob, Chart | Export reports, generate charts |
+| **Projects** | Project | Open, close, manage lifecycle |
+| **Settings** | Settings | Configure preferences (theme, font, language) |
+| **Folders** | Folder | Organize sources in folders |
 
 ### Application Shell Components (C3)
 
@@ -309,22 +301,23 @@ QualCoder v2
 ```
 src/
 ├── contexts/                   # Bounded Contexts (vertical slices)
-│   ├── coding/                 # Coding Context
+│   ├── coding/                 # Coding Context (includes AI coding)
 │   │   ├── core/               # Domain (Pure)
-│   │   │   ├── entities.py
+│   │   │   ├── entities.py     # Code, Category, Segment
+│   │   │   ├── ai_entities.py  # AI-specific entities
 │   │   │   ├── invariants.py
 │   │   │   ├── derivers.py
 │   │   │   ├── events.py
+│   │   │   ├── commandHandlers/  # Use cases
 │   │   │   └── tests/
-│   │   ├── infra/              # Repositories
-│   │   ├── interface/          # Use cases, commands
+│   │   ├── infra/              # Repositories, AI providers
+│   │   ├── interface/          # Signal bridges, MCP tools
 │   │   └── presentation/       # Context-specific UI
-│   ├── sources/
-│   ├── cases/
-│   ├── projects/
-│   ├── settings/
-│   ├── folders/
-│   └── ai_services/
+│   ├── sources/                # Source file management
+│   ├── cases/                  # Case/participant management
+│   ├── projects/               # Project lifecycle
+│   ├── settings/               # User settings
+│   └── folders/                # Folder organization
 │
 ├── shared/                     # Cross-cutting concerns
 │   ├── common/                 # Shared types
@@ -332,17 +325,18 @@ src/
 │   │   ├── operation_result.py # OperationResult pattern
 │   │   └── failure_events.py   # Base failure types
 │   ├── core/                   # Shared domain logic
-│   │   ├── validation.py       # Reusable helpers
-│   │   └── policies/           # Cross-context policies
+│   │   └── sync_handlers.py    # Cross-context sync
 │   ├── infra/                  # Shared infrastructure
 │   │   ├── event_bus.py        # Pub/sub infrastructure
 │   │   ├── signal_bridge/      # Thread-safe Qt bridge
-│   │   ├── app_context.py      # Application context
-│   │   └── state.py            # Project state
+│   │   ├── app_context/        # Application context, factories
+│   │   ├── lifecycle.py        # Project lifecycle
+│   │   └── state.py            # Project state cache
 │   └── presentation/           # Shared UI components
 │       ├── organisms/          # Reusable complex widgets
 │       ├── molecules/          # Small composite widgets
-│       └── templates/          # Page layouts
+│       ├── templates/          # Page layouts, app shell
+│       └── services/           # Dialog service, etc.
 │
 ├── tests/                      # E2E tests
 │   └── e2e/
@@ -356,16 +350,26 @@ design_system/                  # Reusable UI components, tokens
 
 ## 9. Bounded Contexts
 
+### Implemented Contexts
+
 | Context | Purpose | Key Events | Integration Pattern |
 |---------|---------|------------|---------------------|
-| Coding | Apply semantic codes to data | CodeCreated, SegmentCoded | Core - others depend on it |
-| Sources | Manage documents, media | SourceImported, SourceDeleted | Open Host Service |
-| Cases | Group and categorize | CaseCreated, SourceLinked | Conformist to Coding |
+| **Coding** | Apply semantic codes to data | CodeCreated, SegmentCoded | Core - others depend on it |
+| **Sources** | Manage documents, media | SourceImported, SourceDeleted | Open Host Service |
+| **Cases** | Group and categorize | CaseCreated, SourceLinked | Conformist to Coding |
+| **Projects** | Lifecycle management | ProjectOpened, ProjectClosed | Anti-Corruption Layer |
+| **Settings** | User preferences | SettingsUpdated | Independent |
+| **Folders** | Folder organization | FolderCreated, SourceMoved | Supporting |
+
+### Planned Contexts (Future)
+
+| Context | Purpose | Key Events | Integration Pattern |
+|---------|---------|------------|---------------------|
 | Analysis | Generate insights | ReportGenerated | Subscribes to Coding events |
-| Projects | Lifecycle management | ProjectOpened, ProjectExported | Anti-Corruption Layer |
 | Collaboration | Multi-coder workflows | CoderSwitched, CodingsMerged | Published Language |
-| AI Services | LLM, embeddings | SuggestionGenerated | Partnership with Coding |
 | Export | Reports, charts | ReportExported | Downstream consumer |
+
+> **Note:** AI coding capabilities are integrated within the Coding context (`ai_entities.py`, `ai_derivers.py`, etc.) rather than as a separate AI Services context.
 
 ---
 

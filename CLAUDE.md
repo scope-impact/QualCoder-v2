@@ -9,7 +9,6 @@ Detailed conventions are in `.claude/skills/`:
 | `developer` | Code style, patterns, testing, E2E | Writing Python code, tests |
 | `backlog` | Task management with DDD structure | Creating/editing tasks |
 | `c4-architecture` | System architecture diagrams | Understanding codebase structure |
-| `sub-agents` | Layer-specific Claude sub-agents | Complex multi-layer features, parallel development |
 
 ---
 
@@ -43,15 +42,33 @@ See `.claude/skills/backlog/SKILL.md` for full CLI reference and QualCoder-speci
 
 ## Development Workflow
 
-### Architecture (DDD Layers)
+### Architecture (Bounded Context / Vertical Slice)
 
 ```
 src/
-├── domain/           # Pure functions, entities, events (NO I/O)
-├── infrastructure/   # Repositories, database, external services
-├── application/      # Controllers, Signal Bridges, orchestration
-├── presentation/     # PySide6 widgets, screens, dialogs
-design_system/        # Reusable UI components, tokens
+├── contexts/                   # Bounded Contexts (vertical slices)
+│   ├── coding/                 # Coding context
+│   │   ├── core/               # Domain (entities, events, derivers, invariants)
+│   │   │   └── commandHandlers/  # Use cases (command handlers)
+│   │   ├── infra/              # Repositories, external services
+│   │   ├── interface/          # Signal bridges, MCP tools
+│   │   └── presentation/       # Screens, dialogs, viewmodels
+│   ├── sources/
+│   ├── cases/
+│   ├── projects/
+│   ├── settings/
+│   └── folders/
+│
+├── shared/                     # Cross-cutting concerns
+│   ├── common/                 # Types, OperationResult, failure events
+│   ├── core/                   # Shared domain logic
+│   ├── infra/                  # EventBus, SignalBridge, AppContext
+│   └── presentation/           # Molecules, organisms, templates
+│
+├── tests/e2e/                  # End-to-end tests
+└── main.py                     # Entry point
+
+design_system/                  # Reusable UI components, tokens
 ```
 
 ### Testing
@@ -61,13 +78,12 @@ design_system/        # Reusable UI components, tokens
 QT_QPA_PLATFORM=offscreen make test-all
 
 # Run specific e2e tests
-QT_QPA_PLATFORM=offscreen uv run pytest src/presentation/tests/test_case_manager_e2e.py -v
+QT_QPA_PLATFORM=offscreen uv run pytest src/tests/e2e/test_case_manager_e2e.py -v
 ```
 
 See `.claude/skills/developer/SKILL.md` for:
 - Code style and naming conventions
-- Result type patterns (`returns` library)
-- Controller 5-step pattern
+- OperationResult pattern for command handlers
 - Signal Bridge implementation
 - E2E testing with real database fixtures
 
@@ -77,11 +93,19 @@ See `.claude/skills/developer/SKILL.md` for:
 
 ### Bounded Contexts
 
-`coding`, `sources`, `cases`, `journals`, `analysis`, `ai-assistant`, `projects`
+`coding`, `sources`, `cases`, `projects`, `settings`, `folders`
+
+### Context Layer Structure
+
+Each bounded context follows this structure:
+- **core/** — Domain (entities, events, derivers, invariants, commandHandlers/)
+- **infra/** — Repositories, database schemas, external services
+- **interface/** — Signal bridges, MCP tools (adapters)
+- **presentation/** — Screens, pages, dialogs, viewmodels
 
 ### Task Labels
 
-- Layers: `domain`, `infrastructure`, `application`, `presentation`
+- Layers: `core`, `infra`, `interface`, `presentation`
 - Priority: `P0` (critical), `P1`, `P2`, `P3` (low)
 
 ### Commit Convention
@@ -94,25 +118,3 @@ fix(coding): resolve segment overlap detection
 test(cases): add e2e tests for case manager
 docs: update CLAUDE.md
 ```
-
----
-
-## Sub-Agents Architecture
-
-For complex multi-layer features, use specialized sub-agents from `.claude/agents/`:
-
-| Agent | Layer | Scope |
-|-------|-------|-------|
-| `domain-agent` | Domain | Pure functions, entities, events, derivers |
-| `infrastructure-agent` | Infrastructure | Repositories, schemas, external services |
-| `repository-agent` | Infrastructure | Repository implementations specifically |
-| `controller-agent` | Application | 5-step pattern controllers |
-| `signal-bridge-agent` | Application | Event → Qt signal translation |
-| `design-system-agent` | Presentation | Design tokens, atoms |
-| `molecule-agent` | Presentation | Small composite widgets (2-5 atoms) |
-| `organism-agent` | Presentation | Business-logic UI components |
-| `page-agent` | Presentation | Organism compositions with layouts |
-| `screen-agent` | Presentation | Page + ViewModel integration |
-| `viewmodel-agent` | Presentation | UI ↔ Application binding |
-
-See `.claude/skills/sub-agents/SKILL.md` for full orchestration patterns.
