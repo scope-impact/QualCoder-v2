@@ -43,6 +43,7 @@ graph TB
 | [Tutorials](tutorials/README.md) | Hands-on fDDD onboarding through a practical example |
 | [Design System](api/index.md) | 180+ PySide6 components, tokens, and patterns |
 | [Design Documents](design/FUNCTIONAL_DDD_DESIGN.md) | Detailed specs for major features |
+| [Code Reviews](CODE_REVIEW_claude-init-and-analysis-28.md) | Comprehensive reviews of significant branches |
 
 ## Quick Start
 
