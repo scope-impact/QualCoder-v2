@@ -24,6 +24,7 @@ from PySide6.QtWidgets import QApplication, QMainWindow, QVBoxLayout, QWidget
 
 from src.contexts.sources.presentation import FileManagerScreen
 from src.shared.presentation.dto import ProjectSummaryDTO, SourceDTO
+from src.tests.e2e.helpers import attach_screenshot
 
 pytestmark = pytest.mark.e2e  # All tests in this module are E2E tests
 
@@ -252,23 +253,31 @@ class TestFileManagerDisplay:
         """
         screen = file_manager_window["screen"]
         sources = file_manager_window["sources"]
+        window = file_manager_window["window"]
 
         table = screen.page.source_table._table
 
         # Verify row count matches sources
         assert table.rowCount() == len(sources)
 
+        # Screenshot for documentation
+        attach_screenshot(window, "FileManager - With Sources")
+
     def test_empty_state_shown_when_no_sources(self, empty_file_manager_window):
         """
         E2E: Empty state is displayed when project has no sources.
         """
         screen = empty_file_manager_window["screen"]
+        window = empty_file_manager_window["window"]
 
         # Get the stacked widget
         content_stack = screen.page._content_stack
 
         # Verify empty state is visible
         assert content_stack.currentWidget() == screen.page._empty_state
+
+        # Screenshot for documentation
+        attach_screenshot(window, "FileManager - Empty")
 
 
 class TestStatsRowFiltering:

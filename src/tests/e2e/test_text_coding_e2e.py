@@ -33,6 +33,7 @@ from src.shared.presentation.dto import (
     TextCodingDataDTO,
 )
 from src.tests.e2e.helpers import (
+    attach_screenshot,
     click_color_swatch_by_index,
     click_dialog_button,
     find_color_swatch_buttons,
@@ -280,6 +281,9 @@ class TestCodeSelectionUI:
         active = coding_screen.get_active_code()
         assert active["id"] == "1"
         assert active["name"] == "Positive Experience"
+
+        # Screenshot for documentation
+        attach_screenshot(coding_screen, "CodingScreen - Code Selected")
 
     @allure.title("AC #2: Selected code added to recent codes")
     @allure.severity(allure.severity_level.NORMAL)
@@ -764,12 +768,16 @@ class TestWiringVerification:
     @allure.severity(allure.severity_level.CRITICAL)
     def test_coding_screen_functional(self, wired_app):
         """Verify coding screen responds to code selection."""
+        shell = wired_app["shell"]
         coding_screen = wired_app["screens"]["coding"]
 
         # BLACK-BOX: If wired, set_active_code should work
         coding_screen.set_active_code("1", "Test", "#FF0000")
         active = coding_screen.get_active_code()
         assert active["id"] == "1"
+
+        # Screenshot for documentation
+        attach_screenshot(shell, "CodingScreen - With Codes")
 
     @allure.title("Signal bridges produce events")
     @allure.severity(allure.severity_level.CRITICAL)

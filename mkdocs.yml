@@ -66,6 +66,14 @@ markdown_extensions:
 nav:
   - Home: index.md
 
+  - User Manual:
+      - user-manual/index.md
+      - Getting Started: user-manual/getting-started.md
+      - Managing Sources: user-manual/sources.md
+      - Managing Codes: user-manual/codes.md
+      - Coding Text: user-manual/coding.md
+      - AI Features: user-manual/ai-features.md
+
   - Architecture:
       - Overview: ARCHITECTURE.md
 
@@ -132,6 +140,8 @@ nav:
       - archive/README.md
 
 extra:
+  version:
+    provider: mike
   social:
     - icon: fontawesome/brands/github
       link: https://github.com/scope-impact/qualcoder-v2
