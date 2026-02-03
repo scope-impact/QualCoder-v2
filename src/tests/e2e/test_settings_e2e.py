@@ -67,7 +67,7 @@ def settings_repo(temp_config_path):
 @pytest.fixture
 def settings_provider(settings_repo):
     """Create a settings service for use as a provider."""
-    from src.presentation.services import SettingsService
+    from src.shared.presentation.services import SettingsService
 
     return SettingsService(settings_repo)
 
@@ -75,7 +75,7 @@ def settings_provider(settings_repo):
 @pytest.fixture
 def settings_viewmodel(settings_provider):
     """Create SettingsViewModel with real service."""
-    from src.presentation.viewmodels import SettingsViewModel
+    from src.contexts.settings.presentation import SettingsViewModel
 
     return SettingsViewModel(settings_provider=settings_provider)
 
@@ -93,7 +93,7 @@ def settings_dialog(qapp, colors, settings_viewmodel):
     This fixture creates a real dialog with SettingsViewModel backed by
     a JSON file in a temporary directory.
     """
-    from src.presentation.dialogs.settings_dialog import SettingsDialog
+    from src.contexts.settings.presentation.dialogs import SettingsDialog
 
     dialog = SettingsDialog(viewmodel=settings_viewmodel, colors=colors)
     yield dialog
@@ -440,7 +440,7 @@ class TestDialogAcceptCancel:
     @allure.title("OK button accepts the dialog")
     def test_ok_button_accepts_dialog(self, qapp, colors, settings_viewmodel):
         """E2E: OK button accepts the dialog with Accepted result code."""
-        from src.presentation.dialogs.settings_dialog import SettingsDialog
+        from src.contexts.settings.presentation.dialogs import SettingsDialog
 
         with allure.step("Create settings dialog"):
             dialog = SettingsDialog(viewmodel=settings_viewmodel, colors=colors)
@@ -463,7 +463,7 @@ class TestDialogAcceptCancel:
     @allure.title("Cancel button rejects the dialog")
     def test_cancel_button_rejects_dialog(self, qapp, colors, settings_viewmodel):
         """E2E: Cancel button rejects the dialog with Rejected result code."""
-        from src.presentation.dialogs.settings_dialog import SettingsDialog
+        from src.contexts.settings.presentation.dialogs import SettingsDialog
 
         with allure.step("Create and show settings dialog"):
             dialog = SettingsDialog(viewmodel=settings_viewmodel, colors=colors)
@@ -510,9 +510,9 @@ class TestFullRoundTrip:
         Flow: Dialog1 → JSON File → Dialog2 (verify reload)
         """
         from src.contexts.settings.infra import UserSettingsRepository
-        from src.presentation.dialogs.settings_dialog import SettingsDialog
-        from src.presentation.services import SettingsService
-        from src.presentation.viewmodels import SettingsViewModel
+        from src.contexts.settings.presentation import SettingsViewModel
+        from src.contexts.settings.presentation.dialogs import SettingsDialog
+        from src.shared.presentation.services import SettingsService
 
         # =========================================================================
         # Session 1: Make changes to all settings
@@ -658,7 +658,7 @@ class TestUIApplication:
         2. After apply_theme('dark'), colors change to dark palette
         """
         from design_system import get_colors, get_theme
-        from src.presentation.templates.app_shell import AppShell
+        from src.shared.presentation.templates import AppShell
 
         with allure.step("Create AppShell with light theme (default)"):
             light_colors = get_theme("light")
@@ -692,7 +692,7 @@ class TestUIApplication:
         2. After apply_font(), app font changes
         """
         from design_system import get_colors
-        from src.presentation.templates.app_shell import AppShell
+        from src.shared.presentation.templates import AppShell
 
         with allure.step("Create AppShell"):
             shell = AppShell(colors=get_colors())
@@ -725,7 +725,7 @@ class TestUIApplication:
         """
         from design_system import get_colors, get_theme
         from src.contexts.settings.infra import UserSettingsRepository
-        from src.presentation.templates.app_shell import AppShell
+        from src.shared.presentation.templates import AppShell
 
         with allure.step("Save dark theme and Roboto 16px to JSON"):
             repo = UserSettingsRepository(config_path=temp_config_path)
@@ -775,10 +775,10 @@ class TestUIApplication:
         """
         from design_system import get_colors, get_theme
         from src.contexts.settings.infra import UserSettingsRepository
-        from src.presentation.dialogs.settings_dialog import SettingsDialog
-        from src.presentation.services.settings_service import SettingsService
-        from src.presentation.templates.app_shell import AppShell
-        from src.presentation.viewmodels import SettingsViewModel
+        from src.contexts.settings.presentation import SettingsViewModel
+        from src.contexts.settings.presentation.dialogs import SettingsDialog
+        from src.shared.presentation.services.settings_service import SettingsService
+        from src.shared.presentation.templates import AppShell
 
         with allure.step("Create AppShell with light theme"):
             light_colors = get_theme("light")

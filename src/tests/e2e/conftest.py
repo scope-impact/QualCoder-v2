@@ -5,9 +5,8 @@ Shared fixtures for end-to-end tests.
 
 IMPORTANT: E2E tests NEVER use mocks. All dependencies are real:
 - Real in-memory SQLite database
-- Real services (CaseManagerService, AICodingService, etc.)
 - Real repositories
-- Real ViewModels
+- Real ViewModels calling use cases directly
 
 For unit tests with mocks, see src/presentation/viewmodels/tests/mocks.py
 """
@@ -17,8 +16,8 @@ from __future__ import annotations
 import pytest
 from sqlalchemy import create_engine
 
-from src.application.event_bus import EventBus
 from src.contexts.projects.infra.schema import create_all_contexts, drop_all_contexts
+from src.shared.infra.event_bus import EventBus
 
 # =============================================================================
 # Database Fixtures
@@ -84,6 +83,14 @@ def segment_repo(db_connection):
 
 
 @pytest.fixture
+def category_repo(db_connection):
+    """Create a real category repository."""
+    from src.contexts.coding.infra.repositories import SQLiteCategoryRepository
+
+    return SQLiteCategoryRepository(db_connection)
+
+
+@pytest.fixture
 def source_repo(db_connection):
     """Create a real source repository."""
     from src.contexts.sources.infra.source_repository import SQLiteSourceRepository
@@ -99,7 +106,7 @@ def source_repo(db_connection):
 @pytest.fixture
 def cases_context(case_repo):
     """Create a real cases context."""
-    from src.application.contexts import CasesContext
+    from src.shared.infra.app_context import CasesContext
 
     return CasesContext(case_repo=case_repo)
 
@@ -107,7 +114,7 @@ def cases_context(case_repo):
 @pytest.fixture
 def coding_context_bundle(code_repo, segment_repo):
     """Create a real coding context bundle."""
-    from src.application.contexts import CodingContext
+    from src.shared.infra.app_context import CodingContext
 
     return CodingContext(
         code_repo=code_repo,
@@ -117,14 +124,14 @@ def coding_context_bundle(code_repo, segment_repo):
 
 
 # =============================================================================
-# Project State Fixture (with mock project for E2E)
+# Project State Fixture (with test project for E2E)
 # =============================================================================
 
 
 @pytest.fixture
 def project_state():
     """
-    Create a real project state with a mock project.
+    Create a real project state with a test project.
 
     For E2E tests, we need state.project to be set (not None)
     because use cases check for an open project.
@@ -132,8 +139,8 @@ def project_state():
     from datetime import UTC, datetime
     from pathlib import Path
 
-    from src.application.state import ProjectState
     from src.contexts.projects.core.entities import Project, ProjectId
+    from src.shared.infra.state import ProjectState
 
     state = ProjectState()
 
@@ -152,38 +159,22 @@ def project_state():
 
 
 # =============================================================================
-# Service Fixtures (REAL services, not mocks)
+# ViewModel Fixtures (connected to REAL repositories)
 # =============================================================================
 
 
 @pytest.fixture
-def case_service(project_state, cases_context, event_bus):
+def case_viewmodel(case_repo, project_state, event_bus, cases_context):
     """
-    Create a REAL CaseManagerService.
-
-    This is the actual production service, not a mock.
-    """
-    from src.application.cases.service import CaseManagerService
-
-    return CaseManagerService(
-        state=project_state,
-        cases_ctx=cases_context,
-        event_bus=event_bus,
-    )
-
-
-# =============================================================================
-# ViewModel Fixtures (connected to REAL services)
-# =============================================================================
-
-
-@pytest.fixture
-def case_viewmodel(case_service):
-    """
-    Create a CaseManagerViewModel connected to REAL service.
+    Create a CaseManagerViewModel with real dependencies.
 
     This is the actual production setup, not a mock.
     """
-    from src.presentation.viewmodels.case_manager_viewmodel import CaseManagerViewModel
+    from src.contexts.cases.presentation import CaseManagerViewModel
 
-    return CaseManagerViewModel(provider=case_service)
+    return CaseManagerViewModel(
+        case_repo=case_repo,
+        state=project_state,
+        event_bus=event_bus,
+        cases_ctx=cases_context,
+    )

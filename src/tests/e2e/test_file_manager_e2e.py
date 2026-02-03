@@ -22,8 +22,8 @@ import pytest
 from PySide6.QtTest import QSignalSpy
 from PySide6.QtWidgets import QApplication, QMainWindow, QVBoxLayout, QWidget
 
-from src.presentation.dto import ProjectSummaryDTO, SourceDTO
-from src.presentation.screens import FileManagerScreen
+from src.contexts.sources.presentation import FileManagerScreen
+from src.shared.presentation.dto import ProjectSummaryDTO, SourceDTO
 
 pytestmark = pytest.mark.e2e  # All tests in this module are E2E tests
 
