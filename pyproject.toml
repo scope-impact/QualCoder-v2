@@ -40,6 +40,9 @@ design-system = { workspace = true }
 ddd = [
     "returns>=0.22",  # Result/Maybe/IO monads
 ]
+flet = [
+    "flet>=0.25.0",  # Cross-platform UI framework (Apache-2.0)
+]
 
 [dependency-groups]
 dev = [
