@@ -1,0 +1,951 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>QualCoder v2 - Sources</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/design-system.css">
+  <link rel="stylesheet" href="css/layout.css">
+  <link rel="stylesheet" href="css/components.css">
+  <style>
+    .sources-toolbar {
+      display: flex;
+      align-items: center;
+      gap: var(--space-3);
+      padding: var(--space-4) var(--space-5);
+      background-color: var(--surface-card);
+      border-bottom: 1px solid var(--surface-border);
+    }
+
+    .view-toggle {
+      display: flex;
+      border: 1px solid var(--surface-border);
+      border-radius: var(--radius-md);
+      overflow: hidden;
+    }
+
+    .view-toggle-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 36px;
+      height: 32px;
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: all var(--transition-fast);
+    }
+
+    .view-toggle-btn:hover {
+      background-color: var(--surface-hover);
+      color: var(--text-primary);
+    }
+
+    .view-toggle-btn.active {
+      background-color: var(--color-primary-100);
+      color: var(--color-primary-600);
+    }
+
+    .sources-stats {
+      display: flex;
+      gap: var(--space-3);
+      padding: var(--space-3) var(--space-5);
+      background-color: var(--surface-section);
+      border-bottom: 1px solid var(--surface-border);
+    }
+
+    .folder-sidebar {
+      width: 240px;
+      background-color: var(--surface-section);
+      border-right: 1px solid var(--surface-border);
+      display: flex;
+      flex-direction: column;
+    }
+
+    .folder-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: var(--space-3) var(--space-4);
+      border-bottom: 1px solid var(--surface-border);
+    }
+
+    .folder-tree {
+      flex: 1;
+      overflow-y: auto;
+      padding: var(--space-2);
+    }
+
+    .folder-item {
+      display: flex;
+      align-items: center;
+      gap: var(--space-2);
+      padding: var(--space-2) var(--space-3);
+      border-radius: var(--radius-md);
+      cursor: pointer;
+      transition: background-color var(--transition-fast);
+      font-size: var(--font-size-sm);
+    }
+
+    .folder-item:hover {
+      background-color: var(--surface-hover);
+    }
+
+    .folder-item.active {
+      background-color: var(--color-primary-100);
+      color: var(--color-primary-700);
+    }
+
+    .folder-item-icon {
+      width: 18px;
+      height: 18px;
+      color: var(--text-muted);
+    }
+
+    .folder-item.active .folder-item-icon {
+      color: var(--color-primary-600);
+    }
+
+    .folder-item-count {
+      margin-left: auto;
+      font-size: var(--font-size-xs);
+      color: var(--text-muted);
+    }
+
+    .folder-children {
+      padding-left: var(--space-5);
+    }
+
+    .sources-content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .sources-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: var(--space-4);
+      padding: var(--space-5);
+      overflow-y: auto;
+    }
+
+    .source-card {
+      background-color: var(--surface-card);
+      border: 1px solid var(--surface-border);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      transition: all var(--transition-fast);
+      cursor: pointer;
+    }
+
+    .source-card:hover {
+      border-color: var(--color-primary-300);
+      box-shadow: var(--shadow-md);
+      transform: translateY(-2px);
+    }
+
+    .source-card.selected {
+      border-color: var(--color-primary-500);
+      box-shadow: 0 0 0 2px var(--color-primary-100);
+    }
+
+    .source-card-preview {
+      height: 100px;
+      background-color: var(--surface-section);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .source-card-preview.text {
+      padding: var(--space-3);
+      font-size: var(--font-size-xs);
+      color: var(--text-secondary);
+      line-height: 1.4;
+      font-family: var(--font-family-mono);
+      text-align: left;
+      align-items: flex-start;
+    }
+
+    .source-card-preview-icon {
+      width: 48px;
+      height: 48px;
+      color: var(--text-muted);
+    }
+
+    .source-card-checkbox {
+      position: absolute;
+      top: var(--space-2);
+      left: var(--space-2);
+      width: 20px;
+      height: 20px;
+      background-color: var(--surface-card);
+      border: 2px solid var(--surface-border);
+      border-radius: var(--radius-sm);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      transition: opacity var(--transition-fast);
+    }
+
+    .source-card:hover .source-card-checkbox,
+    .source-card.selected .source-card-checkbox {
+      opacity: 1;
+    }
+
+    .source-card.selected .source-card-checkbox {
+      background-color: var(--color-primary-500);
+      border-color: var(--color-primary-500);
+      color: white;
+    }
+
+    .source-card-type {
+      position: absolute;
+      top: var(--space-2);
+      right: var(--space-2);
+      padding: var(--space-1) var(--space-2);
+      background-color: var(--surface-card);
+      border-radius: var(--radius-sm);
+      font-size: var(--font-size-xs);
+      font-weight: var(--font-weight-medium);
+      text-transform: uppercase;
+    }
+
+    .source-card-body {
+      padding: var(--space-3) var(--space-4);
+    }
+
+    .source-card-title {
+      font-weight: var(--font-weight-medium);
+      font-size: var(--font-size-sm);
+      margin-bottom: var(--space-1);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .source-card-meta {
+      display: flex;
+      align-items: center;
+      gap: var(--space-3);
+      font-size: var(--font-size-xs);
+      color: var(--text-muted);
+      margin-bottom: var(--space-3);
+    }
+
+    .source-card-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .source-card-tags {
+      display: flex;
+      gap: var(--space-1);
+    }
+
+    .source-card-actions {
+      display: flex;
+      gap: var(--space-1);
+    }
+
+    .bulk-actions {
+      display: none;
+      align-items: center;
+      gap: var(--space-3);
+      padding: var(--space-3) var(--space-5);
+      background-color: var(--color-primary-50);
+      border-bottom: 1px solid var(--color-primary-200);
+    }
+
+    .bulk-actions.visible {
+      display: flex;
+    }
+
+    .bulk-actions-count {
+      font-weight: var(--font-weight-medium);
+      color: var(--color-primary-700);
+    }
+
+    .upload-zone {
+      border: 2px dashed var(--surface-border);
+      border-radius: var(--radius-lg);
+      padding: var(--space-8);
+      text-align: center;
+      cursor: pointer;
+      transition: all var(--transition-fast);
+    }
+
+    .upload-zone:hover {
+      border-color: var(--color-primary-400);
+      background-color: var(--color-primary-50);
+    }
+
+    .upload-zone-icon {
+      width: 64px;
+      height: 64px;
+      margin: 0 auto var(--space-4);
+      color: var(--text-muted);
+    }
+
+    /* Table View Styles */
+    .sources-table {
+      display: none;
+      flex: 1;
+      overflow: auto;
+    }
+
+    .sources-table.visible {
+      display: block;
+    }
+
+    .sources-grid.hidden {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <!-- Sidebar Navigation -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-header">
+        <a href="dashboard.html" class="sidebar-logo">
+          <div class="sidebar-logo-icon">Q</div>
+          <span class="sidebar-logo-text">QualCoder</span>
+        </a>
+      </div>
+
+      <div class="sidebar-user">
+        <div class="sidebar-user-avatar">JD</div>
+        <div class="sidebar-user-info">
+          <div class="sidebar-user-name">Jane Doe</div>
+          <div class="sidebar-user-role">Primary Researcher</div>
+        </div>
+      </div>
+
+      <nav class="sidebar-nav">
+        <div class="sidebar-nav-section">
+          <div class="sidebar-nav-title">Workspace</div>
+          <a href="dashboard.html" class="sidebar-nav-item">
+            <svg class="sidebar-nav-item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="3" width="7" height="7" rx="1"/>
+              <rect x="14" y="3" width="7" height="7" rx="1"/>
+              <rect x="3" y="14" width="7" height="7" rx="1"/>
+              <rect x="14" y="14" width="7" height="7" rx="1"/>
+            </svg>
+            <span class="sidebar-nav-item-text">Dashboard</span>
+          </a>
+          <a href="sources.html" class="sidebar-nav-item active">
+            <svg class="sidebar-nav-item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/>
+              <polyline points="14,2 14,8 20,8"/>
+            </svg>
+            <span class="sidebar-nav-item-text">Sources</span>
+            <span class="sidebar-nav-item-badge">24</span>
+          </a>
+          <a href="coding.html" class="sidebar-nav-item">
+            <svg class="sidebar-nav-item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="16,18 22,12 16,6"/>
+              <polyline points="8,6 2,12 8,18"/>
+            </svg>
+            <span class="sidebar-nav-item-text">Coding</span>
+          </a>
+          <a href="cases.html" class="sidebar-nav-item">
+            <svg class="sidebar-nav-item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+              <circle cx="9" cy="7" r="4"/>
+            </svg>
+            <span class="sidebar-nav-item-text">Cases</span>
+            <span class="sidebar-nav-item-badge">12</span>
+          </a>
+        </div>
+
+        <div class="sidebar-nav-section">
+          <div class="sidebar-nav-title">Analysis</div>
+          <a href="analysis.html" class="sidebar-nav-item">
+            <svg class="sidebar-nav-item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="18" y1="20" x2="18" y2="10"/>
+              <line x1="12" y1="20" x2="12" y2="4"/>
+              <line x1="6" y1="20" x2="6" y2="14"/>
+            </svg>
+            <span class="sidebar-nav-item-text">Insights</span>
+          </a>
+          <a href="#" class="sidebar-nav-item">
+            <svg class="sidebar-nav-item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"/>
+              <path d="M12 6v6l4 2"/>
+            </svg>
+            <span class="sidebar-nav-item-text">Reports</span>
+          </a>
+        </div>
+
+        <div class="sidebar-nav-section">
+          <div class="sidebar-nav-title">AI Assistant</div>
+          <a href="#" class="sidebar-nav-item">
+            <svg class="sidebar-nav-item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M12 2L2 7l10 5 10-5-10-5z"/>
+              <path d="M2 17l10 5 10-5"/>
+              <path d="M2 12l10 5 10-5"/>
+            </svg>
+            <span class="sidebar-nav-item-text">AI Coding</span>
+          </a>
+        </div>
+      </nav>
+
+      <div class="sidebar-footer">
+        <a href="#" class="sidebar-nav-item">
+          <svg class="sidebar-nav-item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="3"/>
+            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+          </svg>
+          <span class="sidebar-nav-item-text">Settings</span>
+        </a>
+        <button class="sidebar-toggle" onclick="toggleSidebar()">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="11,17 6,12 11,7"/>
+            <polyline points="18,17 13,12 18,7"/>
+          </svg>
+        </button>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main">
+      <!-- Toolbar -->
+      <div class="sources-toolbar">
+        <div class="flex items-center gap-3">
+          <h1 class="text-lg font-semibold">Sources</h1>
+          <span class="badge badge-primary">24 files</span>
+        </div>
+
+        <div class="header-search" style="max-width: 320px; flex: 1;">
+          <input type="text" class="input search-input" placeholder="Search sources...">
+        </div>
+
+        <div class="view-toggle">
+          <button class="view-toggle-btn active" onclick="setView('grid')">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="3" width="7" height="7"/>
+              <rect x="14" y="3" width="7" height="7"/>
+              <rect x="3" y="14" width="7" height="7"/>
+              <rect x="14" y="14" width="7" height="7"/>
+            </svg>
+          </button>
+          <button class="view-toggle-btn" onclick="setView('table')">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="8" y1="6" x2="21" y2="6"/>
+              <line x1="8" y1="12" x2="21" y2="12"/>
+              <line x1="8" y1="18" x2="21" y2="18"/>
+              <line x1="3" y1="6" x2="3.01" y2="6"/>
+              <line x1="3" y1="12" x2="3.01" y2="12"/>
+              <line x1="3" y1="18" x2="3.01" y2="18"/>
+            </svg>
+          </button>
+        </div>
+
+        <div class="ml-auto flex items-center gap-2">
+          <button class="btn btn-ghost btn-icon" onclick="toggleTheme()">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="5"/>
+              <line x1="12" y1="1" x2="12" y2="3"/>
+              <line x1="12" y1="21" x2="12" y2="23"/>
+            </svg>
+          </button>
+          <button class="btn btn-secondary">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+              <polyline points="17,8 12,3 7,8"/>
+              <line x1="12" y1="3" x2="12" y2="15"/>
+            </svg>
+            Export
+          </button>
+          <button class="btn btn-primary">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="12" y1="5" x2="12" y2="19"/>
+              <line x1="5" y1="12" x2="19" y2="12"/>
+            </svg>
+            Import Files
+          </button>
+        </div>
+      </div>
+
+      <!-- Type Filter Stats -->
+      <div class="sources-stats">
+        <button class="stat-compact active">
+          <svg class="stat-compact-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="3" width="18" height="18" rx="2"/>
+          </svg>
+          All (24)
+        </button>
+        <button class="stat-compact">
+          <svg class="stat-compact-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/>
+          </svg>
+          Text (15)
+        </button>
+        <button class="stat-compact">
+          <svg class="stat-compact-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/>
+            <polyline points="14,2 14,8 20,8"/>
+          </svg>
+          PDF (4)
+        </button>
+        <button class="stat-compact">
+          <svg class="stat-compact-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="3" width="18" height="18" rx="2"/>
+            <circle cx="8.5" cy="8.5" r="1.5"/>
+            <polyline points="21,15 16,10 5,21"/>
+          </svg>
+          Images (3)
+        </button>
+        <button class="stat-compact">
+          <svg class="stat-compact-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M9 18V5l12-2v13"/>
+            <circle cx="6" cy="18" r="3"/>
+            <circle cx="18" cy="16" r="3"/>
+          </svg>
+          Audio (2)
+        </button>
+      </div>
+
+      <!-- Bulk Actions Bar (hidden by default) -->
+      <div class="bulk-actions" id="bulkActions">
+        <span class="bulk-actions-count">3 files selected</span>
+        <button class="btn btn-sm btn-secondary">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="16,18 22,12 16,6"/>
+            <polyline points="8,6 2,12 8,18"/>
+          </svg>
+          Code Selected
+        </button>
+        <button class="btn btn-sm btn-secondary">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
+          </svg>
+          Move to Folder
+        </button>
+        <button class="btn btn-sm btn-secondary">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
+            <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
+          </svg>
+          Link to Case
+        </button>
+        <button class="btn btn-sm btn-ghost" style="color: var(--color-error-600);">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="3,6 5,6 21,6"/>
+            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+          </svg>
+          Delete
+        </button>
+        <button class="btn btn-sm btn-ghost ml-auto" onclick="clearSelection()">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"/>
+            <line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+          Clear
+        </button>
+      </div>
+
+      <!-- Content Area with Folder Sidebar -->
+      <div class="flex flex-1 overflow-hidden">
+        <!-- Folder Sidebar -->
+        <div class="folder-sidebar">
+          <div class="folder-header">
+            <span class="text-sm font-semibold">Folders</span>
+            <button class="btn btn-ghost btn-sm btn-icon tooltip" data-tooltip="New folder">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="12" y1="5" x2="12" y2="19"/>
+                <line x1="5" y1="12" x2="19" y2="12"/>
+              </svg>
+            </button>
+          </div>
+          <div class="folder-tree">
+            <div class="folder-item active">
+              <svg class="folder-item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="3" width="18" height="18" rx="2"/>
+              </svg>
+              <span>All Sources</span>
+              <span class="folder-item-count">24</span>
+            </div>
+            <div class="folder-item">
+              <svg class="folder-item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
+              </svg>
+              <span>Interviews</span>
+              <span class="folder-item-count">12</span>
+            </div>
+            <div class="folder-children">
+              <div class="folder-item">
+                <svg class="folder-item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
+                </svg>
+                <span>Round 1</span>
+                <span class="folder-item-count">6</span>
+              </div>
+              <div class="folder-item">
+                <svg class="folder-item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
+                </svg>
+                <span>Round 2</span>
+                <span class="folder-item-count">6</span>
+              </div>
+            </div>
+            <div class="folder-item">
+              <svg class="folder-item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
+              </svg>
+              <span>Focus Groups</span>
+              <span class="folder-item-count">4</span>
+            </div>
+            <div class="folder-item">
+              <svg class="folder-item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
+              </svg>
+              <span>Surveys</span>
+              <span class="folder-item-count">5</span>
+            </div>
+            <div class="folder-item">
+              <svg class="folder-item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
+              </svg>
+              <span>Media</span>
+              <span class="folder-item-count">3</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Sources Grid -->
+        <div class="sources-content">
+          <div class="sources-grid" id="sourcesGrid">
+            <!-- Interview Cards -->
+            <div class="source-card" onclick="toggleCard(this)">
+              <div class="source-card-preview text">
+                <div class="source-card-checkbox">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                    <polyline points="20,6 9,17 4,12"/>
+                  </svg>
+                </div>
+                <span class="source-card-type">TXT</span>
+                Interviewer: Can you tell me about your experience working from home during the past year? P08: Sure. It's been quite a journey, honestly...
+              </div>
+              <div class="source-card-body">
+                <div class="source-card-title">Interview_P08.txt</div>
+                <div class="source-card-meta">
+                  <span>2,450 words</span>
+                  <span>8 codes</span>
+                </div>
+                <div class="source-card-footer">
+                  <div class="source-card-tags">
+                    <span class="badge badge-warning">In Progress</span>
+                  </div>
+                  <button class="btn btn-ghost btn-sm btn-icon">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <circle cx="12" cy="12" r="1"/>
+                      <circle cx="19" cy="12" r="1"/>
+                      <circle cx="5" cy="12" r="1"/>
+                    </svg>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <div class="source-card" onclick="toggleCard(this)">
+              <div class="source-card-preview text">
+                <div class="source-card-checkbox">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                    <polyline points="20,6 9,17 4,12"/>
+                  </svg>
+                </div>
+                <span class="source-card-type">TXT</span>
+                Interviewer: Let's start with your daily routine. Can you walk me through a typical workday? P07: Well, I usually start around 8am...
+              </div>
+              <div class="source-card-body">
+                <div class="source-card-title">Interview_P07.txt</div>
+                <div class="source-card-meta">
+                  <span>3,120 words</span>
+                  <span>12 codes</span>
+                </div>
+                <div class="source-card-footer">
+                  <div class="source-card-tags">
+                    <span class="badge badge-success">Coded</span>
+                  </div>
+                  <button class="btn btn-ghost btn-sm btn-icon">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <circle cx="12" cy="12" r="1"/>
+                      <circle cx="19" cy="12" r="1"/>
+                      <circle cx="5" cy="12" r="1"/>
+                    </svg>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <div class="source-card" onclick="toggleCard(this)">
+              <div class="source-card-preview text">
+                <div class="source-card-checkbox">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                    <polyline points="20,6 9,17 4,12"/>
+                  </svg>
+                </div>
+                <span class="source-card-type">TXT</span>
+                Interviewer: Thank you for joining us today. To begin, can you describe your role? P09: I'm a senior project manager...
+              </div>
+              <div class="source-card-body">
+                <div class="source-card-title">Interview_P09.txt</div>
+                <div class="source-card-meta">
+                  <span>2,890 words</span>
+                  <span>0 codes</span>
+                </div>
+                <div class="source-card-footer">
+                  <div class="source-card-tags">
+                    <span class="badge" style="background-color: var(--surface-section);">Pending</span>
+                  </div>
+                  <button class="btn btn-ghost btn-sm btn-icon">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <circle cx="12" cy="12" r="1"/>
+                      <circle cx="19" cy="12" r="1"/>
+                      <circle cx="5" cy="12" r="1"/>
+                    </svg>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <div class="source-card" onclick="toggleCard(this)">
+              <div class="source-card-preview">
+                <div class="source-card-checkbox">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                    <polyline points="20,6 9,17 4,12"/>
+                  </svg>
+                </div>
+                <span class="source-card-type">PDF</span>
+                <svg class="source-card-preview-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                  <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/>
+                  <polyline points="14,2 14,8 20,8"/>
+                  <line x1="16" y1="13" x2="8" y2="13"/>
+                  <line x1="16" y1="17" x2="8" y2="17"/>
+                </svg>
+              </div>
+              <div class="source-card-body">
+                <div class="source-card-title">Survey_Results_Q3.pdf</div>
+                <div class="source-card-meta">
+                  <span>24 pages</span>
+                  <span>5 codes</span>
+                </div>
+                <div class="source-card-footer">
+                  <div class="source-card-tags">
+                    <span class="badge badge-warning">In Progress</span>
+                  </div>
+                  <button class="btn btn-ghost btn-sm btn-icon">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <circle cx="12" cy="12" r="1"/>
+                      <circle cx="19" cy="12" r="1"/>
+                      <circle cx="5" cy="12" r="1"/>
+                    </svg>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <div class="source-card" onclick="toggleCard(this)">
+              <div class="source-card-preview" style="background: linear-gradient(135deg, #f5f3ff, #e0e7ff);">
+                <div class="source-card-checkbox">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                    <polyline points="20,6 9,17 4,12"/>
+                  </svg>
+                </div>
+                <span class="source-card-type">JPG</span>
+                <svg class="source-card-preview-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                  <rect x="3" y="3" width="18" height="18" rx="2"/>
+                  <circle cx="8.5" cy="8.5" r="1.5"/>
+                  <polyline points="21,15 16,10 5,21"/>
+                </svg>
+              </div>
+              <div class="source-card-body">
+                <div class="source-card-title">Whiteboard_Session1.jpg</div>
+                <div class="source-card-meta">
+                  <span>2.4 MB</span>
+                  <span>3 codes</span>
+                </div>
+                <div class="source-card-footer">
+                  <div class="source-card-tags">
+                    <span class="badge badge-success">Coded</span>
+                  </div>
+                  <button class="btn btn-ghost btn-sm btn-icon">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <circle cx="12" cy="12" r="1"/>
+                      <circle cx="19" cy="12" r="1"/>
+                      <circle cx="5" cy="12" r="1"/>
+                    </svg>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <div class="source-card" onclick="toggleCard(this)">
+              <div class="source-card-preview" style="background: linear-gradient(135deg, #fef3c7, #fde68a);">
+                <div class="source-card-checkbox">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                    <polyline points="20,6 9,17 4,12"/>
+                  </svg>
+                </div>
+                <span class="source-card-type">MP3</span>
+                <svg class="source-card-preview-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                  <path d="M9 18V5l12-2v13"/>
+                  <circle cx="6" cy="18" r="3"/>
+                  <circle cx="18" cy="16" r="3"/>
+                </svg>
+              </div>
+              <div class="source-card-body">
+                <div class="source-card-title">Focus_Group_Audio.mp3</div>
+                <div class="source-card-meta">
+                  <span>45:32</span>
+                  <span>Transcribed</span>
+                </div>
+                <div class="source-card-footer">
+                  <div class="source-card-tags">
+                    <span class="badge badge-info">Ready</span>
+                  </div>
+                  <button class="btn btn-ghost btn-sm btn-icon">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <circle cx="12" cy="12" r="1"/>
+                      <circle cx="19" cy="12" r="1"/>
+                      <circle cx="5" cy="12" r="1"/>
+                    </svg>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Upload Zone -->
+            <div class="upload-zone" style="grid-column: span 1;">
+              <svg class="upload-zone-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                <polyline points="17,8 12,3 7,8"/>
+                <line x1="12" y1="3" x2="12" y2="15"/>
+              </svg>
+              <h3 class="text-base font-medium mb-2">Drop files here</h3>
+              <p class="text-sm text-secondary mb-4">or click to browse</p>
+              <p class="text-xs text-muted">Supports TXT, PDF, DOCX, JPG, PNG, MP3, MP4</p>
+            </div>
+          </div>
+
+          <!-- Table View (hidden by default) -->
+          <div class="sources-table" id="sourcesTable">
+            <table class="table">
+              <thead>
+                <tr>
+                  <th style="width: 40px;">
+                    <input type="checkbox">
+                  </th>
+                  <th>Name</th>
+                  <th>Type</th>
+                  <th>Size</th>
+                  <th>Codes</th>
+                  <th>Status</th>
+                  <th>Modified</th>
+                  <th style="width: 60px;"></th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><input type="checkbox"></td>
+                  <td class="font-medium">Interview_P08.txt</td>
+                  <td>Text</td>
+                  <td>2,450 words</td>
+                  <td>8</td>
+                  <td><span class="badge badge-warning">In Progress</span></td>
+                  <td class="text-muted">2h ago</td>
+                  <td>
+                    <button class="btn btn-ghost btn-sm btn-icon">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="1"/>
+                        <circle cx="19" cy="12" r="1"/>
+                        <circle cx="5" cy="12" r="1"/>
+                      </svg>
+                    </button>
+                  </td>
+                </tr>
+                <tr>
+                  <td><input type="checkbox"></td>
+                  <td class="font-medium">Interview_P07.txt</td>
+                  <td>Text</td>
+                  <td>3,120 words</td>
+                  <td>12</td>
+                  <td><span class="badge badge-success">Coded</span></td>
+                  <td class="text-muted">1d ago</td>
+                  <td>
+                    <button class="btn btn-ghost btn-sm btn-icon">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="1"/>
+                        <circle cx="19" cy="12" r="1"/>
+                        <circle cx="5" cy="12" r="1"/>
+                      </svg>
+                    </button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script src="js/app.js"></script>
+  <script>
+    function setView(view) {
+      const grid = document.getElementById('sourcesGrid');
+      const table = document.getElementById('sourcesTable');
+      const btns = document.querySelectorAll('.view-toggle-btn');
+
+      btns.forEach(btn => btn.classList.remove('active'));
+
+      if (view === 'grid') {
+        grid.classList.remove('hidden');
+        table.classList.remove('visible');
+        btns[0].classList.add('active');
+      } else {
+        grid.classList.add('hidden');
+        table.classList.add('visible');
+        btns[1].classList.add('active');
+      }
+    }
+
+    function toggleCard(card) {
+      card.classList.toggle('selected');
+      updateBulkActions();
+    }
+
+    function updateBulkActions() {
+      const selected = document.querySelectorAll('.source-card.selected');
+      const bulkActions = document.getElementById('bulkActions');
+      const count = document.querySelector('.bulk-actions-count');
+
+      if (selected.length > 0) {
+        bulkActions.classList.add('visible');
+        count.textContent = `${selected.length} file${selected.length > 1 ? 's' : ''} selected`;
+      } else {
+        bulkActions.classList.remove('visible');
+      }
+    }
+
+    function clearSelection() {
+      document.querySelectorAll('.source-card.selected').forEach(card => {
+        card.classList.remove('selected');
+      });
+      updateBulkActions();
+    }
+  </script>
+</body>
+</html>

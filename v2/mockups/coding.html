@@ -1,0 +1,966 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>QualCoder v2 - Coding Workspace</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/design-system.css">
+  <link rel="stylesheet" href="css/layout.css">
+  <link rel="stylesheet" href="css/components.css">
+  <style>
+    /* Coding-specific styles */
+    .coding-toolbar {
+      display: flex;
+      align-items: center;
+      gap: var(--space-3);
+      padding: var(--space-2) var(--space-4);
+      background-color: var(--surface-card);
+      border-bottom: 1px solid var(--surface-border);
+    }
+
+    .source-selector {
+      display: flex;
+      align-items: center;
+      gap: var(--space-2);
+      padding: var(--space-2) var(--space-3);
+      background-color: var(--surface-section);
+      border-radius: var(--radius-md);
+      font-size: var(--font-size-sm);
+      cursor: pointer;
+    }
+
+    .source-selector:hover {
+      background-color: var(--surface-hover);
+    }
+
+    .code-panel-search {
+      padding: var(--space-3);
+      border-bottom: 1px solid var(--surface-border);
+    }
+
+    .code-panel-filters {
+      display: flex;
+      align-items: center;
+      gap: var(--space-2);
+      padding: var(--space-2) var(--space-3);
+      background-color: var(--surface-section);
+      border-bottom: 1px solid var(--surface-border);
+    }
+
+    .filter-btn {
+      display: flex;
+      align-items: center;
+      gap: var(--space-1);
+      padding: var(--space-1) var(--space-2);
+      font-size: var(--font-size-xs);
+      background: none;
+      border: 1px solid var(--surface-border);
+      border-radius: var(--radius-full);
+      cursor: pointer;
+      transition: all var(--transition-fast);
+    }
+
+    .filter-btn:hover {
+      background-color: var(--surface-hover);
+    }
+
+    .filter-btn.active {
+      background-color: var(--color-primary-100);
+      border-color: var(--color-primary-300);
+      color: var(--color-primary-700);
+    }
+
+    .text-editor-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: var(--space-3) var(--space-4);
+      background-color: var(--surface-card);
+      border-bottom: 1px solid var(--surface-border);
+    }
+
+    .document-info {
+      display: flex;
+      align-items: center;
+      gap: var(--space-3);
+    }
+
+    .document-icon {
+      width: 36px;
+      height: 36px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background-color: var(--color-info-50);
+      color: var(--color-info-600);
+      border-radius: var(--radius-md);
+    }
+
+    .document-title {
+      font-weight: var(--font-weight-semibold);
+    }
+
+    .document-meta {
+      font-size: var(--font-size-xs);
+      color: var(--text-muted);
+    }
+
+    .editor-actions {
+      display: flex;
+      align-items: center;
+      gap: var(--space-2);
+    }
+
+    .text-content-wrapper {
+      flex: 1;
+      display: flex;
+      overflow: hidden;
+    }
+
+    .line-numbers {
+      width: 48px;
+      padding: var(--space-4) 0;
+      background-color: var(--surface-section);
+      border-right: 1px solid var(--surface-border);
+      text-align: right;
+      user-select: none;
+      overflow-y: auto;
+    }
+
+    .line-number {
+      padding: 0 var(--space-3);
+      font-family: var(--font-family-mono);
+      font-size: var(--font-size-sm);
+      line-height: 1.75;
+      color: var(--text-muted);
+    }
+
+    .text-content {
+      flex: 1;
+      padding: var(--space-4);
+      overflow-y: auto;
+      font-family: var(--font-family-mono);
+      font-size: var(--font-size-sm);
+      line-height: 1.75;
+    }
+
+    .text-content p {
+      margin-bottom: var(--space-4);
+    }
+
+    .coded-text {
+      position: relative;
+      padding: 2px 4px;
+      margin: 0 -4px;
+      border-radius: 3px;
+      cursor: pointer;
+      transition: filter var(--transition-fast);
+    }
+
+    .coded-text:hover {
+      filter: brightness(0.92);
+    }
+
+    .coded-text.has-memo::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: repeating-linear-gradient(
+        90deg,
+        currentColor,
+        currentColor 3px,
+        transparent 3px,
+        transparent 6px
+      );
+    }
+
+    .overlap-indicator {
+      position: absolute;
+      bottom: -2px;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: linear-gradient(90deg, var(--code-color-1), var(--code-color-2));
+      border-radius: 2px;
+    }
+
+    .right-panel-tabs {
+      display: flex;
+      border-bottom: 1px solid var(--surface-border);
+      background-color: var(--surface-card);
+    }
+
+    .right-panel-tab {
+      flex: 1;
+      padding: var(--space-3);
+      font-size: var(--font-size-xs);
+      font-weight: var(--font-weight-medium);
+      text-align: center;
+      color: var(--text-secondary);
+      background: none;
+      border: none;
+      border-bottom: 2px solid transparent;
+      cursor: pointer;
+      transition: all var(--transition-fast);
+    }
+
+    .right-panel-tab:hover {
+      color: var(--text-primary);
+      background-color: var(--surface-hover);
+    }
+
+    .right-panel-tab.active {
+      color: var(--color-primary-600);
+      border-bottom-color: var(--color-primary-600);
+    }
+
+    .selected-code-info {
+      padding: var(--space-4);
+      border-bottom: 1px solid var(--surface-border);
+    }
+
+    .selected-code-header {
+      display: flex;
+      align-items: flex-start;
+      gap: var(--space-3);
+      margin-bottom: var(--space-3);
+    }
+
+    .selected-code-color {
+      width: 24px;
+      height: 24px;
+      border-radius: var(--radius-md);
+      flex-shrink: 0;
+    }
+
+    .selected-code-name {
+      font-weight: var(--font-weight-semibold);
+      margin-bottom: var(--space-1);
+    }
+
+    .selected-code-category {
+      font-size: var(--font-size-xs);
+      color: var(--text-muted);
+    }
+
+    .selected-code-stats {
+      display: flex;
+      gap: var(--space-4);
+      padding: var(--space-3);
+      background-color: var(--surface-section);
+      border-radius: var(--radius-md);
+      font-size: var(--font-size-xs);
+    }
+
+    .code-stat {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .code-stat-value {
+      font-size: var(--font-size-md);
+      font-weight: var(--font-weight-semibold);
+    }
+
+    .code-stat-label {
+      color: var(--text-muted);
+    }
+
+    .overlap-list {
+      padding: var(--space-3);
+    }
+
+    .overlap-item {
+      display: flex;
+      align-items: center;
+      gap: var(--space-2);
+      padding: var(--space-2);
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      transition: background-color var(--transition-fast);
+    }
+
+    .overlap-item:hover {
+      background-color: var(--surface-hover);
+    }
+
+    .overlap-color {
+      width: 12px;
+      height: 12px;
+      border-radius: var(--radius-sm);
+    }
+
+    .overlap-name {
+      font-size: var(--font-size-sm);
+    }
+
+    .keyboard-hint {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--space-1);
+      padding: var(--space-1) var(--space-2);
+      font-size: var(--font-size-xs);
+      font-family: var(--font-family-mono);
+      background-color: var(--surface-section);
+      border: 1px solid var(--surface-border);
+      border-radius: var(--radius-sm);
+      color: var(--text-muted);
+    }
+
+    .active-code-indicator {
+      display: flex;
+      align-items: center;
+      gap: var(--space-2);
+      padding: var(--space-2) var(--space-3);
+      background-color: var(--color-primary-50);
+      border: 1px solid var(--color-primary-200);
+      border-radius: var(--radius-md);
+      font-size: var(--font-size-sm);
+    }
+
+    .active-code-indicator .color-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: var(--radius-sm);
+    }
+
+    .selection-popup {
+      position: fixed;
+      display: none;
+      align-items: center;
+      gap: var(--space-1);
+      padding: var(--space-2);
+      background-color: var(--surface-card);
+      border: 1px solid var(--surface-border);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-lg);
+      z-index: var(--z-popover);
+    }
+
+    .selection-popup.visible {
+      display: flex;
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <!-- Sidebar Navigation (collapsed by default for coding) -->
+    <aside class="sidebar collapsed" id="sidebar">
+      <div class="sidebar-header">
+        <a href="dashboard.html" class="sidebar-logo">
+          <div class="sidebar-logo-icon">Q</div>
+          <span class="sidebar-logo-text">QualCoder</span>
+        </a>
+      </div>
+
+      <nav class="sidebar-nav">
+        <div class="sidebar-nav-section">
+          <div class="sidebar-nav-title">Workspace</div>
+          <a href="dashboard.html" class="sidebar-nav-item">
+            <svg class="sidebar-nav-item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="3" width="7" height="7" rx="1"/>
+              <rect x="14" y="3" width="7" height="7" rx="1"/>
+              <rect x="3" y="14" width="7" height="7" rx="1"/>
+              <rect x="14" y="14" width="7" height="7" rx="1"/>
+            </svg>
+            <span class="sidebar-nav-item-text">Dashboard</span>
+          </a>
+          <a href="sources.html" class="sidebar-nav-item">
+            <svg class="sidebar-nav-item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/>
+              <polyline points="14,2 14,8 20,8"/>
+            </svg>
+            <span class="sidebar-nav-item-text">Sources</span>
+            <span class="sidebar-nav-item-badge">24</span>
+          </a>
+          <a href="coding.html" class="sidebar-nav-item active">
+            <svg class="sidebar-nav-item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="16,18 22,12 16,6"/>
+              <polyline points="8,6 2,12 8,18"/>
+            </svg>
+            <span class="sidebar-nav-item-text">Coding</span>
+          </a>
+          <a href="cases.html" class="sidebar-nav-item">
+            <svg class="sidebar-nav-item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+              <circle cx="9" cy="7" r="4"/>
+            </svg>
+            <span class="sidebar-nav-item-text">Cases</span>
+          </a>
+        </div>
+        <div class="sidebar-nav-section">
+          <div class="sidebar-nav-title">Analysis</div>
+          <a href="analysis.html" class="sidebar-nav-item">
+            <svg class="sidebar-nav-item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="18" y1="20" x2="18" y2="10"/>
+              <line x1="12" y1="20" x2="12" y2="4"/>
+              <line x1="6" y1="20" x2="6" y2="14"/>
+            </svg>
+            <span class="sidebar-nav-item-text">Insights</span>
+          </a>
+        </div>
+      </nav>
+
+      <div class="sidebar-footer">
+        <button class="sidebar-toggle" onclick="toggleSidebar()">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="13,17 18,12 13,7"/>
+            <polyline points="6,17 11,12 6,7"/>
+          </svg>
+        </button>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main">
+      <!-- Coding Toolbar -->
+      <div class="coding-toolbar">
+        <div class="source-selector" onclick="toggleSourceDropdown()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/>
+          </svg>
+          <span>Interview_P08.txt</span>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="6,9 12,15 18,9"/>
+          </svg>
+        </div>
+
+        <div class="toolbar-separator"></div>
+
+        <div class="toolbar-group">
+          <button class="btn btn-ghost btn-sm tooltip" data-tooltip="Previous (Alt+Left)">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="15,18 9,12 15,6"/>
+            </svg>
+          </button>
+          <span class="text-sm text-muted">3 of 24</span>
+          <button class="btn btn-ghost btn-sm tooltip" data-tooltip="Next (Alt+Right)">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="9,18 15,12 9,6"/>
+            </svg>
+          </button>
+        </div>
+
+        <div class="toolbar-separator"></div>
+
+        <div class="active-code-indicator">
+          <span class="color-dot" style="background-color: var(--code-color-1);"></span>
+          <span>Work-life balance</span>
+          <span class="keyboard-hint">Q to apply</span>
+        </div>
+
+        <div class="ml-auto flex items-center gap-2">
+          <button class="btn btn-ghost btn-sm tooltip" data-tooltip="Undo (Ctrl+Z)">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M3 7v6h6"/>
+              <path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13"/>
+            </svg>
+          </button>
+          <button class="btn btn-ghost btn-sm tooltip" data-tooltip="Redo (Ctrl+Y)">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 7v6h-6"/>
+              <path d="M3 17a9 9 0 0 1 9-9 9 9 0 0 1 6 2.3L21 13"/>
+            </svg>
+          </button>
+
+          <div class="toolbar-separator"></div>
+
+          <button class="btn btn-ghost btn-sm tooltip" data-tooltip="Text size">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M4 7V4h16v3"/>
+              <path d="M9 20h6"/>
+              <path d="M12 4v16"/>
+            </svg>
+          </button>
+          <button class="btn btn-ghost btn-sm tooltip" data-tooltip="Search (Ctrl+F)">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="11" cy="11" r="8"/>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+            </svg>
+          </button>
+          <button class="btn btn-ghost btn-sm tooltip" data-tooltip="AI Auto-code">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M12 2L2 7l10 5 10-5-10-5z"/>
+              <path d="M2 17l10 5 10-5"/>
+              <path d="M2 12l10 5 10-5"/>
+            </svg>
+          </button>
+
+          <div class="toolbar-separator"></div>
+
+          <button class="btn btn-ghost btn-icon" onclick="toggleTheme()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="5"/>
+              <line x1="12" y1="1" x2="12" y2="3"/>
+              <line x1="12" y1="21" x2="12" y2="23"/>
+              <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/>
+              <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+              <line x1="1" y1="12" x2="3" y2="12"/>
+              <line x1="21" y1="12" x2="23" y2="12"/>
+            </svg>
+          </button>
+          <button class="btn btn-ghost btn-sm tooltip" data-tooltip="Keyboard shortcuts">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="2" y="4" width="20" height="16" rx="2"/>
+              <path d="M6 8h.01"/>
+              <path d="M10 8h.01"/>
+              <path d="M14 8h.01"/>
+              <path d="M18 8h.01"/>
+              <path d="M8 12h.01"/>
+              <path d="M12 12h.01"/>
+              <path d="M16 12h.01"/>
+              <path d="M7 16h10"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- Three Panel Layout -->
+      <div class="layout-three-panel">
+        <!-- Left Panel: Files & Codes -->
+        <div class="panel-left">
+          <div class="split-vertical">
+            <!-- Files Panel -->
+            <div class="panel-top" style="flex: 0.4;">
+              <div class="panel-header">
+                <span class="panel-title">Sources</span>
+                <button class="btn btn-ghost btn-sm btn-icon">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="12" y1="5" x2="12" y2="19"/>
+                    <line x1="5" y1="12" x2="19" y2="12"/>
+                  </svg>
+                </button>
+              </div>
+              <div class="code-panel-search">
+                <input type="text" class="input input-sm search-input" placeholder="Search sources...">
+              </div>
+              <div class="panel-content no-padding">
+                <ul class="file-list">
+                  <li class="file-list-item">
+                    <div class="file-icon text">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/>
+                      </svg>
+                    </div>
+                    <div class="file-info">
+                      <div class="file-name">Interview_P07.txt</div>
+                      <div class="file-meta">12 codes</div>
+                    </div>
+                  </li>
+                  <li class="file-list-item active">
+                    <div class="file-icon text">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/>
+                      </svg>
+                    </div>
+                    <div class="file-info">
+                      <div class="file-name">Interview_P08.txt</div>
+                      <div class="file-meta">8 codes - In progress</div>
+                    </div>
+                  </li>
+                  <li class="file-list-item">
+                    <div class="file-icon text">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/>
+                      </svg>
+                    </div>
+                    <div class="file-info">
+                      <div class="file-name">Interview_P09.txt</div>
+                      <div class="file-meta">Not started</div>
+                    </div>
+                  </li>
+                  <li class="file-list-item">
+                    <div class="file-icon pdf">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/>
+                      </svg>
+                    </div>
+                    <div class="file-info">
+                      <div class="file-name">Survey_Report.pdf</div>
+                      <div class="file-meta">5 codes</div>
+                    </div>
+                  </li>
+                </ul>
+              </div>
+            </div>
+
+            <div class="resize-handle-horizontal"></div>
+
+            <!-- Codes Panel -->
+            <div class="panel-bottom" style="flex: 0.6;">
+              <div class="panel-header">
+                <span class="panel-title">Codes</span>
+                <div class="panel-actions">
+                  <button class="btn btn-ghost btn-sm btn-icon tooltip" data-tooltip="Create code (N)">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <line x1="12" y1="5" x2="12" y2="19"/>
+                      <line x1="5" y1="12" x2="19" y2="12"/>
+                    </svg>
+                  </button>
+                </div>
+              </div>
+              <div class="code-panel-search">
+                <input type="text" class="input input-sm search-input" placeholder="Search codes...">
+              </div>
+              <div class="code-panel-filters">
+                <button class="filter-btn active">All (156)</button>
+                <button class="filter-btn">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26"/>
+                  </svg>
+                  Important
+                </button>
+                <button class="filter-btn">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"/>
+                    <path d="M12 6v6l4 2"/>
+                  </svg>
+                  Recent
+                </button>
+              </div>
+              <div class="panel-content no-padding">
+                <div class="code-tree">
+                  <!-- Category: Workplace -->
+                  <div class="code-tree-item expanded">
+                    <div class="code-tree-node">
+                      <div class="code-tree-expand">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                          <polyline points="9,18 15,12 9,6"/>
+                        </svg>
+                      </div>
+                      <div class="code-tree-color" style="background-color: var(--color-gray-400);"></div>
+                      <span class="code-tree-label">Workplace Experience</span>
+                      <span class="code-tree-count">89</span>
+                    </div>
+                    <div class="code-tree-children">
+                      <div class="code-tree-item">
+                        <div class="code-tree-node selected">
+                          <div class="code-tree-expand" style="visibility: hidden;">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                              <polyline points="9,18 15,12 9,6"/>
+                            </svg>
+                          </div>
+                          <div class="code-tree-color" style="background-color: var(--code-color-1);"></div>
+                          <span class="code-tree-label">Work-life balance</span>
+                          <span class="code-tree-count">45</span>
+                        </div>
+                      </div>
+                      <div class="code-tree-item">
+                        <div class="code-tree-node">
+                          <div class="code-tree-expand" style="visibility: hidden;"></div>
+                          <div class="code-tree-color" style="background-color: var(--code-color-2);"></div>
+                          <span class="code-tree-label">Remote challenges</span>
+                          <span class="code-tree-count">38</span>
+                        </div>
+                      </div>
+                      <div class="code-tree-item">
+                        <div class="code-tree-node">
+                          <div class="code-tree-expand" style="visibility: hidden;"></div>
+                          <div class="code-tree-color" style="background-color: var(--code-color-3);"></div>
+                          <span class="code-tree-label">Flexibility benefits</span>
+                          <span class="code-tree-count">6</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Category: Communication -->
+                  <div class="code-tree-item expanded">
+                    <div class="code-tree-node">
+                      <div class="code-tree-expand">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                          <polyline points="9,18 15,12 9,6"/>
+                        </svg>
+                      </div>
+                      <div class="code-tree-color" style="background-color: var(--color-gray-400);"></div>
+                      <span class="code-tree-label">Communication</span>
+                      <span class="code-tree-count">67</span>
+                    </div>
+                    <div class="code-tree-children">
+                      <div class="code-tree-item">
+                        <div class="code-tree-node">
+                          <div class="code-tree-expand" style="visibility: hidden;"></div>
+                          <div class="code-tree-color" style="background-color: var(--code-color-4);"></div>
+                          <span class="code-tree-label">Team collaboration</span>
+                          <span class="code-tree-count">32</span>
+                        </div>
+                      </div>
+                      <div class="code-tree-item">
+                        <div class="code-tree-node">
+                          <div class="code-tree-expand" style="visibility: hidden;"></div>
+                          <div class="code-tree-color" style="background-color: var(--code-color-5);"></div>
+                          <span class="code-tree-label">Meeting fatigue</span>
+                          <span class="code-tree-count">21</span>
+                        </div>
+                      </div>
+                      <div class="code-tree-item">
+                        <div class="code-tree-node">
+                          <div class="code-tree-expand" style="visibility: hidden;"></div>
+                          <div class="code-tree-color" style="background-color: var(--code-color-6);"></div>
+                          <span class="code-tree-label">Async communication</span>
+                          <span class="code-tree-count">14</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Center Panel: Text Editor -->
+        <div class="panel-center">
+          <div class="text-editor-header">
+            <div class="document-info">
+              <div class="document-icon">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/>
+                </svg>
+              </div>
+              <div>
+                <div class="document-title">Interview_P08.txt</div>
+                <div class="document-meta">2,450 words - 8 codes applied - Last edited 2h ago</div>
+              </div>
+            </div>
+            <div class="editor-actions">
+              <span class="badge badge-info">In Progress</span>
+              <button class="btn btn-ghost btn-sm tooltip" data-tooltip="Document memo">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                  <polyline points="14,2 14,8 20,8"/>
+                  <line x1="16" y1="13" x2="8" y2="13"/>
+                  <line x1="16" y1="17" x2="8" y2="17"/>
+                  <line x1="10" y1="9" x2="8" y2="9"/>
+                </svg>
+              </button>
+              <button class="btn btn-ghost btn-sm tooltip" data-tooltip="Link to case">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
+                  <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
+                </svg>
+              </button>
+            </div>
+          </div>
+
+          <div class="text-content-wrapper">
+            <div class="line-numbers">
+              <div class="line-number">1</div>
+              <div class="line-number">2</div>
+              <div class="line-number">3</div>
+              <div class="line-number">4</div>
+              <div class="line-number">5</div>
+              <div class="line-number">6</div>
+              <div class="line-number">7</div>
+              <div class="line-number">8</div>
+              <div class="line-number">9</div>
+              <div class="line-number">10</div>
+              <div class="line-number">11</div>
+              <div class="line-number">12</div>
+              <div class="line-number">13</div>
+              <div class="line-number">14</div>
+              <div class="line-number">15</div>
+              <div class="line-number">16</div>
+              <div class="line-number">17</div>
+              <div class="line-number">18</div>
+              <div class="line-number">19</div>
+              <div class="line-number">20</div>
+            </div>
+            <div class="text-content" id="textContent">
+              <p><strong>Interviewer:</strong> Can you tell me about your experience working from home during the past year?</p>
+
+              <p><strong>P08:</strong> Sure. It's been quite a journey, honestly. At first, I was excited about the flexibility. <span class="coded-text" style="background-color: rgba(139, 92, 246, 0.3);">I could finally have breakfast with my family and skip the long commute</span>. That alone was a huge improvement for my quality of life.</p>
+
+              <p><strong>Interviewer:</strong> That sounds positive. Were there any challenges?</p>
+
+              <p><strong>P08:</strong> Oh, definitely. <span class="coded-text has-memo" style="background-color: rgba(20, 184, 166, 0.3);">The biggest challenge is that we can't just walk over to someone's desk anymore. Messages get lost in Slack, and sometimes you wait hours for a response that would have taken 30 seconds in person</span>. It really slows things down.</p>
+
+              <p>And then there's the meeting fatigue. <span class="coded-text" style="background-color: rgba(245, 158, 11, 0.3);">We have back-to-back video calls all day. By 3pm, I'm completely drained. My eyes hurt, my back hurts from sitting, and I feel like I haven't accomplished anything meaningful</span>.</p>
+
+              <p><strong>Interviewer:</strong> How do you manage the work-life balance?</p>
+
+              <p><strong>P08:</strong> <span class="coded-text" style="background-color: rgba(139, 92, 246, 0.3); position: relative;">That's the tricky part. When your home is your office, it's hard to disconnect. I find myself checking emails at 9pm, or starting work at 7am because the laptop is right there<span class="overlap-indicator"></span></span>. My partner has started hiding my laptop after dinner just to force me to stop.</p>
+
+              <p>But I've also learned to set better boundaries. <span class="coded-text" style="background-color: rgba(34, 197, 94, 0.3);">I now have a dedicated workspace, and when I leave that room, work is done. I've also blocked my calendar from 12-1pm for lunch - no meetings allowed</span>.</p>
+
+              <p><strong>Interviewer:</strong> That's a great strategy. What about team collaboration?</p>
+
+              <p><strong>P08:</strong> We've had to completely reinvent how we work together. <span class="coded-text" style="background-color: rgba(239, 68, 68, 0.3);">The spontaneous hallway conversations where great ideas were born - those don't happen anymore. We've tried virtual coffee chats, but it's not the same</span>.</p>
+            </div>
+          </div>
+
+          <!-- Editor Status Bar -->
+          <div style="display: flex; align-items: center; justify-content: space-between; padding: var(--space-2) var(--space-4); background-color: var(--surface-section); border-top: 1px solid var(--surface-border); font-size: var(--font-size-xs); color: var(--text-muted);">
+            <div class="flex items-center gap-4">
+              <span>Line 8, Col 45</span>
+              <span>|</span>
+              <span>8 segments coded</span>
+              <span>|</span>
+              <span>2 overlaps</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="keyboard-hint">Q</span> Apply code
+              <span class="keyboard-hint">N</span> New code
+              <span class="keyboard-hint">M</span> Memo
+              <span class="keyboard-hint">?</span> Help
+            </div>
+          </div>
+        </div>
+
+        <!-- Right Panel: Details & AI -->
+        <div class="panel-right">
+          <div class="right-panel-tabs">
+            <button class="right-panel-tab active">Selected Code</button>
+            <button class="right-panel-tab">Overlaps</button>
+            <button class="right-panel-tab">AI Suggest</button>
+          </div>
+
+          <!-- Selected Code Details -->
+          <div class="panel-content">
+            <div class="selected-code-info">
+              <div class="selected-code-header">
+                <div class="selected-code-color" style="background-color: var(--code-color-1);"></div>
+                <div>
+                  <div class="selected-code-name">Work-life balance</div>
+                  <div class="selected-code-category">Workplace Experience</div>
+                </div>
+              </div>
+              <div class="selected-code-stats">
+                <div class="code-stat">
+                  <span class="code-stat-value">45</span>
+                  <span class="code-stat-label">Segments</span>
+                </div>
+                <div class="code-stat">
+                  <span class="code-stat-value">12</span>
+                  <span class="code-stat-label">Sources</span>
+                </div>
+                <div class="code-stat">
+                  <span class="code-stat-value">8</span>
+                  <span class="code-stat-label">Cases</span>
+                </div>
+              </div>
+            </div>
+
+            <div style="padding: var(--space-4);">
+              <h4 class="text-xs font-semibold text-muted mb-3">CODE MEMO</h4>
+              <p class="text-sm text-secondary mb-4">Experiences related to balancing work responsibilities with personal life, including time management, boundaries, and family time.</p>
+
+              <h4 class="text-xs font-semibold text-muted mb-3">EXAMPLE QUOTES</h4>
+              <div class="text-sm text-secondary" style="border-left: 3px solid var(--code-color-1); padding-left: var(--space-3); margin-bottom: var(--space-3);">
+                "I could finally have breakfast with my family and skip the long commute"
+              </div>
+              <div class="text-sm text-secondary" style="border-left: 3px solid var(--code-color-1); padding-left: var(--space-3);">
+                "When your home is your office, it's hard to disconnect"
+              </div>
+            </div>
+
+            <div style="padding: var(--space-4); border-top: 1px solid var(--surface-border);">
+              <h4 class="text-xs font-semibold text-muted mb-3">OVERLAPPING CODES</h4>
+              <div class="overlap-list">
+                <div class="overlap-item">
+                  <div class="overlap-color" style="background-color: var(--code-color-2);"></div>
+                  <span class="overlap-name">Remote challenges</span>
+                </div>
+                <div class="overlap-item">
+                  <div class="overlap-color" style="background-color: var(--code-color-5);"></div>
+                  <span class="overlap-name">Meeting fatigue</span>
+                </div>
+              </div>
+            </div>
+
+            <div style="padding: var(--space-4); border-top: 1px solid var(--surface-border);">
+              <h4 class="text-xs font-semibold text-muted mb-3">ACTIONS</h4>
+              <div class="flex flex-col gap-2">
+                <button class="btn btn-secondary btn-sm w-full">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                  </svg>
+                  Edit Code
+                </button>
+                <button class="btn btn-secondary btn-sm w-full">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="11" cy="11" r="8"/>
+                    <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                  </svg>
+                  Find Similar
+                </button>
+                <button class="btn btn-secondary btn-sm w-full">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M12 2L2 7l10 5 10-5-10-5z"/>
+                    <path d="M2 17l10 5 10-5"/>
+                  </svg>
+                  AI Auto-apply
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Selection Popup (shown when text is selected) -->
+  <div class="selection-popup" id="selectionPopup">
+    <button class="selection-popup-btn primary tooltip" data-tooltip="Apply code (Q)">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <polyline points="16,18 22,12 16,6"/>
+        <polyline points="8,6 2,12 8,18"/>
+      </svg>
+    </button>
+    <button class="selection-popup-btn tooltip" data-tooltip="New code from selection (V)">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <line x1="12" y1="5" x2="12" y2="19"/>
+        <line x1="5" y1="12" x2="19" y2="12"/>
+      </svg>
+    </button>
+    <button class="selection-popup-btn tooltip" data-tooltip="Add memo (M)">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+        <polyline points="14,2 14,8 20,8"/>
+        <line x1="16" y1="13" x2="8" y2="13"/>
+        <line x1="16" y1="17" x2="8" y2="17"/>
+      </svg>
+    </button>
+    <button class="selection-popup-btn tooltip" data-tooltip="Search for similar">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="11" cy="11" r="8"/>
+        <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+      </svg>
+    </button>
+  </div>
+
+  <script src="js/app.js"></script>
+  <script>
+    // Show selection popup when text is selected
+    const textContent = document.getElementById('textContent');
+    const selectionPopup = document.getElementById('selectionPopup');
+
+    textContent.addEventListener('mouseup', (e) => {
+      const selection = window.getSelection();
+      if (selection.toString().trim().length > 0) {
+        const range = selection.getRangeAt(0);
+        const rect = range.getBoundingClientRect();
+        selectionPopup.style.top = `${rect.top - 50}px`;
+        selectionPopup.style.left = `${rect.left + (rect.width / 2) - 80}px`;
+        selectionPopup.classList.add('visible');
+      } else {
+        selectionPopup.classList.remove('visible');
+      }
+    });
+
+    document.addEventListener('mousedown', (e) => {
+      if (!selectionPopup.contains(e.target)) {
+        selectionPopup.classList.remove('visible');
+      }
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,714 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>QualCoder v2 - Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/design-system.css">
+  <link rel="stylesheet" href="css/layout.css">
+  <link rel="stylesheet" href="css/components.css">
+  <style>
+    /* Dashboard-specific styles */
+    .dashboard-grid {
+      display: grid;
+      grid-template-columns: repeat(12, 1fr);
+      gap: var(--space-5);
+    }
+
+    .col-span-4 { grid-column: span 4; }
+    .col-span-6 { grid-column: span 6; }
+    .col-span-8 { grid-column: span 8; }
+    .col-span-12 { grid-column: span 12; }
+
+    @media (max-width: 1200px) {
+      .col-span-4, .col-span-6, .col-span-8 { grid-column: span 12; }
+    }
+
+    .welcome-banner {
+      background: linear-gradient(135deg, var(--color-primary-600), var(--color-accent-600));
+      color: white;
+      border-radius: var(--radius-xl);
+      padding: var(--space-6);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .welcome-banner::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      right: -20%;
+      width: 60%;
+      height: 200%;
+      background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+    }
+
+    .welcome-banner h2 {
+      font-size: var(--font-size-xl);
+      margin-bottom: var(--space-2);
+    }
+
+    .welcome-banner p {
+      opacity: 0.9;
+      margin-bottom: var(--space-4);
+    }
+
+    .welcome-banner .btn {
+      background-color: white;
+      color: var(--color-primary-700);
+    }
+
+    .welcome-banner .btn:hover {
+      background-color: var(--color-gray-100);
+    }
+
+    .quick-action-card {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: var(--space-5);
+      background-color: var(--surface-card);
+      border: 1px solid var(--surface-border);
+      border-radius: var(--radius-lg);
+      text-align: center;
+      cursor: pointer;
+      transition: all var(--transition-fast);
+    }
+
+    .quick-action-card:hover {
+      border-color: var(--color-primary-300);
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-md);
+    }
+
+    .quick-action-icon {
+      width: 48px;
+      height: 48px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: var(--radius-lg);
+      margin-bottom: var(--space-3);
+    }
+
+    .quick-action-card:nth-child(1) .quick-action-icon {
+      background-color: var(--color-primary-100);
+      color: var(--color-primary-600);
+    }
+
+    .quick-action-card:nth-child(2) .quick-action-icon {
+      background-color: var(--color-accent-100);
+      color: var(--color-accent-600);
+    }
+
+    .quick-action-card:nth-child(3) .quick-action-icon {
+      background-color: var(--color-warning-50);
+      color: var(--color-warning-600);
+    }
+
+    .quick-action-card:nth-child(4) .quick-action-icon {
+      background-color: var(--color-info-50);
+      color: var(--color-info-600);
+    }
+
+    .recent-activity-item {
+      display: flex;
+      align-items: flex-start;
+      gap: var(--space-3);
+      padding: var(--space-3);
+      border-radius: var(--radius-md);
+      transition: background-color var(--transition-fast);
+    }
+
+    .recent-activity-item:hover {
+      background-color: var(--surface-hover);
+    }
+
+    .activity-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: var(--radius-md);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .activity-icon.code { background-color: var(--color-primary-100); color: var(--color-primary-600); }
+    .activity-icon.source { background-color: var(--color-info-50); color: var(--color-info-600); }
+    .activity-icon.case { background-color: var(--color-success-50); color: var(--color-success-600); }
+    .activity-icon.ai { background-color: var(--color-accent-100); color: var(--color-accent-600); }
+
+    .activity-content {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .activity-text {
+      font-size: var(--font-size-sm);
+      margin-bottom: var(--space-1);
+    }
+
+    .activity-time {
+      font-size: var(--font-size-xs);
+      color: var(--text-muted);
+    }
+
+    .coding-progress-item {
+      display: flex;
+      align-items: center;
+      gap: var(--space-3);
+      padding: var(--space-3) 0;
+      border-bottom: 1px solid var(--surface-border);
+    }
+
+    .coding-progress-item:last-child {
+      border-bottom: none;
+    }
+
+    .progress-file-icon {
+      width: 32px;
+      height: 32px;
+      border-radius: var(--radius-md);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background-color: var(--surface-section);
+      color: var(--text-secondary);
+    }
+
+    .progress-file-info {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .progress-file-name {
+      font-size: var(--font-size-sm);
+      font-weight: var(--font-weight-medium);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .progress-file-meta {
+      font-size: var(--font-size-xs);
+      color: var(--text-muted);
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <!-- Sidebar Navigation -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-header">
+        <a href="#" class="sidebar-logo">
+          <div class="sidebar-logo-icon">Q</div>
+          <span class="sidebar-logo-text">QualCoder</span>
+        </a>
+      </div>
+
+      <div class="sidebar-user">
+        <div class="sidebar-user-avatar">JD</div>
+        <div class="sidebar-user-info">
+          <div class="sidebar-user-name">Jane Doe</div>
+          <div class="sidebar-user-role">Primary Researcher</div>
+        </div>
+      </div>
+
+      <nav class="sidebar-nav">
+        <div class="sidebar-nav-section">
+          <div class="sidebar-nav-title">Workspace</div>
+          <a href="dashboard.html" class="sidebar-nav-item active">
+            <svg class="sidebar-nav-item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="3" width="7" height="7" rx="1"/>
+              <rect x="14" y="3" width="7" height="7" rx="1"/>
+              <rect x="3" y="14" width="7" height="7" rx="1"/>
+              <rect x="14" y="14" width="7" height="7" rx="1"/>
+            </svg>
+            <span class="sidebar-nav-item-text">Dashboard</span>
+          </a>
+          <a href="sources.html" class="sidebar-nav-item">
+            <svg class="sidebar-nav-item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/>
+              <polyline points="14,2 14,8 20,8"/>
+            </svg>
+            <span class="sidebar-nav-item-text">Sources</span>
+            <span class="sidebar-nav-item-badge">24</span>
+          </a>
+          <a href="coding.html" class="sidebar-nav-item">
+            <svg class="sidebar-nav-item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="16,18 22,12 16,6"/>
+              <polyline points="8,6 2,12 8,18"/>
+            </svg>
+            <span class="sidebar-nav-item-text">Coding</span>
+          </a>
+          <a href="cases.html" class="sidebar-nav-item">
+            <svg class="sidebar-nav-item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+              <circle cx="9" cy="7" r="4"/>
+              <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+              <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+            </svg>
+            <span class="sidebar-nav-item-text">Cases</span>
+            <span class="sidebar-nav-item-badge">12</span>
+          </a>
+        </div>
+
+        <div class="sidebar-nav-section">
+          <div class="sidebar-nav-title">Analysis</div>
+          <a href="analysis.html" class="sidebar-nav-item">
+            <svg class="sidebar-nav-item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="18" y1="20" x2="18" y2="10"/>
+              <line x1="12" y1="20" x2="12" y2="4"/>
+              <line x1="6" y1="20" x2="6" y2="14"/>
+            </svg>
+            <span class="sidebar-nav-item-text">Insights</span>
+          </a>
+          <a href="#" class="sidebar-nav-item">
+            <svg class="sidebar-nav-item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"/>
+              <path d="M12 6v6l4 2"/>
+            </svg>
+            <span class="sidebar-nav-item-text">Reports</span>
+          </a>
+        </div>
+
+        <div class="sidebar-nav-section">
+          <div class="sidebar-nav-title">AI Assistant</div>
+          <a href="#" class="sidebar-nav-item">
+            <svg class="sidebar-nav-item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M12 2L2 7l10 5 10-5-10-5z"/>
+              <path d="M2 17l10 5 10-5"/>
+              <path d="M2 12l10 5 10-5"/>
+            </svg>
+            <span class="sidebar-nav-item-text">AI Coding</span>
+            <span class="badge badge-primary">New</span>
+          </a>
+          <a href="#" class="sidebar-nav-item">
+            <svg class="sidebar-nav-item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+            </svg>
+            <span class="sidebar-nav-item-text">Ask AI</span>
+          </a>
+        </div>
+      </nav>
+
+      <div class="sidebar-footer">
+        <a href="#" class="sidebar-nav-item">
+          <svg class="sidebar-nav-item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="3"/>
+            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+          </svg>
+          <span class="sidebar-nav-item-text">Settings</span>
+        </a>
+        <button class="sidebar-toggle" onclick="toggleSidebar()">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="11,17 6,12 11,7"/>
+            <polyline points="18,17 13,12 18,7"/>
+          </svg>
+        </button>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main">
+      <!-- Header -->
+      <header class="header">
+        <div class="header-left">
+          <h1 class="header-title">Dashboard</h1>
+        </div>
+        <div class="header-center">
+          <div class="header-search" style="max-width: 400px; width: 100%;">
+            <input type="text" class="input search-input" placeholder="Search codes, sources, cases... (Ctrl+K)">
+          </div>
+        </div>
+        <div class="header-right">
+          <button class="btn btn-ghost btn-icon tooltip" data-tooltip="Notifications">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+              <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+            </svg>
+          </button>
+          <button class="btn btn-ghost btn-icon" onclick="toggleTheme()">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="5"/>
+              <line x1="12" y1="1" x2="12" y2="3"/>
+              <line x1="12" y1="21" x2="12" y2="23"/>
+              <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/>
+              <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+              <line x1="1" y1="12" x2="3" y2="12"/>
+              <line x1="21" y1="12" x2="23" y2="12"/>
+              <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/>
+              <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+            </svg>
+          </button>
+          <button class="btn btn-primary">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="12" y1="5" x2="12" y2="19"/>
+              <line x1="5" y1="12" x2="19" y2="12"/>
+            </svg>
+            Import
+          </button>
+        </div>
+      </header>
+
+      <!-- Page Content -->
+      <div class="page">
+        <div class="dashboard-grid">
+          <!-- Welcome Banner -->
+          <div class="col-span-8">
+            <div class="welcome-banner">
+              <h2>Welcome back, Jane!</h2>
+              <p>You have 3 sources ready for coding and 2 AI suggestions to review.</p>
+              <div class="flex gap-3">
+                <a href="coding.html" class="btn">Continue Coding</a>
+                <button class="btn" style="background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.3);">
+                  View AI Suggestions
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Project Stats -->
+          <div class="col-span-4">
+            <div class="card h-full">
+              <div class="card-header">
+                <h3 class="text-sm font-semibold">Project Overview</h3>
+              </div>
+              <div class="card-body">
+                <div class="flex flex-col gap-4">
+                  <div class="flex items-center justify-between">
+                    <span class="text-sm text-secondary">Sources</span>
+                    <span class="font-semibold">24</span>
+                  </div>
+                  <div class="flex items-center justify-between">
+                    <span class="text-sm text-secondary">Codes</span>
+                    <span class="font-semibold">156</span>
+                  </div>
+                  <div class="flex items-center justify-between">
+                    <span class="text-sm text-secondary">Cases</span>
+                    <span class="font-semibold">12</span>
+                  </div>
+                  <div class="flex items-center justify-between">
+                    <span class="text-sm text-secondary">Segments</span>
+                    <span class="font-semibold">892</span>
+                  </div>
+                  <div class="mt-2">
+                    <div class="flex items-center justify-between mb-2">
+                      <span class="text-xs text-muted">Coding Progress</span>
+                      <span class="text-xs font-medium">68%</span>
+                    </div>
+                    <div class="progress">
+                      <div class="progress-bar" style="width: 68%;"></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Quick Actions -->
+          <div class="col-span-12">
+            <h3 class="text-sm font-semibold mb-4">Quick Actions</h3>
+            <div class="grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: var(--space-4);">
+              <div class="quick-action-card">
+                <div class="quick-action-icon">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/>
+                    <polyline points="14,2 14,8 20,8"/>
+                    <line x1="12" y1="18" x2="12" y2="12"/>
+                    <line x1="9" y1="15" x2="15" y2="15"/>
+                  </svg>
+                </div>
+                <span class="font-medium text-sm">Import Source</span>
+                <span class="text-xs text-muted mt-1">Add new documents</span>
+              </div>
+              <div class="quick-action-card">
+                <div class="quick-action-icon">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="16,18 22,12 16,6"/>
+                    <polyline points="8,6 2,12 8,18"/>
+                  </svg>
+                </div>
+                <span class="font-medium text-sm">Start Coding</span>
+                <span class="text-xs text-muted mt-1">Code your sources</span>
+              </div>
+              <div class="quick-action-card">
+                <div class="quick-action-icon">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M12 2L2 7l10 5 10-5-10-5z"/>
+                    <path d="M2 17l10 5 10-5"/>
+                    <path d="M2 12l10 5 10-5"/>
+                  </svg>
+                </div>
+                <span class="font-medium text-sm">AI Auto-Code</span>
+                <span class="text-xs text-muted mt-1">Let AI suggest codes</span>
+              </div>
+              <div class="quick-action-card">
+                <div class="quick-action-icon">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="18" y1="20" x2="18" y2="10"/>
+                    <line x1="12" y1="20" x2="12" y2="4"/>
+                    <line x1="6" y1="20" x2="6" y2="14"/>
+                  </svg>
+                </div>
+                <span class="font-medium text-sm">View Insights</span>
+                <span class="text-xs text-muted mt-1">Analyze your data</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Recent Activity -->
+          <div class="col-span-6">
+            <div class="card">
+              <div class="card-header flex items-center justify-between">
+                <h3 class="text-sm font-semibold">Recent Activity</h3>
+                <a href="#" class="text-xs text-primary">View all</a>
+              </div>
+              <div class="card-body p-0">
+                <div class="recent-activity-item">
+                  <div class="activity-icon code">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <polyline points="16,18 22,12 16,6"/>
+                      <polyline points="8,6 2,12 8,18"/>
+                    </svg>
+                  </div>
+                  <div class="activity-content">
+                    <div class="activity-text">Applied code <span class="badge badge-primary">Work-life balance</span> to 3 segments</div>
+                    <div class="activity-time">2 minutes ago</div>
+                  </div>
+                </div>
+                <div class="recent-activity-item">
+                  <div class="activity-icon source">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/>
+                      <polyline points="14,2 14,8 20,8"/>
+                    </svg>
+                  </div>
+                  <div class="activity-content">
+                    <div class="activity-text">Imported <strong>Interview_P12.txt</strong></div>
+                    <div class="activity-time">15 minutes ago</div>
+                  </div>
+                </div>
+                <div class="recent-activity-item">
+                  <div class="activity-icon ai">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M12 2L2 7l10 5 10-5-10-5z"/>
+                      <path d="M2 17l10 5 10-5"/>
+                    </svg>
+                  </div>
+                  <div class="activity-content">
+                    <div class="activity-text">AI suggested 5 new code applications</div>
+                    <div class="activity-time">1 hour ago</div>
+                  </div>
+                </div>
+                <div class="recent-activity-item">
+                  <div class="activity-icon case">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                      <circle cx="9" cy="7" r="4"/>
+                    </svg>
+                  </div>
+                  <div class="activity-content">
+                    <div class="activity-text">Created case <strong>Participant 12</strong></div>
+                    <div class="activity-time">2 hours ago</div>
+                  </div>
+                </div>
+                <div class="recent-activity-item">
+                  <div class="activity-icon code">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <line x1="12" y1="5" x2="12" y2="19"/>
+                      <line x1="5" y1="12" x2="19" y2="12"/>
+                    </svg>
+                  </div>
+                  <div class="activity-content">
+                    <div class="activity-text">Created new code <span class="badge badge-primary">Remote work challenges</span></div>
+                    <div class="activity-time">3 hours ago</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Coding Progress -->
+          <div class="col-span-6">
+            <div class="card">
+              <div class="card-header flex items-center justify-between">
+                <h3 class="text-sm font-semibold">Sources to Code</h3>
+                <a href="sources.html" class="text-xs text-primary">View all</a>
+              </div>
+              <div class="card-body">
+                <div class="coding-progress-item">
+                  <div class="progress-file-icon">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/>
+                    </svg>
+                  </div>
+                  <div class="progress-file-info">
+                    <div class="progress-file-name">Interview_P12.txt</div>
+                    <div class="progress-file-meta">2,450 words - Not started</div>
+                  </div>
+                  <span class="badge badge-warning">Pending</span>
+                </div>
+                <div class="coding-progress-item">
+                  <div class="progress-file-icon">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/>
+                    </svg>
+                  </div>
+                  <div class="progress-file-info">
+                    <div class="progress-file-name">Focus_Group_Session2.txt</div>
+                    <div class="progress-file-meta">4,120 words - 35% coded</div>
+                  </div>
+                  <div class="progress" style="width: 60px; height: 6px;">
+                    <div class="progress-bar" style="width: 35%;"></div>
+                  </div>
+                </div>
+                <div class="coding-progress-item">
+                  <div class="progress-file-icon">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/>
+                    </svg>
+                  </div>
+                  <div class="progress-file-info">
+                    <div class="progress-file-name">Survey_OpenEnded.txt</div>
+                    <div class="progress-file-meta">1,890 words - 72% coded</div>
+                  </div>
+                  <div class="progress" style="width: 60px; height: 6px;">
+                    <div class="progress-bar" style="width: 72%;"></div>
+                  </div>
+                </div>
+                <div class="coding-progress-item">
+                  <div class="progress-file-icon">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <rect x="3" y="3" width="18" height="18" rx="2"/>
+                      <circle cx="8.5" cy="8.5" r="1.5"/>
+                      <polyline points="21,15 16,10 5,21"/>
+                    </svg>
+                  </div>
+                  <div class="progress-file-info">
+                    <div class="progress-file-name">Whiteboard_Photo.jpg</div>
+                    <div class="progress-file-meta">Image - Not started</div>
+                  </div>
+                  <span class="badge badge-warning">Pending</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Top Codes -->
+          <div class="col-span-6">
+            <div class="card">
+              <div class="card-header flex items-center justify-between">
+                <h3 class="text-sm font-semibold">Most Used Codes</h3>
+                <a href="#" class="text-xs text-primary">Manage codes</a>
+              </div>
+              <div class="card-body">
+                <div class="bar-chart">
+                  <div class="bar-chart-item">
+                    <span class="bar-chart-label">Work-life balance</span>
+                    <div class="bar-chart-track">
+                      <div class="bar-chart-fill" style="width: 85%; background-color: var(--code-color-1);">45</div>
+                    </div>
+                  </div>
+                  <div class="bar-chart-item">
+                    <span class="bar-chart-label">Remote challenges</span>
+                    <div class="bar-chart-track">
+                      <div class="bar-chart-fill" style="width: 72%; background-color: var(--code-color-2);">38</div>
+                    </div>
+                  </div>
+                  <div class="bar-chart-item">
+                    <span class="bar-chart-label">Team collaboration</span>
+                    <div class="bar-chart-track">
+                      <div class="bar-chart-fill" style="width: 60%; background-color: var(--code-color-3);">32</div>
+                    </div>
+                  </div>
+                  <div class="bar-chart-item">
+                    <span class="bar-chart-label">Technology issues</span>
+                    <div class="bar-chart-track">
+                      <div class="bar-chart-fill" style="width: 48%; background-color: var(--code-color-4);">25</div>
+                    </div>
+                  </div>
+                  <div class="bar-chart-item">
+                    <span class="bar-chart-label">Management support</span>
+                    <div class="bar-chart-track">
+                      <div class="bar-chart-fill" style="width: 36%; background-color: var(--code-color-5);">19</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- AI Suggestions Panel -->
+          <div class="col-span-6">
+            <div class="ai-panel">
+              <div class="ai-panel-header">
+                <svg class="ai-panel-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M12 2L2 7l10 5 10-5-10-5z"/>
+                  <path d="M2 17l10 5 10-5"/>
+                  <path d="M2 12l10 5 10-5"/>
+                </svg>
+                <span class="ai-panel-title">AI Coding Assistant</span>
+                <div class="ai-panel-status">
+                  <div class="ai-panel-status-dot"></div>
+                  Active
+                </div>
+              </div>
+              <div class="ai-panel-body">
+                <div class="ai-suggestion-card">
+                  <div class="ai-suggestion-header">
+                    <div class="ai-suggestion-code">
+                      <span class="code-tag" style="background-color: var(--code-color-1); color: white;">
+                        <span class="color-dot" style="background-color: white;"></span>
+                        Communication barriers
+                      </span>
+                    </div>
+                    <span class="ai-suggestion-confidence">92% confidence</span>
+                  </div>
+                  <div class="ai-suggestion-text">
+                    "...the biggest challenge is that we can't just walk over to someone's desk anymore. Messages get lost in Slack..."
+                  </div>
+                  <div class="ai-suggestion-actions">
+                    <button class="btn btn-sm btn-primary">Apply</button>
+                    <button class="btn btn-sm btn-secondary">Dismiss</button>
+                    <button class="btn btn-sm btn-ghost">View in context</button>
+                  </div>
+                </div>
+                <div class="ai-suggestion-card">
+                  <div class="ai-suggestion-header">
+                    <div class="ai-suggestion-code">
+                      <span class="code-tag" style="background-color: var(--code-color-2); color: white;">
+                        <span class="color-dot" style="background-color: white;"></span>
+                        Flexibility benefits
+                      </span>
+                    </div>
+                    <span class="ai-suggestion-confidence">88% confidence</span>
+                  </div>
+                  <div class="ai-suggestion-text">
+                    "I love being able to pick up my kids from school now. That was never possible before..."
+                  </div>
+                  <div class="ai-suggestion-actions">
+                    <button class="btn btn-sm btn-primary">Apply</button>
+                    <button class="btn btn-sm btn-secondary">Dismiss</button>
+                    <button class="btn btn-sm btn-ghost">View in context</button>
+                  </div>
+                </div>
+                <div class="text-center mt-4">
+                  <button class="btn btn-secondary">View all 5 suggestions</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script src="js/app.js"></script>
+</body>
+</html>
