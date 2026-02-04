@@ -37,7 +37,7 @@ Structure:
 from dataclasses import dataclass
 from typing import Any
 
-from PySide6.QtCore import Signal
+from PySide6.QtCore import Qt, Signal
 from PySide6.QtGui import QKeySequence, QShortcut
 from PySide6.QtWidgets import QVBoxLayout, QWidget
 from returns.result import Success
@@ -498,6 +498,10 @@ class TextCodingScreen(QWidget):
     def _register_shortcut(self, key: str, callback):
         """Register a keyboard shortcut."""
         shortcut = QShortcut(QKeySequence(key), self)
+        # Use WidgetWithChildrenShortcut so shortcuts work when focus is on
+        # child widgets (e.g., the text editor). Default WidgetShortcut only
+        # works when THIS widget has focus, not children.
+        shortcut.setContext(Qt.ShortcutContext.WidgetWithChildrenShortcut)
         shortcut.activated.connect(callback)
         self._shortcuts[key] = shortcut
 
