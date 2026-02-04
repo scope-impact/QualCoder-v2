@@ -1,0 +1,2 @@
+WARNING  pypdf._reader:_utils.py:457 incorrect startxref pointer(1)
+WARNING  pypdf._reader:_utils.py:457 parsing for Object Streams

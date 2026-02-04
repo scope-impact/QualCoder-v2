@@ -1,0 +1,1 @@
+WARNING  src.shared.infra.app_context.context:context.py:122 AppContext.stop() called but not started
