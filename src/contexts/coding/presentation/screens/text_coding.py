@@ -299,16 +299,8 @@ class TextCodingScreen(QWidget):
 
     def _on_viewmodel_segments_changed(self, segments: list[dict]):
         """Handle segments_changed from viewmodel - update highlights."""
-        # Clear existing highlights
-        self._page.editor_panel.clear_highlights()
-
-        # Apply new highlights
-        for seg in segments:
-            self._page.editor_panel.highlight_range(
-                start=seg["start"],
-                end=seg["end"],
-                color=seg["color"],
-            )
+        # Use batch method for efficiency (avoids O(n²) overlap checks per highlight)
+        self._page.editor_panel.set_highlights(segments)
 
     def set_current_source(self, source_id: int):
         """

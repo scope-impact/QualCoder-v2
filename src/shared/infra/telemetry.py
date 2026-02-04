@@ -21,13 +21,22 @@ Usage:
 from __future__ import annotations
 
 import functools
+import json
+import os
 from collections.abc import Callable
+from datetime import datetime
+from pathlib import Path
 from typing import TYPE_CHECKING, ParamSpec, TypeVar
 
 from opentelemetry import trace
 from opentelemetry.sdk.resources import Resource
-from opentelemetry.sdk.trace import TracerProvider
-from opentelemetry.sdk.trace.export import BatchSpanProcessor, ConsoleSpanExporter
+from opentelemetry.sdk.trace import ReadableSpan, TracerProvider
+from opentelemetry.sdk.trace.export import (
+    BatchSpanProcessor,
+    ConsoleSpanExporter,
+    SpanExporter,
+    SpanExportResult,
+)
 
 if TYPE_CHECKING:
     from opentelemetry.trace import Span
@@ -38,6 +47,53 @@ P = ParamSpec("P")
 R = TypeVar("R")
 
 # -----------------------------------------------------------------------------
+# File Exporter
+# -----------------------------------------------------------------------------
+
+
+class FileSpanExporter(SpanExporter):
+    """Exports spans to a JSON file for development debugging."""
+
+    def __init__(self, file_path: str | Path) -> None:
+        self.file_path = Path(file_path)
+        self.file_path.parent.mkdir(parents=True, exist_ok=True)
+        # Clear file on init
+        self.file_path.write_text("")
+
+    def export(self, spans: list[ReadableSpan]) -> SpanExportResult:
+        try:
+            with open(self.file_path, "a") as f:
+                for span in spans:
+                    span_data = {
+                        "timestamp": datetime.now().isoformat(),
+                        "name": span.name,
+                        "trace_id": format(span.context.trace_id, "032x"),
+                        "span_id": format(span.context.span_id, "016x"),
+                        "parent_id": (
+                            format(span.parent.span_id, "016x")
+                            if span.parent
+                            else None
+                        ),
+                        "start_time": span.start_time,
+                        "end_time": span.end_time,
+                        "duration_ms": (
+                            (span.end_time - span.start_time) / 1_000_000
+                            if span.end_time and span.start_time
+                            else None
+                        ),
+                        "attributes": dict(span.attributes) if span.attributes else {},
+                        "status": span.status.status_code.name,
+                    }
+                    f.write(json.dumps(span_data) + "\n")
+            return SpanExportResult.SUCCESS
+        except Exception:
+            return SpanExportResult.FAILURE
+
+    def shutdown(self) -> None:
+        pass
+
+
+# -----------------------------------------------------------------------------
 # Setup
 # -----------------------------------------------------------------------------
 
@@ -45,15 +101,34 @@ _initialized = False
 _sqlalchemy_instrumented = False
 
 
+def _is_dev_mode() -> bool:
+    """Check if running in development mode (not packaged)."""
+    # Check if running from source (not frozen/packaged)
+    import sys
+
+    if getattr(sys, "frozen", False):
+        return False
+    # Check for common dev indicators
+    if os.environ.get("QUALCODER_DEV"):
+        return True
+    # Check if running from a git repo
+    return Path(__file__).parents[3].joinpath(".git").exists()
+
+
 def init_telemetry(
-    service_name: str = "qualcoder", enable_console: bool = True
+    service_name: str = "qualcoder",
+    enable_console: bool = False,
+    log_file: str | Path | None = None,
 ) -> None:
     """
     Initialize OpenTelemetry tracing.
 
+    In dev mode (not packaged), automatically logs to ~/.qualcoder/telemetry.jsonl
+
     Args:
         service_name: Name of the service for traces
         enable_console: Whether to export spans to console
+        log_file: Optional file path for span logging (auto-set in dev mode)
     """
     global _initialized
     if _initialized:
@@ -62,9 +137,17 @@ def init_telemetry(
     resource = Resource.create({"service.name": service_name})
     provider = TracerProvider(resource=resource)
 
+    # In dev mode, log to file by default
+    if _is_dev_mode() and log_file is None:
+        log_file = Path.home() / ".qualcoder" / "telemetry.jsonl"
+
+    if log_file:
+        file_processor = BatchSpanProcessor(FileSpanExporter(log_file))
+        provider.add_span_processor(file_processor)
+
     if enable_console:
-        processor = BatchSpanProcessor(ConsoleSpanExporter())
-        provider.add_span_processor(processor)
+        console_processor = BatchSpanProcessor(ConsoleSpanExporter())
+        provider.add_span_processor(console_processor)
 
     trace.set_tracer_provider(provider)
     _initialized = True
@@ -192,11 +275,12 @@ class SpanContext:
         self.name = name
         self.attributes = attributes or {}
         self._span: Span | None = None
-        self._token = None
+        self._context_manager = None
 
     def __enter__(self) -> Span:
         self._span = tracer.start_span(self.name)
-        self._token = trace.use_span(self._span, end_on_exit=True).__enter__()
+        self._context_manager = trace.use_span(self._span, end_on_exit=True)
+        self._context_manager.__enter__()
         for key, value in self.attributes.items():
             self._span.set_attribute(key, value)
         return self._span
@@ -205,10 +289,8 @@ class SpanContext:
         if exc_type is not None and self._span:
             self._span.record_exception(exc_val)
             self._span.set_status(trace.Status(trace.StatusCode.ERROR, str(exc_val)))
-        if self._token:
-            trace.use_span(self._span, end_on_exit=True).__exit__(
-                exc_type, exc_val, exc_tb
-            )
+        if self._context_manager:
+            self._context_manager.__exit__(exc_type, exc_val, exc_tb)
 
 
 # Alias for convenience

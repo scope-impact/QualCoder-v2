@@ -178,8 +178,9 @@ class TextCodingViewModel(QObject):
         return self._segments_to_highlight_info(segments)
 
     def set_current_source(self, source_id: int) -> None:
-        """Set the current source being viewed."""
+        """Set the current source being viewed and load its segments."""
         self._current_source_id = source_id
+        self._emit_segments_changed()
 
     # =========================================================================
     # Public API - Commands

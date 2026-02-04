@@ -58,6 +58,9 @@ from src.shared.presentation.molecules.editor import LineNumberGutter
 from src.shared.presentation.molecules.highlighting import OverlapDetector
 from src.shared.presentation.molecules.selection import SelectionPopupController
 
+# Telemetry
+from src.shared.infra.telemetry import SpanContext, traced
+
 
 @dataclass
 class HighlightRange:
@@ -383,52 +386,57 @@ class TextEditorPanel(QFrame):
         Args:
             highlights: List of dicts with keys: start, end, color, memo (optional)
         """
-        # Save cursor position and scroll
-        cursor = self._text_edit.textCursor()
-        original_pos = cursor.position()
-        scrollbar = self._text_edit.verticalScrollBar()
-        scroll_pos = scrollbar.value() if scrollbar else 0
+        with SpanContext("set_highlights", {"segment_count": len(highlights)}) as span:
+            # Save cursor position and scroll
+            cursor = self._text_edit.textCursor()
+            original_pos = cursor.position()
+            scrollbar = self._text_edit.verticalScrollBar()
+            scroll_pos = scrollbar.value() if scrollbar else 0
 
-        # Block signals to prevent UI thrashing
-        self._text_edit.blockSignals(True)
+            # Block signals to prevent UI thrashing
+            self._text_edit.blockSignals(True)
 
-        try:
-            # Clear existing highlights (without setTextCursor)
-            self._highlights.clear()
-            text = self._text_edit.toPlainText()
-            if text:
-                clear_cursor = self._text_edit.textCursor()
-                clear_cursor.setPosition(0, QTextCursor.MoveMode.MoveAnchor)
-                clear_cursor.setPosition(len(text), QTextCursor.MoveMode.KeepAnchor)
-                clear_cursor.setCharFormat(QTextCharFormat())
-                # Don't call setTextCursor - preserves original cursor
+            try:
+                # Clear existing highlights (without setTextCursor)
+                with SpanContext("clear_highlights"):
+                    self._highlights.clear()
+                    text = self._text_edit.toPlainText()
 
-            # Apply all highlights without overlap checking
-            for h in highlights:
-                start = h["start"]
-                end = h["end"]
-                color = h["color"]
-                memo = h.get("memo", "")
+                    if text:
+                        clear_cursor = self._text_edit.textCursor()
+                        clear_cursor.setPosition(0, QTextCursor.MoveMode.MoveAnchor)
+                        clear_cursor.setPosition(len(text), QTextCursor.MoveMode.KeepAnchor)
+                        clear_cursor.setCharFormat(QTextCharFormat())
 
-                if start >= end or start < 0 or start >= len(text):
-                    continue
-                if end > len(text):
-                    end = len(text)
+                # Apply all highlights without overlap checking
+                with SpanContext("apply_highlights") as apply_span:
+                    for h in highlights:
+                        start = h["start"]
+                        end = h["end"]
+                        color = h["color"]
+                        memo = h.get("memo", "")
 
-                highlight = HighlightRange(start=start, end=end, color=color, memo=memo)
-                self._highlights.append(highlight)
-                self._apply_highlight(highlight)
+                        if start >= end or start < 0 or start >= len(text):
+                            continue
+                        if end > len(text):
+                            end = len(text)
 
-            # Check overlaps only once at the end
-            self._apply_overlap_underlines()
+                        highlight = HighlightRange(start=start, end=end, color=color, memo=memo)
+                        self._highlights.append(highlight)
+                        self._apply_highlight(highlight)
 
-        finally:
-            # Restore cursor and scroll
-            self._text_edit.blockSignals(False)
-            cursor.setPosition(original_pos)
-            self._text_edit.setTextCursor(cursor)
-            if scrollbar:
-                scrollbar.setValue(scroll_pos)
+                    apply_span.set_attribute("applied_count", len(self._highlights))
+
+                # Check overlaps only once at the end
+                self._apply_overlap_underlines()
+
+            finally:
+                # Restore cursor and scroll
+                self._text_edit.blockSignals(False)
+                cursor.setPosition(original_pos)
+                self._text_edit.setTextCursor(cursor)
+                if scrollbar:
+                    scrollbar.setValue(scroll_pos)
 
     def _apply_highlight(self, highlight: HighlightRange):
         """Apply formatting for a single highlight."""
@@ -484,6 +492,7 @@ class TextEditorPanel(QFrame):
     # Public API - Overlap Detection (AC #3, #5)
     # =========================================================================
 
+    @traced("get_overlap_regions")
     def get_overlap_regions(self) -> list[tuple[int, int]]:
         """
         Detect and return overlapping highlight regions.
@@ -496,6 +505,7 @@ class TextEditorPanel(QFrame):
         overlaps = self._overlap_detector.find_overlaps(self._highlights)
         return [(r.start, r.end) for r in overlaps]
 
+    @traced("apply_overlap_underlines")
     def _apply_overlap_underlines(self):
         """
         Apply underline to overlapping regions.

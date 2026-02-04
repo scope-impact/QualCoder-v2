@@ -27,6 +27,7 @@ from src.shared.common.types import SourceId
 from src.shared.infra.app_context import create_app_context
 from src.shared.infra.mcp_server import MCPServerManager
 from src.shared.infra.signal_bridge.projects import ProjectSignalBridge
+from src.shared.infra.telemetry import init_telemetry
 from src.shared.presentation import create_empty_text_coding_data
 
 # Shared presentation imports
@@ -45,6 +46,9 @@ class QualCoderApp:
     """
 
     def __init__(self):
+        # Initialize telemetry for performance monitoring (logs to file in dev mode)
+        init_telemetry(service_name="qualcoder")
+
         self._app = QApplication(sys.argv)
         self._colors = get_colors()
         self._ctx = create_app_context()
