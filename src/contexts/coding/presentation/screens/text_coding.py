@@ -212,6 +212,11 @@ class TextCodingScreen(QWidget):
         self._page.media_type_changed.connect(self.media_type_changed.emit)
         self._page.search_changed.connect(self.search_changed.emit)
 
+        # Connect codes panel + button to code_created signal
+        self._page.codes_panel.add_code_clicked.connect(
+            lambda: self.code_created.emit("")
+        )
+
         # Connect popup action signals from editor panel
         self._page.editor_panel.popup_code_clicked.connect(self.quick_mark)
         self._page.editor_panel.popup_in_vivo_clicked.connect(self.in_vivo_code)

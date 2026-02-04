@@ -14,6 +14,23 @@ A **code** represents a concept, theme, or category in your data. Each code has:
 
 ### Create a New Code
 
+There are two ways to create a new code:
+
+**Method 1: Keyboard Shortcut (Recommended)**
+
+1. In the **Coding** screen, press ++n++
+2. The Create Code dialog opens
+3. Enter a code name
+4. Select a color from the palette
+5. Optionally add a description
+6. Click **Create Code**
+
+![Create Code Dialog](images/create-code-dialog.png)
+
+*The Create Code dialog - press N while coding to open it.*
+
+**Method 2: Plus Button**
+
 1. In the **Coding** screen, click the **+** button
 2. Enter a code name
 3. Select a color from the color picker

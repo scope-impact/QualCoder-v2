@@ -39,11 +39,13 @@ class CodesPanel(QFrame):
         code_selected(dict): Emitted when a code is selected, with code data
         navigation_clicked(str): Emitted when navigation button is clicked (prev, next, all)
         code_move_requested(str, str): Emitted when drag-drop move is requested (code_id, category_id)
+        add_code_clicked(): Emitted when the + button is clicked
     """
 
     code_selected = Signal(dict)
     navigation_clicked = Signal(str)
     code_move_requested = Signal(str, str)  # code_id, target_category_id
+    add_code_clicked = Signal()
 
     # Max number of recent codes to track
     MAX_RECENT_CODES = 10
@@ -88,7 +90,11 @@ class CodesPanel(QFrame):
 
         # Header
         header = PanelHeader("Codes", icon="mdi6.label", colors=self._colors)
-        header.add_action("mdi6.plus", tooltip="Add code")
+        header.add_action(
+            "mdi6.plus",
+            tooltip="Add code",
+            on_click=lambda: self.add_code_clicked.emit(),
+        )
         header.add_action("mdi6.magnify", tooltip="Search codes")
         header.add_action("mdi6.unfold-more-horizontal", tooltip="Expand all")
         layout.addWidget(header)

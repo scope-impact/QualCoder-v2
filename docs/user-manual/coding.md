@@ -107,16 +107,36 @@ You can apply multiple codes to the same text:
 
 The segment will show a combined color and list all applied codes on hover.
 
+## Creating Codes While Coding
+
+You can create new codes without leaving the coding screen:
+
+1. Press ++n++ to open the **Create Code** dialog
+2. Enter a code name
+3. Select a color from the palette
+4. Optionally add a description
+5. Click **Create Code**
+
+![Create Code Dialog](images/create-code-dialog.png)
+
+*The Create Code dialog opened via the N key shortcut.*
+
+The new code is immediately available for use and can be applied to your current selection.
+
+!!! tip "In-Vivo Coding"
+    Press ++v++ to create a code from your selected text. The selection becomes the code name automatically.
+
 ## Keyboard Shortcuts
 
 | Action | Shortcut |
 |--------|----------|
 | Quick Mark | ++q++ |
+| New Code | ++n++ |
+| In-Vivo Code | ++v++ |
+| Unmark | ++u++ |
 | Undo | ++cmd+z++ / ++ctrl+z++ |
 | Redo | ++cmd+shift+z++ / ++ctrl+y++ |
 | Remove Code | ++delete++ |
-| Next Segment | ++n++ |
-| Previous Segment | ++p++ |
 
 ## Best Practices
 
