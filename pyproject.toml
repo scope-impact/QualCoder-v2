@@ -23,6 +23,8 @@ dependencies = [
     "python-docx>=1.0",
     # OpenDocument extraction (Apache-2.0 license)
     "odfpy>=1.4",
+    # MCP server HTTP transport (MIT license)
+    "aiohttp>=3.9",
 ]
 
 [tool.uv.workspace]
@@ -44,6 +46,7 @@ dev = [
     "ruff>=0.9.0",
     "returns>=0.22",  # Result monad for domain layer
     "pytest-cov>=7.0.0",
+    "httpx>=0.28.1",
 ]
 docs = [
     "mkdocs>=1.6",

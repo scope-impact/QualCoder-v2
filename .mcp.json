@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "qualcoder": {
+      "type": "http",
+      "url": "http://localhost:8765/mcp",
+      "description": "QualCoder v2 - connects to running app for live coding operations"
+    }
+  }
+}

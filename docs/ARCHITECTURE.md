@@ -50,7 +50,7 @@ graph TD
 | C2 | Domain Core | Python / Pure Functions | Business logic, invariants, derivers | Library |
 | C3 | Application Shell | Python / EventBus + SignalBridge | Orchestration, event routing | Library |
 | C4 | Project Database | SQLite 3 | Stores codes, segments, sources | Database |
-| C5 | Agent Context | Python / MCP Protocol | Exposes domain to AI agents | API |
+| C5 | Agent Context | Python / MCP Protocol | Exposes domain to AI agents via HTTP | API |
 | C6 | Vector Store | ChromaDB (embedded) | Stores embeddings for search | Database |
 
 ### Container Diagram
@@ -250,7 +250,7 @@ sequenceDiagram
 |-----------|-------------------|
 | C1 Desktop App | Local execution, no network auth required |
 | C4 Project DB | File-level permissions, optional encryption |
-| C5 Agent Context | MCP protocol validation, tool schema enforcement |
+| C5 Agent Context | MCP protocol validation, localhost-only HTTP server, tool schema enforcement |
 | LLM Provider | API key storage in OS keychain, HTTPS only |
 
 ### Ownership Perspective
@@ -415,6 +415,8 @@ Start with the [Onboarding Tutorial](./tutorials/README.md) - a progressive guid
 
 - [Common Patterns and Recipes](./tutorials/appendices/A-common-patterns.md)
 - [When to Create New Patterns](./tutorials/appendices/B-when-to-create.md)
+- [MCP Setup Guide](./user-manual/mcp-setup.md) - Connect AI assistants to QualCoder
+- [MCP API Reference](./api/mcp-api.md) - Technical API documentation
 
 ### C4 Model References
 

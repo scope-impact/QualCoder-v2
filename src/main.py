@@ -20,10 +20,12 @@ from src.contexts.coding.presentation import (
     TextCodingScreen,
     TextCodingViewModel,
 )
+from src.contexts.coding.presentation.dialogs import CreateCodeDialog
 from src.contexts.projects.presentation import ProjectScreen
 from src.contexts.sources.presentation import FileManagerScreen, FileManagerViewModel
 from src.shared.common.types import SourceId
 from src.shared.infra.app_context import create_app_context
+from src.shared.infra.mcp_server import MCPServerManager
 from src.shared.infra.signal_bridge.projects import ProjectSignalBridge
 from src.shared.presentation import create_empty_text_coding_data
 
@@ -52,6 +54,9 @@ class QualCoderApp:
         self._project_signal_bridge.start()
         self._coding_signal_bridge = CodingSignalBridge.instance(self._ctx.event_bus)
         self._coding_signal_bridge.start()
+        # Start embedded MCP server for AI agent access
+        self._mcp_server = MCPServerManager(ctx=self._ctx)
+        self._mcp_server.start()
         self._shell: AppShell | None = None
         self._screens: dict = {}
 
@@ -162,6 +167,11 @@ class QualCoderApp:
             )
             self._screens["coding"].set_viewmodel(text_coding_viewmodel)
 
+            # Connect "N" key (new code) to show CreateCodeDialog
+            self._screens["coding"].code_created.connect(
+                lambda _: self._on_show_create_code_dialog(text_coding_viewmodel)
+            )
+
     def _on_open_project(self):
         """Handle open project request."""
         result = self._dialog_service.show_open_project_dialog(parent=self._shell)
@@ -209,6 +219,19 @@ class QualCoderApp:
                 result.error,
             )
 
+    def _on_show_create_code_dialog(self, viewmodel: TextCodingViewModel):
+        """Show CreateCodeDialog and wire it to the viewmodel."""
+        dialog = CreateCodeDialog(colors=self._colors, parent=self._shell)
+
+        def on_code_created(name: str, color: str, _memo: str):
+            """Handle code creation from dialog."""
+            success = viewmodel.create_code(name=name, color=color)
+            if success:
+                dialog.accept()  # Close dialog on success
+
+        dialog.code_created.connect(on_code_created)
+        dialog.show()
+
     def _on_navigate_to_coding(self, source_id: str):
         """Handle navigation to coding screen with a specific source."""
         try:
@@ -240,6 +263,7 @@ class QualCoderApp:
 
         exit_code = self._app.exec()
 
+        self._mcp_server.stop()
         self._ctx.stop()
         return exit_code
 
