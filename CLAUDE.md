@@ -9,6 +9,7 @@ Detailed conventions are in `.claude/skills/`:
 | `developer` | Code style, patterns, testing, E2E | Writing Python code, tests |
 | `backlog` | Task management with DDD structure | Creating/editing tasks |
 | `c4-architecture` | System architecture diagrams | Understanding codebase structure |
+| `docs-updater` | Documentation & screenshots | After tests pass, updating docs |
 
 ---
 
@@ -89,8 +90,9 @@ Requirements:
 1. E2E test exists in `src/tests/e2e/`
 2. Test has `@allure.story("QC-XXX.YY Description")` decorator
 3. Test passes with `make test-all`
-4. User documentation updated in `docs/user-manual/` (use `developer` skill)
+4. User documentation updated in `docs/user-manual/` (use `docs-updater` skill)
 5. API documentation updated in `docs/api/` for MCP tools (use `developer` skill)
+6. Coverage matrix updated in `docs/DOC_COVERAGE.md`
 
 ```python
 # Allure tracing convention
