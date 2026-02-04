@@ -8,10 +8,15 @@ These wrappers decorate SQLite repositories to:
 
 Pattern:
     SQLite Repository (decorated) -> SyncedRepository -> SyncEngine -> Convex
+
+Sync loop prevention:
+    - Track IDs of entities with pending outbound changes
+    - Skip inbound updates for those IDs until outbound is confirmed
 """
 
 from __future__ import annotations
 
+import logging
 from typing import TYPE_CHECKING, Any
 
 from src.shared.infra.sync.engine import ChangeType, SyncChange
@@ -25,6 +30,8 @@ if TYPE_CHECKING:
     )
     from src.shared.common.types import CategoryId, CodeId, SegmentId, SourceId
     from src.shared.infra.sync import SyncEngine
+
+logger = logging.getLogger(__name__)
 
 
 class SyncedCodeRepository:
@@ -41,6 +48,7 @@ class SyncedCodeRepository:
     ) -> None:
         self._repo = sqlite_repo
         self._sync = sync_engine
+        self._pending_outbound: set[str] = set()  # IDs with pending outbound sync
 
         # Register for remote changes
         self._sync.on_remote_change("code", self._handle_remote_change)
@@ -69,6 +77,9 @@ class SyncedCodeRepository:
         is_new = not self._repo.exists(code.id)
         self._repo.save(code)
 
+        # Track pending outbound to avoid sync loops
+        self._pending_outbound.add(code.id.value)
+
         # Queue for Convex sync
         self._sync.queue_change(
             SyncChange(
@@ -88,6 +99,7 @@ class SyncedCodeRepository:
 
     def delete(self, code_id: CodeId) -> None:
         self._repo.delete(code_id)
+        self._pending_outbound.add(code_id.value)
         self._sync.queue_change(
             SyncChange(
                 entity_type="code",
@@ -99,9 +111,59 @@ class SyncedCodeRepository:
 
     def _handle_remote_change(self, change_type: str, data: dict) -> None:
         """Handle incoming changes from Convex subscription."""
-        # This would diff remote data with local and apply changes
-        # For now, we'll let the sync engine handle full data refresh
-        pass
+        if change_type != "sync" or "items" not in data:
+            return
+
+        remote_items = data["items"]
+        if not remote_items:
+            return
+
+        try:
+            from datetime import datetime
+
+            from src.contexts.coding.core.entities import Code
+            from src.contexts.coding.core.value_objects import CodeColor
+            from src.shared.common.types import CategoryId, CodeId
+
+            # Get local items for comparison
+            local_codes = {code.id.value: code for code in self._repo.get_all()}
+            remote_ids = set()
+
+            for item in remote_items:
+                item_id = item.get("_id") or item.get("id")
+                if not item_id:
+                    continue
+
+                remote_ids.add(item_id)
+
+                # Skip if we have pending outbound for this ID
+                if item_id in self._pending_outbound:
+                    self._pending_outbound.discard(item_id)  # Clear after seeing it
+                    continue
+
+                # Build Code entity from remote data
+                code = Code(
+                    id=CodeId(item_id),
+                    name=item.get("name", ""),
+                    color=CodeColor.from_hex(item.get("color", "#808080")),
+                    memo=item.get("memo", ""),
+                    category_id=CategoryId(item["catid"]) if item.get("catid") else None,
+                    owner=item.get("owner", ""),
+                    created_at=datetime.fromisoformat(item["date"]) if item.get("date") else datetime.now(),
+                )
+
+                # Save to local SQLite (without re-queueing to Convex)
+                self._repo.save(code)
+                logger.debug(f"Synced code from remote: {code.name}")
+
+            # Handle deletions: items in local but not in remote
+            for local_id in local_codes:
+                if local_id not in remote_ids and local_id not in self._pending_outbound:
+                    self._repo.delete(CodeId(local_id))
+                    logger.debug(f"Deleted code from remote sync: {local_id}")
+
+        except Exception as e:
+            logger.exception(f"Error handling remote code changes: {e}")
 
 
 class SyncedCategoryRepository:
@@ -118,6 +180,7 @@ class SyncedCategoryRepository:
     ) -> None:
         self._repo = sqlite_repo
         self._sync = sync_engine
+        self._pending_outbound: set[str] = set()
         self._sync.on_remote_change("category", self._handle_remote_change)
 
     # Delegate read operations
@@ -137,6 +200,7 @@ class SyncedCategoryRepository:
     def save(self, category: Category) -> None:
         is_new = self._repo.get_by_id(category.id) is None
         self._repo.save(category)
+        self._pending_outbound.add(category.id.value)
 
         self._sync.queue_change(
             SyncChange(
@@ -155,6 +219,7 @@ class SyncedCategoryRepository:
 
     def delete(self, category_id: CategoryId) -> None:
         self._repo.delete(category_id)
+        self._pending_outbound.add(category_id.value)
         self._sync.queue_change(
             SyncChange(
                 entity_type="category",
@@ -165,7 +230,52 @@ class SyncedCategoryRepository:
         )
 
     def _handle_remote_change(self, change_type: str, data: dict) -> None:
-        pass
+        """Handle incoming changes from Convex subscription."""
+        if change_type != "sync" or "items" not in data:
+            return
+
+        remote_items = data["items"]
+        if not remote_items:
+            return
+
+        try:
+            from datetime import datetime
+
+            from src.contexts.coding.core.entities import Category
+            from src.shared.common.types import CategoryId
+
+            local_cats = {cat.id.value: cat for cat in self._repo.get_all()}
+            remote_ids = set()
+
+            for item in remote_items:
+                item_id = item.get("_id") or item.get("id")
+                if not item_id:
+                    continue
+
+                remote_ids.add(item_id)
+
+                if item_id in self._pending_outbound:
+                    self._pending_outbound.discard(item_id)
+                    continue
+
+                category = Category(
+                    id=CategoryId(item_id),
+                    name=item.get("name", ""),
+                    memo=item.get("memo", ""),
+                    parent_id=CategoryId(item["supercatid"]) if item.get("supercatid") else None,
+                    owner=item.get("owner", ""),
+                    created_at=datetime.fromisoformat(item["date"]) if item.get("date") else datetime.now(),
+                )
+                self._repo.save(category)
+                logger.debug(f"Synced category from remote: {category.name}")
+
+            for local_id in local_cats:
+                if local_id not in remote_ids and local_id not in self._pending_outbound:
+                    self._repo.delete(CategoryId(local_id))
+                    logger.debug(f"Deleted category from remote sync: {local_id}")
+
+        except Exception as e:
+            logger.exception(f"Error handling remote category changes: {e}")
 
 
 class SyncedSegmentRepository:
@@ -182,6 +292,7 @@ class SyncedSegmentRepository:
     ) -> None:
         self._repo = sqlite_repo
         self._sync = sync_engine
+        self._pending_outbound: set[str] = set()
         self._sync.on_remote_change("segment", self._handle_remote_change)
 
     # Delegate read operations
@@ -212,6 +323,7 @@ class SyncedSegmentRepository:
     def save(self, segment: TextSegment) -> None:
         is_new = self._repo.get_by_id(segment.id) is None
         self._repo.save(segment)
+        self._pending_outbound.add(segment.id.value)
 
         self._sync.queue_change(
             SyncChange(
@@ -234,6 +346,7 @@ class SyncedSegmentRepository:
 
     def delete(self, segment_id: SegmentId) -> None:
         self._repo.delete(segment_id)
+        self._pending_outbound.add(segment_id.value)
         self._sync.queue_change(
             SyncChange(
                 entity_type="segment",
@@ -249,6 +362,7 @@ class SyncedSegmentRepository:
 
         # Queue delete for each segment
         for segment in segments:
+            self._pending_outbound.add(segment.id.value)
             self._sync.queue_change(
                 SyncChange(
                     entity_type="segment",
@@ -264,6 +378,7 @@ class SyncedSegmentRepository:
         count = self._repo.delete_by_source(source_id)
 
         for segment in segments:
+            self._pending_outbound.add(segment.id.value)
             self._sync.queue_change(
                 SyncChange(
                     entity_type="segment",
@@ -283,7 +398,56 @@ class SyncedSegmentRepository:
         self._repo.update_source_name(source_id, new_name)
 
     def _handle_remote_change(self, change_type: str, data: dict) -> None:
-        pass
+        """Handle incoming changes from Convex subscription."""
+        if change_type != "sync" or "items" not in data:
+            return
+
+        remote_items = data["items"]
+        if not remote_items:
+            return
+
+        try:
+            from datetime import datetime
+
+            from src.contexts.coding.core.entities import TextSegment
+            from src.contexts.coding.core.value_objects import TextPosition
+            from src.shared.common.types import CodeId, SegmentId, SourceId
+
+            local_segments = {seg.id.value: seg for seg in self._repo.get_all()}
+            remote_ids = set()
+
+            for item in remote_items:
+                item_id = item.get("_id") or item.get("id")
+                if not item_id:
+                    continue
+
+                remote_ids.add(item_id)
+
+                if item_id in self._pending_outbound:
+                    self._pending_outbound.discard(item_id)
+                    continue
+
+                segment = TextSegment(
+                    id=SegmentId(item_id),
+                    code_id=CodeId(item["cid"]),
+                    source_id=SourceId(item["fid"]),
+                    position=TextPosition(start=item["pos0"], end=item["pos1"]),
+                    selected_text=item.get("seltext", ""),
+                    memo=item.get("memo", ""),
+                    owner=item.get("owner", ""),
+                    created_at=datetime.fromisoformat(item["date"]) if item.get("date") else datetime.now(),
+                    importance=item.get("important", 0),
+                )
+                self._repo.save(segment)
+                logger.debug(f"Synced segment from remote: {item_id}")
+
+            for local_id in local_segments:
+                if local_id not in remote_ids and local_id not in self._pending_outbound:
+                    self._repo.delete(SegmentId(local_id))
+                    logger.debug(f"Deleted segment from remote sync: {local_id}")
+
+        except Exception as e:
+            logger.exception(f"Error handling remote segment changes: {e}")
 
 
 class SyncedSourceRepository:
