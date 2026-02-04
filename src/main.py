@@ -255,17 +255,21 @@ class QualCoderApp:
         self._shell.set_screen(self._screens["coding"])
         self._shell.set_active_menu("coding")
 
+    def _cleanup(self):
+        """Clean up resources on app exit."""
+        self._mcp_server.stop()
+        self._ctx.stop()
+
     def run(self) -> int:
         """Run the application."""
         self._ctx.start()
         self._setup_shell()
         self._shell.show()
 
-        exit_code = self._app.exec()
+        # Ensure cleanup happens regardless of how app closes
+        self._app.aboutToQuit.connect(self._cleanup)
 
-        self._mcp_server.stop()
-        self._ctx.stop()
-        return exit_code
+        return self._app.exec()
 
 
 def main():
