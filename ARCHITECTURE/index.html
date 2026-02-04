@@ -1,0 +1,5745 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Developer documentation for QualCoder v2 - architecture, tutorials, and component library">
+      
+      
+      
+        <link rel="canonical" href="https://qualcoder.dev/docs/ARCHITECTURE/">
+      
+      
+        <link rel="prev" href="../user-manual/ai-features/">
+      
+      
+        <link rel="next" href="../tutorials/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.1">
+    
+    
+      
+        <title>QualCoder v2 Architecture - QualCoder v2 Developer Guide</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.484c7ddc.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="teal" data-md-color-accent="teal">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#qualcoder-v2-system-architecture" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+      <div data-md-color-scheme="default" data-md-component="outdated" hidden>
+        
+      </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow md-header--lifted" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="QualCoder v2 Developer Guide" class="md-header__button md-logo" aria-label="QualCoder v2 Developer Guide" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            QualCoder v2 Developer Guide
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              QualCoder v2 Architecture
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="teal" data-md-color-accent="teal"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="teal" data-md-color-accent="teal"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/scope-impact/qualcoder-v2" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    qualcoder-v2
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+    
+      
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href=".." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../user-manual/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  User Manual
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="./" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Architecture
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../tutorials/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Tutorials
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../api/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Design System
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../design/FUNCTIONAL_DDD_DESIGN/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Design Documents
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../backlog/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Backlog
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../ai/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  AI Plans (Historical)
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../archive/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Archive (Historical)
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../test-reports/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Test Reports
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+    
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="QualCoder v2 Developer Guide" class="md-nav__button md-logo" aria-label="QualCoder v2 Developer Guide" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    QualCoder v2 Developer Guide
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/scope-impact/qualcoder-v2" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    qualcoder-v2
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../user-manual/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    User Manual
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_2" id="__nav_2_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    User Manual
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../user-manual/getting-started/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Getting Started
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../user-manual/sources/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Managing Sources
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../user-manual/codes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Managing Codes
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../user-manual/coding/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Coding Text
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../user-manual/ai-features/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    AI Features
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+      
+    
+    
+    
+      
+        
+        
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Architecture
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#1-system-context-c4-level-1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. System Context (C4 Level 1)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="1. System Context (C4 Level 1)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#context-diagram" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Context Diagram
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-container-inventory-c4-level-2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. Container Inventory (C4 Level 2)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="2. Container Inventory (C4 Level 2)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#container-diagram" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Container Diagram
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-component-view-c4-level-3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Component View (C4 Level 3)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="3. Component View (C4 Level 3)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#domain-core-components-c2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Domain Core Components (C2)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#bounded-context-summary" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Bounded Context Summary
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#application-shell-components-c3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Application Shell Components (C3)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-functional-core-imperative-shell" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. Functional Core / Imperative Shell
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="4. Functional Core / Imperative Shell">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#the-5-building-blocks" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The 5 Building Blocks
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5-data-flow" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. Data Flow
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="5. Data Flow">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#success-flow-apply-code-to-text" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Success Flow: Apply Code to Text
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#failure-flow" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Failure Flow
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#6-perspectives-overlay" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6. Perspectives Overlay
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="6. Perspectives Overlay">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#security-perspective" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Security Perspective
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ownership-perspective" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Ownership Perspective
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#technology-perspective" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Technology Perspective
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#7-deployment-mapping" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7. Deployment Mapping
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="7. Deployment Mapping">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#distribution" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Distribution
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#8-directory-structure" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        8. Directory Structure
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#9-bounded-contexts" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        9. Bounded Contexts
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="9. Bounded Contexts">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#implemented-contexts" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Implemented Contexts
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#planned-contexts-future" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Planned Contexts (Future)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#10-design-decisions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        10. Design Decisions
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="10. Design Decisions">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#why-functional-ddd" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Why Functional DDD?
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#why-custom-components" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Why Custom Components?
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#11-further-reading" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        11. Further Reading
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="11. Further Reading">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#tutorials-hands-on-learning" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Tutorials (Hands-on Learning)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#reference-documents" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Reference Documents
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#c4-model-references" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        C4 Model References
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_4" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../tutorials/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tutorials
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_4" id="__nav_4_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Tutorials
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../tutorials/00-big-picture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    The Big Picture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../tutorials/01-first-invariant/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Your First Invariant
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../tutorials/02-first-deriver/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Your First Deriver
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../tutorials/03-result-type/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    The Result Type
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../tutorials/04-event-flow/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Events Flow Through
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../tutorials/05-signal-bridge/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    SignalBridge Payloads
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../tutorials/06-testing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Testing Without Mocks
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../tutorials/07-complete-flow/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Complete Flow Reference
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_4_10" >
+        
+          
+          <label class="md-nav__link" for="__nav_4_10" id="__nav_4_10_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Appendices
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_4_10_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4_10">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Appendices
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../tutorials/appendices/A-common-patterns/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Common Patterns
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../tutorials/appendices/B-when-to-create/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    When to Create
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_5" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../api/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Design System
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_5" id="__nav_5_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Design System
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_5_2" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../api/getting-started/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Getting Started
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_5_2" id="__nav_5_2_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_5_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Getting Started
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api/getting-started/installation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Installation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api/getting-started/quick-start/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Quick Start
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_5_3" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../api/tokens/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Design Tokens
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_5_3" id="__nav_5_3_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_5_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Design Tokens
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api/tokens/colors/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Colors
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api/tokens/spacing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Spacing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api/tokens/typography/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Typography
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api/tokens/layout-animation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Layout & Animation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_5_4" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../api/components/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Components
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_5_4" id="__nav_5_4_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_5_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Components
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api/components/core/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Core
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api/components/icons/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Icons
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api/components/layout/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Layout
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api/components/forms/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Forms
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api/components/navigation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Navigation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api/components/data-display/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Data Display
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api/components/lists/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Lists
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api/components/media/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Media
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api/components/chat/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Chat & AI
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api/components/document/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Document
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api/components/feedback/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Feedback
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api/components/visualization/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Visualization
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api/components/pickers/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Pickers
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api/components/advanced/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Advanced
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_5_5" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../api/patterns/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Patterns
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_5_5" id="__nav_5_5_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_5_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Patterns
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api/patterns/signals/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Signals
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api/patterns/theming/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Theming
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api/patterns/composition/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Composition
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_5_6" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../api/reference/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Reference
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_5_6" id="__nav_5_6_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_5_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5_6">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Reference
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api/reference/modules/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Module Index
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api/reference/dependencies/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Dependencies
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Design Documents
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Design Documents
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../design/FUNCTIONAL_DDD_DESIGN/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Functional DDD
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../design/AGENT_CONTEXT_DESIGN/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Agent Context
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_7" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../backlog/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Backlog
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_7" id="__nav_7_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_7">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Backlog
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../backlog/BACKLOG_RESTRUCTURE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Restructure Plan
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../backlog/DEPENDENCY_ANALYSIS/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Dependencies
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_7_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_7_4" id="__nav_7_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Decisions
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_7_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_7_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Decisions
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../backlog/decisions/decision-001%20design-system-visualization-libraries/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Design System Visualization Libraries
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--Accepted"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../backlog/decisions/decision-002%20library-alternatives-analysis/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Library Alternatives Analysis for Custom Infrastructure
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--proposed"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../backlog/decisions/decision-003%20localization-framework/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Localization Framework Selection
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--Accepted"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../backlog/decisions/decision-004%20design-system-visualization-libraries/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Design System Visualization Libraries
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--Accepted"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../backlog/decisions/decision-005%20mcp-transport-http-over-stdio/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MCP Transport - HTTP over Stdio
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--Accepted"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_7_5" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../backlog/tasks/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tasks
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_7_5" id="__nav_7_5_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_7_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_7_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Tasks
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../backlog/tasks/qc-026%20-%20Open-Navigate-Project/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Open & Navigate Project
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--To Do"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../backlog/tasks/qc-027%20-%20Manage-Sources/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Manage Sources
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--To Do"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../backlog/tasks/qc-028%20-%20Manage-Codes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Manage Codes
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--In Progress"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../backlog/tasks/qc-029%20-%20Apply-Codes-to-Text/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Apply Codes to Text
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--In Progress"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../backlog/tasks/qc-030%20-%20Apply-Codes-to-Images/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Apply Codes to Images
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--To Do"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../backlog/tasks/qc-031%20-%20Apply-Codes-to-Audio-Video/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Apply Codes to Audio Video
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--To Do"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../backlog/tasks/qc-032%20-%20Auto-Code/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Auto-Code
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--Done"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../backlog/tasks/qc-033%20-%20Search-and-Find/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Search and Find
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--To Do"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../backlog/tasks/qc-034%20-%20Manage-Cases/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Manage Cases
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--To Do"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../backlog/tasks/qc-035%20-%20Generate-Reports/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Generate Reports
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--To Do"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../backlog/tasks/qc-036%20-%20Collaborate/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Collaborate
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--To Do"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../backlog/tasks/qc-037%20-%20Chat-with-Agent/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Chat with Agent
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--To Do"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../backlog/tasks/qc-038%20-%20Settings-and-Preferences/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Settings and Preferences
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--Done"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../backlog/tasks/qc-039%20-%20Import-Export-Formats/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Import Export Formats
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--To Do"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../backlog/tasks/qc-040%20-%20Data-Privacy/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Data Privacy
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--To Do"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../backlog/tasks/qc-041%20-%20References-and-Bibliography/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    References and Bibliography
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--To Do"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../backlog/tasks/qc-042%20-%20Apply-Codes-to-PDF/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Apply Codes to PDF
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--To Do"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../backlog/tasks/qc-043%20-%20Journals-and-Memos/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Journals and Memos
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--To Do"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../backlog/tasks/qc-044%20-%20Visualizations/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Visualizations
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--To Do"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../backlog/tasks/qc-045%20-%20Complete-Coding-Context/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Complete Coding Context
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--To Do"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../backlog/tasks/qc-046%20-%20Remove-premature-v1%E2%86%92v2-migration-code/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Remove premature v1→v2 migration code
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--Done"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_8" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../ai/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    AI Plans (Historical)
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_8_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_8">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    AI Plans (Historical)
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_9" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../archive/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Archive (Historical)
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_9_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_9">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Archive (Historical)
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_10" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../test-reports/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Test Reports
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_10_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_10">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Test Reports
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#1-system-context-c4-level-1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. System Context (C4 Level 1)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="1. System Context (C4 Level 1)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#context-diagram" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Context Diagram
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-container-inventory-c4-level-2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. Container Inventory (C4 Level 2)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="2. Container Inventory (C4 Level 2)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#container-diagram" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Container Diagram
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-component-view-c4-level-3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Component View (C4 Level 3)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="3. Component View (C4 Level 3)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#domain-core-components-c2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Domain Core Components (C2)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#bounded-context-summary" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Bounded Context Summary
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#application-shell-components-c3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Application Shell Components (C3)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-functional-core-imperative-shell" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. Functional Core / Imperative Shell
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="4. Functional Core / Imperative Shell">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#the-5-building-blocks" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The 5 Building Blocks
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5-data-flow" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. Data Flow
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="5. Data Flow">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#success-flow-apply-code-to-text" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Success Flow: Apply Code to Text
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#failure-flow" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Failure Flow
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#6-perspectives-overlay" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6. Perspectives Overlay
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="6. Perspectives Overlay">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#security-perspective" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Security Perspective
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ownership-perspective" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Ownership Perspective
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#technology-perspective" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Technology Perspective
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#7-deployment-mapping" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7. Deployment Mapping
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="7. Deployment Mapping">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#distribution" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Distribution
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#8-directory-structure" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        8. Directory Structure
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#9-bounded-contexts" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        9. Bounded Contexts
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="9. Bounded Contexts">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#implemented-contexts" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Implemented Contexts
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#planned-contexts-future" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Planned Contexts (Future)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#10-design-decisions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        10. Design Decisions
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="10. Design Decisions">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#why-functional-ddd" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Why Functional DDD?
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#why-custom-components" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Why Custom Components?
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#11-further-reading" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        11. Further Reading
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="11. Further Reading">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#tutorials-hands-on-learning" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Tutorials (Hands-on Learning)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#reference-documents" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Reference Documents
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#c4-model-references" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        C4 Model References
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="qualcoder-v2-system-architecture">QualCoder v2 System Architecture<a class="headerlink" href="#qualcoder-v2-system-architecture" title="Permanent link">&para;</a></h1>
+<blockquote>
+<p><strong>Status:</strong> <code>DRAFT</code>
+<strong>Owner:</strong> <code>QualCoder Core Team</code>
+<strong>Version:</strong> <code>v2.0</code></p>
+</blockquote>
+<p>This document provides a C4 model architecture overview of QualCoder v2. For hands-on learning with code examples, see the <a href="../tutorials/">Onboarding Tutorials</a>.</p>
+<hr />
+<h2 id="1-system-context-c4-level-1">1. System Context (C4 Level 1)<a class="headerlink" href="#1-system-context-c4-level-1" title="Permanent link">&para;</a></h2>
+<p><strong>Scope:</strong> QualCoder v2 is a desktop qualitative data analysis tool for researchers to apply semantic codes to research data and generate insights.</p>
+<table>
+<thead>
+<tr>
+<th>Actor / System</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Researcher</strong></td>
+<td>Person</td>
+<td>Qualitative researcher applying codes to research data</td>
+</tr>
+<tr>
+<td><strong>AI Agent</strong></td>
+<td>Person</td>
+<td>Automated agent suggesting codes and generating insights</td>
+</tr>
+<tr>
+<td><strong>QualCoder v2</strong></td>
+<td>System</td>
+<td>The Scope - Desktop QDA tool with AI assistance</td>
+</tr>
+<tr>
+<td><strong>LLM Provider</strong></td>
+<td>System</td>
+<td>External AI service (OpenAI, Anthropic, local Ollama)</td>
+</tr>
+<tr>
+<td><strong>File System</strong></td>
+<td>System</td>
+<td>Local storage for project files, media, exports</td>
+</tr>
+</tbody>
+</table>
+<h3 id="context-diagram">Context Diagram<a class="headerlink" href="#context-diagram" title="Permanent link">&para;</a></h3>
+<pre class="mermaid"><code>graph TD
+    Researcher(Researcher) -- "Mouse/Keyboard / Qt Events" --&gt; QC(QualCoder v2)
+    Agent(AI Agent) -- "tool_call / MCP JSON-RPC" --&gt; QC
+    QC -- "chat/completions / HTTPS" --&gt; LLM(LLM Provider)
+    QC -- "open/read/write / File I/O" --&gt; FS(File System)
+    QC -- "SELECT/INSERT / SQLite" --&gt; DB[(Project DB)]</code></pre>
+<hr />
+<h2 id="2-container-inventory-c4-level-2">2. Container Inventory (C4 Level 2)<a class="headerlink" href="#2-container-inventory-c4-level-2" title="Permanent link">&para;</a></h2>
+<p><strong>Definition:</strong> A "Container" is a runnable application or data store.</p>
+<table>
+<thead>
+<tr>
+<th>ID</th>
+<th>Container Name</th>
+<th>Technology</th>
+<th>Responsibility</th>
+<th>Type</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>C1</td>
+<td>Desktop Application</td>
+<td>Python 3.10+ / PySide6</td>
+<td>Main GUI, user interaction</td>
+<td>Desktop App</td>
+</tr>
+<tr>
+<td>C2</td>
+<td>Domain Core</td>
+<td>Python / Pure Functions</td>
+<td>Business logic, invariants, derivers</td>
+<td>Library</td>
+</tr>
+<tr>
+<td>C3</td>
+<td>Application Shell</td>
+<td>Python / EventBus + SignalBridge</td>
+<td>Orchestration, event routing</td>
+<td>Library</td>
+</tr>
+<tr>
+<td>C4</td>
+<td>Project Database</td>
+<td>SQLite 3</td>
+<td>Stores codes, segments, sources</td>
+<td>Database</td>
+</tr>
+<tr>
+<td>C5</td>
+<td>Agent Context</td>
+<td>Python / MCP Protocol</td>
+<td>Exposes domain to AI agents via HTTP</td>
+<td>API</td>
+</tr>
+<tr>
+<td>C6</td>
+<td>Vector Store</td>
+<td>ChromaDB (embedded)</td>
+<td>Stores embeddings for search</td>
+<td>Database</td>
+</tr>
+</tbody>
+</table>
+<h3 id="container-diagram">Container Diagram<a class="headerlink" href="#container-diagram" title="Permanent link">&para;</a></h3>
+<pre class="mermaid"><code>graph TB
+    subgraph QualCoder v2 System Boundary
+        UI[Desktop App - PySide6]
+        DOMAIN[Domain Core - Pure Python]
+        APP[Application Shell - EventBus + SignalBridge]
+        AGENT[Agent Context - MCP Protocol]
+
+        UI -- "Command DTOs / Python" --&gt; APP
+        APP -- "Function calls / Python" --&gt; DOMAIN
+        DOMAIN -- "DomainEvent / Python" --&gt; APP
+        APP -- "pyqtSignal / Qt" --&gt; UI
+        AGENT -- "MCP tool_call / JSON-RPC" --&gt; APP
+    end
+
+    subgraph Data Stores
+        DB[(Project DB - SQLite)]
+        VEC[(Vector Store - ChromaDB)]
+    end
+
+    APP -- "SQL / sqlite3" --&gt; DB
+    AGENT -- "Embeddings / Python API" --&gt; VEC
+
+    LLM(LLM Provider)
+    AGENT -- "Chat API / HTTPS" --&gt; LLM</code></pre>
+<hr />
+<h2 id="3-component-view-c4-level-3">3. Component View (C4 Level 3)<a class="headerlink" href="#3-component-view-c4-level-3" title="Permanent link">&para;</a></h2>
+<h3 id="domain-core-components-c2">Domain Core Components (C2)<a class="headerlink" href="#domain-core-components-c2" title="Permanent link">&para;</a></h3>
+<p>Organized by <strong>Bounded Contexts</strong> - each context is a cohesive business capability.</p>
+<pre class="mermaid"><code>graph TB
+    subgraph Core Domain
+        COD[CODING&lt;br&gt;Codes, Categories, Segments&lt;br&gt;Apply codes to research data&lt;br&gt;+ AI suggestions]
+    end
+
+    subgraph Supporting Domain
+        SRC[SOURCES&lt;br&gt;Documents, Audio, Video&lt;br&gt;Manage research materials]
+        CAS[CASES&lt;br&gt;Grouping, Attributes&lt;br&gt;Organize by participant]
+        PRJ[PROJECTS&lt;br&gt;Settings, Lifecycle&lt;br&gt;Project management]
+        FLD[FOLDERS&lt;br&gt;Organization&lt;br&gt;Group sources]
+        SET[SETTINGS&lt;br&gt;Preferences&lt;br&gt;Theme, font, language]
+    end
+
+    SRC --&gt;|"SourceImported / DomainEvent"| COD
+    CAS --&gt;|"CaseLinked / DomainEvent"| COD
+    FLD --&gt;|"SourceMoved / DomainEvent"| SRC</code></pre>
+<h3 id="bounded-context-summary">Bounded Context Summary<a class="headerlink" href="#bounded-context-summary" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Context</th>
+<th>Entities</th>
+<th>Key Operations</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Coding</strong></td>
+<td>Code, Category, Segment, AISuggestion</td>
+<td>Create code, apply to text, merge codes, AI suggestions</td>
+</tr>
+<tr>
+<td><strong>Sources</strong></td>
+<td>Source, Folder</td>
+<td>Import files, manage folders</td>
+</tr>
+<tr>
+<td><strong>Cases</strong></td>
+<td>Case, CaseAttribute</td>
+<td>Link sources, assign attributes</td>
+</tr>
+<tr>
+<td><strong>Projects</strong></td>
+<td>Project</td>
+<td>Open, close, manage lifecycle</td>
+</tr>
+<tr>
+<td><strong>Settings</strong></td>
+<td>Settings</td>
+<td>Configure preferences (theme, font, language)</td>
+</tr>
+<tr>
+<td><strong>Folders</strong></td>
+<td>Folder</td>
+<td>Organize sources in folders</td>
+</tr>
+</tbody>
+</table>
+<h3 id="application-shell-components-c3">Application Shell Components (C3)<a class="headerlink" href="#application-shell-components-c3" title="Permanent link">&para;</a></h3>
+<pre class="mermaid"><code>graph LR
+    subgraph Application Shell
+        EB[EventBus]
+        SB[SignalBridge]
+        CTRL[Controllers]
+        QRY[Queries]
+    end
+
+    CTRL -- "publish(DomainEvent)" --&gt; EB
+    EB -- "callback(DomainEvent)" --&gt; SB
+    SB -- "pyqtSignal.emit(Payload)" --&gt; UI[Qt Widgets]</code></pre>
+<hr />
+<h2 id="4-functional-core-imperative-shell">4. Functional Core / Imperative Shell<a class="headerlink" href="#4-functional-core-imperative-shell" title="Permanent link">&para;</a></h2>
+<p>QualCoder v2 follows the <strong>Functional Core / Imperative Shell</strong> pattern:</p>
+<pre class="mermaid"><code>graph TB
+    subgraph Functional Core - Pure
+        INV[Invariants]
+        DER[Derivers]
+        EVT[Events]
+    end
+
+    subgraph Imperative Shell - Side Effects
+        CTRL[Controllers]
+        REPO[Repositories]
+        BUS[EventBus]
+        SB[SignalBridge]
+    end
+
+    subgraph Presentation
+        QT[Qt Widgets]
+    end
+
+    INV -- "bool predicates" --&gt; DER
+    DER -- "Result[Event, Failure]" --&gt; EVT
+    EVT -- "DomainEvent" --&gt; CTRL
+    CTRL -- "save() / SQL" --&gt; REPO
+    CTRL -- "publish(event)" --&gt; BUS
+    BUS -- "callback(event)" --&gt; SB
+    SB -- "pyqtSignal.emit()" --&gt; QT</code></pre>
+<h3 id="the-5-building-blocks">The 5 Building Blocks<a class="headerlink" href="#the-5-building-blocks" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Block</th>
+<th>Layer</th>
+<th>Purpose</th>
+<th>Naming</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Invariants</td>
+<td>Domain</td>
+<td>Pure predicates - "Is this allowed?"</td>
+<td><code>is_*</code>, <code>can_*</code></td>
+</tr>
+<tr>
+<td>Derivers</td>
+<td>Domain</td>
+<td>Pure functions - "What happened?"</td>
+<td><code>derive_*</code></td>
+</tr>
+<tr>
+<td>Events</td>
+<td>Domain</td>
+<td>Immutable records of changes</td>
+<td><code>*Created</code>, <code>*Deleted</code></td>
+</tr>
+<tr>
+<td>EventBus</td>
+<td>Application</td>
+<td>Pub/sub event distribution</td>
+<td><code>subscribe</code>, <code>publish</code></td>
+</tr>
+<tr>
+<td>SignalBridge</td>
+<td>Application</td>
+<td>Thread-safe domain to Qt bridge</td>
+<td><code>*_signal</code></td>
+</tr>
+</tbody>
+</table>
+<p>See <a href="../tutorials/">Onboarding Tutorials</a> for hands-on examples.</p>
+<hr />
+<h2 id="5-data-flow">5. Data Flow<a class="headerlink" href="#5-data-flow" title="Permanent link">&para;</a></h2>
+<h3 id="success-flow-apply-code-to-text">Success Flow: Apply Code to Text<a class="headerlink" href="#success-flow-apply-code-to-text" title="Permanent link">&para;</a></h3>
+<pre class="mermaid"><code>sequenceDiagram
+    participant User
+    participant UI as Qt Widget
+    participant Ctrl as Controller
+    participant Der as Deriver
+    participant Repo as Repository
+    participant EB as EventBus
+    participant SB as SignalBridge
+
+    User-&gt;&gt;UI: Select text, click Apply Code
+    UI-&gt;&gt;Ctrl: apply_code(code_id, source_id, position)
+
+    Note over Ctrl,Repo: Build State
+    Ctrl-&gt;&gt;Repo: get_all()
+    Repo--&gt;&gt;Ctrl: existing data
+
+    Note over Ctrl,Der: Pure Domain Logic
+    Ctrl-&gt;&gt;Der: derive_apply_code(...)
+
+    Note over Der: Validates invariants
+    Der--&gt;&gt;Ctrl: Success(SegmentCoded)
+
+    Note over Ctrl,Repo: Persist
+    Ctrl-&gt;&gt;Repo: save(event)
+
+    Note over Ctrl,SB: Notify
+    Ctrl-&gt;&gt;EB: publish(event)
+    EB-&gt;&gt;SB: handle(event)
+    SB-&gt;&gt;UI: segment_coded.emit(payload)
+
+    Note over UI: Updates in real-time</code></pre>
+<h3 id="failure-flow">Failure Flow<a class="headerlink" href="#failure-flow" title="Permanent link">&para;</a></h3>
+<pre class="mermaid"><code>sequenceDiagram
+    participant UI as Qt Widget
+    participant Ctrl as Controller
+    participant Der as Deriver
+
+    UI-&gt;&gt;Ctrl: create_code(Anxiety)
+    Ctrl-&gt;&gt;Der: derive_create_code(Anxiety, state)
+
+    Note over Der: is_code_name_unique = False
+    Der--&gt;&gt;Ctrl: Failure(DuplicateName)
+
+    Note over Ctrl: No database write, No event published
+    Ctrl--&gt;&gt;UI: Show error message</code></pre>
+<hr />
+<h2 id="6-perspectives-overlay">6. Perspectives Overlay<a class="headerlink" href="#6-perspectives-overlay" title="Permanent link">&para;</a></h2>
+<h3 id="security-perspective">Security Perspective<a class="headerlink" href="#security-perspective" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Container</th>
+<th>Security Controls</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>C1 Desktop App</td>
+<td>Local execution, no network auth required</td>
+</tr>
+<tr>
+<td>C4 Project DB</td>
+<td>File-level permissions, optional encryption</td>
+</tr>
+<tr>
+<td>C5 Agent Context</td>
+<td>MCP protocol validation, localhost-only HTTP server, tool schema enforcement</td>
+</tr>
+<tr>
+<td>LLM Provider</td>
+<td>API key storage in OS keychain, HTTPS only</td>
+</tr>
+</tbody>
+</table>
+<h3 id="ownership-perspective">Ownership Perspective<a class="headerlink" href="#ownership-perspective" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Team / Role</th>
+<th>Owns</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Core Team</td>
+<td>Domain Core (C2), Application Shell (C3)</td>
+</tr>
+<tr>
+<td>UI Team</td>
+<td>Desktop Application (C1), Presentation components</td>
+</tr>
+<tr>
+<td>AI Team</td>
+<td>Agent Context (C5), AI Services bounded context</td>
+</tr>
+</tbody>
+</table>
+<h3 id="technology-perspective">Technology Perspective<a class="headerlink" href="#technology-perspective" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Layer</th>
+<th>Technology</th>
+<th>Why</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>UI Framework</td>
+<td>PySide6</td>
+<td>Qt bindings, cross-platform, mature</td>
+</tr>
+<tr>
+<td>Database</td>
+<td>SQLite</td>
+<td>Embedded, portable projects, no server</td>
+</tr>
+<tr>
+<td>Vector Store</td>
+<td>ChromaDB</td>
+<td>Embedded, Python-native, simple API</td>
+</tr>
+<tr>
+<td>Event System</td>
+<td>Custom EventBus</td>
+<td>Need subscribe_all, history, type-based</td>
+</tr>
+<tr>
+<td>Result Type</td>
+<td>Custom</td>
+<td>Minimal (~50 lines), no dependency</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="7-deployment-mapping">7. Deployment Mapping<a class="headerlink" href="#7-deployment-mapping" title="Permanent link">&para;</a></h2>
+<p><strong>Definition:</strong> How Containers (Level 2) map to Infrastructure.</p>
+<table>
+<thead>
+<tr>
+<th>Container</th>
+<th>Infrastructure</th>
+<th>Environment</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Desktop Application</td>
+<td>Native executable (PyInstaller)</td>
+<td>User's machine</td>
+</tr>
+<tr>
+<td>Project Database</td>
+<td>SQLite file in project folder</td>
+<td>User's file system</td>
+</tr>
+<tr>
+<td>Vector Store</td>
+<td>ChromaDB files in project folder</td>
+<td>User's file system</td>
+</tr>
+<tr>
+<td>LLM Provider</td>
+<td>Cloud API or local (Ollama)</td>
+<td>External / Local</td>
+</tr>
+</tbody>
+</table>
+<h3 id="distribution">Distribution<a class="headerlink" href="#distribution" title="Permanent link">&para;</a></h3>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>QualCoder v2
+</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>├── macOS: .dmg installer (arm64, x86_64)
+</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>├── Windows: .msi installer
+</span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>├── Linux: .deb, .rpm, AppImage
+</span><span id="__span-0-5"><a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>└── PyPI: pip install qualcoder-v2
+</span></code></pre></div>
+<hr />
+<h2 id="8-directory-structure">8. Directory Structure<a class="headerlink" href="#8-directory-structure" title="Permanent link">&para;</a></h2>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>src/
+</span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>├── contexts/                   # Bounded Contexts (vertical slices)
+</span><span id="__span-1-3"><a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>│   ├── coding/                 # Coding Context (includes AI coding)
+</span><span id="__span-1-4"><a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>│   │   ├── core/               # Domain (Pure)
+</span><span id="__span-1-5"><a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>│   │   │   ├── entities.py     # Code, Category, Segment
+</span><span id="__span-1-6"><a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>│   │   │   ├── ai_entities.py  # AI-specific entities
+</span><span id="__span-1-7"><a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>│   │   │   ├── invariants.py
+</span><span id="__span-1-8"><a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>│   │   │   ├── derivers.py
+</span><span id="__span-1-9"><a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>│   │   │   ├── events.py
+</span><span id="__span-1-10"><a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a>│   │   │   ├── commandHandlers/  # Use cases
+</span><span id="__span-1-11"><a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a>│   │   │   └── tests/
+</span><span id="__span-1-12"><a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a>│   │   ├── infra/              # Repositories, AI providers
+</span><span id="__span-1-13"><a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a>│   │   ├── interface/          # Signal bridges, MCP tools
+</span><span id="__span-1-14"><a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a>│   │   └── presentation/       # Context-specific UI
+</span><span id="__span-1-15"><a id="__codelineno-1-15" name="__codelineno-1-15" href="#__codelineno-1-15"></a>│   ├── sources/                # Source file management
+</span><span id="__span-1-16"><a id="__codelineno-1-16" name="__codelineno-1-16" href="#__codelineno-1-16"></a>│   ├── cases/                  # Case/participant management
+</span><span id="__span-1-17"><a id="__codelineno-1-17" name="__codelineno-1-17" href="#__codelineno-1-17"></a>│   ├── projects/               # Project lifecycle
+</span><span id="__span-1-18"><a id="__codelineno-1-18" name="__codelineno-1-18" href="#__codelineno-1-18"></a>│   ├── settings/               # User settings
+</span><span id="__span-1-19"><a id="__codelineno-1-19" name="__codelineno-1-19" href="#__codelineno-1-19"></a>│   └── folders/                # Folder organization
+</span><span id="__span-1-20"><a id="__codelineno-1-20" name="__codelineno-1-20" href="#__codelineno-1-20"></a>│
+</span><span id="__span-1-21"><a id="__codelineno-1-21" name="__codelineno-1-21" href="#__codelineno-1-21"></a>├── shared/                     # Cross-cutting concerns
+</span><span id="__span-1-22"><a id="__codelineno-1-22" name="__codelineno-1-22" href="#__codelineno-1-22"></a>│   ├── common/                 # Shared types
+</span><span id="__span-1-23"><a id="__codelineno-1-23" name="__codelineno-1-23" href="#__codelineno-1-23"></a>│   │   ├── types.py            # DomainEvent, typed IDs
+</span><span id="__span-1-24"><a id="__codelineno-1-24" name="__codelineno-1-24" href="#__codelineno-1-24"></a>│   │   ├── operation_result.py # OperationResult pattern
+</span><span id="__span-1-25"><a id="__codelineno-1-25" name="__codelineno-1-25" href="#__codelineno-1-25"></a>│   │   └── failure_events.py   # Base failure types
+</span><span id="__span-1-26"><a id="__codelineno-1-26" name="__codelineno-1-26" href="#__codelineno-1-26"></a>│   ├── core/                   # Shared domain logic
+</span><span id="__span-1-27"><a id="__codelineno-1-27" name="__codelineno-1-27" href="#__codelineno-1-27"></a>│   │   └── sync_handlers.py    # Cross-context sync
+</span><span id="__span-1-28"><a id="__codelineno-1-28" name="__codelineno-1-28" href="#__codelineno-1-28"></a>│   ├── infra/                  # Shared infrastructure
+</span><span id="__span-1-29"><a id="__codelineno-1-29" name="__codelineno-1-29" href="#__codelineno-1-29"></a>│   │   ├── event_bus.py        # Pub/sub infrastructure
+</span><span id="__span-1-30"><a id="__codelineno-1-30" name="__codelineno-1-30" href="#__codelineno-1-30"></a>│   │   ├── signal_bridge/      # Thread-safe Qt bridge
+</span><span id="__span-1-31"><a id="__codelineno-1-31" name="__codelineno-1-31" href="#__codelineno-1-31"></a>│   │   ├── app_context/        # Application context, factories
+</span><span id="__span-1-32"><a id="__codelineno-1-32" name="__codelineno-1-32" href="#__codelineno-1-32"></a>│   │   ├── lifecycle.py        # Project lifecycle
+</span><span id="__span-1-33"><a id="__codelineno-1-33" name="__codelineno-1-33" href="#__codelineno-1-33"></a>│   │   └── state.py            # Project state cache
+</span><span id="__span-1-34"><a id="__codelineno-1-34" name="__codelineno-1-34" href="#__codelineno-1-34"></a>│   └── presentation/           # Shared UI components
+</span><span id="__span-1-35"><a id="__codelineno-1-35" name="__codelineno-1-35" href="#__codelineno-1-35"></a>│       ├── organisms/          # Reusable complex widgets
+</span><span id="__span-1-36"><a id="__codelineno-1-36" name="__codelineno-1-36" href="#__codelineno-1-36"></a>│       ├── molecules/          # Small composite widgets
+</span><span id="__span-1-37"><a id="__codelineno-1-37" name="__codelineno-1-37" href="#__codelineno-1-37"></a>│       ├── templates/          # Page layouts, app shell
+</span><span id="__span-1-38"><a id="__codelineno-1-38" name="__codelineno-1-38" href="#__codelineno-1-38"></a>│       └── services/           # Dialog service, etc.
+</span><span id="__span-1-39"><a id="__codelineno-1-39" name="__codelineno-1-39" href="#__codelineno-1-39"></a>│
+</span><span id="__span-1-40"><a id="__codelineno-1-40" name="__codelineno-1-40" href="#__codelineno-1-40"></a>├── tests/                      # E2E tests
+</span><span id="__span-1-41"><a id="__codelineno-1-41" name="__codelineno-1-41" href="#__codelineno-1-41"></a>│   └── e2e/
+</span><span id="__span-1-42"><a id="__codelineno-1-42" name="__codelineno-1-42" href="#__codelineno-1-42"></a>│
+</span><span id="__span-1-43"><a id="__codelineno-1-43" name="__codelineno-1-43" href="#__codelineno-1-43"></a>└── main.py                     # Application entry point
+</span><span id="__span-1-44"><a id="__codelineno-1-44" name="__codelineno-1-44" href="#__codelineno-1-44"></a>
+</span><span id="__span-1-45"><a id="__codelineno-1-45" name="__codelineno-1-45" href="#__codelineno-1-45"></a>design_system/                  # Reusable UI components, tokens
+</span></code></pre></div>
+<hr />
+<h2 id="9-bounded-contexts">9. Bounded Contexts<a class="headerlink" href="#9-bounded-contexts" title="Permanent link">&para;</a></h2>
+<h3 id="implemented-contexts">Implemented Contexts<a class="headerlink" href="#implemented-contexts" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Context</th>
+<th>Purpose</th>
+<th>Key Events</th>
+<th>Integration Pattern</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Coding</strong></td>
+<td>Apply semantic codes to data</td>
+<td>CodeCreated, SegmentCoded</td>
+<td>Core - others depend on it</td>
+</tr>
+<tr>
+<td><strong>Sources</strong></td>
+<td>Manage documents, media</td>
+<td>SourceImported, SourceDeleted</td>
+<td>Open Host Service</td>
+</tr>
+<tr>
+<td><strong>Cases</strong></td>
+<td>Group and categorize</td>
+<td>CaseCreated, SourceLinked</td>
+<td>Conformist to Coding</td>
+</tr>
+<tr>
+<td><strong>Projects</strong></td>
+<td>Lifecycle management</td>
+<td>ProjectOpened, ProjectClosed</td>
+<td>Anti-Corruption Layer</td>
+</tr>
+<tr>
+<td><strong>Settings</strong></td>
+<td>User preferences</td>
+<td>SettingsUpdated</td>
+<td>Independent</td>
+</tr>
+<tr>
+<td><strong>Folders</strong></td>
+<td>Folder organization</td>
+<td>FolderCreated, SourceMoved</td>
+<td>Supporting</td>
+</tr>
+</tbody>
+</table>
+<h3 id="planned-contexts-future">Planned Contexts (Future)<a class="headerlink" href="#planned-contexts-future" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Context</th>
+<th>Purpose</th>
+<th>Key Events</th>
+<th>Integration Pattern</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Analysis</td>
+<td>Generate insights</td>
+<td>ReportGenerated</td>
+<td>Subscribes to Coding events</td>
+</tr>
+<tr>
+<td>Collaboration</td>
+<td>Multi-coder workflows</td>
+<td>CoderSwitched, CodingsMerged</td>
+<td>Published Language</td>
+</tr>
+<tr>
+<td>Export</td>
+<td>Reports, charts</td>
+<td>ReportExported</td>
+<td>Downstream consumer</td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<p><strong>Note:</strong> AI coding capabilities are integrated within the Coding context (<code>ai_entities.py</code>, <code>ai_derivers.py</code>, etc.) rather than as a separate AI Services context.</p>
+</blockquote>
+<hr />
+<h2 id="10-design-decisions">10. Design Decisions<a class="headerlink" href="#10-design-decisions" title="Permanent link">&para;</a></h2>
+<h3 id="why-functional-ddd">Why Functional DDD?<a class="headerlink" href="#why-functional-ddd" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Concern</th>
+<th>Traditional OOP</th>
+<th>Functional DDD</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Testing</td>
+<td>Mocks required</td>
+<td>Pure functions, no mocks</td>
+</tr>
+<tr>
+<td>Side effects</td>
+<td>Hidden in methods</td>
+<td>Explicit via events</td>
+</tr>
+<tr>
+<td>State</td>
+<td>Mutable objects</td>
+<td>Immutable data</td>
+</tr>
+<tr>
+<td>Debugging</td>
+<td>Stack traces</td>
+<td>Event replay</td>
+</tr>
+</tbody>
+</table>
+<h3 id="why-custom-components">Why Custom Components?<a class="headerlink" href="#why-custom-components" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Component</th>
+<th>Why Custom</th>
+<th>Alternative</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>EventBus</td>
+<td>Need subscribe_all, history</td>
+<td>Blinker, PyPubSub</td>
+</tr>
+<tr>
+<td>SignalBridge</td>
+<td>No library for domain to Qt threading</td>
+<td>None available</td>
+</tr>
+<tr>
+<td>Result Type</td>
+<td>Minimal, no dependency</td>
+<td>returns library</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="11-further-reading">11. Further Reading<a class="headerlink" href="#11-further-reading" title="Permanent link">&para;</a></h2>
+<h3 id="tutorials-hands-on-learning">Tutorials (Hands-on Learning)<a class="headerlink" href="#tutorials-hands-on-learning" title="Permanent link">&para;</a></h3>
+<p>Start with the <a href="../tutorials/">Onboarding Tutorial</a> - a progressive guide using a toy example (adding "priority" to Codes).</p>
+<table>
+<thead>
+<tr>
+<th>Part</th>
+<th>Topic</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="../tutorials/00-big-picture/">Part 0</a></td>
+<td>The Big Picture</td>
+</tr>
+<tr>
+<td><a href="../tutorials/01-first-invariant/">Part 1</a></td>
+<td>Your First Invariant</td>
+</tr>
+<tr>
+<td><a href="../tutorials/02-first-deriver/">Part 2</a></td>
+<td>Your First Deriver</td>
+</tr>
+<tr>
+<td><a href="../tutorials/03-result-type/">Part 3</a></td>
+<td>The Result Type</td>
+</tr>
+<tr>
+<td><a href="../tutorials/04-event-flow/">Part 4</a></td>
+<td>Events Flow Through</td>
+</tr>
+<tr>
+<td><a href="../tutorials/05-signal-bridge/">Part 5</a></td>
+<td>SignalBridge Payloads</td>
+</tr>
+<tr>
+<td><a href="../tutorials/06-testing/">Part 6</a></td>
+<td>Testing Without Mocks</td>
+</tr>
+<tr>
+<td><a href="../tutorials/07-complete-flow/">Part 7</a></td>
+<td>Complete Flow Reference</td>
+</tr>
+</tbody>
+</table>
+<h3 id="reference-documents">Reference Documents<a class="headerlink" href="#reference-documents" title="Permanent link">&para;</a></h3>
+<ul>
+<li><a href="../tutorials/appendices/A-common-patterns/">Common Patterns and Recipes</a></li>
+<li><a href="../tutorials/appendices/B-when-to-create/">When to Create New Patterns</a></li>
+<li><a href="../user-manual/mcp-setup/">MCP Setup Guide</a> - Connect AI assistants to QualCoder</li>
+<li><a href="../api/mcp-api/">MCP API Reference</a> - Technical API documentation</li>
+</ul>
+<h3 id="c4-model-references">C4 Model References<a class="headerlink" href="#c4-model-references" title="Permanent link">&para;</a></h3>
+<ul>
+<li><a href="https://c4model.com/">C4 Model Official</a></li>
+<li><a href="https://softwarearchitecturefordevelopers.com/">Simon Brown - Software Architecture for Developers</a></li>
+</ul>
+<hr />
+<p><em>Architecture documentation for QualCoder v2. Last updated: 2026-01.</em></p>
+
+
+
+
+
+
+
+  
+  
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+        
+<div class="md-social">
+  
+    
+    
+    
+    
+      
+      
+    
+    <a href="https://github.com/scope-impact/qualcoder-v2" target="_blank" rel="noopener" title="github.com" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.instant", "navigation.tracking", "navigation.tabs", "navigation.tabs.sticky", "navigation.sections", "navigation.expand", "navigation.indexes", "toc.follow", "search.suggest", "search.highlight", "content.code.copy", "content.code.annotate"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"provider": "mike"}}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+    
+  </body>
+</html>
