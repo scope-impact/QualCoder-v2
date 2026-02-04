@@ -37,23 +37,6 @@ class RemoteItem:
 
 
 @dataclass(frozen=True)
-class SyncConflict:
-    """
-    Represents a sync conflict requiring resolution.
-
-    Conflicts occur when local changes are pending while
-    remote changes arrive for the same entity.
-    """
-
-    local_id: str
-    remote_id: str
-    entity_type: str
-    conflict_type: str  # "pending_outbound", "version_mismatch"
-    local_data: dict = field(default_factory=dict)
-    remote_data: dict = field(default_factory=dict)
-
-
-@dataclass(frozen=True)
 class SyncDomainState:
     """
     Immutable state container for sync derivers.
