@@ -1,0 +1,3 @@
+
+Screenshot saved: /home/runner/work/QualCoder-v2/QualCoder-v2/design_system/tests/screenshots/inputs_all_states_20260204_100444.png
+Assets copy: /home/runner/work/QualCoder-v2/QualCoder-v2/design_system/assets/screenshots/inputs_all_states.png

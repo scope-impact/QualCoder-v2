@@ -1,0 +1,3 @@
+
+Screenshot saved: /home/runner/work/QualCoder-v2/QualCoder-v2/design_system/tests/screenshots/message_bubbles_20260204_100448.png
+Assets copy: /home/runner/work/QualCoder-v2/QualCoder-v2/design_system/assets/screenshots/message_bubbles.png

@@ -1,0 +1,3 @@
+
+Screenshot saved: /home/runner/work/QualCoder-v2/QualCoder-v2/design_system/tests/screenshots/player_controls_20260204_100446.png
+Assets copy: /home/runner/work/QualCoder-v2/QualCoder-v2/design_system/assets/screenshots/player_controls.png
