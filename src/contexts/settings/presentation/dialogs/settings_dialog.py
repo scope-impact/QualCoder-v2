@@ -577,7 +577,11 @@ class SettingsDialog(QDialog):
         backend_layout.setSpacing(SPACING.md)
 
         self._backend_group = QButtonGroup(self)
-        backends = [("SQLite (Local)", "sqlite"), ("Convex (Cloud)", "convex")]
+        backends = [
+            ("SQLite (Local)", "sqlite"),
+            ("Sync (Local + Cloud)", "sync"),
+            ("Convex (Cloud Only)", "convex"),
+        ]
 
         for display_name, value in backends:
             btn = QPushButton(display_name)
@@ -594,8 +598,9 @@ class SettingsDialog(QDialog):
 
         # Description
         desc_label = QLabel(
-            "SQLite stores data locally in .qda project files.\n"
-            "Convex stores data in the cloud for real-time collaboration."
+            "SQLite: Local storage only (works offline)\n"
+            "Sync: Local + cloud sync (offline-first, real-time collaboration)\n"
+            "Convex: Cloud only (requires internet connection)"
         )
         desc_label.setStyleSheet(f"""
             color: {self._colors.text_secondary};
@@ -743,7 +748,7 @@ class SettingsDialog(QDialog):
             if btn.property("backend_value") == backend_type:
                 btn.setChecked(True)
                 break
-        self._convex_config_frame.setVisible(backend_type == "convex")
+        self._convex_config_frame.setVisible(backend_type in ("convex", "sync"))
         convex_url = getattr(settings, "convex_url", "")
         if convex_url:
             self._convex_url.setText(convex_url)
@@ -841,7 +846,8 @@ class SettingsDialog(QDialog):
 
     def _on_backend_changed(self, backend_type: str) -> None:
         """Handle database backend selection."""
-        self._convex_config_frame.setVisible(backend_type == "convex")
+        # Show Convex config for both "convex" and "sync" modes
+        self._convex_config_frame.setVisible(backend_type in ("convex", "sync"))
         self._viewmodel.change_backend(backend_type)
         self.settings_changed.emit()
 

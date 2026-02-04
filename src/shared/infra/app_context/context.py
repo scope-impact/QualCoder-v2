@@ -14,7 +14,7 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from src.shared.common.operation_result import OperationResult
 from src.shared.infra.event_bus import EventBus
@@ -79,6 +79,9 @@ class AppContext:
 
     # Optional Convex client for cloud backend
     convex_client: ConvexClientWrapper | None = None
+
+    # Optional sync engine for SQLite-Convex sync
+    _sync_engine: Any = field(default=None, init=False, repr=False)
 
     # Bounded contexts (None when no project is open)
     sources_context: SourcesContext | None = None
@@ -237,21 +240,33 @@ class AppContext:
         """
         # Determine backend type from settings
         backend_config = self.settings_repo.get_backend_config()
-        backend_type = (
-            BackendType.CONVEX if backend_config.is_convex else BackendType.SQLITE
-        )
 
-        # Initialize Convex client if needed
-        if backend_type == BackendType.CONVEX and self.convex_client is None:
+        # Initialize Convex client if needed (for "convex" or "sync" modes)
+        if backend_config.uses_convex and self.convex_client is None:
             from src.shared.infra.convex import ConvexClientWrapper
 
             if backend_config.convex_url:
-                self.convex_client = ConvexClientWrapper(backend_config.convex_url)
+                try:
+                    self.convex_client = ConvexClientWrapper(backend_config.convex_url)
+                    logger.info(f"Connected to Convex: {backend_config.convex_url}")
+                except Exception as e:
+                    logger.warning(f"Failed to connect to Convex: {e}")
+                    if backend_config.is_convex:
+                        # Convex-only mode requires connection
+                        raise
+                    # Sync mode can work offline
+                    self.convex_client = None
             else:
-                logger.warning(
-                    "Convex backend configured but no URL provided, falling back to SQLite"
-                )
-                backend_type = BackendType.SQLITE
+                logger.warning("Convex URL not configured")
+                if backend_config.is_convex:
+                    logger.warning("Falling back to SQLite (Convex URL not set)")
+
+        # Determine actual backend type
+        if backend_config.is_convex and self.convex_client:
+            backend_type = BackendType.CONVEX
+        else:
+            # SQLite or sync mode both use SQLite as primary
+            backend_type = BackendType.SQLITE
 
         # Create contexts with appropriate backend
         self.sources_context = SourcesContext.create(
@@ -273,10 +288,19 @@ class AppContext:
         self.projects_context = ProjectsContext.create(
             connection=connection,
             convex_client=self.convex_client,
-            backend_type=BackendType.SQLITE,  # Always SQLite for project management
+            backend_type=BackendType.SQLITE,
         )
 
-        logger.debug(f"Created bounded contexts for project (backend: {backend_type.value})")
+        # Start sync engine for sync mode
+        if backend_config.is_sync and self.convex_client:
+            from src.shared.infra.sync import SyncEngine
+
+            self._sync_engine = SyncEngine(connection, self.convex_client)
+            self._sync_engine.start()
+            logger.info("SyncEngine started for SQLite-Convex sync")
+
+        mode_name = backend_config.backend_type
+        logger.debug(f"Created bounded contexts for project (mode: {mode_name})")
 
         return {
             "sources": self.sources_context,
@@ -292,6 +316,11 @@ class AppContext:
         self.cases_context = None
         self.coding_context = None
         self.projects_context = None
+
+        # Stop sync engine if running
+        if self._sync_engine is not None:
+            self._sync_engine.stop()
+            self._sync_engine = None
 
         # Close Convex client if open
         if self.convex_client is not None:

@@ -1,0 +1,64 @@
+# Docker Compose for QualCoder v2 with Local Convex Backend
+#
+# This provides a self-hosted Convex backend for local development and testing.
+# Data is stored in SQLite by default (good for development).
+#
+# Usage:
+#   docker compose up -d         # Start Convex backend
+#   docker compose logs -f       # View logs
+#   docker compose down          # Stop services
+#
+# Access:
+#   Dashboard: http://localhost:6791
+#   Backend:   http://127.0.0.1:3210
+#
+# Generate admin key:
+#   docker compose exec backend ./generate_admin_key.sh
+
+services:
+  # Convex Backend (self-hosted)
+  backend:
+    image: ghcr.io/get-convex/convex-backend:latest
+    ports:
+      - "3210:3210"   # Backend API
+      - "3211:3211"   # HTTP Actions
+    volumes:
+      - convex_data:/convex_data
+    environment:
+      # Use SQLite for local development (simpler setup)
+      - CONVEX_SITE_URL=http://127.0.0.1:3210
+      # Uncomment below for PostgreSQL in production:
+      # - POSTGRES_URL=postgresql://user:pass@postgres:5432/convex
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3210/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Convex Dashboard (optional, for visual management)
+  dashboard:
+    image: ghcr.io/get-convex/convex-dashboard:latest
+    ports:
+      - "6791:6791"
+    environment:
+      - CONVEX_BACKEND_URL=http://backend:3210
+    depends_on:
+      backend:
+        condition: service_healthy
+
+  # PostgreSQL (optional, for production-like setup)
+  # Uncomment if you want to use PostgreSQL instead of SQLite
+  # postgres:
+  #   image: postgres:16-alpine
+  #   ports:
+  #     - "5432:5432"
+  #   volumes:
+  #     - postgres_data:/var/lib/postgresql/data
+  #   environment:
+  #     - POSTGRES_USER=convex
+  #     - POSTGRES_PASSWORD=convex_password
+  #     - POSTGRES_DB=convex
+
+volumes:
+  convex_data:
+  # postgres_data:

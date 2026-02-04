@@ -145,22 +145,40 @@ class BackendConfig:
     """
     Database backend configuration value object.
 
-    Controls which database backend to use (SQLite or Convex).
+    Controls which database backend to use:
+    - "sqlite": Local SQLite only (offline, no sync)
+    - "convex": Convex cloud only (requires internet)
+    - "sync": Both SQLite + Convex (offline-first with cloud sync)
     """
 
-    backend_type: str = "sqlite"  # "sqlite" or "convex"
+    backend_type: str = "sqlite"  # "sqlite", "convex", or "sync"
     convex_url: str | None = None  # Convex deployment URL
     convex_project_id: str | None = None  # Convex project ID for the current project
 
     @property
     def is_convex(self) -> bool:
-        """Check if using Convex backend."""
+        """Check if using Convex-only backend."""
         return self.backend_type == "convex"
 
     @property
     def is_sqlite(self) -> bool:
-        """Check if using SQLite backend."""
+        """Check if using SQLite-only backend."""
         return self.backend_type == "sqlite"
+
+    @property
+    def is_sync(self) -> bool:
+        """Check if using sync mode (SQLite + Convex)."""
+        return self.backend_type == "sync"
+
+    @property
+    def uses_convex(self) -> bool:
+        """Check if Convex is used (either convex-only or sync mode)."""
+        return self.backend_type in ("convex", "sync")
+
+    @property
+    def uses_sqlite(self) -> bool:
+        """Check if SQLite is used (either sqlite-only or sync mode)."""
+        return self.backend_type in ("sqlite", "sync")
 
     def with_backend_type(self, backend_type: str) -> BackendConfig:
         """Return new BackendConfig with updated backend type."""
