@@ -5,6 +5,7 @@ status: To Do
 created_date: '2026-02-04'
 labels: [infrastructure, projects, feature, P1]
 dependencies: []
+decision: decision-006
 ---
 
 ## Description
@@ -17,54 +18,48 @@ This allows researchers to:
 - View meaningful diffs showing what codes/segments/sources changed
 - Collaborate with merge capabilities for multi-coder workflows
 
-## Research Summary
+## Decision
 
-### Available Approaches
+**sqlite-diffable** selected as the primary tool. See [decision-006](../decisions/decision-006%20sqlite-version-control-sqlite-diffable.md) for full rationale.
 
-| Approach | Pros | Cons | Recommendation |
-|----------|------|------|----------------|
-| **Git clean/smudge filters** | Line-by-line diffs, stores as SQL text | Setup complexity | **Primary choice** |
-| **sqldiff (Official SQLite)** | Official tool, SQL output | No triggers/views | Use for diff display |
-| **git-sqlite** | Full merge support | Shell scripts, extra deps | Consider for merging |
-| **sqlite-diffable** | Python, JSON export | Different format | Good for archival |
-| **Git textconv** | Simple setup | Display only, no merge | Fallback option |
-| **Litestream** | Continuous backup, PITR | Not version control | Complementary backup |
+### Why sqlite-diffable
 
-### Recommended Implementation Stack
+| Criteria | sqlite-diffable | Alternatives |
+|----------|-----------------|--------------|
+| Python native | `pip install` | git-sqlite: shell only |
+| Cross-platform | Win/Mac/Linux | git-sqlite: no Windows |
+| Active maintainer | Simon Willison | git-sqlite: dormant |
+| Format | JSON (diffable) | SQL text (ordering issues) |
+| Integration | CLI + Python | Shell scripts |
 
-1. **Git clean/smudge filters** - Store database as SQL text in Git
-   - Clean: `sqlite3 .dump` on commit (binary -> SQL)
-   - Smudge: Reconstruct binary on checkout (SQL -> binary)
-   - Enables meaningful line-by-line diffs
+### Architecture
 
-2. **sqldiff integration** - For viewing changes between versions
-   - Official SQLite utility (included in Debian 9+)
-   - Outputs SQL script to transform db1 -> db2
+```
+project.qda/
+├── data.sqlite           ← Working database (binary)
+├── .git/                 ← Git repository
+└── .qualcoder-vcs/       ← Diffable snapshots
+    ├── code_name.metadata.json
+    ├── code_name.ndjson
+    ├── code_text.metadata.json
+    ├── code_text.ndjson
+    └── ...
+```
 
-3. **Optional: Litestream** - Complementary continuous backup
-   - WAL streaming to S3/Azure for disaster recovery
-   - Point-in-time recovery capability
+### Workflow
 
-### Key Tools & References
-
-- [git-sqlite](https://github.com/cannadayr/git-sqlite) - Custom diff/merge driver
-- [sqlite-diffable](https://datasette.io/tools/sqlite-diffable) - Python tool by Datasette
-- [sqldiff](https://www.sqlite.org/sqldiff.html) - Official SQLite utility
-- [gitsqlite](https://github.com/danielsiegl/gitsqlite) - Smudge/clean filters
-- [Litestream](https://litestream.io/) - Streaming SQLite replication
-
-### Technical Considerations
-
-1. **Repository Size**: Storing as SQL text is more efficient than binary blobs
-2. **Binary Changes**: SQLite files change even when content is identical (need canonical rebuild)
-3. **Merge Conflicts**: Domain-specific - may need custom resolution for QualCoder schema
-4. **Filter Setup**: Users without filters configured will see errors on clone
+1. User works in QualCoder (edits `data.sqlite`)
+2. User clicks "Create Snapshot"
+3. `sqlite-diffable dump` exports to `.qualcoder-vcs/`
+4. Git commits the JSON files
+5. Git diff shows meaningful line-by-line changes
+6. Restore: Git checkout + `sqlite-diffable load`
 
 ## Acceptance Criteria
 
 - [ ] Git repository initialization for QualCoder projects
-- [ ] Clean/smudge filter configuration for SQLite files
-- [ ] sqldiff integration for viewing database changes
+- [ ] sqlite-diffable integration for dump/load operations
+- [ ] Snapshot creation (dump + git commit)
 - [ ] UI for viewing version history and diffs
 - [ ] Rollback/restore functionality to previous commits
 - [ ] Branch and merge support for database states
@@ -75,11 +70,11 @@ This allows researchers to:
 | ID | Subtask | Status | Layer |
 |----|---------|--------|-------|
 | QC-047.01 | Git repository initialization in project folder | To Do | infrastructure |
-| QC-047.02 | Clean/smudge filter scripts for SQLite | To Do | infrastructure |
-| QC-047.03 | sqldiff wrapper for viewing changes | To Do | infrastructure |
+| QC-047.02 | sqlite-diffable adapter (dump/load wrapper) | To Do | infrastructure |
+| QC-047.03 | Git operations service (commit, log, checkout) | To Do | infrastructure |
 | QC-047.04 | Version history query service | To Do | core |
-| QC-047.05 | Commit/snapshot command handler | To Do | core |
-| QC-047.06 | Rollback/restore command handler | To Do | core |
+| QC-047.05 | Create snapshot command handler | To Do | core |
+| QC-047.06 | Restore snapshot command handler | To Do | core |
 | QC-047.07 | Version history UI panel | To Do | presentation |
 | QC-047.08 | Diff viewer dialog | To Do | presentation |
 | QC-047.09 | MCP tools for version control | To Do | interface |
@@ -87,19 +82,21 @@ This allows researchers to:
 
 ## Implementation Notes
 
-### Git Filter Configuration
+### Dependencies
 
-```bash
-# .gitattributes in project folder
-*.sqlite filter=sqlite3 diff=sqlite3
+```toml
+[project.dependencies]
+sqlite-diffable = ">=1.0"  # Apache 2.0
+```
 
-# Git config (per-repo or global)
-[filter "sqlite3"]
-    clean = sqlite3 %f .dump
-    smudge = sqlite3 %f
+### Excluded Tables
 
-[diff "sqlite3"]
-    textconv = sqlite3 %f .dump
+```python
+EXCLUDE_TABLES = [
+    "sqlite_sequence",       # Auto-increment tracking
+    "source_fulltext_fts",   # FTS index (regenerable)
+    "source_fulltext_data",  # FTS data (regenerable)
+]
 ```
 
 ### Directory Structure
@@ -113,8 +110,7 @@ src/contexts/projects/
 │       └── restore_snapshot.py
 ├── infra/
 │   ├── git_repository.py
-│   ├── sqlite_filter.py
-│   └── sqldiff_adapter.py
+│   └── sqlite_diffable_adapter.py
 ├── interface/
 │   └── version_control_tools.py  # MCP tools
 └── presentation/
@@ -122,13 +118,51 @@ src/contexts/projects/
     └── diff_viewer_dialog.py
 ```
 
+### Python API
+
+```python
+import subprocess
+from pathlib import Path
+
+def create_snapshot(db_path: Path, output_dir: Path, exclude: list[str] = None):
+    """Dump database to diffable format."""
+    cmd = ["sqlite-diffable", "dump", str(db_path), str(output_dir), "--all"]
+    if exclude:
+        for table in exclude:
+            cmd.extend(["--exclude", table])
+    subprocess.run(cmd, check=True)
+
+def restore_snapshot(db_path: Path, snapshot_dir: Path):
+    """Load database from diffable format."""
+    cmd = ["sqlite-diffable", "load", str(db_path), str(snapshot_dir), "--replace"]
+    subprocess.run(cmd, check=True)
+```
+
 ### MCP Tool Schemas
 
 ```python
-# Planned MCP tools
-- create_snapshot(message: str) -> SnapshotCreated
-- list_snapshots(limit: int) -> List[Snapshot]
-- view_diff(from_ref: str, to_ref: str) -> DiffResult
-- restore_snapshot(ref: str) -> SnapshotRestored
-- get_version_status() -> VersionStatus
+@mcp_tool
+def create_snapshot(message: str) -> SnapshotCreated:
+    """Create a version control snapshot of the current database state."""
+
+@mcp_tool
+def list_snapshots(limit: int = 20) -> list[Snapshot]:
+    """List recent snapshots with commit messages and dates."""
+
+@mcp_tool
+def view_diff(from_ref: str = "HEAD~1", to_ref: str = "HEAD") -> DiffResult:
+    """View changes between two snapshots."""
+
+@mcp_tool
+def restore_snapshot(ref: str) -> SnapshotRestored:
+    """Restore database to a previous snapshot state."""
+
+@mcp_tool
+def get_version_status() -> VersionStatus:
+    """Get current version control status (dirty/clean, current commit)."""
 ```
+
+## References
+
+- [sqlite-diffable GitHub](https://github.com/simonw/sqlite-diffable)
+- [Decision Record](../decisions/decision-006%20sqlite-version-control-sqlite-diffable.md)
