@@ -1,0 +1,3 @@
+
+Screenshot saved: /home/runner/work/QualCoder-v2/QualCoder-v2/design_system/tests/screenshots/avatars_all_sizes_20260204_193826.png
+Assets copy: /home/runner/work/QualCoder-v2/QualCoder-v2/design_system/assets/screenshots/avatars_all_sizes.png
