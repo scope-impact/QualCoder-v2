@@ -644,7 +644,6 @@ class AppShell(QMainWindow):
     # Navigation signals
     navigation_clicked = Signal(str)  # nav_id: project, files, coding, etc.
     menu_clicked = Signal(str)  # Legacy alias for navigation_clicked
-    tab_clicked = Signal(str)  # Legacy - kept for compatibility
     settings_clicked = Signal()  # settings button clicked
 
     def __init__(self, colors: ColorPalette = None, parent=None):

@@ -82,16 +82,14 @@ class CodingToolbar(QFrame):
         media_type_changed(str): Emitted when media type selection changes
         search_changed(str): Emitted when search text changes
         details_toggle_clicked(): Emitted when Show Details button is clicked
-        coder_changed(str): Legacy signal (not used in simplified layout)
-        action_triggered(str): Legacy signal (not used in simplified layout)
+        action_triggered(str): Legacy signal (connected but never emitted)
     """
 
     media_type_changed = Signal(str)
     search_changed = Signal(str)
     details_toggle_clicked = Signal()
 
-    # Legacy signals for backwards compatibility
-    coder_changed = Signal(str)
+    # Legacy signal for backwards compatibility (connected but never emitted)
     action_triggered = Signal(str)
 
     def __init__(
