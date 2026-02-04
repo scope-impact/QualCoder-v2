@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING
 from src.contexts.projects.core.vcs_commands import AutoCommitCommand
 from src.contexts.projects.core.vcs_derivers import derive_auto_commit
 from src.contexts.projects.core.vcs_entities import VersionControlState
-from src.contexts.projects.core.vcs_events import SnapshotCreated
+from src.contexts.projects.core.vcs_events import AutoCommitDecided, SnapshotCreated
 from src.contexts.projects.core.vcs_failure_events import AutoCommitSkipped
 from src.shared.common.operation_result import OperationResult
 
@@ -26,20 +26,35 @@ def auto_commit(
     git_adapter: GitRepositoryAdapter,
     event_bus: EventBus,
 ) -> OperationResult:
-    """Auto-commit pending domain events to version control."""
+    """
+    Auto-commit pending domain events to version control.
+
+    Steps:
+    1. Build state from adapters
+    2. Call deriver (domain decides)
+    3. Handle failure
+    4. Execute I/O (dump, stage, commit)
+    5. Publish domain event
+    """
     project_path = Path(command.project_path)
     events = tuple(command.events)
 
-    # Build state and call deriver
+    # 1. Build state
     state = VersionControlState(is_initialized=git_adapter.is_initialized())
-    result = derive_auto_commit(events=events, state=state)
 
-    if isinstance(result, AutoCommitSkipped):
-        return OperationResult.from_failure(result)
+    # 2. Call deriver (domain decides)
+    decision = derive_auto_commit(events=events, state=state)
 
-    commit_message = result.message
+    # 3. Handle failure
+    if isinstance(decision, AutoCommitSkipped):
+        return OperationResult.from_failure(decision)
 
-    # Execute I/O: dump database, stage, commit
+    # Decision is AutoCommitDecided - extract message and count
+    assert isinstance(decision, AutoCommitDecided)
+    commit_message = decision.message
+    event_count = decision.event_count
+
+    # 4. Execute I/O: dump database, stage, commit
     vcs_dir = diffable_adapter.get_vcs_dir(project_path)
 
     dump_result = diffable_adapter.dump(project_path, vcs_dir)
@@ -53,14 +68,17 @@ def auto_commit(
     commit_result = git_adapter.commit(commit_message)
     if commit_result.is_failure:
         if commit_result.error_code == "GIT_NOT_COMMITTED/NOTHING_TO_COMMIT":
+            # No actual changes to commit - return success without publishing event
             return OperationResult.ok(
-                data=SnapshotCreated.create("no-changes", commit_message, len(events))
+                data=SnapshotCreated.create("no-changes", commit_message, event_count)
             )
         return commit_result
 
-    # Publish event with actual SHA
+    # 5. Create and publish domain event with actual SHA
     final_event = SnapshotCreated.create(
-        commit_result.data or "", commit_message, len(events)
+        git_sha=commit_result.data or "",
+        message=commit_message,
+        event_count=event_count,
     )
     event_bus.publish(final_event)
 

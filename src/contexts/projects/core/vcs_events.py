@@ -7,6 +7,52 @@ from typing import ClassVar
 
 from src.shared.common.types import DomainEvent
 
+# ============================================================
+# Decision Events (returned by derivers, consumed by handlers)
+# ============================================================
+
+
+@dataclass(frozen=True)
+class AutoCommitDecided:
+    """
+    Decision event: Auto-commit should proceed.
+
+    Derivers return this to indicate the commit can proceed.
+    Command handler uses this to create the actual SnapshotCreated event.
+    """
+
+    message: str
+    event_count: int
+
+
+@dataclass(frozen=True)
+class RestoreDecided:
+    """
+    Decision event: Restore should proceed.
+
+    Derivers return this to indicate the restore can proceed.
+    Command handler uses this to create the actual SnapshotRestored event.
+    """
+
+    ref: str
+
+
+@dataclass(frozen=True)
+class InitializeDecided:
+    """
+    Decision event: Initialization should proceed.
+
+    Derivers return this to indicate initialization can proceed.
+    Command handler uses this to create the actual VersionControlInitialized event.
+    """
+
+    project_path: str
+
+
+# ============================================================
+# Domain Events (published after successful I/O)
+# ============================================================
+
 
 @dataclass(frozen=True)
 class SnapshotCreated(DomainEvent):
@@ -65,4 +111,26 @@ class VersionControlInitialized(DomainEvent):
         )
 
 
+# ============================================================
+# Type Unions
+# ============================================================
+
+DecisionEvent = AutoCommitDecided | RestoreDecided | InitializeDecided
 VersionControlEvent = SnapshotCreated | SnapshotRestored | VersionControlInitialized
+
+# ============================================================
+# Exports
+# ============================================================
+
+__all__ = [
+    # Decision events
+    "AutoCommitDecided",
+    "RestoreDecided",
+    "InitializeDecided",
+    "DecisionEvent",
+    # Domain events
+    "SnapshotCreated",
+    "SnapshotRestored",
+    "VersionControlInitialized",
+    "VersionControlEvent",
+]

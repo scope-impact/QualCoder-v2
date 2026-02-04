@@ -150,33 +150,31 @@ class GitRepositoryAdapter:
 
     def diff(self, from_ref: str, to_ref: str) -> OperationResult:
         """Get diff between two commits."""
-        valid_refs = self.get_valid_refs()
-        if valid_refs.is_failure:
-            return valid_refs
-
-        result = self._run_git(["diff", from_ref, to_ref], "GIT_DIFF_FAILED")
-        if result.is_failure:
-            return result
-
-        # _run_git doesn't capture output for data, so run directly
         try:
-            proc = subprocess.run(
+            result = subprocess.run(
                 ["git", "diff", from_ref, to_ref],
                 cwd=self._repo_path,
                 capture_output=True,
                 text=True,
                 check=False,
             )
-            if proc.returncode != 0:
+            if result.returncode != 0:
+                error_msg = result.stderr.strip() or result.stdout.strip()
                 return OperationResult.fail(
-                    error=f"git diff failed: {proc.stderr.strip()}",
+                    error=f"git diff failed: {error_msg}",
                     error_code="GIT_DIFF_FAILED/CLI_ERROR",
                 )
-            return OperationResult.ok(data=proc.stdout)
-        except (FileNotFoundError, OSError) as e:
+            return OperationResult.ok(data=result.stdout)
+        except FileNotFoundError:
             return OperationResult.fail(
-                error=f"git diff failed: {e}",
-                error_code="GIT_DIFF_FAILED/CLI_ERROR",
+                error="git command not found",
+                error_code="GIT_DIFF_FAILED/CLI_NOT_FOUND",
+                suggestions=("Install Git: https://git-scm.com/downloads",),
+            )
+        except OSError as e:
+            return OperationResult.fail(
+                error=f"Failed to run git: {e}",
+                error_code="GIT_DIFF_FAILED/OS_ERROR",
             )
 
     def checkout(self, ref: str) -> OperationResult:

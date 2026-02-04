@@ -13,3 +13,6 @@ class VersionControlState:
     has_uncommitted_changes: bool = False
     valid_refs: tuple[str, ...] = ()
     current_ref: str = "HEAD"
+
+
+__all__ = ["VersionControlState"]

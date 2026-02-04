@@ -1,27 +1,27 @@
 """
 Version Control Derivers - Pure Event Derivation
 
-Pure functions that compose invariants and derive domain events.
+Pure functions that compose invariants and derive decision events.
 These are the core of the Functional DDD pattern.
 
 Architecture:
-    Deriver: (command/data, state) -> SuccessEvent | FailureEvent
+    Deriver: (command/data, state) -> DecisionEvent | FailureEvent
     - Pure function, no I/O, no side effects
     - Composes multiple invariants
-    - Returns a discriminated union (success or failure event)
+    - Returns a discriminated union (decision or failure event)
+    - Command handler creates actual domain events after I/O
     - Fully testable in isolation
 """
 
 from __future__ import annotations
 
 from collections import Counter
-from typing import TYPE_CHECKING
 
 from src.contexts.projects.core.vcs_entities import VersionControlState
 from src.contexts.projects.core.vcs_events import (
-    SnapshotCreated,
-    SnapshotRestored,
-    VersionControlInitialized,
+    AutoCommitDecided,
+    InitializeDecided,
+    RestoreDecided,
 )
 from src.contexts.projects.core.vcs_failure_events import (
     AutoCommitSkipped,
@@ -29,14 +29,8 @@ from src.contexts.projects.core.vcs_failure_events import (
     VersionControlNotInitialized,
 )
 from src.contexts.projects.core.vcs_invariants import (
-    has_events_to_commit,
     is_valid_git_ref,
-    is_version_control_initialized,
 )
-
-if TYPE_CHECKING:
-    pass
-
 
 # ============================================================
 # Auto-Commit Deriver
@@ -46,40 +40,35 @@ if TYPE_CHECKING:
 def derive_auto_commit(
     events: tuple,
     state: VersionControlState,
-) -> SnapshotCreated | AutoCommitSkipped:
+) -> AutoCommitDecided | AutoCommitSkipped:
     """
-    Derive auto-commit event from batched domain events.
+    Derive auto-commit decision from batched domain events.
 
     PURE - no I/O. Called by command handler after debounce.
 
-    Pattern: (events, state) -> SuccessEvent | FailureEvent
+    Pattern: (events, state) -> DecisionEvent | FailureEvent
 
     Args:
         events: Tuple of domain events to commit
         state: Current version control state
 
     Returns:
-        SnapshotCreated on success (git_sha will be "pending" until command handler fills it)
+        AutoCommitDecided if commit should proceed
         AutoCommitSkipped on failure with reason
     """
     # Check: VCS must be initialized
-    if not is_version_control_initialized(state.is_initialized):
+    if not state.is_initialized:
         return AutoCommitSkipped.not_initialized()
 
     # Check: Must have events to commit
-    if not has_events_to_commit(events):
+    if len(events) == 0:
         return AutoCommitSkipped.no_events()
 
     # Generate commit message from events
     message = _generate_commit_message(events)
 
-    # Return success event
-    # Note: git_sha is "pending" - command handler will fill in the real SHA
-    return SnapshotCreated.create(
-        git_sha="pending",
-        message=message,
-        event_count=len(events),
-    )
+    # Return decision event - handler creates actual SnapshotCreated after I/O
+    return AutoCommitDecided(message=message, event_count=len(events))
 
 
 # ============================================================
@@ -90,24 +79,24 @@ def derive_auto_commit(
 def derive_restore_snapshot(
     ref: str,
     state: VersionControlState,
-) -> SnapshotRestored | SnapshotNotRestored:
+) -> RestoreDecided | SnapshotNotRestored:
     """
-    Derive restore snapshot event.
+    Derive restore snapshot decision.
 
     PURE - no I/O. Validates that restore operation can proceed.
 
-    Pattern: (ref, state) -> SuccessEvent | FailureEvent
+    Pattern: (ref, state) -> DecisionEvent | FailureEvent
 
     Args:
         ref: Git reference to restore to (SHA or HEAD~N)
         state: Current version control state
 
     Returns:
-        SnapshotRestored on success
+        RestoreDecided if restore should proceed
         SnapshotNotRestored on failure with reason
     """
     # Check: VCS must be initialized
-    if not is_version_control_initialized(state.is_initialized):
+    if not state.is_initialized:
         return SnapshotNotRestored.not_initialized()
 
     # Check: Cannot restore with uncommitted changes
@@ -118,11 +107,8 @@ def derive_restore_snapshot(
     if not is_valid_git_ref(ref, state.valid_refs):
         return SnapshotNotRestored.invalid_ref(ref)
 
-    # Return success event
-    return SnapshotRestored.create(
-        ref=ref,
-        git_sha=ref,  # Command handler may resolve to actual SHA
-    )
+    # Return decision event - handler creates actual SnapshotRestored after I/O
+    return RestoreDecided(ref=ref)
 
 
 # ============================================================
@@ -133,28 +119,28 @@ def derive_restore_snapshot(
 def derive_initialize_version_control(
     project_path: str,
     state: VersionControlState,
-) -> VersionControlInitialized | VersionControlNotInitialized:
+) -> InitializeDecided | VersionControlNotInitialized:
     """
-    Derive version control initialization event.
+    Derive version control initialization decision.
 
     PURE - no I/O. Validates that initialization can proceed.
 
-    Pattern: (project_path, state) -> SuccessEvent | FailureEvent
+    Pattern: (project_path, state) -> DecisionEvent | FailureEvent
 
     Args:
         project_path: Path to the project directory
         state: Current version control state
 
     Returns:
-        VersionControlInitialized on success
+        InitializeDecided if initialization should proceed
         VersionControlNotInitialized on failure with reason
     """
     # Check: VCS must NOT already be initialized
     if state.is_initialized:
         return VersionControlNotInitialized.already_initialized(project_path)
 
-    # Return success event
-    return VersionControlInitialized.create(project_path=project_path)
+    # Return decision event - handler creates actual VersionControlInitialized after I/O
+    return InitializeDecided(project_path=project_path)
 
 
 # ============================================================

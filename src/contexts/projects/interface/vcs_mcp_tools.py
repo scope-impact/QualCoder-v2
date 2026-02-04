@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any
 
 from src.contexts.projects.core.commandHandlers import (
@@ -43,7 +43,7 @@ class ToolDefinition:
 
     name: str
     description: str
-    parameters: tuple[ToolParameter, ...] = field(default_factory=tuple)
+    parameters: tuple[ToolParameter, ...] = ()
     is_destructive: bool = False
 
     def to_schema(self) -> dict[str, Any]:

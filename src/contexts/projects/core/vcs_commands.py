@@ -8,7 +8,7 @@ Commands are pure data containers with no behavior.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
     pass
@@ -23,7 +23,7 @@ class AutoCommitCommand:
     """
 
     project_path: str
-    events: list  # List[DomainEvent] - events to commit
+    events: list[Any]  # List of DomainEvent instances
 
 
 @dataclass(frozen=True)
@@ -50,10 +50,6 @@ class InitializeVersionControlCommand:
 
     project_path: str
 
-
-# ============================================================
-# Exports
-# ============================================================
 
 __all__ = [
     "AutoCommitCommand",

@@ -8,7 +8,10 @@ from typing import TYPE_CHECKING
 from src.contexts.projects.core.vcs_commands import InitializeVersionControlCommand
 from src.contexts.projects.core.vcs_derivers import derive_initialize_version_control
 from src.contexts.projects.core.vcs_entities import VersionControlState
-from src.contexts.projects.core.vcs_events import VersionControlInitialized
+from src.contexts.projects.core.vcs_events import (
+    InitializeDecided,
+    VersionControlInitialized,
+)
 from src.contexts.projects.core.vcs_failure_events import VersionControlNotInitialized
 from src.shared.common.operation_result import OperationResult
 
@@ -34,17 +37,33 @@ def initialize_version_control(
     git_adapter: GitRepositoryAdapter,
     event_bus: EventBus,
 ) -> OperationResult:
-    """Initialize version control for a project."""
+    """
+    Initialize version control for a project.
+
+    Steps:
+    1. Build state from adapters
+    2. Call deriver (domain decides)
+    3. Handle failure
+    4. Execute I/O (init, gitignore, dump, commit)
+    5. Publish domain event
+    """
     project_path = Path(command.project_path)
 
-    # Build state and call deriver
+    # 1. Build state
     state = VersionControlState(is_initialized=git_adapter.is_initialized())
-    result = derive_initialize_version_control(str(project_path), state)
 
-    if isinstance(result, VersionControlNotInitialized):
-        return OperationResult.from_failure(result)
+    # 2. Call deriver (domain decides)
+    decision = derive_initialize_version_control(str(project_path), state)
 
-    # Execute I/O: git init, create .gitignore, dump database, commit
+    # 3. Handle failure
+    if isinstance(decision, VersionControlNotInitialized):
+        return OperationResult.from_failure(decision)
+
+    # Decision is InitializeDecided - extract project path
+    assert isinstance(decision, InitializeDecided)
+    target_path = decision.project_path
+
+    # 4. Execute I/O: git init, create .gitignore, dump database, commit
     init_result = git_adapter.init()
     if init_result.is_failure:
         return init_result
@@ -70,8 +89,8 @@ def initialize_version_control(
     if commit_result.is_failure:
         return commit_result
 
-    # Publish event
-    final_event = VersionControlInitialized.create(str(project_path))
+    # 5. Create and publish domain event
+    final_event = VersionControlInitialized.create(target_path)
     event_bus.publish(final_event)
 
     return OperationResult.ok(data=final_event)
