@@ -282,6 +282,29 @@ get_sync_status_tool = ToolDefinition(
 )
 
 
+# Tool: sync_pull
+sync_pull_tool = ToolDefinition(
+    name="sync_pull",
+    description=(
+        "Pull remote changes from cloud (like 'git pull'). "
+        "Fetches latest data from Convex and applies to local SQLite. "
+        "Use this to sync changes made on other devices."
+    ),
+    parameters=(
+        ToolParameter(
+            name="entity_types",
+            type="array",
+            description=(
+                "Entity types to pull. Options: code, category, segment, source, folder, case. "
+                "Default: all types."
+            ),
+            required=False,
+            default=None,
+        ),
+    ),
+)
+
+
 # ============================================================
 # Tool Implementation
 # ============================================================
@@ -325,6 +348,7 @@ class ProjectTools:
             "navigate_to_segment": navigate_to_segment_tool,
             "suggest_source_metadata": suggest_source_metadata_tool,
             "get_sync_status": get_sync_status_tool,
+            "sync_pull": sync_pull_tool,
         }
 
     @property
@@ -363,6 +387,7 @@ class ProjectTools:
             "navigate_to_segment": self._execute_navigate_to_segment,
             "suggest_source_metadata": self._execute_suggest_source_metadata,
             "get_sync_status": self._execute_get_sync_status,
+            "sync_pull": self._execute_sync_pull,
         }
 
         handler = handlers.get(tool_name)
@@ -647,7 +672,7 @@ class ProjectTools:
         self, _arguments: dict[str, Any]
     ) -> Result[dict[str, Any], str]:
         """
-        Execute get_sync_status tool.
+        Execute get_sync_status tool using command handler.
 
         Returns sync status including:
         - cloud_sync_enabled: bool - whether cloud sync is enabled in settings
@@ -657,40 +682,61 @@ class ProjectTools:
         - last_sync: string or null - ISO timestamp of last successful sync
         - error: string or null - error message if status is 'error'
         """
-        # Get settings repo to check if cloud sync is enabled
-        settings_repo = getattr(self._ctx, "settings_repo", None)
-        if settings_repo:
-            backend_config = settings_repo.get_backend_config()
-            cloud_sync_enabled = backend_config.cloud_sync_enabled
-        else:
-            cloud_sync_enabled = False
+        from src.shared.core.sync.commands import SyncStatusCommand
+        from src.shared.infra.sync.commandHandlers import handle_sync_status
 
-        # Get sync engine state if available
-        sync_engine = getattr(self._ctx, "_sync_engine", None)
+        # Use public API methods instead of private attribute access
+        sync_engine = self._ctx.get_sync_engine()
+        cloud_sync_enabled = self._ctx.is_cloud_sync_enabled()
 
-        if sync_engine is None:
-            return Success(
-                {
-                    "cloud_sync_enabled": cloud_sync_enabled,
-                    "connected": False,
-                    "status": "offline",
-                    "pending_changes": 0,
-                    "last_sync": None,
-                    "error": None,
-                }
-            )
-
-        state = sync_engine.state
-
-        return Success(
-            {
-                "cloud_sync_enabled": cloud_sync_enabled,
-                "connected": sync_engine.is_online,
-                "status": state.status.value,
-                "pending_changes": state.pending_changes,
-                "last_sync": (
-                    state.last_sync.isoformat() if state.last_sync else None
-                ),
-                "error": state.error_message,
-            }
+        # Call command handler (same pattern as ViewModel)
+        result = handle_sync_status(
+            cmd=SyncStatusCommand(),
+            sync_engine=sync_engine,
+            cloud_sync_enabled=cloud_sync_enabled,
         )
+
+        if result.success:
+            return Success(result.data)
+        return Failure(result.error or "Failed to get sync status")
+
+    def _execute_sync_pull(
+        self, arguments: dict[str, Any]
+    ) -> Result[dict[str, Any], str]:
+        """
+        Execute sync_pull tool using command handler.
+
+        Pulls remote changes from Convex (like 'git pull').
+        Calls the same command handler that ViewModel would use.
+
+        Args:
+            arguments: May contain 'entity_types' array
+
+        Returns:
+            Success with pull results, or Failure with error
+        """
+        from src.shared.core.sync.commands import SyncPullCommand
+        from src.shared.infra.sync.commandHandlers import handle_sync_pull
+
+        # Use public API
+        sync_engine = self._ctx.get_sync_engine()
+        if sync_engine is None:
+            return Failure("Cloud sync not enabled")
+
+        # Build command
+        entity_types = arguments.get("entity_types")
+        if entity_types:
+            cmd = SyncPullCommand(entity_types=tuple(entity_types))
+        else:
+            cmd = SyncPullCommand()  # Default: all types
+
+        # Call command handler (same as ViewModel would)
+        result = handle_sync_pull(
+            cmd=cmd,
+            sync_engine=sync_engine,
+            event_bus=self._ctx.event_bus,
+        )
+
+        if result.success:
+            return Success(result.data)
+        return Failure(result.error or "Sync pull failed")

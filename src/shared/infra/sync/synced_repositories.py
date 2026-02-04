@@ -110,7 +110,12 @@ class SyncedCodeRepository:
         )
 
     def _handle_remote_change(self, change_type: str, data: dict) -> None:
-        """Handle incoming changes from Convex subscription."""
+        """
+        Handle incoming changes from Convex subscription.
+
+        Uses domain derivers via sync_helpers to make decisions about
+        what to apply, skip (conflicts), or delete.
+        """
         if change_type != "sync" or "items" not in data:
             return
 
@@ -119,51 +124,62 @@ class SyncedCodeRepository:
             return
 
         try:
-            from datetime import datetime
+            from src.shared.common.types import CodeId
+            from src.shared.infra.sync.sync_helpers import (
+                clear_pending_after_sync,
+                process_remote_changes,
+            )
 
-            from src.contexts.coding.core.entities import Code
-            from src.contexts.coding.core.value_objects import CodeColor
-            from src.shared.common.types import CategoryId, CodeId
+            # Get local IDs for comparison
+            local_ids = {code.id.value for code in self._repo.get_all()}
 
-            # Get local items for comparison
-            local_codes = {code.id.value: code for code in self._repo.get_all()}
-            remote_ids = set()
+            # Use helper with domain derivers (DOMAIN DECIDES)
+            applied, skipped, deleted = process_remote_changes(
+                entity_type="code",
+                remote_items=remote_items,
+                local_ids=local_ids,
+                pending_outbound=self._pending_outbound,
+                entity_builder=self._build_code_from_remote,
+                save_entity=self._repo.save,
+                delete_entity=lambda id_: self._repo.delete(CodeId(id_)),
+            )
 
-            for item in remote_items:
-                item_id = item.get("_id") or item.get("id")
-                if not item_id:
-                    continue
+            # Clear pending IDs that were seen in remote
+            clear_pending_after_sync(remote_items, self._pending_outbound)
 
-                remote_ids.add(item_id)
-
-                # Skip if we have pending outbound for this ID
-                if item_id in self._pending_outbound:
-                    self._pending_outbound.discard(item_id)  # Clear after seeing it
-                    continue
-
-                # Build Code entity from remote data
-                code = Code(
-                    id=CodeId(item_id),
-                    name=item.get("name", ""),
-                    color=CodeColor.from_hex(item.get("color", "#808080")),
-                    memo=item.get("memo", ""),
-                    category_id=CategoryId(item["catid"]) if item.get("catid") else None,
-                    owner=item.get("owner", ""),
-                    created_at=datetime.fromisoformat(item["date"]) if item.get("date") else datetime.now(),
+            if applied > 0 or deleted > 0:
+                logger.info(
+                    f"Remote code sync: {applied} applied, {skipped} skipped, {deleted} deleted"
                 )
-
-                # Save to local SQLite (without re-queueing to Convex)
-                self._repo.save(code)
-                logger.debug(f"Synced code from remote: {code.name}")
-
-            # Handle deletions: items in local but not in remote
-            for local_id in local_codes:
-                if local_id not in remote_ids and local_id not in self._pending_outbound:
-                    self._repo.delete(CodeId(local_id))
-                    logger.debug(f"Deleted code from remote sync: {local_id}")
 
         except Exception as e:
             logger.exception(f"Error handling remote code changes: {e}")
+
+    def _build_code_from_remote(self, item: dict) -> Code | None:
+        """Build Code entity from remote Convex data."""
+        from datetime import datetime
+
+        from src.contexts.coding.core.entities import Code
+        from src.contexts.coding.core.value_objects import CodeColor
+        from src.shared.common.types import CategoryId, CodeId
+
+        item_id = item.get("_id") or item.get("id")
+        if not item_id:
+            return None
+
+        return Code(
+            id=CodeId(item_id),
+            name=item.get("name", ""),
+            color=CodeColor.from_hex(item.get("color", "#808080")),
+            memo=item.get("memo", ""),
+            category_id=CategoryId(item["catid"]) if item.get("catid") else None,
+            owner=item.get("owner", ""),
+            created_at=(
+                datetime.fromisoformat(item["date"])
+                if item.get("date")
+                else datetime.now()
+            ),
+        )
 
 
 class SyncedCategoryRepository:

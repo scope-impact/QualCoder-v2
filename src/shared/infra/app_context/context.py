@@ -343,3 +343,42 @@ class AppContext:
     def has_project(self) -> bool:
         """Check if a project is currently open."""
         return self.state.project is not None
+
+    # =========================================================================
+    # Sync API (Public methods for MCP tools and UI)
+    # =========================================================================
+
+    def get_sync_engine(self):
+        """
+        Get the sync engine (public API).
+
+        Used by command handlers and MCP tools.
+
+        Returns:
+            SyncEngine if cloud sync is enabled, None otherwise.
+        """
+        return self._sync_engine
+
+    def get_sync_state(self):
+        """
+        Get current sync state (public API).
+
+        Used by MCP tools to query sync status without
+        accessing private attributes.
+
+        Returns:
+            SyncState if sync engine exists, None otherwise.
+        """
+        if self._sync_engine is None:
+            return None
+        return self._sync_engine.state
+
+    def is_cloud_sync_enabled(self) -> bool:
+        """
+        Check if cloud sync is enabled.
+
+        Returns:
+            True if cloud sync is configured and enabled.
+        """
+        backend_config = self.settings_repo.get_backend_config()
+        return backend_config.uses_convex

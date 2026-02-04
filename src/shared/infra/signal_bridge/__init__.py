@@ -43,12 +43,19 @@ from src.shared.infra.signal_bridge.thread_utils import (
     is_main_thread,
     warn_if_not_main_thread,
 )
+from src.shared.infra.signal_bridge.sync import (
+    SyncSignalBridge,
+    SyncStatusPayload,
+    SyncResultPayload,
+)
 
 __all__ = [
     # Payloads
     "SignalPayload",
     "ActivityItem",
     "ActivityStatus",
+    "SyncStatusPayload",
+    "SyncResultPayload",
     # Converter type
     "EventConverter",
     # Thread utilities
@@ -59,4 +66,6 @@ __all__ = [
     # Base class
     "BaseSignalBridge",
     "ConverterRegistration",
+    # Sync bridge
+    "SyncSignalBridge",
 ]

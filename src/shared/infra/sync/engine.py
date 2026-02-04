@@ -458,6 +458,29 @@ class SyncEngine:
             self._change_listeners[entity_type] = []
         self._change_listeners[entity_type].append(callback)
 
+    def get_pending_ids(self, entity_type: str) -> frozenset[str]:
+        """
+        Get IDs of entities with pending outbound changes.
+
+        Used by sync derivers to detect conflicts between local
+        pending changes and incoming remote changes.
+
+        Args:
+            entity_type: Entity type to check (e.g., "code", "source")
+
+        Returns:
+            Frozenset of entity IDs with pending changes
+        """
+        pending_ids: set[str] = set()
+
+        # Check items in the queue (creates a snapshot)
+        queue_items = list(self._outbound_queue.queue)
+        for change in queue_items:
+            if change.entity_type == entity_type:
+                pending_ids.add(change.entity_id)
+
+        return frozenset(pending_ids)
+
     # =========================================================================
     # Outbound Sync (Local -> Convex)
     # =========================================================================
