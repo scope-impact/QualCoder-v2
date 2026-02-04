@@ -83,12 +83,14 @@ QT_QPA_PLATFORM=offscreen uv run pytest src/tests/e2e/test_case_manager_e2e.py -
 
 ### Definition of Done
 
-**AC should only be marked `[x]` when E2E tests exist with Allure tracing.**
+**AC should only be marked `[x]` when all requirements are met:**
 
 Requirements:
 1. E2E test exists in `src/tests/e2e/`
 2. Test has `@allure.story("QC-XXX.YY Description")` decorator
 3. Test passes with `make test-all`
+4. User documentation updated in `docs/user-manual/` (use `developer` skill)
+5. API documentation updated in `docs/api/` for MCP tools (use `developer` skill)
 
 ```python
 # Allure tracing convention
