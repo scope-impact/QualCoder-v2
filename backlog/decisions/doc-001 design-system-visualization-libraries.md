@@ -1,5 +1,5 @@
 ---
-id: ADR-001
+id: doc-001
 title: Design System Visualization Libraries
 status: Accepted
 date: '2026-01-29'
