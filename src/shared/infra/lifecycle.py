@@ -79,6 +79,12 @@ class ProjectLifecycle:
             # Create engine and connection
             db_url = f"sqlite:///{path}"
             self._engine = create_engine(db_url, echo=False)
+
+            # Enable automatic SQL query tracing
+            from src.shared.infra.telemetry import instrument_sqlalchemy
+
+            instrument_sqlalchemy(self._engine)
+
             self._connection = self._engine.connect()
             self._current_path = path
 

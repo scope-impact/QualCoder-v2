@@ -371,6 +371,65 @@ class TextEditorPanel(QFrame):
         # Emit signal
         self.highlight_applied.emit(start, end, color)
 
+    def set_highlights(self, highlights: list[dict]):
+        """
+        Batch-set all highlights efficiently (replaces clear + loop).
+
+        This method is optimized to:
+        - Preserve cursor position and scroll
+        - Apply all highlights without per-highlight overlap checking
+        - Check overlaps only once at the end
+
+        Args:
+            highlights: List of dicts with keys: start, end, color, memo (optional)
+        """
+        # Save cursor position and scroll
+        cursor = self._text_edit.textCursor()
+        original_pos = cursor.position()
+        scrollbar = self._text_edit.verticalScrollBar()
+        scroll_pos = scrollbar.value() if scrollbar else 0
+
+        # Block signals to prevent UI thrashing
+        self._text_edit.blockSignals(True)
+
+        try:
+            # Clear existing highlights (without setTextCursor)
+            self._highlights.clear()
+            text = self._text_edit.toPlainText()
+            if text:
+                clear_cursor = self._text_edit.textCursor()
+                clear_cursor.setPosition(0, QTextCursor.MoveMode.MoveAnchor)
+                clear_cursor.setPosition(len(text), QTextCursor.MoveMode.KeepAnchor)
+                clear_cursor.setCharFormat(QTextCharFormat())
+                # Don't call setTextCursor - preserves original cursor
+
+            # Apply all highlights without overlap checking
+            for h in highlights:
+                start = h["start"]
+                end = h["end"]
+                color = h["color"]
+                memo = h.get("memo", "")
+
+                if start >= end or start < 0 or start >= len(text):
+                    continue
+                if end > len(text):
+                    end = len(text)
+
+                highlight = HighlightRange(start=start, end=end, color=color, memo=memo)
+                self._highlights.append(highlight)
+                self._apply_highlight(highlight)
+
+            # Check overlaps only once at the end
+            self._apply_overlap_underlines()
+
+        finally:
+            # Restore cursor and scroll
+            self._text_edit.blockSignals(False)
+            cursor.setPosition(original_pos)
+            self._text_edit.setTextCursor(cursor)
+            if scrollbar:
+                scrollbar.setValue(scroll_pos)
+
     def _apply_highlight(self, highlight: HighlightRange):
         """Apply formatting for a single highlight."""
         fmt = QTextCharFormat()

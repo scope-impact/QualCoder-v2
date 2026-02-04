@@ -25,6 +25,9 @@ dependencies = [
     "odfpy>=1.4",
     # MCP server HTTP transport (MIT license)
     "aiohttp>=3.9",
+    "opentelemetry-api>=1.39.1",
+    "opentelemetry-sdk>=1.39.1",
+    "opentelemetry-instrumentation-sqlalchemy>=0.60b1",
 ]
 
 [tool.uv.workspace]
