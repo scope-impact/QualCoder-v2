@@ -140,6 +140,97 @@ class SyncEngine:
         self._running = False
         self._lock = threading.Lock()
 
+        # Ensure sync queue table exists for persistence
+        self._ensure_sync_table()
+
+    def _ensure_sync_table(self) -> None:
+        """Create the sync_queue table if it doesn't exist."""
+        try:
+            from sqlalchemy import text
+
+            self._sqlite.execute(
+                text("""
+                    CREATE TABLE IF NOT EXISTS sync_queue (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        entity_type TEXT NOT NULL,
+                        change_type TEXT NOT NULL,
+                        entity_id TEXT NOT NULL,
+                        data TEXT NOT NULL,
+                        timestamp TEXT NOT NULL,
+                        retry_count INTEGER DEFAULT 0
+                    )
+                """)
+            )
+            self._sqlite.commit()
+        except Exception as e:
+            logger.warning(f"Failed to create sync_queue table: {e}")
+
+    def _load_pending_changes(self) -> None:
+        """Load pending changes from SQLite into the queue."""
+        try:
+            import json
+
+            from sqlalchemy import text
+
+            result = self._sqlite.execute(
+                text("SELECT id, entity_type, change_type, entity_id, data, timestamp, retry_count FROM sync_queue ORDER BY id")
+            )
+            for row in result.fetchall():
+                change = SyncChange(
+                    entity_type=row[1],
+                    change_type=ChangeType(row[2]),
+                    entity_id=row[3],
+                    data=json.loads(row[4]),
+                    timestamp=datetime.fromisoformat(row[5]),
+                    retry_count=row[6],
+                )
+                self._outbound_queue.put(change)
+
+            count = self._outbound_queue.qsize()
+            if count > 0:
+                logger.info(f"Loaded {count} pending sync changes from database")
+                self._state.pending_changes = count
+        except Exception as e:
+            logger.warning(f"Failed to load pending sync changes: {e}")
+
+    def _persist_change(self, change: SyncChange) -> None:
+        """Persist a change to SQLite for durability."""
+        try:
+            import json
+
+            from sqlalchemy import text
+
+            self._sqlite.execute(
+                text("""
+                    INSERT INTO sync_queue (entity_type, change_type, entity_id, data, timestamp, retry_count)
+                    VALUES (:entity_type, :change_type, :entity_id, :data, :timestamp, :retry_count)
+                """),
+                {
+                    "entity_type": change.entity_type,
+                    "change_type": change.change_type.value,
+                    "entity_id": change.entity_id,
+                    "data": json.dumps(change.data),
+                    "timestamp": change.timestamp.isoformat(),
+                    "retry_count": change.retry_count,
+                },
+            )
+            self._sqlite.commit()
+        except Exception as e:
+            logger.warning(f"Failed to persist sync change: {e}")
+
+    def _remove_persisted_change(self, change: SyncChange) -> None:
+        """Remove a successfully synced change from SQLite."""
+        try:
+            from sqlalchemy import text
+
+            self._sqlite.execute(
+                text("DELETE FROM sync_queue WHERE entity_type = :entity_type AND entity_id = :entity_id"),
+                {"entity_type": change.entity_type, "entity_id": change.entity_id},
+            )
+            self._sqlite.commit()
+        except Exception as e:
+            logger.warning(f"Failed to remove synced change from database: {e}")
+
     @property
     def state(self) -> SyncState:
         """Get current sync state."""
@@ -161,6 +252,9 @@ class SyncEngine:
 
         self._running = True
         self._state.status = SyncStatus.OFFLINE
+
+        # Load any pending changes from previous session
+        self._load_pending_changes()
 
         # Start outbound sync thread
         self._outbound_thread = threading.Thread(
@@ -220,8 +314,10 @@ class SyncEngine:
 
         The change should already be applied to SQLite.
         This queues it for background sync to Convex.
+        Changes are persisted to SQLite so they survive app restart.
         """
         self._outbound_queue.put(change)
+        self._persist_change(change)  # Persist for durability
         self._state.pending_changes = self._outbound_queue.qsize()
         logger.debug(f"Queued change: {change.entity_type}/{change.change_type}")
 
@@ -266,11 +362,16 @@ class SyncEngine:
                 # Sync to Convex
                 success = self._sync_to_convex(change)
 
-                if not success:
+                if success:
+                    # Remove from persistent queue after successful sync
+                    self._remove_persisted_change(change)
+                else:
                     change.retry_count += 1
                     if change.retry_count < self.MAX_RETRY:
                         self._outbound_queue.put(change)
                     else:
+                        # Max retries exceeded, remove from persistent queue
+                        self._remove_persisted_change(change)
                         logger.error(
                             f"Sync failed after {self.MAX_RETRY} retries: "
                             f"{change.entity_type}/{change.entity_id}"
