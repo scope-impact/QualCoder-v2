@@ -4,6 +4,7 @@ title: References and Bibliography
 status: To Do
 assignee: []
 created_date: '2026-01-30 21:15'
+updated_date: '2026-02-04 06:19'
 labels: []
 dependencies: []
 ---
@@ -21,4 +22,5 @@ Enable researchers to manage academic references and link them to research findi
 - [ ] #3 Researcher can link references to coded segments
 - [ ] #4 Researcher can export bibliography
 - [ ] #5 Agent can suggest relevant references
+- [ ] #6 Agent can cite references in reports
 <!-- AC:END -->

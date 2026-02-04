@@ -162,7 +162,6 @@ class TestThemeChanges:
     """
 
     @allure.title("AC #1: Changing theme to dark persists to JSON file")
-    @allure.link("QC-038", name="Backlog Task")
     def test_change_theme_to_dark_persists_to_file(
         self, settings_dialog, settings_viewmodel, settings_repo
     ):
@@ -225,7 +224,6 @@ class TestFontChanges:
     """
 
     @allure.title("AC #2: Changing font size via slider persists to JSON file")
-    @allure.link("QC-038", name="Backlog Task")
     def test_change_font_size_via_slider_persists_to_file(
         self, settings_dialog, settings_repo
     ):
@@ -271,7 +269,6 @@ class TestLanguageChanges:
     """
 
     @allure.title("AC #3: Selecting language via combo persists to JSON file")
-    @allure.link("QC-038", name="Backlog Task")
     def test_change_language_via_combo_persists_to_file(
         self, settings_dialog, settings_repo
     ):
@@ -304,7 +301,6 @@ class TestBackupChanges:
     """
 
     @allure.title("AC #4: Enabling backup via checkbox persists to JSON file")
-    @allure.link("QC-038", name="Backlog Task")
     def test_enable_backup_via_checkbox_persists_to_file(
         self, settings_dialog, settings_repo
     ):
@@ -349,7 +345,6 @@ class TestAVCodingChanges:
     """
 
     @allure.title("AC #5: Changing timestamp format via combo persists to JSON file")
-    @allure.link("QC-038", name="Backlog Task")
     def test_change_timestamp_format_via_combo_persists_to_file(
         self, settings_dialog, settings_repo
     ):
@@ -492,7 +487,6 @@ class TestFullRoundTrip:
     """
 
     @allure.title("Complete workflow: All 6 ACs persist to JSON and reload correctly")
-    @allure.link("QC-038", name="Backlog Task")
     def test_all_settings_persist_and_reload_after_restart(
         self, qapp, colors, temp_config_path
     ):
@@ -648,7 +642,6 @@ class TestUIApplication:
     """
 
     @allure.title("Theme change applies to AppShell and updates colors")
-    @allure.link("QC-038", name="Backlog Task")
     def test_theme_change_applies_to_ui(self, qapp, temp_config_path):
         """
         E2E: Changing theme actually changes the UI colors.

@@ -20,9 +20,8 @@ Technical enabler: Complete all Coding context implementations to enable QC-028,
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 Image Coding controller and screen implemented
-- [ ] #2 AV Coding controller and screen implemented
-- [ ] #3 MCP coding tools connected to controllers
-- [ ] #4 All Researcher coding stories completable
-- [ ] #5 All Agent coding stories completable
+- [ ] #1 Image Coding screen implemented (QC-030)
+- [ ] #2 AV Coding screen implemented (QC-031)
+- [ ] #3 All Researcher coding stories completable
+- [ ] #4 All Agent coding stories completable
 <!-- AC:END -->

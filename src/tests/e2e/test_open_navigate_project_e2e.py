@@ -65,7 +65,6 @@ def project_with_data(app_context: AppContext, tmp_path: Path) -> Path:
 @allure.severity(allure.severity_level.CRITICAL)
 class TestOpenExistingProject:
     @allure.title("AC #1: Researcher can open an existing project file")
-    @allure.link("QC-026.01", name="Subtask")
     def test_open_existing_project_success(
         self, app_context: AppContext, existing_project: Path
     ):
@@ -162,7 +161,6 @@ class TestOpenExistingProject:
 @allure.severity(allure.severity_level.CRITICAL)
 class TestCreateNewProject:
     @allure.title("AC #1: Researcher can specify project name and location")
-    @allure.link("QC-026.02", name="Subtask")
     def test_create_new_project_success(
         self, app_context: AppContext, temp_project_path: Path
     ):
@@ -259,7 +257,6 @@ class TestCreateNewProject:
 @allure.severity(allure.severity_level.CRITICAL)
 class TestViewSourcesList:
     @allure.title("AC #1: Researcher can see list of all imported sources")
-    @allure.link("QC-026.03", name="Subtask")
     def test_view_empty_sources_list(
         self, app_context: AppContext, existing_project: Path
     ):
@@ -423,7 +420,6 @@ class TestViewSourcesList:
 @allure.severity(allure.severity_level.NORMAL)
 class TestSwitchScreens:
     @allure.title("AC #1: Researcher can switch to Coding screen")
-    @allure.link("QC-026.04", name="Subtask")
     def test_switch_to_coding_screen(
         self, app_context: AppContext, existing_project: Path
     ):
@@ -513,7 +509,6 @@ class TestSwitchScreens:
 @allure.severity(allure.severity_level.CRITICAL)
 class TestAgentQueryContext:
     @allure.title("AC #5: Agent can query current project context")
-    @allure.link("QC-026", name="Backlog Task")
     def test_get_project_context_when_open(
         self, app_context: AppContext, existing_project: Path
     ):
@@ -686,7 +681,6 @@ class TestAgentQueryContext:
 @allure.severity(allure.severity_level.CRITICAL)
 class TestAgentNavigateToSegment:
     @allure.title("AC #6: Agent can navigate to a specific source")
-    @allure.link("QC-026", name="Backlog Task")
     def test_navigate_to_segment_tool_schema(self, app_context: AppContext):
         from src.contexts.projects.interface.mcp_tools import ProjectTools
 
@@ -825,7 +819,6 @@ class TestAgentNavigateToSegment:
 @allure.severity(allure.severity_level.CRITICAL)
 class TestProjectWorkflowIntegration:
     @allure.title("Complete workflow: Create, open, add sources, query")
-    @allure.link("QC-026", name="Backlog Task")
     def test_full_project_workflow(self, app_context: AppContext, tmp_path: Path):
         from src.contexts.projects.core.entities import Source, SourceType
         from src.contexts.projects.interface.mcp_tools import ProjectTools

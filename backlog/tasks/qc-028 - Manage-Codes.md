@@ -4,7 +4,7 @@ title: Manage Codes
 status: In Progress
 assignee: []
 created_date: '2026-01-30 20:25'
-updated_date: '2026-02-03 22:40'
+updated_date: '2026-02-04 06:15'
 labels: []
 dependencies: []
 ---
@@ -20,12 +20,13 @@ Enable researchers and agents to create, organize, and manage the coding scheme 
 - [x] #1 Researcher can create new codes with name and color
 - [x] #2 Researcher can organize codes into categories
 - [x] #3 Researcher can rename and recolor codes
-- [x] #4 Researcher can add memos to codes
+- [ ] #4 Researcher can add memos to codes
 - [x] #5 Researcher can merge duplicate codes
 - [x] #6 Researcher can delete codes
-- [x] #7 Agent can list all codes
+- [ ] #7 Agent can list all codes
 - [x] #8 Agent can suggest new codes based on content
 - [x] #9 Agent can detect potential duplicate codes
+- [ ] #10 Agent can create a new code with name and color
 <!-- AC:END -->
 
 ## Implementation Notes

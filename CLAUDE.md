@@ -81,6 +81,29 @@ QT_QPA_PLATFORM=offscreen make test-all
 QT_QPA_PLATFORM=offscreen uv run pytest src/tests/e2e/test_case_manager_e2e.py -v
 ```
 
+### Definition of Done
+
+**AC should only be marked `[x]` when E2E tests exist with Allure tracing.**
+
+Requirements:
+1. E2E test exists in `src/tests/e2e/`
+2. Test has `@allure.story("QC-XXX.YY Description")` decorator
+3. Test passes with `make test-all`
+
+```python
+# Allure tracing convention
+@allure.story("QC-028.03 Rename and Recolor Codes")
+class TestColorPickerDialog:
+    @allure.title("AC #3.1: Dialog shows preset color grid")
+    def test_dialog_shows_preset_colors(self):
+        ...
+```
+
+```bash
+# Check which tasks have test coverage
+grep -rh "@allure.story.*QC-" src/tests/e2e/*.py | sort -u
+```
+
 See `.claude/skills/developer/SKILL.md` for:
 - Code style and naming conventions
 - OperationResult pattern for command handlers

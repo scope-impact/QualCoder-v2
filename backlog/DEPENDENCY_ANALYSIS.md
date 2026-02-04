@@ -20,26 +20,25 @@ TIER 1: FOUNDATION (Must complete first)
 TIER 2: CORE CODING (Text - mostly done ✓)
 ┌─────────────────────────────────────────────────────────────────────┐
 │  QC-028: Manage Codes ────────────────────────────── [In Progress]  │
-│  ├── 6/8 subtasks Done ✓                                            │
-│  └── Pending: Agent suggest/detect                                  │
+│  ├── Researcher: create, organize, merge codes ✓                    │
+│  └── Agent: list, suggest, create codes                             │
 │                                                                     │
 │  QC-029: Apply Codes to Text ─────────────────────── [In Progress]  │
-│  ├── Core workflow implemented ✓                                    │
-│  └── Pending: Agent suggestions                                     │
+│  ├── Researcher: select, apply, remove coding ✓                     │
+│  └── Agent: apply, list, remove segments                            │
 └─────────────────────────────────────────────────────────────────────┘
                                     │
                                     ▼
-TIER 3: SPECIALIZED CODING (Blocked by QC-045 ⚡)
+TIER 3: SPECIALIZED CODING (Image/AV)
 ┌─────────────────────────────────────────────────────────────────────┐
-│  ⚡ QC-045: Complete Coding Context ⚡ ──────────── [CRITICAL]      │
-│  ├── QC-045.01: Image Coding Controller ──┐                         │
-│  ├── QC-045.02: Image Coding Screen ──────┼── blocks QC-030         │
-│  ├── QC-045.03: AV Coding Controller ─────┤                         │
-│  ├── QC-045.04: AV Coding Screen ─────────┼── blocks QC-031         │
-│  └── QC-045.05: MCP Tool Adapters ────────┴── blocks ALL agent ops  │
+│  QC-030: Apply Codes to Images                                      │
+│  ├── Researcher: draw region, apply code                            │
+│  └── Agent: detect regions, apply codes                             │
 │                                                                     │
-│  QC-030: Apply Codes to Images ───────── [Blocked by QC-045.01/02]  │
-│  QC-031: Apply Codes to Audio/Video ──── [Blocked by QC-045.03/04]  │
+│  QC-031: Apply Codes to Audio/Video                                 │
+│  ├── Researcher: mark time range, apply code                        │
+│  └── Agent: transcribe, apply codes                                 │
+│                                                                     │
 │  QC-032: Auto-Code ──────────────────────────────── [In Progress]   │
 │  └── 5/7 subtasks Done ✓                                            │
 └─────────────────────────────────────────────────────────────────────┘
@@ -59,7 +58,7 @@ TIER 5: COLLABORATION & AI (Needs everything)
 │  QC-037: Chat with Agent ──────────────── (Consummate feature)      │
 └─────────────────────────────────────────────────────────────────────┘
 
-PARALLEL TRACK: (Can start after QC-026)
+PARALLEL TRACK: AUXILIARY FEATURES (Can start after QC-026)
 ┌─────────────────────────────────────────────────────────────────────┐
 │  QC-034: Manage Cases                                               │
 │  QC-038: Settings and Preferences                                   │
@@ -71,101 +70,22 @@ PARALLEL TRACK: (Can start after QC-026)
 └─────────────────────────────────────────────────────────────────────┘
 ```
 
-## Cross-Feature Dependency Graph
+## Parallel Development: Researcher + Agent
+
+Every feature has both Researcher and Agent acceptance criteria. They can be developed in parallel:
 
 ```
-                              ┌──────────────┐
-                              │   QC-026     │
-                              │   Project    │
-                              └──────┬───────┘
-                                     │
-           ┌─────────────────────────┼─────────────────────────┐
-           │                         │                         │
-           ▼                         ▼                         ▼
-    ┌──────────────┐          ┌──────────────┐          ┌──────────────┐
-    │   QC-027     │          │   QC-028     │          │  PARALLEL    │
-    │   Sources    │          │    Codes     │          │  QC-038,43   │
-    │              │          │   [75% ✓]    │          │  Settings    │
-    └──────┬───────┘          └──────┬───────┘          └──────────────┘
-           │                         │
-           └────────────┬────────────┘
-                        │
-                        ▼
-                 ┌──────────────┐
-                 │   QC-029     │
-                 │  Text Coding │
-                 │   [80% ✓]    │
-                 └──────┬───────┘
-                        │
-      ┌─────────────────┼─────────────────┐
-      │                 │                 │
-      ▼                 ▼                 ▼
-┌──────────────┐ ┌──────────────┐ ┌──────────────┐
-│   QC-032     │ │   QC-042     │ │   QC-039     │
-│  Auto-Code   │ │  PDF Coding  │ │   Export     │
-│   [70% ✓]    │ │              │ │              │
-└──────┬───────┘ └──────────────┘ └──────────────┘
-       │
-       │         ⚡⚡⚡ CRITICAL BLOCKER ⚡⚡⚡
-       │         ┌──────────────────────────────┐
-       │         │         QC-045               │
-       │         │   Complete Coding Context    │
-       │         │                              │
-       │         │  ┌────────┐    ┌────────┐   │
-       │         │  │045.01  │    │045.03  │   │
-       │         │  │Img Ctl │    │AV Ctl  │   │
-       │         │  └───┬────┘    └───┬────┘   │
-       │         │      │             │        │
-       │         │  ┌───┴────┐    ┌───┴────┐   │
-       │         │  │045.02  │    │045.04  │   │
-       │         │  │Img Scr │    │AV Scr  │   │
-       │         │  └────────┘    └────────┘   │
-       │         │                              │
-       │         │  ┌────────────────────────┐ │
-       │         │  │       045.05           │ │
-       │         │  │   MCP Tool Adapters    │ │
-       │         │  └────────────────────────┘ │
-       │         └──────────────┬───────────────┘
-       │                        │
-       │         ┌──────────────┴──────────────┐
-       │         │                             │
-       │         ▼                             ▼
-       │  ┌──────────────┐              ┌──────────────┐
-       │  │   QC-030     │              │   QC-031     │
-       │  │ Image Coding │              │  AV Coding   │
-       │  │  [BLOCKED]   │              │  [BLOCKED]   │
-       │  └──────┬───────┘              └──────┬───────┘
-       │         │                             │
-       └─────────┼─────────────────────────────┘
-                 │
-                 ▼
-          ┌──────────────┐
-          │   QC-033     │
-          │   Search     │
-          └──────┬───────┘
-                 │
-      ┌──────────┼──────────┐
-      │          │          │
-      ▼          ▼          ▼
-┌──────────┐ ┌──────────┐ ┌──────────┐
-│ QC-035   │ │ QC-034   │ │ QC-044   │
-│ Reports  │ │  Cases   │ │   Viz    │
-└────┬─────┘ └────┬─────┘ └────┬─────┘
-     │            │            │
-     └────────────┼────────────┘
-                  │
-                  ▼
-           ┌──────────────┐
-           │   QC-036     │
-           │ Collaborate  │
-           └──────┬───────┘
-                  │
-                  ▼
-           ┌──────────────┐
-           │   QC-037     │
-           │  Chat Agent  │
-           │   (FINAL)    │
-           └──────────────┘
+┌─────────────────────────────────────────────────────────────────────┐
+│  EACH FEATURE = RESEARCHER AC + AGENT AC                            │
+├─────────────────────────────────────────────────────────────────────┤
+│                                                                     │
+│  Example: QC-028 Manage Codes                                       │
+│  ├── Researcher: create, edit, merge codes (UI)                     │
+│  └── Agent: list, suggest, create codes (MCP)                       │
+│                                                                     │
+│  Both share same domain layer - develop in parallel!                │
+│                                                                     │
+└─────────────────────────────────────────────────────────────────────┘
 ```
 
 ## Current Status Summary
@@ -173,48 +93,46 @@ PARALLEL TRACK: (Can start after QC-026)
 | Status | Count | Features |
 |--------|-------|----------|
 | ✓ Done/In Progress | 3 | QC-028, QC-029, QC-032 |
-| ⚡ Critical Blocker | 1 | QC-045 (blocks 2 features + all agent) |
 | Blocked | 2 | QC-030, QC-031 |
-| To Do | 14 | QC-026, 027, 033-044 |
+| To Do | 15 | QC-026, 027, 033-044 |
+
+## Current Agent Capability Status
+
+| Feature | Agent Capability | Status |
+|---------|------------------|--------|
+| QC-028 | List codes | ✅ Working |
+| QC-028 | Get code details | ✅ Working |
+| QC-028 | Suggest codes | ✅ Done |
+| QC-028 | **Create new code** | ❌ Missing |
+| QC-027 | List sources | ✅ Working |
+| QC-027 | Read source content | ✅ Working |
+| QC-027 | **Add text source** | ❌ Missing |
+| QC-029 | Apply codes to text | ✅ Working |
+| QC-029 | List coded segments | ✅ Working |
+| QC-029 | Navigate to segment | ✅ Working |
+| QC-029 | **Remove coded segment** | ❌ Missing |
 
 ## Recommended Sequence
 
-### Phase 1: Foundation (Current Focus)
+### Phase 1: Foundation
 ```
-QC-026 → QC-027 → Stabilize QC-028/029
-```
-
-### Phase 2: Unlock Specialized Coding ⚡
-```
-QC-045.01 (Image Controller)
-QC-045.02 (Image Screen)
-    └── UNBLOCKS → QC-030 (Image Coding)
-
-QC-045.03 (AV Controller)
-QC-045.04 (AV Screen)
-    └── UNBLOCKS → QC-031 (AV Coding)
-
-QC-045.05 (MCP Adapters)
-    └── UNBLOCKS → All agent coding operations
+QC-026 (Project) → QC-027 (Sources) → QC-028/029 (Coding)
 ```
 
-### Phase 3: Analysis Features
+### Phase 2: Complete Text Coding
 ```
-QC-033 (Search) → QC-035 (Reports) → QC-044 (Viz)
-```
-
-### Phase 4: Collaboration & AI
-```
-QC-036 (Collaborate) → QC-037 (Chat Agent)
+QC-028: Add "Agent can create code" capability
+QC-027: Add "Agent can add source" capability
+QC-029: Add "Agent can remove segment" capability
 ```
 
-## Key Insight
+### Phase 3: Specialized Coding
+```
+QC-030 (Image Coding) - Researcher + Agent
+QC-031 (AV Coding) - Researcher + Agent
+```
 
-**QC-045 is the critical bottleneck.** Until it's complete:
-- QC-030 (Image Coding) cannot be implemented
-- QC-031 (AV Coding) cannot be implemented
-- Agent cannot perform any coding operations
-- 7+ downstream features remain blocked
-
-The domain layer is ready (ImageSegment, AVSegment, TimeRange entities exist).
-What's needed: Application controllers + Presentation screens + MCP adapters.
+### Phase 4: Analysis & Collaboration
+```
+QC-033 (Search) → QC-035 (Reports) → QC-036 (Collaborate) → QC-037 (Chat)
+```

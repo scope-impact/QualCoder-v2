@@ -73,7 +73,6 @@ class TestImportTextDocument:
     """
 
     @allure.title("AC #1: I can select .txt, .docx, .rtf files from file system")
-    @allure.link("QC-027.01", name="Subtask")
     def test_ac1_select_txt_files(self, text_extractor, sample_files: SampleFiles):
         with allure.step("Verify TextExtractor supports .txt files"):
             assert text_extractor.supports(Path("document.txt"))
@@ -196,7 +195,6 @@ class TestImportPdfDocument:
     """
 
     @allure.title("AC #1: I can select PDF files from file system")
-    @allure.link("QC-027.02", name="Subtask")
     def test_ac1_select_pdf_files(self, pdf_extractor):
         with allure.step("Verify PdfExtractor supports .pdf files"):
             assert pdf_extractor.supports(Path("document.pdf"))
@@ -258,7 +256,6 @@ class TestImportImageFiles:
     """
 
     @allure.title("AC #1: I can select image files (PNG, JPG, etc.)")
-    @allure.link("QC-027.03", name="Subtask")
     def test_ac1_select_image_files(self, sample_files: SampleFiles):
         with allure.step("Verify PNG file exists and has correct extension"):
             assert sample_files.png_file.exists()
@@ -372,7 +369,6 @@ class TestImportAudioVideoFiles:
     """
 
     @allure.title("AC #1: I can select audio files (MP3, WAV, etc.)")
-    @allure.link("QC-027.04", name="Subtask")
     def test_ac1_select_audio_files(self, sample_files: SampleFiles):
         with allure.step("Verify WAV file exists and has correct extension"):
             assert sample_files.wav_file.exists()
@@ -511,7 +507,6 @@ class TestOrganizeSources:
     """
 
     @allure.title("AC #1: I can create folders for sources")
-    @allure.link("QC-027.05", name="Subtask")
     def test_ac1_create_folders(self, qapp):
         from src.shared.presentation.organisms import FolderTree
 
@@ -686,7 +681,6 @@ class TestViewSourceMetadata:
     """
 
     @allure.title("AC #1: I can see file name, type, size, and date")
-    @allure.link("QC-027.06", name="Subtask")
     def test_ac1_see_file_info(self, sample_files: SampleFiles):
         with allure.step("Get sample text file"):
             path = sample_files.txt_file
@@ -776,7 +770,6 @@ class TestDeleteSource:
     """
 
     @allure.title("AC #1: I can select a source to delete")
-    @allure.link("QC-027.07", name="Subtask")
     def test_ac1_select_source_to_delete(self, qapp, colors):
         from src.shared.presentation.organisms import SourceTable
 
@@ -831,7 +824,6 @@ class TestSourceManagementIntegration:
     """Integration tests for complete source management workflows."""
 
     @allure.title("Complete workflow: Import text file and extract content")
-    @allure.link("QC-027", name="Backlog Task")
     def test_text_import_workflow(self, text_extractor, sample_files: SampleFiles):
         from returns.result import Success
 
@@ -1264,7 +1256,6 @@ class TestImportPdfDocumentAdditional:
     """Additional tests for QC-027.02 acceptance criteria."""
 
     @allure.title("AC #3: I can choose to import as text or as image")
-    @allure.link("QC-027.02", name="Subtask")
     def test_ac3_pdf_import_mode_option(self, pdf_extractor):
         """
         AC #3: PDF import mode selection.
@@ -1293,7 +1284,6 @@ class TestViewSourceMetadataAdditional:
     """Additional tests for QC-027.06 acceptance criteria."""
 
     @allure.title("AC #3: I can see coding statistics for the source")
-    @allure.link("QC-027.06", name="Subtask")
     def test_ac3_coding_statistics_displayed(self):
         from src.contexts.sources.presentation.dialogs.source_metadata_dialog import (
             SourceMetadata,
@@ -1326,7 +1316,6 @@ class TestDeleteSourceAdditional:
     """Additional tests for QC-027.07 acceptance criteria."""
 
     @allure.title("AC #4: Undo deletion - feature pending implementation")
-    @allure.link("QC-027.07", name="Subtask")
     def test_ac4_undo_deletion_pending(self, qapp):
         """
         AC #4: Undo deletion immediately after.
@@ -1415,7 +1404,6 @@ class TestAgentListSources:
         return project_path
 
     @allure.title("AC #1: Agent can get list of all sources with IDs")
-    @allure.link("QC-027.08", name="Subtask")
     def test_ac1_list_all_sources_with_ids(self, app_context, project_with_sources):
         from returns.result import Success
 
@@ -1552,7 +1540,6 @@ class TestAgentReadSourceContent:
         return project_path
 
     @allure.title("AC #1: Agent can get text content of a source")
-    @allure.link("QC-027.09", name="Subtask")
     def test_ac1_get_text_content(self, app_context, project_with_content):
         from returns.result import Success
 
@@ -1687,7 +1674,6 @@ class TestAgentExtractMetadata:
         return project_path
 
     @allure.title("AC #1: Agent can detect document language")
-    @allure.link("QC-027.10", name="Subtask")
     def test_ac1_suggest_language(self, app_context, project_with_source):
         from returns.result import Success
 
