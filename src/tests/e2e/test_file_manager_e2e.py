@@ -25,6 +25,7 @@ from PySide6.QtWidgets import QApplication, QMainWindow, QVBoxLayout, QWidget
 from src.contexts.sources.presentation import FileManagerScreen
 from src.shared.presentation.dto import ProjectSummaryDTO, SourceDTO
 from src.tests.e2e.helpers import attach_screenshot
+from src.tests.e2e.utils import DocScreenshot
 
 pytestmark = pytest.mark.e2e  # All tests in this module are E2E tests
 
@@ -262,6 +263,7 @@ class TestFileManagerDisplay:
 
         # Screenshot for documentation
         attach_screenshot(window, "FileManager - With Sources")
+        DocScreenshot.capture(window, "file-manager-with-sources", max_width=1000)
 
     def test_empty_state_shown_when_no_sources(self, empty_file_manager_window):
         """
@@ -278,6 +280,7 @@ class TestFileManagerDisplay:
 
         # Screenshot for documentation
         attach_screenshot(window, "FileManager - Empty")
+        DocScreenshot.capture(window, "file-manager-empty", max_width=1000)
 
 
 class TestStatsRowFiltering:

@@ -39,7 +39,6 @@ from design_system import (
     TYPOGRAPHY,
     ColorPalette,
     Icon,
-    TitleBar,
     get_colors,
     set_theme,
 )
@@ -723,9 +722,8 @@ class AppShell(QMainWindow):
         content = screen.get_content()
         self._content_slot.set_content(content)
 
-        # Set status message
-        message = screen.get_status_message()
-        self._status_bar.set_message(message)
+        # Set status message (no-op in modern layout, status bar removed)
+        # message = screen.get_status_message()
 
     def set_toolbar_content(self, widget: QWidget | None):
         """Directly set toolbar content"""
@@ -868,9 +866,7 @@ class AppShell(QMainWindow):
         """Refresh all UI components with current colors."""
         # Save current state
         current_screen = self._current_screen
-        current_nav_id = (
-            self._nav_bar._active_id if hasattr(self, "_nav_bar") else None
-        )
+        current_nav_id = self._nav_bar._active_id if hasattr(self, "_nav_bar") else None
 
         # Rebuild components with new colors
         central = self.centralWidget()
