@@ -231,6 +231,39 @@ def find_visible_dialog(widget_type: type[T]) -> T | None:
     return None
 
 
+def wait_for_dialog(
+    widget_type: type[T], timeout_ms: int = 1000, poll_interval_ms: int = 50
+) -> T | None:
+    """
+    Wait for a dialog to become visible with polling.
+
+    This is more reliable than find_visible_dialog for CI environments
+    where event processing may be slower.
+
+    Args:
+        widget_type: The dialog class to find
+        timeout_ms: Maximum time to wait in milliseconds
+        poll_interval_ms: Time between checks in milliseconds
+
+    Returns:
+        The dialog if found and visible within timeout, None otherwise
+    """
+    import time
+
+    from PySide6.QtWidgets import QApplication
+
+    deadline = time.time() + (timeout_ms / 1000.0)
+
+    while time.time() < deadline:
+        QApplication.processEvents()
+        dialog = find_visible_dialog(widget_type)
+        if dialog is not None:
+            return dialog
+        time.sleep(poll_interval_ms / 1000.0)
+
+    return None
+
+
 def get_all_visible_dialogs() -> list[QDialog]:
     """
     Get all currently visible dialogs.

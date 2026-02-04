@@ -41,6 +41,7 @@ from src.tests.e2e.helpers import (
     find_input_by_placeholder,
     find_visible_dialog,
     is_button_enabled,
+    wait_for_dialog,
 )
 
 pytestmark = [
@@ -842,10 +843,9 @@ class TestCreateCodeFullPath:
 
         # BLACK-BOX: Simulate N key press
         QTest.keyClick(screen, Qt.Key.Key_N)
-        QApplication.processEvents()
 
         # BLACK-BOX: Verify dialog opened by finding it in top-level widgets
-        dialog = find_visible_dialog(CreateCodeDialog)
+        dialog = wait_for_dialog(CreateCodeDialog)
         assert dialog is not None, "CreateCodeDialog should open when N is pressed"
 
         # Screenshot for documentation
@@ -877,9 +877,8 @@ class TestCreateCodeFullPath:
 
         # BLACK-BOX: Open dialog via N key
         QTest.keyClick(screen, Qt.Key.Key_N)
-        QApplication.processEvents()
 
-        dialog = find_visible_dialog(CreateCodeDialog)
+        dialog = wait_for_dialog(CreateCodeDialog)
         assert dialog is not None, "Dialog should open"
 
         # BLACK-BOX: Fill form using public API
@@ -917,10 +916,9 @@ class TestCreateCodeFullPath:
 
         # BLACK-BOX: Open dialog and create code
         QTest.keyClick(screen, Qt.Key.Key_N)
-        QApplication.processEvents()
 
-        dialog = find_visible_dialog(CreateCodeDialog)
-        assert dialog is not None
+        dialog = wait_for_dialog(CreateCodeDialog)
+        assert dialog is not None, "CreateCodeDialog should open after pressing N"
 
         dialog.set_code_name("Interview Pattern")
         click_color_swatch_by_index(dialog, 5)
@@ -968,10 +966,9 @@ class TestCreateCodeFullPath:
 
         # Step 1: Open dialog and create code
         QTest.keyClick(screen, Qt.Key.Key_N)
-        QApplication.processEvents()
 
-        dialog = find_visible_dialog(CreateCodeDialog)
-        assert dialog is not None
+        dialog = wait_for_dialog(CreateCodeDialog)
+        assert dialog is not None, "CreateCodeDialog should open after pressing N"
 
         dialog.set_code_name("Quick Code")
         click_color_swatch_by_index(dialog, 0)
@@ -1014,10 +1011,9 @@ class TestCreateCodeFullPath:
 
         # Open dialog
         QTest.keyClick(screen, Qt.Key.Key_N)
-        QApplication.processEvents()
 
-        dialog = find_visible_dialog(CreateCodeDialog)
-        assert dialog is not None
+        dialog = wait_for_dialog(CreateCodeDialog)
+        assert dialog is not None, "CreateCodeDialog should open after pressing N"
 
         # Fill and submit
         dialog.set_code_name("Auto Close Test")
@@ -1045,10 +1041,9 @@ class TestCreateCodeFullPath:
 
         # Open dialog
         QTest.keyClick(screen, Qt.Key.Key_N)
-        QApplication.processEvents()
 
-        dialog = find_visible_dialog(CreateCodeDialog)
-        assert dialog is not None
+        dialog = wait_for_dialog(CreateCodeDialog)
+        assert dialog is not None, "CreateCodeDialog should open after pressing N"
 
         # Fill form but cancel
         dialog.set_code_name("Should Not Exist")
@@ -1080,10 +1075,9 @@ class TestCreateCodeFullPath:
 
         # Open dialog
         QTest.keyClick(screen, Qt.Key.Key_N)
-        QApplication.processEvents()
 
-        dialog = find_visible_dialog(CreateCodeDialog)
-        assert dialog is not None
+        dialog = wait_for_dialog(CreateCodeDialog)
+        assert dialog is not None, "CreateCodeDialog should open after pressing N"
 
         # Try to create code with existing name
         dialog.set_code_name(existing_code.name)  # "Positive" from seeded data
@@ -1115,10 +1109,9 @@ class TestCreateCodeFullPath:
         assert add_btn is not None, "Add code button should exist in codes panel"
 
         add_btn.click()
-        QApplication.processEvents()
 
         # BLACK-BOX: Verify dialog opened
-        dialog = find_visible_dialog(CreateCodeDialog)
+        dialog = wait_for_dialog(CreateCodeDialog)
         assert dialog is not None, "CreateCodeDialog should open when + is clicked"
 
         # Screenshot for documentation
@@ -1140,10 +1133,9 @@ class TestCreateCodeFullPath:
         # Click + button
         add_btn = find_any_button_by_tooltip(screen, "Add code")
         add_btn.click()
-        QApplication.processEvents()
 
-        dialog = find_visible_dialog(CreateCodeDialog)
-        assert dialog is not None
+        dialog = wait_for_dialog(CreateCodeDialog)
+        assert dialog is not None, "CreateCodeDialog should open when + is clicked"
 
         # Fill form and create
         dialog.set_code_name("Button Created Code")
