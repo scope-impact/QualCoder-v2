@@ -6,7 +6,7 @@ User input components: search boxes, selects, textareas, and pickers.
 
 Search input with icon.
 
-![SearchBox States](../../../design_system/assets/screenshots/search_box_states.png)
+![SearchBox States](images/search_box_states.png)
 
 ```python
 from design_system import SearchBox
@@ -36,7 +36,7 @@ search.clear()
 
 Dropdown selection.
 
-![Select Dropdown](../../../design_system/assets/screenshots/select_dropdown.png)
+![Select Dropdown](images/select_dropdown.png)
 
 ```python
 from design_system import Select
@@ -89,7 +89,7 @@ multi.add_items(["Tag 1", "Tag 2", "Tag 3"])
 
 Multi-line text input.
 
-![Textarea](../../../design_system/assets/screenshots/textarea_with_content.png)
+![Textarea](images/textarea_with_content.png)
 
 ```python
 from design_system import Textarea
@@ -151,7 +151,7 @@ slider.valueChanged.connect(lambda value: print(f"Value: {value}"))
 
 Color selection widget.
 
-![Color Picker](../../../design_system/assets/screenshots/color_picker.png)
+![Color Picker](images/color_picker.png)
 
 ```python
 from design_system import ColorPicker
@@ -172,7 +172,7 @@ picker.color_changed.connect(lambda color: print(f"Color: {color}"))
 
 Grouped form fields with label.
 
-![Form Groups](../../../design_system/assets/screenshots/form_groups.png)
+![Form Groups](images/form_groups.png)
 
 ```python
 from design_system import FormGroup, Input

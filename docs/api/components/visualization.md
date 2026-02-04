@@ -6,7 +6,7 @@ Data visualization: charts, graphs, word clouds, and PDF viewers.
 
 Charts using PyQtGraph.
 
-![Bar Chart](../../../design_system/assets/screenshots/chart_bar.png)
+![Bar Chart](images/chart_bar.png)
 
 ```python
 from design_system import ChartWidget, ChartDataPoint
@@ -115,7 +115,7 @@ item = LegendItem(label="Category A", color="#FFC107")
 
 Interactive network visualization.
 
-![Network Graph](../../../design_system/assets/screenshots/network_graph.png)
+![Network Graph](images/network_graph.png)
 
 ```python
 from design_system import NetworkGraphWidget, GraphNode, GraphEdge
@@ -174,7 +174,7 @@ edge = GraphEdge(
 
 Word cloud visualization.
 
-![Word Cloud](../../../design_system/assets/screenshots/word_cloud.png)
+![Word Cloud](images/word_cloud.png)
 
 ```python
 from design_system import WordCloudWidget
@@ -311,5 +311,6 @@ selection = PDFSelection(
 )
 ```
 
-!!! note "Dependencies"
-    PDFPageViewer requires `pymupdf` (PyMuPDF) for PDF rendering.
+> **Note: Dependencies**
+>
+> PDFPageViewer requires `pymupdf` (PyMuPDF) for PDF rendering.

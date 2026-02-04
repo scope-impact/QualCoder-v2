@@ -13,6 +13,7 @@ labels:
 ## Context
 
 QualCoder v2 requires visualization components for:
+
 1. **Charts** - Code frequency, distributions, trends
 2. **Network Graphs** - Code relationships, co-occurrences
 3. **Word Clouds** - Text analysis visualization
@@ -20,6 +21,7 @@ QualCoder v2 requires visualization components for:
 5. **Image Annotation** - Region-based coding on images
 
 We evaluated libraries based on:
+
 - **User Experience (40%)** - Interactivity, responsiveness, visual quality
 - **Licensing (25%)** - Commercial-friendly (MIT/BSD/LGPL preferred)
 - **Integration (20%)** - PyQt6/PySide6 compatibility

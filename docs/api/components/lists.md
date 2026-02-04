@@ -6,7 +6,7 @@ Collection display components for files, cases, attributes, and queues.
 
 File list with type icons.
 
-![File List](../../../design_system/assets/screenshots/file_list.png)
+![File List](images/file_list.png)
 
 ```python
 from design_system import FileList
@@ -45,7 +45,7 @@ files.item_double_clicked.connect(lambda id: print(f"Open: {id}"))
 
 Case/study list.
 
-![Case List](../../../design_system/assets/screenshots/case_list.png)
+![Case List](images/case_list.png)
 
 ```python
 from design_system import CaseList, ListItem

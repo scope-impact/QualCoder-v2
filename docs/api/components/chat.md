@@ -6,7 +6,7 @@ AI interface components for chat, suggestions, and reasoning.
 
 Chat message display.
 
-![Message Bubbles](../../../design_system/assets/screenshots/message_bubbles.png)
+![Message Bubbles](images/message_bubbles.png)
 
 ```python
 from design_system import MessageBubble
@@ -38,7 +38,7 @@ assistant_msg = MessageBubble(
 
 Animated typing indicator.
 
-![Typing Indicator](../../../design_system/assets/screenshots/typing_indicator.png)
+![Typing Indicator](images/typing_indicator.png)
 
 ```python
 from design_system import TypingIndicator
@@ -62,7 +62,7 @@ indicator.stop()
 
 Message input with send button.
 
-![Chat Input](../../../design_system/assets/screenshots/chat_input.png)
+![Chat Input](images/chat_input.png)
 
 ```python
 from design_system import ChatInput
@@ -113,7 +113,7 @@ prompts.prompt_clicked.connect(lambda text: send_prompt(text))
 
 AI code suggestion display.
 
-![Code Suggestions](../../../design_system/assets/screenshots/code_suggestions.png)
+![Code Suggestions](images/code_suggestions.png)
 
 ```python
 from design_system import CodeSuggestion

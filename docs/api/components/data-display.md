@@ -6,7 +6,7 @@ Components for presenting data: tables, trees, cards, and lists.
 
 Data table with selection support.
 
-![Data Table](../../../design_system/assets/screenshots/data_table.png)
+![Data Table](images/data_table.png)
 
 ```python
 from design_system import DataTable
@@ -53,7 +53,7 @@ table.clear()
 
 Hierarchical tree for qualitative codes.
 
-![Code Tree](../../../design_system/assets/screenshots/code_tree.png)
+![Code Tree](images/code_tree.png)
 
 ```python
 from design_system import CodeTree, CodeItem, CodeTreeNode
@@ -143,7 +143,7 @@ card.collapsed_changed.connect(lambda collapsed: print(f"Collapsed: {collapsed}"
 
 Key-value pairs display.
 
-![Key Value List](../../../design_system/assets/screenshots/key_value_list.png)
+![Key Value List](images/key_value_list.png)
 
 ```python
 from design_system import KeyValueList
@@ -170,7 +170,7 @@ kvlist.set_items([
 
 Placeholder for empty content.
 
-![Empty State](../../../design_system/assets/screenshots/empty_state.png)
+![Empty State](images/empty_state.png)
 
 ```python
 from design_system import EmptyState

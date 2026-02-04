@@ -53,13 +53,13 @@ print(f"Button created: {button}")
 
 For best development experience, ensure your IDE recognizes the type annotations:
 
-=== "VS Code"
+### VS Code
 
-    Install the Pylance extension for full type support.
+Install the Pylance extension for full type support.
 
-=== "PyCharm"
+### PyCharm
 
-    Type hints work out of the box.
+Type hints work out of the box.
 
 ## Next Steps
 

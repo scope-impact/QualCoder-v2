@@ -87,6 +87,7 @@ dmypy.json
 # Logs
 *.log
 *.png
+!docs/**/*.png
 design_system/assets/screenshots/
 
 # MkDocs

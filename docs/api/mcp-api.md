@@ -408,4 +408,4 @@ The following tools are planned but not yet implemented. Progress is tracked via
 
 See [ARCHITECTURE.md](../ARCHITECTURE.md) for how MCP integrates with the application.
 
-See [Decision 005](../../backlog/decisions/decision-005%20mcp-transport-http-over-stdio.md) for the HTTP vs stdio transport decision.
+See [Decision 005](../backlog/decisions/decision-005%20mcp-transport-http-over-stdio.md) for the HTTP vs stdio transport decision.

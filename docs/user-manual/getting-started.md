@@ -4,36 +4,37 @@ This guide walks you through installing QualCoder v2 and creating your first pro
 
 ## Installation
 
-=== "macOS / Linux"
+### macOS / Linux
 
-    ```bash
-    # Clone the repository
-    git clone https://github.com/scope-impact/qualcoder-v2
-    cd qualcoder-v2
+```bash
+# Clone the repository
+git clone https://github.com/scope-impact/qualcoder-v2
+cd qualcoder-v2
 
-    # Install dependencies
-    uv sync
+# Install dependencies
+uv sync
 
-    # Run the application
-    uv run python src/main.py
-    ```
+# Run the application
+uv run python src/main.py
+```
 
-=== "Windows"
+### Windows
 
-    ```powershell
-    # Clone the repository
-    git clone https://github.com/scope-impact/qualcoder-v2
-    cd qualcoder-v2
+```powershell
+# Clone the repository
+git clone https://github.com/scope-impact/qualcoder-v2
+cd qualcoder-v2
 
-    # Install dependencies
-    uv sync
+# Install dependencies
+uv sync
 
-    # Run the application
-    uv run python src/main.py
-    ```
+# Run the application
+uv run python src/main.py
+```
 
-!!! tip "Using uv"
-    We recommend using [uv](https://github.com/astral-sh/uv) for Python package management. It's fast and handles virtual environments automatically.
+> **Tip: Using uv**
+>
+> We recommend using [uv](https://github.com/astral-sh/uv) for Python package management. It's fast and handles virtual environments automatically.
 
 ## Creating a Project
 
@@ -52,8 +53,9 @@ uv run python src/main.py
 3. Choose a save location
 4. Click **Create**
 
-!!! info "Project Files"
-    QualCoder saves projects as `.qda` files (SQLite databases). All your data is stored in this single file, making it easy to backup and share.
+> **Info: Project Files**
+>
+> QualCoder saves projects as `.qda` files (SQLite databases). All your data is stored in this single file, making it easy to backup and share.
 
 ### Step 3: Open an Existing Project
 

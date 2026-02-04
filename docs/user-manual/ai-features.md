@@ -2,8 +2,9 @@
 
 QualCoder v2 includes AI-powered features to accelerate your qualitative analysis while keeping you in control.
 
-!!! info "Human-in-the-Loop"
-    All AI features are designed as suggestions. You always review and approve before changes are made to your data.
+> **Info: Human-in-the-Loop**
+>
+> All AI features are designed as suggestions. You always review and approve before changes are made to your data.
 
 ## Code Suggestions
 
@@ -13,34 +14,10 @@ The AI analyzes your documents and suggests new codes based on patterns it detec
 
 1. Click **AI > Suggest Codes** from the menu
 2. The AI analyzes your document content
-3. Review the suggestions dialog
+3. Review the suggestions (each shows name, description, and confidence level)
+4. **Approve** to add, **Reject** to dismiss, or **Edit** to modify before approving
 
-![Code Suggestions List](images/code-suggestions-list.png)
-
-### Reviewing Suggestions
-
-Each suggestion card shows:
-
-- **Name** - The proposed code name
-- **Description** - What the code captures
-- **Confidence** - How confident the AI is
-
-![Code Suggestion Details](images/code-suggestions-details.png)
-
-### Actions
-
-| Action | Result |
-|--------|--------|
-| **Approve** | Adds the code to your codebook |
-| **Reject** | Dismisses the suggestion |
-| **Edit** | Modify the name before approving |
-| **Approve All** | Accept all suggestions at once |
-
-### Empty State
-
-When no suggestions are available:
-
-![Empty Suggestions](images/code-suggestions-empty.png)
+![Code Suggestions](images/code-suggestions.png)
 
 ## Duplicate Detection
 
@@ -50,38 +27,15 @@ Over time, you may create similar or redundant codes. The duplicate detector ide
 
 1. Click **AI > Find Duplicates**
 2. The AI compares all codes using semantic similarity
-3. Review candidate pairs
+3. Review candidate pairs (each shows code names, similarity %, and segment counts)
+4. **Merge A → B** to combine codes, or **Dismiss** if they're not duplicates
 
-![Duplicate Codes List](images/duplicate-codes-list.png)
+![Duplicate Codes](images/duplicate-codes.png)
 
-### Understanding Similarity
-
-Each pair shows:
-
-- **Code names** - The two potentially duplicate codes
-- **Similarity %** - How similar they are semantically
-- **Segment counts** - How many segments use each code
-
-![Duplicate Similarity Score](images/duplicate-codes-similarity.png)
-
-!!! tip "Similarity Threshold"
-    - **90%+** - Very likely duplicates
-    - **70-90%** - Possibly related, review carefully
-    - **Below 70%** - Probably distinct concepts
-
-### Actions
-
-| Action | Result |
-|--------|--------|
-| **Merge A → B** | Combines codes, moves all segments from A to B |
-| **Merge B → A** | Combines codes, moves all segments from B to A |
-| **Dismiss** | Marks as "not duplicates", won't suggest again |
-
-### Empty State
-
-When no duplicates are found:
-
-![No Duplicates](images/duplicate-codes-empty.png)
+> **Tip: Similarity Threshold**
+> - **90%+** - Very likely duplicates
+> - **70-90%** - Possibly related, review carefully
+> - **Below 70%** - Probably distinct concepts
 
 ## Auto-Code
 
@@ -117,8 +71,9 @@ Find passages similar to a coded segment.
 3. Review passages with similar meaning
 4. Apply the same code to matches
 
-!!! tip "Semantic Search"
-    This uses semantic similarity, not just keyword matching. It finds passages with similar meaning even if they use different words.
+> **Tip: Semantic Search**
+>
+> This uses semantic similarity, not just keyword matching. It finds passages with similar meaning even if they use different words.
 
 ## AI Agent Integration
 
@@ -128,17 +83,17 @@ See [MCP Setup Guide](./mcp-setup.md) for configuration and available tools.
 
 ## Best Practices
 
-!!! success "Review All Suggestions"
-    - Never blindly accept AI suggestions
-    - Check if suggested codes fit your conceptual framework
-    - Consider if distinctions are meaningful for your research
+> **Review All Suggestions**
+> - Never blindly accept AI suggestions
+> - Check if suggested codes fit your conceptual framework
+> - Consider if distinctions are meaningful for your research
 
-!!! success "Iterative Refinement"
-    - Start with AI suggestions as a first pass
-    - Refine and merge codes as understanding develops
-    - Use duplicate detection periodically
+> **Iterative Refinement**
+> - Start with AI suggestions as a first pass
+> - Refine and merge codes as understanding develops
+> - Use duplicate detection periodically
 
-!!! success "Document Decisions"
-    - Add memos explaining why you accepted/rejected suggestions
-    - Note merge decisions in code memos
-    - Keep an audit trail of AI-assisted changes
+> **Document Decisions**
+> - Add memos explaining why you accepted/rejected suggestions
+> - Note merge decisions in code memos
+> - Keep an audit trail of AI-assisted changes

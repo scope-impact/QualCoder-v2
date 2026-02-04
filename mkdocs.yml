@@ -133,6 +133,40 @@ nav:
       - Functional DDD: design/FUNCTIONAL_DDD_DESIGN.md
       - Agent Context: design/AGENT_CONTEXT_DESIGN.md
 
+  - Backlog:
+      - backlog/index.md
+      - Restructure Plan: backlog/BACKLOG_RESTRUCTURE.md
+      - Dependencies: backlog/DEPENDENCY_ANALYSIS.md
+      - Decisions:
+          - backlog/decisions/decision-001 design-system-visualization-libraries.md
+          - backlog/decisions/decision-002 library-alternatives-analysis.md
+          - backlog/decisions/decision-003 localization-framework.md
+          - backlog/decisions/decision-004 design-system-visualization-libraries.md
+          - backlog/decisions/decision-005 mcp-transport-http-over-stdio.md
+      - Tasks:
+          - backlog/tasks/index.md
+          - backlog/tasks/qc-026 - Open-Navigate-Project.md
+          - backlog/tasks/qc-027 - Manage-Sources.md
+          - backlog/tasks/qc-028 - Manage-Codes.md
+          - backlog/tasks/qc-029 - Apply-Codes-to-Text.md
+          - backlog/tasks/qc-030 - Apply-Codes-to-Images.md
+          - backlog/tasks/qc-031 - Apply-Codes-to-Audio-Video.md
+          - backlog/tasks/qc-032 - Auto-Code.md
+          - backlog/tasks/qc-033 - Search-and-Find.md
+          - backlog/tasks/qc-034 - Manage-Cases.md
+          - backlog/tasks/qc-035 - Generate-Reports.md
+          - backlog/tasks/qc-036 - Collaborate.md
+          - backlog/tasks/qc-037 - Chat-with-Agent.md
+          - backlog/tasks/qc-038 - Settings-and-Preferences.md
+          - backlog/tasks/qc-039 - Import-Export-Formats.md
+          - backlog/tasks/qc-040 - Data-Privacy.md
+          - backlog/tasks/qc-041 - References-and-Bibliography.md
+          - backlog/tasks/qc-042 - Apply-Codes-to-PDF.md
+          - backlog/tasks/qc-043 - Journals-and-Memos.md
+          - backlog/tasks/qc-044 - Visualizations.md
+          - backlog/tasks/qc-045 - Complete-Coding-Context.md
+          - backlog/tasks/qc-046 - Remove-premature-v1→v2-migration-code.md
+
   - AI Plans (Historical):
       - ai/README.md
 

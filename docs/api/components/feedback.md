@@ -6,7 +6,7 @@ User feedback components: spinners, toasts, progress bars, and stat cards.
 
 Loading spinners.
 
-![Loading Indicators](../../../design_system/assets/screenshots/loading_indicators.png)
+![Loading Indicators](images/loading_indicators.png)
 
 ```python
 from design_system import Spinner, LoadingIndicator, LoadingOverlay
@@ -66,7 +66,7 @@ skeleton = SkeletonLoader(width=200, height=20)
 
 Popup notifications.
 
-![Toast Variants](../../../design_system/assets/screenshots/toasts_all_variants.png)
+![Toast Variants](images/toasts_all_variants.png)
 
 ```python
 from design_system import Toast, ToastManager, ToastContainer
@@ -112,7 +112,7 @@ container.add_toast(toast)
 
 Progress indicator.
 
-![Progress Bars](../../../design_system/assets/screenshots/progress_bars_values.png)
+![Progress Bars](images/progress_bars_values.png)
 
 ```python
 from design_system import ProgressBar, ProgressBarLabeled, ProgressBarWidget
@@ -177,7 +177,7 @@ indicator.set_score(0.5)
 
 Statistics display with trend.
 
-![Stat Cards](../../../design_system/assets/screenshots/stat_cards.png)
+![Stat Cards](images/stat_cards.png)
 
 ```python
 from design_system import StatCard, StatCardRow, MiniStatCard

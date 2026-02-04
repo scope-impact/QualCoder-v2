@@ -25,8 +25,9 @@ Sources are the documents and media files you analyze. QualCoder supports text, 
 
 *The File Manager showing imported source files with type statistics.*
 
-!!! tip "Bulk Import"
-    You can select multiple files at once. Hold `Cmd` (macOS) or `Ctrl` (Windows) while clicking to select multiple files.
+> **Tip: Bulk Import**
+>
+> You can select multiple files at once. Hold `Cmd` (macOS) or `Ctrl` (Windows) while clicking to select multiple files.
 
 ### Import a Folder
 
@@ -107,8 +108,9 @@ When no sources have been imported yet:
 
 ## Deleting Sources
 
-!!! warning "Caution"
-    Deleting a source also removes all coded segments associated with it.
+> **Warning: Caution**
+>
+> Deleting a source also removes all coded segments associated with it.
 
 1. Right-click the source
 2. Select **Delete**

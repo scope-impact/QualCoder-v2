@@ -86,7 +86,7 @@ content.add_widget(panel)
 
 Side panel with header.
 
-![Panel with Header](../../../design_system/assets/screenshots/panel_with_header.png)
+![Panel with Header](images/panel_with_header.png)
 
 ```python
 from design_system import Panel, PanelHeader
@@ -111,7 +111,7 @@ header = PanelHeader(title="Section Title")
 
 Collapsible sidebar.
 
-![Sidebar](../../../design_system/assets/screenshots/sidebar.png)
+![Sidebar](images/sidebar.png)
 
 ```python
 from design_system import Sidebar
@@ -126,7 +126,7 @@ sidebar.add_widget(navigation)
 
 Tool button container.
 
-![Toolbar](../../../design_system/assets/screenshots/toolbar.png)
+![Toolbar](images/toolbar.png)
 
 ```python
 from design_system import Toolbar, ToolbarGroup, ToolbarButton

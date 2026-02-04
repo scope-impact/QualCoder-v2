@@ -6,9 +6,9 @@ Fundamental UI building blocks: buttons, inputs, labels, cards, and more.
 
 Styled button with multiple variants and sizes.
 
-![Button Variants](../../../design_system/assets/screenshots/buttons_all_variants.png)
+![Button Variants](images/buttons_all_variants.png)
 
-![Button Sizes](../../../design_system/assets/screenshots/buttons_all_sizes.png)
+![Button Sizes](images/buttons_all_sizes.png)
 
 ```python
 from design_system import Button
@@ -55,7 +55,7 @@ button.clicked.connect(lambda: print("Clicked!"))
 
 Text input field with validation support.
 
-![Input States](../../../design_system/assets/screenshots/inputs_all_states.png)
+![Input States](images/inputs_all_states.png)
 
 ```python
 from design_system import Input
@@ -121,7 +121,7 @@ error = Label("Invalid input", variant="error")
 
 Container with elevation and shadow.
 
-![Card](../../../design_system/assets/screenshots/card_basic.png)
+![Card](images/card_basic.png)
 
 ```python
 from design_system import Card, CardHeader
@@ -163,7 +163,7 @@ header = CardHeader(
 
 Small tag/label for status or counts.
 
-![Badge Variants](../../../design_system/assets/screenshots/badges_all_variants.png)
+![Badge Variants](images/badges_all_variants.png)
 
 ```python
 from design_system import Badge
@@ -193,7 +193,7 @@ badge = Badge("Error", variant="destructive")
 
 Callout component for messages.
 
-![Alert Variants](../../../design_system/assets/screenshots/alerts_all_variants.png)
+![Alert Variants](images/alerts_all_variants.png)
 
 ```python
 from design_system import Alert
@@ -220,7 +220,7 @@ alert = Alert(
 
 Circular avatar with text or image.
 
-![Avatar Sizes](../../../design_system/assets/screenshots/avatars_all_sizes.png)
+![Avatar Sizes](images/avatars_all_sizes.png)
 
 ```python
 from design_system import Avatar
@@ -241,7 +241,7 @@ avatar = Avatar(text="JD", size=40)  # Shows initials
 
 Tag with optional close button.
 
-![Chips](../../../design_system/assets/screenshots/chips_closable.png)
+![Chips](images/chips_closable.png)
 
 ```python
 from design_system import Chip
@@ -269,7 +269,7 @@ chip.close_clicked.connect(lambda: print("Closed"))
 
 File type icon with colored background.
 
-![File Icons](../../../design_system/assets/screenshots/file_icons_all_types.png)
+![File Icons](images/file_icons_all_types.png)
 
 ```python
 from design_system import FileIcon

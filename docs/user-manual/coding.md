@@ -30,10 +30,10 @@ The selected text is highlighted.
 
 ### Selection Tips
 
-!!! tip "Precise Selections"
-    - Double-click to select a word
-    - Triple-click to select a paragraph
-    - Hold `Shift` and click to extend selection
+> **Tip: Precise Selections**
+> - Double-click to select a word
+> - Triple-click to select a paragraph
+> - Hold `Shift` and click to extend selection
 
 ![Coding Screen - With Codes](images/coding-screen-with-codes.png)
 
@@ -47,10 +47,11 @@ The fastest way to code:
 
 1. Select a code from the code list (it becomes "active")
 2. Select text in the document
-3. Press ++q++ to apply the code
+3. Press `Q` to apply the code
 
-!!! info "Quick Mark"
-    The **Q** key instantly applies the currently active code to your selection. This is the most efficient way to code.
+> **Info: Quick Mark**
+>
+> The `Q` key instantly applies the currently active code to your selection. This is the most efficient way to code.
 
 ### Method 2: Right-Click Menu
 
@@ -94,7 +95,7 @@ View all segments for the current source:
 ### Remove All from Selection
 
 1. Select the coded text
-2. Press ++delete++ or ++backspace++
+2. Press `Delete` or `Backspace`
 3. Confirm the removal
 
 ## Multiple Codes
@@ -111,7 +112,7 @@ The segment will show a combined color and list all applied codes on hover.
 
 You can create new codes without leaving the coding screen:
 
-1. Press ++n++ to open the **Create Code** dialog
+1. Press `N` to open the **Create Code** dialog
 2. Enter a code name
 3. Select a color from the palette
 4. Optionally add a description
@@ -123,37 +124,38 @@ You can create new codes without leaving the coding screen:
 
 The new code is immediately available for use and can be applied to your current selection.
 
-!!! tip "In-Vivo Coding"
-    Press ++v++ to create a code from your selected text. The selection becomes the code name automatically.
+> **Tip: In-Vivo Coding**
+>
+> Press `V` to create a code from your selected text. The selection becomes the code name automatically.
 
 ## Keyboard Shortcuts
 
 | Action | Shortcut |
 |--------|----------|
-| Quick Mark | ++q++ |
-| New Code | ++n++ |
-| In-Vivo Code | ++v++ |
-| Unmark | ++u++ |
-| Undo | ++cmd+z++ / ++ctrl+z++ |
-| Redo | ++cmd+shift+z++ / ++ctrl+y++ |
-| Remove Code | ++delete++ |
+| Quick Mark | `Q` |
+| New Code | `N` |
+| In-Vivo Code | `V` |
+| Unmark | `U` |
+| Undo | `Cmd+Z` / `Ctrl+Z` |
+| Redo | `Cmd+Shift+Z` / `Ctrl+Y` |
+| Remove Code | `Delete` |
 
 ## Best Practices
 
-!!! success "Consistent Boundaries"
-    - Include complete phrases or sentences
-    - Avoid cutting words in half
-    - Be consistent with punctuation inclusion
+> **Consistent Boundaries**
+> - Include complete phrases or sentences
+> - Avoid cutting words in half
+> - Be consistent with punctuation inclusion
 
-!!! success "Granularity"
-    - Code meaningful units of meaning
-    - Don't code too large (entire paragraphs)
-    - Don't code too small (single words) unless meaningful
+> **Granularity**
+> - Code meaningful units of meaning
+> - Don't code too large (entire paragraphs)
+> - Don't code too small (single words) unless meaningful
 
-!!! success "Overlap Strategy"
-    - Decide early if codes can overlap
-    - Document your overlap rules
-    - Be consistent throughout
+> **Overlap Strategy**
+> - Decide early if codes can overlap
+> - Document your overlap rules
+> - Be consistent throughout
 
 ## Next Steps
 

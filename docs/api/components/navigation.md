@@ -6,7 +6,7 @@ Navigation patterns: tabs, menus, breadcrumbs, and step indicators.
 
 Tab navigation.
 
-![Tab Group](../../../design_system/assets/screenshots/tab_group.png)
+![Tab Group](images/tab_group.png)
 
 ```python
 from design_system import Tab, TabGroup
@@ -67,7 +67,7 @@ item.clicked.connect(handler)
 
 Breadcrumb navigation path.
 
-![Breadcrumb](../../../design_system/assets/screenshots/breadcrumb_navigation.png)
+![Breadcrumb](images/breadcrumb_navigation.png)
 
 ```python
 from design_system import Breadcrumb
@@ -110,7 +110,7 @@ nav.add_item("Settings", icon="mdi6.cog")
 
 Progress steps display.
 
-![Step Indicator](../../../design_system/assets/screenshots/step_indicator.png)
+![Step Indicator](images/step_indicator.png)
 
 ```python
 from design_system import StepIndicator

@@ -49,7 +49,7 @@ waveform.position_changed.connect(lambda pos: print(f"Position: {pos}"))
 
 Playback timeline.
 
-![Timeline](../../../design_system/assets/screenshots/timeline_with_segments.png)
+![Timeline](images/timeline_with_segments.png)
 
 ```python
 from design_system import Timeline
@@ -73,7 +73,7 @@ timeline.set_position(60)   # 1 minute in seconds
 
 Media player controls.
 
-![Player Controls](../../../design_system/assets/screenshots/player_controls.png)
+![Player Controls](images/player_controls.png)
 
 ```python
 from design_system import PlayerControls

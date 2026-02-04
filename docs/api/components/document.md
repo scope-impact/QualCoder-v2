@@ -6,7 +6,7 @@ Document display and editing components.
 
 Text document display with optional line numbers.
 
-![Text Panel](../../../design_system/assets/screenshots/text_panel.png)
+![Text Panel](images/text_panel.png)
 
 ```python
 from design_system import TextPanel, LineNumberArea
@@ -56,7 +56,7 @@ panel.text_selected.connect(lambda text, start, end: print(f"Selected: {text}"))
 
 Transcript display with segments.
 
-![Transcript Panel](../../../design_system/assets/screenshots/transcript_panel.png)
+![Transcript Panel](images/transcript_panel.png)
 
 ```python
 from design_system import TranscriptPanel, TranscriptSegment

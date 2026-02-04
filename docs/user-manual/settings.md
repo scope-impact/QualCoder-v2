@@ -6,7 +6,7 @@ Configure QualCoder to match your workflow and preferences.
 
 Access settings from the menu bar:
 
-1. Click **Settings** in the menu bar (or press ++cmd+comma++ on macOS)
+1. Click **Settings** in the menu bar (or press `Cmd+,` on macOS)
 2. The Settings dialog opens with a sidebar for navigation
 
 ## Appearance
@@ -19,8 +19,9 @@ Choose between light and dark themes:
 2. Click **Light** or **Dark** theme button
 3. The UI updates immediately
 
-!!! tip "Eye Strain"
-    Use dark theme in low-light environments to reduce eye strain during extended coding sessions.
+> **Tip: Eye Strain**
+>
+> Use dark theme in low-light environments to reduce eye strain during extended coding sessions.
 
 ### Font Size
 
@@ -51,8 +52,9 @@ Select your preferred application language:
    - Portuguese
 3. Some changes may require restart
 
-!!! note "Translation Coverage"
-    Not all languages have complete translations. Missing translations fall back to English.
+> **Note: Translation Coverage**
+>
+> Not all languages have complete translations. Missing translations fall back to English.
 
 ## Backup Settings
 
@@ -71,8 +73,9 @@ Set how often backups are created:
 2. Set the interval (in minutes) using the spinbox
 3. Default is 30 minutes
 
-!!! warning "Backup Location"
-    Backups are stored alongside your project file. Ensure you have sufficient disk space.
+> **Warning: Backup Location**
+>
+> Backups are stored alongside your project file. Ensure you have sufficient disk space.
 
 ## AV Coding Settings
 
@@ -112,7 +115,7 @@ Settings are saved automatically as you change them. There's no need to click Sa
 
 | Action | Shortcut |
 |--------|----------|
-| Open Settings | ++cmd+comma++ (macOS) / ++ctrl+comma++ (Windows/Linux) |
+| Open Settings | `Cmd+,` (macOS) / `Ctrl+,` (Windows/Linux) |
 
 ## Next Steps
 

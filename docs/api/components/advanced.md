@@ -6,7 +6,7 @@ Complex components: modals, context menus, editors, pagination, filters, and upl
 
 Material Design dialog.
 
-![Modal Dialog](../../../design_system/assets/screenshots/modal_dialog.png)
+![Modal Dialog](images/modal_dialog.png)
 
 ```python
 from design_system import Modal, ModalHeader, ModalBody, ModalFooter
@@ -49,7 +49,7 @@ result = modal.exec()  # Returns QDialog.Accepted or QDialog.Rejected
 
 Switch component.
 
-![Toggle States](../../../design_system/assets/screenshots/toggle_states.png)
+![Toggle States](images/toggle_states.png)
 
 ```python
 from design_system import Toggle, LabeledToggle
@@ -75,7 +75,7 @@ labeled.toggled.connect(lambda checked: handle_toggle(checked))
 
 Right-click menu.
 
-![Context Menu](../../../design_system/assets/screenshots/context_menu.png)
+![Context Menu](images/context_menu.png)
 
 ```python
 from design_system import ContextMenu
@@ -106,7 +106,7 @@ menu.exec(QCursor.pos())
 
 Collapsible filter panel.
 
-![Filter Panel](../../../design_system/assets/screenshots/filter_panel.png)
+![Filter Panel](images/filter_panel.png)
 
 ```python
 from design_system import FilterPanel, FilterSection
@@ -135,7 +135,7 @@ filters.set_collapsed(True)
 
 Toggle between view modes.
 
-![View Toggle](../../../design_system/assets/screenshots/view_toggle.png)
+![View Toggle](images/view_toggle.png)
 
 ```python
 from design_system import ViewToggle
@@ -153,7 +153,7 @@ current = toggle.current_view()
 
 Code editor with syntax highlighting.
 
-![Code Editor](../../../design_system/assets/screenshots/code_editor.png)
+![Code Editor](images/code_editor.png)
 
 ```python
 from design_system import CodeEditor
@@ -185,7 +185,7 @@ editor.code_changed.connect(lambda code: print("Code changed"))
 
 Rich text editor with formatting toolbar.
 
-![Rich Text Editor](../../../design_system/assets/screenshots/rich_text_editor.png)
+![Rich Text Editor](images/rich_text_editor.png)
 
 ```python
 from design_system import RichTextEditor
@@ -207,7 +207,7 @@ editor.content_changed.connect(lambda html: save_content(html))
 
 Memo/note editor for annotations.
 
-![Memo Editor](../../../design_system/assets/screenshots/memo_editor.png)
+![Memo Editor](images/memo_editor.png)
 
 ```python
 from design_system import MemoEditor
@@ -227,7 +227,7 @@ memo.save_clicked.connect(lambda: save_memo())
 
 Page navigation.
 
-![Pagination](../../../design_system/assets/screenshots/pagination.png)
+![Pagination](images/pagination.png)
 
 ```python
 from design_system import Pagination, SimplePagination
@@ -256,7 +256,7 @@ simple.next_clicked.connect(next_handler)
 
 Date range selection.
 
-![Date Range Picker](../../../design_system/assets/screenshots/date_range_picker.png)
+![Date Range Picker](images/date_range_picker.png)
 
 ```python
 from design_system import DateRangePicker, QuickDateSelect
@@ -275,7 +275,7 @@ quick.range_selected.connect(lambda start, end: apply_range(start, end))
 
 Drag-and-drop file upload.
 
-![Drop Zone](../../../design_system/assets/screenshots/drop_zone.png)
+![Drop Zone](images/drop_zone.png)
 
 ```python
 from design_system import DropZone, CompactDropZone
