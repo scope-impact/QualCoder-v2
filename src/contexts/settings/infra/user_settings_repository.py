@@ -345,7 +345,7 @@ class UserSettingsRepository:
                 "speaker_format": settings.av_coding.speaker_format,
             },
             "backend": {
-                "backend_type": settings.backend.backend_type,
+                "cloud_sync_enabled": settings.backend.cloud_sync_enabled,
                 "convex_url": settings.backend.convex_url,
                 "convex_project_id": settings.backend.convex_project_id,
             },
@@ -383,7 +383,7 @@ class UserSettingsRepository:
                 speaker_format=av_coding_data.get("speaker_format", "Speaker {n}"),
             ),
             backend=BackendConfig(
-                backend_type=backend_data.get("backend_type", "sqlite"),
+                cloud_sync_enabled=backend_data.get("cloud_sync_enabled", False),
                 convex_url=backend_data.get("convex_url"),
                 convex_project_id=backend_data.get("convex_project_id"),
             ),
