@@ -65,43 +65,46 @@ We need a solution that makes SQLite databases **diffable** in Git.
 │      └── ...                                                 │
 │                                                              │
 └─────────────────────────────────────────────────────────────┘
-
-Workflow:
-                    ┌─────────────┐
-                    │ User edits  │
-                    │ in QualCoder│
-                    └──────┬──────┘
-                           │
-                           ▼
-                    ┌─────────────┐
-                    │ data.sqlite │  (binary, working copy)
-                    └──────┬──────┘
-                           │
-         User clicks "Create Snapshot"
-                           │
-                           ▼
-              ┌────────────────────────┐
-              │ sqlite-diffable dump   │
-              │ data.sqlite            │
-              │ .qualcoder-vcs/ --all  │
-              └────────────┬───────────┘
-                           │
-                           ▼
-              ┌────────────────────────┐
-              │ .qualcoder-vcs/        │
-              │ ├── code_name.ndjson   │  (JSON, diffable)
-              │ ├── code_text.ndjson   │
-              │ └── ...                │
-              └────────────┬───────────┘
-                           │
-                     git add + commit
-                           │
-                           ▼
-              ┌────────────────────────┐
-              │ Git repository         │
-              │ (line-by-line diffs)   │
-              └────────────────────────┘
 ```
+
+### Auto-Commit Workflow (with 500ms debounce)
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                        EventBus                              │
+│                           │                                  │
+│    ┌──────────────────────┼──────────────────────┐          │
+│    ▼                      ▼                      ▼          │
+│ CodeCreated        SegmentCoded           SourceImported    │
+│    │                      │                      │          │
+│    └──────────────────────┼──────────────────────┘          │
+│                           ▼                                  │
+│              ┌────────────────────────┐                     │
+│              │ VersionControlListener │                     │
+│              │  - collect events      │                     │
+│              │  - debounce 500ms      │                     │
+│              │  - dump + commit       │                     │
+│              └────────────────────────┘                     │
+└─────────────────────────────────────────────────────────────┘
+
+Timeline Example:
+  0ms:   CodeCreated "Theme A"     → start 500ms timer
+  100ms: CodeCreated "Theme B"     → reset timer, add to batch
+  200ms: SegmentCoded              → reset timer, add to batch
+  700ms: timer fires               → dump + commit (3 events)
+
+Commit message: "Created 2 codes, applied 1 segment"
+```
+
+### Commit Trigger Decision
+
+| Approach | Pros | Cons | Decision |
+|----------|------|------|----------|
+| Explicit snapshots | Clean history | User must remember | Rejected |
+| Auto-commit every mutation | Never lose work | Noisy history | Rejected |
+| **Auto-commit + debounce** | Best of both | Slight delay | **Accepted** |
+
+**Rationale:** 500ms debounce batches rapid changes (e.g., bulk coding) into single commits while ensuring no work is lost. Commit messages are auto-generated from event types.
 
 ### Output Format
 
@@ -218,18 +221,18 @@ Continuous WAL streaming for backup/recovery.
 ### Negative
 
 - **Disk space**: JSON copy alongside SQLite database
-- **Manual workflow**: User must trigger snapshot (not automatic)
 - **Large tables**: ndjson files can be large for big datasets
 - **Binary blobs**: Images/media stored as base64 may bloat
+- **Commit frequency**: Many small commits with auto-commit
 
 ### Mitigations
 
 | Issue | Mitigation |
 |-------|------------|
 | Disk space | Compress old snapshots, .gitignore binary media |
-| Manual workflow | Auto-snapshot on project close (opt-in) |
 | Large tables | Exclude `source.fulltext` for text-heavy sources |
 | Binary blobs | Store media references only, not content |
+| Commit frequency | 500ms debounce batches rapid changes |
 
 ## Implementation
 
@@ -268,15 +271,89 @@ def restore_snapshot(db_path: Path, snapshot_dir: Path, replace: bool = True):
 src/contexts/projects/
 ├── infra/
 │   ├── sqlite_diffable_adapter.py   # Wrapper for sqlite-diffable CLI
-│   └── git_repository.py            # Git operations (init, commit, log)
+│   ├── git_repository_adapter.py    # Git operations (init, commit, log)
+│   └── version_control_listener.py  # EventBus subscriber, debounce, auto-commit
 ├── core/
+│   ├── vcs_entities.py              # Snapshot, SnapshotDiff
+│   ├── vcs_events.py                # SnapshotCreated, SnapshotRestored
+│   ├── vcs_failure_events.py        # SnapshotNotCreated, etc.
 │   └── commandHandlers/
-│       ├── create_snapshot.py       # Dump + git commit
+│       ├── initialize_version_control.py
 │       ├── list_snapshots.py        # Git log parsing
+│       ├── view_diff.py             # Git diff parsing
 │       └── restore_snapshot.py      # Git checkout + load
+├── interface/
+│   └── vcs_mcp_tools.py             # MCP tools for AI agents
 └── presentation/
-    ├── version_history_panel.py     # List commits, view diffs
-    └── snapshot_dialog.py           # Commit message input
+    ├── viewmodels/
+    │   └── version_control_viewmodel.py
+    ├── pages/
+    │   └── version_history_page.py  # List commits, view diffs
+    └── dialogs/
+        └── diff_viewer_dialog.py
+```
+
+### VersionControlListener (Core Component)
+
+```python
+class VersionControlListener:
+    """
+    Subscribes to mutation events and auto-commits with debounce.
+    """
+
+    DEBOUNCE_MS = 500
+
+    MUTATION_EVENTS = (
+        "coding.code_created",
+        "coding.code_updated",
+        "coding.code_deleted",
+        "coding.segment_coded",
+        "coding.segment_uncoded",
+        "sources.source_imported",
+        "sources.source_deleted",
+        "cases.case_created",
+        "cases.case_updated",
+        # ... all mutation events
+    )
+
+    def __init__(self, event_bus, diffable_adapter, git_adapter, project_path):
+        self._pending_events: list[DomainEvent] = []
+        self._timer: QTimer | None = None
+
+        # Subscribe to all mutation events
+        for event_type in self.MUTATION_EVENTS:
+            event_bus.subscribe(event_type, self._on_mutation)
+
+    def _on_mutation(self, event: DomainEvent):
+        """Queue event and reset debounce timer."""
+        self._pending_events.append(event)
+        self._reset_timer()
+
+    def _reset_timer(self):
+        if self._timer:
+            self._timer.stop()
+        self._timer = QTimer()
+        self._timer.setSingleShot(True)
+        self._timer.timeout.connect(self._flush)
+        self._timer.start(self.DEBOUNCE_MS)
+
+    def _flush(self):
+        """Dump database and commit all pending events."""
+        if not self._pending_events:
+            return
+
+        self._diffable.dump(db_path, vcs_dir)
+        message = self._generate_message(self._pending_events)
+        self._git.add_all()
+        self._git.commit(message)
+        self._pending_events.clear()
+
+    def _generate_message(self, events: list) -> str:
+        """Generate commit message from batched events."""
+        if len(events) == 1:
+            return self._format_single(events[0])
+        # Group and summarize: "Created 2 codes, applied 3 segments"
+        ...
 ```
 
 ### Excluded Tables (Default)
