@@ -499,9 +499,7 @@ class TextCodingViewModel(QObject):
 
         # Group codes by category
         uncategorized_codes: list[Code] = []
-        category_codes: dict[int, list[Code]] = {
-            cat.id.value: [] for cat in categories
-        }
+        category_codes: dict[int, list[Code]] = {cat.id.value: [] for cat in categories}
 
         for code in codes:
             if code.category_id is None:
@@ -522,9 +520,7 @@ class TextCodingViewModel(QObject):
                     CodeCategoryDTO(
                         id=str(cat.id.value),
                         name=cat.name,
-                        codes=[
-                            self._code_to_dto(c, segment_counts) for c in cat_codes
-                        ],
+                        codes=[self._code_to_dto(c, segment_counts) for c in cat_codes],
                     )
                 )
 
