@@ -45,7 +45,55 @@ if TYPE_CHECKING:
 
     from src.shared.infra.convex import ConvexClientWrapper
 
+# Import ConvexClient at module level to avoid import deadlock in threads
+# (PyO3-based modules can deadlock if imported from a thread while main holds import lock)
+try:
+    from convex import ConvexClient as _ConvexClient
+except ImportError:
+    _ConvexClient = None  # type: ignore[misc, assignment]
+
 logger = logging.getLogger(__name__)
+
+
+def _subscription_worker(
+    convex_client_class: type,
+    url: str,
+    query: str,
+    entity_type: str,
+    listeners: dict[str, list[Callable]],
+    state: "SyncState",
+) -> None:
+    """
+    Standalone subscription worker function.
+
+    This is a module-level function (not a method) to avoid PyO3 GIL deadlocks
+    that can occur when passing bound methods to threads. Each worker creates
+    its own ConvexClient instance to avoid "already borrowed" threading errors.
+
+    Args:
+        convex_client_class: The ConvexClient class to instantiate
+        url: Convex deployment URL
+        query: Query to subscribe to (e.g., "codes:getAll")
+        entity_type: Entity type for logging and callbacks
+        listeners: Dict of entity_type -> list of callback functions
+        state: SyncState object to update on errors
+    """
+    try:
+        # Create a dedicated client for this thread
+        thread_client = convex_client_class(url)
+
+        # Subscribe and handle updates
+        for data in thread_client.subscribe(query, {}):
+            # Notify registered listeners
+            for callback in listeners.get(entity_type, []):
+                try:
+                    callback("sync", {"items": data})
+                except Exception:
+                    pass  # Silently ignore callback errors
+
+    except Exception as e:
+        state.status = SyncStatus.ERROR
+        state.error_message = str(e)
 
 
 class SyncStatus(str, Enum):
@@ -116,6 +164,7 @@ class SyncEngine:
         self,
         sqlite_connection: Connection,
         convex_client: ConvexClientWrapper | None = None,
+        enable_subscriptions: bool = False,
     ) -> None:
         """
         Initialize the sync engine.
@@ -123,9 +172,15 @@ class SyncEngine:
         Args:
             sqlite_connection: SQLAlchemy connection to local SQLite
             convex_client: Optional Convex client for cloud sync
+            enable_subscriptions: Whether to enable real-time Convex subscriptions.
+                Disabled by default due to PyO3 threading issues. When disabled,
+                inbound sync requires manual refresh or polling.
         """
         self._sqlite = sqlite_connection
         self._convex = convex_client
+        # Store URL for creating per-thread clients (avoids PyO3 "already borrowed" error)
+        self._convex_url: str | None = convex_client._url if convex_client else None
+        self._enable_subscriptions = enable_subscriptions
         self._state = SyncState()
 
         # Change queue for outbound sync (local -> Convex)
@@ -264,10 +319,13 @@ class SyncEngine:
         )
         self._outbound_thread.start()
 
-        # Setup Convex subscriptions if available
-        if self._convex:
+        # Setup Convex subscriptions if available and enabled
+        if self._convex and self._enable_subscriptions:
             self._state.status = SyncStatus.CONNECTING
             self._start_subscriptions()
+        elif self._convex:
+            # Convex available but subscriptions disabled - mark as synced
+            self._state.status = SyncStatus.SYNCED
 
         logger.info("SyncEngine started")
 
@@ -292,6 +350,7 @@ class SyncEngine:
         with self._lock:
             was_online = self._convex is not None
             self._convex = client
+            self._convex_url = client._url if client else None
 
             if was_online and not client:
                 # Going offline
@@ -440,7 +499,7 @@ class SyncEngine:
 
     def _start_subscriptions(self) -> None:
         """Start Convex subscription threads for real-time updates."""
-        if not self._convex:
+        if not self._convex_url:
             return
 
         # Subscribe to each entity type
@@ -453,10 +512,20 @@ class SyncEngine:
             ("cases", "cases:getAll", "case"),
         ]
 
+        # Capture values to avoid closure over self (prevents PyO3 GIL deadlock)
+        client_class = _ConvexClient
+        if client_class is None:
+            logger.error("ConvexClient not available for subscriptions")
+            return
+
+        url = self._convex_url
+        listeners = self._change_listeners  # Dict reference, not method
+        state = self._state  # State object reference
+
         for name, query, entity_type in subscriptions:
             thread = threading.Thread(
-                target=self._subscription_loop,
-                args=(query, entity_type),
+                target=_subscription_worker,
+                args=(client_class, url, query, entity_type, listeners, state),
                 daemon=True,
                 name=f"SyncEngine-Sub-{name}",
             )
@@ -466,18 +535,36 @@ class SyncEngine:
         self._state.status = SyncStatus.SYNCED
         logger.info(f"Started {len(subscriptions)} Convex subscriptions")
 
+    def _set_subscription_error(self, message: str) -> None:
+        """Set subscription error state (thread-safe helper)."""
+        self._state.status = SyncStatus.ERROR
+        self._state.error_message = message
+
     def _subscription_loop(self, query: str, entity_type: str) -> None:
         """
         Subscribe to a Convex query and handle updates.
 
         Uses Convex's subscribe() which yields new data on every change.
+
+        Note: Each subscription thread creates its own ConvexClient instance
+        to avoid PyO3 "already borrowed" threading errors. The Convex Python
+        client uses Rust bindings (PyO3) which don't support concurrent access
+        from multiple threads on the same client instance.
         """
-        if not self._convex:
+        if not self._convex_url:
             return
 
         try:
+            # Create a dedicated client for this thread to avoid PyO3 threading issues
+            if _ConvexClient is None:
+                logger.error("ConvexClient not available")
+                return
+
+            thread_client = _ConvexClient(self._convex_url)
+            logger.debug(f"Created dedicated Convex client for {entity_type} subscription")
+
             # The subscribe() method yields new data whenever it changes
-            for data in self._convex.client.subscribe(query, {}):
+            for data in thread_client.subscribe(query, {}):
                 if not self._running:
                     break
 
