@@ -120,33 +120,11 @@ Find passages similar to a coded segment.
 !!! tip "Semantic Search"
     This uses semantic similarity, not just keyword matching. It finds passages with similar meaning even if they use different words.
 
-## MCP Tools for AI Agents
+## AI Agent Integration
 
-QualCoder v2 exposes its functionality through MCP (Model Context Protocol) tools, allowing AI agents to:
+QualCoder v2 supports AI agents (like Claude Code) working alongside human researchers via the MCP protocol.
 
-| Tool | Purpose |
-|------|---------|
-| `list_codes` | Get all codes in the project |
-| `create_code` | Create a new code |
-| `apply_code` | Apply a code to a text range |
-| `suggest_codes` | Get AI code suggestions |
-| `find_duplicates` | Detect duplicate codes |
-| `search_text` | Search across all sources |
-
-### Agent Workflow Example
-
-```python
-# AI agent workflow
-codes = await mcp.list_codes()
-suggestions = await mcp.suggest_codes(source_id=1)
-
-for suggestion in suggestions:
-    if suggestion.confidence > 0.8:
-        await mcp.create_code(
-            name=suggestion.name,
-            color=suggestion.color
-        )
-```
+See [MCP Setup Guide](./mcp-setup.md) for configuration and available tools.
 
 ## Best Practices
 
