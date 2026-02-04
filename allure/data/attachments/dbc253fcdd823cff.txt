@@ -1,0 +1,3 @@
+
+Screenshot saved: /home/runner/work/QualCoder-v2/QualCoder-v2/design_system/tests/screenshots/loading_indicators_20260204_202411.png
+Assets copy: /home/runner/work/QualCoder-v2/QualCoder-v2/design_system/assets/screenshots/loading_indicators.png

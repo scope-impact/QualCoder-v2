@@ -1,0 +1,2 @@
+[MCP] Server running on http://localhost:19296
+[MCP] Server error: Event loop stopped before Future completed.
