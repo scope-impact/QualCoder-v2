@@ -84,10 +84,13 @@ class OverlapDetector:
         n = len(ranges)
         comparisons = n * (n - 1) // 2
 
-        with SpanContext("find_overlaps", {
-            "range_count": n,
-            "comparisons": comparisons,
-        }) as span:
+        with SpanContext(
+            "find_overlaps",
+            {
+                "range_count": n,
+                "comparisons": comparisons,
+            },
+        ) as span:
             overlaps: list[Range] = []
 
             for i, r1 in enumerate(ranges):

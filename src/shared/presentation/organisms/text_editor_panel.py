@@ -53,13 +53,13 @@ from design_system import (
     get_colors,
 )
 
+# Telemetry
+from src.shared.infra.telemetry import SpanContext, traced
+
 # Import molecules
 from src.shared.presentation.molecules.editor import LineNumberGutter
 from src.shared.presentation.molecules.highlighting import OverlapDetector
 from src.shared.presentation.molecules.selection import SelectionPopupController
-
-# Telemetry
-from src.shared.infra.telemetry import SpanContext, traced
 
 
 @dataclass
@@ -386,7 +386,7 @@ class TextEditorPanel(QFrame):
         Args:
             highlights: List of dicts with keys: start, end, color, memo (optional)
         """
-        with SpanContext("set_highlights", {"segment_count": len(highlights)}) as span:
+        with SpanContext("set_highlights", {"segment_count": len(highlights)}):
             # Save cursor position and scroll
             cursor = self._text_edit.textCursor()
             original_pos = cursor.position()
@@ -405,7 +405,9 @@ class TextEditorPanel(QFrame):
                     if text:
                         clear_cursor = self._text_edit.textCursor()
                         clear_cursor.setPosition(0, QTextCursor.MoveMode.MoveAnchor)
-                        clear_cursor.setPosition(len(text), QTextCursor.MoveMode.KeepAnchor)
+                        clear_cursor.setPosition(
+                            len(text), QTextCursor.MoveMode.KeepAnchor
+                        )
                         clear_cursor.setCharFormat(QTextCharFormat())
 
                 # Apply all highlights without overlap checking
@@ -421,7 +423,9 @@ class TextEditorPanel(QFrame):
                         if end > len(text):
                             end = len(text)
 
-                        highlight = HighlightRange(start=start, end=end, color=color, memo=memo)
+                        highlight = HighlightRange(
+                            start=start, end=end, color=color, memo=memo
+                        )
                         self._highlights.append(highlight)
                         self._apply_highlight(highlight)
 
