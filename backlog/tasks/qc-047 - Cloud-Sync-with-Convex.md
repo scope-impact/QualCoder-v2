@@ -12,24 +12,18 @@ dependencies: [QC-038]
 ## Description
 
 <!-- SECTION:DESCRIPTION:BEGIN -->
-Enable optional cloud synchronization using Convex database. SQLite remains the primary local storage (offline-first), with Convex providing real-time sync for collaboration and backup.
-
-Architecture:
-- SQLite: Always primary, works offline
-- Convex: Optional cloud sync layer
-- SyncEngine: Bidirectional sync between SQLite and Convex
+Enable optional cloud synchronization for real-time collaboration and backup. All data remains stored locally for offline access, with changes syncing to the cloud when enabled.
 <!-- SECTION:DESCRIPTION:END -->
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [x] #1 Researcher can enable/disable cloud sync in Settings > Database
-- [x] #2 Researcher can configure Convex deployment URL
-- [ ] #3 Local changes sync to Convex in real-time when enabled
-- [ ] #4 Remote changes from Convex sync back to local SQLite
-- [ ] #5 App works offline with SQLite, syncs when reconnected
-- [x] #6 Researcher can test locally using Docker Compose
-- [ ] #7 Connection status indicator shows sync state
-- [ ] #8 Agent can access cloud sync status via MCP
+- [x] #1 Researcher can enable/disable cloud sync in Settings
+- [x] #2 Researcher can configure cloud sync connection URL
+- [ ] #3 Local changes appear on other connected devices
+- [ ] #4 Changes from other devices appear locally
+- [ ] #5 App works offline and syncs when reconnected
+- [ ] #6 Researcher can see sync connection status
+- [ ] #7 Agent can check if cloud sync is active
 <!-- AC:END -->
 
 ## Implementation Notes
@@ -70,8 +64,10 @@ Architecture:
 
 ## Sub-tasks
 
-- [ ] QC-047.01 - Wire SyncEngine to Convex subscriptions
-- [ ] QC-047.02 - Implement conflict resolution
-- [ ] QC-047.03 - Add sync status indicator
-- [ ] QC-047.04 - E2E tests for cloud sync
-- [ ] QC-047.05 - User documentation
+- [ ] QC-047.01 - Real-time sync to cloud
+- [ ] QC-047.02 - Real-time sync from cloud
+- [ ] QC-047.03 - Offline queue and reconnection
+- [ ] QC-047.04 - Sync status indicator
+- [ ] QC-047.05 - Conflict resolution
+- [ ] QC-047.06 - E2E tests
+- [ ] QC-047.07 - User documentation
