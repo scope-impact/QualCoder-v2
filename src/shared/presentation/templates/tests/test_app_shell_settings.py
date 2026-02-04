@@ -175,18 +175,18 @@ class TestSettingsDialogIntegration:
 class TestSettingsButtonPosition:
     """Tests for settings button placement."""
 
-    def test_settings_button_in_menu_bar(self, qapp, colors):
-        """Settings button should be in the menu bar area."""
-        from src.shared.presentation.templates.app_shell import AppMenuBar, AppShell
+    def test_settings_button_in_nav_bar(self, qapp, colors):
+        """Settings button should be in the navigation bar area."""
+        from src.shared.presentation.templates.app_shell import AppShell, UnifiedNavBar
 
         shell = AppShell(colors=colors)
 
-        # Get the menu bar
-        menu_bar = shell.findChild(AppMenuBar)
-        assert menu_bar is not None
+        # Get the navigation bar
+        nav_bar = shell.findChild(UnifiedNavBar)
+        assert nav_bar is not None
 
-        # Settings button should be a child of menu bar
-        settings_btn = menu_bar.findChild(QPushButton, "settings_button")
+        # Settings button should be a child of nav bar
+        settings_btn = nav_bar.findChild(QPushButton, "settings_button")
         assert settings_btn is not None
 
         shell.close()

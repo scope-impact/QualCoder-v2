@@ -92,7 +92,6 @@ class QualCoderApp:
 
         # Connect navigation
         self._shell.menu_clicked.connect(self._on_menu_click)
-        self._shell.tab_clicked.connect(self._on_tab_click)
 
         # Connect settings button to open dialog with live updates
         self._shell.settings_clicked.connect(self._on_settings_clicked)
@@ -111,19 +110,6 @@ class QualCoderApp:
         if menu_id in self._screens:
             self._shell.set_screen(self._screens[menu_id])
             self._shell.set_active_menu(menu_id)
-
-    def _on_tab_click(self, tab_id: str):
-        """Handle tab clicks."""
-        tab_to_menu = {
-            "coding": "coding",
-            "reports": "reports",
-            "manage": "files",
-            "action_log": "project",
-        }
-        menu_id = tab_to_menu.get(tab_id, tab_id)
-        if menu_id in self._screens:
-            self._shell.set_screen(self._screens[menu_id])
-            self._shell.set_active_tab(tab_id)
 
     def _on_settings_clicked(self):
         """Handle settings button click with live UI updates."""

@@ -12,6 +12,14 @@ graph LR
     D --> E[Visible Highlight]
 ```
 
+## The Coding Screen
+
+The coding screen has a streamlined toolbar with:
+
+- **Media Type Tabs** - Switch between Text, A/V, Image, and PDF sources
+- **Search Box** - Search within the current transcript
+- **Show Details** - Toggle the details panel to view segment information
+
 ## Opening a Source
 
 1. Navigate to the **Coding** screen
@@ -80,8 +88,8 @@ Coded segments appear as colored highlights matching the code's color:
 
 View all segments for the current source:
 
-1. Click **View Segments** in the toolbar
-2. See a list of all coded segments
+1. Click **Show Details** in the toolbar to reveal the details panel
+2. See a list of all coded segments for the selected code
 3. Click a segment to jump to it in the document
 
 ## Removing Codes

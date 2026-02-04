@@ -71,10 +71,11 @@ uv run python src/main.py
 
 Once your project is open, you'll see the main application shell with:
 
-- **Menu Bar** - File, Edit, View, AI, Help menus
-- **Navigation** - Switch between screens (Files, Coding, Cases, etc.)
+- **Navigation Bar** - A unified horizontal bar with QUALCODER logo, Project, Files, Coding, Reports, and AI sections. Click any item to switch screens.
+- **Toolbar** - Context-specific actions for the current screen
 - **Content Area** - The main workspace for the current screen
-- **Status Bar** - Current project name and status indicators
+
+The navigation bar provides quick access to all areas of the application. The currently active screen is highlighted.
 
 ## Next Steps
 

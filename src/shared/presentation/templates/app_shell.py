@@ -4,16 +4,10 @@ QualCoder App Shell Template
 The main application shell that provides the consistent structure
 across all screens. Screens fill the toolbar and content slots.
 
-Structure:
+Structure (Modern Layout - QC-047):
 ┌─────────────────────────────────────────────────────────┐
-│ TITLE BAR                                               │
-│ [Q] QualCoder - project_name.qda        [─][□][×]       │
-├─────────────────────────────────────────────────────────┤
-│ MENU BAR                                                │
-│ Project | Files and Cases | Coding | Reports | AI | Help│
-├─────────────────────────────────────────────────────────┤
-│ TAB BAR                                                 │
-│ [Coding] [Reports] [Manage] [Action Log]                │
+│ UNIFIED NAV BAR                                         │
+│ QUALCODER  │ Project │ Files │ Coding │ Reports │ AI   │
 ├─────────────────────────────────────────────────────────┤
 │ TOOLBAR                                    ← slot       │
 │ [context-specific buttons and actions]                  │
@@ -22,9 +16,6 @@ Structure:
 │ MAIN CONTENT                               ← slot       │
 │ (screen-specific content goes here)                     │
 │                                                         │
-├─────────────────────────────────────────────────────────┤
-│ STATUS BAR                                              │
-│ Ready | 24 files | 156 codes | Last saved: 2:34 PM      │
 └─────────────────────────────────────────────────────────┘
 """
 
@@ -48,27 +39,31 @@ from design_system import (
     TYPOGRAPHY,
     ColorPalette,
     Icon,
-    TitleBar,
     get_colors,
     set_theme,
 )
 
-# QualCoder-specific menu items
-MENU_ITEMS = [
+# QualCoder navigation items (unified nav bar - QC-047.01)
+NAV_ITEMS = [
     ("project", "Project"),
-    ("files", "Files and Cases"),
+    ("files", "Files"),
     ("coding", "Coding"),
     ("reports", "Reports"),
     ("ai", "AI"),
-    ("help", "Help"),
 ]
 
-# QualCoder-specific tabs (using qtawesome mdi6 icon names)
+# Legacy constants for backwards compatibility with tests
+MENU_ITEMS = [
+    ("project", "Project"),
+    ("files", "Files"),
+    ("coding", "Coding"),
+    ("reports", "Reports"),
+    ("ai", "AI"),
+]
+
 TAB_ITEMS = [
     ("coding", "Coding", "mdi6.code-tags"),
     ("reports", "Reports", "mdi6.chart-box"),
-    ("manage", "Manage", "mdi6.folder"),
-    ("action_log", "Action Log", "mdi6.history"),
 ]
 
 
@@ -92,7 +87,7 @@ class ScreenProtocol(Protocol):
 class ToolbarSlot(QFrame):
     """
     Container for screen-provided toolbar content.
-    Shows empty space when no content is set.
+    Hides when no content is set.
     """
 
     def __init__(self, colors: ColorPalette, parent=None):
@@ -111,8 +106,8 @@ class ToolbarSlot(QFrame):
         self._layout.setContentsMargins(SPACING.lg, SPACING.sm, SPACING.lg, SPACING.sm)
         self._layout.setSpacing(SPACING.sm)
 
-        # Default empty state - just spacing
-        self.setMinimumHeight(52)
+        # Hide by default when empty
+        self.setVisible(False)
 
     def set_content(self, widget: QWidget | None):
         """Set toolbar content from screen"""
@@ -131,6 +126,9 @@ class ToolbarSlot(QFrame):
         if widget:
             self._content = widget
             self._layout.addWidget(widget)
+            self.setVisible(True)
+        else:
+            self.setVisible(False)
 
     def clear(self):
         """Clear toolbar content"""
@@ -184,6 +182,136 @@ class ContentSlot(QWidget):
             self._layout.removeWidget(self._content)
             self._content.setParent(None)
             self._content = None
+
+
+class UnifiedNavBar(QFrame):
+    """
+    Unified navigation bar combining logo and navigation items (QC-047.01).
+
+    Structure:
+    ┌─────────────────────────────────────────────────────────────────┐
+    │ QUALCODER  │ Project │ Files │ Coding │ Reports │ AI   [⚙]    │
+    └─────────────────────────────────────────────────────────────────┘
+    """
+
+    navigation_clicked = Signal(str)  # nav_id: project, files, coding, etc.
+    settings_clicked = Signal()
+
+    def __init__(self, colors: ColorPalette, parent=None):
+        super().__init__(parent)
+        self._colors = colors
+        self._buttons = {}
+        self._active_id = None
+
+        self.setFixedHeight(48)
+        self.setStyleSheet(f"""
+            QFrame {{
+                background-color: {self._colors.surface};
+                border-bottom: 1px solid {self._colors.border};
+            }}
+        """)
+
+        layout = QHBoxLayout(self)
+        layout.setContentsMargins(SPACING.lg, 0, SPACING.lg, 0)
+        layout.setSpacing(0)
+
+        # Logo section
+        logo_label = QLabel("QUALCODER")
+        logo_label.setStyleSheet(f"""
+            QLabel {{
+                color: {self._colors.text_primary};
+                font-size: {TYPOGRAPHY.text_lg}px;
+                font-weight: {TYPOGRAPHY.weight_bold};
+                padding-right: {SPACING.xl}px;
+            }}
+        """)
+        layout.addWidget(logo_label)
+
+        # Navigation items
+        for nav_id, label in NAV_ITEMS:
+            btn = QPushButton(label)
+            btn.setCursor(Qt.CursorShape.PointingHandCursor)
+            btn.clicked.connect(lambda _checked, nid=nav_id: self._on_click(nid))
+            self._buttons[nav_id] = btn
+            layout.addWidget(btn)
+            self._style_button(btn, False)
+
+        layout.addStretch()
+
+        # Settings button (gear icon)
+        self._settings_btn = QPushButton()
+        self._settings_btn.setObjectName("settings_button")
+        self._settings_btn.setCursor(Qt.CursorShape.PointingHandCursor)
+        self._settings_btn.setToolTip("Settings")
+        self._settings_btn.clicked.connect(self.settings_clicked.emit)
+        self._settings_btn.setStyleSheet(f"""
+            QPushButton {{
+                background-color: transparent;
+                border: none;
+                border-radius: {RADIUS.sm}px;
+                padding: {SPACING.sm}px;
+            }}
+            QPushButton:hover {{
+                background-color: {self._colors.surface_light};
+            }}
+        """)
+        settings_icon = Icon(
+            "mdi6.cog",
+            size=18,
+            color=self._colors.text_secondary,
+            colors=self._colors,
+        )
+        icon_layout = QHBoxLayout(self._settings_btn)
+        icon_layout.setContentsMargins(SPACING.xs, SPACING.xs, SPACING.xs, SPACING.xs)
+        icon_layout.addWidget(settings_icon)
+        layout.addWidget(self._settings_btn)
+
+    def _on_click(self, nav_id: str):
+        self.set_active(nav_id)
+        self.navigation_clicked.emit(nav_id)
+
+    def set_active(self, nav_id: str):
+        """Set active navigation item"""
+        # Deactivate previous
+        if self._active_id and self._active_id in self._buttons:
+            self._style_button(self._buttons[self._active_id], False)
+
+        # Activate new
+        self._active_id = nav_id
+        if nav_id in self._buttons:
+            self._style_button(self._buttons[nav_id], True)
+
+    def _style_button(self, btn: QPushButton, active: bool):
+        if active:
+            btn.setStyleSheet(f"""
+                QPushButton {{
+                    background-color: {self._colors.primary};
+                    color: {self._colors.primary_foreground};
+                    border: none;
+                    border-radius: {RADIUS.md}px;
+                    padding: {SPACING.sm}px {SPACING.lg}px;
+                    font-size: {TYPOGRAPHY.text_sm}px;
+                    font-weight: {TYPOGRAPHY.weight_medium};
+                    margin: 0 {SPACING.xs}px;
+                }}
+            """)
+        else:
+            btn.setStyleSheet(f"""
+                QPushButton {{
+                    background-color: transparent;
+                    color: {self._colors.text_secondary};
+                    border: none;
+                    border-radius: {RADIUS.md}px;
+                    padding: {SPACING.sm}px {SPACING.lg}px;
+                    font-size: {TYPOGRAPHY.text_sm}px;
+                    font-weight: {TYPOGRAPHY.weight_medium};
+                    margin: 0 {SPACING.xs}px;
+                }}
+                QPushButton:hover {{
+                    background-color: {self._colors.surface_light};
+                    color: {self._colors.text_primary};
+                }}
+            """)
 
 
 class AppMenuBar(QFrame):
@@ -495,16 +623,13 @@ class AppStatusBar(QFrame):
 
 class AppShell(QMainWindow):
     """
-    Main QualCoder application shell.
+    Main QualCoder application shell (QC-047.01 Modern Layout).
 
     This is the fixed template that all screens plug into.
     It provides:
-    - Title bar with project name
-    - Menu bar (Project, Files, Coding, Reports, AI, Help)
-    - Tab bar (Coding, Reports, Manage, Action Log)
+    - Unified navigation bar (QUALCODER | Project | Files | Coding | Reports | AI)
     - Toolbar slot (filled by screens)
     - Content slot (filled by screens)
-    - Status bar
 
     Usage:
         shell = AppShell(colors=get_colors())
@@ -516,12 +641,11 @@ class AppShell(QMainWindow):
         # Or manually set slots
         shell.set_toolbar_content(toolbar_widget)
         shell.set_content(content_widget)
-        shell.set_status_message("Processing...")
     """
 
     # Navigation signals
-    menu_clicked = Signal(str)  # menu_id
-    tab_clicked = Signal(str)  # tab_id
+    navigation_clicked = Signal(str)  # nav_id: project, files, coding, etc.
+    menu_clicked = Signal(str)  # Legacy alias for navigation_clicked
     settings_clicked = Signal()  # settings button clicked
 
     def __init__(self, colors: ColorPalette = None, parent=None):
@@ -545,22 +669,13 @@ class AppShell(QMainWindow):
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(0)
 
-        # Title bar
-        self._title_bar = TitleBar(
-            title=f"QualCoder - {self._project_name}",
-            show_logo=True,
-            show_controls=True,
-            colors=self._colors,
-        )
-        layout.addWidget(self._title_bar)
+        # Unified navigation bar (QC-047.01)
+        self._nav_bar = UnifiedNavBar(colors=self._colors)
+        layout.addWidget(self._nav_bar)
 
-        # Menu bar
-        self._menu_bar = AppMenuBar(colors=self._colors)
-        layout.addWidget(self._menu_bar)
-
-        # Tab bar
-        self._tab_bar = AppTabBar(colors=self._colors)
-        layout.addWidget(self._tab_bar)
+        # Legacy references for backwards compatibility
+        self._menu_bar = self._nav_bar  # Tests may reference _menu_bar
+        self._tab_bar = self._nav_bar  # Tests may reference _tab_bar
 
         # Toolbar slot
         self._toolbar_slot = ToolbarSlot(colors=self._colors)
@@ -570,10 +685,6 @@ class AppShell(QMainWindow):
         self._content_slot = ContentSlot(colors=self._colors)
         layout.addWidget(self._content_slot, 1)
 
-        # Status bar
-        self._status_bar = AppStatusBar(colors=self._colors)
-        layout.addWidget(self._status_bar)
-
         # Apply background
         central.setStyleSheet(f"""
             QWidget {{
@@ -582,23 +693,10 @@ class AppShell(QMainWindow):
         """)
 
     def _connect_signals(self):
-        self._menu_bar.item_clicked.connect(self.menu_clicked.emit)
-        self._tab_bar.tab_clicked.connect(self.tab_clicked.emit)
-        self._menu_bar.settings_clicked.connect(self.settings_clicked.emit)
-
-        # Note: Dialog opening is handled externally via settings_clicked signal
-        # (see main.py which connects to open_settings_dialog after setup)
-
-        # Window controls
-        self._title_bar.close_clicked.connect(self.close)
-        self._title_bar.minimize_clicked.connect(self.showMinimized)
-        self._title_bar.maximize_clicked.connect(self._toggle_maximize)
-
-    def _toggle_maximize(self):
-        if self.isMaximized():
-            self.showNormal()
-        else:
-            self.showMaximized()
+        # Connect unified nav bar signals (QC-047.01)
+        self._nav_bar.navigation_clicked.connect(self.navigation_clicked.emit)
+        self._nav_bar.navigation_clicked.connect(self.menu_clicked.emit)  # Legacy
+        self._nav_bar.settings_clicked.connect(self.settings_clicked.emit)
 
     # --- Public API ---
 
@@ -627,9 +725,8 @@ class AppShell(QMainWindow):
         content = screen.get_content()
         self._content_slot.set_content(content)
 
-        # Set status message
-        message = screen.get_status_message()
-        self._status_bar.set_message(message)
+        # Set status message (no-op in modern layout, status bar removed)
+        # message = screen.get_status_message()
 
     def set_toolbar_content(self, widget: QWidget | None):
         """Directly set toolbar content"""
@@ -640,20 +737,24 @@ class AppShell(QMainWindow):
         self._content_slot.set_content(widget)
 
     def set_status_message(self, message: str):
-        """Set status bar message"""
-        self._status_bar.set_message(message)
+        """Set status bar message (no-op in modern layout)"""
+        pass  # Status bar removed in QC-047.01
 
     def set_status_stat(self, key: str, value: str):
-        """Set a status bar stat"""
-        self._status_bar.set_stat(key, value)
+        """Set a status bar stat (no-op in modern layout)"""
+        pass  # Status bar removed in QC-047.01
+
+    def set_active_navigation(self, nav_id: str):
+        """Set active navigation item (QC-047.01)"""
+        self._nav_bar.set_active(nav_id)
 
     def set_active_menu(self, menu_id: str):
-        """Set active menu item"""
-        self._menu_bar.set_active(menu_id)
+        """Set active menu item (legacy - maps to navigation)"""
+        self._nav_bar.set_active(menu_id)
 
     def set_active_tab(self, tab_id: str):
-        """Set active tab"""
-        self._tab_bar.set_active(tab_id)
+        """Set active tab (legacy - maps to navigation)"""
+        self._nav_bar.set_active(tab_id)
 
     # --- Settings Application ---
 
@@ -768,10 +869,7 @@ class AppShell(QMainWindow):
         """Refresh all UI components with current colors."""
         # Save current state
         current_screen = self._current_screen
-        current_menu_id = (
-            self._menu_bar._active_id if hasattr(self, "_menu_bar") else None
-        )
-        current_tab_id = self._tab_bar._active_id if hasattr(self, "_tab_bar") else None
+        current_nav_id = self._nav_bar._active_id if hasattr(self, "_nav_bar") else None
 
         # Rebuild components with new colors
         central = self.centralWidget()
@@ -793,10 +891,8 @@ class AppShell(QMainWindow):
         # Restore current screen and navigation state
         if current_screen is not None:
             self.set_screen(current_screen)
-        if current_menu_id:
-            self._menu_bar.set_active(current_menu_id)
-        if current_tab_id:
-            self._tab_bar.set_active(current_tab_id)
+        if current_nav_id:
+            self._nav_bar.set_active(current_nav_id)
 
     # --- Accessors ---
 
@@ -809,13 +905,16 @@ class AppShell(QMainWindow):
         return self._content_slot
 
     @property
-    def status_bar(self) -> AppStatusBar:
-        return self._status_bar
+    def nav_bar(self) -> UnifiedNavBar:
+        """Get the unified navigation bar (QC-047.01)"""
+        return self._nav_bar
 
     @property
-    def menu_bar(self) -> AppMenuBar:
-        return self._menu_bar
+    def menu_bar(self) -> UnifiedNavBar:
+        """Legacy accessor - returns nav_bar for compatibility"""
+        return self._nav_bar
 
     @property
-    def tab_bar(self) -> AppTabBar:
-        return self._tab_bar
+    def tab_bar(self) -> UnifiedNavBar:
+        """Legacy accessor - returns nav_bar for compatibility"""
+        return self._nav_bar
