@@ -105,7 +105,7 @@ def derive_create_code(...) -> CodeCreated | CodeNotCreated:
 
 The return type tells you: "You'll get a `CodeCreated` success event OR a `CodeNotCreated` failure event."
 
-> **Note:** The codebase also re-exports the [`returns`](https://returns.readthedocs.io/) library's `Success`/`Failure` types from `src/contexts/shared/core/types.py` for use in other scenarios.
+> **Note:** The codebase also provides `OperationResult` (in `src/shared/common/operation_result.py`) which command handlers use to wrap results with error codes, suggestions, and rollback commands. See the section below.
 
 ## Benefits
 
@@ -201,7 +201,7 @@ def create_and_apply(name, color, source_id, position, state):
     return segment_result  # Could be SegmentCoded or SegmentNotCoded
 ```
 
-> **Note:** The `returns` library (`Success`/`Failure`/`Result`) is also available from `src/contexts/shared/core/types.py` for scenarios where you need monadic composition.
+> **Note:** Command handlers wrap failure events in `OperationResult` to provide a richer response for ViewModels and MCP tools.
 
 ## Failure Events in QualCoder
 
@@ -246,6 +246,72 @@ Each failure event:
 - Has a `reason` property extracted from `event_type`
 - Can be published to the EventBus for policies to react
 
+## OperationResult: Wrapping for Presentation
+
+While derivers return `SuccessEvent | FailureEvent`, command handlers wrap these in `OperationResult` to serve both UI and AI consumers:
+
+```python
+# In src/shared/common/operation_result.py
+@dataclass(frozen=True)
+class OperationResult:
+    """Rich result type for use case operations."""
+
+    success: bool
+    data: Any | None = None           # The entity on success
+    error: str | None = None          # Human-readable error
+    error_code: str | None = None     # Machine-readable (e.g., "CODE_NOT_CREATED/DUPLICATE_NAME")
+    suggestions: tuple[str, ...] = () # Recovery hints for UI/AI
+    rollback_command: Any | None = None  # For undo functionality
+
+    @classmethod
+    def ok(cls, data: Any = None, rollback: Any = None) -> OperationResult:
+        return cls(success=True, data=data, rollback_command=rollback)
+
+    @classmethod
+    def fail(cls, error: str, error_code: str | None = None, suggestions: tuple[str, ...] = ()) -> OperationResult:
+        return cls(success=False, error=error, error_code=error_code, suggestions=suggestions)
+
+    @classmethod
+    def from_failure(cls, event: FailureEvent) -> OperationResult:
+        """Convert a domain failure event to OperationResult."""
+        return cls(
+            success=False,
+            error=event.message,
+            error_code=event.event_type,
+            suggestions=getattr(event, "suggestions", ()),
+        )
+```
+
+Command handlers use it like this:
+
+```python
+# In src/contexts/coding/core/commandHandlers/create_code.py
+def create_code(command: CreateCodeCommand, code_repo, event_bus) -> OperationResult:
+    # Call deriver
+    result = derive_create_code(name=command.name, color=color, state=state)
+
+    # Handle failure
+    if isinstance(result, FailureEvent):
+        event_bus.publish(result)
+        return OperationResult.from_failure(result)
+
+    # Persist and publish success
+    code = Code(...)
+    code_repo.save(code)
+    event_bus.publish(result)
+
+    return OperationResult.ok(
+        data=code,
+        rollback=DeleteCodeCommand(code_id=code.id.value),
+    )
+```
+
+**Why OperationResult?**
+- **UI consumers** get `error` and `suggestions` for display
+- **AI consumers** get `error_code` for programmatic handling
+- **Undo functionality** gets `rollback_command` for the undo stack
+- **Same interface** for both human and AI callers
+
 ## When to Use Each
 
 **Use failure events for:**
@@ -254,12 +320,17 @@ Each failure event:
 - Invalid state transitions
 - Any failure that policies or UI might need to react to
 
+**Use OperationResult for:**
+- Command handler return values (wraps failure events)
+- ViewModel return values
+- MCP tool responses
+
 **Use exceptions for:**
 - Programming errors (should never happen in production)
 - Infrastructure failures (database down, network error)
 - System-level issues (out of memory)
 
-The domain layer returns failure events. The infrastructure/application layers handle exceptions.
+The domain layer returns failure events. Command handlers wrap them in OperationResult. Infrastructure exceptions bubble up separately.
 
 ## Summary
 

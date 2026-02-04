@@ -99,7 +99,11 @@ class TestPriorityInvariants:
 Run the tests:
 
 ```bash
-pytest src/contexts/coding/core/tests/test_invariants.py::TestPriorityInvariants -v
+# Run specific test class
+QT_QPA_PLATFORM=offscreen uv run pytest src/contexts/coding/core/tests/test_invariants.py::TestPriorityInvariants -v
+
+# Or run all invariant tests
+QT_QPA_PLATFORM=offscreen uv run pytest src/contexts/coding/core/tests/test_invariants.py -v
 ```
 
 ## Anatomy of an Invariant Test

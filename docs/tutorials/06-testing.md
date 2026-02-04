@@ -260,20 +260,27 @@ Organize tests to mirror the architecture:
 
 ```
 src/contexts/coding/core/tests/
-├── conftest.py           # Shared fixtures (sample_codes, states)
-├── test_invariants.py    # Pure predicate tests
-└── test_derivers.py      # Event derivation tests
+├── conftest.py               # Shared fixtures (sample_codes, states)
+├── test_invariants.py        # Pure predicate tests
+├── test_derivers.py          # Event derivation tests
+└── test_command_handlers.py  # Use case orchestration tests
 
-src/application/tests/
-├── test_event_bus.py     # Pub/sub tests
-└── test_converters.py    # Payload conversion tests
+src/shared/infra/tests/
+├── test_event_bus.py         # Pub/sub tests
+└── test_lifecycle.py         # App lifecycle tests
 
-src/application/signal_bridge/tests/
-├── test_base.py          # SignalBridge tests
-└── test_payloads.py      # Payload tests
+src/shared/infra/signal_bridge/tests/
+├── test_base.py              # SignalBridge tests
+├── test_payloads.py          # Payload tests
+└── test_thread_utils.py      # Thread safety tests
+
+src/tests/e2e/                # End-to-end tests with real database
+├── conftest.py               # Real database fixtures
+├── test_manage_sources_e2e.py
+└── test_case_manager_e2e.py
 ```
 
-Each layer tested in isolation.
+Each layer tested in isolation, plus integration tests that use real database.
 
 ## Running Tests
 
@@ -281,14 +288,60 @@ Fast, focused test runs:
 
 ```bash
 # Test just invariants (milliseconds)
-pytest src/contexts/coding/core/tests/test_invariants.py -v
+QT_QPA_PLATFORM=offscreen uv run pytest src/contexts/coding/core/tests/test_invariants.py -v
 
 # Test just derivers (still fast)
-pytest src/contexts/coding/core/tests/test_derivers.py -v
+QT_QPA_PLATFORM=offscreen uv run pytest src/contexts/coding/core/tests/test_derivers.py -v
 
 # Test specific feature
-pytest -k "priority" -v
+QT_QPA_PLATFORM=offscreen uv run pytest -k "priority" -v
+
+# Run all tests (unit + E2E)
+QT_QPA_PLATFORM=offscreen make test-all
 ```
+
+## E2E Testing with Allure
+
+For end-to-end tests that verify full flows with real database, we use Allure decorators:
+
+```python
+# src/tests/e2e/test_coding_e2e.py
+"""QC-028 Coding Management - E2E Tests."""
+import allure
+import pytest
+
+pytestmark = [
+    pytest.mark.e2e,
+    allure.epic("QualCoder v2"),
+    allure.feature("QC-028 Coding Management"),
+]
+
+@allure.story("QC-028.01 Create Code")
+class TestCreateCode:
+
+    @allure.title("AC #1.1: Create code with valid name")
+    def test_create_code_with_valid_name(self, app_context):
+        """Should create a code and emit event."""
+        with allure.step("Call create_code command handler"):
+            result = create_code(
+                CreateCodeCommand(name="Test Code", color="#ff0000"),
+                app_context.coding.code_repo,
+                app_context.coding.category_repo,
+                app_context.coding.segment_repo,
+                app_context.event_bus,
+            )
+
+        with allure.step("Verify success"):
+            assert result.success
+            assert result.data.name == "Test Code"
+```
+
+**E2E Test Conventions:**
+- Use `@allure.story("QC-XXX.YY Description")` to link to task IDs
+- Use `@allure.title("AC #N: Description")` for acceptance criteria
+- Use `with allure.step()` for traceability
+- Tests live in `src/tests/e2e/`
+- Use real database fixtures from `conftest.py`
 
 ## Summary
 
@@ -296,11 +349,29 @@ Testing in fDDD is easy because:
 
 1. **Invariants** are pure functions - trivial to test
 2. **Derivers** are pure functions - just data in, data out
-3. **No database** needed for domain tests
-4. **No mocks** needed for pure functions
-5. **Fast** tests encourage thorough coverage
+3. **Command handlers** can be tested with mock repos
+4. **No database** needed for domain tests (unit tests)
+5. **No mocks** needed for pure functions
+6. **Fast** tests encourage thorough coverage
+7. **E2E tests** with real database verify full flows
 
 The architecture pushes complexity to the edges, leaving the core logic simple and testable.
+
+### Test Pyramid
+
+```
+    /\       E2E Tests (src/tests/e2e/)
+   /  \      - Real database, Allure decorators
+  /----\     - Slow but comprehensive
+ /      \
+/--------\   Integration Tests
+          \  - EventBus + SignalBridge
+           \ - Fast, no UI
+/----------\
+            \ Unit Tests (src/contexts/*/core/tests/)
+             \- Invariants, derivers, command handlers
+              \- Fastest, most numerous
+```
 
 ## Next Steps
 

@@ -4,72 +4,91 @@ Let's trace how a `CodeCreated` event travels from the deriver to the UI.
 
 ## The Journey
 
-When a user creates a Code, the event travels through four layers:
+When a user creates a Code, the event travels through these layers:
 
 ```mermaid
 graph LR
-    A[Controller<br/><i>deriver</i>] -->|Domain Event| B[EventBus<br/><i>pub/sub</i>]
-    B -->|Subscribe| C[SignalBridge<br/><i>Qt signals</i>]
-    C -->|Emit| D[UI<br/><i>widgets</i>]
+    A[ViewModel/MCP Tool] -->|call| B[CommandHandler<br/><i>orchestration</i>]
+    B -->|call| C[Deriver<br/><i>pure domain</i>]
+    C -->|return event| B
+    B -->|publish| D[EventBus<br/><i>pub/sub</i>]
+    D -->|subscribe| E[SignalBridge<br/><i>Qt signals</i>]
+    E -->|emit| F[UI Widget<br/><i>update</i>]
 ```
 
 Let's trace each step.
 
-## Step 1: Controller Calls Deriver
+## Step 1: CommandHandler Orchestrates the Flow
 
-A Controller orchestrates the operation:
+Command handlers live in `src/contexts/{context}/core/commandHandlers/`. They orchestrate the operation:
 
 ```python
-# In a hypothetical CodingController
-class CodingController:
-    def __init__(self, code_repo, event_bus):
-        self._code_repo = code_repo
-        self._event_bus = event_bus
+# In src/contexts/coding/core/commandHandlers/create_code.py
+def create_code(
+    command: CreateCodeCommand,
+    code_repo: CodeRepository,
+    category_repo: CategoryRepository,
+    segment_repo: SegmentRepository,
+    event_bus: EventBus,
+) -> OperationResult:
+    """
+    Create a new code in the codebook.
 
-    def create_code(
-        self,
-        name: str,
-        color: Color,
-        priority: Optional[int] = None,
-    ) -> CodeCreated | Failure:
-        # 1. Build state from repositories
-        state = CodingState(
-            existing_codes=tuple(self._code_repo.get_all()),
-            existing_categories=tuple(self._category_repo.get_all()),
-        )
+    This is the USE CASE - it orchestrates:
+    1. Load state (I/O)
+    2. Call deriver (pure domain)
+    3. Handle failure
+    4. Persist (I/O)
+    5. Publish event (I/O)
+    """
+    # 1. Build state from repositories
+    state = build_coding_state(code_repo, category_repo, segment_repo)
 
-        # 2. Call the pure deriver
-        result = derive_create_code(
-            name=name,
-            color=color,
-            memo=None,
-            category_id=None,
-            priority=priority,
-            owner="local",
-            state=state,
-        )
+    # 2. Call the pure deriver
+    result = derive_create_code(
+        name=command.name,
+        color=color,
+        memo=command.memo,
+        category_id=category_id,
+        owner=None,
+        state=state,
+    )
 
-        # 3. Handle failure
-        if isinstance(result, CodeNotCreated):
-            return result
+    # 3. Handle failure
+    if isinstance(result, FailureEvent):
+        event_bus.publish(result)  # Publish for policies
+        return OperationResult.from_failure(result)
 
-        # 4. Persist (side effect)
-        self._code_repo.save_from_event(result)
+    event: CodeCreated = result
 
-        # 5. Publish event (side effect)
-        self._event_bus.publish(result)
+    # 4. Persist (side effect)
+    code = Code(
+        id=event.code_id,
+        name=event.name,
+        color=event.color,
+        memo=event.memo,
+        category_id=event.category_id,
+    )
+    code_repo.save(code)
 
-        return result
+    # 5. Publish event (side effect)
+    event_bus.publish(event)
+
+    return OperationResult.ok(
+        data=code,
+        rollback=DeleteCodeCommand(code_id=code.id.value),
+    )
 ```
 
 Key points:
 - The **deriver is pure** - it just computes
-- The **controller handles side effects** - persistence, publishing
+- The **command handler handles side effects** - persistence, publishing
 - State is built **before** calling the deriver
+- Returns `OperationResult` with data, error info, and rollback command
 
 ## Step 2: EventBus Receives and Routes
 
-Look at `src/application/event_bus.py`:
+Look at `src/shared/infra/event_bus.py`:
 
 ```python
 class EventBus:
@@ -90,15 +109,19 @@ The EventBus:
 2. Finds all subscribers for that type
 3. Calls each handler synchronously
 
-Event type is derived from the class:
-- `CodeCreated` in module `src.domain.coding.events`
-- Becomes `"coding.code_created"`
+Event type is defined as a class variable on the event:
+
+```python
+@dataclass(frozen=True)
+class CodeCreated(DomainEvent):
+    event_type: ClassVar[str] = "coding.code_created"
+```
 
 ## Step 3: SignalBridge Receives Event
 
 The SignalBridge subscribes to domain events and converts them to Qt signals.
 
-From `src/application/signal_bridge/base.py`:
+From `src/shared/infra/signal_bridge/base.py`:
 
 ```python
 class BaseSignalBridge(QObject, ABC):
@@ -214,7 +237,8 @@ Let's trace "Create Code with priority=3":
 sequenceDiagram
     participant User
     participant Button as Create Button
-    participant Ctrl as Controller
+    participant VM as ViewModel
+    participant CH as CommandHandler
     participant Repo as Repository
     participant Der as Deriver
     participant EB as EventBus
@@ -223,23 +247,26 @@ sequenceDiagram
     participant Activity as ActivityPanel
 
     User->>Button: Click "Create Code"
-    Button->>Ctrl: create_code("Theme A", color, priority=3)
+    Button->>VM: create_code("Theme A", color, priority=3)
+    VM->>CH: create_code(command, repos, event_bus)
 
-    Note over Ctrl,Repo: Build State
-    Ctrl->>Repo: get_all()
-    Repo-->>Ctrl: existing_codes
+    Note over CH,Repo: Build State
+    CH->>Repo: get_all()
+    Repo-->>CH: existing_codes
+    CH->>CH: build_coding_state()
 
-    Note over Ctrl,Der: Pure Domain Logic
-    Ctrl->>Der: derive_create_code(...)
+    Note over CH,Der: Pure Domain Logic
+    CH->>Der: derive_create_code(...)
     Note over Der: is_valid_code_name() ✓<br/>is_code_name_unique() ✓<br/>is_valid_priority(3) ✓
-    Der-->>Ctrl: CodeCreated event
+    Der-->>CH: CodeCreated event
 
-    Note over Ctrl,Repo: Persist
-    Ctrl->>Repo: save_from_event(result)
+    Note over CH,Repo: Persist
+    CH->>Repo: save(code)
 
-    Note over Ctrl,Activity: Publish & React
-    Ctrl->>EB: publish(CodeCreated)
-    EB->>SB: handler(event)
+    Note over CH,Activity: Publish & React
+    CH->>EB: publish(CodeCreated)
+    CH-->>VM: OperationResult.ok(code, rollback)
+    EB->>SB: _dispatch_event(event)
     Note over SB: Convert to payload
     SB->>Tree: code_created.emit(payload)
     SB->>Activity: activity_logged.emit(...)
@@ -268,11 +295,13 @@ To observe this in practice, you could:
 
 Events flow through:
 
-1. **Controller** calls pure deriver, handles side effects
-2. **EventBus** routes events to subscribers
-3. **SignalBridge** converts events to UI payloads
-4. **Qt Signals** emit payloads thread-safely
-5. **UI Widgets** update from payloads
+1. **ViewModel/MCP Tool** receives user/AI request
+2. **CommandHandler** orchestrates: load state, call deriver, persist, publish
+3. **Deriver** (pure function) validates and returns success/failure event
+4. **EventBus** routes events to subscribers
+5. **SignalBridge** converts events to UI payloads
+6. **Qt Signals** emit payloads thread-safely
+7. **UI Widgets** update from payloads
 
 Each step is isolated and testable.
 
