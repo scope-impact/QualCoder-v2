@@ -181,6 +181,7 @@ class MCPServerManager:
         )
         from src.contexts.projects.interface.mcp_tools import (
             get_project_context_tool,
+            get_sync_status_tool,
             list_sources_tool,
             navigate_to_segment_tool,
             read_source_content_tool,
@@ -193,6 +194,7 @@ class MCPServerManager:
             read_source_content_tool,
             navigate_to_segment_tool,
             suggest_source_metadata_tool,
+            get_sync_status_tool,
             list_codes_tool,
             get_code_tool,
             batch_apply_codes_tool,
@@ -208,6 +210,7 @@ class MCPServerManager:
             "read_source_content",
             "navigate_to_segment",
             "suggest_source_metadata",
+            "get_sync_status",
         }
         coding_tools = {
             "list_codes",

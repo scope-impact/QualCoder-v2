@@ -270,6 +270,18 @@ suggest_source_metadata_tool = ToolDefinition(
 )
 
 
+# Tool: get_sync_status
+get_sync_status_tool = ToolDefinition(
+    name="get_sync_status",
+    description=(
+        "Get the current cloud sync status. Returns whether cloud sync is enabled, "
+        "connection status, pending changes count, and last sync time. "
+        "Use this to check if the project is syncing with other devices."
+    ),
+    parameters=(),  # No parameters needed
+)
+
+
 # ============================================================
 # Tool Implementation
 # ============================================================
@@ -312,6 +324,7 @@ class ProjectTools:
             "read_source_content": read_source_content_tool,
             "navigate_to_segment": navigate_to_segment_tool,
             "suggest_source_metadata": suggest_source_metadata_tool,
+            "get_sync_status": get_sync_status_tool,
         }
 
     @property
@@ -349,6 +362,7 @@ class ProjectTools:
             "read_source_content": self._execute_read_source_content,
             "navigate_to_segment": self._execute_navigate_to_segment,
             "suggest_source_metadata": self._execute_suggest_source_metadata,
+            "get_sync_status": self._execute_get_sync_status,
         }
 
         handler = handlers.get(tool_name)
@@ -626,5 +640,57 @@ class ProjectTools:
                 "suggested": suggested,
                 "status": "pending_approval",
                 "requires_approval": True,
+            }
+        )
+
+    def _execute_get_sync_status(
+        self, _arguments: dict[str, Any]
+    ) -> Result[dict[str, Any], str]:
+        """
+        Execute get_sync_status tool.
+
+        Returns sync status including:
+        - cloud_sync_enabled: bool - whether cloud sync is enabled in settings
+        - connected: bool - whether currently connected to cloud
+        - status: string - current sync status (offline, connecting, syncing, synced, error)
+        - pending_changes: int - number of changes waiting to sync
+        - last_sync: string or null - ISO timestamp of last successful sync
+        - error: string or null - error message if status is 'error'
+        """
+        # Get settings repo to check if cloud sync is enabled
+        settings_repo = getattr(self._ctx, "settings_repo", None)
+        if settings_repo:
+            backend_config = settings_repo.get_backend_config()
+            cloud_sync_enabled = backend_config.cloud_sync_enabled
+        else:
+            cloud_sync_enabled = False
+
+        # Get sync engine state if available
+        sync_engine = getattr(self._ctx, "_sync_engine", None)
+
+        if sync_engine is None:
+            return Success(
+                {
+                    "cloud_sync_enabled": cloud_sync_enabled,
+                    "connected": False,
+                    "status": "offline",
+                    "pending_changes": 0,
+                    "last_sync": None,
+                    "error": None,
+                }
+            )
+
+        state = sync_engine.state
+
+        return Success(
+            {
+                "cloud_sync_enabled": cloud_sync_enabled,
+                "connected": sync_engine.is_online,
+                "status": state.status.value,
+                "pending_changes": state.pending_changes,
+                "last_sync": (
+                    state.last_sync.isoformat() if state.last_sync else None
+                ),
+                "error": state.error_message,
             }
         )
