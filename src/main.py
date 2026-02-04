@@ -28,6 +28,7 @@ from src.shared.common.types import SourceId
 from src.shared.infra.app_context import create_app_context
 from src.shared.infra.mcp_server import MCPServerManager
 from src.shared.infra.signal_bridge.projects import ProjectSignalBridge
+from src.shared.infra.signal_bridge.sync import SyncSignalBridge
 from src.shared.infra.telemetry import init_telemetry
 from src.shared.presentation import create_empty_text_coding_data
 
@@ -59,6 +60,8 @@ class QualCoderApp:
         self._project_signal_bridge.start()
         self._coding_signal_bridge = CodingSignalBridge.instance(self._ctx.event_bus)
         self._coding_signal_bridge.start()
+        self._sync_signal_bridge = SyncSignalBridge.instance(self._ctx.event_bus)
+        self._sync_signal_bridge.start()
         # Start embedded MCP server for AI agent access
         self._mcp_server = MCPServerManager(ctx=self._ctx)
         self._mcp_server.start()
@@ -102,6 +105,14 @@ class QualCoderApp:
         # Connect settings button to open dialog with live updates
         self._shell.settings_clicked.connect(self._on_settings_clicked)
 
+        # Connect sync button to trigger cloud sync pull
+        self._shell.sync_requested.connect(self._on_sync_requested)
+
+        # Connect SyncSignalBridge for reactive sync status updates
+        self._sync_signal_bridge.sync_status_changed.connect(
+            self._on_sync_status_changed
+        )
+
         # Connect file manager navigation to coding screen
         self._screens["files"].navigate_to_coding.connect(self._on_navigate_to_coding)
 
@@ -126,6 +137,29 @@ class QualCoderApp:
         # Live UI updates: re-apply theme/font after dialog closes
         if dialog:
             self._shell.load_and_apply_settings(self._ctx.settings_repo)
+
+    def _on_sync_requested(self):
+        """Handle sync button click - trigger cloud sync pull."""
+        if not self._ctx.is_cloud_sync_enabled():
+            return
+
+        # Import here to avoid circular dependency
+        from src.shared.core.sync import SyncPullCommand
+        from src.shared.infra.sync.commandHandlers import handle_sync_pull
+
+        sync_engine = self._ctx.get_sync_engine()
+        if sync_engine:
+            cmd = SyncPullCommand()
+            handle_sync_pull(cmd, sync_engine, self._ctx.event_bus)
+
+    def _on_sync_status_changed(self, payload):
+        """Handle sync status changes from SyncSignalBridge."""
+        if self._shell:
+            self._shell.set_sync_status(
+                status=payload.status,
+                pending=payload.pending_count,
+                error_message=payload.error_message,
+            )
 
     def _update_sync_status(self):
         """Update sync status indicator in the status bar."""
