@@ -382,3 +382,31 @@ class AppContext:
         """
         backend_config = self.settings_repo.get_backend_config()
         return backend_config.uses_convex
+
+    def trigger_sync_pull(self) -> OperationResult:
+        """
+        Trigger a cloud sync pull operation.
+
+        Delegates to the sync pull command handler.
+        Used by UI and MCP tools to initiate sync.
+
+        Returns:
+            OperationResult from the sync pull operation.
+        """
+        if not self.is_cloud_sync_enabled():
+            return OperationResult.failure(
+                error="Cloud sync is not enabled",
+                error_code="SYNC_DISABLED",
+            )
+
+        if self._sync_engine is None:
+            return OperationResult.failure(
+                error="Sync engine not initialized",
+                error_code="SYNC_NOT_READY",
+            )
+
+        from src.shared.core.sync import SyncPullCommand
+        from src.shared.infra.sync.commandHandlers import handle_sync_pull
+
+        cmd = SyncPullCommand()
+        return handle_sync_pull(cmd, self._sync_engine, self.event_bus)

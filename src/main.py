@@ -8,7 +8,6 @@ from __future__ import annotations
 
 import sys
 
-from PySide6.QtCore import QTimer
 from PySide6.QtWidgets import QApplication, QMessageBox
 
 from design_system import get_colors
@@ -67,7 +66,6 @@ class QualCoderApp:
         self._mcp_server.start()
         self._shell: AppShell | None = None
         self._screens: dict = {}
-        self._sync_timer: QTimer | None = None
 
     def _setup_shell(self):
         """Create and configure the main application shell."""
@@ -139,18 +137,8 @@ class QualCoderApp:
             self._shell.load_and_apply_settings(self._ctx.settings_repo)
 
     def _on_sync_requested(self):
-        """Handle sync button click - trigger cloud sync pull."""
-        if not self._ctx.is_cloud_sync_enabled():
-            return
-
-        # Import here to avoid circular dependency
-        from src.shared.core.sync import SyncPullCommand
-        from src.shared.infra.sync.commandHandlers import handle_sync_pull
-
-        sync_engine = self._ctx.get_sync_engine()
-        if sync_engine:
-            cmd = SyncPullCommand()
-            handle_sync_pull(cmd, sync_engine, self._ctx.event_bus)
+        """Handle sync button click - delegate to AppContext."""
+        self._ctx.trigger_sync_pull()
 
     def _on_sync_status_changed(self, payload):
         """Handle sync status changes from SyncSignalBridge."""
@@ -161,33 +149,29 @@ class QualCoderApp:
                 error_message=payload.error_message,
             )
 
-    def _update_sync_status(self):
-        """Update sync status indicator in the status bar."""
-        if not self._shell or not self._ctx._sync_engine:
+    def _init_sync_status(self):
+        """Initialize sync status from AppContext state."""
+        if not self._shell:
+            return
+
+        if not self._ctx.is_cloud_sync_enabled():
             self._shell.set_sync_status("offline")
             return
 
-        state = self._ctx._sync_engine.state
-        self._shell.set_sync_status(state.status.value, state.pending_changes)
-
-    def _start_sync_status_timer(self):
-        """Start timer to periodically update sync status."""
-        if self._sync_timer is None:
-            self._sync_timer = QTimer()
-            self._sync_timer.timeout.connect(self._update_sync_status)
-
-        self._sync_timer.start(2000)  # Update every 2 seconds
-        self._update_sync_status()  # Immediate first update
-
-    def _stop_sync_status_timer(self):
-        """Stop sync status timer."""
-        if self._sync_timer:
-            self._sync_timer.stop()
+        # Get initial state from sync engine
+        sync_state = self._ctx.get_sync_state()
+        if sync_state:
+            self._shell.set_sync_status(
+                status=sync_state.status.value,
+                pending=sync_state.pending_changes,
+            )
+        else:
+            self._shell.set_sync_status("synced")
 
     def _wire_viewmodels(self):
         """Wire viewmodels to screens after a project is opened."""
-        # Start sync status monitoring
-        self._start_sync_status_timer()
+        # Initialize sync status (reactive updates via SignalBridge)
+        self._init_sync_status()
 
         # Create FileManagerViewModel now that contexts are available
         file_manager_viewmodel = FileManagerViewModel(
