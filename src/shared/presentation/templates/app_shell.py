@@ -87,7 +87,7 @@ class ScreenProtocol(Protocol):
 class ToolbarSlot(QFrame):
     """
     Container for screen-provided toolbar content.
-    Shows empty space when no content is set.
+    Hides when no content is set.
     """
 
     def __init__(self, colors: ColorPalette, parent=None):
@@ -106,8 +106,8 @@ class ToolbarSlot(QFrame):
         self._layout.setContentsMargins(SPACING.lg, SPACING.sm, SPACING.lg, SPACING.sm)
         self._layout.setSpacing(SPACING.sm)
 
-        # Default empty state - just spacing
-        self.setMinimumHeight(52)
+        # Hide by default when empty
+        self.setVisible(False)
 
     def set_content(self, widget: QWidget | None):
         """Set toolbar content from screen"""
@@ -126,6 +126,9 @@ class ToolbarSlot(QFrame):
         if widget:
             self._content = widget
             self._layout.addWidget(widget)
+            self.setVisible(True)
+        else:
+            self.setVisible(False)
 
     def clear(self):
         """Clear toolbar content"""
