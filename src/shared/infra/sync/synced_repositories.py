@@ -284,3 +284,241 @@ class SyncedSegmentRepository:
 
     def _handle_remote_change(self, change_type: str, data: dict) -> None:
         pass
+
+
+class SyncedSourceRepository:
+    """
+    Source repository with sync support.
+
+    Wraps SQLiteSourceRepository to queue changes for Convex sync.
+    """
+
+    def __init__(
+        self,
+        sqlite_repo: Any,
+        sync_engine: SyncEngine,
+    ) -> None:
+        self._repo = sqlite_repo
+        self._sync = sync_engine
+        self._sync.on_remote_change("source", self._handle_remote_change)
+
+    # Delegate read operations
+    def get_all(self) -> list:
+        return self._repo.get_all()
+
+    def get_by_id(self, source_id: SourceId) -> Any:
+        return self._repo.get_by_id(source_id)
+
+    def get_by_name(self, name: str) -> Any:
+        return self._repo.get_by_name(name)
+
+    def get_by_type(self, source_type: str) -> list:
+        return self._repo.get_by_type(source_type)
+
+    def get_by_status(self, status: str) -> list:
+        return self._repo.get_by_status(status)
+
+    def get_by_folder(self, folder_id: Any) -> list:
+        return self._repo.get_by_folder(folder_id)
+
+    def exists(self, source_id: SourceId) -> bool:
+        return self._repo.exists(source_id)
+
+    # Write operations with sync
+    def save(self, source: Any) -> None:
+        is_new = not self._repo.exists(source.id)
+        self._repo.save(source)
+
+        self._sync.queue_change(
+            SyncChange(
+                entity_type="source",
+                change_type=ChangeType.CREATE if is_new else ChangeType.UPDATE,
+                entity_id=source.id.value,
+                data={
+                    "name": source.name,
+                    "memo": getattr(source, "memo", ""),
+                    "owner": getattr(source, "owner", ""),
+                    "source_type": getattr(source, "source_type", ""),
+                    "folder_id": source.folder_id.value if source.folder_id else None,
+                },
+            )
+        )
+
+    def delete(self, source_id: SourceId) -> None:
+        self._repo.delete(source_id)
+        self._sync.queue_change(
+            SyncChange(
+                entity_type="source",
+                change_type=ChangeType.DELETE,
+                entity_id=source_id.value,
+                data={},
+            )
+        )
+
+    def _handle_remote_change(self, change_type: str, data: dict) -> None:
+        pass
+
+
+class SyncedFolderRepository:
+    """
+    Folder repository with sync support.
+
+    Wraps SQLiteFolderRepository to queue changes for Convex sync.
+    """
+
+    def __init__(
+        self,
+        sqlite_repo: Any,
+        sync_engine: SyncEngine,
+    ) -> None:
+        self._repo = sqlite_repo
+        self._sync = sync_engine
+        self._sync.on_remote_change("folder", self._handle_remote_change)
+
+    # Delegate read operations
+    def get_all(self) -> list:
+        return self._repo.get_all()
+
+    def get_by_id(self, folder_id: Any) -> Any:
+        return self._repo.get_by_id(folder_id)
+
+    def get_children(self, parent_id: Any) -> list:
+        return self._repo.get_children(parent_id)
+
+    def get_root_folders(self) -> list:
+        return self._repo.get_root_folders()
+
+    def get_descendants(self, folder_id: Any) -> list:
+        return self._repo.get_descendants(folder_id)
+
+    # Write operations with sync
+    def save(self, folder: Any) -> None:
+        existing = self._repo.get_by_id(folder.id)
+        is_new = existing is None
+        self._repo.save(folder)
+
+        self._sync.queue_change(
+            SyncChange(
+                entity_type="folder",
+                change_type=ChangeType.CREATE if is_new else ChangeType.UPDATE,
+                entity_id=folder.id.value,
+                data={
+                    "name": folder.name,
+                    "parent_id": folder.parent_id.value if folder.parent_id else None,
+                    "memo": getattr(folder, "memo", ""),
+                },
+            )
+        )
+
+    def delete(self, folder_id: Any) -> None:
+        self._repo.delete(folder_id)
+        self._sync.queue_change(
+            SyncChange(
+                entity_type="folder",
+                change_type=ChangeType.DELETE,
+                entity_id=folder_id.value,
+                data={},
+            )
+        )
+
+    def update_parent(self, folder_id: Any, new_parent_id: Any) -> None:
+        self._repo.update_parent(folder_id, new_parent_id)
+        self._sync.queue_change(
+            SyncChange(
+                entity_type="folder",
+                change_type=ChangeType.UPDATE,
+                entity_id=folder_id.value,
+                data={"parent_id": new_parent_id.value if new_parent_id else None},
+            )
+        )
+
+    def _handle_remote_change(self, change_type: str, data: dict) -> None:
+        pass
+
+
+class SyncedCaseRepository:
+    """
+    Case repository with sync support.
+
+    Wraps SQLiteCaseRepository to queue changes for Convex sync.
+    """
+
+    def __init__(
+        self,
+        sqlite_repo: Any,
+        sync_engine: SyncEngine,
+    ) -> None:
+        self._repo = sqlite_repo
+        self._sync = sync_engine
+        self._sync.on_remote_change("case", self._handle_remote_change)
+
+    # Delegate read operations
+    def get_all(self) -> list:
+        return self._repo.get_all()
+
+    def get_by_id(self, case_id: Any) -> Any:
+        return self._repo.get_by_id(case_id)
+
+    def get_by_name(self, name: str) -> Any:
+        return self._repo.get_by_name(name)
+
+    def get_cases_for_source(self, source_id: SourceId) -> list:
+        return self._repo.get_cases_for_source(source_id)
+
+    # Write operations with sync
+    def save(self, case: Any) -> None:
+        existing = self._repo.get_by_id(case.id)
+        is_new = existing is None
+        self._repo.save(case)
+
+        self._sync.queue_change(
+            SyncChange(
+                entity_type="case",
+                change_type=ChangeType.CREATE if is_new else ChangeType.UPDATE,
+                entity_id=case.id.value,
+                data={
+                    "name": case.name,
+                    "memo": getattr(case, "memo", ""),
+                    "owner": getattr(case, "owner", ""),
+                },
+            )
+        )
+
+    def delete(self, case_id: Any) -> None:
+        self._repo.delete(case_id)
+        self._sync.queue_change(
+            SyncChange(
+                entity_type="case",
+                change_type=ChangeType.DELETE,
+                entity_id=case_id.value,
+                data={},
+            )
+        )
+
+    def link_source(
+        self, case_id: Any, source_id: SourceId, source_name: str, owner: str
+    ) -> None:
+        self._repo.link_source(case_id, source_id, source_name, owner)
+        # Case-source links are tracked as case updates
+        self._sync.queue_change(
+            SyncChange(
+                entity_type="case",
+                change_type=ChangeType.UPDATE,
+                entity_id=case_id.value,
+                data={"link_source": source_id.value},
+            )
+        )
+
+    def unlink_source(self, case_id: Any, source_id: SourceId) -> None:
+        self._repo.unlink_source(case_id, source_id)
+        self._sync.queue_change(
+            SyncChange(
+                entity_type="case",
+                change_type=ChangeType.UPDATE,
+                entity_id=case_id.value,
+                data={"unlink_source": source_id.value},
+            )
+        )
+
+    def _handle_remote_change(self, change_type: str, data: dict) -> None:
+        pass

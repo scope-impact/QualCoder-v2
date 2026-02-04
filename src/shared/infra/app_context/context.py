@@ -243,7 +243,8 @@ class AppContext:
         backend_config = self.settings_repo.get_backend_config()
         backend_type = BackendType.SQLITE  # Always SQLite as primary
 
-        # Initialize Convex client if cloud sync is enabled
+        # Initialize Convex client and SyncEngine if cloud sync is enabled
+        sync_engine = None
         if backend_config.uses_convex and self.convex_client is None:
             from src.shared.infra.convex import ConvexClientWrapper
 
@@ -255,21 +256,32 @@ class AppContext:
                 # Continue without cloud sync - SQLite works offline
                 self.convex_client = None
 
-        # Create contexts with appropriate backend
+        # Create SyncEngine BEFORE contexts so repos can use it
+        if backend_config.uses_convex and self.convex_client:
+            from src.shared.infra.sync import SyncEngine
+
+            self._sync_engine = SyncEngine(connection, self.convex_client)
+            sync_engine = self._sync_engine
+            logger.info("SyncEngine created for SQLite-Convex cloud sync")
+
+        # Create contexts with sync support
         self.sources_context = SourcesContext.create(
             connection=connection,
             convex_client=self.convex_client,
             backend_type=backend_type,
+            sync_engine=sync_engine,
         )
         self.coding_context = CodingContext.create(
             connection=connection,
             convex_client=self.convex_client,
             backend_type=backend_type,
+            sync_engine=sync_engine,
         )
         self.cases_context = CasesContext.create(
             connection=connection,
             convex_client=self.convex_client,
             backend_type=backend_type,
+            sync_engine=sync_engine,
         )
         # ProjectsContext always uses SQLite for local project file management
         self.projects_context = ProjectsContext.create(
@@ -278,13 +290,10 @@ class AppContext:
             backend_type=BackendType.SQLITE,
         )
 
-        # Start sync engine if cloud sync is enabled and connected
-        if backend_config.uses_convex and self.convex_client:
-            from src.shared.infra.sync import SyncEngine
-
-            self._sync_engine = SyncEngine(connection, self.convex_client)
+        # Start sync engine after contexts are created
+        if self._sync_engine is not None:
             self._sync_engine.start()
-            logger.info("SyncEngine started for SQLite-Convex cloud sync")
+            logger.info("SyncEngine started")
 
         sync_status = "enabled" if self._sync_engine else "disabled"
         logger.debug(f"Created bounded contexts for project (cloud sync: {sync_status})")

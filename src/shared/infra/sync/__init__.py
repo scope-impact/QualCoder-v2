@@ -11,6 +11,14 @@ from src.shared.infra.sync.engine import (
     SyncState,
     SyncStatus,
 )
+from src.shared.infra.sync.synced_repositories import (
+    SyncedCaseRepository,
+    SyncedCategoryRepository,
+    SyncedCodeRepository,
+    SyncedFolderRepository,
+    SyncedSegmentRepository,
+    SyncedSourceRepository,
+)
 
 __all__ = [
     "ChangeType",
@@ -18,4 +26,10 @@ __all__ = [
     "SyncEngine",
     "SyncState",
     "SyncStatus",
+    "SyncedCaseRepository",
+    "SyncedCategoryRepository",
+    "SyncedCodeRepository",
+    "SyncedFolderRepository",
+    "SyncedSegmentRepository",
+    "SyncedSourceRepository",
 ]

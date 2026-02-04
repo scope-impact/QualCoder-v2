@@ -3,7 +3,7 @@ Bounded Context Classes for QualCoder.
 
 These classes bundle repositories for each bounded context.
 They are created when a project is opened and cleared when it closes.
-Supports both SQLite and Convex backends.
+Supports SQLite (primary) with optional Convex sync.
 """
 
 from __future__ import annotations
@@ -29,6 +29,7 @@ if TYPE_CHECKING:
         SegmentRepositoryProtocol,
         SourceRepositoryProtocol,
     )
+    from src.shared.infra.sync import SyncEngine
 
 
 @dataclass
@@ -50,6 +51,7 @@ class SourcesContext:
         connection: Connection | None = None,
         convex_client: ConvexClientWrapper | None = None,
         backend_type: BackendType = BackendType.SQLITE,
+        sync_engine: SyncEngine | None = None,
     ) -> SourcesContext:
         """Create a SourcesContext with all repositories."""
         if backend_type == BackendType.CONVEX:
@@ -74,9 +76,22 @@ class SourcesContext:
                 SQLiteSourceRepository,
             )
 
+            source_repo = SQLiteSourceRepository(connection)
+            folder_repo = SQLiteFolderRepository(connection)
+
+            # Wrap with sync if enabled
+            if sync_engine is not None:
+                from src.shared.infra.sync.synced_repositories import (
+                    SyncedFolderRepository,
+                    SyncedSourceRepository,
+                )
+
+                source_repo = SyncedSourceRepository(source_repo, sync_engine)
+                folder_repo = SyncedFolderRepository(folder_repo, sync_engine)
+
             return cls(
-                source_repo=SQLiteSourceRepository(connection),
-                folder_repo=SQLiteFolderRepository(connection),
+                source_repo=source_repo,
+                folder_repo=folder_repo,
             )
 
 
@@ -97,6 +112,7 @@ class CasesContext:
         connection: Connection | None = None,
         convex_client: ConvexClientWrapper | None = None,
         backend_type: BackendType = BackendType.SQLITE,
+        sync_engine: SyncEngine | None = None,
     ) -> CasesContext:
         """Create a CasesContext with all repositories."""
         if backend_type == BackendType.CONVEX:
@@ -110,7 +126,17 @@ class CasesContext:
                 raise ValueError("SQLAlchemy connection required for SQLite backend")
             from src.contexts.cases.infra.case_repository import SQLiteCaseRepository
 
-            return cls(case_repo=SQLiteCaseRepository(connection))
+            case_repo = SQLiteCaseRepository(connection)
+
+            # Wrap with sync if enabled
+            if sync_engine is not None:
+                from src.shared.infra.sync.synced_repositories import (
+                    SyncedCaseRepository,
+                )
+
+                case_repo = SyncedCaseRepository(case_repo, sync_engine)
+
+            return cls(case_repo=case_repo)
 
 
 @dataclass
@@ -134,6 +160,7 @@ class CodingContext:
         connection: Connection | None = None,
         convex_client: ConvexClientWrapper | None = None,
         backend_type: BackendType = BackendType.SQLITE,
+        sync_engine: SyncEngine | None = None,
     ) -> CodingContext:
         """Create a CodingContext with all repositories."""
         if backend_type == BackendType.CONVEX:
@@ -159,10 +186,26 @@ class CodingContext:
                 SQLiteSegmentRepository,
             )
 
+            code_repo = SQLiteCodeRepository(connection)
+            category_repo = SQLiteCategoryRepository(connection)
+            segment_repo = SQLiteSegmentRepository(connection)
+
+            # Wrap with sync if enabled
+            if sync_engine is not None:
+                from src.shared.infra.sync.synced_repositories import (
+                    SyncedCategoryRepository,
+                    SyncedCodeRepository,
+                    SyncedSegmentRepository,
+                )
+
+                code_repo = SyncedCodeRepository(code_repo, sync_engine)
+                category_repo = SyncedCategoryRepository(category_repo, sync_engine)
+                segment_repo = SyncedSegmentRepository(segment_repo, sync_engine)
+
             return cls(
-                code_repo=SQLiteCodeRepository(connection),
-                category_repo=SQLiteCategoryRepository(connection),
-                segment_repo=SQLiteSegmentRepository(connection),
+                code_repo=code_repo,
+                category_repo=category_repo,
+                segment_repo=segment_repo,
             )
 
 
