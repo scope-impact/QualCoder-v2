@@ -48,7 +48,7 @@ def app_context():
 @pytest.fixture
 def project_with_text_and_codes(app_context: AppContext, tmp_path: Path) -> Path:
     """Create a project with text sources and codes for AI coding tests."""
-    from src.contexts.coding.core.entities import Code
+    from src.contexts.coding.core.entities import Code, Color
     from src.contexts.projects.core.entities import Source, SourceType
     from src.shared.common.types import CodeId, SourceId
 
@@ -99,14 +99,14 @@ Interviewer: Thank you for your valuable insights.
 
     # Add codes for coding the text
     codes = [
-        Code(id=CodeId(1), name="Initial Skepticism", color="#FF5722"),
-        Code(id=CodeId(2), name="Positive Experience", color="#4CAF50"),
-        Code(id=CodeId(3), name="Time Management Challenge", color="#F44336"),
-        Code(id=CodeId(4), name="Adaptive Learning", color="#2196F3"),
-        Code(id=CodeId(5), name="Motivation", color="#9C27B0"),
-        Code(id=CodeId(6), name="Support System", color="#FF9800"),
-        Code(id=CodeId(7), name="Feedback Value", color="#00BCD4"),
-        Code(id=CodeId(8), name="Improvement Suggestion", color="#795548"),
+        Code(id=CodeId(1), name="Initial Skepticism", color=Color.from_hex("#FF5722")),
+        Code(id=CodeId(2), name="Positive Experience", color=Color.from_hex("#4CAF50")),
+        Code(id=CodeId(3), name="Time Management Challenge", color=Color.from_hex("#F44336")),
+        Code(id=CodeId(4), name="Adaptive Learning", color=Color.from_hex("#2196F3")),
+        Code(id=CodeId(5), name="Motivation", color=Color.from_hex("#9C27B0")),
+        Code(id=CodeId(6), name="Support System", color=Color.from_hex("#FF9800")),
+        Code(id=CodeId(7), name="Feedback Value", color=Color.from_hex("#00BCD4")),
+        Code(id=CodeId(8), name="Improvement Suggestion", color=Color.from_hex("#795548")),
     ]
     for code in codes:
         app_context.coding_context.code_repo.save(code)
@@ -117,7 +117,7 @@ Interviewer: Thank you for your valuable insights.
 @pytest.fixture
 def project_with_multiple_sources(app_context: AppContext, tmp_path: Path) -> Path:
     """Create a project with multiple sources for batch coding tests."""
-    from src.contexts.coding.core.entities import Code
+    from src.contexts.coding.core.entities import Code, Color
     from src.contexts.projects.core.entities import Source, SourceType
     from src.shared.common.types import CodeId, SourceId
 
@@ -154,8 +154,8 @@ def project_with_multiple_sources(app_context: AppContext, tmp_path: Path) -> Pa
 
     # Add codes
     codes = [
-        Code(id=CodeId(1), name="Time Management", color="#F44336"),
-        Code(id=CodeId(2), name="Work-Life Balance", color="#FF9800"),
+        Code(id=CodeId(1), name="Time Management", color=Color.from_hex("#F44336")),
+        Code(id=CodeId(2), name="Work-Life Balance", color=Color.from_hex("#FF9800")),
     ]
     for code in codes:
         app_context.coding_context.code_repo.save(code)

@@ -48,7 +48,7 @@ def app_context():
 @pytest.fixture
 def project_with_codes(app_context: AppContext, tmp_path: Path) -> Path:
     """Create a project with sample codes for AI analysis."""
-    from src.contexts.coding.core.entities import Category, Code
+    from src.contexts.coding.core.entities import Category, Code, Color
     from src.shared.common.types import CategoryId, CodeId
 
     project_path = tmp_path / "ai_codes_test.qda"
@@ -58,12 +58,12 @@ def project_with_codes(app_context: AppContext, tmp_path: Path) -> Path:
 
     # Add sample codes
     codes = [
-        Code(id=CodeId(1), name="Theme", color="#FF5722", memo="Main themes"),
-        Code(id=CodeId(2), name="Themes", color="#FF9800", memo="Alternative themes"),
-        Code(id=CodeId(3), name="Positive Emotion", color="#4CAF50", memo="Happy feelings"),
-        Code(id=CodeId(4), name="Positive Feeling", color="#8BC34A", memo="Good feelings"),
-        Code(id=CodeId(5), name="Challenge", color="#F44336", memo="Difficulties"),
-        Code(id=CodeId(6), name="Learning", color="#2196F3", memo="Education related"),
+        Code(id=CodeId(1), name="Theme", color=Color.from_hex("#FF5722"), memo="Main themes"),
+        Code(id=CodeId(2), name="Themes", color=Color.from_hex("#FF9800"), memo="Alternative themes"),
+        Code(id=CodeId(3), name="Positive Emotion", color=Color.from_hex("#4CAF50"), memo="Happy feelings"),
+        Code(id=CodeId(4), name="Positive Feeling", color=Color.from_hex("#8BC34A"), memo="Good feelings"),
+        Code(id=CodeId(5), name="Challenge", color=Color.from_hex("#F44336"), memo="Difficulties"),
+        Code(id=CodeId(6), name="Learning", color=Color.from_hex("#2196F3"), memo="Education related"),
     ]
     for code in codes:
         app_context.coding_context.code_repo.save(code)
@@ -78,7 +78,7 @@ def project_with_codes(app_context: AppContext, tmp_path: Path) -> Path:
 @pytest.fixture
 def project_with_uncoded_content(app_context: AppContext, tmp_path: Path) -> Path:
     """Create a project with uncoded text content for AI suggestion testing."""
-    from src.contexts.coding.core.entities import Code
+    from src.contexts.coding.core.entities import Code, Color
     from src.contexts.projects.core.entities import Source, SourceType
     from src.shared.common.types import CodeId, SourceId
 
@@ -116,8 +116,8 @@ def project_with_uncoded_content(app_context: AppContext, tmp_path: Path) -> Pat
 
     # Add a few existing codes
     codes = [
-        Code(id=CodeId(1), name="Challenge", color="#F44336"),
-        Code(id=CodeId(2), name="Achievement", color="#4CAF50"),
+        Code(id=CodeId(1), name="Challenge", color=Color.from_hex("#F44336")),
+        Code(id=CodeId(2), name="Achievement", color=Color.from_hex("#4CAF50")),
     ]
     for code in codes:
         app_context.coding_context.code_repo.save(code)
