@@ -209,8 +209,8 @@ class SettingsDTO:
     backup_path: str | None = None
     timestamp_format: str = "HH:MM:SS"
     speaker_format: str = "Speaker {n}"
-    # Database backend settings
-    backend_type: str = "sqlite"  # "sqlite" or "convex"
+    # Cloud sync settings (SQLite is always primary)
+    cloud_sync_enabled: bool = False
     convex_url: str | None = None
 
 

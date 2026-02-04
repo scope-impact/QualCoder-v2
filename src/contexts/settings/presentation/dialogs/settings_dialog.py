@@ -561,46 +561,50 @@ class SettingsDialog(QDialog):
         layout.setContentsMargins(SPACING.lg, SPACING.lg, SPACING.lg, SPACING.lg)
         layout.setSpacing(SPACING.lg)
 
-        # Backend header
-        backend_label = QLabel("Database Backend")
-        backend_label.setStyleSheet(f"""
+        # Primary storage info
+        primary_label = QLabel("Primary Storage: SQLite (Local)")
+        primary_label.setStyleSheet(f"""
             color: {self._colors.text_primary};
             font-size: {TYPOGRAPHY.text_sm}px;
             font-weight: {TYPOGRAPHY.weight_semibold};
         """)
-        layout.addWidget(backend_label)
+        layout.addWidget(primary_label)
 
-        # Backend selection
-        backend_frame = QFrame()
-        backend_layout = QHBoxLayout(backend_frame)
-        backend_layout.setContentsMargins(0, 0, 0, 0)
-        backend_layout.setSpacing(SPACING.md)
+        primary_desc = QLabel(
+            "All data is stored locally in SQLite. Works offline."
+        )
+        primary_desc.setStyleSheet(f"""
+            color: {self._colors.text_secondary};
+            font-size: {TYPOGRAPHY.text_xs}px;
+        """)
+        layout.addWidget(primary_desc)
 
-        self._backend_group = QButtonGroup(self)
-        backends = [
-            ("SQLite (Local)", "sqlite"),
-            ("Sync (Local + Cloud)", "sync"),
-            ("Convex (Cloud Only)", "convex"),
-        ]
+        # Cloud sync section
+        sync_label = QLabel("Cloud Sync (Optional)")
+        sync_label.setStyleSheet(f"""
+            color: {self._colors.text_primary};
+            font-size: {TYPOGRAPHY.text_sm}px;
+            font-weight: {TYPOGRAPHY.weight_semibold};
+            margin-top: {SPACING.md}px;
+        """)
+        layout.addWidget(sync_label)
 
-        for display_name, value in backends:
-            btn = QPushButton(display_name)
-            btn.setCheckable(True)
-            btn.setProperty("backend_value", value)
-            btn.setCursor(Qt.CursorShape.PointingHandCursor)
-            btn.setStyleSheet(self._get_toggle_button_style())
-            btn.clicked.connect(lambda _checked, v=value: self._on_backend_changed(v))
-            self._backend_group.addButton(btn)
-            backend_layout.addWidget(btn)
-
-        backend_layout.addStretch()
-        layout.addWidget(backend_frame)
+        # Enable cloud sync checkbox
+        self._cloud_sync_enabled = QCheckBox("Enable cloud sync with Convex")
+        self._cloud_sync_enabled.setStyleSheet(f"""
+            QCheckBox {{
+                color: {self._colors.text_primary};
+                font-size: {TYPOGRAPHY.text_sm}px;
+                spacing: {SPACING.sm}px;
+            }}
+        """)
+        self._cloud_sync_enabled.stateChanged.connect(self._on_cloud_sync_changed)
+        layout.addWidget(self._cloud_sync_enabled)
 
         # Description
         desc_label = QLabel(
-            "SQLite: Local storage only (works offline)\n"
-            "Sync: Local + cloud sync (offline-first, real-time collaboration)\n"
-            "Convex: Cloud only (requires internet connection)"
+            "When enabled, changes sync to Convex cloud in real-time.\n"
+            "Enables collaboration and backup while keeping local data."
         )
         desc_label.setStyleSheet(f"""
             color: {self._colors.text_secondary};
@@ -742,13 +746,10 @@ class SettingsDialog(QDialog):
         self._speaker_format.setText(settings.speaker_format)
         self._update_speaker_preview()
 
-        # Database backend
-        backend_type = getattr(settings, "backend_type", "sqlite")
-        for btn in self._backend_group.buttons():
-            if btn.property("backend_value") == backend_type:
-                btn.setChecked(True)
-                break
-        self._convex_config_frame.setVisible(backend_type in ("convex", "sync"))
+        # Cloud sync
+        cloud_sync_enabled = getattr(settings, "cloud_sync_enabled", False)
+        self._cloud_sync_enabled.setChecked(cloud_sync_enabled)
+        self._convex_config_frame.setVisible(cloud_sync_enabled)
         convex_url = getattr(settings, "convex_url", "")
         if convex_url:
             self._convex_url.setText(convex_url)
@@ -844,11 +845,11 @@ class SettingsDialog(QDialog):
         ]
         self._speaker_preview.setText(", ".join(previews))
 
-    def _on_backend_changed(self, backend_type: str) -> None:
-        """Handle database backend selection."""
-        # Show Convex config for both "convex" and "sync" modes
-        self._convex_config_frame.setVisible(backend_type in ("convex", "sync"))
-        self._viewmodel.change_backend(backend_type)
+    def _on_cloud_sync_changed(self, _state: int) -> None:
+        """Handle cloud sync checkbox change."""
+        enabled = self._cloud_sync_enabled.isChecked()
+        self._convex_config_frame.setVisible(enabled)
+        self._viewmodel.set_cloud_sync_enabled(enabled)
         self.settings_changed.emit()
 
     def _on_convex_url_changed(self, url: str) -> None:

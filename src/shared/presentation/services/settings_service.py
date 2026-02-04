@@ -94,3 +94,27 @@ class SettingsService:
             speaker_format=speaker_format,
         )
         return configure_av_coding(command=command, settings_repo=self._settings_repo)
+
+    def set_cloud_sync_enabled(self, enabled: bool) -> Result:
+        """Enable or disable cloud sync with Convex."""
+        from returns.result import Success
+
+        try:
+            self._settings_repo.set_cloud_sync_enabled(enabled)
+            return Success(None)
+        except Exception as e:
+            from returns.result import Failure
+
+            return Failure(str(e))
+
+    def set_convex_url(self, url: str | None) -> Result:
+        """Set the Convex deployment URL."""
+        from returns.result import Success
+
+        try:
+            self._settings_repo.set_convex_url(url)
+            return Success(None)
+        except Exception as e:
+            from returns.result import Failure
+
+            return Failure(str(e))

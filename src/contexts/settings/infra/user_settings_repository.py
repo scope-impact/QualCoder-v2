@@ -186,10 +186,10 @@ class UserSettingsRepository:
         settings = self.load()
         self.save(settings.with_backend(backend))
 
-    def set_backend_type(self, backend_type: str) -> None:
-        """Set the backend type (sqlite or convex)."""
+    def set_cloud_sync_enabled(self, enabled: bool) -> None:
+        """Enable or disable cloud sync with Convex."""
         config = self.get_backend_config()
-        self.set_backend_config(config.with_backend_type(backend_type))
+        self.set_backend_config(config.with_cloud_sync_enabled(enabled))
 
     def set_convex_url(self, convex_url: str | None) -> None:
         """Set the Convex deployment URL."""

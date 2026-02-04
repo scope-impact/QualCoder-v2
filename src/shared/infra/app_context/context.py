@@ -239,34 +239,21 @@ class AppContext:
             Dict of context name to context object
         """
         # Determine backend type from settings
+        # SQLite is always primary; Convex is optional cloud sync
         backend_config = self.settings_repo.get_backend_config()
+        backend_type = BackendType.SQLITE  # Always SQLite as primary
 
-        # Initialize Convex client if needed (for "convex" or "sync" modes)
+        # Initialize Convex client if cloud sync is enabled
         if backend_config.uses_convex and self.convex_client is None:
             from src.shared.infra.convex import ConvexClientWrapper
 
-            if backend_config.convex_url:
-                try:
-                    self.convex_client = ConvexClientWrapper(backend_config.convex_url)
-                    logger.info(f"Connected to Convex: {backend_config.convex_url}")
-                except Exception as e:
-                    logger.warning(f"Failed to connect to Convex: {e}")
-                    if backend_config.is_convex:
-                        # Convex-only mode requires connection
-                        raise
-                    # Sync mode can work offline
-                    self.convex_client = None
-            else:
-                logger.warning("Convex URL not configured")
-                if backend_config.is_convex:
-                    logger.warning("Falling back to SQLite (Convex URL not set)")
-
-        # Determine actual backend type
-        if backend_config.is_convex and self.convex_client:
-            backend_type = BackendType.CONVEX
-        else:
-            # SQLite or sync mode both use SQLite as primary
-            backend_type = BackendType.SQLITE
+            try:
+                self.convex_client = ConvexClientWrapper(backend_config.convex_url)
+                logger.info(f"Connected to Convex for cloud sync: {backend_config.convex_url}")
+            except Exception as e:
+                logger.warning(f"Failed to connect to Convex (sync disabled): {e}")
+                # Continue without cloud sync - SQLite works offline
+                self.convex_client = None
 
         # Create contexts with appropriate backend
         self.sources_context = SourcesContext.create(
@@ -291,16 +278,16 @@ class AppContext:
             backend_type=BackendType.SQLITE,
         )
 
-        # Start sync engine for sync mode
-        if backend_config.is_sync and self.convex_client:
+        # Start sync engine if cloud sync is enabled and connected
+        if backend_config.uses_convex and self.convex_client:
             from src.shared.infra.sync import SyncEngine
 
             self._sync_engine = SyncEngine(connection, self.convex_client)
             self._sync_engine.start()
-            logger.info("SyncEngine started for SQLite-Convex sync")
+            logger.info("SyncEngine started for SQLite-Convex cloud sync")
 
-        mode_name = backend_config.backend_type
-        logger.debug(f"Created bounded contexts for project (mode: {mode_name})")
+        sync_status = "enabled" if self._sync_engine else "disabled"
+        logger.debug(f"Created bounded contexts for project (cloud sync: {sync_status})")
 
         return {
             "sources": self.sources_context,
