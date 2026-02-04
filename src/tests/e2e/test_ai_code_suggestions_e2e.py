@@ -15,7 +15,7 @@ from typing import TYPE_CHECKING
 
 import allure
 import pytest
-from returns.result import Failure, Success
+# Note: CodingTools.execute() returns dict, not Result
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -155,8 +155,8 @@ class TestAgentSuggestNewCode:
             )
 
         with allure.step("Verify analysis returned"):
-            assert isinstance(result, Success)
-            data = result.unwrap()
+            assert result.get("success") is True
+            data = result["data"]
             assert "uncoded_segments" in data or "analysis" in data
             assert data.get("source_id") == 1
 
@@ -187,8 +187,8 @@ class TestAgentSuggestNewCode:
             )
 
         with allure.step("Verify suggestion created"):
-            assert isinstance(result, Success)
-            data = result.unwrap()
+            assert result.get("success") is True
+            data = result["data"]
             assert data["status"] == "pending_approval"
             assert "suggestion_id" in data
             assert data["name"] == "Learning Experience"
@@ -214,8 +214,8 @@ class TestAgentSuggestNewCode:
             )
 
         with allure.step("Verify rationale is included in suggestion"):
-            assert isinstance(result, Success)
-            data = result.unwrap()
+            assert result.get("success") is True
+            data = result["data"]
             assert "rationale" in data
             assert "time management" in data["rationale"].lower()
 
@@ -240,8 +240,8 @@ class TestAgentSuggestNewCode:
             )
 
         with allure.step("Verify suggestion is pending, not created"):
-            assert isinstance(result, Success)
-            data = result.unwrap()
+            assert result.get("success") is True
+            data = result["data"]
             assert data["status"] == "pending_approval"
             assert data["requires_approval"] is True
 
@@ -273,8 +273,8 @@ class TestAgentSuggestNewCode:
             result = tools.execute("list_pending_suggestions", {})
 
         with allure.step("Verify pending suggestions returned"):
-            assert isinstance(result, Success)
-            data = result.unwrap()
+            assert result.get("success") is True
+            data = result["data"]
             assert data["count"] >= 2
             names = [s["name"] for s in data["suggestions"]]
             assert "Code A" in names
@@ -301,8 +301,8 @@ class TestAgentSuggestNewCode:
             )
 
         with allure.step("Verify confidence score in response"):
-            assert isinstance(result, Success)
-            data = result.unwrap()
+            assert result.get("success") is True
+            data = result["data"]
             assert "confidence" in data
             assert 0 <= data["confidence"] <= 100
             assert data["confidence"] == 95
@@ -338,8 +338,8 @@ class TestAgentDetectDuplicateCodes:
             )
 
         with allure.step("Verify duplicates detected"):
-            assert isinstance(result, Success)
-            data = result.unwrap()
+            assert result.get("success") is True
+            data = result["data"]
             assert "candidates" in data
             assert len(data["candidates"]) > 0
 
@@ -363,8 +363,8 @@ class TestAgentDetectDuplicateCodes:
             result = tools.execute("detect_duplicate_codes", {"threshold": 0.7})
 
         with allure.step("Verify merge suggestions include both code IDs"):
-            assert isinstance(result, Success)
-            data = result.unwrap()
+            assert result.get("success") is True
+            data = result["data"]
             for candidate in data["candidates"]:
                 assert "code_a_id" in candidate
                 assert "code_b_id" in candidate
@@ -386,8 +386,8 @@ class TestAgentDetectDuplicateCodes:
             )
 
         with allure.step("Verify analysis includes rationale"):
-            assert isinstance(result, Success)
-            data = result.unwrap()
+            assert result.get("success") is True
+            data = result["data"]
             for candidate in data["candidates"]:
                 assert "rationale" in candidate
                 # Rationale should explain why they're similar
@@ -407,14 +407,14 @@ class TestAgentDetectDuplicateCodes:
         with allure.step("Detect duplicates"):
             tools = CodingTools(ctx=app_context)
             result = tools.execute("detect_duplicate_codes", {"threshold": 0.8})
-            assert isinstance(result, Success)
+            assert result.get("success") is True
 
         with allure.step("Verify codes NOT merged automatically"):
             codes = app_context.coding_context.code_repo.get_all()
             assert len(codes) == initial_count
 
         with allure.step("Verify result indicates approval required"):
-            data = result.unwrap()
+            data = result["data"]
             assert data["requires_approval"] is True
 
     @allure.title("Detection returns similarity scores")
@@ -430,8 +430,8 @@ class TestAgentDetectDuplicateCodes:
             result = tools.execute("detect_duplicate_codes", {"threshold": 0.5})
 
         with allure.step("Verify similarity scores"):
-            assert isinstance(result, Success)
-            data = result.unwrap()
+            assert result.get("success") is True
+            data = result["data"]
             for candidate in data["candidates"]:
                 assert "similarity" in candidate
                 assert 0 <= candidate["similarity"] <= 100
@@ -449,8 +449,8 @@ class TestAgentDetectDuplicateCodes:
             result = tools.execute("detect_duplicate_codes", {"threshold": 0.7})
 
         with allure.step("Verify segment counts included"):
-            assert isinstance(result, Success)
-            data = result.unwrap()
+            assert result.get("success") is True
+            data = result["data"]
             for candidate in data["candidates"]:
                 assert "code_a_segments" in candidate
                 assert "code_b_segments" in candidate
@@ -475,8 +475,8 @@ class TestAgentDetectDuplicateCodes:
             )
 
         with allure.step("Verify merge suggestion created"):
-            assert isinstance(result, Success)
-            data = result.unwrap()
+            assert result.get("success") is True
+            data = result["data"]
             assert data["status"] == "pending_approval"
             assert data["merge_source_id"] == 1
             assert data["merge_target_id"] == 2
@@ -503,7 +503,7 @@ class TestAICodeManagementIntegration:
 
         with allure.step("Step 1: Analyze content for potential codes"):
             analysis = tools.execute("analyze_content_for_codes", {"source_id": 1})
-            assert isinstance(analysis, Success)
+            assert analysis.get("success") is True
 
         with allure.step("Step 2: Suggest a new code based on analysis"):
             suggestion = tools.execute(
@@ -516,13 +516,13 @@ class TestAICodeManagementIntegration:
                     "confidence": 85,
                 },
             )
-            assert isinstance(suggestion, Success)
-            suggestion_id = suggestion.unwrap()["suggestion_id"]
+            assert suggestion.get("success") is True
+            suggestion_id = suggestion["data"]["suggestion_id"]
 
         with allure.step("Step 3: Verify suggestion is pending"):
             pending = tools.execute("list_pending_suggestions", {})
-            assert isinstance(pending, Success)
-            ids = [s["suggestion_id"] for s in pending.unwrap()["suggestions"]]
+            assert pending.get("success") is True
+            ids = [s["suggestion_id"] for s in pending["data"]["suggestions"]]
             assert suggestion_id in ids
 
         with allure.step("Step 4: Approve suggestion (simulated researcher action)"):
@@ -531,8 +531,8 @@ class TestAICodeManagementIntegration:
                 "approve_suggestion",
                 {"suggestion_id": suggestion_id},
             )
-            assert isinstance(approval, Success)
-            assert approval.unwrap()["status"] == "created"
+            assert approval.get("success") is True
+            assert approval["data"]["status"] == "created"
 
         with allure.step("Step 5: Verify code now exists"):
             codes = app_context.coding_context.code_repo.get_all()
@@ -550,8 +550,8 @@ class TestAICodeManagementIntegration:
 
         with allure.step("Step 1: Detect duplicate codes"):
             detection = tools.execute("detect_duplicate_codes", {"threshold": 0.8})
-            assert isinstance(detection, Success)
-            candidates = detection.unwrap()["candidates"]
+            assert detection.get("success") is True
+            candidates = detection["data"]["candidates"]
             assert len(candidates) > 0
 
         with allure.step("Step 2: Suggest merge for a detected pair"):
@@ -564,15 +564,15 @@ class TestAICodeManagementIntegration:
                     "rationale": pair["rationale"],
                 },
             )
-            assert isinstance(merge_suggestion, Success)
-            merge_id = merge_suggestion.unwrap()["merge_suggestion_id"]
+            assert merge_suggestion.get("success") is True
+            merge_id = merge_suggestion["data"]["merge_suggestion_id"]
 
         with allure.step("Step 3: Approve merge"):
             approval = tools.execute(
                 "approve_merge",
                 {"merge_suggestion_id": merge_id},
             )
-            assert isinstance(approval, Success)
+            assert approval.get("success") is True
 
         with allure.step("Step 4: Verify merge completed"):
             codes = app_context.coding_context.code_repo.get_all()

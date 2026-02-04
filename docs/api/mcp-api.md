@@ -268,6 +268,425 @@ Get coded segments for a source.
 
 ---
 
+### AI Suggestion Tools (QC-028.07, QC-028.08)
+
+These tools enable AI agents to suggest new codes and detect duplicates. All suggestions require researcher approval.
+
+#### analyze_content_for_codes
+
+Analyze uncoded content to identify patterns.
+
+```json
+{
+  "name": "analyze_content_for_codes",
+  "inputSchema": {
+    "type": "object",
+    "properties": {
+      "source_id": {"type": "integer", "description": "Source to analyze"}
+    },
+    "required": ["source_id"]
+  }
+}
+```
+
+#### suggest_new_code
+
+Suggest a new code (requires approval).
+
+```json
+{
+  "name": "suggest_new_code",
+  "inputSchema": {
+    "type": "object",
+    "properties": {
+      "name": {"type": "string", "description": "Suggested code name"},
+      "rationale": {"type": "string", "description": "Why this code is needed"},
+      "color": {"type": "string", "default": "#808080"},
+      "description": {"type": "string"},
+      "confidence": {"type": "integer", "minimum": 0, "maximum": 100, "default": 70}
+    },
+    "required": ["name", "rationale"]
+  }
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "status": "pending_approval",
+    "requires_approval": true,
+    "suggestion_id": "uuid-here",
+    "name": "Anxiety",
+    "confidence": 85
+  }
+}
+```
+
+#### list_pending_suggestions
+
+List pending code suggestions.
+
+```json
+{
+  "name": "list_pending_suggestions",
+  "inputSchema": {
+    "type": "object",
+    "properties": {},
+    "required": []
+  }
+}
+```
+
+#### approve_suggestion
+
+Approve a pending code suggestion (creates the code).
+
+```json
+{
+  "name": "approve_suggestion",
+  "inputSchema": {
+    "type": "object",
+    "properties": {
+      "suggestion_id": {"type": "string"}
+    },
+    "required": ["suggestion_id"]
+  }
+}
+```
+
+#### detect_duplicate_codes
+
+Detect semantically similar codes.
+
+```json
+{
+  "name": "detect_duplicate_codes",
+  "inputSchema": {
+    "type": "object",
+    "properties": {
+      "threshold": {"type": "number", "minimum": 0, "maximum": 1, "default": 0.8},
+      "include_usage_analysis": {"type": "boolean", "default": false}
+    },
+    "required": []
+  }
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "requires_approval": true,
+    "codes_analyzed": 15,
+    "candidates": [
+      {
+        "code_a_id": 1, "code_a_name": "Anxiety",
+        "code_b_id": 5, "code_b_name": "Anxious",
+        "similarity": 92,
+        "code_a_segments": 12, "code_b_segments": 3
+      }
+    ]
+  }
+}
+```
+
+#### suggest_merge_codes
+
+Suggest merging two codes (requires approval).
+
+```json
+{
+  "name": "suggest_merge_codes",
+  "inputSchema": {
+    "type": "object",
+    "properties": {
+      "source_code_id": {"type": "integer", "description": "Code to merge FROM (deleted)"},
+      "target_code_id": {"type": "integer", "description": "Code to merge INTO (kept)"},
+      "rationale": {"type": "string"}
+    },
+    "required": ["source_code_id", "target_code_id", "rationale"]
+  }
+}
+```
+
+#### approve_merge
+
+Approve a merge suggestion.
+
+```json
+{
+  "name": "approve_merge",
+  "inputSchema": {
+    "type": "object",
+    "properties": {
+      "merge_suggestion_id": {"type": "string"}
+    },
+    "required": ["merge_suggestion_id"]
+  }
+}
+```
+
+---
+
+### AI Coding Tools (QC-029.07, QC-029.08)
+
+These tools enable AI agents to suggest code applications. All require researcher approval.
+
+#### suggest_code_application
+
+Suggest applying a code to a text range (requires approval).
+
+```json
+{
+  "name": "suggest_code_application",
+  "inputSchema": {
+    "type": "object",
+    "properties": {
+      "source_id": {"type": "integer"},
+      "code_id": {"type": "integer"},
+      "start_pos": {"type": "integer"},
+      "end_pos": {"type": "integer"},
+      "rationale": {"type": "string"},
+      "confidence": {"type": "integer", "minimum": 0, "maximum": 100, "default": 70},
+      "include_text": {"type": "boolean", "default": false}
+    },
+    "required": ["source_id", "code_id", "start_pos", "end_pos"]
+  }
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "status": "pending_approval",
+    "requires_approval": true,
+    "suggestion_id": "uuid-here",
+    "source_id": 1,
+    "code_id": 3,
+    "start_pos": 100,
+    "end_pos": 250,
+    "confidence": 85
+  }
+}
+```
+
+#### list_pending_coding_suggestions
+
+List pending coding suggestions.
+
+```json
+{
+  "name": "list_pending_coding_suggestions",
+  "inputSchema": {
+    "type": "object",
+    "properties": {
+      "source_id": {"type": "integer", "description": "Filter by source (optional)"}
+    },
+    "required": []
+  }
+}
+```
+
+#### approve_coding_suggestion
+
+Approve a coding suggestion (creates the segment).
+
+```json
+{
+  "name": "approve_coding_suggestion",
+  "inputSchema": {
+    "type": "object",
+    "properties": {
+      "suggestion_id": {"type": "string"}
+    },
+    "required": ["suggestion_id"]
+  }
+}
+```
+
+#### reject_coding_suggestion
+
+Reject a coding suggestion with feedback.
+
+```json
+{
+  "name": "reject_coding_suggestion",
+  "inputSchema": {
+    "type": "object",
+    "properties": {
+      "suggestion_id": {"type": "string"},
+      "reason": {"type": "string"},
+      "feedback": {"type": "string"}
+    },
+    "required": ["suggestion_id"]
+  }
+}
+```
+
+#### analyze_uncoded_text
+
+Analyze a source to find uncoded text ranges.
+
+```json
+{
+  "name": "analyze_uncoded_text",
+  "inputSchema": {
+    "type": "object",
+    "properties": {
+      "source_id": {"type": "integer"}
+    },
+    "required": ["source_id"]
+  }
+}
+```
+
+#### suggest_codes_for_range
+
+Suggest which codes fit a text range.
+
+```json
+{
+  "name": "suggest_codes_for_range",
+  "inputSchema": {
+    "type": "object",
+    "properties": {
+      "source_id": {"type": "integer"},
+      "start_pos": {"type": "integer"},
+      "end_pos": {"type": "integer"}
+    },
+    "required": ["source_id", "start_pos", "end_pos"]
+  }
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "source_id": 1,
+    "start_pos": 100,
+    "end_pos": 200,
+    "suggestion_batch_id": "uuid-here",
+    "suggestions": [
+      {"code_id": 1, "code_name": "Anxiety", "confidence": 90, "rationale": "..."},
+      {"code_id": 3, "code_name": "Coping", "confidence": 78, "rationale": "..."}
+    ]
+  }
+}
+```
+
+#### auto_suggest_codes
+
+Auto-suggest codes for all uncoded portions.
+
+```json
+{
+  "name": "auto_suggest_codes",
+  "inputSchema": {
+    "type": "object",
+    "properties": {
+      "source_id": {"type": "integer"},
+      "min_confidence": {"type": "integer", "default": 70}
+    },
+    "required": ["source_id"]
+  }
+}
+```
+
+#### get_suggestion_batch_status
+
+Get status of a suggestion batch.
+
+```json
+{
+  "name": "get_suggestion_batch_status",
+  "inputSchema": {
+    "type": "object",
+    "properties": {
+      "batch_id": {"type": "string"}
+    },
+    "required": ["batch_id"]
+  }
+}
+```
+
+#### approve_batch_coding
+
+Approve all suggestions in a batch.
+
+```json
+{
+  "name": "approve_batch_coding",
+  "inputSchema": {
+    "type": "object",
+    "properties": {
+      "batch_id": {"type": "string"}
+    },
+    "required": ["batch_id"]
+  }
+}
+```
+
+---
+
+### Batch Operations
+
+#### find_similar_content
+
+Find similar content across sources.
+
+```json
+{
+  "name": "find_similar_content",
+  "inputSchema": {
+    "type": "object",
+    "properties": {
+      "search_text": {"type": "string"},
+      "code_id": {"type": "integer", "description": "Optional context"}
+    },
+    "required": ["search_text"]
+  }
+}
+```
+
+#### suggest_batch_coding
+
+Suggest applying a code to multiple segments.
+
+```json
+{
+  "name": "suggest_batch_coding",
+  "inputSchema": {
+    "type": "object",
+    "properties": {
+      "code_id": {"type": "integer"},
+      "segments": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "source_id": {"type": "integer"},
+            "start_pos": {"type": "integer"},
+            "end_pos": {"type": "integer"}
+          },
+          "required": ["source_id", "start_pos", "end_pos"]
+        }
+      },
+      "rationale": {"type": "string"}
+    },
+    "required": ["code_id", "segments", "rationale"]
+  }
+}
+```
+
+---
+
 ## HTTP Examples
 
 ### Direct Tool Call

@@ -287,3 +287,172 @@ class SuggestionBatch:
         if len(self.text_analyzed) <= 200:
             return self.text_analyzed
         return self.text_analyzed[:197] + "..."
+
+
+# ============================================================
+# Coding Suggestions (QC-029.07)
+# ============================================================
+
+
+@dataclass(frozen=True)
+class CodingSuggestionId:
+    """Unique identifier for a coding suggestion."""
+
+    value: str
+
+    @classmethod
+    def new(cls) -> CodingSuggestionId:
+        """Generate a new unique coding suggestion ID."""
+        return cls(value=f"csug_{uuid4().hex[:12]}")
+
+
+@dataclass(frozen=True)
+class CodingSuggestion:
+    """
+    An AI-suggested code application to a text range.
+
+    Represents a proposed application of an existing code
+    to a specific text segment, awaiting researcher approval.
+    """
+
+    id: CodingSuggestionId
+    source_id: SourceId
+    code_id: CodeId
+    start_pos: int
+    end_pos: int
+    rationale: str
+    confidence: float = 0.0  # 0.0 to 1.0
+    text_excerpt: str | None = None
+    status: str = "pending"  # pending, approved, rejected
+    created_at: datetime = field(default_factory=lambda: datetime.now(UTC))
+
+    def __post_init__(self) -> None:
+        if not 0.0 <= self.confidence <= 1.0:
+            raise ValueError(
+                f"Confidence must be between 0.0 and 1.0, got {self.confidence}"
+            )
+        if self.status not in ("pending", "approved", "rejected"):
+            raise ValueError(f"Invalid status: {self.status}")
+        if self.start_pos < 0:
+            raise ValueError(f"start_pos must be >= 0, got {self.start_pos}")
+        if self.end_pos <= self.start_pos:
+            raise ValueError(
+                f"end_pos must be > start_pos, got {self.end_pos} <= {self.start_pos}"
+            )
+
+    def with_status(self, new_status: str) -> CodingSuggestion:
+        """Return new CodingSuggestion with updated status."""
+        return CodingSuggestion(
+            id=self.id,
+            source_id=self.source_id,
+            code_id=self.code_id,
+            start_pos=self.start_pos,
+            end_pos=self.end_pos,
+            rationale=self.rationale,
+            confidence=self.confidence,
+            text_excerpt=self.text_excerpt,
+            status=new_status,
+            created_at=self.created_at,
+        )
+
+    @property
+    def is_pending(self) -> bool:
+        """Check if suggestion is awaiting review."""
+        return self.status == "pending"
+
+    @property
+    def confidence_percentage(self) -> int:
+        """Return confidence as percentage (0-100)."""
+        return int(self.confidence * 100)
+
+
+@dataclass(frozen=True)
+class CodingSuggestionBatchId:
+    """Unique identifier for a batch of coding suggestions."""
+
+    value: str
+
+    @classmethod
+    def new(cls) -> CodingSuggestionBatchId:
+        """Generate a new unique batch ID."""
+        return cls(value=f"cbatch_{uuid4().hex[:12]}")
+
+
+@dataclass(frozen=True)
+class CodingSuggestionBatch:
+    """
+    A batch of coding suggestions from auto-suggest.
+
+    Groups related coding suggestions for efficient review.
+    """
+
+    id: CodingSuggestionBatchId
+    source_id: SourceId
+    suggestions: tuple[CodingSuggestion, ...]
+    status: str = "pending_review"  # pending_review, reviewed, applied
+    created_at: datetime = field(default_factory=lambda: datetime.now(UTC))
+
+    @property
+    def count(self) -> int:
+        """Number of suggestions in batch."""
+        return len(self.suggestions)
+
+    @property
+    def pending_count(self) -> int:
+        """Number of pending suggestions."""
+        return sum(1 for s in self.suggestions if s.is_pending)
+
+    @property
+    def reviewed_count(self) -> int:
+        """Number of reviewed (approved or rejected) suggestions."""
+        return sum(1 for s in self.suggestions if not s.is_pending)
+
+
+@dataclass(frozen=True)
+class MergeSuggestionId:
+    """Unique identifier for a merge suggestion."""
+
+    value: str
+
+    @classmethod
+    def new(cls) -> MergeSuggestionId:
+        """Generate a new unique merge suggestion ID."""
+        return cls(value=f"merge_{uuid4().hex[:12]}")
+
+
+@dataclass(frozen=True)
+class MergeSuggestion:
+    """
+    A suggestion to merge one code into another.
+
+    Represents a proposed merge operation awaiting approval.
+    """
+
+    id: MergeSuggestionId
+    source_code_id: CodeId
+    target_code_id: CodeId
+    rationale: str
+    status: str = "pending"  # pending, approved, rejected
+    created_at: datetime = field(default_factory=lambda: datetime.now(UTC))
+
+    def __post_init__(self) -> None:
+        if self.status not in ("pending", "approved", "rejected"):
+            raise ValueError(f"Invalid status: {self.status}")
+        if self.source_code_id == self.target_code_id:
+            raise ValueError("Cannot merge a code into itself")
+
+    def with_status(self, new_status: str) -> MergeSuggestion:
+        """Return new MergeSuggestion with updated status."""
+        return MergeSuggestion(
+            id=self.id,
+            source_code_id=self.source_code_id,
+            target_code_id=self.target_code_id,
+            rationale=self.rationale,
+            status=new_status,
+            created_at=self.created_at,
+        )
+
+    @property
+    def is_pending(self) -> bool:
+        """Check if suggestion is awaiting review."""
+        return self.status == "pending"

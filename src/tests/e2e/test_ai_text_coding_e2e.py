@@ -15,7 +15,7 @@ from typing import TYPE_CHECKING
 
 import allure
 import pytest
-from returns.result import Failure, Success
+# Note: CodingTools.execute() returns dict, not Result
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -199,8 +199,8 @@ class TestAgentApplyCodeToTextRange:
             )
 
         with allure.step("Verify suggestion accepted"):
-            assert isinstance(result, Success)
-            data = result.unwrap()
+            assert result.get("success") is True
+            data = result["data"]
             assert data["source_id"] == 1
             assert data["code_id"] == 1
             assert data["start_pos"] == 195
@@ -228,8 +228,8 @@ class TestAgentApplyCodeToTextRange:
             )
 
         with allure.step("Verify approval required"):
-            assert isinstance(result, Success)
-            data = result.unwrap()
+            assert result.get("success") is True
+            data = result["data"]
             assert data["status"] == "pending_approval"
             assert data["requires_approval"] is True
 
@@ -238,7 +238,7 @@ class TestAgentApplyCodeToTextRange:
             # No segments should exist until approved
             matching = [
                 s for s in segments
-                if s.source_id.value == 1 and s.start_pos == 400
+                if s.source_id.value == 1 and s.position.start == 400
             ]
             assert len(matching) == 0
 
@@ -264,8 +264,8 @@ class TestAgentApplyCodeToTextRange:
             )
 
         with allure.step("Verify rationale included"):
-            assert isinstance(result, Success)
-            data = result.unwrap()
+            assert result.get("success") is True
+            data = result["data"]
             assert "rationale" in data
             assert "time management" in data["rationale"].lower()
 
@@ -307,8 +307,8 @@ class TestAgentApplyCodeToTextRange:
             )
 
         with allure.step("Verify pending suggestions returned"):
-            assert isinstance(result, Success)
-            data = result.unwrap()
+            assert result.get("success") is True
+            data = result["data"]
             assert data["count"] >= 2
             assert all("suggestion_id" in s for s in data["suggestions"])
             assert all("rationale" in s for s in data["suggestions"])
@@ -336,8 +336,8 @@ class TestAgentApplyCodeToTextRange:
             )
 
         with allure.step("Verify text excerpt included"):
-            assert isinstance(result, Success)
-            data = result.unwrap()
+            assert result.get("success") is True
+            data = result["data"]
             assert "text_excerpt" in data
             assert len(data["text_excerpt"]) > 0
 
@@ -362,7 +362,7 @@ class TestAgentApplyCodeToTextRange:
                     "rationale": "Participant values immediate feedback",
                 },
             )
-            suggestion_id = suggestion.unwrap()["suggestion_id"]
+            suggestion_id = suggestion["data"]["suggestion_id"]
 
         with allure.step("Approve suggestion"):
             approval = tools.execute(
@@ -371,8 +371,8 @@ class TestAgentApplyCodeToTextRange:
             )
 
         with allure.step("Verify segment created"):
-            assert isinstance(approval, Success)
-            data = approval.unwrap()
+            assert approval.get("success") is True
+            data = approval["data"]
             assert data["status"] == "applied"
             assert "segment_id" in data
 
@@ -415,8 +415,8 @@ class TestAgentSuggestCodesForText:
             )
 
         with allure.step("Verify analysis returned"):
-            assert isinstance(result, Success)
-            data = result.unwrap()
+            assert result.get("success") is True
+            data = result["data"]
             assert "uncoded_ranges" in data
             assert data["total_length"] > 0
             assert "uncoded_percentage" in data
@@ -440,8 +440,8 @@ class TestAgentSuggestCodesForText:
             )
 
         with allure.step("Verify code suggestions returned"):
-            assert isinstance(result, Success)
-            data = result.unwrap()
+            assert result.get("success") is True
+            data = result["data"]
             assert "suggestions" in data
             assert len(data["suggestions"]) > 0
 
@@ -471,8 +471,8 @@ class TestAgentSuggestCodesForText:
             )
 
         with allure.step("Verify confidence scores"):
-            assert isinstance(result, Success)
-            data = result.unwrap()
+            assert result.get("success") is True
+            data = result["data"]
             for suggestion in data["suggestions"]:
                 assert "confidence" in suggestion
                 assert 0 <= suggestion["confidence"] <= 100
@@ -491,8 +491,8 @@ class TestAgentSuggestCodesForText:
                 "suggest_codes_for_range",
                 {"source_id": 1, "start_pos": 400, "end_pos": 600},
             )
-            assert isinstance(suggestions, Success)
-            suggestion_id = suggestions.unwrap()["suggestion_batch_id"]
+            assert suggestions.get("success") is True
+            suggestion_id = suggestions["data"]["suggestion_batch_id"]
 
         with allure.step("Accept a suggestion"):
             accept_result = tools.execute(
@@ -503,8 +503,8 @@ class TestAgentSuggestCodesForText:
                     "selected_code_ids": [4],  # Accept Adaptive Learning
                 },
             )
-            assert isinstance(accept_result, Success)
-            assert accept_result.unwrap()["applied_count"] >= 1
+            assert accept_result.get("success") is True
+            assert accept_result["data"]["applied_count"] >= 1
 
         with allure.step("Reject a suggestion"):
             # Get new suggestions first
@@ -512,7 +512,7 @@ class TestAgentSuggestCodesForText:
                 "suggest_codes_for_range",
                 {"source_id": 1, "start_pos": 100, "end_pos": 200},
             )
-            batch_id = suggestions2.unwrap()["suggestion_batch_id"]
+            batch_id = suggestions2["data"]["suggestion_batch_id"]
 
             reject_result = tools.execute(
                 "respond_to_code_suggestion",
@@ -522,8 +522,8 @@ class TestAgentSuggestCodesForText:
                     "reason": "Not applicable to this context",
                 },
             )
-            assert isinstance(reject_result, Success)
-            assert reject_result.unwrap()["status"] == "rejected"
+            assert reject_result.get("success") is True
+            assert reject_result["data"]["status"] == "rejected"
 
     @allure.title("Auto-suggest codes for entire source")
     @allure.severity(allure.severity_level.NORMAL)
@@ -544,8 +544,8 @@ class TestAgentSuggestCodesForText:
             )
 
         with allure.step("Verify batch suggestions returned"):
-            assert isinstance(result, Success)
-            data = result.unwrap()
+            assert result.get("success") is True
+            data = result["data"]
             assert "suggestions" in data
             assert "total_suggested" in data
             # Should find multiple segments to code
@@ -570,17 +570,17 @@ class TestAgentSuggestCodesForText:
                 "auto_suggest_codes",
                 {"source_id": 1, "min_confidence": 60},
             )
-            assert isinstance(result, Success)
-            batch_id = result.unwrap()["batch_id"]
+            assert result.get("success") is True
+            batch_id = result["data"]["batch_id"]
 
         with allure.step("Verify batch is pending"):
             status = tools.execute(
                 "get_suggestion_batch_status",
                 {"batch_id": batch_id},
             )
-            assert isinstance(status, Success)
-            assert status.unwrap()["status"] == "pending_review"
-            assert status.unwrap()["reviewed_count"] == 0
+            assert status.get("success") is True
+            assert status["data"]["status"] == "pending_review"
+            assert status["data"]["reviewed_count"] == 0
 
 
 # =============================================================================
@@ -611,8 +611,8 @@ class TestBatchCodingOperations:
             )
 
         with allure.step("Verify matches found across sources"):
-            assert isinstance(result, Success)
-            data = result.unwrap()
+            assert result.get("success") is True
+            data = result["data"]
             assert "matches" in data
             # Should find matches in all 3 sources
             source_ids = {m["source_id"] for m in data["matches"]}
@@ -634,7 +634,7 @@ class TestBatchCodingOperations:
                 "find_similar_content",
                 {"search_text": "time management", "code_id": 1},
             )
-            matches = find_result.unwrap()["matches"]
+            matches = find_result["data"]["matches"]
 
         with allure.step("Suggest batch application"):
             batch_result = tools.execute(
@@ -650,8 +650,8 @@ class TestBatchCodingOperations:
             )
 
         with allure.step("Verify batch suggestion created"):
-            assert isinstance(batch_result, Success)
-            data = batch_result.unwrap()
+            assert batch_result.get("success") is True
+            data = batch_result["data"]
             assert data["status"] == "pending_approval"
             assert data["segment_count"] == len(matches)
 
@@ -677,7 +677,7 @@ class TestBatchCodingOperations:
                     "rationale": "Time management mentions",
                 },
             )
-            batch_id = batch_result.unwrap()["batch_id"]
+            batch_id = batch_result["data"]["batch_id"]
 
         with allure.step("Approve entire batch"):
             approval = tools.execute(
@@ -686,8 +686,8 @@ class TestBatchCodingOperations:
             )
 
         with allure.step("Verify all segments created"):
-            assert isinstance(approval, Success)
-            data = approval.unwrap()
+            assert approval.get("success") is True
+            data = approval["data"]
             assert data["applied_count"] == 3
 
         with allure.step("Verify segments in repository"):
@@ -717,8 +717,8 @@ class TestAITextCodingIntegration:
 
         with allure.step("Step 1: Analyze uncoded text"):
             analysis = tools.execute("analyze_uncoded_text", {"source_id": 1})
-            assert isinstance(analysis, Success)
-            uncoded_pct = analysis.unwrap()["uncoded_percentage"]
+            assert analysis.get("success") is True
+            uncoded_pct = analysis["data"]["uncoded_percentage"]
             assert uncoded_pct == 100  # Nothing coded yet
 
         with allure.step("Step 2: Auto-suggest codes"):
@@ -726,9 +726,9 @@ class TestAITextCodingIntegration:
                 "auto_suggest_codes",
                 {"source_id": 1, "min_confidence": 75},
             )
-            assert isinstance(suggestions, Success)
-            batch_id = suggestions.unwrap()["batch_id"]
-            total_suggested = suggestions.unwrap()["total_suggested"]
+            assert suggestions.get("success") is True
+            batch_id = suggestions["data"]["batch_id"]
+            total_suggested = suggestions["data"]["total_suggested"]
             assert total_suggested > 0
 
         with allure.step("Step 3: Review suggestions"):
@@ -736,20 +736,20 @@ class TestAITextCodingIntegration:
                 "get_suggestion_batch_status",
                 {"batch_id": batch_id},
             )
-            assert status.unwrap()["status"] == "pending_review"
+            assert status["data"]["status"] == "pending_review"
 
         with allure.step("Step 4: Approve suggestions"):
             approval = tools.execute(
                 "approve_batch_coding",
                 {"batch_id": batch_id},
             )
-            assert isinstance(approval, Success)
-            applied = approval.unwrap()["applied_count"]
+            assert approval.get("success") is True
+            applied = approval["data"]["applied_count"]
             assert applied > 0
 
         with allure.step("Step 5: Verify coding completed"):
             analysis2 = tools.execute("analyze_uncoded_text", {"source_id": 1})
-            uncoded_pct2 = analysis2.unwrap()["uncoded_percentage"]
+            uncoded_pct2 = analysis2["data"]["uncoded_percentage"]
             # Should have less uncoded text now
             assert uncoded_pct2 < uncoded_pct
 
@@ -773,7 +773,7 @@ class TestAITextCodingIntegration:
                     "rationale": "Test suggestion",
                 },
             )
-            suggestion_id = suggestion.unwrap()["suggestion_id"]
+            suggestion_id = suggestion["data"]["suggestion_id"]
 
         with allure.step("Reject with feedback"):
             rejection = tools.execute(
@@ -784,7 +784,7 @@ class TestAITextCodingIntegration:
                     "feedback": "Include more context",
                 },
             )
-            assert isinstance(rejection, Success)
+            assert rejection.get("success") is True
 
         with allure.step("Submit modified suggestion"):
             modified = tools.execute(
@@ -797,14 +797,14 @@ class TestAITextCodingIntegration:
                     "rationale": "Expanded range based on feedback",
                 },
             )
-            new_suggestion_id = modified.unwrap()["suggestion_id"]
+            new_suggestion_id = modified["data"]["suggestion_id"]
 
         with allure.step("Approve modified suggestion"):
             approval = tools.execute(
                 "approve_coding_suggestion",
                 {"suggestion_id": new_suggestion_id},
             )
-            assert isinstance(approval, Success)
+            assert approval.get("success") is True
 
 
 # =============================================================================

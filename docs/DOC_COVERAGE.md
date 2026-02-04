@@ -45,7 +45,21 @@ This file tracks which features have documentation and screenshots.
 | QC-029.06 | Multiple Codes | [coding.md](user-manual/coding.md) | coding-multiple-codes.png | :white_check_mark: |
 | QC-029.07 | Segment Memos | [coding.md](user-manual/coding.md) | memos-panel.png | :white_check_mark: |
 
-### QC-030 AI Features
+### QC-028 AI Code Management (Agent Stories)
+
+| ID | Story | Doc Page | Screenshots | Status |
+|----|-------|----------|-------------|--------|
+| QC-028.07 | Suggest New Code | [ai-features.md](user-manual/ai-features.md), [mcp-api.md](api/mcp-api.md) | code-suggestions.png | :white_check_mark: |
+| QC-028.08 | Detect Duplicate Codes | [ai-features.md](user-manual/ai-features.md), [mcp-api.md](api/mcp-api.md) | duplicate-codes.png | :white_check_mark: |
+
+### QC-029 AI Text Coding (Agent Stories)
+
+| ID | Story | Doc Page | Screenshots | Status |
+|----|-------|----------|-------------|--------|
+| QC-029.07 | Apply Code to Text Range | [mcp-api.md](api/mcp-api.md) | - | :construction: |
+| QC-029.08 | Suggest Codes for Text | [ai-features.md](user-manual/ai-features.md), [mcp-api.md](api/mcp-api.md) | - | :construction: |
+
+### QC-030 AI Features (Researcher Stories)
 
 | ID | Story | Doc Page | Screenshots | Status |
 |----|-------|----------|-------------|--------|
