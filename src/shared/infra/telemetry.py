@@ -21,7 +21,8 @@ Usage:
 from __future__ import annotations
 
 import functools
-from typing import TYPE_CHECKING, Callable, ParamSpec, TypeVar
+from collections.abc import Callable
+from typing import TYPE_CHECKING, ParamSpec, TypeVar
 
 from opentelemetry import trace
 from opentelemetry.sdk.resources import Resource
@@ -44,7 +45,9 @@ _initialized = False
 _sqlalchemy_instrumented = False
 
 
-def init_telemetry(service_name: str = "qualcoder", enable_console: bool = True) -> None:
+def init_telemetry(
+    service_name: str = "qualcoder", enable_console: bool = True
+) -> None:
     """
     Initialize OpenTelemetry tracing.
 
@@ -161,7 +164,7 @@ def traced_method(
                     span.set_attribute("arg_count", len(args) - 1)
                 if kwargs:
                     for key, value in kwargs.items():
-                        if isinstance(value, (int, str, float, bool)):
+                        if isinstance(value, int | str | float | bool):
                             span.set_attribute(f"arg.{key}", value)
                 return func(*args, **kwargs)
 
@@ -203,7 +206,9 @@ class SpanContext:
             self._span.record_exception(exc_val)
             self._span.set_status(trace.Status(trace.StatusCode.ERROR, str(exc_val)))
         if self._token:
-            trace.use_span(self._span, end_on_exit=True).__exit__(exc_type, exc_val, exc_tb)
+            trace.use_span(self._span, end_on_exit=True).__exit__(
+                exc_type, exc_val, exc_tb
+            )
 
 
 # Alias for convenience
@@ -238,7 +243,7 @@ class QueryCounter:
     def increment(self, n: int = 1) -> None:
         self.count += n
 
-    def __enter__(self) -> "QueryCounter":
+    def __enter__(self) -> QueryCounter:
         self._span = tracer.start_span(f"{self.name}.queries")
         trace.use_span(self._span, end_on_exit=False)
         return self
