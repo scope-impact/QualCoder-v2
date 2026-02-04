@@ -360,8 +360,67 @@ class SyncEngine:
             elif client and not was_online:
                 # Coming online
                 self._state.status = SyncStatus.CONNECTING
-                self._start_subscriptions()
+                if self._enable_subscriptions:
+                    self._start_subscriptions()
+                else:
+                    self._state.status = SyncStatus.SYNCED
                 logger.info("SyncEngine: came online")
+
+    def pull(self) -> dict[str, int]:
+        """
+        Pull remote changes from Convex (like 'git pull').
+
+        Fetches all data from Convex and notifies registered listeners
+        so they can update local SQLite. This is a manual alternative to
+        real-time subscriptions.
+
+        Returns:
+            Dict mapping entity type to number of items pulled.
+            Example: {"code": 5, "source": 10, "case": 2}
+
+        Raises:
+            RuntimeError: If not connected to Convex.
+        """
+        if not self._convex:
+            raise RuntimeError("Not connected to Convex")
+
+        self._state.status = SyncStatus.SYNCING
+        results: dict[str, int] = {}
+
+        try:
+            # Pull each entity type
+            pull_queries = [
+                ("code", self._convex.get_all_codes),
+                ("category", self._convex.get_all_categories),
+                ("segment", self._convex.get_all_segments),
+                ("source", self._convex.get_all_sources),
+                ("folder", self._convex.get_all_folders),
+                ("case", self._convex.get_all_cases),
+            ]
+
+            for entity_type, query_func in pull_queries:
+                try:
+                    items = query_func()
+                    results[entity_type] = len(items)
+
+                    # Notify listeners with the pulled data
+                    self._notify_listeners(entity_type, items)
+
+                    logger.debug(f"Pulled {len(items)} {entity_type}(s) from Convex")
+                except Exception as e:
+                    logger.warning(f"Failed to pull {entity_type}: {e}")
+                    results[entity_type] = 0
+
+            self._state.status = SyncStatus.SYNCED
+            self._state.last_sync = datetime.now(UTC)
+            logger.info(f"Pull complete: {results}")
+            return results
+
+        except Exception as e:
+            self._state.status = SyncStatus.ERROR
+            self._state.error_message = str(e)
+            logger.error(f"Pull failed: {e}")
+            raise
 
     # =========================================================================
     # Change Management (Local -> Convex)
