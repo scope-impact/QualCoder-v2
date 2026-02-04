@@ -32,13 +32,15 @@ Architecture:
 
 from __future__ import annotations
 
+import contextlib
 import logging
 import queue
 import threading
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from enum import Enum
-from typing import TYPE_CHECKING, Any, Callable
+from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
     from sqlalchemy import Connection
@@ -61,7 +63,7 @@ def _subscription_worker(
     query: str,
     entity_type: str,
     listeners: dict[str, list[Callable]],
-    state: "SyncState",
+    state: SyncState,
 ) -> None:
     """
     Standalone subscription worker function.
@@ -86,10 +88,8 @@ def _subscription_worker(
         for data in thread_client.subscribe(query, {}):
             # Notify registered listeners
             for callback in listeners.get(entity_type, []):
-                try:
+                with contextlib.suppress(Exception):
                     callback("sync", {"items": data})
-                except Exception:
-                    pass  # Silently ignore callback errors
 
     except Exception as e:
         state.status = SyncStatus.ERROR
@@ -228,7 +228,9 @@ class SyncEngine:
             from sqlalchemy import text
 
             result = self._sqlite.execute(
-                text("SELECT id, entity_type, change_type, entity_id, data, timestamp, retry_count FROM sync_queue ORDER BY id")
+                text(
+                    "SELECT id, entity_type, change_type, entity_id, data, timestamp, retry_count FROM sync_queue ORDER BY id"
+                )
             )
             for row in result.fetchall():
                 change = SyncChange(
@@ -279,7 +281,9 @@ class SyncEngine:
             from sqlalchemy import text
 
             self._sqlite.execute(
-                text("DELETE FROM sync_queue WHERE entity_type = :entity_type AND entity_id = :entity_id"),
+                text(
+                    "DELETE FROM sync_queue WHERE entity_type = :entity_type AND entity_id = :entity_id"
+                ),
                 {"entity_type": change.entity_type, "entity_id": change.entity_id},
             )
             self._sqlite.commit()
@@ -560,7 +564,9 @@ class SyncEngine:
 
             mutation = mutation_map.get((change.entity_type, change.change_type))
             if not mutation:
-                logger.warning(f"Unknown change: {change.entity_type}/{change.change_type}")
+                logger.warning(
+                    f"Unknown change: {change.entity_type}/{change.change_type}"
+                )
                 return True
 
             if change.change_type == ChangeType.DELETE:
@@ -643,7 +649,9 @@ class SyncEngine:
                 return
 
             thread_client = _ConvexClient(self._convex_url)
-            logger.debug(f"Created dedicated Convex client for {entity_type} subscription")
+            logger.debug(
+                f"Created dedicated Convex client for {entity_type} subscription"
+            )
 
             # The subscribe() method yields new data whenever it changes
             for data in thread_client.subscribe(query, {}):

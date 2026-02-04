@@ -36,7 +36,6 @@ if TYPE_CHECKING:
         SyncPullCompleted,
         SyncPullFailed,
         SyncPullStarted,
-        SyncStatusChanged,
     )
 
 
@@ -120,7 +119,7 @@ class SyncResultPayload(SignalPayload):
 class SyncPullStartedConverter:
     """Convert SyncPullStarted event to UI payload."""
 
-    def convert(self, event: SyncPullStarted) -> SyncStatusPayload:
+    def convert(self, _event: SyncPullStarted) -> SyncStatusPayload:
         return SyncStatusPayload.pulling()
 
 

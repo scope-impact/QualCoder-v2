@@ -9,6 +9,10 @@ Components:
 - Command Handlers: handle_sync_pull, handle_sync_status
 """
 
+from src.shared.infra.sync.commandHandlers import (
+    handle_sync_pull,
+    handle_sync_status,
+)
 from src.shared.infra.sync.engine import (
     ChangeType,
     SyncChange,
@@ -23,10 +27,6 @@ from src.shared.infra.sync.synced_repositories import (
     SyncedFolderRepository,
     SyncedSegmentRepository,
     SyncedSourceRepository,
-)
-from src.shared.infra.sync.commandHandlers import (
-    handle_sync_pull,
-    handle_sync_status,
 )
 
 __all__ = [

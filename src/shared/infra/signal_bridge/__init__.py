@@ -37,16 +37,16 @@ from src.shared.infra.signal_bridge.payloads import (
     ActivityStatus,
     SignalPayload,
 )
+from src.shared.infra.signal_bridge.sync import (
+    SyncResultPayload,
+    SyncSignalBridge,
+    SyncStatusPayload,
+)
 from src.shared.infra.signal_bridge.thread_utils import (
     ThreadChecker,
     get_current_thread_name,
     is_main_thread,
     warn_if_not_main_thread,
-)
-from src.shared.infra.signal_bridge.sync import (
-    SyncSignalBridge,
-    SyncStatusPayload,
-    SyncResultPayload,
 )
 
 __all__ = [

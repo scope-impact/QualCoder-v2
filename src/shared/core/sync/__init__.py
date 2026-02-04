@@ -6,7 +6,19 @@ Provides:
 2. Cross-context sync handlers for denormalized data
 """
 
-from src.shared.core.sync.source_sync_handler import SourceSyncHandler
+# Commands
+from src.shared.core.sync.commands import (
+    SyncPullCommand,
+    SyncStatusCommand,
+)
+
+# Domain Derivers
+from src.shared.core.sync.derivers import (
+    SyncDecision,
+    derive_entity_pull_result,
+    derive_pull_completed,
+    derive_sync_changes,
+)
 
 # Domain Entities
 from src.shared.core.sync.entities import (
@@ -31,20 +43,7 @@ from src.shared.core.sync.invariants import (
     is_deletion_candidate,
     is_valid_remote_item,
 )
-
-# Domain Derivers
-from src.shared.core.sync.derivers import (
-    SyncDecision,
-    derive_entity_pull_result,
-    derive_pull_completed,
-    derive_sync_changes,
-)
-
-# Commands
-from src.shared.core.sync.commands import (
-    SyncPullCommand,
-    SyncStatusCommand,
-)
+from src.shared.core.sync.source_sync_handler import SourceSyncHandler
 
 __all__ = [
     # Cross-context handler

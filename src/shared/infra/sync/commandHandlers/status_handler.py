@@ -13,7 +13,7 @@ from src.shared.common.operation_result import OperationResult
 from src.shared.core.sync.commands import SyncStatusCommand
 
 if TYPE_CHECKING:
-    from src.shared.infra.sync.engine import SyncEngine, SyncState
+    from src.shared.infra.sync.engine import SyncEngine
 
 
 @dataclass(frozen=True)
@@ -40,7 +40,7 @@ class SyncStatusResult:
 
 
 def handle_sync_status(
-    cmd: SyncStatusCommand,
+    _cmd: SyncStatusCommand,
     sync_engine: SyncEngine | None,
     cloud_sync_enabled: bool = False,
 ) -> OperationResult:

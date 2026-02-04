@@ -9,13 +9,14 @@ synced repository's _handle_remote_change method.
 from __future__ import annotations
 
 import logging
-from typing import TYPE_CHECKING, Callable, TypeVar
+from collections.abc import Callable
+from typing import TYPE_CHECKING, TypeVar
 
 from src.shared.core.sync.derivers import derive_sync_changes
 from src.shared.core.sync.entities import RemoteItem, SyncDomainState
 
 if TYPE_CHECKING:
-    from src.shared.core.sync.derivers import SyncDecision
+    pass
 
 logger = logging.getLogger(__name__)
 
@@ -79,7 +80,9 @@ def process_remote_changes(
                 applied += 1
                 logger.debug(f"Synced {entity_type} from remote: {remote_item.id}")
         except Exception as e:
-            logger.warning(f"Failed to apply remote {entity_type} {remote_item.id}: {e}")
+            logger.warning(
+                f"Failed to apply remote {entity_type} {remote_item.id}: {e}"
+            )
 
     deleted = 0
     for entity_id in decision.to_delete:
@@ -92,7 +95,9 @@ def process_remote_changes(
 
     skipped = len(decision.skipped_conflicts)
     if skipped > 0:
-        logger.debug(f"Skipped {skipped} {entity_type}(s) with pending outbound changes")
+        logger.debug(
+            f"Skipped {skipped} {entity_type}(s) with pending outbound changes"
+        )
 
     return applied, skipped, deleted
 
