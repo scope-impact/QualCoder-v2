@@ -173,6 +173,9 @@ nav:
   - Archive (Historical):
       - archive/README.md
 
+  - Test Reports:
+      - test-reports/index.md
+
 extra:
   version:
     provider: mike

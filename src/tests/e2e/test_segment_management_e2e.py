@@ -34,6 +34,7 @@ from src.shared.presentation.dto import (
     FileDTO,
     TextCodingDataDTO,
 )
+from src.tests.e2e.helpers import attach_screenshot
 
 pytestmark = [
     pytest.mark.e2e,
@@ -209,6 +210,8 @@ class TestOverlappingCodes:
         # Verify UI state: code count incremented
         assert screen.get_code_count("2") == initial_count + 1
 
+        attach_screenshot(screen, "CodingScreen - Apply Second Code")
+
     @allure.title("AC #2.2: Multiple codes can be applied to overlapping regions")
     @allure.severity(allure.severity_level.NORMAL)
     def test_overlapping_codes_tracked(self, coding_screen_with_overlaps):
@@ -242,6 +245,8 @@ class TestOverlappingCodes:
         # Verify UI state: both code counts incremented
         assert screen.get_code_count("1") == initial_count_1 + 1
         assert screen.get_code_count("3") == initial_count_3 + 1
+
+        attach_screenshot(screen, "CodingScreen - Multiple Codes Applied")
 
     @allure.title("AC #2.3: O key cycles through overlapping codes")
     @allure.severity(allure.severity_level.NORMAL)
@@ -282,6 +287,8 @@ class TestSegmentHighlighting:
 
         assert len(flash_signals) == 1
         assert flash_signals[0] == (50, 100)
+
+        attach_screenshot(screen, "CodingScreen - Navigate to Segment")
 
     @allure.title("AC #3.2: Screen has method to check quick mark state")
     @allure.severity(allure.severity_level.NORMAL)
@@ -364,6 +371,8 @@ class TestSegmentMemos:
         preview = segment_memo_dialog.get_segment_preview()
         assert "sample coded text" in preview
 
+        attach_screenshot(segment_memo_dialog, "SegmentMemoDialog - Segment Preview")
+
     @allure.title("AC #6.2: Dialog shows code name and color")
     @allure.severity(allure.severity_level.NORMAL)
     def test_dialog_shows_code_info(self, segment_memo_dialog):
@@ -373,6 +382,8 @@ class TestSegmentMemos:
 
         title = segment_memo_dialog.get_title()
         assert "Positive Experience" in title
+
+        attach_screenshot(segment_memo_dialog, "SegmentMemoDialog - Code Info Header")
 
     @allure.title("AC #6.3: User can enter memo text")
     @allure.severity(allure.severity_level.CRITICAL)
@@ -386,6 +397,8 @@ class TestSegmentMemos:
         assert (
             segment_memo_dialog.get_content() == "Important insight about this passage"
         )
+
+        attach_screenshot(segment_memo_dialog, "SegmentMemoDialog - Memo Text Entered")
 
     @allure.title("AC #6.4: Save button emits save_clicked")
     @allure.severity(allure.severity_level.CRITICAL)
@@ -446,6 +459,8 @@ class TestMemosPanel:
 
         assert memos_panel.get_memo_count() == 4
 
+        attach_screenshot(memos_panel, "MemosPanel - All Memos Displayed")
+
     @allure.title("Panel can filter by type")
     @allure.severity(allure.severity_level.NORMAL)
     def test_filter_by_type(self, memos_panel, sample_memos):
@@ -469,6 +484,8 @@ class TestMemosPanel:
                 assert item.is_visible_state()
             else:
                 assert not item.is_visible_state()
+
+        attach_screenshot(memos_panel, "MemosPanel - Filtered by Segment Type")
 
     @allure.title("Panel shows all when filter cleared")
     @allure.severity(allure.severity_level.NORMAL)

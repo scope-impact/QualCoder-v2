@@ -23,6 +23,7 @@ from PySide6.QtTest import QSignalSpy
 from PySide6.QtWidgets import QApplication
 
 from src.tests.e2e.fixtures import SampleFiles, create_sample_files
+from src.tests.e2e.helpers import attach_screenshot
 
 pytestmark = [
     pytest.mark.e2e,
@@ -286,6 +287,8 @@ class TestImportImageFiles:
         with allure.step("Verify viewer has correct image path"):
             assert viewer.get_current_path() == sample_files.png_file
 
+        attach_screenshot(viewer, "ImageViewer - Loaded Image")
+
     @allure.title("AC #3: I can import multiple images at once")
     def test_ac3_import_multiple_images(self, sample_files: SampleFiles):
         with allure.step("Prepare list of multiple images"):
@@ -315,6 +318,8 @@ class TestImportImageFiles:
             assert metadata.format in ("PNG", "JPEG", "Unknown")
             assert metadata.file_size > 0
 
+        attach_screenshot(viewer, "ImageViewer - Metadata Captured")
+
     @allure.title("Viewer provides zoom controls")
     @allure.severity(allure.severity_level.NORMAL)
     def test_image_viewer_zoom_controls(self, qapp, colors, sample_files: SampleFiles):
@@ -337,6 +342,8 @@ class TestImportImageFiles:
         with allure.step("Zoom out and verify returned to initial"):
             viewer.zoom_out()
             assert viewer.get_zoom_level() == initial_zoom
+
+        attach_screenshot(viewer, "ImageViewer - Zoom Controls")
 
     @allure.title("Viewer can fit image to window")
     @allure.severity(allure.severity_level.NORMAL)
@@ -417,6 +424,8 @@ class TestImportAudioVideoFiles:
             duration = player.get_duration()
             assert duration >= 0  # NoopBackend returns fake duration
 
+        attach_screenshot(player, "MediaPlayer - Duration Display")
+
     @allure.title("AC #4: Playback controls are available")
     def test_ac4_playback_controls_available(
         self, qapp, colors, sample_files: SampleFiles
@@ -447,6 +456,8 @@ class TestImportAudioVideoFiles:
         with allure.step("Test stop control"):
             player.stop()
             assert not player.is_playing()
+
+        attach_screenshot(player, "MediaPlayer - Playback Controls")
 
     @allure.title("MediaPlayer detects available backend")
     @allure.severity(allure.severity_level.NORMAL)
@@ -1076,6 +1087,8 @@ class TestMediaPlayerUIControls:
         with allure.step("Verify paused"):
             assert not player.is_playing()
 
+        attach_screenshot(player, "MediaPlayer - Play Button Toggle")
+
     @allure.title("Play button click emits playback_started signal")
     def test_play_button_emits_signals(
         self, qtbot, qapp, colors, sample_files: SampleFiles
@@ -1171,6 +1184,8 @@ class TestImageViewerUIControls:
         with allure.step("Verify unchecked"):
             assert not fit_btn.isChecked()
 
+        attach_screenshot(viewer, "ImageViewer - Fit Button Toggle")
+
     @allure.title("Clicking actual size button shows image at 100%")
     def test_actual_size_button(self, qtbot, qapp, colors, sample_files: SampleFiles):
         from PySide6.QtCore import Qt
@@ -1190,6 +1205,8 @@ class TestImageViewerUIControls:
 
         with allure.step("Verify zoom is 100%"):
             assert viewer.get_zoom_level() == 1.0
+
+        attach_screenshot(viewer, "ImageViewer - Actual Size")
 
     @allure.title("Zoom in/out methods change zoom level")
     def test_zoom_methods_work(self, qtbot, qapp, colors, sample_files: SampleFiles):

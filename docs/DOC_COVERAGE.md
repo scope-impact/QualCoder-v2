@@ -20,8 +20,8 @@ This file tracks which features have documentation and screenshots.
 |----|-------|----------|-------------|--------|
 | QC-027.01 | Import Text Document | [sources.md](user-manual/sources.md) | file-manager-empty.png, file-manager-with-sources.png | :white_check_mark: |
 | QC-027.02 | Import PDF Document | [sources.md](user-manual/sources.md) | - | :construction: |
-| QC-027.03 | Import Image | [sources.md](user-manual/sources.md) | - | :construction: |
-| QC-027.04 | Import Audio/Video | [sources.md](user-manual/sources.md) | - | :construction: |
+| QC-027.03 | Import Image | [sources.md](user-manual/sources.md) | image-viewer.png | :white_check_mark: |
+| QC-027.04 | Import Audio/Video | [sources.md](user-manual/sources.md) | media-player.png | :white_check_mark: |
 
 ### QC-028 Manage Codes
 
@@ -42,6 +42,8 @@ This file tracks which features have documentation and screenshots.
 | QC-029.03 | In-Vivo Coding (V key) | [coding.md](user-manual/coding.md) | - | :construction: |
 | QC-029.04 | Unmark (U key) | [coding.md](user-manual/coding.md) | - | :construction: |
 | QC-029.05 | Text Selection | [coding.md](user-manual/coding.md) | coding-screen-selected.png | :white_check_mark: |
+| QC-029.06 | Multiple Codes | [coding.md](user-manual/coding.md) | coding-multiple-codes.png | :white_check_mark: |
+| QC-029.07 | Segment Memos | [coding.md](user-manual/coding.md) | memos-panel.png | :white_check_mark: |
 
 ### QC-030 AI Features
 
@@ -49,23 +51,24 @@ This file tracks which features have documentation and screenshots.
 |----|-------|----------|-------------|--------|
 | QC-030.01 | Code Suggestions | [ai-features.md](user-manual/ai-features.md) | code-suggestions-empty.png, code-suggestions-list.png, code-suggestions-details.png | :white_check_mark: |
 | QC-030.02 | Semantic Search | [ai-features.md](user-manual/ai-features.md) | - | :x: |
-| QC-030.03 | Auto-coding | [ai-features.md](user-manual/ai-features.md) | - | :x: |
+| QC-030.03 | Auto-coding | [ai-features.md](user-manual/ai-features.md) | auto-code-pattern.png, auto-code-preview.png | :white_check_mark: |
 
-### QC-031 Cases
-
-| ID | Story | Doc Page | Screenshots | Status |
-|----|-------|----------|-------------|--------|
-| QC-031.01 | Create Case | [cases.md](user-manual/cases.md) | - | :x: |
-| QC-031.02 | Case Attributes | [cases.md](user-manual/cases.md) | - | :x: |
-| QC-031.03 | Link Sources to Cases | [cases.md](user-manual/cases.md) | - | :x: |
-
-### QC-032 Settings
+### QC-034 Cases
 
 | ID | Story | Doc Page | Screenshots | Status |
 |----|-------|----------|-------------|--------|
-| QC-032.01 | General Settings | [settings.md](user-manual/settings.md) | - | :construction: |
-| QC-032.02 | AI Provider Settings | [settings.md](user-manual/settings.md) | - | :construction: |
-| QC-032.03 | MCP Server Settings | [mcp-setup.md](user-manual/mcp-setup.md) | - | :construction: |
+| QC-034.01 | View Cases | [cases.md](user-manual/cases.md) | case-manager-empty.png, case-manager-list.png | :white_check_mark: |
+| QC-034.02 | Create Case | [cases.md](user-manual/cases.md) | - | :construction: |
+| QC-034.03 | Case Attributes | [cases.md](user-manual/cases.md) | - | :construction: |
+
+### QC-038 Settings
+
+| ID | Story | Doc Page | Screenshots | Status |
+|----|-------|----------|-------------|--------|
+| QC-038.01 | Theme Settings | [settings.md](user-manual/settings.md) | settings-default-theme.png, settings-dark-theme.png | :white_check_mark: |
+| QC-038.02 | Font Settings | [settings.md](user-manual/settings.md) | settings-navigation.png | :white_check_mark: |
+| QC-038.03 | All Settings | [settings.md](user-manual/settings.md) | settings-full.png | :white_check_mark: |
+| QC-038.04 | MCP Server Settings | [mcp-setup.md](user-manual/mcp-setup.md) | - | :construction: |
 
 ---
 
@@ -109,6 +112,31 @@ All images in `docs/user-manual/images/`:
 - [x] `code-suggestions-empty.png`
 - [x] `code-suggestions-list.png`
 - [x] `code-suggestions-details.png`
+- [x] `auto-code-pattern.png`
+- [x] `auto-code-preview.png`
+
+### Settings
+- [x] `settings-default-theme.png`
+- [x] `settings-dark-theme.png`
+- [x] `settings-navigation.png`
+- [x] `settings-full.png`
+
+### Cases
+- [x] `case-manager-empty.png`
+- [x] `case-manager-list.png`
+
+### Media Viewers
+- [x] `image-viewer.png`
+- [x] `media-player.png`
+
+### Main Window
+- [x] `main-window-startup.png`
+
+### Memos
+- [x] `memos-panel.png`
+
+### Additional Coding
+- [x] `coding-multiple-codes.png`
 
 ---
 

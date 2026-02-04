@@ -46,6 +46,10 @@ A project is a container for all your research data: sources, codes, and annotat
 uv run python src/main.py
 ```
 
+![Main Window](images/main-window-startup.png)
+
+*The QualCoder main window on startup.*
+
 ### Step 2: Create New Project
 
 1. Click **File > New Project** from the menu

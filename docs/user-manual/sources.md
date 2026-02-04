@@ -90,6 +90,10 @@ Images open in the image viewer with:
 - Region selection tools
 - Overlay of coded regions
 
+![Image Viewer](images/image-viewer.png)
+
+*The Image Viewer displaying an imported image with zoom controls.*
+
 ### Audio/Video
 
 Media files open in the media player with:
@@ -97,6 +101,10 @@ Media files open in the media player with:
 - Playback controls
 - Timeline visualization
 - Segment marking tools
+
+![Media Player](images/media-player.png)
+
+*The Media Player with playback controls for audio/video files.*
 
 ### Empty State
 

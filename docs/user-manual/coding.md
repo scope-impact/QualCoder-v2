@@ -108,6 +108,10 @@ You can apply multiple codes to the same text:
 
 The segment will show a combined color and list all applied codes on hover.
 
+![Multiple Codes Applied](images/coding-multiple-codes.png)
+
+*A text segment with multiple codes applied, showing combined highlighting.*
+
 ## Creating Codes While Coding
 
 You can create new codes without leaving the coding screen:
@@ -139,6 +143,21 @@ The new code is immediately available for use and can be applied to your current
 | Undo | `Cmd+Z` / `Ctrl+Z` |
 | Redo | `Cmd+Shift+Z` / `Ctrl+Y` |
 | Remove Code | `Delete` |
+
+## Segment Memos
+
+Add notes to coded segments:
+
+1. Right-click on a coded segment
+2. Select **Add Memo**
+3. Enter your notes about this segment
+4. Click **Save**
+
+View all memos in the Memos Panel:
+
+![Memos Panel](images/memos-panel.png)
+
+*The Memos Panel showing all segment memos for the current source.*
 
 ## Best Practices
 

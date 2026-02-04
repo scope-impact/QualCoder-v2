@@ -58,6 +58,12 @@ test-all: ## Run entire test suite
 test-coverage: ## Run tests with coverage report
 	uv run pytest --cov=src --cov-report=term-missing -v
 
+test-allure: ## Run tests with Allure results
+	uv run pytest -v --alluredir=allure-results
+
+allure-serve: ## Serve Allure report locally (requires allure CLI)
+	allure serve allure-results
+
 # =============================================================================
 # Code Quality
 # =============================================================================
@@ -93,6 +99,8 @@ clean: ## Remove build artifacts and caches
 	rm -rf .pytest_cache/
 	rm -rf .ruff_cache/
 	rm -rf __pycache__/
+	rm -rf allure-results/
+	rm -rf allure-report/
 	find . -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null || true
 	find . -type f -name "*.pyc" -delete 2>/dev/null || true
 	@echo "Cleaned build artifacts."

@@ -51,6 +51,14 @@ Automatically apply codes to text matching a pattern.
 4. Click **Preview** to see matches
 5. Click **Apply All** to code all matches
 
+![Auto-Code Pattern Search](images/auto-code-pattern.png)
+
+*The Auto-Code dialog showing pattern entry and match options.*
+
+![Auto-Code Preview](images/auto-code-preview.png)
+
+*Preview of matches before applying the code.*
+
 ### Auto-Code by Speaker
 
 For transcripts with speaker labels:

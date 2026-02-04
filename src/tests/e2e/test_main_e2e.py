@@ -21,6 +21,8 @@ import allure
 import pytest
 from PySide6.QtWidgets import QApplication, QPushButton
 
+from src.tests.e2e.helpers import attach_screenshot
+
 pytestmark = [
     pytest.mark.e2e,
     allure.epic("QualCoder v2"),
@@ -173,6 +175,7 @@ class TestSmokeStartup:
         QApplication.processEvents()
 
         assert isinstance(fresh_app._screens["project"], ProjectScreen)
+        attach_screenshot(fresh_app._shell, "MainWindow - Project Screen on Startup")
 
     @allure.title("All screens are created even without a project")
     @allure.severity(allure.severity_level.NORMAL)
@@ -200,6 +203,7 @@ class TestSmokeStartup:
         # Should not crash - screen shows empty state
         files_screen = fresh_app._screens["files"]
         assert files_screen._viewmodel is None
+        attach_screenshot(fresh_app._shell, "MainWindow - File Manager Empty State")
 
     @allure.title("AC #4: Navigation works without a project")
     @allure.severity(allure.severity_level.NORMAL)
@@ -214,6 +218,7 @@ class TestSmokeStartup:
             fresh_app._on_menu_click(screen_id)
             QApplication.processEvents()
             # Should not crash
+        attach_screenshot(fresh_app._shell, "MainWindow - Navigation Complete")
 
 
 @allure.story("QC-026.02 Create New Project")
@@ -436,6 +441,7 @@ class TestAppStartup:
         app_instance._shell.show()
         QApplication.processEvents()
         assert app_instance._shell.isVisible()
+        attach_screenshot(app_instance._shell, "MainWindow - Shell Visible")
 
 
 @allure.story("QC-026.04 Switch Between Screens")
@@ -462,6 +468,7 @@ class TestNavigation:
         for screen_id in ["project", "files", "cases", "coding"]:
             app_instance._on_menu_click(screen_id)
             QApplication.processEvents()
+        attach_screenshot(app_instance._shell, "MainWindow - All Screens Navigation")
 
 
 @allure.story("QC-026 Open & Navigate Project")
@@ -544,6 +551,7 @@ class TestFileManagerScreen:
         app_instance._on_menu_click("files")
         QApplication.processEvents()
         assert app_instance._screens["files"] is not None
+        attach_screenshot(app_instance._shell, "MainWindow - File Manager Screen")
 
     @allure.title("File manager has page component")
     @allure.severity(allure.severity_level.NORMAL)
@@ -568,6 +576,7 @@ class TestCaseManagerScreen:
         app_instance._on_menu_click("cases")
         QApplication.processEvents()
         assert app_instance._screens["cases"] is not None
+        attach_screenshot(app_instance._shell, "MainWindow - Case Manager Screen")
 
 
 @allure.story("QC-026 Open & Navigate Project")
@@ -585,6 +594,7 @@ class TestFullUserJourney:
         for screen in ["files", "cases", "coding", "project"]:
             app_instance._on_menu_click(screen)
             QApplication.processEvents()
+        attach_screenshot(app_instance._shell, "MainWindow - User Journey Complete")
 
     @allure.title("User journey: Change theme in settings")
     @allure.severity(allure.severity_level.NORMAL)

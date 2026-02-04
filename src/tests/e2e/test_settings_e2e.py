@@ -32,6 +32,8 @@ import allure
 import pytest
 from PySide6.QtWidgets import QApplication, QDialog, QPushButton
 
+from src.tests.e2e.helpers import attach_screenshot
+
 pytestmark = [
     pytest.mark.e2e,
     allure.epic("QualCoder v2"),
@@ -132,6 +134,8 @@ class TestSettingsDialogDefaults:
             assert light_btn is not None
             assert light_btn.isChecked()
 
+        attach_screenshot(settings_dialog, "SettingsDialog - Default Theme")
+
     @allure.title("Dialog opens with font size 14 by default")
     def test_dialog_opens_with_default_font_size(self, settings_dialog):
         """E2E: Dialog displays font size 14 by default."""
@@ -185,6 +189,8 @@ class TestThemeChanges:
             settings = settings_repo.load()
             assert settings.theme.name == "dark"
 
+        attach_screenshot(settings_dialog, "SettingsDialog - Dark Theme")
+
     @allure.title("AC #1: Changing theme emits settings_changed signal")
     def test_change_theme_emits_settings_changed_signal(self, settings_dialog, qapp):
         """E2E: Changing theme emits settings_changed signal for reactive updates."""
@@ -236,6 +242,8 @@ class TestFontChanges:
             settings = settings_repo.load()
             assert settings.font.size == 18
 
+        attach_screenshot(settings_dialog, "SettingsDialog - Font Size Changed")
+
     @allure.title("AC #2: Changing font family via combo persists to JSON file")
     def test_change_font_family_via_combo_persists_to_file(
         self, settings_dialog, settings_repo
@@ -285,6 +293,8 @@ class TestLanguageChanges:
         with allure.step("Verify language persisted to repository"):
             settings = settings_repo.load()
             assert settings.language.code == "es"
+
+        attach_screenshot(settings_dialog, "SettingsDialog - Language Changed")
 
 
 # =============================================================================
@@ -420,6 +430,8 @@ class TestDialogNavigation:
             sidebar.setCurrentRow(3)
             QApplication.processEvents()
             assert settings_dialog._content_stack.currentIndex() == 3
+
+        attach_screenshot(settings_dialog, "SettingsDialog - Section Navigation")
 
 
 # =============================================================================
@@ -623,6 +635,8 @@ class TestFullRoundTrip:
             assert dialog2._speaker_format.text() == "Interviewee {n}", (
                 "Speaker format not loaded from JSON"
             )
+
+        attach_screenshot(dialog2, "SettingsDialog - Full Settings")
 
         with allure.step("Close dialog"):
             dialog2.close()

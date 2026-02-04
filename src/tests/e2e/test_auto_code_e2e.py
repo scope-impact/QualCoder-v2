@@ -33,6 +33,7 @@ from src.shared.presentation.dto import (
     FileDTO,
     TextCodingDataDTO,
 )
+from src.tests.e2e.helpers import attach_screenshot
 
 pytestmark = [
     pytest.mark.e2e,
@@ -162,6 +163,7 @@ class TestPatternSearch:
         auto_code_dialog.set_pattern("time management")
 
         assert auto_code_dialog.get_pattern() == "time management"
+        attach_screenshot(auto_code_dialog, "AutoCode - Pattern Search")
 
     @allure.title("AC #1.3: Match type options available")
     @allure.severity(allure.severity_level.NORMAL)
@@ -175,6 +177,7 @@ class TestPatternSearch:
         assert "exact" in match_types
         assert "contains" in match_types
         assert "regex" in match_types
+        attach_screenshot(auto_code_dialog, "AutoCode - Match Type Options")
 
     @allure.title("AC #1.4: User can select match type")
     @allure.severity(allure.severity_level.NORMAL)
@@ -239,6 +242,7 @@ class TestMatchPreview:
         assert signals[0][0] == "challenge"
         assert signals[0][1] == "contains"
         assert signals[0][2] == "all"
+        attach_screenshot(auto_code_dialog, "AutoCode - Preview Matches")
 
     @allure.title("AC #2.2: Dialog receives and caches matches")
     @allure.severity(allure.severity_level.NORMAL)
@@ -254,6 +258,7 @@ class TestMatchPreview:
         cached = auto_code_dialog.get_cached_matches()
         assert len(cached) == 3
         assert cached[0] == (100, 110)
+        attach_screenshot(auto_code_dialog, "AutoCode - Matches Found")
 
     @allure.title("AC #2.3: Preview requires pattern and text")
     @allure.severity(allure.severity_level.NORMAL)
@@ -329,6 +334,7 @@ class TestApplyToMatches:
         # Verify color swatch updated (check stylesheet contains color)
         style = auto_code_dialog._code_color.styleSheet()
         assert "#4CAF50" in style
+        attach_screenshot(auto_code_dialog, "AutoCode - Selected Code Display")
 
     @allure.title("AC #3.3: Get code returns selected code")
     @allure.severity(allure.severity_level.NORMAL)
@@ -361,6 +367,7 @@ class TestUndoBatchCoding:
         """Coding screen supports undo operations."""
         # Undo is typically handled at application level or via unmark history
         assert coding_screen._unmark_history is not None
+        attach_screenshot(coding_screen, "AutoCode - Coding Screen with Undo")
 
     @allure.title("AC #4.2: Unmark history tracks operations")
     @allure.severity(allure.severity_level.NORMAL)
@@ -419,6 +426,7 @@ class TestAutoCodeBySpeaker:
         QApplication.processEvents()
 
         assert len(signals) == 1
+        attach_screenshot(auto_code_dialog, "AutoCode - Speaker Detection")
 
     @allure.title("AC #5.2: Dialog receives detected speakers")
     @allure.severity(allure.severity_level.NORMAL)
@@ -573,6 +581,7 @@ class TestAutoCodeIntegration:
             config = apply_signals[0]
             assert config["pattern"] == "time management"
             assert config["code"]["name"] == "Time Management"
+            attach_screenshot(auto_code_dialog, "AutoCode - Applied")
 
     @allure.title("Cancel button closes dialog without applying")
     @allure.severity(allure.severity_level.NORMAL)

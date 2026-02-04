@@ -13,11 +13,65 @@ For unit tests with mocks, see src/presentation/viewmodels/tests/mocks.py
 
 from __future__ import annotations
 
+import allure
 import pytest
+from PySide6.QtWidgets import QApplication
 from sqlalchemy import create_engine
 
 from src.contexts.projects.infra.schema import create_all_contexts, drop_all_contexts
 from src.shared.infra.event_bus import EventBus
+
+# =============================================================================
+# Pytest Hooks for Allure Screenshots
+# =============================================================================
+
+
+def _capture_all_visible_widgets() -> list[bytes]:
+    """Capture screenshots of all visible top-level widgets."""
+    screenshots = []
+    try:
+        app = QApplication.instance()
+        if app:
+            for widget in app.topLevelWidgets():
+                if widget.isVisible() and widget.width() > 0 and widget.height() > 0:
+                    pixmap = widget.grab()
+                    from io import BytesIO
+
+                    buffer = BytesIO()
+                    pixmap.save(buffer, "PNG")
+                    screenshots.append(
+                        (
+                            widget.objectName() or widget.__class__.__name__,
+                            buffer.getvalue(),
+                        )
+                    )
+    except Exception:
+        pass
+    return screenshots
+
+
+@pytest.hookimpl(tryfirst=True, hookwrapper=True)
+def pytest_runtest_makereport(item, call):
+    """Capture screenshot for all E2E tests in Allure report."""
+    outcome = yield
+    report = outcome.get_result()
+
+    # Only capture after test execution (not setup/teardown)
+    if report.when == "call":
+        screenshots = _capture_all_visible_widgets()
+        for name, data in screenshots:
+            suffix = "_failure" if report.failed else ""
+            attachment_name = (
+                f"screenshot_{name}{suffix}"
+                if len(screenshots) > 1
+                else f"screenshot{suffix}"
+            )
+            allure.attach(
+                data,
+                name=attachment_name,
+                attachment_type=allure.attachment_type.PNG,
+            )
+
 
 # =============================================================================
 # Database Fixtures

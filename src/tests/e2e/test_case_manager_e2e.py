@@ -37,6 +37,7 @@ from src.contexts.projects.infra.schema import create_all_contexts, drop_all_con
 from src.shared.common.types import CaseId, SourceId
 from src.shared.infra.event_bus import EventBus
 from src.shared.infra.state import ProjectState
+from src.tests.e2e.helpers import attach_screenshot
 
 pytestmark = pytest.mark.e2e  # All tests in this module are E2E tests
 
@@ -331,6 +332,8 @@ class TestCaseManagerDisplayWithRealData:
         attributes_card = stats_row._cards["has_attributes"]
         assert attributes_card._count == 3
 
+        attach_screenshot(screen, "stats_row_with_counts")
+
     def test_table_shows_all_cases_from_db(self, case_manager_window):
         """
         E2E: Table displays all cases from database.
@@ -340,6 +343,8 @@ class TestCaseManagerDisplayWithRealData:
         table = screen.page._case_table._table
         assert table.rowCount() == 3
 
+        attach_screenshot(screen, "case_table_with_all_cases")
+
     def test_empty_state_shown_when_db_empty(self, empty_case_manager_window):
         """
         E2E: Empty state is displayed when database has no cases.
@@ -348,6 +353,8 @@ class TestCaseManagerDisplayWithRealData:
 
         content_stack = screen.page._content_stack
         assert content_stack.currentWidget() == screen.page._empty_state
+
+        attach_screenshot(screen, "case_manager_empty_state")
 
 
 class TestCreateCaseFlow:
@@ -414,6 +421,8 @@ class TestCreateCaseFlow:
 
         # Should now show one case
         assert screen.page._case_table._table.rowCount() == 1
+
+        attach_screenshot(screen, "case_created_ui_refresh")
 
     def test_case_created_signal_emitted_with_new_id(
         self, empty_case_manager_window, qapp
@@ -510,6 +519,8 @@ class TestDeleteCaseFlow:
 
         # Should now show 2 cases
         assert screen.page._case_table._table.rowCount() == 2
+
+        attach_screenshot(screen, "case_deleted_ui_refresh")
 
 
 class TestLinkSourceFlow:
@@ -793,6 +804,8 @@ class TestStatsRowFiltering:
         assert spy.count() == 1
         assert spy.at(0)[0] == "all"
 
+        attach_screenshot(screen, "stats_row_all_filter_clicked")
+
     def test_click_with_sources_card_filters_display(self, case_manager_window, qapp):
         """
         E2E: Clicking "with sources" card filters to cases with linked sources.
@@ -813,6 +826,8 @@ class TestStatsRowFiltering:
         card = screen.page._stats_row._cards["with_sources"]
         assert card._active is True
 
+        attach_screenshot(screen, "stats_row_with_sources_filter_active")
+
 
 class TestTableSelection:
     """E2E tests for table row selection."""
@@ -829,6 +844,8 @@ class TestTableSelection:
         QApplication.processEvents()
 
         assert viewmodel.get_selected_case_id() == 1
+
+        attach_screenshot(screen, "table_row_selected")
 
     def test_double_click_emits_navigation_signal(self, case_manager_window, qapp):
         """
@@ -874,6 +891,8 @@ class TestDataRefresh:
         # Should now show 4 cases
         assert screen.page._case_table._table.rowCount() == 4
 
+        attach_screenshot(screen, "data_refresh_after_db_insert")
+
     def test_set_viewmodel_loads_new_data(self, qapp, colors, viewmodel, case_repo):
         """
         E2E: Setting a new viewmodel loads its data.
@@ -891,6 +910,8 @@ class TestDataRefresh:
         # Should load the case
         assert screen.page._case_table._table.rowCount() == 1
 
+        attach_screenshot(screen, "viewmodel_set_loads_data")
+
 
 class TestScreenProtocol:
     """E2E tests for ScreenProtocol implementation."""
@@ -906,6 +927,8 @@ class TestScreenProtocol:
         assert "3 cases" in message
         assert "2 with sources" in message
         assert "3 attributes" in message
+
+        attach_screenshot(screen, "status_message_with_summary")
 
     def test_get_content_returns_self(self, case_manager_window):
         """
@@ -941,6 +964,8 @@ class TestSelectionManagement:
         QApplication.processEvents()
 
         assert viewmodel.get_selected_case_id() is None
+
+        attach_screenshot(screen, "selection_cleared")
 
     def test_delete_selected_case_clears_selection(self, case_manager_window, qapp):
         """
