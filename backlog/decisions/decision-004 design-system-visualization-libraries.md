@@ -1,5 +1,5 @@
 ---
-id: doc-001
+id: decision-004
 title: Design System Visualization Libraries
 status: Accepted
 date: '2026-01-29'
