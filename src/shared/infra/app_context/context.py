@@ -161,12 +161,13 @@ class AppContext:
         from src.contexts.projects.core.commands import OpenProjectCommand
 
         command = OpenProjectCommand(path=path)
+        # Pass project path to _create_contexts via closure
         result = open_project(
             command=command,
             lifecycle=self.lifecycle,
             state=self.state,
             event_bus=self.event_bus,
-            get_contexts=self._create_contexts,
+            get_contexts=lambda conn: self._create_contexts(conn, project_path=path),
         )
 
         if result.is_success:
@@ -225,7 +226,7 @@ class AppContext:
     # Context Management (Internal)
     # =========================================================================
 
-    def _create_contexts(self, connection) -> dict:
+    def _create_contexts(self, connection, project_path: str | None = None) -> dict:
         """
         Create bounded context objects for the open project.
 
@@ -234,6 +235,7 @@ class AppContext:
 
         Args:
             connection: SQLAlchemy Connection object
+            project_path: Path to the project file (for VCS adapter initialization)
 
         Returns:
             Dict of context name to context object
@@ -250,7 +252,9 @@ class AppContext:
 
             try:
                 self.convex_client = ConvexClientWrapper(backend_config.convex_url)
-                logger.info(f"Connected to Convex for cloud sync: {backend_config.convex_url}")
+                logger.info(
+                    f"Connected to Convex for cloud sync: {backend_config.convex_url}"
+                )
             except Exception as e:
                 logger.warning(f"Failed to connect to Convex (sync disabled): {e}")
                 # Continue without cloud sync - SQLite works offline
@@ -286,8 +290,9 @@ class AppContext:
         # ProjectsContext always uses SQLite for local project file management
         self.projects_context = ProjectsContext.create(
             connection=connection,
-            convex_client=self.convex_client,
-            backend_type=BackendType.SQLITE,
+            _convex_client=self.convex_client,
+            _backend_type=BackendType.SQLITE,
+            project_path=project_path,
         )
 
         # Start sync engine after contexts are created
@@ -296,7 +301,9 @@ class AppContext:
             logger.info("SyncEngine started")
 
         sync_status = "enabled" if self._sync_engine else "disabled"
-        logger.debug(f"Created bounded contexts for project (cloud sync: {sync_status})")
+        logger.debug(
+            f"Created bounded contexts for project (cloud sync: {sync_status})"
+        )
 
         return {
             "sources": self.sources_context,

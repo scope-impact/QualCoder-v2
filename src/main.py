@@ -21,7 +21,11 @@ from src.contexts.coding.presentation import (
     TextCodingViewModel,
 )
 from src.contexts.coding.presentation.dialogs import CreateCodeDialog
-from src.contexts.projects.presentation import ProjectScreen
+from src.contexts.projects.presentation import (
+    ProjectScreen,
+    VersionControlViewModel,
+    VersionHistoryScreen,
+)
 from src.contexts.sources.presentation import FileManagerScreen, FileManagerViewModel
 from src.shared.common.types import SourceId
 from src.shared.infra.app_context import create_app_context
@@ -91,6 +95,7 @@ class QualCoderApp:
                 data=create_empty_text_coding_data(),
                 colors=self._colors,
             ),
+            "history": VersionHistoryScreen(colors=self._colors),
         }
 
         # Set initial screen (project selection)
@@ -207,6 +212,20 @@ class QualCoderApp:
             self._screens["coding"].code_created.connect(
                 lambda _: self._on_show_create_code_dialog(text_coding_viewmodel)
             )
+
+        # Create VersionControlViewModel for history screen
+        if self._ctx.projects_context and self._ctx.state.project:
+            from pathlib import Path
+
+            projects_ctx = self._ctx.projects_context
+            if projects_ctx.git_adapter and projects_ctx.diffable_adapter:
+                vcs_viewmodel = VersionControlViewModel(
+                    project_path=Path(self._ctx.state.project.path),
+                    diffable_adapter=projects_ctx.diffable_adapter,
+                    git_adapter=projects_ctx.git_adapter,
+                    event_bus=self._ctx.event_bus,
+                )
+                self._screens["history"].set_viewmodel(vcs_viewmodel)
 
     def _on_open_project(self):
         """Handle open project request."""

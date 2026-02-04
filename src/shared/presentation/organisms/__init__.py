@@ -47,6 +47,7 @@ from .text_highlighter import (
     OverlapIndicator,
     TextHighlighter,
 )
+from .version_history_panel import SnapshotItem, VersionHistoryPanel
 
 __all__ = [
     "CodingToolbar",
@@ -79,4 +80,7 @@ __all__ = [
     "CodedTextHighlight",
     "OverlapIndicator",
     "AnnotationIndicator",
+    # Version control
+    "VersionHistoryPanel",
+    "SnapshotItem",
 ]

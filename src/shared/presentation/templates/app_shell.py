@@ -49,6 +49,7 @@ NAV_ITEMS = [
     ("project", "Project"),
     ("files", "Files"),
     ("coding", "Coding"),
+    ("history", "History"),
     ("reports", "Reports"),
     ("ai", "AI"),
 ]
@@ -58,6 +59,7 @@ MENU_ITEMS = [
     ("project", "Project"),
     ("files", "Files"),
     ("coding", "Coding"),
+    ("history", "History"),
     ("reports", "Reports"),
     ("ai", "AI"),
 ]

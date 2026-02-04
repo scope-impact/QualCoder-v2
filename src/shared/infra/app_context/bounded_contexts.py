@@ -217,6 +217,8 @@ class ProjectsContext:
     Provides access to:
     - ProjectRepository: Project creation, validation, loading
     - SettingsRepository: Project-level settings
+    - GitAdapter: Git repository operations (for VCS)
+    - DiffableAdapter: SQLite to JSON conversion (for VCS)
 
     Note: ProjectsContext currently only supports SQLite backend as
     project metadata is stored locally. For Convex backend, project
@@ -225,13 +227,16 @@ class ProjectsContext:
 
     project_repo: SQLiteProjectRepository | Any  # SQLite or Convex
     settings_repo: SQLiteProjectSettingsRepository | Any  # SQLite or Convex
+    git_adapter: Any | None = None  # GitRepositoryAdapter
+    diffable_adapter: Any | None = None  # SqliteDiffableAdapter
 
     @classmethod
     def create(
         cls,
         connection: Connection | None = None,
-        convex_client: ConvexClientWrapper | None = None,
-        backend_type: BackendType = BackendType.SQLITE,
+        _convex_client: ConvexClientWrapper | None = None,  # Reserved for future use
+        _backend_type: BackendType = BackendType.SQLITE,  # Reserved for future use
+        project_path: str | None = None,
     ) -> ProjectsContext:
         """Create a ProjectsContext with all repositories."""
         # ProjectsContext always uses SQLite for local project file management
@@ -239,14 +244,32 @@ class ProjectsContext:
         if connection is None:
             raise ValueError("SQLAlchemy connection required for project management")
 
+        from pathlib import Path
+
+        from src.contexts.projects.infra.git_repository_adapter import (
+            GitRepositoryAdapter,
+        )
         from src.contexts.projects.infra.project_repository import (
             SQLiteProjectRepository,
         )
         from src.contexts.projects.infra.settings_repository import (
             SQLiteProjectSettingsRepository,
         )
+        from src.contexts.projects.infra.sqlite_diffable_adapter import (
+            SqliteDiffableAdapter,
+        )
+
+        # Create VCS adapters if project path is provided
+        git_adapter = None
+        diffable_adapter = None
+        if project_path:
+            project_dir = Path(project_path).parent
+            git_adapter = GitRepositoryAdapter(project_dir)
+            diffable_adapter = SqliteDiffableAdapter()
 
         return cls(
             project_repo=SQLiteProjectRepository(connection),
             settings_repo=SQLiteProjectSettingsRepository(connection),
+            git_adapter=git_adapter,
+            diffable_adapter=diffable_adapter,
         )
