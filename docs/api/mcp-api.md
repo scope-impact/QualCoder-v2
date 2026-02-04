@@ -387,6 +387,23 @@ async def agent_workflow():
 
 ---
 
+## Planned Tools
+
+The following tools are planned but not yet implemented. Progress is tracked via Agent AC on feature tasks:
+
+| Tool | Description | Tracked In |
+|------|-------------|------------|
+| `create_code` | Create a new code with name and color | QC-028 AC #10 |
+| `update_code` | Update code name, color, or memo | QC-028 |
+| `delete_code` | Delete a code | QC-028 |
+| `merge_codes` | Merge two codes into one | QC-028 |
+| `remove_coding` | Remove coding from a segment | QC-029 AC #10 |
+| `add_source` | Add a text source to the project | QC-027 AC #11 |
+| `auto_code_pattern` | Auto-code by text pattern | QC-032 |
+| `auto_code_speaker` | Auto-code by speaker | QC-032 |
+
+---
+
 ## Architecture
 
 See [ARCHITECTURE.md](../ARCHITECTURE.md) for how MCP integrates with the application.
