@@ -94,8 +94,8 @@ class CodingToolbar(QFrame):
 
     def __init__(
         self,
-        coders: list[str] = None,
-        selected_coder: str = None,
+        coders: list[str] = None,  # noqa: ARG002 - kept for backwards compat
+        selected_coder: str = None,  # noqa: ARG002 - kept for backwards compat
         colors: ColorPalette = None,
         parent=None,
     ):
@@ -133,7 +133,9 @@ class CodingToolbar(QFrame):
             ("pdf", "PDF"),
         ]:
             tab = MediaTypeTab(label, tab_id, colors=self._colors)
-            tab.clicked.connect(lambda _checked, tid=tab_id: self._on_media_tab_click(tid))
+            tab.clicked.connect(
+                lambda _checked, tid=tab_id: self._on_media_tab_click(tid)
+            )
             self._media_tabs[tab_id] = tab
             layout.addWidget(tab)
 
