@@ -11,7 +11,7 @@ from datetime import UTC, datetime
 from enum import Enum
 from pathlib import Path
 
-from src.contexts.shared.core.types import FolderId, SourceId
+from src.shared.common.types import FolderId, SourceId
 
 # ============================================================
 # Enums

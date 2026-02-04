@@ -2,7 +2,10 @@
 Cases Context: Derivers
 
 Pure functions that compose invariants and derive domain events.
-No I/O, no side effects - returns events or Failure.
+No I/O, no side effects - returns success events or failure events.
+
+Per SKILL.md, derivers return direct failure events (not Failure wrappers)
+for rich error context in UI and MCP/AI consumers.
 """
 
 from __future__ import annotations
@@ -11,12 +14,22 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any
 
 from src.contexts.cases.core.events import (
+    CaseAttributeRemoved,
     CaseAttributeSet,
     CaseCreated,
     CaseRemoved,
     CaseUpdated,
     SourceLinkedToCase,
     SourceUnlinkedFromCase,
+)
+from src.contexts.cases.core.failure_events import (
+    AttributeRemovalFailed,
+    AttributeSetFailed,
+    CaseCreationFailed,
+    CaseDeletionFailed,
+    CaseUpdateFailed,
+    SourceLinkFailed,
+    SourceUnlinkFailed,
 )
 from src.contexts.cases.core.invariants import (
     is_case_name_unique,
@@ -25,140 +38,10 @@ from src.contexts.cases.core.invariants import (
     is_valid_attribute_value,
     is_valid_case_name,
 )
-from src.contexts.shared import CaseId, Failure, SourceId
+from src.shared import CaseId, SourceId
 
 if TYPE_CHECKING:
     from src.contexts.cases.core.entities import Case
-
-
-# =============================================================================
-# Failure Reasons
-# =============================================================================
-
-
-@dataclass(frozen=True)
-class EmptyCaseName:
-    """Case name is empty or whitespace-only."""
-
-    message: str = "Case name cannot be empty"
-
-
-@dataclass(frozen=True)
-class CaseNameTooLong:
-    """Case name exceeds maximum length."""
-
-    name: str = ""
-    message: str = ""
-
-    def __post_init__(self) -> None:
-        if not self.message:
-            object.__setattr__(
-                self,
-                "message",
-                f"Case name '{self.name[:20]}...' exceeds 100 characters",
-            )
-
-
-@dataclass(frozen=True)
-class DuplicateCaseName:
-    """Case name already exists."""
-
-    name: str = ""
-    message: str = ""
-
-    def __post_init__(self) -> None:
-        if not self.message:
-            object.__setattr__(
-                self, "message", f"Case name '{self.name}' already exists"
-            )
-
-
-@dataclass(frozen=True)
-class CaseNotFound:
-    """Case with given ID not found."""
-
-    case_id: CaseId | None = None
-    message: str = ""
-
-    def __post_init__(self) -> None:
-        if not self.message and self.case_id:
-            object.__setattr__(
-                self, "message", f"Case with id {self.case_id.value} not found"
-            )
-
-
-@dataclass(frozen=True)
-class InvalidAttributeType:
-    """Attribute type is not valid."""
-
-    attr_type: str = ""
-    message: str = ""
-
-    def __post_init__(self) -> None:
-        if not self.message:
-            object.__setattr__(
-                self,
-                "message",
-                f"Invalid attribute type '{self.attr_type}'. Must be: text, number, date, boolean",
-            )
-
-
-@dataclass(frozen=True)
-class InvalidAttributeValue:
-    """Attribute value does not match expected type."""
-
-    attr_name: str = ""
-    attr_type: str = ""
-    message: str = ""
-
-    def __post_init__(self) -> None:
-        if not self.message:
-            object.__setattr__(
-                self,
-                "message",
-                f"Value for attribute '{self.attr_name}' is not a valid {self.attr_type}",
-            )
-
-
-@dataclass(frozen=True)
-class InvalidAttributeName:
-    """Attribute name is invalid."""
-
-    message: str = "Attribute name cannot be empty"
-
-
-@dataclass(frozen=True)
-class SourceAlreadyLinked:
-    """Source is already linked to case."""
-
-    case_id: CaseId | None = None
-    source_id: int = 0
-    message: str = ""
-
-    def __post_init__(self) -> None:
-        if not self.message and self.case_id:
-            object.__setattr__(
-                self,
-                "message",
-                f"Source {self.source_id} is already linked to case {self.case_id.value}",
-            )
-
-
-@dataclass(frozen=True)
-class SourceNotLinked:
-    """Source is not linked to case."""
-
-    case_id: CaseId | None = None
-    source_id: int = 0
-    message: str = ""
-
-    def __post_init__(self) -> None:
-        if not self.message and self.case_id:
-            object.__setattr__(
-                self,
-                "message",
-                f"Source {self.source_id} is not linked to case {self.case_id.value}",
-            )
 
 
 # =============================================================================
@@ -183,7 +66,7 @@ def derive_create_case(
     description: str | None,
     memo: str | None,
     state: CaseState,
-) -> CaseCreated | Failure:
+) -> CaseCreated | CaseCreationFailed:
     """
     Derive a case creation event from inputs and state.
 
@@ -196,21 +79,21 @@ def derive_create_case(
         state: Current case state for invariant checking
 
     Returns:
-        CaseCreated event on success, Failure with reason on error
+        CaseCreated event on success, CaseCreationFailed on error
     """
     # Check for empty/whitespace name
     if not name or not name.strip():
-        return Failure(EmptyCaseName())
+        return CaseCreationFailed.empty_name()
 
     # Check name length
     if not is_valid_case_name(name):
-        return Failure(CaseNameTooLong(name=name))
+        return CaseCreationFailed.name_too_long(name)
 
     # Check uniqueness
     if not is_case_name_unique(name, list(state.existing_cases)):
-        return Failure(DuplicateCaseName(name=name))
+        return CaseCreationFailed.duplicate_name(name)
 
-    return CaseCreated(
+    return CaseCreated.create(
         name=name.strip(),
         description=description,
         memo=memo,
@@ -223,7 +106,7 @@ def derive_update_case(
     description: str | None,
     memo: str | None,
     state: CaseState,
-) -> CaseUpdated | Failure:
+) -> CaseUpdated | CaseUpdateFailed:
     """
     Derive a case update event from inputs and state.
 
@@ -237,28 +120,28 @@ def derive_update_case(
         state: Current case state for invariant checking
 
     Returns:
-        CaseUpdated event on success, Failure with reason on error
+        CaseUpdated event on success, CaseUpdateFailed on error
     """
     # Check case exists
     case_exists = any(c.id == case_id for c in state.existing_cases)
     if not case_exists:
-        return Failure(CaseNotFound(case_id=case_id))
+        return CaseUpdateFailed.not_found(case_id.value)
 
     # Check for empty/whitespace name
     if not name or not name.strip():
-        return Failure(EmptyCaseName())
+        return CaseUpdateFailed.empty_name(case_id.value)
 
     # Check name length
     if not is_valid_case_name(name):
-        return Failure(CaseNameTooLong(name=name))
+        return CaseUpdateFailed.name_too_long(case_id.value, name)
 
     # Check uniqueness (excluding current case)
     if not is_case_name_unique(
         name, list(state.existing_cases), exclude_id=case_id.value
     ):
-        return Failure(DuplicateCaseName(name=name))
+        return CaseUpdateFailed.duplicate_name(case_id.value, name)
 
-    return CaseUpdated(
+    return CaseUpdated.create(
         case_id=case_id,
         name=name.strip(),
         description=description,
@@ -269,7 +152,7 @@ def derive_update_case(
 def derive_remove_case(
     case_id: CaseId,
     state: CaseState,
-) -> CaseRemoved | Failure:
+) -> CaseRemoved | CaseDeletionFailed:
     """
     Derive a case removal event from inputs and state.
 
@@ -280,14 +163,14 @@ def derive_remove_case(
         state: Current case state for invariant checking
 
     Returns:
-        CaseRemoved event on success, Failure with reason on error
+        CaseRemoved event on success, CaseDeletionFailed on error
     """
     # Check case exists
     case_exists = any(c.id == case_id for c in state.existing_cases)
     if not case_exists:
-        return Failure(CaseNotFound(case_id=case_id))
+        return CaseDeletionFailed.not_found(case_id.value)
 
-    return CaseRemoved(case_id=case_id)
+    return CaseRemoved.create(case_id=case_id)
 
 
 def derive_set_case_attribute(
@@ -296,7 +179,7 @@ def derive_set_case_attribute(
     attr_type: str,
     attr_value: Any,
     state: CaseState,
-) -> CaseAttributeSet | Failure:
+) -> CaseAttributeSet | AttributeSetFailed:
     """
     Derive a case attribute set event from inputs and state.
 
@@ -310,26 +193,26 @@ def derive_set_case_attribute(
         state: Current case state for invariant checking
 
     Returns:
-        CaseAttributeSet event on success, Failure with reason on error
+        CaseAttributeSet event on success, AttributeSetFailed on error
     """
     # Check case exists
     case_exists = any(c.id == case_id for c in state.existing_cases)
     if not case_exists:
-        return Failure(CaseNotFound(case_id=case_id))
+        return AttributeSetFailed.case_not_found(case_id.value)
 
     # Validate attribute name
     if not is_valid_attribute_name(attr_name):
-        return Failure(InvalidAttributeName())
+        return AttributeSetFailed.invalid_name(case_id.value)
 
     # Validate attribute type
     if not is_valid_attribute_type(attr_type):
-        return Failure(InvalidAttributeType(attr_type=attr_type))
+        return AttributeSetFailed.invalid_type(case_id.value, attr_type)
 
     # Validate attribute value matches type
     if not is_valid_attribute_value(attr_value, attr_type):
-        return Failure(InvalidAttributeValue(attr_name=attr_name, attr_type=attr_type))
+        return AttributeSetFailed.invalid_value(case_id.value, attr_name, attr_type)
 
-    return CaseAttributeSet(
+    return CaseAttributeSet.create(
         case_id=case_id,
         attr_name=attr_name.strip(),
         attr_type=attr_type.lower(),
@@ -341,7 +224,7 @@ def derive_link_source_to_case(
     case_id: CaseId,
     source_id: SourceId,
     state: CaseState,
-) -> SourceLinkedToCase | Failure:
+) -> SourceLinkedToCase | SourceLinkFailed:
     """
     Derive a source linked to case event from inputs and state.
 
@@ -353,18 +236,18 @@ def derive_link_source_to_case(
         state: Current case state for invariant checking
 
     Returns:
-        SourceLinkedToCase event on success, Failure with reason on error
+        SourceLinkedToCase event on success, SourceLinkFailed on error
     """
     # Find the case
     case = next((c for c in state.existing_cases if c.id == case_id), None)
     if case is None:
-        return Failure(CaseNotFound(case_id=case_id))
+        return SourceLinkFailed.case_not_found(case_id.value, source_id.value)
 
     # Check if source is already linked
     if source_id.value in case.source_ids:
-        return Failure(SourceAlreadyLinked(case_id=case_id, source_id=source_id.value))
+        return SourceLinkFailed.already_linked(case_id.value, source_id.value)
 
-    return SourceLinkedToCase(
+    return SourceLinkedToCase.create(
         case_id=case_id,
         source_id=source_id.value,
     )
@@ -374,7 +257,7 @@ def derive_unlink_source_from_case(
     case_id: CaseId,
     source_id: SourceId,
     state: CaseState,
-) -> SourceUnlinkedFromCase | Failure:
+) -> SourceUnlinkedFromCase | SourceUnlinkFailed:
     """
     Derive a source unlinked from case event from inputs and state.
 
@@ -386,18 +269,52 @@ def derive_unlink_source_from_case(
         state: Current case state for invariant checking
 
     Returns:
-        SourceUnlinkedFromCase event on success, Failure with reason on error
+        SourceUnlinkedFromCase event on success, SourceUnlinkFailed on error
     """
     # Find the case
     case = next((c for c in state.existing_cases if c.id == case_id), None)
     if case is None:
-        return Failure(CaseNotFound(case_id=case_id))
+        return SourceUnlinkFailed.case_not_found(case_id.value, source_id.value)
 
     # Check if source is linked
     if source_id.value not in case.source_ids:
-        return Failure(SourceNotLinked(case_id=case_id, source_id=source_id.value))
+        return SourceUnlinkFailed.not_linked(case_id.value, source_id.value)
 
-    return SourceUnlinkedFromCase(
+    return SourceUnlinkedFromCase.create(
         case_id=case_id,
         source_id=source_id.value,
+    )
+
+
+def derive_remove_case_attribute(
+    case_id: CaseId,
+    attr_name: str,
+    state: CaseState,
+) -> CaseAttributeRemoved | AttributeRemovalFailed:
+    """
+    Derive a case attribute removal event from inputs and state.
+
+    Pure function - no I/O, no side effects.
+
+    Args:
+        case_id: The case ID to remove attribute from
+        attr_name: The attribute name to remove
+        state: Current case state for invariant checking
+
+    Returns:
+        CaseAttributeRemoved event on success, AttributeRemovalFailed on error
+    """
+    # Find the case
+    case = next((c for c in state.existing_cases if c.id == case_id), None)
+    if case is None:
+        return AttributeRemovalFailed.case_not_found(case_id.value, attr_name)
+
+    # Check if attribute exists on case
+    attr_exists = any(attr.name == attr_name for attr in case.attributes)
+    if not attr_exists:
+        return AttributeRemovalFailed.attribute_not_found(case_id.value, attr_name)
+
+    return CaseAttributeRemoved.create(
+        case_id=case_id,
+        attr_name=attr_name,
     )

@@ -85,7 +85,7 @@ from src.contexts.projects.core.invariants import (
     is_valid_project_path,
     is_valid_source_name,
 )
-from src.contexts.shared.core.types import FolderId
+from src.shared.common.types import FolderId
 
 __all__ = [
     # Entities
@@ -136,7 +136,7 @@ __all__ = [
     "derive_open_source",
     "derive_remove_source",
     "derive_rename_folder",
-    # Failure reasons (legacy - kept for backwards compatibility)
+    # Failure reasons (returned by derivers)
     "DuplicateFolderName",
     "DuplicateSourceName",
     "EmptyProjectName",
@@ -150,7 +150,7 @@ __all__ = [
     "SourceFileNotFound",
     "SourceNotFound",
     "UnsupportedSourceType",
-    # Failure events (new - publishable)
+    # Failure events (publishable to EventBus)
     "FolderNotCreated",
     "FolderNotDeleted",
     "FolderNotRenamed",

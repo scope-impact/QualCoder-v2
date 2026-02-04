@@ -4,6 +4,7 @@ title: Settings and Preferences
 status: Done
 assignee: []
 created_date: '2026-01-30 21:14'
+updated_date: '2026-02-04 06:19'
 labels: []
 dependencies: []
 ---
@@ -22,10 +23,12 @@ Enable researchers to customize the application appearance, behavior, and backup
 - [x] #4 Researcher can configure automatic backups
 - [x] #5 Researcher can set timestamp format for AV coding
 - [x] #6 Researcher can configure speaker name format
+- [ ] #7 Agent can read current settings for context
 <!-- AC:END -->
 
 ## Implementation Notes
 
+<!-- SECTION:NOTES:BEGIN -->
 Settings feature fully implemented with DDD architecture:
 
 **Domain Layer** (`src/domain/settings/`):
@@ -50,3 +53,4 @@ Settings feature fully implemented with DDD architecture:
 - 66 unit tests (derivers, repository, controller)
 - 17 E2E tests (dialog, persistence, round-trip)
 - 6 integration tests (AppShell settings button)
+<!-- SECTION:NOTES:END -->

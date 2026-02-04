@@ -188,7 +188,7 @@ def derive_theme_change(
     if not is_valid_theme(new_theme):
         return Failure(InvalidTheme(theme=new_theme))
 
-    return ThemeChanged(
+    return ThemeChanged.create(
         old_theme=current_settings.theme.name,
         new_theme=new_theme,
     )
@@ -218,7 +218,7 @@ def derive_font_change(
     if not is_valid_font_size(size):
         return Failure(InvalidFontSize(size=size))
 
-    return FontChanged(
+    return FontChanged.create(
         old_family=current_settings.font.family,
         old_size=current_settings.font.size,
         family=family,
@@ -247,7 +247,7 @@ def derive_language_change(
 
     language_name = VALID_LANGUAGES.get(new_language_code, "Unknown")
 
-    return LanguageChanged(
+    return LanguageChanged.create(
         old_language=current_settings.language.code,
         new_language=new_language_code,
         language_name=language_name,
@@ -282,7 +282,7 @@ def derive_backup_config_change(
     if not is_valid_max_backups(max_backups):
         return Failure(InvalidMaxBackups(max_backups=max_backups))
 
-    return BackupConfigChanged(
+    return BackupConfigChanged.create(
         old_enabled=current_settings.backup.enabled,
         old_interval_minutes=current_settings.backup.interval_minutes,
         old_max_backups=current_settings.backup.max_backups,
@@ -318,7 +318,7 @@ def derive_av_coding_config_change(
     if not is_valid_speaker_format(speaker_format):
         return Failure(InvalidSpeakerFormat(format_str=speaker_format))
 
-    return AVCodingConfigChanged(
+    return AVCodingConfigChanged.create(
         old_timestamp_format=current_settings.av_coding.timestamp_format,
         old_speaker_format=current_settings.av_coding.speaker_format,
         timestamp_format=timestamp_format,

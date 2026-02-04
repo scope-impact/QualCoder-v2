@@ -49,6 +49,46 @@
 
 ---
 
+## Parallel Development Tracks
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                    TWO PARALLEL DEVELOPMENT TRACKS                          │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                             │
+│  TRACK A: RESEARCHER UI                    TRACK B: AGENT MCP               │
+│  ─────────────────────                     ───────────────────              │
+│                                                                             │
+│  ┌─────────────────────┐                   ┌─────────────────────┐         │
+│  │ Screens & Dialogs   │                   │ MCP Tools & Schemas │         │
+│  │ (Qt/PySide6)        │                   │ (JSON-RPC/HTTP)     │         │
+│  └──────────┬──────────┘                   └──────────┬──────────┘         │
+│             │                                         │                     │
+│             │         ┌───────────────────┐           │                     │
+│             └────────►│  SHARED DOMAIN    │◄──────────┘                     │
+│                       │  (Use Cases)      │                                 │
+│                       │  - Coordinators   │                                 │
+│                       │  - Repositories   │                                 │
+│                       │  - Event Bus      │                                 │
+│                       └───────────────────┘                                 │
+│                                                                             │
+│  Key Insight: Agent MCP tools can be developed IN PARALLEL with UI.        │
+│  They share the same domain layer but have independent interfaces.          │
+│                                                                             │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+### Why Parallel Tracks Matter
+
+| Without Parallel Tracks | With Parallel Tracks |
+|------------------------|---------------------|
+| Agent blocked until all UI screens done | Agent tools ship as domain is ready |
+| MCP tools wait for Image/AV screens | Text MCP tools ship NOW |
+| Testing requires full UI | Agent enables automated testing |
+| Single critical path | Multiple parallel workstreams |
+
+---
+
 ## Feature Map (Skeleton)
 
 ### F-000: Foundation (Architecture Setup)
@@ -63,6 +103,7 @@
 | Design System | Reusable UI components | Done |
 | Result Type | Success/Failure pattern | Done |
 | Typed IDs | CodeId, SourceId, etc. | Done |
+| MCP Server | HTTP server for agent tools | Done |
 
 ---
 
@@ -440,6 +481,8 @@
 
 ## Implementation Status Mapping
 
+### Researcher UI Track
+
 | Feature | Current Status | Notes |
 |---------|---------------|-------|
 | F-001 | Partial | Project open works, navigation partial |
@@ -454,6 +497,27 @@
 | F-010 | Not Started | M-005 not started |
 | F-011 | Not Started | M-007 not started |
 | F-012 | Partial | Agent infrastructure done |
+
+### Agent MCP Track (Parallel Development)
+
+| Feature | Agent Capability | Status |
+|---------|------------------|--------|
+| F-001 | Get project context | ✅ Done |
+| F-001 | Navigate to source | ✅ Done |
+| F-002 | List sources | ✅ Done |
+| F-002 | Read source content | ✅ Done |
+| F-002 | Extract metadata | ✅ Done |
+| F-002 | **Add source** | ❌ Missing |
+| F-003 | List codes | ✅ Done |
+| F-003 | Get code details | ✅ Done |
+| F-003 | **Create code** | ❌ Missing |
+| F-004 | Apply codes | ✅ Done |
+| F-004 | List segments | ✅ Done |
+| F-004 | **Remove coding** | ❌ Missing |
+
+**Key Blockers for Agent Testing:**
+- Agent cannot create codes
+- Agent cannot add test documents
 
 ---
 

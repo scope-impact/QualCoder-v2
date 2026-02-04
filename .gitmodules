@@ -1,6 +1,6 @@
-[submodule "vendor/QualCoder"]
-	path = vendor/QualCoder
+[submodule "inspiration/QualCoder"]
+	path = inspiration/QualCoder
 	url = https://github.com/ccbogel/QualCoder
-[submodule "ddd-workshop"]
-	path = ddd-workshop
+[submodule "inspiration/ddd-workshop"]
+	path = inspiration/ddd-workshop
 	url = https://github.com/PensionBee/ddd-workshop.git

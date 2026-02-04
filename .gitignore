@@ -46,6 +46,7 @@ coverage.xml
 .hypothesis/
 .pytest_cache/
 allure-results/
+allure-report/
 
 # Translations
 *.mo
@@ -87,3 +88,6 @@ dmypy.json
 *.log
 *.png
 design_system/assets/screenshots/
+
+# MkDocs
+site/

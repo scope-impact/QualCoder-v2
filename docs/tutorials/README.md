@@ -86,11 +86,14 @@ src/contexts/coding/core/
     ├── test_invariants.py
     └── test_derivers.py
 
-src/contexts/shared/core/
+src/shared/common/
 ├── types.py          # DomainEvent base, typed IDs
+└── operation_result.py # Success/Failure result pattern
+
+src/shared/core/
 └── validation.py     # Shared validation helpers
 
-src/application/
+src/shared/infra/
 ├── event_bus.py      # Pub/sub for domain events
 └── signal_bridge/
     ├── base.py       # BaseSignalBridge

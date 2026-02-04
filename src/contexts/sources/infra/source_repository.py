@@ -13,8 +13,8 @@ from typing import TYPE_CHECKING
 from sqlalchemy import delete, func, select, update
 
 from src.contexts.projects.core.entities import Source, SourceStatus, SourceType
-from src.contexts.shared.core.types import FolderId, SourceId
 from src.contexts.sources.infra.schema import src_source
+from src.shared.common.types import FolderId, SourceId
 
 if TYPE_CHECKING:
     from sqlalchemy import Connection
@@ -132,28 +132,6 @@ class SQLiteSourceRepository:
         result = self._conn.execute(stmt)
         return result.scalar() > 0
 
-    def count(self) -> int:
-        """Get total count of sources."""
-        stmt = select(func.count()).select_from(src_source)
-        result = self._conn.execute(stmt)
-        return result.scalar()
-
-    def count_by_type(self, source_type: SourceType) -> int:
-        """Get count of sources by type."""
-        stmt = select(func.count()).where(src_source.c.source_type == source_type.value)
-        result = self._conn.execute(stmt)
-        return result.scalar()
-
-    def update_status(self, source_id: SourceId, new_status: SourceStatus) -> None:
-        """Update the status of a source."""
-        stmt = (
-            update(src_source)
-            .where(src_source.c.id == source_id.value)
-            .values(status=new_status.value)
-        )
-        self._conn.execute(stmt)
-        self._conn.commit()
-
     def get_by_folder(self, folder_id: FolderId | None) -> list[Source]:
         """Get all sources in a folder (None for root level)."""
         if folder_id is None:
@@ -170,31 +148,6 @@ class SQLiteSourceRepository:
             )
         result = self._conn.execute(stmt)
         return [self._row_to_source(row) for row in result]
-
-    def update_folder(self, source_id: SourceId, folder_id: FolderId | None) -> None:
-        """Move a source to a different folder."""
-        stmt = (
-            update(src_source)
-            .where(src_source.c.id == source_id.value)
-            .values(folder_id=folder_id.value if folder_id else None)
-        )
-        self._conn.execute(stmt)
-        self._conn.commit()
-
-    def update_name(self, source_id: SourceId, new_name: str) -> None:
-        """
-        Update the name of a source.
-
-        This is used when renaming a source and should trigger
-        SourceRenamed event for cross-context sync.
-        """
-        stmt = (
-            update(src_source)
-            .where(src_source.c.id == source_id.value)
-            .values(name=new_name)
-        )
-        self._conn.execute(stmt)
-        self._conn.commit()
 
     def _row_to_source(self, row) -> Source:
         """
@@ -220,23 +173,3 @@ class SQLiteSourceRepository:
             if row.date
             else datetime.now(UTC),
         )
-
-    def _to_source_data(self, src: Source) -> dict:
-        """
-        Map domain Source entity to database format.
-
-        Returns a dict suitable for SQLAlchemy insert/update.
-        """
-        return {
-            "id": src.id.value,
-            "name": src.name,
-            "source_type": src.source_type.value,
-            "status": src.status.value,
-            "memo": src.memo,
-            "mediapath": str(src.file_path) if src.file_path else None,
-            "file_size": src.file_size,
-            "origin": src.origin,
-            "folder_id": src.folder_id.value if src.folder_id else None,
-            "owner": None,  # Would come from context
-            "date": src.created_at.isoformat(),
-        }

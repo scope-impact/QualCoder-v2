@@ -4,6 +4,7 @@ title: Manage Sources
 status: To Do
 assignee: []
 created_date: '2026-01-30 20:23'
+updated_date: '2026-02-04 06:15'
 labels: []
 dependencies: []
 ---
@@ -26,4 +27,5 @@ Enable researchers and agents to import, organize, and manage research data file
 - [ ] #8 Agent can list all sources
 - [ ] #9 Agent can read source content
 - [ ] #10 Agent can extract metadata from sources
+- [ ] #11 Agent can add a text source to the project
 <!-- AC:END -->

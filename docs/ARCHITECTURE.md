@@ -50,7 +50,7 @@ graph TD
 | C2 | Domain Core | Python / Pure Functions | Business logic, invariants, derivers | Library |
 | C3 | Application Shell | Python / EventBus + SignalBridge | Orchestration, event routing | Library |
 | C4 | Project Database | SQLite 3 | Stores codes, segments, sources | Database |
-| C5 | Agent Context | Python / MCP Protocol | Exposes domain to AI agents | API |
+| C5 | Agent Context | Python / MCP Protocol | Exposes domain to AI agents via HTTP | API |
 | C6 | Vector Store | ChromaDB (embedded) | Stores embeddings for search | Database |
 
 ### Container Diagram
@@ -93,40 +93,32 @@ Organized by **Bounded Contexts** - each context is a cohesive business capabili
 ```mermaid
 graph TB
     subgraph Core Domain
-        COD[CODING<br>Codes, Categories, Segments<br>Apply codes to research data]
-        ANA[ANALYSIS<br>Reports, Insights<br>Generate research findings]
+        COD[CODING<br>Codes, Categories, Segments<br>Apply codes to research data<br>+ AI suggestions]
     end
 
     subgraph Supporting Domain
         SRC[SOURCES<br>Documents, Audio, Video<br>Manage research materials]
         CAS[CASES<br>Grouping, Attributes<br>Organize by participant]
         PRJ[PROJECTS<br>Settings, Lifecycle<br>Project management]
-        COL[COLLABORATION<br>Coders, Merging<br>Multi-coder workflows]
+        FLD[FOLDERS<br>Organization<br>Group sources]
+        SET[SETTINGS<br>Preferences<br>Theme, font, language]
     end
 
-    subgraph Generic Domain
-        AI[AI SERVICES<br>LLM, Embeddings<br>AI-assisted coding]
-        EXP[EXPORT<br>Reports, Charts<br>Output generation]
-    end
-
-    COD -->|"SegmentCoded / DomainEvent"| ANA
     SRC -->|"SourceImported / DomainEvent"| COD
     CAS -->|"CaseLinked / DomainEvent"| COD
-    AI <-->|"SuggestionGenerated / Async"| COD
+    FLD -->|"SourceMoved / DomainEvent"| SRC
 ```
 
 ### Bounded Context Summary
 
 | Context | Entities | Key Operations |
 |---------|----------|----------------|
-| **Coding** | Code, Category, Segment | Create code, apply to text, merge codes |
-| **Analysis** | Report, Insight, Matrix | Generate frequency, co-occurrence |
-| **Sources** | Source, Speaker, Transcript | Import files, detect speakers |
+| **Coding** | Code, Category, Segment, AISuggestion | Create code, apply to text, merge codes, AI suggestions |
+| **Sources** | Source, Folder | Import files, manage folders |
 | **Cases** | Case, CaseAttribute | Link sources, assign attributes |
-| **Projects** | Project, Settings | Open, save, export project |
-| **Collaboration** | Coder, CodingSession | Switch coder, compare, merge |
-| **AI Services** | Embedding, Suggestion | Generate suggestions, search |
-| **Export** | ExportJob, Chart | Export reports, generate charts |
+| **Projects** | Project | Open, close, manage lifecycle |
+| **Settings** | Settings | Configure preferences (theme, font, language) |
+| **Folders** | Folder | Organize sources in folders |
 
 ### Application Shell Components (C3)
 
@@ -258,7 +250,7 @@ sequenceDiagram
 |-----------|-------------------|
 | C1 Desktop App | Local execution, no network auth required |
 | C4 Project DB | File-level permissions, optional encryption |
-| C5 Agent Context | MCP protocol validation, tool schema enforcement |
+| C5 Agent Context | MCP protocol validation, localhost-only HTTP server, tool schema enforcement |
 | LLM Provider | API key storage in OS keychain, HTTPS only |
 
 ### Ownership Perspective
@@ -308,58 +300,76 @@ QualCoder v2
 
 ```
 src/
-├── domain/                     # C2: Domain Core (Pure)
-│   ├── coding/                 # Bounded Context
-│   │   ├── entities.py         # Code, Category, Segment
-│   │   ├── invariants.py       # is_valid_*, can_*
-│   │   ├── derivers.py         # derive_*
-│   │   ├── events.py           # *Created, *Deleted
-│   │   └── tests/              # No mocks needed
-│   ├── sources/
-│   ├── cases/
-│   ├── analysis/
-│   ├── projects/
-│   ├── collaboration/
-│   ├── ai_services/
-│   └── shared/
-│       ├── types.py            # Result, DomainEvent, IDs
-│       └── validation.py       # Reusable helpers
+├── contexts/                   # Bounded Contexts (vertical slices)
+│   ├── coding/                 # Coding Context (includes AI coding)
+│   │   ├── core/               # Domain (Pure)
+│   │   │   ├── entities.py     # Code, Category, Segment
+│   │   │   ├── ai_entities.py  # AI-specific entities
+│   │   │   ├── invariants.py
+│   │   │   ├── derivers.py
+│   │   │   ├── events.py
+│   │   │   ├── commandHandlers/  # Use cases
+│   │   │   └── tests/
+│   │   ├── infra/              # Repositories, AI providers
+│   │   ├── interface/          # Signal bridges, MCP tools
+│   │   └── presentation/       # Context-specific UI
+│   ├── sources/                # Source file management
+│   ├── cases/                  # Case/participant management
+│   ├── projects/               # Project lifecycle
+│   ├── settings/               # User settings
+│   └── folders/                # Folder organization
 │
-├── application/                # C3: Application Shell
-│   ├── event_bus.py            # Pub/sub infrastructure
-│   ├── signal_bridge/
-│   │   ├── base.py             # Thread-safe bridge
-│   │   └── payloads.py         # Qt-friendly DTOs
-│   ├── controllers/            # Command handlers
-│   └── queries/                # Read-side
+├── shared/                     # Cross-cutting concerns
+│   ├── common/                 # Shared types
+│   │   ├── types.py            # DomainEvent, typed IDs
+│   │   ├── operation_result.py # OperationResult pattern
+│   │   └── failure_events.py   # Base failure types
+│   ├── core/                   # Shared domain logic
+│   │   └── sync_handlers.py    # Cross-context sync
+│   ├── infra/                  # Shared infrastructure
+│   │   ├── event_bus.py        # Pub/sub infrastructure
+│   │   ├── signal_bridge/      # Thread-safe Qt bridge
+│   │   ├── app_context/        # Application context, factories
+│   │   ├── lifecycle.py        # Project lifecycle
+│   │   └── state.py            # Project state cache
+│   └── presentation/           # Shared UI components
+│       ├── organisms/          # Reusable complex widgets
+│       ├── molecules/          # Small composite widgets
+│       ├── templates/          # Page layouts, app shell
+│       └── services/           # Dialog service, etc.
 │
-├── infrastructure/             # Repositories, Adapters
-│   ├── repositories/           # SQLite access
-│   └── adapters/               # File I/O, LLM clients
+├── tests/                      # E2E tests
+│   └── e2e/
 │
-├── presentation/               # C1: Desktop App (PySide6)
-│   ├── organisms/              # Complex widgets
-│   ├── pages/                  # Page layouts
-│   └── screens/                # Top-level windows
-│
-└── agent_context/              # C5: Agent Context (MCP)
-    └── schemas/                # Tool definitions
+└── main.py                     # Application entry point
+
+design_system/                  # Reusable UI components, tokens
 ```
 
 ---
 
 ## 9. Bounded Contexts
 
+### Implemented Contexts
+
 | Context | Purpose | Key Events | Integration Pattern |
 |---------|---------|------------|---------------------|
-| Coding | Apply semantic codes to data | CodeCreated, SegmentCoded | Core - others depend on it |
-| Sources | Manage documents, media | SourceImported, SourceDeleted | Open Host Service |
-| Cases | Group and categorize | CaseCreated, SourceLinked | Conformist to Coding |
+| **Coding** | Apply semantic codes to data | CodeCreated, SegmentCoded | Core - others depend on it |
+| **Sources** | Manage documents, media | SourceImported, SourceDeleted | Open Host Service |
+| **Cases** | Group and categorize | CaseCreated, SourceLinked | Conformist to Coding |
+| **Projects** | Lifecycle management | ProjectOpened, ProjectClosed | Anti-Corruption Layer |
+| **Settings** | User preferences | SettingsUpdated | Independent |
+| **Folders** | Folder organization | FolderCreated, SourceMoved | Supporting |
+
+### Planned Contexts (Future)
+
+| Context | Purpose | Key Events | Integration Pattern |
+|---------|---------|------------|---------------------|
 | Analysis | Generate insights | ReportGenerated | Subscribes to Coding events |
-| Projects | Lifecycle management | ProjectOpened, ProjectExported | Anti-Corruption Layer |
 | Collaboration | Multi-coder workflows | CoderSwitched, CodingsMerged | Published Language |
-| AI Services | LLM, embeddings | SuggestionGenerated | Partnership with Coding |
 | Export | Reports, charts | ReportExported | Downstream consumer |
+
+> **Note:** AI coding capabilities are integrated within the Coding context (`ai_entities.py`, `ai_derivers.py`, etc.) rather than as a separate AI Services context.
 
 ---
 
@@ -381,8 +391,6 @@ src/
 | EventBus | Need subscribe_all, history | Blinker, PyPubSub |
 | SignalBridge | No library for domain to Qt threading | None available |
 | Result Type | Minimal, no dependency | returns library |
-
-See [Decision: Library Alternatives](../decisions/decision-002%20library-alternatives-analysis.md) for details.
 
 ---
 
@@ -407,7 +415,8 @@ Start with the [Onboarding Tutorial](./tutorials/README.md) - a progressive guid
 
 - [Common Patterns and Recipes](./tutorials/appendices/A-common-patterns.md)
 - [When to Create New Patterns](./tutorials/appendices/B-when-to-create.md)
-- [Library Alternatives Analysis](../decisions/decision-002%20library-alternatives-analysis.md)
+- [MCP Setup Guide](./user-manual/mcp-setup.md) - Connect AI assistants to QualCoder
+- [MCP API Reference](./api/mcp-api.md) - Technical API documentation
 
 ### C4 Model References
 

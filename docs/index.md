@@ -42,7 +42,20 @@ graph TB
 | [Architecture](ARCHITECTURE.md) | C4 model, bounded contexts, data flow, design decisions |
 | [Tutorials](tutorials/README.md) | Hands-on fDDD onboarding through a practical example |
 | [Design System](api/index.md) | 180+ PySide6 components, tokens, and patterns |
-| [Design Documents](design/FUNCTIONAL_DDD_DESIGN.md) | Detailed specs for major features |
+| [Design Documents](design/) | Detailed specs (Functional DDD, Agent Context) |
+| [AI Plans](ai/) | AI-generated planning documents (historical reference) |
+| [Archive](archive/) | Historical planning documents |
+
+## Bounded Contexts
+
+| Context | Purpose |
+|---------|---------|
+| **Coding** | Apply semantic codes to data (includes AI suggestions) |
+| **Sources** | Manage documents, audio, video files |
+| **Cases** | Group and categorize by participant |
+| **Projects** | Project lifecycle management |
+| **Settings** | User preferences (theme, font, language) |
+| **Folders** | Organize sources in folders |
 
 ## Quick Start
 

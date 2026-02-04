@@ -10,7 +10,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
 
-from src.contexts.shared.core.types import CategoryId, CodeId, SegmentId, SourceId
+from src.shared.common.types import CategoryId, CodeId, SegmentId, SourceId
 
 # ============================================================
 # Value Objects

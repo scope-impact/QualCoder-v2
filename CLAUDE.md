@@ -9,7 +9,6 @@ Detailed conventions are in `.claude/skills/`:
 | `developer` | Code style, patterns, testing, E2E | Writing Python code, tests |
 | `backlog` | Task management with DDD structure | Creating/editing tasks |
 | `c4-architecture` | System architecture diagrams | Understanding codebase structure |
-| `sub-agents` | Layer-specific Claude sub-agents | Complex multi-layer features, parallel development |
 
 ---
 
@@ -43,15 +42,33 @@ See `.claude/skills/backlog/SKILL.md` for full CLI reference and QualCoder-speci
 
 ## Development Workflow
 
-### Architecture (DDD Layers)
+### Architecture (Bounded Context / Vertical Slice)
 
 ```
 src/
-├── domain/           # Pure functions, entities, events (NO I/O)
-├── infrastructure/   # Repositories, database, external services
-├── application/      # Controllers, Signal Bridges, orchestration
-├── presentation/     # PySide6 widgets, screens, dialogs
-design_system/        # Reusable UI components, tokens
+├── contexts/                   # Bounded Contexts (vertical slices)
+│   ├── coding/                 # Coding context
+│   │   ├── core/               # Domain (entities, events, derivers, invariants)
+│   │   │   └── commandHandlers/  # Use cases (command handlers)
+│   │   ├── infra/              # Repositories, external services
+│   │   ├── interface/          # Signal bridges, MCP tools
+│   │   └── presentation/       # Screens, dialogs, viewmodels
+│   ├── sources/
+│   ├── cases/
+│   ├── projects/
+│   ├── settings/
+│   └── folders/
+│
+├── shared/                     # Cross-cutting concerns
+│   ├── common/                 # Types, OperationResult, failure events
+│   ├── core/                   # Shared domain logic
+│   ├── infra/                  # EventBus, SignalBridge, AppContext
+│   └── presentation/           # Molecules, organisms, templates
+│
+├── tests/e2e/                  # End-to-end tests
+└── main.py                     # Entry point
+
+design_system/                  # Reusable UI components, tokens
 ```
 
 ### Testing
@@ -61,13 +78,37 @@ design_system/        # Reusable UI components, tokens
 QT_QPA_PLATFORM=offscreen make test-all
 
 # Run specific e2e tests
-QT_QPA_PLATFORM=offscreen uv run pytest src/presentation/tests/test_case_manager_e2e.py -v
+QT_QPA_PLATFORM=offscreen uv run pytest src/tests/e2e/test_case_manager_e2e.py -v
+```
+
+### Definition of Done
+
+**AC should only be marked `[x]` when all requirements are met:**
+
+Requirements:
+1. E2E test exists in `src/tests/e2e/`
+2. Test has `@allure.story("QC-XXX.YY Description")` decorator
+3. Test passes with `make test-all`
+4. User documentation updated in `docs/user-manual/` (use `developer` skill)
+5. API documentation updated in `docs/api/` for MCP tools (use `developer` skill)
+
+```python
+# Allure tracing convention
+@allure.story("QC-028.03 Rename and Recolor Codes")
+class TestColorPickerDialog:
+    @allure.title("AC #3.1: Dialog shows preset color grid")
+    def test_dialog_shows_preset_colors(self):
+        ...
+```
+
+```bash
+# Check which tasks have test coverage
+grep -rh "@allure.story.*QC-" src/tests/e2e/*.py | sort -u
 ```
 
 See `.claude/skills/developer/SKILL.md` for:
 - Code style and naming conventions
-- Result type patterns (`returns` library)
-- Controller 5-step pattern
+- OperationResult pattern for command handlers
 - Signal Bridge implementation
 - E2E testing with real database fixtures
 
@@ -77,11 +118,19 @@ See `.claude/skills/developer/SKILL.md` for:
 
 ### Bounded Contexts
 
-`coding`, `sources`, `cases`, `journals`, `analysis`, `ai-assistant`, `projects`
+`coding`, `sources`, `cases`, `projects`, `settings`, `folders`
+
+### Context Layer Structure
+
+Each bounded context follows this structure:
+- **core/** — Domain (entities, events, derivers, invariants, commandHandlers/)
+- **infra/** — Repositories, database schemas, external services
+- **interface/** — Signal bridges, MCP tools (adapters)
+- **presentation/** — Screens, pages, dialogs, viewmodels
 
 ### Task Labels
 
-- Layers: `domain`, `infrastructure`, `application`, `presentation`
+- Layers: `core`, `infra`, `interface`, `presentation`
 - Priority: `P0` (critical), `P1`, `P2`, `P3` (low)
 
 ### Commit Convention
@@ -97,22 +146,43 @@ docs: update CLAUDE.md
 
 ---
 
-## Sub-Agents Architecture
+## Common Issues / Wiring Checklist
 
-For complex multi-layer features, use specialized sub-agents from `.claude/agents/`:
+### Screen ↔ ViewModel Wiring Pattern
 
-| Agent | Layer | Scope |
-|-------|-------|-------|
-| `domain-agent` | Domain | Pure functions, entities, events, derivers |
-| `infrastructure-agent` | Infrastructure | Repositories, schemas, external services |
-| `repository-agent` | Infrastructure | Repository implementations specifically |
-| `controller-agent` | Application | 5-step pattern controllers |
-| `signal-bridge-agent` | Application | Event → Qt signal translation |
-| `design-system-agent` | Presentation | Design tokens, atoms |
-| `molecule-agent` | Presentation | Small composite widgets (2-5 atoms) |
-| `organism-agent` | Presentation | Business-logic UI components |
-| `page-agent` | Presentation | Organism compositions with layouts |
-| `screen-agent` | Presentation | Page + ViewModel integration |
-| `viewmodel-agent` | Presentation | UI ↔ Application binding |
+Every Screen that needs domain operations must be wired to its ViewModel in `main.py`:
 
-See `.claude/skills/sub-agents/SKILL.md` for full orchestration patterns.
+```python
+# In _wire_viewmodels() - called when project opens
+def _wire_viewmodels(self):
+    # 1. Create ViewModel with repos from context
+    viewmodel = SomeViewModel(
+        some_repo=self._ctx.some_context.some_repo,
+        event_bus=self._ctx.event_bus,
+        signal_bridge=self._some_signal_bridge,
+    )
+    # 2. Wire to screen
+    self._screens["screen_name"].set_viewmodel(viewmodel)
+```
+
+**Checklist when adding a new Screen:**
+- [ ] Screen has `set_viewmodel()` method
+- [ ] ViewModel created in `_wire_viewmodels()` with correct repos
+- [ ] Screen wired after project opens (repos need DB connection)
+- [ ] SignalBridge connected for reactive UI updates
+
+**Current wiring status in main.py:**
+| Screen | ViewModel | Wired | Status |
+|--------|-----------|-------|--------|
+| FileManagerScreen | FileManagerViewModel | ✅ | Working |
+| TextCodingScreen | TextCodingViewModel | ✅ | Working |
+| CaseManagerScreen | CaseManagerViewModel | ❌ | Needs check |
+| ProjectScreen | — | N/A | Static UI |
+
+### Why UI clicks do nothing
+
+If clicking UI does nothing, check:
+1. **No ViewModel** — Screen created without viewmodel
+2. **ViewModel not wired** — `_wire_viewmodels()` missing the screen
+3. **Signal not connected** — Screen emits signal but nothing listens
+4. **Repos not available** — Project not opened yet (repos need DB)
