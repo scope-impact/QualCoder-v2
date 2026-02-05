@@ -28,4 +28,6 @@ Enable researchers and agents to import, organize, and manage research data file
 - [ ] #9 Agent can read source content
 - [ ] #10 Agent can extract metadata from sources
 - [ ] #11 Agent can add a text source to the project
+- [ ] #12 Agent can manage source folders (create, list, rename, delete, move)
+- [ ] #13 Agent can remove a source with preview/confirmation
 <!-- AC:END -->
