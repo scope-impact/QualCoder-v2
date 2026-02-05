@@ -268,6 +268,149 @@ Get coded segments for a source.
 
 ---
 
+### Version Control Tools
+
+#### list_snapshots
+
+List version control snapshots (commit history).
+
+```json
+{
+  "name": "list_snapshots",
+  "inputSchema": {
+    "type": "object",
+    "properties": {
+      "limit": {
+        "type": "integer",
+        "description": "Max snapshots to return. Default 20.",
+        "default": 20
+      }
+    },
+    "required": []
+  }
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "count": 3,
+    "snapshots": [
+      {
+        "sha": "abc123456789",
+        "message": "coding: 3 events",
+        "author": "QualCoder",
+        "date": "2024-01-15T10:30:00Z"
+      },
+      {
+        "sha": "def987654321",
+        "message": "sources: imported 2 files",
+        "author": "QualCoder",
+        "date": "2024-01-15T09:15:00Z"
+      }
+    ]
+  }
+}
+```
+
+#### view_diff
+
+View differences between two snapshots.
+
+```json
+{
+  "name": "view_diff",
+  "inputSchema": {
+    "type": "object",
+    "properties": {
+      "from_ref": {
+        "type": "string",
+        "description": "Starting commit reference (SHA or HEAD~N)"
+      },
+      "to_ref": {
+        "type": "string",
+        "description": "Ending commit reference (SHA or HEAD~N)"
+      }
+    },
+    "required": ["from_ref", "to_ref"]
+  }
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "from_ref": "abc123",
+    "to_ref": "def456",
+    "diff": "diff --git a/code.csv b/code.csv\n+new line\n-old line"
+  }
+}
+```
+
+#### restore_snapshot
+
+**⚠️ DESTRUCTIVE**: Restore database to a previous snapshot.
+
+```json
+{
+  "name": "restore_snapshot",
+  "inputSchema": {
+    "type": "object",
+    "properties": {
+      "ref": {
+        "type": "string",
+        "description": "Commit reference to restore (SHA or HEAD~N)"
+      }
+    },
+    "required": ["ref"]
+  },
+  "annotations": {"destructive": true}
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "message": "Restored to snapshot abc123",
+    "restored_ref": "abc123"
+  }
+}
+```
+
+#### initialize_version_control
+
+Initialize version control for the project.
+
+```json
+{
+  "name": "initialize_version_control",
+  "inputSchema": {
+    "type": "object",
+    "properties": {},
+    "required": []
+  }
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "message": "Version control initialized",
+    "initial_sha": "abc123456789"
+  }
+}
+```
+
+---
+
 ## HTTP Examples
 
 ### Direct Tool Call
