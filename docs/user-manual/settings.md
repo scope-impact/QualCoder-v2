@@ -104,6 +104,76 @@ Customize how speaker names appear in transcripts:
 
 The preview shows how speaker names will appear.
 
+## Database Settings
+
+Configure your project's data storage and synchronization options.
+
+### Primary Storage
+
+Your project data is always stored locally in SQLite. This ensures:
+
+- **Offline access** - Work without an internet connection
+- **Fast performance** - No network latency for read/write operations
+- **Data ownership** - Your data stays on your machine
+
+### Cloud Sync (Optional)
+
+Enable cloud synchronization to:
+
+- **Collaborate in real-time** with team members
+- **Back up** your project data to the cloud
+- **Access** your project from multiple devices
+
+#### Enabling Cloud Sync
+
+1. Go to **Database** in the sidebar
+2. Check **Enable cloud sync with Convex**
+3. The Convex configuration panel appears
+
+#### Configuring Convex
+
+1. Get your deployment URL from [convex.dev](https://convex.dev)
+2. Create a new project or use an existing one
+3. Copy the deployment URL (looks like `https://your-project.convex.cloud`)
+4. Paste it into the **Deployment URL** field
+
+> **Note: Reopening Required**
+>
+> After changing database settings, you may need to reopen your project for changes to take effect.
+
+#### How Cloud Sync Works
+
+When cloud sync is enabled:
+
+- All changes are **saved locally first** (SQLite remains primary)
+- Changes are then **queued for upload** to Convex
+- When connected, changes **sync automatically** in real-time
+- Changes from other devices **appear automatically**
+
+#### Sync Status Indicator
+
+When cloud sync is enabled, a sync status indicator appears in the navigation bar:
+
+| Icon | Status | Meaning |
+|------|--------|---------|
+| Green check | Synced | All changes uploaded |
+| Spinning | Syncing | Upload in progress |
+| Red warning | Error | Connection issue (hover for details) |
+
+Click the indicator to manually trigger a sync or see pending changes.
+
+#### Offline Mode
+
+If you lose internet connection:
+
+1. Continue working normally - all changes save locally
+2. Changes queue for upload automatically
+3. When reconnected, pending changes sync in the background
+
+> **Tip: Check Connection Status**
+>
+> The sync indicator shows the current connection state. If syncing seems stuck, check your internet connection.
+
 ## Saving Settings
 
 Settings are saved automatically as you change them. There's no need to click Save.

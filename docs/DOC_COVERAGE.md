@@ -70,6 +70,18 @@ This file tracks which features have documentation and screenshots.
 | QC-038.03 | All Settings | [settings.md](user-manual/settings.md) | settings-full.png | :white_check_mark: |
 | QC-038.04 | MCP Server Settings | [mcp-setup.md](user-manual/mcp-setup.md) | - | :construction: |
 
+### QC-047 Cloud Sync with Convex
+
+| ID | Story | Doc Page | Screenshots | Status |
+|----|-------|----------|-------------|--------|
+| QC-047.01 | Cloud Sync Settings | [settings.md](user-manual/settings.md) | settings-cloud-sync-enabled.png | :white_check_mark: |
+| QC-047.02 | Convex URL Configuration | [settings.md](user-manual/settings.md) | settings-cloud-sync-enabled.png | :white_check_mark: |
+| QC-047.03 | Real-time Sync to Cloud | - | - | :x: |
+| QC-047.04 | Sync Status Indicator | [settings.md](user-manual/settings.md) | - | :white_check_mark: |
+| QC-047.05 | Real-time Sync from Cloud | - | - | :x: |
+| QC-047.06 | Offline Mode | [settings.md](user-manual/settings.md) | - | :construction: |
+| QC-047.07 | Agent API | - | - | :x: |
+
 ### QC-048 Version Control
 
 | ID | Story | Doc Page | Screenshots | Status |
@@ -131,6 +143,7 @@ All images in `docs/user-manual/images/`:
 - [x] `settings-dark-theme.png`
 - [x] `settings-navigation.png`
 - [x] `settings-full.png`
+- [x] `settings-cloud-sync-enabled.png`
 
 ### Cases
 - [x] `case-manager-empty.png`
