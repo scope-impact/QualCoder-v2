@@ -225,11 +225,11 @@ class TestVersionHistoryScreen:
     @allure.title("AC #3: Screen displays snapshot cards with history")
     def test_screen_displays_snapshot_cards(self, qapp, colors, event_bus):
         """E2E: Screen shows snapshot cards when history exists."""
-        from src.contexts.projects.presentation.screens import VersionHistoryScreen
-        from src.shared.presentation.organisms import SnapshotItem
+        from src.shared.presentation.organisms import SnapshotItem, VersionHistoryPanel
 
-        with allure.step("Create screen with mock viewmodel behavior"):
-            screen = VersionHistoryScreen(colors=colors)
+        with allure.step("Create history panel with mock data"):
+            # Test the VersionHistoryPanel directly (it's the reusable organism)
+            panel = VersionHistoryPanel(colors=colors)
 
             # Manually set snapshots to simulate loaded history
             snapshots = [
@@ -255,23 +255,23 @@ class TestVersionHistoryScreen:
                     is_current=False,
                 ),
             ]
-            screen._history_panel.set_snapshots(snapshots)
-            screen.resize(900, 600)
-            screen.show()
+            panel.set_snapshots(snapshots)
+            panel.resize(400, 500)
+            panel.show()
             QApplication.processEvents()
 
         with allure.step("Verify snapshot cards are displayed"):
-            # Check that the history panel has content
-            scroll_layout = screen._history_panel._scroll_layout
+            # Check that the panel has content
+            scroll_layout = panel._scroll_layout
             # Should have 3 cards + 1 stretch
             assert scroll_layout.count() >= 3
 
         with allure.step("Capture screenshot for documentation"):
             # Save to user manual images
-            DocScreenshot.capture(screen, "version-history-screen", max_width=1000)
+            DocScreenshot.capture(panel, "version-history-screen", max_width=500)
 
-        attach_screenshot(screen, "VersionHistoryScreen - With Snapshots")
-        screen.close()
+        attach_screenshot(panel, "VersionHistoryPanel - With Snapshots")
+        panel.close()
 
     @pytest.mark.skip(
         reason="Requires full VCS infrastructure with real git repository"
