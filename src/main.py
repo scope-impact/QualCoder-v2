@@ -224,6 +224,7 @@ class QualCoderApp:
                     diffable_adapter=projects_ctx.diffable_adapter,
                     git_adapter=projects_ctx.git_adapter,
                     event_bus=self._ctx.event_bus,
+                    signal_bridge=self._project_signal_bridge,
                 )
                 self._screens["history"].set_viewmodel(vcs_viewmodel)
 

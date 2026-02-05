@@ -30,6 +30,7 @@ if TYPE_CHECKING:
         SqliteDiffableAdapter,
     )
     from src.shared.infra.event_bus import EventBus
+    from src.shared.infra.signal_bridge.projects import ProjectSignalBridge
 
 
 class VersionControlViewModel(QObject):
@@ -64,6 +65,7 @@ class VersionControlViewModel(QObject):
         diffable_adapter: SqliteDiffableAdapter,
         git_adapter: GitRepositoryAdapter,
         event_bus: EventBus,
+        signal_bridge: ProjectSignalBridge | None = None,
         parent=None,
     ):
         super().__init__(parent)
@@ -71,6 +73,15 @@ class VersionControlViewModel(QObject):
         self._diffable_adapter = diffable_adapter
         self._git_adapter = git_adapter
         self._event_bus = event_bus
+        self._signal_bridge = signal_bridge
+
+        # Subscribe to domain events via SignalBridge for reactive updates
+        if self._signal_bridge is not None:
+            self._signal_bridge.snapshot_created.connect(self._on_snapshot_created)
+            self._signal_bridge.snapshot_restored.connect(self._on_snapshot_restored)
+            self._signal_bridge.version_control_initialized.connect(
+                self._on_vcs_initialized
+            )
 
     @property
     def is_initialized(self) -> bool:
@@ -175,6 +186,40 @@ class VersionControlViewModel(QObject):
         else:
             self.vcs_initialized.emit()
             self.load_snapshots()
+
+    # =========================================================================
+    # SignalBridge Event Handlers (Reactive Updates)
+    # =========================================================================
+
+    @Slot(object)
+    def _on_snapshot_created(self, _payload):
+        """
+        React to snapshot creation event from SignalBridge.
+
+        Auto-refreshes the snapshot list when a new commit is created
+        (e.g., from auto-commit after domain operations).
+        """
+        self.load_snapshots()
+
+    @Slot(object)
+    def _on_snapshot_restored(self, _payload):
+        """
+        React to snapshot restore event from SignalBridge.
+
+        Auto-refreshes the snapshot list to update the current marker.
+        """
+        self.load_snapshots()
+
+    @Slot(object)
+    def _on_vcs_initialized(self, _payload):
+        """
+        React to VCS initialization event from SignalBridge.
+
+        Auto-refreshes state when VCS is initialized externally
+        (e.g., via MCP tool).
+        """
+        self.vcs_initialized.emit()
+        self.load_snapshots()
 
 
 __all__ = ["VersionControlViewModel"]

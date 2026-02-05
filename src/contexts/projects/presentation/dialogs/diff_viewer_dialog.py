@@ -37,27 +37,31 @@ from design_system import (
 
 
 class DiffHighlighter(QSyntaxHighlighter):
-    """Syntax highlighter for git diff output."""
+    """
+    Syntax highlighter for git diff output.
+
+    Uses design system colors for theme support (git-cola inspired).
+    """
 
     def __init__(self, colors: ColorPalette, document: QTextDocument):
         super().__init__(document)
         self._colors = colors
 
-        # Define formats
+        # Define formats using design system colors
         self._add_format = QTextCharFormat()
-        self._add_format.setBackground(QColor("#1a472a"))  # Dark green bg
-        self._add_format.setForeground(QColor("#7ee787"))  # Light green text
+        self._add_format.setBackground(QColor(colors.diff_add_bg))
+        self._add_format.setForeground(QColor(colors.diff_add_fg))
 
         self._remove_format = QTextCharFormat()
-        self._remove_format.setBackground(QColor("#5c2d2d"))  # Dark red bg
-        self._remove_format.setForeground(QColor("#ff7b72"))  # Light red text
+        self._remove_format.setBackground(QColor(colors.diff_remove_bg))
+        self._remove_format.setForeground(QColor(colors.diff_remove_fg))
 
         self._header_format = QTextCharFormat()
-        self._header_format.setForeground(QColor("#79c0ff"))  # Blue
+        self._header_format.setForeground(QColor(colors.diff_header_fg))
         self._header_format.setFontWeight(QFont.Weight.Bold)
 
         self._hunk_format = QTextCharFormat()
-        self._hunk_format.setForeground(QColor("#a371f7"))  # Purple
+        self._hunk_format.setForeground(QColor(colors.diff_hunk_fg))
 
     def highlightBlock(self, text: str):
         """Apply highlighting to a block of text."""
@@ -199,7 +203,7 @@ class DiffViewerDialog(QDialog):
 
         additions_label = QLabel(f"+{stats['additions']} additions")
         additions_label.setStyleSheet(f"""
-            color: #7ee787;
+            color: {self._colors.diff_add_fg};
             font-size: {TYPOGRAPHY.text_sm}px;
             font-weight: 600;
         """)
@@ -207,7 +211,7 @@ class DiffViewerDialog(QDialog):
 
         deletions_label = QLabel(f"-{stats['deletions']} deletions")
         deletions_label.setStyleSheet(f"""
-            color: #ff7b72;
+            color: {self._colors.diff_remove_fg};
             font-size: {TYPOGRAPHY.text_sm}px;
             font-weight: 600;
         """)
