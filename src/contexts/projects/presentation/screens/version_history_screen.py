@@ -3,7 +3,7 @@ Version History Screen
 
 Displays VCS timeline with restore and diff capabilities.
 
-Implements QC-047.06 Version History UI:
+Implements QC-048.06 Version History UI:
 - AC #3: View history of all changes
 - AC #4: See what changed between two points in time
 - AC #5: Restore to previous state

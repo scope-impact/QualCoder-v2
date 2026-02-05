@@ -1,4 +1,4 @@
-# QC-047: SQLite Database Version Control - Implementation Plan
+# QC-048: SQLite Database Version Control - Implementation Plan
 
 ## Overview
 

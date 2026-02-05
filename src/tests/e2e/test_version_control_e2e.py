@@ -4,7 +4,7 @@ Version Control End-to-End Tests
 E2E tests for VCS (Version Control System) feature with full behavior.
 Tests the complete flow: UI action → ViewModel → Adapter → Git → UI update
 
-Implements QC-047 Version Control:
+Implements QC-048 Version Control:
 - AC #3: View history of all changes
 - AC #4: See what changed between two points in time
 - AC #5: Restore to previous state
@@ -29,7 +29,7 @@ from src.tests.e2e.utils.doc_screenshot import DocScreenshot
 pytestmark = [
     pytest.mark.e2e,
     allure.epic("QualCoder v2"),
-    allure.feature("QC-047 Version Control"),
+    allure.feature("QC-048 Version Control"),
 ]
 
 
@@ -186,7 +186,7 @@ index abc1234..def5678 100644
 # =============================================================================
 
 
-@allure.story("QC-047.06 Version History UI")
+@allure.story("QC-048.06 Version History UI")
 @allure.severity(allure.severity_level.CRITICAL)
 class TestVersionHistoryScreen:
     """
@@ -295,7 +295,7 @@ class TestVersionHistoryScreen:
 # =============================================================================
 
 
-@allure.story("QC-047.07 Diff Viewer Dialog")
+@allure.story("QC-048.07 Diff Viewer Dialog")
 @allure.severity(allure.severity_level.CRITICAL)
 class TestDiffViewerDialog:
     """
@@ -377,7 +377,7 @@ class TestDiffViewerDialog:
 # =============================================================================
 
 
-@allure.story("QC-047.08 Restore Snapshot")
+@allure.story("QC-048.08 Restore Snapshot")
 @allure.severity(allure.severity_level.CRITICAL)
 class TestRestoreSnapshot:
     """
@@ -464,7 +464,7 @@ class TestRestoreSnapshot:
 # =============================================================================
 
 
-@allure.story("QC-047 Integration")
+@allure.story("QC-048 Integration")
 @allure.severity(allure.severity_level.CRITICAL)
 class TestVersionControlIntegration:
     """Integration tests for complete VCS workflow."""
@@ -526,7 +526,7 @@ class TestVersionControlIntegration:
 # =============================================================================
 
 
-@allure.story("QC-047 Design System")
+@allure.story("QC-048 Design System")
 @allure.severity(allure.severity_level.NORMAL)
 class TestDesignSystemIntegration:
     """Tests for design system token usage in VCS components."""

@@ -3,7 +3,7 @@ Diff Viewer Dialog
 
 Displays the diff between two VCS snapshots.
 
-Implements QC-047.07 Diff Viewer Dialog:
+Implements QC-048.07 Diff Viewer Dialog:
 - AC #4: See what changed between two points in time
 """
 

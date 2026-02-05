@@ -9,7 +9,7 @@ labels:
   - projects
   - version-control
   - sqlite
-related_task: QC-047
+related_task: QC-048
 ---
 
 ## Context

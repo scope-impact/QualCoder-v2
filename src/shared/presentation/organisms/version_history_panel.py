@@ -3,7 +3,7 @@ Version History Panel
 
 Displays a timeline of VCS snapshots with restore functionality.
 
-Implements QC-047.06 Version History UI:
+Implements QC-048.06 Version History UI:
 - AC #3: View history of all changes
 - AC #5: Restore to previous state
 """
