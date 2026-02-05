@@ -23,7 +23,7 @@ Each snapshot shows:
 - **Message** - What changed (e.g., "coding: 2 events, sources: 1 event")
 - **SHA** - Unique identifier for the snapshot
 
-<!-- ![Version History Screen](images/version-history-screen.png) -->
+![Version History Screen](images/version-history-screen.png)
 
 ### Understanding the Timeline
 
@@ -55,7 +55,7 @@ The diff uses color highlighting:
 | **Blue text** | File headers |
 | **Purple text** | Section markers (`@@`) |
 
-<!-- ![Diff Viewer](images/diff-viewer-dialog.png) -->
+![Diff Viewer](images/diff-viewer-dialog.png)
 
 > **Tip: Stats Summary**
 >
