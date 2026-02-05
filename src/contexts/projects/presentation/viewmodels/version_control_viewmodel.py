@@ -84,7 +84,7 @@ class VersionControlViewModel(QObject):
             self.snapshots_loaded.emit([])
             return
 
-        result = list_snapshots(self._git_adapter, limit=50)
+        result = list_snapshots(limit=50, git_adapter=self._git_adapter)
 
         if result.is_failure:
             self.error_occurred.emit(result.error or "Failed to load history")
@@ -141,9 +141,9 @@ class VersionControlViewModel(QObject):
             return
 
         result = view_diff(
-            self._git_adapter,
             from_ref=from_ref,
             to_ref=to_ref,
+            git_adapter=self._git_adapter,
         )
 
         if result.is_failure:
