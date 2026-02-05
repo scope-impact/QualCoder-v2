@@ -3,6 +3,8 @@ Convex Client Wrapper.
 
 A Python wrapper around the Convex client that provides a consistent
 interface for calling Convex functions (queries and mutations).
+
+Includes OpenTelemetry instrumentation for performance monitoring.
 """
 
 from __future__ import annotations
@@ -11,6 +13,10 @@ import os
 from typing import Any
 
 from convex import ConvexClient
+from opentelemetry import trace
+
+# Get tracer for Convex operations
+_tracer = trace.get_tracer("qualcoder.convex")
 
 
 class ConvexClientWrapper:
@@ -69,7 +75,25 @@ class ConvexClientWrapper:
         Returns:
             Query result from Convex
         """
-        return self.client.query(function_name, kwargs)
+        with _tracer.start_as_current_span(
+            f"convex.query.{function_name}",
+            attributes={
+                "db.system": "convex",
+                "db.operation": "query",
+                "convex.function": function_name,
+                "convex.arg_count": len(kwargs),
+            },
+        ) as span:
+            try:
+                result = self.client.query(function_name, kwargs)
+                # Record result size for list results
+                if isinstance(result, list):
+                    span.set_attribute("convex.result_count", len(result))
+                return result
+            except Exception as e:
+                span.record_exception(e)
+                span.set_status(trace.Status(trace.StatusCode.ERROR, str(e)))
+                raise
 
     # =========================================================================
     # Mutation Methods
@@ -86,7 +110,22 @@ class ConvexClientWrapper:
         Returns:
             Mutation result from Convex
         """
-        return self.client.mutation(function_name, kwargs)
+        with _tracer.start_as_current_span(
+            f"convex.mutation.{function_name}",
+            attributes={
+                "db.system": "convex",
+                "db.operation": "mutation",
+                "convex.function": function_name,
+                "convex.arg_count": len(kwargs),
+            },
+        ) as span:
+            try:
+                result = self.client.mutation(function_name, kwargs)
+                return result
+            except Exception as e:
+                span.record_exception(e)
+                span.set_status(trace.Status(trace.StatusCode.ERROR, str(e)))
+                raise
 
     # =========================================================================
     # Coding Context Shortcuts
