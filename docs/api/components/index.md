@@ -12,10 +12,10 @@ The QualCoder Design System provides 180+ reusable components organized into fun
 | [Forms](forms.md) | SearchBox, Select, Textarea, ColorPicker | User input |
 | [Navigation](navigation.md) | Tab, TabGroup, Breadcrumb, NavList | Navigation patterns |
 | [Data Display](data-display.md) | DataTable, CodeTree, InfoCard, KeyValueList | Data presentation |
-| [Lists](lists.md) | FileList, CaseList, AttributeList | Collection displays |
+| [Lists](lists.md) | FileList, CaseList, AttributeList, VersionHistoryPanel | Collection displays |
 | [Media](media.md) | VideoContainer, Timeline, PlayerControls | Media playback |
 | [Chat & AI](chat.md) | MessageBubble, ChatInput, CodeSuggestion | AI interface |
-| [Document](document.md) | TextPanel, TranscriptPanel, SelectionPopup | Document handling |
+| [Document](document.md) | TextPanel, TranscriptPanel, SelectionPopup, DiffHighlighter | Document handling |
 | [Feedback](feedback.md) | Spinner, Toast, ProgressBar | User feedback |
 | [Visualization](visualization.md) | ChartWidget, NetworkGraph, WordCloud | Data visualization |
 | [Pickers](pickers.md) | TypeSelector, ColorSchemeSelector | Selection widgets |
