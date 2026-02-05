@@ -70,6 +70,17 @@ This file tracks which features have documentation and screenshots.
 | QC-038.03 | All Settings | [settings.md](user-manual/settings.md) | settings-full.png | :white_check_mark: |
 | QC-038.04 | MCP Server Settings | [mcp-setup.md](user-manual/mcp-setup.md) | - | :construction: |
 
+### QC-047 Version Control
+
+| ID | Story | Doc Page | Screenshots | Status |
+|----|-------|----------|-------------|--------|
+| QC-047.01 | Initialize VCS | [version-control.md](user-manual/version-control.md) | - | :construction: |
+| QC-047.02 | Auto-commit on Changes | [version-control.md](user-manual/version-control.md) | - | :construction: |
+| QC-047.03 | View History | [version-control.md](user-manual/version-control.md) | version-history-screen.png | :construction: |
+| QC-047.04 | Restore Snapshot | [version-control.md](user-manual/version-control.md) | - | :construction: |
+| QC-047.05 | View Diff | [version-control.md](user-manual/version-control.md) | diff-viewer-dialog.png | :construction: |
+| QC-047.06 | Diff Highlighting | [colors.md](api/tokens/colors.md) | - | :white_check_mark: |
+
 ---
 
 ## Image Inventory
@@ -137,6 +148,10 @@ All images in `docs/user-manual/images/`:
 
 ### Additional Coding
 - [x] `coding-multiple-codes.png`
+
+### Version Control
+- [ ] `version-history-screen.png`
+- [ ] `diff-viewer-dialog.png`
 
 ---
 

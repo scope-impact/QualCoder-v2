@@ -25,6 +25,8 @@ QualCoder is a free, open-source qualitative data analysis tool that helps resea
 
 4. **[Apply Codes](coding.md)** — Select text and apply codes to build your analysis.
 
+5. **[Version Control](version-control.md)** — View history, compare changes, and restore previous states.
+
 ## Features Overview
 
 | Feature | Human | AI Agent |
@@ -35,6 +37,7 @@ QualCoder is a free, open-source qualitative data analysis tool that helps resea
 | Detect duplicates | - | ✓ |
 | Auto-code patterns | ✓ | ✓ |
 | Organize categories | ✓ | ✓ |
+| View history & restore | ✓ | ✓ |
 
 ## System Requirements
 
