@@ -229,7 +229,9 @@ class FolderRepositoryProtocol(Protocol):
         """Delete a folder by ID."""
         ...
 
-    def update_parent(self, folder_id: FolderId, new_parent_id: FolderId | None) -> None:
+    def update_parent(
+        self, folder_id: FolderId, new_parent_id: FolderId | None
+    ) -> None:
         """Move a folder to a new parent."""
         ...
 

@@ -167,7 +167,9 @@ class ConvexCaseRepository:
         elif attribute.attr_type == AttributeType.DATE:
             value_date = attribute.value.isoformat() if attribute.value else None
         elif attribute.attr_type == AttributeType.BOOLEAN:
-            value_text = str(attribute.value).lower() if attribute.value is not None else None
+            value_text = (
+                str(attribute.value).lower() if attribute.value is not None else None
+            )
 
         self._client.mutation(
             "cases:saveAttribute",

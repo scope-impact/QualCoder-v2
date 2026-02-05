@@ -201,9 +201,7 @@ class ConvexFolderRepository:
 
     def _doc_to_folder(self, doc: dict[str, Any]) -> Folder:
         """Map Convex document to domain Folder entity."""
-        parent_id = (
-            FolderId(value=doc["parent_id"]) if doc.get("parent_id") else None
-        )
+        parent_id = FolderId(value=doc["parent_id"]) if doc.get("parent_id") else None
         return Folder(
             id=FolderId(value=doc["_id"]),
             name=doc["name"],

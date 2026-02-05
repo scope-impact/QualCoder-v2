@@ -226,7 +226,7 @@ def _get_local_ids(entity_type: str, sync_engine: SyncEngine) -> frozenset[str]:
     """Get local IDs for an entity type."""
     # This would need to query the local repos
     # For now, delegate to sync_engine which has listener access
-    listeners = sync_engine._change_listeners.get(entity_type, [])
+    _ = sync_engine._change_listeners.get(entity_type, [])
     # Listeners don't give us local IDs directly
     # We'll need to track this differently or get from repos
     # For now return empty - deletions won't be detected

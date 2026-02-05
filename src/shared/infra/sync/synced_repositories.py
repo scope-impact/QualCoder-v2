@@ -226,7 +226,9 @@ class SyncedCategoryRepository:
                 data={
                     "name": category.name,
                     "memo": category.memo,
-                    "supercatid": category.parent_id.value if category.parent_id else None,
+                    "supercatid": category.parent_id.value
+                    if category.parent_id
+                    else None,
                     "owner": category.owner,
                     "date": category.created_at.isoformat(),
                 },
@@ -278,15 +280,22 @@ class SyncedCategoryRepository:
                     id=CategoryId(item_id),
                     name=item.get("name", ""),
                     memo=item.get("memo", ""),
-                    parent_id=CategoryId(item["supercatid"]) if item.get("supercatid") else None,
+                    parent_id=CategoryId(item["supercatid"])
+                    if item.get("supercatid")
+                    else None,
                     owner=item.get("owner", ""),
-                    created_at=datetime.fromisoformat(item["date"]) if item.get("date") else datetime.now(),
+                    created_at=datetime.fromisoformat(item["date"])
+                    if item.get("date")
+                    else datetime.now(),
                 )
                 self._repo.save(category)
                 logger.debug(f"Synced category from remote: {category.name}")
 
             for local_id in local_cats:
-                if local_id not in remote_ids and local_id not in self._pending_outbound:
+                if (
+                    local_id not in remote_ids
+                    and local_id not in self._pending_outbound
+                ):
                     self._repo.delete(CategoryId(local_id))
                     logger.debug(f"Deleted category from remote sync: {local_id}")
 
@@ -451,14 +460,19 @@ class SyncedSegmentRepository:
                     selected_text=item.get("seltext", ""),
                     memo=item.get("memo", ""),
                     owner=item.get("owner", ""),
-                    created_at=datetime.fromisoformat(item["date"]) if item.get("date") else datetime.now(),
+                    created_at=datetime.fromisoformat(item["date"])
+                    if item.get("date")
+                    else datetime.now(),
                     importance=item.get("important", 0),
                 )
                 self._repo.save(segment)
                 logger.debug(f"Synced segment from remote: {item_id}")
 
             for local_id in local_segments:
-                if local_id not in remote_ids and local_id not in self._pending_outbound:
+                if (
+                    local_id not in remote_ids
+                    and local_id not in self._pending_outbound
+                ):
                     self._repo.delete(SegmentId(local_id))
                     logger.debug(f"Deleted segment from remote sync: {local_id}")
 

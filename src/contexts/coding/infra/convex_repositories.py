@@ -95,7 +95,9 @@ class ConvexCodeRepository:
         return Code(
             id=CodeId(value=doc["_id"]),
             name=doc["name"],
-            color=Color.from_hex(doc.get("color")) if doc.get("color") else Color(153, 153, 153),
+            color=Color.from_hex(doc.get("color"))
+            if doc.get("color")
+            else Color(153, 153, 153),
             memo=doc.get("memo"),
             category_id=CategoryId(value=doc["catid"]) if doc.get("catid") else None,
             owner=doc.get("owner"),
@@ -172,7 +174,9 @@ class ConvexCategoryRepository:
         return Category(
             id=CategoryId(value=doc["_id"]),
             name=doc["name"],
-            parent_id=CategoryId(value=doc["supercatid"]) if doc.get("supercatid") else None,
+            parent_id=CategoryId(value=doc["supercatid"])
+            if doc.get("supercatid")
+            else None,
             memo=doc.get("memo"),
             owner=doc.get("owner"),
             created_at=datetime.fromisoformat(doc["date"])
@@ -262,7 +266,9 @@ class ConvexSegmentRepository:
 
     def delete_by_source(self, source_id: SourceId) -> int:
         """Delete all segments for a source, returns count deleted."""
-        return self._client.mutation("segments:deleteBySource", sourceId=source_id.value)
+        return self._client.mutation(
+            "segments:deleteBySource", sourceId=source_id.value
+        )
 
     def count_by_code(self, code_id: CodeId) -> int:
         """Count segments with a specific code."""

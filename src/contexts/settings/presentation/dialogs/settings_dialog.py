@@ -570,9 +570,7 @@ class SettingsDialog(QDialog):
         """)
         layout.addWidget(primary_label)
 
-        primary_desc = QLabel(
-            "All data is stored locally in SQLite. Works offline."
-        )
+        primary_desc = QLabel("All data is stored locally in SQLite. Works offline.")
         primary_desc.setStyleSheet(f"""
             color: {self._colors.text_secondary};
             font-size: {TYPOGRAPHY.text_xs}px;
