@@ -46,6 +46,16 @@ class AddSourceCommand:
 
 
 @dataclass(frozen=True)
+class AddTextSourceCommand:
+    """Command to add a text source directly (agent-provided content, no file)."""
+
+    name: str
+    content: str
+    origin: str | None = None
+    memo: str | None = None
+
+
+@dataclass(frozen=True)
 class RemoveSourceCommand:
     """Command to remove a source from the project."""
 
