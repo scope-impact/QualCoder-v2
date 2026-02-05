@@ -187,6 +187,13 @@ class MCPServerManager:
             read_source_content_tool,
             suggest_source_metadata_tool,
         )
+        from src.contexts.settings.interface.cloud_sync_mcp_tools import (
+            configure_cloud_sync_tool,
+            get_sync_settings_tool,
+        )
+        from src.contexts.settings.interface.cloud_sync_mcp_tools import (
+            get_sync_status_tool as cloud_sync_status_tool,
+        )
 
         tools = [
             get_project_context_tool,
@@ -199,6 +206,10 @@ class MCPServerManager:
             get_code_tool,
             batch_apply_codes_tool,
             list_segments_tool,
+            # Cloud sync tools
+            cloud_sync_status_tool,
+            configure_cloud_sync_tool,
+            get_sync_settings_tool,
         ]
         return [t.to_schema() for t in tools]
 
@@ -217,6 +228,11 @@ class MCPServerManager:
             "get_code",
             "batch_apply_codes",
             "list_segments_for_source",
+        }
+        cloud_sync_tools = {
+            "get_sync_status",
+            "configure_cloud_sync",
+            "get_sync_settings",
         }
 
         try:
@@ -242,6 +258,17 @@ class MCPServerManager:
                 )
                 tools = CodingTools(ctx=coding_ctx)
                 return tools.execute(tool_name, arguments)
+
+            elif tool_name in cloud_sync_tools:
+                from src.contexts.settings.interface.cloud_sync_mcp_tools import (
+                    CloudSyncMCPTools,
+                )
+
+                tools = CloudSyncMCPTools(
+                    settings_repo=self._ctx.settings_repo,
+                    event_bus=self._ctx.event_bus,
+                )
+                return tools.handle_tool_call(tool_name, arguments)
 
             return {"success": False, "error": f"Unknown tool: {tool_name}"}
 

@@ -15,13 +15,16 @@ from src.contexts.settings.core.entities import UserSettings
 from src.contexts.settings.core.events import (
     AVCodingConfigChanged,
     BackupConfigChanged,
+    CloudSyncConfigChanged,
     FontChanged,
     LanguageChanged,
     ThemeChanged,
 )
 from src.contexts.settings.core.invariants import (
     VALID_LANGUAGES,
+    can_enable_cloud_sync,
     is_valid_backup_interval,
+    is_valid_convex_url,
     is_valid_font_family,
     is_valid_font_size,
     is_valid_language_code,
@@ -162,6 +165,40 @@ class InvalidSpeakerFormat:
                 "message",
                 f"Speaker format '{self.format_str}' must contain {{n}} placeholder",
             )
+
+
+@dataclass(frozen=True)
+class CloudSyncSettingsFailed:
+    """Cloud sync settings change failed."""
+
+    reason: str = ""
+    error_code: str = ""
+    suggestions: tuple[str, ...] = ()
+
+    @classmethod
+    def invalid_url(cls, url: str) -> CloudSyncSettingsFailed:
+        """Create failure for invalid Convex URL."""
+        return cls(
+            reason=f"Invalid Convex URL: '{url}'",
+            error_code="INVALID_CONVEX_URL",
+            suggestions=(
+                "URL must start with https://",
+                "URL must end with .convex.cloud",
+                "Example: https://your-project.convex.cloud",
+            ),
+        )
+
+    @classmethod
+    def url_required(cls) -> CloudSyncSettingsFailed:
+        """Create failure when trying to enable without URL."""
+        return cls(
+            reason="Convex URL is required to enable cloud sync",
+            error_code="URL_REQUIRED",
+            suggestions=(
+                "Configure the Convex URL first",
+                "Get your URL from convex.dev dashboard",
+            ),
+        )
 
 
 # =============================================================================
@@ -323,4 +360,38 @@ def derive_av_coding_config_change(
         old_speaker_format=current_settings.av_coding.speaker_format,
         timestamp_format=timestamp_format,
         speaker_format=speaker_format,
+    )
+
+
+def derive_cloud_sync_config_change(
+    enabled: bool,
+    convex_url: str | None,
+    current_settings: UserSettings,
+) -> CloudSyncConfigChanged | Failure:
+    """
+    Derive a cloud sync config change event from inputs.
+
+    Pure function - no I/O, no side effects.
+
+    Args:
+        enabled: Whether cloud sync is enabled
+        convex_url: Convex deployment URL (required if enabled)
+        current_settings: Current user settings for old cloud sync values
+
+    Returns:
+        CloudSyncConfigChanged event on success, Failure with reason on error
+    """
+    # Validate URL format if provided
+    if convex_url and not is_valid_convex_url(convex_url):
+        return Failure(CloudSyncSettingsFailed.invalid_url(convex_url))
+
+    # Cannot enable without valid URL
+    if enabled and not can_enable_cloud_sync(convex_url):
+        return Failure(CloudSyncSettingsFailed.url_required())
+
+    return CloudSyncConfigChanged.create(
+        old_enabled=current_settings.backend.cloud_sync_enabled,
+        old_convex_url=current_settings.backend.convex_url,
+        enabled=enabled,
+        convex_url=convex_url,
     )

@@ -71,3 +71,16 @@ class ConfigureAVCodingCommand:
 
     timestamp_format: str
     speaker_format: str
+
+
+# =============================================================================
+# Cloud Sync Commands
+# =============================================================================
+
+
+@dataclass(frozen=True)
+class ConfigureCloudSyncCommand:
+    """Command to configure cloud sync settings."""
+
+    enabled: bool
+    convex_url: str | None = None

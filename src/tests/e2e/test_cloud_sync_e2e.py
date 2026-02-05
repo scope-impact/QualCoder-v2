@@ -372,9 +372,9 @@ class TestCloudSyncPersistence:
             dialog.show()
             QApplication.processEvents()
 
-            # Enable cloud sync and set URL via viewmodel
-            viewmodel.set_cloud_sync_enabled(True)
+            # Set URL first, then enable cloud sync (URL required to enable)
             viewmodel.set_convex_url("https://test.convex.cloud")
+            viewmodel.set_cloud_sync_enabled(True)
             QApplication.processEvents()
 
             # Trigger save via the service/repo path

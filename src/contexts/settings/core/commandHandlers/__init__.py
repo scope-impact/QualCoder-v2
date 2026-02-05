@@ -11,6 +11,9 @@ from src.contexts.settings.core.commandHandlers.configure_av_coding import (
     configure_av_coding,
 )
 from src.contexts.settings.core.commandHandlers.configure_backup import configure_backup
+from src.contexts.settings.core.commandHandlers.configure_cloud_sync import (
+    configure_cloud_sync,
+)
 
 __all__ = [
     "change_font",
@@ -18,4 +21,5 @@ __all__ = [
     "change_theme",
     "configure_av_coding",
     "configure_backup",
+    "configure_cloud_sync",
 ]
