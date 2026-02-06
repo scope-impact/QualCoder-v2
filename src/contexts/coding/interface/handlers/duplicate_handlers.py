@@ -2,6 +2,8 @@
 QC-028.08: Detect Duplicate Codes Handlers
 
 Handlers for detecting and merging semantically similar codes.
+
+All mutation handlers delegate to command handlers to ensure proper event publishing.
 """
 
 from __future__ import annotations
@@ -17,7 +19,8 @@ from src.contexts.coding.core.ai_entities import (
     MergeSuggestionId,
     SimilarityScore,
 )
-from src.contexts.coding.core.entities import TextSegment
+from src.contexts.coding.core.commandHandlers import merge_codes
+from src.contexts.coding.core.commands import MergeCodesCommand
 from src.shared.common.operation_result import OperationResult
 from src.shared.common.types import CodeId
 
@@ -35,7 +38,7 @@ def handle_detect_duplicate_codes(
 ) -> dict[str, Any]:
     """Detect semantically similar codes."""
     threshold = arguments.get("threshold", 0.8)
-    include_usage = arguments.get("include_usage_analysis", False)
+    _include_usage = arguments.get("include_usage_analysis", False)  # Reserved
 
     if ctx.code_repo is None:
         return no_context_error("DETECT_DUPLICATES")
@@ -148,7 +151,12 @@ def handle_approve_merge(
     ctx: HandlerContext,
     arguments: dict[str, Any],
 ) -> dict[str, Any]:
-    """Approve a merge suggestion."""
+    """
+    Approve a merge suggestion.
+
+    Delegates to merge_codes command handler for proper event publishing
+    (CodesMerged) for UI refresh.
+    """
     merge_id = arguments.get("merge_suggestion_id")
     if not merge_id:
         return missing_param_error("APPROVE_MERGE", "merge_suggestion_id")
@@ -162,38 +170,36 @@ def handle_approve_merge(
             error_code="APPROVE_MERGE/NOT_FOUND",
         ).to_dict()
 
-    # Execute merge: Update all segments from source to target, then delete source
-    if ctx.segment_repo:
-        segments = ctx.segment_repo.get_by_code(suggestion.source_code_id)
-        for segment in segments:
-            updated = TextSegment(
-                id=segment.id,
-                source_id=segment.source_id,
-                code_id=suggestion.target_code_id,
-                position=segment.position,
-                selected_text=segment.selected_text,
-                memo=segment.memo,
-                importance=segment.importance,
-                owner=segment.owner,
-                created_at=segment.created_at,
-            )
-            ctx.segment_repo.save(updated)
+    if ctx.code_repo is None or ctx.segment_repo is None:
+        return no_context_error("APPROVE_MERGE")
 
-    # Delete source code
-    if ctx.code_repo:
-        ctx.code_repo.delete(suggestion.source_code_id)
+    # Delegate to merge_codes command handler - publishes CodesMerged event
+    command = MergeCodesCommand(
+        source_code_id=suggestion.source_code_id.value,
+        target_code_id=suggestion.target_code_id.value,
+    )
+    result = merge_codes(
+        command=command,
+        code_repo=ctx.code_repo,
+        category_repo=ctx.category_repo,
+        segment_repo=ctx.segment_repo,
+        event_bus=ctx.event_bus,
+    )
 
-    # Update suggestion status
-    updated = suggestion.with_status("approved")
-    ctx.suggestion_cache.merge_suggestions.update(updated)
+    if result.is_success:
+        # Update suggestion status
+        updated = suggestion.with_status("approved")
+        ctx.suggestion_cache.merge_suggestions.update(updated)
 
-    return OperationResult.ok(
-        data={
-            "status": "merged",
-            "merged_from": suggestion.source_code_id.value,
-            "merged_into": suggestion.target_code_id.value,
-        }
-    ).to_dict()
+        return OperationResult.ok(
+            data={
+                "status": "merged",
+                "merged_from": suggestion.source_code_id.value,
+                "merged_into": suggestion.target_code_id.value,
+            }
+        ).to_dict()
+
+    return result.to_dict()
 
 
 # Handler registry for duplicate detection tools

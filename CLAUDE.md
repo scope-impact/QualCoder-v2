@@ -188,3 +188,31 @@ If clicking UI does nothing, check:
 2. **ViewModel not wired** — `_wire_viewmodels()` missing the screen
 3. **Signal not connected** — Screen emits signal but nothing listens
 4. **Repos not available** — Project not opened yet (repos need DB)
+
+### MCP Handler Pattern (AI Tools)
+
+MCP tools in `interface/handlers/` **MUST delegate mutations to command handlers**. This ensures events are published and UI refreshes via SignalBridge.
+
+```python
+# CORRECT: Delegate to command handler (publishes event)
+def handle_approve_suggestion(ctx: HandlerContext, args: dict) -> dict:
+    command = CreateCodeCommand(name=suggestion.name, color=suggestion.color)
+    result = create_code(
+        command=command,
+        code_repo=ctx.code_repo,
+        event_bus=ctx.event_bus,  # Always pass event_bus
+    )
+    return result.to_dict()
+
+# WRONG: Direct repo access (no event, UI won't refresh)
+def handle_approve_suggestion(ctx: HandlerContext, args: dict) -> dict:
+    ctx.code_repo.save(code)  # No event published!
+    return {"success": True}
+```
+
+**Anti-pattern checklist** - MCP handlers should NOT:
+- Call `repo.save()` or `repo.delete()` directly
+- Create entities manually instead of via command handler
+- Skip passing `event_bus` to command handlers
+
+**Why:** Command handlers publish events → SignalBridge converts to Qt signals → UI updates reactively

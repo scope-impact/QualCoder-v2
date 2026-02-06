@@ -2,6 +2,8 @@
 QC-028.07: Suggest New Code Handlers
 
 Handlers for AI-assisted code suggestion workflow.
+
+All mutation handlers delegate to command handlers to ensure proper event publishing.
 """
 
 from __future__ import annotations
@@ -9,9 +11,11 @@ from __future__ import annotations
 from typing import Any
 
 from src.contexts.coding.core.ai_entities import CodeSuggestion, SuggestionId
+from src.contexts.coding.core.commandHandlers import create_code
+from src.contexts.coding.core.commands import CreateCodeCommand
 from src.contexts.coding.core.entities import Color
 from src.shared.common.operation_result import OperationResult
-from src.shared.common.types import CodeId, SourceId
+from src.shared.common.types import SourceId
 
 from .base import HandlerContext, missing_param_error, no_context_error
 
@@ -115,7 +119,12 @@ def handle_approve_suggestion(
     ctx: HandlerContext,
     arguments: dict[str, Any],
 ) -> dict[str, Any]:
-    """Approve a pending code suggestion."""
+    """
+    Approve a pending code suggestion.
+
+    Delegates to create_code command handler for proper event publishing
+    (CodeCreated) for UI refresh.
+    """
     suggestion_id = arguments.get("suggestion_id")
     if not suggestion_id:
         return missing_param_error("APPROVE_SUGGESTION", "suggestion_id")
@@ -138,33 +147,36 @@ def handle_approve_suggestion(
     if ctx.code_repo is None:
         return no_context_error("APPROVE_SUGGESTION")
 
-    # Create the actual code
-    from src.contexts.coding.core.entities import Code
-
-    # Get next code ID
-    existing_codes = ctx.code_repo.get_all()
-    max_id = max((c.id.value for c in existing_codes), default=0)
-    new_code_id = CodeId(max_id + 1)
-
-    new_code = Code(
-        id=new_code_id,
+    # Delegate to create_code command handler - publishes CodeCreated event
+    command = CreateCodeCommand(
         name=suggestion.name,
-        color=suggestion.color,
+        color=suggestion.color.to_hex(),
         memo=suggestion.memo,
     )
-    ctx.code_repo.save(new_code)
+    result = create_code(
+        command=command,
+        code_repo=ctx.code_repo,
+        category_repo=ctx.category_repo,
+        segment_repo=ctx.segment_repo,
+        event_bus=ctx.event_bus,
+    )
 
-    # Update suggestion status
-    updated = suggestion.with_status("approved")
-    ctx.suggestion_cache.code_suggestions.update(updated)
+    if result.is_success:
+        # Update suggestion status
+        updated = suggestion.with_status("approved")
+        ctx.suggestion_cache.code_suggestions.update(updated)
 
-    return OperationResult.ok(
-        data={
-            "status": "created",
-            "code_id": new_code_id.value,
-            "name": new_code.name,
-        }
-    ).to_dict()
+        # Extract code from result
+        code = result.data
+        return OperationResult.ok(
+            data={
+                "status": "created",
+                "code_id": code.id.value,
+                "name": code.name,
+            }
+        ).to_dict()
+
+    return result.to_dict()
 
 
 # Handler registry for suggest code tools

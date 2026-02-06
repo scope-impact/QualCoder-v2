@@ -2,6 +2,8 @@
 QC-029.08: Suggest Codes for Text Handlers
 
 Handlers for auto-suggesting codes for uncoded text.
+
+All mutation handlers delegate to command handlers to ensure proper event publishing.
 """
 
 from __future__ import annotations
@@ -14,9 +16,10 @@ from src.contexts.coding.core.ai_entities import (
     CodingSuggestionBatchId,
     CodingSuggestionId,
 )
-from src.contexts.coding.core.entities import TextPosition, TextSegment
+from src.contexts.coding.core.commandHandlers import apply_code
+from src.contexts.coding.core.commands import ApplyCodeCommand
 from src.shared.common.operation_result import OperationResult
-from src.shared.common.types import SegmentId, SourceId
+from src.shared.common.types import SourceId
 
 from .base import HandlerContext, missing_param_error, no_context_error
 
@@ -109,7 +112,7 @@ def handle_auto_suggest_codes(
 ) -> dict[str, Any]:
     """Auto-suggest codes for all uncoded portions."""
     source_id = arguments.get("source_id")
-    min_confidence = arguments.get("min_confidence", 70)
+    _min_confidence = arguments.get("min_confidence", 70)  # Reserved for AI
 
     if source_id is None:
         return missing_param_error("AUTO_SUGGEST", "source_id")
@@ -198,7 +201,7 @@ def handle_get_suggestion_batch_status(
 
 
 def handle_respond_to_code_suggestion(
-    ctx: HandlerContext,
+    _ctx: HandlerContext,
     arguments: dict[str, Any],
 ) -> dict[str, Any]:
     """Respond to a batch of suggestions."""
@@ -237,7 +240,12 @@ def handle_approve_batch_coding(
     ctx: HandlerContext,
     arguments: dict[str, Any],
 ) -> dict[str, Any]:
-    """Approve an entire batch of coding suggestions."""
+    """
+    Approve an entire batch of coding suggestions.
+
+    Delegates to apply_code command handler for each suggestion to ensure
+    proper event publishing (SegmentCoded) for UI refresh.
+    """
     batch_id = arguments.get("batch_id")
     if not batch_id:
         return missing_param_error("APPROVE_BATCH", "batch_id")
@@ -251,39 +259,53 @@ def handle_approve_batch_coding(
             error_code="APPROVE_BATCH/NOT_FOUND",
         ).to_dict()
 
-    if ctx.segment_repo is None:
+    if ctx.segment_repo is None or ctx.code_repo is None:
         return no_context_error("APPROVE_BATCH")
 
-    # Approve all pending suggestions in batch
+    # Approve all pending suggestions using command handler
     applied_count = 0
+    failed_count = 0
+    errors = []
+
     for suggestion in batch.suggestions:
         if suggestion.is_pending:
-            # Create segment
-            existing = ctx.segment_repo.get_all()
-            max_id = max((s.id.value for s in existing), default=0)
-            new_id = SegmentId(max_id + 1 + applied_count)
-
-            segment = TextSegment(
-                id=new_id,
-                source_id=suggestion.source_id,
-                code_id=suggestion.code_id,
-                position=TextPosition(
-                    start=suggestion.start_pos, end=suggestion.end_pos
-                ),
-                selected_text="",
+            # Delegate to apply_code command handler - publishes SegmentCoded event
+            command = ApplyCodeCommand(
+                code_id=suggestion.code_id.value,
+                source_id=suggestion.source_id.value,
+                start_position=suggestion.start_pos,
+                end_position=suggestion.end_pos,
+                memo=suggestion.rationale,
+            )
+            result = apply_code(
+                command=command,
+                code_repo=ctx.code_repo,
+                category_repo=ctx.category_repo,
+                segment_repo=ctx.segment_repo,
+                event_bus=ctx.event_bus,
             )
 
-            ctx.segment_repo.save(segment)
-
-            # Update suggestion status
-            updated = suggestion.with_status("approved")
-            ctx.suggestion_cache.coding_suggestions.update(updated)
-            applied_count += 1
+            if result.is_success:
+                # Update suggestion status
+                updated = suggestion.with_status("approved")
+                ctx.suggestion_cache.coding_suggestions.update(updated)
+                applied_count += 1
+            else:
+                failed_count += 1
+                errors.append(
+                    {
+                        "suggestion_id": suggestion.id.value,
+                        "error": result.error,
+                        "error_code": result.error_code,
+                    }
+                )
 
     return OperationResult.ok(
         data={
-            "status": "applied",
+            "status": "applied" if failed_count == 0 else "partial",
             "applied_count": applied_count,
+            "failed_count": failed_count,
+            "errors": errors if errors else None,
         }
     ).to_dict()
 

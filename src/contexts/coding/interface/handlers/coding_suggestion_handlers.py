@@ -2,6 +2,8 @@
 QC-029.07: Apply Code to Text Range Handlers
 
 Handlers for suggesting code applications to text ranges.
+
+All mutation handlers delegate to command handlers to ensure proper event publishing.
 """
 
 from __future__ import annotations
@@ -9,9 +11,10 @@ from __future__ import annotations
 from typing import Any
 
 from src.contexts.coding.core.ai_entities import CodingSuggestion, CodingSuggestionId
-from src.contexts.coding.core.entities import TextPosition, TextSegment
+from src.contexts.coding.core.commandHandlers import apply_code
+from src.contexts.coding.core.commands import ApplyCodeCommand
 from src.shared.common.operation_result import OperationResult
-from src.shared.common.types import CodeId, SegmentId, SourceId
+from src.shared.common.types import CodeId, SourceId
 
 from .base import HandlerContext, missing_param_error, no_context_error
 
@@ -105,7 +108,12 @@ def handle_approve_coding_suggestion(
     ctx: HandlerContext,
     arguments: dict[str, Any],
 ) -> dict[str, Any]:
-    """Approve a coding suggestion."""
+    """
+    Approve a coding suggestion.
+
+    Delegates to apply_code command handler for proper event publishing
+    (SegmentCoded) for UI refresh.
+    """
     suggestion_id = arguments.get("suggestion_id")
     if not suggestion_id:
         return missing_param_error("APPROVE_CODING", "suggestion_id")
@@ -119,35 +127,40 @@ def handle_approve_coding_suggestion(
             error_code="APPROVE_CODING/NOT_FOUND",
         ).to_dict()
 
-    if ctx.segment_repo is None:
+    if ctx.segment_repo is None or ctx.code_repo is None:
         return no_context_error("APPROVE_CODING")
 
-    # Create the segment
-    existing_segments = ctx.segment_repo.get_all()
-    max_id = max((s.id.value for s in existing_segments), default=0)
-    new_segment_id = SegmentId(max_id + 1)
-
-    segment = TextSegment(
-        id=new_segment_id,
-        source_id=suggestion.source_id,
-        code_id=suggestion.code_id,
-        position=TextPosition(start=suggestion.start_pos, end=suggestion.end_pos),
-        selected_text="",
+    # Delegate to apply_code command handler - publishes SegmentCoded event
+    command = ApplyCodeCommand(
+        code_id=suggestion.code_id.value,
+        source_id=suggestion.source_id.value,
+        start_position=suggestion.start_pos,
+        end_position=suggestion.end_pos,
         memo=suggestion.rationale,
     )
+    result = apply_code(
+        command=command,
+        code_repo=ctx.code_repo,
+        category_repo=ctx.category_repo,
+        segment_repo=ctx.segment_repo,
+        event_bus=ctx.event_bus,
+    )
 
-    ctx.segment_repo.save(segment)
+    if result.is_success:
+        # Update suggestion status
+        updated = suggestion.with_status("approved")
+        ctx.suggestion_cache.coding_suggestions.update(updated)
 
-    # Update suggestion status
-    updated = suggestion.with_status("approved")
-    ctx.suggestion_cache.coding_suggestions.update(updated)
+        # Extract segment from result
+        segment = result.data
+        return OperationResult.ok(
+            data={
+                "status": "applied",
+                "segment_id": segment.id.value,
+            }
+        ).to_dict()
 
-    return OperationResult.ok(
-        data={
-            "status": "applied",
-            "segment_id": new_segment_id.value,
-        }
-    ).to_dict()
+    return result.to_dict()
 
 
 def handle_reject_coding_suggestion(
