@@ -37,6 +37,11 @@ from src.contexts.projects.core.events import (
     SourceRenamed,
     SourceStatusChanged,
 )
+from src.contexts.projects.core.vcs_events import (
+    SnapshotCreated,
+    SnapshotRestored,
+    VersionControlInitialized,
+)
 from src.shared.infra.signal_bridge.base import BaseSignalBridge, EventConverter
 
 # =============================================================================
@@ -115,6 +120,21 @@ class SourceMovedPayload:
     source_id: int
     old_folder_id: int | None
     new_folder_id: int | None
+    timestamp: datetime = field(default_factory=_now)
+    session_id: str = "local"
+    is_ai_action: bool = False
+
+
+@dataclass(frozen=True)
+class SnapshotPayload:
+    """Payload for version control snapshot events."""
+
+    event_type: str
+    git_sha: str
+    message: str
+    event_count: int = 0
+    ref: str | None = None
+    project_path: str | None = None
     timestamp: datetime = field(default_factory=_now)
     session_id: str = "local"
     is_ai_action: bool = False
@@ -305,6 +325,42 @@ class SourceMovedToFolderConverter(EventConverter):
         )
 
 
+class SnapshotCreatedConverter(EventConverter):
+    """Convert SnapshotCreated event to payload."""
+
+    def convert(self, event: SnapshotCreated) -> SnapshotPayload:
+        return SnapshotPayload(
+            event_type="projects.snapshot_created",
+            git_sha=event.git_sha,
+            message=event.message,
+            event_count=event.event_count,
+        )
+
+
+class SnapshotRestoredConverter(EventConverter):
+    """Convert SnapshotRestored event to payload."""
+
+    def convert(self, event: SnapshotRestored) -> SnapshotPayload:
+        return SnapshotPayload(
+            event_type="projects.snapshot_restored",
+            git_sha=event.git_sha,
+            message="",
+            ref=event.ref,
+        )
+
+
+class VersionControlInitializedConverter(EventConverter):
+    """Convert VersionControlInitialized event to payload."""
+
+    def convert(self, event: VersionControlInitialized) -> SnapshotPayload:
+        return SnapshotPayload(
+            event_type="projects.version_control_initialized",
+            git_sha="",
+            message="Version control initialized",
+            project_path=event.project_path,
+        )
+
+
 # =============================================================================
 # Signal Bridge
 # =============================================================================
@@ -332,6 +388,9 @@ class ProjectSignalBridge(BaseSignalBridge):
         source_moved: Emitted when a source is moved to a different folder
         screen_changed: Emitted when user navigates to a different screen
         navigated_to_segment: Emitted when navigating to a specific segment
+        snapshot_created: Emitted when a VCS snapshot is created (auto-commit)
+        snapshot_restored: Emitted when database is restored to a snapshot
+        version_control_initialized: Emitted when VCS is initialized
 
     Usage:
         bridge = ProjectSignalBridge.instance(event_bus)
@@ -361,6 +420,11 @@ class ProjectSignalBridge(BaseSignalBridge):
     folder_renamed = Signal(object)
     folder_deleted = Signal(object)
     source_moved = Signal(object)
+
+    # Version control signals
+    snapshot_created = Signal(object)
+    snapshot_restored = Signal(object)
+    version_control_initialized = Signal(object)
 
     def _get_context_name(self) -> str:
         """Return the bounded context name."""
@@ -449,4 +513,21 @@ class ProjectSignalBridge(BaseSignalBridge):
             "projects.source_moved_to_folder",
             SourceMovedToFolderConverter(),
             "source_moved",
+        )
+
+        # Version control events
+        self.register_converter(
+            "projects.snapshot_created",
+            SnapshotCreatedConverter(),
+            "snapshot_created",
+        )
+        self.register_converter(
+            "projects.snapshot_restored",
+            SnapshotRestoredConverter(),
+            "snapshot_restored",
+        )
+        self.register_converter(
+            "projects.version_control_initialized",
+            VersionControlInitializedConverter(),
+            "version_control_initialized",
         )

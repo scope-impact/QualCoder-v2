@@ -42,12 +42,14 @@ from design_system import (
     get_colors,
     set_theme,
 )
+from src.shared.presentation.molecules import SyncStatusButton
 
 # QualCoder navigation items (unified nav bar - QC-047.01)
 NAV_ITEMS = [
     ("project", "Project"),
     ("files", "Files"),
     ("coding", "Coding"),
+    ("history", "History"),
     ("reports", "Reports"),
     ("ai", "AI"),
 ]
@@ -57,6 +59,7 @@ MENU_ITEMS = [
     ("project", "Project"),
     ("files", "Files"),
     ("coding", "Coding"),
+    ("history", "History"),
     ("reports", "Reports"),
     ("ai", "AI"),
 ]
@@ -190,12 +193,13 @@ class UnifiedNavBar(QFrame):
 
     Structure:
     ┌─────────────────────────────────────────────────────────────────┐
-    │ QUALCODER  │ Project │ Files │ Coding │ Reports │ AI   [⚙]    │
+    │ QUALCODER  │ Project │ Files │ Coding │ Reports │ AI   [☁][⚙] │
     └─────────────────────────────────────────────────────────────────┘
     """
 
     navigation_clicked = Signal(str)  # nav_id: project, files, coding, etc.
     settings_clicked = Signal()
+    sync_requested = Signal()  # sync button clicked
 
     def __init__(self, colors: ColorPalette, parent=None):
         super().__init__(parent)
@@ -237,6 +241,12 @@ class UnifiedNavBar(QFrame):
             self._style_button(btn, False)
 
         layout.addStretch()
+
+        # Sync status button (cloud icon) - hidden by default
+        self._sync_btn = SyncStatusButton(colors=self._colors)
+        self._sync_btn.sync_requested.connect(self.sync_requested.emit)
+        self._sync_btn.setVisible(False)  # Hidden until cloud sync enabled
+        layout.addWidget(self._sync_btn)
 
         # Settings button (gear icon)
         self._settings_btn = QPushButton()
@@ -312,6 +322,27 @@ class UnifiedNavBar(QFrame):
                     color: {self._colors.text_primary};
                 }}
             """)
+
+    def set_sync_status(
+        self,
+        status: str,
+        pending: int = 0,
+        error_message: str | None = None,
+    ) -> None:
+        """
+        Update cloud sync status indicator.
+
+        Args:
+            status: One of "offline", "connecting", "syncing", "synced", "error"
+            pending: Number of pending changes to sync
+            error_message: Error details if status is "error"
+        """
+        self._sync_btn.set_status(status, pending, error_message)
+
+    @property
+    def sync_button(self) -> SyncStatusButton:
+        """Get the sync status button for direct access."""
+        return self._sync_btn
 
 
 class AppMenuBar(QFrame):
@@ -596,6 +627,15 @@ class AppStatusBar(QFrame):
         self._right_layout.setSpacing(SPACING.lg)
         layout.addLayout(self._right_layout)
 
+        # Cloud sync status indicator
+        self._sync_indicator = QLabel()
+        self._sync_indicator.setStyleSheet(f"""
+            color: rgba(255, 255, 255, 0.8);
+            font-size: {TYPOGRAPHY.text_sm}px;
+        """)
+        self._sync_indicator.hide()  # Hidden until sync is enabled
+        self._right_layout.addWidget(self._sync_indicator)
+
         # Default stats
         self._stats = {}
         self.add_stat("files", "0 files")
@@ -619,6 +659,39 @@ class AppStatusBar(QFrame):
         """Update a stat item"""
         if key in self._stats:
             self._stats[key].setText(text)
+
+    def set_sync_status(self, status: str, pending: int = 0) -> None:
+        """
+        Update cloud sync status indicator.
+
+        Args:
+            status: One of "offline", "connecting", "syncing", "synced", "error"
+            pending: Number of pending changes to sync
+        """
+        if status == "offline":
+            self._sync_indicator.hide()
+            return
+
+        self._sync_indicator.show()
+
+        # Status colors and icons
+        status_config = {
+            "connecting": ("🔄", "rgba(255, 193, 7, 0.9)", "Connecting..."),
+            "syncing": ("🔄", "rgba(255, 193, 7, 0.9)", f"Syncing ({pending})"),
+            "synced": ("☁️", "rgba(76, 175, 80, 0.9)", "Synced"),
+            "error": ("⚠️", "rgba(244, 67, 54, 0.9)", "Sync Error"),
+        }
+
+        icon, color, text = status_config.get(status, ("", "white", status))
+
+        if pending > 0 and status == "synced":
+            text = f"Synced ({pending} pending)"
+
+        self._sync_indicator.setText(f"{icon} {text}")
+        self._sync_indicator.setStyleSheet(f"""
+            color: {color};
+            font-size: {TYPOGRAPHY.text_sm}px;
+        """)
 
 
 class AppShell(QMainWindow):
@@ -647,6 +720,7 @@ class AppShell(QMainWindow):
     navigation_clicked = Signal(str)  # nav_id: project, files, coding, etc.
     menu_clicked = Signal(str)  # Legacy alias for navigation_clicked
     settings_clicked = Signal()  # settings button clicked
+    sync_requested = Signal()  # sync button clicked
 
     def __init__(self, colors: ColorPalette = None, parent=None):
         super().__init__(parent)
@@ -697,6 +771,7 @@ class AppShell(QMainWindow):
         self._nav_bar.navigation_clicked.connect(self.navigation_clicked.emit)
         self._nav_bar.navigation_clicked.connect(self.menu_clicked.emit)  # Legacy
         self._nav_bar.settings_clicked.connect(self.settings_clicked.emit)
+        self._nav_bar.sync_requested.connect(self.sync_requested.emit)
 
     # --- Public API ---
 
@@ -747,6 +822,22 @@ class AppShell(QMainWindow):
     def set_active_navigation(self, nav_id: str):
         """Set active navigation item (QC-047.01)"""
         self._nav_bar.set_active(nav_id)
+
+    def set_sync_status(
+        self,
+        status: str,
+        pending: int = 0,
+        error_message: str | None = None,
+    ) -> None:
+        """
+        Update cloud sync status indicator in nav bar.
+
+        Args:
+            status: One of "offline", "connecting", "syncing", "synced", "error"
+            pending: Number of pending changes to sync
+            error_message: Error details if status is "error"
+        """
+        self._nav_bar.set_sync_status(status, pending, error_message)
 
     def set_active_menu(self, menu_id: str):
         """Set active menu item (legacy - maps to navigation)"""

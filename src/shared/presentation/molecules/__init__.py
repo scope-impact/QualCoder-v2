@@ -30,6 +30,7 @@ from .memo import MemoListItem
 from .preview import MatchPreviewItem, MatchPreviewPanel
 from .search import SearchBar
 from .selection import SelectionPopupController
+from .sync_status_button import SyncStatusButton
 
 __all__ = [
     "AISuggestionCard",
@@ -41,4 +42,5 @@ __all__ = [
     "OverlapDetector",
     "SearchBar",
     "SelectionPopupController",
+    "SyncStatusButton",
 ]

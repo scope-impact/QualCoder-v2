@@ -9,6 +9,9 @@ dependencies = [
     "pyside6>=6.5.0",
     # Database
     "sqlalchemy>=2.0",
+    # Convex cloud database client
+    "convex>=0.7.0",
+    "python-dotenv>=1.0.0",
     # Image processing (MIT-CMU license)
     "pillow>=10.0",
     # HEIC/HEIF image support (Apache-2.0 license)

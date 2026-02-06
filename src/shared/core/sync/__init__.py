@@ -1,9 +1,74 @@
 """
-Cross-Context Synchronization Handlers.
+Sync Context: Domain Layer & Cross-Context Handlers.
 
-Provides handlers that keep denormalized data in sync across bounded contexts.
+Provides:
+1. Pure domain logic for SQLite-Convex synchronization
+2. Cross-context sync handlers for denormalized data
 """
 
+# Commands
+from src.shared.core.sync.commands import (
+    SyncPullCommand,
+    SyncStatusCommand,
+)
+
+# Domain Derivers
+from src.shared.core.sync.derivers import (
+    SyncDecision,
+    derive_entity_pull_result,
+    derive_pull_completed,
+    derive_sync_changes,
+)
+
+# Domain Entities
+from src.shared.core.sync.entities import (
+    PullResult,
+    PullSummary,
+    RemoteItem,
+    SyncDomainState,
+)
+
+# Domain Events
+from src.shared.core.sync.events import (
+    RemoteChangesReceived,
+    SyncPullCompleted,
+    SyncPullFailed,
+    SyncPullStarted,
+)
+
+# Domain Invariants
+from src.shared.core.sync.invariants import (
+    can_apply_remote_item,
+    has_sync_conflicts,
+    is_deletion_candidate,
+    is_valid_remote_item,
+)
 from src.shared.core.sync.source_sync_handler import SourceSyncHandler
 
-__all__ = ["SourceSyncHandler"]
+__all__ = [
+    # Cross-context handler
+    "SourceSyncHandler",
+    # Entities
+    "RemoteItem",
+    "SyncDomainState",
+    "PullResult",
+    "PullSummary",
+    # Events
+    "SyncPullStarted",
+    "SyncPullCompleted",
+    "SyncPullFailed",
+    "RemoteChangesReceived",
+    # Invariants
+    "can_apply_remote_item",
+    "is_deletion_candidate",
+    "is_valid_remote_item",
+    "has_sync_conflicts",
+    # Derivers
+    "SyncDecision",
+    "derive_sync_changes",
+    "derive_pull_completed",
+    "derive_entity_pull_result",
+    # Commands
+    "SyncPullCommand",
+    "SyncStatusCommand",
+]

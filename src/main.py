@@ -21,12 +21,17 @@ from src.contexts.coding.presentation import (
     TextCodingViewModel,
 )
 from src.contexts.coding.presentation.dialogs import CreateCodeDialog
-from src.contexts.projects.presentation import ProjectScreen
+from src.contexts.projects.presentation import (
+    ProjectScreen,
+    VersionControlViewModel,
+    VersionHistoryScreen,
+)
 from src.contexts.sources.presentation import FileManagerScreen, FileManagerViewModel
 from src.shared.common.types import SourceId
 from src.shared.infra.app_context import create_app_context
 from src.shared.infra.mcp_server import MCPServerManager
 from src.shared.infra.signal_bridge.projects import ProjectSignalBridge
+from src.shared.infra.signal_bridge.sync import SyncSignalBridge
 from src.shared.infra.telemetry import init_telemetry
 from src.shared.presentation import create_empty_text_coding_data
 
@@ -58,6 +63,8 @@ class QualCoderApp:
         self._project_signal_bridge.start()
         self._coding_signal_bridge = CodingSignalBridge.instance(self._ctx.event_bus)
         self._coding_signal_bridge.start()
+        self._sync_signal_bridge = SyncSignalBridge.instance(self._ctx.event_bus)
+        self._sync_signal_bridge.start()
         # Start embedded MCP server for AI agent access
         self._mcp_server = MCPServerManager(ctx=self._ctx)
         self._mcp_server.start()
@@ -88,6 +95,7 @@ class QualCoderApp:
                 data=create_empty_text_coding_data(),
                 colors=self._colors,
             ),
+            "history": VersionHistoryScreen(colors=self._colors),
         }
 
         # Set initial screen (project selection)
@@ -99,6 +107,14 @@ class QualCoderApp:
 
         # Connect settings button to open dialog with live updates
         self._shell.settings_clicked.connect(self._on_settings_clicked)
+
+        # Connect sync button to trigger cloud sync pull
+        self._shell.sync_requested.connect(self._on_sync_requested)
+
+        # Connect SyncSignalBridge for reactive sync status updates
+        self._sync_signal_bridge.sync_status_changed.connect(
+            self._on_sync_status_changed
+        )
 
         # Connect file manager navigation to coding screen
         self._screens["files"].navigate_to_coding.connect(self._on_navigate_to_coding)
@@ -125,8 +141,43 @@ class QualCoderApp:
         if dialog:
             self._shell.load_and_apply_settings(self._ctx.settings_repo)
 
+    def _on_sync_requested(self):
+        """Handle sync button click - delegate to AppContext."""
+        self._ctx.trigger_sync_pull()
+
+    def _on_sync_status_changed(self, payload):
+        """Handle sync status changes from SyncSignalBridge."""
+        if self._shell:
+            self._shell.set_sync_status(
+                status=payload.status,
+                pending=payload.pending_count,
+                error_message=payload.error_message,
+            )
+
+    def _init_sync_status(self):
+        """Initialize sync status from AppContext state."""
+        if not self._shell:
+            return
+
+        if not self._ctx.is_cloud_sync_enabled():
+            self._shell.set_sync_status("offline")
+            return
+
+        # Get initial state from sync engine
+        sync_state = self._ctx.get_sync_state()
+        if sync_state:
+            self._shell.set_sync_status(
+                status=sync_state.status.value,
+                pending=sync_state.pending_changes,
+            )
+        else:
+            self._shell.set_sync_status("synced")
+
     def _wire_viewmodels(self):
         """Wire viewmodels to screens after a project is opened."""
+        # Initialize sync status (reactive updates via SignalBridge)
+        self._init_sync_status()
+
         # Create FileManagerViewModel now that contexts are available
         file_manager_viewmodel = FileManagerViewModel(
             source_repo=self._ctx.sources_context.source_repo,
@@ -162,6 +213,62 @@ class QualCoderApp:
                 lambda _: self._on_show_create_code_dialog(text_coding_viewmodel)
             )
 
+        # Create VersionControlViewModel for history screen
+        if self._ctx.projects_context and self._ctx.state.project:
+            from pathlib import Path
+
+            projects_ctx = self._ctx.projects_context
+            if projects_ctx.git_adapter and projects_ctx.diffable_adapter:
+                vcs_viewmodel = VersionControlViewModel(
+                    project_path=Path(self._ctx.state.project.path),
+                    diffable_adapter=projects_ctx.diffable_adapter,
+                    git_adapter=projects_ctx.git_adapter,
+                    event_bus=self._ctx.event_bus,
+                    signal_bridge=self._project_signal_bridge,
+                )
+                self._screens["history"].set_viewmodel(vcs_viewmodel)
+
+    def _auto_init_vcs(self):
+        """Auto-initialize VCS for newly created projects."""
+        from pathlib import Path
+
+        from src.contexts.projects.core.commandHandlers import (
+            initialize_version_control,
+        )
+        from src.contexts.projects.core.vcs_commands import (
+            InitializeVersionControlCommand,
+        )
+
+        projects_ctx = self._ctx.projects_context
+        if not projects_ctx or not self._ctx.state.project:
+            return
+
+        if not projects_ctx.git_adapter or not projects_ctx.diffable_adapter:
+            return
+
+        # Skip if already initialized
+        if projects_ctx.git_adapter.is_initialized():
+            return
+
+        project_path = Path(self._ctx.state.project.path)
+        command = InitializeVersionControlCommand(project_path=str(project_path))
+        result = initialize_version_control(
+            command=command,
+            diffable_adapter=projects_ctx.diffable_adapter,
+            git_adapter=projects_ctx.git_adapter,
+            event_bus=self._ctx.event_bus,
+        )
+
+        # Warn user if VCS init failed (e.g., git not installed)
+        if result.is_failure and "CLI_NOT_FOUND" in (result.error_code or ""):
+            QMessageBox.warning(
+                self._shell,
+                "Version Control Unavailable",
+                "Git is not installed. Version history will not be available.\n\n"
+                "Install Git from https://git-scm.com/downloads to enable "
+                "automatic change tracking and restore capabilities.",
+            )
+
     def _on_open_project(self):
         """Handle open project request."""
         result = self._dialog_service.show_open_project_dialog(parent=self._shell)
@@ -191,6 +298,8 @@ class QualCoderApp:
             if open_result.is_success:
                 # Wire viewmodels and switch to files view
                 self._wire_viewmodels()
+                # Auto-initialize VCS for new projects
+                self._auto_init_vcs()
                 self._screens["files"].refresh()
                 self._shell.set_screen(self._screens["files"])
                 self._shell.set_active_menu("files")

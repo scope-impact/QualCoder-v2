@@ -266,12 +266,14 @@ def wired_app(qapp, colors, tmp_path):
     from src.main import QualCoderApp
     from src.shared.infra.app_context import create_app_context
     from src.shared.infra.signal_bridge.projects import ProjectSignalBridge
+    from src.shared.infra.signal_bridge.sync import SyncSignalBridge
     from src.shared.presentation.services import DialogService
 
     # Clear singletons for test isolation
     CodingSignalBridge.clear_instance()
     CasesSignalBridge.clear_instance()
     ProjectSignalBridge.clear_instance()
+    SyncSignalBridge.clear_instance()
 
     # Create app instance without calling __init__ (to avoid QApplication conflict)
     # Then set up attributes the same way __init__ does
@@ -286,6 +288,8 @@ def wired_app(qapp, colors, tmp_path):
     app._project_signal_bridge.start()
     app._coding_signal_bridge = CodingSignalBridge.instance(app._ctx.event_bus)
     app._coding_signal_bridge.start()
+    app._sync_signal_bridge = SyncSignalBridge.instance(app._ctx.event_bus)
+    app._sync_signal_bridge.start()
     app._shell = None
     app._screens = {}
     app._current_project_path = None
@@ -326,6 +330,7 @@ def wired_app(qapp, colors, tmp_path):
     CodingSignalBridge.clear_instance()
     CasesSignalBridge.clear_instance()
     ProjectSignalBridge.clear_instance()
+    SyncSignalBridge.clear_instance()
 
 
 @pytest.fixture

@@ -92,3 +92,5 @@ design_system/assets/screenshots/
 
 # MkDocs
 site/
+node_modules/
+.env.local

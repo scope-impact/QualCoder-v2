@@ -133,6 +133,7 @@ class SettingsDialog(QDialog):
         self._content_stack.addWidget(self._create_language_section())
         self._content_stack.addWidget(self._create_backup_section())
         self._content_stack.addWidget(self._create_av_coding_section())
+        self._content_stack.addWidget(self._create_database_section())
 
         # Sidebar navigation (created after content stack)
         self._sidebar = self._create_sidebar()
@@ -206,6 +207,7 @@ class SettingsDialog(QDialog):
             ("Language", "mdi6.translate"),
             ("Backup", "mdi6.backup-restore"),
             ("AV Coding", "mdi6.video"),
+            ("Database", "mdi6.database"),
         ]
 
         for name, icon_name in sections:
@@ -552,6 +554,127 @@ class SettingsDialog(QDialog):
 
         return widget
 
+    def _create_database_section(self) -> QWidget:
+        """Create the Database backend settings section."""
+        widget = QWidget()
+        layout = QVBoxLayout(widget)
+        layout.setContentsMargins(SPACING.lg, SPACING.lg, SPACING.lg, SPACING.lg)
+        layout.setSpacing(SPACING.lg)
+
+        # Primary storage info
+        primary_label = QLabel("Primary Storage: SQLite (Local)")
+        primary_label.setStyleSheet(f"""
+            color: {self._colors.text_primary};
+            font-size: {TYPOGRAPHY.text_sm}px;
+            font-weight: {TYPOGRAPHY.weight_semibold};
+        """)
+        layout.addWidget(primary_label)
+
+        primary_desc = QLabel("All data is stored locally in SQLite. Works offline.")
+        primary_desc.setStyleSheet(f"""
+            color: {self._colors.text_secondary};
+            font-size: {TYPOGRAPHY.text_xs}px;
+        """)
+        layout.addWidget(primary_desc)
+
+        # Cloud sync section
+        sync_label = QLabel("Cloud Sync (Optional)")
+        sync_label.setStyleSheet(f"""
+            color: {self._colors.text_primary};
+            font-size: {TYPOGRAPHY.text_sm}px;
+            font-weight: {TYPOGRAPHY.weight_semibold};
+            margin-top: {SPACING.md}px;
+        """)
+        layout.addWidget(sync_label)
+
+        # Enable cloud sync checkbox
+        self._cloud_sync_enabled = QCheckBox("Enable cloud sync with Convex")
+        self._cloud_sync_enabled.setStyleSheet(f"""
+            QCheckBox {{
+                color: {self._colors.text_primary};
+                font-size: {TYPOGRAPHY.text_sm}px;
+                spacing: {SPACING.sm}px;
+            }}
+        """)
+        self._cloud_sync_enabled.stateChanged.connect(self._on_cloud_sync_changed)
+        layout.addWidget(self._cloud_sync_enabled)
+
+        # Description
+        desc_label = QLabel(
+            "When enabled, changes sync to Convex cloud in real-time.\n"
+            "Enables collaboration and backup while keeping local data."
+        )
+        desc_label.setStyleSheet(f"""
+            color: {self._colors.text_secondary};
+            font-size: {TYPOGRAPHY.text_xs}px;
+        """)
+        layout.addWidget(desc_label)
+
+        # Convex configuration (shown only when Convex is selected)
+        self._convex_config_frame = QFrame()
+        convex_layout = QVBoxLayout(self._convex_config_frame)
+        convex_layout.setContentsMargins(0, SPACING.md, 0, 0)
+        convex_layout.setSpacing(SPACING.sm)
+
+        convex_header = QLabel("Convex Configuration")
+        convex_header.setStyleSheet(f"""
+            color: {self._colors.text_primary};
+            font-size: {TYPOGRAPHY.text_sm}px;
+            font-weight: {TYPOGRAPHY.weight_semibold};
+            margin-top: {SPACING.md}px;
+        """)
+        convex_layout.addWidget(convex_header)
+
+        # Deployment URL
+        url_frame = QFrame()
+        url_layout = QHBoxLayout(url_frame)
+        url_layout.setContentsMargins(0, 0, 0, 0)
+        url_layout.setSpacing(SPACING.sm)
+
+        url_label = QLabel("Deployment URL:")
+        url_label.setStyleSheet(f"""
+            color: {self._colors.text_secondary};
+            font-size: {TYPOGRAPHY.text_sm}px;
+        """)
+        url_layout.addWidget(url_label)
+
+        self._convex_url = QLineEdit()
+        self._convex_url.setPlaceholderText("https://your-project.convex.cloud")
+        self._convex_url.setStyleSheet(self._get_input_style())
+        self._convex_url.textChanged.connect(self._on_convex_url_changed)
+        url_layout.addWidget(self._convex_url, 1)
+
+        convex_layout.addWidget(url_frame)
+
+        # Help text
+        help_label = QLabel(
+            "Get your deployment URL from the Convex dashboard at convex.dev"
+        )
+        help_label.setStyleSheet(f"""
+            color: {self._colors.text_secondary};
+            font-size: {TYPOGRAPHY.text_xs}px;
+        """)
+        convex_layout.addWidget(help_label)
+
+        layout.addWidget(self._convex_config_frame)
+        self._convex_config_frame.hide()  # Hidden by default
+
+        # Warning note
+        warning_label = QLabel(
+            "Note: Changing the database backend requires reopening the project."
+        )
+        warning_label.setStyleSheet(f"""
+            color: {self._colors.warning};
+            font-size: {TYPOGRAPHY.text_xs}px;
+            font-style: italic;
+            margin-top: {SPACING.md}px;
+        """)
+        layout.addWidget(warning_label)
+
+        layout.addStretch()
+
+        return widget
+
     def _setup_footer(self, layout: QVBoxLayout) -> None:
         """Setup the dialog footer with buttons."""
         footer = QFrame()
@@ -620,6 +743,14 @@ class SettingsDialog(QDialog):
             self._timestamp_combo.setCurrentIndex(ts_index)
         self._speaker_format.setText(settings.speaker_format)
         self._update_speaker_preview()
+
+        # Cloud sync
+        cloud_sync_enabled = getattr(settings, "cloud_sync_enabled", False)
+        self._cloud_sync_enabled.setChecked(cloud_sync_enabled)
+        self._convex_config_frame.setVisible(cloud_sync_enabled)
+        convex_url = getattr(settings, "convex_url", "")
+        if convex_url:
+            self._convex_url.setText(convex_url)
 
     # =========================================================================
     # Event Handlers
@@ -711,6 +842,18 @@ class SettingsDialog(QDialog):
             for i in range(1, 4)
         ]
         self._speaker_preview.setText(", ".join(previews))
+
+    def _on_cloud_sync_changed(self, _state: int) -> None:
+        """Handle cloud sync checkbox change."""
+        enabled = self._cloud_sync_enabled.isChecked()
+        self._convex_config_frame.setVisible(enabled)
+        self._viewmodel.set_cloud_sync_enabled(enabled)
+        self.settings_changed.emit()
+
+    def _on_convex_url_changed(self, url: str) -> None:
+        """Handle Convex URL change."""
+        self._viewmodel.set_convex_url(url if url else None)
+        self.settings_changed.emit()
 
     def _on_ok(self) -> None:
         """Handle OK button click."""
