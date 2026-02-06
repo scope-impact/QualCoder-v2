@@ -43,6 +43,7 @@ from src.tests.e2e.helpers import (
     is_button_enabled,
     wait_for_dialog,
 )
+from src.tests.e2e.utils import DocScreenshot
 
 pytestmark = [
     pytest.mark.e2e,
@@ -781,6 +782,7 @@ class TestWiringVerification:
 
         # Screenshot for documentation
         attach_screenshot(shell, "CodingScreen - With Codes")
+        DocScreenshot.capture(shell, "coding-screen-with-codes", max_width=1000)
 
     @allure.title("Signal bridges produce events")
     @allure.severity(allure.severity_level.CRITICAL)

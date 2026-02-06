@@ -14,6 +14,8 @@ from collections.abc import Sequence
 from dataclasses import dataclass
 from typing import Protocol
 
+from src.shared.infra.telemetry import SpanContext, traced
+
 
 class HasRange(Protocol):
     """Protocol for objects that have a start and end position."""
@@ -79,22 +81,34 @@ class OverlapDetector:
         Returns:
             List of Range objects representing overlap regions
         """
-        overlaps: list[Range] = []
+        n = len(ranges)
+        comparisons = n * (n - 1) // 2
 
-        for i, r1 in enumerate(ranges):
-            for j, r2 in enumerate(ranges):
-                if i >= j:
-                    continue
+        with SpanContext(
+            "find_overlaps",
+            {
+                "range_count": n,
+                "comparisons": comparisons,
+            },
+        ) as span:
+            overlaps: list[Range] = []
 
-                # Check for overlap
-                if r1.start < r2.end and r2.start < r1.end:
-                    overlap_start = max(r1.start, r2.start)
-                    overlap_end = min(r1.end, r2.end)
-                    if overlap_start < overlap_end:
-                        overlaps.append(Range(overlap_start, overlap_end))
+            for i, r1 in enumerate(ranges):
+                for j, r2 in enumerate(ranges):
+                    if i >= j:
+                        continue
 
-        return self.merge_ranges(overlaps)
+                    # Check for overlap
+                    if r1.start < r2.end and r2.start < r1.end:
+                        overlap_start = max(r1.start, r2.start)
+                        overlap_end = min(r1.end, r2.end)
+                        if overlap_start < overlap_end:
+                            overlaps.append(Range(overlap_start, overlap_end))
 
+            span.set_attribute("overlaps_found", len(overlaps))
+            return self.merge_ranges(overlaps)
+
+    @traced("merge_ranges")
     def merge_ranges(self, ranges: Sequence[HasRange]) -> list[Range]:
         """
         Merge adjacent or overlapping ranges into consolidated ranges.

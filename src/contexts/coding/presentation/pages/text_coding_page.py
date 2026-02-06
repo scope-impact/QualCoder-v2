@@ -107,6 +107,7 @@ class TextCodingPage(QWidget):
         self._toolbar.action_triggered.connect(self.action_triggered.emit)
         self._toolbar.media_type_changed.connect(self.media_type_changed.emit)
         self._toolbar.search_changed.connect(self.search_changed.emit)
+        self._toolbar.details_toggle_clicked.connect(self._toggle_details_panel)
         layout.addWidget(self._toolbar)
 
         # Main content - three panel layout
@@ -276,6 +277,13 @@ class TextCodingPage(QWidget):
     def _on_text_selected(self, text: str, start: int, end: int):
         """Handle text selection."""
         self.text_selected.emit(text, start, end)
+
+    def _toggle_details_panel(self):
+        """Toggle visibility of the details panel."""
+        is_visible = self._details_panel.isVisible()
+        self._details_panel.setVisible(not is_visible)
+        # Update toolbar button state
+        self._toolbar.set_details_visible(not is_visible)
 
 
 # =============================================================================

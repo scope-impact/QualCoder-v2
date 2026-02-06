@@ -186,3 +186,12 @@ class CodingCoordinator:
     def get_segments_for_code(self, code_id: int) -> list[TextSegment]:
         """Get all segments with a specific code."""
         return get_segments_for_code(self._segment_repo, code_id)
+
+    def get_segment_counts_by_code(self) -> dict[int, int]:
+        """
+        Get segment counts for all codes in a single query.
+
+        Returns:
+            Dictionary mapping code_id to segment count
+        """
+        return self._segment_repo.count_all_by_code()

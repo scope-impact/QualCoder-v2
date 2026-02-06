@@ -22,6 +22,7 @@ import pytest
 from PySide6.QtWidgets import QApplication, QPushButton
 
 from src.tests.e2e.helpers import attach_screenshot
+from src.tests.e2e.utils import DocScreenshot
 
 pytestmark = [
     pytest.mark.e2e,
@@ -176,6 +177,8 @@ class TestSmokeStartup:
 
         assert isinstance(fresh_app._screens["project"], ProjectScreen)
         attach_screenshot(fresh_app._shell, "MainWindow - Project Screen on Startup")
+        # Save to docs for user manual
+        DocScreenshot.capture(fresh_app._shell, "main-window-startup", max_width=1000)
 
     @allure.title("All screens are created even without a project")
     @allure.severity(allure.severity_level.NORMAL)

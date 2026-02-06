@@ -32,6 +32,7 @@ from src.contexts.coding.interface.signal_bridge import (
     CodingSignalBridge,
     SegmentPayload,
 )
+from src.shared.infra.telemetry import traced
 from src.shared.presentation.dto import (
     CodeCategoryDTO,
     CodeDTO,
@@ -61,6 +62,7 @@ class CodingProvider(Protocol):
     def get_all_codes(self) -> list: ...
     def get_all_categories(self) -> list: ...
     def get_segments_for_source(self, source_id: int) -> list: ...
+    def get_segment_counts_by_code(self) -> dict[int, int]: ...
 
 
 class TextCodingViewModel(QObject):
@@ -160,6 +162,7 @@ class TextCodingViewModel(QObject):
         """
         return self._build_categories_dto()
 
+    @traced("load_segments_for_source")
     def load_segments_for_source(self, source_id: int) -> list[dict]:
         """
         Load segments for a source document.
@@ -175,8 +178,9 @@ class TextCodingViewModel(QObject):
         return self._segments_to_highlight_info(segments)
 
     def set_current_source(self, source_id: int) -> None:
-        """Set the current source being viewed."""
+        """Set the current source being viewed and load its segments."""
         self._current_source_id = source_id
+        self._emit_segments_changed()
 
     # =========================================================================
     # Public API - Commands
@@ -486,10 +490,13 @@ class TextCodingViewModel(QObject):
             info = self._segments_to_highlight_info(segments)
             self.segments_changed.emit(info)
 
+    @traced("build_categories_dto")
     def _build_categories_dto(self) -> list[CodeCategoryDTO]:
         """Build category DTOs from current data."""
         codes = self._controller.get_all_codes()
         categories = self._controller.get_all_categories()
+        # Get all segment counts in a single query (fixes N+1 count problem)
+        segment_counts = self._controller.get_segment_counts_by_code()
 
         # Group codes by category
         uncategorized_codes: list[Code] = []
@@ -514,7 +521,7 @@ class TextCodingViewModel(QObject):
                     CodeCategoryDTO(
                         id=str(cat.id.value),
                         name=cat.name,
-                        codes=[self._code_to_dto(c) for c in cat_codes],
+                        codes=[self._code_to_dto(c, segment_counts) for c in cat_codes],
                     )
                 )
 
@@ -524,16 +531,19 @@ class TextCodingViewModel(QObject):
                 CodeCategoryDTO(
                     id="uncategorized",
                     name="Uncategorized",
-                    codes=[self._code_to_dto(c) for c in uncategorized_codes],
+                    codes=[
+                        self._code_to_dto(c, segment_counts)
+                        for c in uncategorized_codes
+                    ],
                 )
             )
 
         return result
 
-    def _code_to_dto(self, code: Code) -> CodeDTO:
+    def _code_to_dto(self, code: Code, segment_counts: dict[int, int]) -> CodeDTO:
         """Convert a Code entity to DTO."""
-        # Count segments for this code
-        count = len(self._controller.get_segments_for_code(code.id.value))
+        # Use pre-fetched count (avoids N+1 query)
+        count = segment_counts.get(code.id.value, 0)
         return CodeDTO(
             id=str(code.id.value),
             name=code.name,
@@ -542,11 +552,16 @@ class TextCodingViewModel(QObject):
             memo=code.memo,
         )
 
+    @traced("segments_to_highlight_info")
     def _segments_to_highlight_info(self, segments: list[TextSegment]) -> list[dict]:
         """Convert segments to highlight information for the editor."""
+        # Build code lookup map upfront (fixes N+1 query problem)
+        codes = self._controller.get_all_codes()
+        code_map = {code.id.value: code for code in codes}
+
         result = []
         for seg in segments:
-            code = self._controller.get_code(seg.code_id.value)
+            code = code_map.get(seg.code_id.value)
             result.append(
                 {
                     "id": seg.id.value,

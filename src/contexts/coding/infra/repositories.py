@@ -363,6 +363,19 @@ class SQLiteSegmentRepository:
         result = self._conn.execute(stmt)
         return result.scalar()
 
+    def count_all_by_code(self) -> dict[int, int]:
+        """
+        Count segments grouped by code_id in a single query.
+
+        Returns:
+            Dictionary mapping code_id to segment count
+        """
+        stmt = select(code_text.c.cid, func.count().label("cnt")).group_by(
+            code_text.c.cid
+        )
+        result = self._conn.execute(stmt)
+        return {row.cid: row.cnt for row in result}
+
     def reassign_code(self, from_code_id: CodeId, to_code_id: CodeId) -> int:
         """Reassign all segments from one code to another, returns count."""
         count = self.count_by_code(from_code_id)

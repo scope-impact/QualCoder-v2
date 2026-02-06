@@ -27,6 +27,7 @@ from src.shared.common.types import SourceId
 from src.shared.infra.app_context import create_app_context
 from src.shared.infra.mcp_server import MCPServerManager
 from src.shared.infra.signal_bridge.projects import ProjectSignalBridge
+from src.shared.infra.telemetry import init_telemetry
 from src.shared.presentation import create_empty_text_coding_data
 
 # Shared presentation imports
@@ -45,6 +46,9 @@ class QualCoderApp:
     """
 
     def __init__(self):
+        # Initialize telemetry for performance monitoring (logs to file in dev mode)
+        init_telemetry(service_name="qualcoder")
+
         self._app = QApplication(sys.argv)
         self._colors = get_colors()
         self._ctx = create_app_context()
@@ -92,7 +96,6 @@ class QualCoderApp:
 
         # Connect navigation
         self._shell.menu_clicked.connect(self._on_menu_click)
-        self._shell.tab_clicked.connect(self._on_tab_click)
 
         # Connect settings button to open dialog with live updates
         self._shell.settings_clicked.connect(self._on_settings_clicked)
@@ -111,19 +114,6 @@ class QualCoderApp:
         if menu_id in self._screens:
             self._shell.set_screen(self._screens[menu_id])
             self._shell.set_active_menu(menu_id)
-
-    def _on_tab_click(self, tab_id: str):
-        """Handle tab clicks."""
-        tab_to_menu = {
-            "coding": "coding",
-            "reports": "reports",
-            "manage": "files",
-            "action_log": "project",
-        }
-        menu_id = tab_to_menu.get(tab_id, tab_id)
-        if menu_id in self._screens:
-            self._shell.set_screen(self._screens[menu_id])
-            self._shell.set_active_tab(tab_id)
 
     def _on_settings_clicked(self):
         """Handle settings button click with live UI updates."""
