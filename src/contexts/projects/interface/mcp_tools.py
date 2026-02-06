@@ -34,10 +34,11 @@ Usage:
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Any, Protocol, runtime_checkable
 
 from returns.result import Failure, Result, Success
+
+from src.shared.common.mcp_types import ToolDefinition, ToolParameter
 
 if TYPE_CHECKING:
     from src.shared.common.operation_result import OperationResult
@@ -99,56 +100,6 @@ class ProjectToolsContext(Protocol):
     def close_project(self) -> OperationResult:
         """Close the current project."""
         ...
-
-
-# ============================================================
-# Tool Definitions (MCP Schema)
-# ============================================================
-
-
-@dataclass(frozen=True)
-class ToolParameter:
-    """MCP tool parameter definition."""
-
-    name: str
-    type: str
-    description: str
-    required: bool = True
-    default: Any = None
-
-
-@dataclass(frozen=True)
-class ToolDefinition:
-    """MCP tool definition with schema."""
-
-    name: str
-    description: str
-    parameters: tuple[ToolParameter, ...] = field(default_factory=tuple)
-
-    def to_schema(self) -> dict[str, Any]:
-        """Convert to MCP-compatible JSON schema."""
-        properties = {}
-        required = []
-
-        for param in self.parameters:
-            properties[param.name] = {
-                "type": param.type,
-                "description": param.description,
-            }
-            if param.default is not None:
-                properties[param.name]["default"] = param.default
-            if param.required:
-                required.append(param.name)
-
-        return {
-            "name": self.name,
-            "description": self.description,
-            "inputSchema": {
-                "type": "object",
-                "properties": properties,
-                "required": required,
-            },
-        }
 
 
 # ============================================================

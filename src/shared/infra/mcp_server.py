@@ -401,25 +401,54 @@ class MCPServerManager:
 
     # ── Tool Execution ─────────────────────────────────────────
 
-    def _get_tool_schemas(self) -> list[dict]:
-        """Get all tool schemas."""
-        from src.contexts.coding.interface.tool_definitions import ALL_TOOLS
+    @staticmethod
+    def _get_project_tool_definitions() -> list:
+        """Get all project tool definitions (single source of truth)."""
         from src.contexts.projects.interface.mcp_tools import (
+            add_text_source_tool,
+            close_project_tool,
+            create_folder_tool,
+            delete_folder_tool,
             get_project_context_tool,
+            import_file_source_tool,
+            list_folders_tool,
             list_sources_tool,
+            move_source_to_folder_tool,
             navigate_to_segment_tool,
+            open_project_tool,
             read_source_content_tool,
+            remove_source_tool,
+            rename_folder_tool,
             suggest_source_metadata_tool,
         )
 
-        project_tools = [
+        return [
+            # Query tools
             get_project_context_tool,
             list_sources_tool,
             read_source_content_tool,
             navigate_to_segment_tool,
             suggest_source_metadata_tool,
+            # Project lifecycle (QC-026.07)
+            open_project_tool,
+            close_project_tool,
+            # Source management (QC-027.12, QC-027.14, QC-027.15)
+            add_text_source_tool,
+            remove_source_tool,
+            import_file_source_tool,
+            # Folder management (QC-027.13)
+            list_folders_tool,
+            create_folder_tool,
+            rename_folder_tool,
+            delete_folder_tool,
+            move_source_to_folder_tool,
         ]
-        schemas = [t.to_schema() for t in project_tools]
+
+    def _get_tool_schemas(self) -> list[dict]:
+        """Get all tool schemas."""
+        from src.contexts.coding.interface.tool_definitions import ALL_TOOLS
+
+        schemas = [t.to_schema() for t in self._get_project_tool_definitions()]
         schemas.extend([t.to_schema() for t in ALL_TOOLS.values()])
         return schemas
 
@@ -435,13 +464,7 @@ class MCPServerManager:
         if log is None:
             log = self._log
 
-        project_tools = {
-            "get_project_context",
-            "list_sources",
-            "read_source_content",
-            "navigate_to_segment",
-            "suggest_source_metadata",
-        }
+        project_tool_names = {t.name for t in self._get_project_tool_definitions()}
         coding_tools = set(ALL_TOOLS.keys())
 
         self._stats["tool_calls"] += 1
@@ -455,13 +478,19 @@ class MCPServerManager:
             log.debug("Tool call: %s args=%s", tool_name, args_str)
 
         try:
-            if tool_name in project_tools:
+            if tool_name in project_tool_names:
+                from returns.result import Failure as ReturnsFailure
+                from returns.result import Success as ReturnsSuccess
+
                 from src.contexts.projects.interface.mcp_tools import ProjectTools
 
                 tools = ProjectTools(ctx=self._ctx)
                 result = tools.execute(tool_name, arguments)
-                if hasattr(result, "value_or"):
-                    result = {"success": True, "data": result.value_or(None)}
+                # Convert returns.Result to plain dict for MCP response
+                if isinstance(result, ReturnsSuccess):
+                    result = {"success": True, "data": result.unwrap()}
+                elif isinstance(result, ReturnsFailure):
+                    result = {"success": False, "error": result.failure()}
                 else:
                     result = {"success": True, "data": result}
 

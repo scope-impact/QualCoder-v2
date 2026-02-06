@@ -28,10 +28,10 @@ Usage:
 from __future__ import annotations
 
 from collections import defaultdict
-from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Any, Protocol, runtime_checkable
 
 from src.contexts.cases.core.commandHandlers import get_case, list_cases
+from src.shared.common.mcp_types import ToolDefinition, ToolParameter
 from src.shared.common.operation_result import OperationResult
 
 if TYPE_CHECKING:
@@ -60,56 +60,6 @@ class CaseToolsContext(Protocol):
     def cases_context(self):
         """Get cases context with case_repo (None if no project open)."""
         ...
-
-
-# ============================================================
-# Tool Definitions (MCP Schema)
-# ============================================================
-
-
-@dataclass(frozen=True)
-class ToolParameter:
-    """MCP tool parameter definition."""
-
-    name: str
-    type: str
-    description: str
-    required: bool = True
-    default: Any = None
-
-
-@dataclass(frozen=True)
-class ToolDefinition:
-    """MCP tool definition with schema."""
-
-    name: str
-    description: str
-    parameters: tuple[ToolParameter, ...] = field(default_factory=tuple)
-
-    def to_schema(self) -> dict[str, Any]:
-        """Convert to MCP-compatible JSON schema."""
-        properties = {}
-        required = []
-
-        for param in self.parameters:
-            properties[param.name] = {
-                "type": param.type,
-                "description": param.description,
-            }
-            if param.default is not None:
-                properties[param.name]["default"] = param.default
-            if param.required:
-                required.append(param.name)
-
-        return {
-            "name": self.name,
-            "description": self.description,
-            "inputSchema": {
-                "type": "object",
-                "properties": properties,
-                "required": required,
-            },
-        }
 
 
 # Tool: list_cases
