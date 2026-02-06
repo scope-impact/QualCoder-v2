@@ -66,116 +66,51 @@ class GitRepositoryAdapter:
                 error_code="GIT_NOT_COMMITTED/EMPTY_MESSAGE",
             )
 
-        try:
-            result = subprocess.run(
-                ["git", "commit", "-m", message],
-                cwd=self._repo_path,
-                capture_output=True,
-                text=True,
-                check=False,
-            )
-
-            if result.returncode != 0:
-                error_msg = result.stderr.strip() or result.stdout.strip()
-                if "nothing to commit" in error_msg.lower():
-                    return OperationResult.fail(
-                        error="Nothing to commit - no changes staged",
-                        error_code="GIT_NOT_COMMITTED/NOTHING_TO_COMMIT",
-                    )
+        result = self._run_git(
+            ["commit", "-m", message], "GIT_NOT_COMMITTED", return_output=True
+        )
+        if result.is_failure:
+            # Check for "nothing to commit" case
+            if "nothing to commit" in (result.error or "").lower():
                 return OperationResult.fail(
-                    error=f"git commit failed: {error_msg}",
-                    error_code="GIT_NOT_COMMITTED/CLI_ERROR",
+                    error="Nothing to commit - no changes staged",
+                    error_code="GIT_NOT_COMMITTED/NOTHING_TO_COMMIT",
                 )
+            return result
 
-            sha_result = subprocess.run(
-                ["git", "rev-parse", "HEAD"],
-                cwd=self._repo_path,
-                capture_output=True,
-                text=True,
-                check=False,
-            )
-            sha = sha_result.stdout.strip() if sha_result.returncode == 0 else ""
-            return OperationResult.ok(data=sha)
-
-        except FileNotFoundError:
-            return OperationResult.fail(
-                error="git command not found",
-                error_code="GIT_NOT_COMMITTED/CLI_NOT_FOUND",
-                suggestions=("Install Git: https://git-scm.com/downloads",),
-            )
-        except OSError as e:
-            return OperationResult.fail(
-                error=f"Failed to run git: {e}",
-                error_code="GIT_NOT_COMMITTED/OS_ERROR",
-            )
+        # Get the commit SHA
+        sha_result = self._run_git(
+            ["rev-parse", "HEAD"], "GIT_NOT_COMMITTED", return_output=True
+        )
+        return OperationResult.ok(
+            data=sha_result.data.strip() if sha_result.data else ""
+        )
 
     def log(self, limit: int = 20) -> OperationResult:
         """Get commit history as list of CommitInfo."""
-        try:
-            result = subprocess.run(
-                ["git", "log", "--format=%H|%an|%ct|%s", f"-n{limit}"],
-                cwd=self._repo_path,
-                capture_output=True,
-                text=True,
-                check=False,
-            )
+        result = self._run_git(
+            ["log", "--format=%H|%an|%ct|%s", f"-n{limit}"],
+            "GIT_LOG_FAILED",
+            return_output=True,
+        )
+        if result.is_failure:
+            # Empty repo is not an error
+            if "does not have any commits" in (result.error or "").lower():
+                return OperationResult.ok(data=[])
+            return result
 
-            if result.returncode != 0:
-                error_msg = result.stderr.strip() or result.stdout.strip()
-                if "does not have any commits yet" in error_msg.lower():
-                    return OperationResult.ok(data=[])
-                return OperationResult.fail(
-                    error=f"git log failed: {error_msg}",
-                    error_code="GIT_LOG_FAILED/CLI_ERROR",
-                )
-
-            commits = [
-                commit
-                for line in result.stdout.strip().split("\n")
-                if line and (commit := CommitInfo.from_git_log_line(line))
-            ]
-            return OperationResult.ok(data=commits)
-
-        except FileNotFoundError:
-            return OperationResult.fail(
-                error="git command not found",
-                error_code="GIT_LOG_FAILED/CLI_NOT_FOUND",
-                suggestions=("Install Git: https://git-scm.com/downloads",),
-            )
-        except OSError as e:
-            return OperationResult.fail(
-                error=f"Failed to run git: {e}",
-                error_code="GIT_LOG_FAILED/OS_ERROR",
-            )
+        commits = [
+            commit
+            for line in (result.data or "").strip().split("\n")
+            if line and (commit := CommitInfo.from_git_log_line(line))
+        ]
+        return OperationResult.ok(data=commits)
 
     def diff(self, from_ref: str, to_ref: str) -> OperationResult:
         """Get diff between two commits."""
-        try:
-            result = subprocess.run(
-                ["git", "diff", from_ref, to_ref],
-                cwd=self._repo_path,
-                capture_output=True,
-                text=True,
-                check=False,
-            )
-            if result.returncode != 0:
-                error_msg = result.stderr.strip() or result.stdout.strip()
-                return OperationResult.fail(
-                    error=f"git diff failed: {error_msg}",
-                    error_code="GIT_DIFF_FAILED/CLI_ERROR",
-                )
-            return OperationResult.ok(data=result.stdout)
-        except FileNotFoundError:
-            return OperationResult.fail(
-                error="git command not found",
-                error_code="GIT_DIFF_FAILED/CLI_NOT_FOUND",
-                suggestions=("Install Git: https://git-scm.com/downloads",),
-            )
-        except OSError as e:
-            return OperationResult.fail(
-                error=f"Failed to run git: {e}",
-                error_code="GIT_DIFF_FAILED/OS_ERROR",
-            )
+        return self._run_git(
+            ["diff", from_ref, to_ref], "GIT_DIFF_FAILED", return_output=True
+        )
 
     def checkout(self, ref: str) -> OperationResult:
         """Checkout a specific commit. WARNING: Discards uncommitted changes."""
@@ -183,78 +118,41 @@ class GitRepositoryAdapter:
 
     def get_valid_refs(self) -> OperationResult:
         """Get all valid commit SHAs."""
-        try:
-            result = subprocess.run(
-                ["git", "rev-list", "--all"],
-                cwd=self._repo_path,
-                capture_output=True,
-                text=True,
-                check=False,
-            )
+        result = self._run_git(
+            ["rev-list", "--all"], "GIT_REFS_FAILED", return_output=True
+        )
+        if result.is_failure:
+            # Empty repo is not an error
+            if (
+                "does not have any commits" in (result.error or "").lower()
+                or not result.error
+            ):
+                return OperationResult.ok(data=())
+            return result
 
-            if result.returncode != 0:
-                error_msg = result.stderr.strip() or result.stdout.strip()
-                if not error_msg or "does not have any commits" in error_msg.lower():
-                    return OperationResult.ok(data=())
-                return OperationResult.fail(
-                    error=f"git rev-list failed: {error_msg}",
-                    error_code="GIT_REFS_FAILED/CLI_ERROR",
-                )
-
-            refs = tuple(
-                line.strip() for line in result.stdout.strip().split("\n") if line
-            )
-            return OperationResult.ok(data=refs)
-
-        except FileNotFoundError:
-            return OperationResult.fail(
-                error="git command not found",
-                error_code="GIT_REFS_FAILED/CLI_NOT_FOUND",
-                suggestions=("Install Git: https://git-scm.com/downloads",),
-            )
-        except OSError as e:
-            return OperationResult.fail(
-                error=f"Failed to run git: {e}",
-                error_code="GIT_REFS_FAILED/OS_ERROR",
-            )
+        refs = tuple(
+            line.strip() for line in (result.data or "").strip().split("\n") if line
+        )
+        return OperationResult.ok(data=refs)
 
     def has_staged_changes(self) -> OperationResult:
         """Check if there are staged changes ready to commit."""
-        try:
-            result = subprocess.run(
-                ["git", "status", "--porcelain"],
-                cwd=self._repo_path,
-                capture_output=True,
-                text=True,
-                check=False,
-            )
+        result = self._run_git(
+            ["status", "--porcelain"], "GIT_STATUS_FAILED", return_output=True
+        )
+        if result.is_failure:
+            return result
 
-            if result.returncode != 0:
-                return OperationResult.fail(
-                    error=f"git status failed: {result.stderr.strip()}",
-                    error_code="GIT_STATUS_FAILED/CLI_ERROR",
-                )
+        # Porcelain format: XY filename (X = staged status)
+        has_staged = any(
+            line and len(line) >= 2 and line[0] in "AMDRC"
+            for line in (result.data or "").strip().split("\n")
+        )
+        return OperationResult.ok(data=has_staged)
 
-            # Porcelain format: XY filename (X = staged status)
-            has_staged = any(
-                line and len(line) >= 2 and line[0] in "AMDRC"
-                for line in result.stdout.strip().split("\n")
-            )
-            return OperationResult.ok(data=has_staged)
-
-        except FileNotFoundError:
-            return OperationResult.fail(
-                error="git command not found",
-                error_code="GIT_STATUS_FAILED/CLI_NOT_FOUND",
-                suggestions=("Install Git: https://git-scm.com/downloads",),
-            )
-        except OSError as e:
-            return OperationResult.fail(
-                error=f"Failed to run git: {e}",
-                error_code="GIT_STATUS_FAILED/OS_ERROR",
-            )
-
-    def _run_git(self, args: list[str], error_prefix: str) -> OperationResult:
+    def _run_git(
+        self, args: list[str], error_prefix: str, *, return_output: bool = False
+    ) -> OperationResult:
         """Run git command with standard error handling."""
         try:
             result = subprocess.run(
@@ -265,10 +163,13 @@ class GitRepositoryAdapter:
                 check=False,
             )
             if result.returncode != 0:
+                error_msg = result.stderr.strip() or result.stdout.strip()
                 return OperationResult.fail(
-                    error=f"git {args[0]} failed: {result.stderr.strip() or result.stdout.strip()}",
+                    error=f"git {args[0]} failed: {error_msg}",
                     error_code=f"{error_prefix}/CLI_ERROR",
                 )
+            if return_output:
+                return OperationResult.ok(data=result.stdout)
             return OperationResult.ok()
         except FileNotFoundError:
             return OperationResult.fail(
