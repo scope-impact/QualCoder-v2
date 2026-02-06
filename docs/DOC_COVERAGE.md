@@ -14,6 +14,12 @@ This file tracks which features have documentation and screenshots.
 
 ## Feature Coverage
 
+### QC-026 Open & Navigate Project
+
+| ID | Story | Doc Page | Screenshots | Status |
+|----|-------|----------|-------------|--------|
+| QC-026.07 | Agent Open/Close Project | [mcp-setup.md](user-manual/mcp-setup.md), [mcp-api.md](api/mcp-api.md) | - | :construction: |
+
 ### QC-027 Manage Sources
 
 | ID | Story | Doc Page | Screenshots | Status |
@@ -22,6 +28,10 @@ This file tracks which features have documentation and screenshots.
 | QC-027.02 | Import PDF Document | [sources.md](user-manual/sources.md) | - | :construction: |
 | QC-027.03 | Import Image | [sources.md](user-manual/sources.md) | image-viewer.png | :white_check_mark: |
 | QC-027.04 | Import Audio/Video | [sources.md](user-manual/sources.md) | media-player.png | :white_check_mark: |
+| QC-027.12 | Agent Add Text Source | [sources.md](user-manual/sources.md), [mcp-api.md](api/mcp-api.md) | - | :construction: |
+| QC-027.13 | Agent Manage Folders | [sources.md](user-manual/sources.md), [mcp-api.md](api/mcp-api.md) | - | :construction: |
+| QC-027.14 | Agent Remove Source | [sources.md](user-manual/sources.md), [mcp-api.md](api/mcp-api.md) | - | :construction: |
+| QC-027.15 | Agent Import File Source | [sources.md](user-manual/sources.md), [mcp-api.md](api/mcp-api.md) | - | :construction: |
 
 ### QC-028 Manage Codes
 
@@ -45,7 +55,21 @@ This file tracks which features have documentation and screenshots.
 | QC-029.06 | Multiple Codes | [coding.md](user-manual/coding.md) | coding-multiple-codes.png | :white_check_mark: |
 | QC-029.07 | Segment Memos | [coding.md](user-manual/coding.md) | memos-panel.png | :white_check_mark: |
 
-### QC-030 AI Features
+### QC-028 AI Code Management (Agent Stories)
+
+| ID | Story | Doc Page | Screenshots | Status |
+|----|-------|----------|-------------|--------|
+| QC-028.07 | Suggest New Code | [ai-features.md](user-manual/ai-features.md), [mcp-api.md](api/mcp-api.md) | code-suggestions.png | :white_check_mark: |
+| QC-028.08 | Detect Duplicate Codes | [ai-features.md](user-manual/ai-features.md), [mcp-api.md](api/mcp-api.md) | duplicate-codes.png | :white_check_mark: |
+
+### QC-029 AI Text Coding (Agent Stories)
+
+| ID | Story | Doc Page | Screenshots | Status |
+|----|-------|----------|-------------|--------|
+| QC-029.07 | Apply Code to Text Range | [mcp-api.md](api/mcp-api.md) | - | :construction: |
+| QC-029.08 | Suggest Codes for Text | [ai-features.md](user-manual/ai-features.md), [mcp-api.md](api/mcp-api.md) | - | :construction: |
+
+### QC-030 AI Features (Researcher Stories)
 
 | ID | Story | Doc Page | Screenshots | Status |
 |----|-------|----------|-------------|--------|

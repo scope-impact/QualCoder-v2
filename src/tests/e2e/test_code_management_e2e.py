@@ -28,6 +28,7 @@ from src.contexts.coding.presentation.dialogs import (
     ColorPickerDialog,
     DuplicateCodesDialog,
 )
+from src.contexts.coding.presentation.dialogs.memo_dialog import CodeMemoDialog
 from src.tests.e2e.helpers import (
     attach_screenshot,
     click_dialog_button,
@@ -1078,3 +1079,156 @@ class TestDeleteCodeDialog:
         # Signal should NOT be emitted
         assert spy.count() == 0
         assert delete_code_dialog_with_segments.result() == 0
+
+
+# =============================================================================
+# QC-028.04: Add Memos to Codes (Black-Box)
+# =============================================================================
+
+
+@pytest.fixture
+def code_memo_dialog(qapp, colors):
+    """Create a CodeMemoDialog for testing."""
+    dialog = CodeMemoDialog(
+        code_name="Test Code",
+        code_color="#FF5722",
+        content="",
+        colors=colors,
+    )
+    yield dialog
+    dialog.close()
+
+
+@pytest.fixture
+def code_memo_dialog_with_content(qapp, colors):
+    """Create a CodeMemoDialog with existing content."""
+    from datetime import datetime
+
+    dialog = CodeMemoDialog(
+        code_name="Test Code",
+        code_color="#FF5722",
+        content="Existing memo content about this code.",
+        author="researcher",
+        timestamp=datetime(2024, 1, 15, 10, 30),
+        colors=colors,
+    )
+    yield dialog
+    dialog.close()
+
+
+@allure.story("QC-028.04 Add Memos to Codes")
+class TestCodeMemoDialog:
+    """
+    QC-028.04: Researcher can add memos to codes
+    Tests for code-level memo functionality.
+    """
+
+    @allure.title("AC #4.1: Dialog shows code name and color")
+    @allure.severity(allure.severity_level.NORMAL)
+    def test_dialog_shows_code_info(self, code_memo_dialog):
+        """Dialog header shows code name and color indicator."""
+        code_memo_dialog.show()
+        QApplication.processEvents()
+
+        title = code_memo_dialog.get_title()
+        assert "Test Code" in title
+
+        attach_screenshot(code_memo_dialog, "CodeMemoDialog - Code Info Header")
+
+    @allure.title("AC #4.2: Dialog displays existing memo content")
+    @allure.severity(allure.severity_level.NORMAL)
+    def test_dialog_displays_existing_content(self, code_memo_dialog_with_content):
+        """Dialog shows existing memo content when editing."""
+        code_memo_dialog_with_content.show()
+        QApplication.processEvents()
+
+        content = code_memo_dialog_with_content.get_content()
+        assert "Existing memo content" in content
+
+        attach_screenshot(
+            code_memo_dialog_with_content, "CodeMemoDialog - Existing Content"
+        )
+
+    @allure.title("AC #4.3: User can enter memo text")
+    @allure.severity(allure.severity_level.CRITICAL)
+    def test_enter_memo_text(self, code_memo_dialog):
+        """User can type memo content for the code."""
+        code_memo_dialog.show()
+        QApplication.processEvents()
+
+        code_memo_dialog.set_content(
+            "This code captures positive experiences mentioned."
+        )
+
+        assert (
+            code_memo_dialog.get_content()
+            == "This code captures positive experiences mentioned."
+        )
+
+        attach_screenshot(code_memo_dialog, "CodeMemoDialog - Memo Text Entered")
+
+    @allure.title("AC #4.4: Save button emits save_clicked signal")
+    @allure.severity(allure.severity_level.CRITICAL)
+    def test_save_emits_signal(self, code_memo_dialog):
+        """Save button emits save_clicked signal."""
+        code_memo_dialog.show()
+        QApplication.processEvents()
+
+        signals = []
+        code_memo_dialog.save_clicked.connect(lambda: signals.append(True))
+
+        code_memo_dialog.set_content("Test memo content")
+        code_memo_dialog._on_save()
+        QApplication.processEvents()
+
+        assert len(signals) == 1
+
+    @allure.title("AC #4.5: Cancel closes dialog without saving")
+    @allure.severity(allure.severity_level.NORMAL)
+    def test_cancel_closes_dialog(self, code_memo_dialog):
+        """Clicking cancel closes the dialog without emitting save."""
+        code_memo_dialog.show()
+        QApplication.processEvents()
+
+        save_signals = []
+        cancel_signals = []
+        code_memo_dialog.save_clicked.connect(lambda: save_signals.append(True))
+        code_memo_dialog.cancel_clicked.connect(lambda: cancel_signals.append(True))
+
+        code_memo_dialog.set_content("Some unsaved content")
+        code_memo_dialog._on_cancel()
+        QApplication.processEvents()
+
+        # Cancel should emit, save should NOT
+        assert len(cancel_signals) == 1
+        assert len(save_signals) == 0
+
+    @allure.title("AC #4.6: Dialog shows author and timestamp metadata")
+    @allure.severity(allure.severity_level.NORMAL)
+    def test_shows_metadata(self, code_memo_dialog_with_content):
+        """Dialog displays author and timestamp for existing memo."""
+        code_memo_dialog_with_content.show()
+        QApplication.processEvents()
+
+        metadata_text = code_memo_dialog_with_content.get_metadata_text()
+        assert "researcher" in metadata_text
+        assert "2024-01-15" in metadata_text
+
+        attach_screenshot(
+            code_memo_dialog_with_content, "CodeMemoDialog - Metadata Display"
+        )
+
+    @allure.title("AC #4.7: Content changed signal emitted on edit")
+    @allure.severity(allure.severity_level.NORMAL)
+    def test_content_changed_signal(self, code_memo_dialog):
+        """content_changed signal emitted when memo text changes."""
+        code_memo_dialog.show()
+        QApplication.processEvents()
+
+        changes = []
+        code_memo_dialog.content_changed.connect(lambda text: changes.append(text))
+
+        code_memo_dialog._editor.setPlainText("New content for the code memo")
+        QApplication.processEvents()
+
+        assert len(changes) >= 1

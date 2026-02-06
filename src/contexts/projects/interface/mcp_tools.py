@@ -3,9 +3,17 @@ MCP Project Tools
 
 Provides MCP-compatible tools for AI agent interaction with projects.
 
-Implements QC-026:
-- AC #5: Agent can query current project context
-- AC #6: Agent can navigate to a specific source or segment
+Implements:
+- QC-026.05: Agent can query current project context
+- QC-026.06: Agent can navigate to a specific source or segment
+- QC-026.07: Agent can open and close projects programmatically
+- QC-027.08: Agent can list sources
+- QC-027.09: Agent can read source content
+- QC-027.10: Agent can extract/suggest metadata
+- QC-027.12: Agent can add text sources
+- QC-027.13: Agent can manage folders
+- QC-027.14: Agent can remove sources
+- QC-027.15: Agent can import file-based sources
 
 These tools follow the MCP (Model Context Protocol) specification:
 - Each tool has a name, description, and input schema
@@ -26,12 +34,14 @@ Usage:
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Any, Protocol, runtime_checkable
 
 from returns.result import Failure, Result, Success
 
+from src.shared.common.mcp_types import ToolDefinition, ToolParameter
+
 if TYPE_CHECKING:
+    from src.shared.common.operation_result import OperationResult
     from src.shared.infra.state import ProjectState
 
 
@@ -45,7 +55,12 @@ class ProjectToolsContext(Protocol):
     - event_bus: EventBus for publishing domain events
     - signal_bridge: Optional ProjectSignalBridge for UI updates
     - sources_context: SourcesContext for source/folder repos
+    - coding_context: CodingContext for segment repo (cascade deletes)
     - cases_context: CasesContext for case repo
+
+    Required methods:
+    - open_project: Open a project by path
+    - close_project: Close the current project
     """
 
     @property
@@ -69,60 +84,27 @@ class ProjectToolsContext(Protocol):
         ...
 
     @property
+    def coding_context(self):
+        """Get coding context with segment_repo (None if no project open)."""
+        ...
+
+    @property
     def cases_context(self):
         """Get cases context with case_repo (None if no project open)."""
         ...
 
+    def open_project(self, path: str) -> OperationResult:
+        """Open a project by path."""
+        ...
+
+    def close_project(self) -> OperationResult:
+        """Close the current project."""
+        ...
+
 
 # ============================================================
-# Tool Definitions (MCP Schema)
+# Existing Tool Definitions
 # ============================================================
-
-
-@dataclass(frozen=True)
-class ToolParameter:
-    """MCP tool parameter definition."""
-
-    name: str
-    type: str
-    description: str
-    required: bool = True
-    default: Any = None
-
-
-@dataclass(frozen=True)
-class ToolDefinition:
-    """MCP tool definition with schema."""
-
-    name: str
-    description: str
-    parameters: tuple[ToolParameter, ...] = field(default_factory=tuple)
-
-    def to_schema(self) -> dict[str, Any]:
-        """Convert to MCP-compatible JSON schema."""
-        properties = {}
-        required = []
-
-        for param in self.parameters:
-            properties[param.name] = {
-                "type": param.type,
-                "description": param.description,
-            }
-            if param.default is not None:
-                properties[param.name]["default"] = param.default
-            if param.required:
-                required.append(param.name)
-
-        return {
-            "name": self.name,
-            "description": self.description,
-            "inputSchema": {
-                "type": "object",
-                "properties": properties,
-                "required": required,
-            },
-        }
-
 
 # Tool: get_project_context
 get_project_context_tool = ToolDefinition(
@@ -271,6 +253,231 @@ suggest_source_metadata_tool = ToolDefinition(
 
 
 # ============================================================
+# New Tool Definitions (QC-026.07, QC-027.12, QC-027.13, QC-027.14)
+# ============================================================
+
+# Tool: open_project (QC-026.07)
+open_project_tool = ToolDefinition(
+    name="open_project",
+    description=(
+        "Open an existing QualCoder project file (.qda). "
+        "Closes any currently open project first."
+    ),
+    parameters=(
+        ToolParameter(
+            name="path",
+            type="string",
+            description="Absolute path to the .qda project file.",
+            required=True,
+        ),
+    ),
+)
+
+# Tool: close_project (QC-026.07)
+close_project_tool = ToolDefinition(
+    name="close_project",
+    description=(
+        "Close the currently open project. Safe to call when no project is open."
+    ),
+    parameters=(),
+)
+
+# Tool: add_text_source (QC-027.12)
+add_text_source_tool = ToolDefinition(
+    name="add_text_source",
+    description=(
+        "Add a new text source to the current project. "
+        "Provide a name and text content. "
+        "Optionally include memo and origin metadata."
+    ),
+    parameters=(
+        ToolParameter(
+            name="name",
+            type="string",
+            description="Name for the new source (must be unique within project).",
+            required=True,
+        ),
+        ToolParameter(
+            name="content",
+            type="string",
+            description="The full text content of the source.",
+            required=True,
+        ),
+        ToolParameter(
+            name="memo",
+            type="string",
+            description="Optional memo/notes about the source.",
+            required=False,
+            default=None,
+        ),
+        ToolParameter(
+            name="origin",
+            type="string",
+            description="Optional origin description (e.g., 'interview transcript', 'field notes').",
+            required=False,
+            default=None,
+        ),
+    ),
+)
+
+# Tool: remove_source (QC-027.14)
+remove_source_tool = ToolDefinition(
+    name="remove_source",
+    description=(
+        "Remove a source from the project. "
+        "This deletes the source, its content, and all coded segments. "
+        "Use confirm=false to preview what would be deleted."
+    ),
+    parameters=(
+        ToolParameter(
+            name="source_id",
+            type="integer",
+            description="ID of the source to remove.",
+            required=True,
+        ),
+        ToolParameter(
+            name="confirm",
+            type="boolean",
+            description="Set to true to actually delete. Default false returns a preview.",
+            required=False,
+            default=False,
+        ),
+    ),
+)
+
+# Tool: list_folders (QC-027.13)
+list_folders_tool = ToolDefinition(
+    name="list_folders",
+    description=(
+        "List all source folders in the current project, including hierarchy."
+    ),
+    parameters=(),
+)
+
+# Tool: create_folder (QC-027.13)
+create_folder_tool = ToolDefinition(
+    name="create_folder",
+    description="Create a new folder for organizing sources.",
+    parameters=(
+        ToolParameter(
+            name="name",
+            type="string",
+            description="Folder name (must be unique within parent).",
+            required=True,
+        ),
+        ToolParameter(
+            name="parent_id",
+            type="integer",
+            description="Parent folder ID for nesting. Omit for root-level folder.",
+            required=False,
+            default=None,
+        ),
+    ),
+)
+
+# Tool: rename_folder (QC-027.13)
+rename_folder_tool = ToolDefinition(
+    name="rename_folder",
+    description="Rename an existing folder.",
+    parameters=(
+        ToolParameter(
+            name="folder_id",
+            type="integer",
+            description="ID of the folder to rename.",
+            required=True,
+        ),
+        ToolParameter(
+            name="new_name",
+            type="string",
+            description="New folder name.",
+            required=True,
+        ),
+    ),
+)
+
+# Tool: delete_folder (QC-027.13)
+delete_folder_tool = ToolDefinition(
+    name="delete_folder",
+    description="Delete an empty folder. Fails if folder contains sources.",
+    parameters=(
+        ToolParameter(
+            name="folder_id",
+            type="integer",
+            description="ID of the folder to delete.",
+            required=True,
+        ),
+    ),
+)
+
+# Tool: move_source_to_folder (QC-027.13)
+move_source_to_folder_tool = ToolDefinition(
+    name="move_source_to_folder",
+    description="Move a source into a folder for organization.",
+    parameters=(
+        ToolParameter(
+            name="source_id",
+            type="integer",
+            description="ID of the source to move.",
+            required=True,
+        ),
+        ToolParameter(
+            name="folder_id",
+            type="integer",
+            description="Target folder ID. Use null or 0 for root.",
+            required=False,
+            default=None,
+        ),
+    ),
+)
+
+# Tool: import_file_source (QC-027.15)
+import_file_source_tool = ToolDefinition(
+    name="import_file_source",
+    description=(
+        "Import a file-based source (document, PDF, image, audio, video) "
+        "into the current project by providing its absolute file path. "
+        "The file type is auto-detected from the extension."
+    ),
+    parameters=(
+        ToolParameter(
+            name="file_path",
+            type="string",
+            description="Absolute path to the source file on the local filesystem.",
+            required=True,
+        ),
+        ToolParameter(
+            name="name",
+            type="string",
+            description="Optional name override. Defaults to the filename.",
+            required=False,
+            default=None,
+        ),
+        ToolParameter(
+            name="memo",
+            type="string",
+            description="Optional memo/notes about the source.",
+            required=False,
+            default=None,
+        ),
+        ToolParameter(
+            name="origin",
+            type="string",
+            description="Optional origin description (e.g., 'field recording', 'scan').",
+            required=False,
+            default=None,
+        ),
+        ToolParameter(
+            name="dry_run",
+            type="boolean",
+            description="If true, validate the file without importing. Default false.",
+            required=False,
+            default=False,
+        ),
+    ),
+)
+
+
+# ============================================================
 # Tool Implementation
 # ============================================================
 
@@ -279,10 +486,12 @@ class ProjectTools:
     """
     MCP-compatible project tools for AI agent integration.
 
-    Provides tools to:
-    - Query current project context (AC #5)
-    - Navigate to specific sources/segments (AC #6)
-    - List and filter project sources
+    Provides tools for:
+    - Project lifecycle: open, close, query context
+    - Source management: list, read, add text, remove
+    - Source metadata: suggest metadata
+    - Folder management: list, create, rename, delete, move sources
+    - Navigation: navigate to segment
 
     Example:
         from src.shared.infra.app_context import create_app_context
@@ -307,17 +516,63 @@ class ProjectTools:
         self._ctx = ctx
 
         self._tools: dict[str, ToolDefinition] = {
+            # Existing tools
             "get_project_context": get_project_context_tool,
             "list_sources": list_sources_tool,
             "read_source_content": read_source_content_tool,
             "navigate_to_segment": navigate_to_segment_tool,
             "suggest_source_metadata": suggest_source_metadata_tool,
+            # QC-026.07: Project lifecycle
+            "open_project": open_project_tool,
+            "close_project": close_project_tool,
+            # QC-027.12: Add text source
+            "add_text_source": add_text_source_tool,
+            # QC-027.14: Remove source
+            "remove_source": remove_source_tool,
+            # QC-027.13: Folder management
+            "list_folders": list_folders_tool,
+            "create_folder": create_folder_tool,
+            "rename_folder": rename_folder_tool,
+            "delete_folder": delete_folder_tool,
+            "move_source_to_folder": move_source_to_folder_tool,
+            # QC-027.15: Import file source
+            "import_file_source": import_file_source_tool,
+        }
+
+        self._handlers = {
+            "get_project_context": self._execute_get_project_context,
+            "list_sources": self._execute_list_sources,
+            "read_source_content": self._execute_read_source_content,
+            "navigate_to_segment": self._execute_navigate_to_segment,
+            "suggest_source_metadata": self._execute_suggest_source_metadata,
+            "open_project": self._execute_open_project,
+            "close_project": self._execute_close_project,
+            "add_text_source": self._execute_add_text_source,
+            "remove_source": self._execute_remove_source,
+            "list_folders": self._execute_list_folders,
+            "create_folder": self._execute_create_folder,
+            "rename_folder": self._execute_rename_folder,
+            "delete_folder": self._execute_delete_folder,
+            "move_source_to_folder": self._execute_move_source_to_folder,
+            "import_file_source": self._execute_import_file_source,
         }
 
     @property
     def _state(self):
         """Get the project state from context."""
         return self._ctx.state
+
+    @property
+    def _source_repo(self):
+        """Get source repo (None if no project open)."""
+        ctx = self._ctx.sources_context
+        return ctx.source_repo if ctx else None
+
+    @property
+    def _folder_repo(self):
+        """Get folder repo (None if no project open)."""
+        ctx = self._ctx.sources_context
+        return ctx.folder_repo if ctx else None
 
     def get_tool_schemas(self) -> list[dict[str, Any]]:
         """
@@ -343,15 +598,7 @@ class ProjectTools:
         Returns:
             Success with result dict, or Failure with error message
         """
-        handlers = {
-            "get_project_context": self._execute_get_project_context,
-            "list_sources": self._execute_list_sources,
-            "read_source_content": self._execute_read_source_content,
-            "navigate_to_segment": self._execute_navigate_to_segment,
-            "suggest_source_metadata": self._execute_suggest_source_metadata,
-        }
-
-        handler = handlers.get(tool_name)
+        handler = self._handlers.get(tool_name)
         if handler is None:
             return Failure(f"Unknown tool: {tool_name}")
 
@@ -359,6 +606,10 @@ class ProjectTools:
             return handler(arguments)
         except Exception as e:
             return Failure(f"Tool execution error: {e!s}")
+
+    # ============================================================
+    # Existing Tool Handlers
+    # ============================================================
 
     def _execute_get_project_context(
         self, _arguments: dict[str, Any]
@@ -416,15 +667,7 @@ class ProjectTools:
     def _execute_list_sources(
         self, arguments: dict[str, Any]
     ) -> Result[dict[str, Any], str]:
-        """
-        Execute list_sources tool.
-
-        Args:
-            arguments: May contain 'source_type' filter
-
-        Returns:
-            Dict with sources list
-        """
+        """Execute list_sources tool."""
         source_type = arguments.get("source_type")
 
         # Get sources from repo (source of truth)
@@ -461,15 +704,7 @@ class ProjectTools:
     def _execute_read_source_content(
         self, arguments: dict[str, Any]
     ) -> Result[dict[str, Any], str]:
-        """
-        Execute read_source_content tool.
-
-        Args:
-            arguments: Must contain source_id. Optional: start_pos, end_pos, max_length
-
-        Returns:
-            Success with content and position markers, or Failure
-        """
+        """Execute read_source_content tool."""
         # Get source_id
         source_id = arguments.get("source_id")
         if source_id is None:
@@ -519,16 +754,7 @@ class ProjectTools:
     def _execute_navigate_to_segment(
         self, arguments: dict[str, Any]
     ) -> Result[dict[str, Any], str]:
-        """
-        Execute navigate_to_segment tool.
-
-        Args:
-            arguments: Must contain source_id, start_pos, end_pos
-                      May contain highlight (default True)
-
-        Returns:
-            Success with navigation result, or Failure
-        """
+        """Execute navigate_to_segment tool."""
         from src.contexts.projects.core.commands import NavigateToSegmentCommand
 
         # Validate required parameters
@@ -579,15 +805,7 @@ class ProjectTools:
     def _execute_suggest_source_metadata(
         self, arguments: dict[str, Any]
     ) -> Result[dict[str, Any], str]:
-        """
-        Execute suggest_source_metadata tool.
-
-        Args:
-            arguments: Must contain source_id. Optional: language, topics, organization_suggestion
-
-        Returns:
-            Success with suggestion stored (pending approval), or Failure
-        """
+        """Execute suggest_source_metadata tool."""
         # Validate required parameter
         source_id = arguments.get("source_id")
         if source_id is None:
@@ -626,5 +844,446 @@ class ProjectTools:
                 "suggested": suggested,
                 "status": "pending_approval",
                 "requires_approval": True,
+            }
+        )
+
+    # ============================================================
+    # QC-026.07: Project Lifecycle Tools
+    # ============================================================
+
+    def _execute_open_project(
+        self, arguments: dict[str, Any]
+    ) -> Result[dict[str, Any], str]:
+        """
+        Execute open_project tool.
+
+        Calls AppContext.open_project() which delegates to the
+        open_project command handler.
+        """
+        path = arguments.get("path")
+        if path is None:
+            return Failure("Missing required parameter: path")
+
+        result = self._ctx.open_project(str(path))
+
+        if result.is_failure:
+            return Failure(result.error or "Failed to open project")
+
+        project = result.data
+        return Success(
+            {
+                "success": True,
+                "project_name": project.name,
+                "project_path": str(project.path),
+                "source_count": len(
+                    self._ctx.sources_context.source_repo.get_all()
+                    if self._ctx.sources_context
+                    else []
+                ),
+            }
+        )
+
+    def _execute_close_project(
+        self, _arguments: dict[str, Any]
+    ) -> Result[dict[str, Any], str]:
+        """
+        Execute close_project tool.
+
+        Idempotent - safe to call when no project is open.
+        """
+        if self._state.project is None:
+            return Success(
+                {
+                    "success": True,
+                    "closed": False,
+                    "message": "No project was open",
+                }
+            )
+
+        project_name = self._state.project.name
+        result = self._ctx.close_project()
+
+        if result.is_failure:
+            return Failure(result.error or "Failed to close project")
+
+        return Success(
+            {
+                "success": True,
+                "closed": True,
+                "project_name": project_name,
+            }
+        )
+
+    # ============================================================
+    # QC-027.12: Add Text Source Tool
+    # ============================================================
+
+    def _execute_add_text_source(
+        self, arguments: dict[str, Any]
+    ) -> Result[dict[str, Any], str]:
+        """
+        Execute add_text_source tool.
+
+        Calls the add_text_source command handler to create a new
+        text source with agent-provided content.
+        """
+        from src.contexts.projects.core.commands import AddTextSourceCommand
+        from src.contexts.sources.core.commandHandlers.add_text_source import (
+            add_text_source,
+        )
+
+        name = arguments.get("name")
+        content = arguments.get("content")
+
+        if name is None:
+            return Failure("Missing required parameter: name")
+        if content is None:
+            return Failure("Missing required parameter: content")
+
+        command = AddTextSourceCommand(
+            name=name,
+            content=content,
+            memo=arguments.get("memo"),
+            origin=arguments.get("origin"),
+        )
+
+        result = add_text_source(
+            command=command,
+            state=self._state,
+            source_repo=self._source_repo,
+            event_bus=self._ctx.event_bus,
+        )
+
+        if result.is_failure:
+            return Failure(result.error or "Failed to add source")
+
+        source = result.data
+        return Success(
+            {
+                "success": True,
+                "source_id": source.id.value,
+                "name": source.name,
+                "type": source.source_type.value,
+                "status": source.status.value,
+                "file_size": source.file_size,
+            }
+        )
+
+    # ============================================================
+    # QC-027.14: Remove Source Tool
+    # ============================================================
+
+    def _execute_remove_source(
+        self, arguments: dict[str, Any]
+    ) -> Result[dict[str, Any], str]:
+        """
+        Execute remove_source tool.
+
+        Supports preview mode (confirm=false) and actual deletion (confirm=true).
+        Calls the remove_source command handler for actual deletion.
+        """
+        source_id = arguments.get("source_id")
+        if source_id is None:
+            return Failure("Missing required parameter: source_id")
+
+        confirm = arguments.get("confirm", False)
+
+        # Verify source exists
+        sources_ctx = self._ctx.sources_context
+        if not sources_ctx:
+            return Failure("No project open")
+
+        from src.shared.common.types import SourceId
+
+        source = sources_ctx.source_repo.get_by_id(SourceId(value=int(source_id)))
+        if source is None:
+            return Failure(f"Source not found: {source_id}")
+
+        # Preview mode: show what would be deleted
+        if not confirm:
+            return Success(
+                {
+                    "preview": True,
+                    "source_id": source.id.value,
+                    "source_name": source.name,
+                    "source_type": source.source_type.value,
+                    "coded_segments_count": source.code_count,
+                    "requires_approval": True,
+                    "message": (
+                        f"This will delete source '{source.name}' "
+                        f"and {source.code_count} coded segment(s)"
+                    ),
+                }
+            )
+
+        # Actual deletion via command handler
+        from src.contexts.projects.core.commands import RemoveSourceCommand
+        from src.contexts.sources.core.commandHandlers.remove_source import (
+            remove_source,
+        )
+
+        command = RemoveSourceCommand(source_id=int(source_id))
+
+        # Get segment_repo from coding context for cascade delete
+        segment_repo = (
+            self._ctx.coding_context.segment_repo if self._ctx.coding_context else None
+        )
+
+        result = remove_source(
+            command=command,
+            state=self._state,
+            source_repo=sources_ctx.source_repo,
+            segment_repo=segment_repo,
+            event_bus=self._ctx.event_bus,
+        )
+
+        if result.is_failure:
+            return Failure(result.error or "Failed to remove source")
+
+        event = result.data
+        return Success(
+            {
+                "success": True,
+                "removed": True,
+                "source_id": event.source_id.value,
+                "source_name": event.name,
+                "segments_removed": event.segments_removed,
+            }
+        )
+
+    # ============================================================
+    # QC-027.13: Folder Management Tools
+    # ============================================================
+
+    def _execute_list_folders(
+        self, _arguments: dict[str, Any]
+    ) -> Result[dict[str, Any], str]:
+        """Execute list_folders tool (query - direct repo access)."""
+        from src.contexts.folders.core.commandHandlers.list_folders import list_folders
+
+        folder_repo = (
+            self._ctx.sources_context.folder_repo if self._ctx.sources_context else None
+        )
+
+        result = list_folders(state=self._state, folder_repo=folder_repo)
+
+        if result.is_failure:
+            return Failure(result.error or "Failed to list folders")
+
+        return Success(result.data)
+
+    def _execute_create_folder(
+        self, arguments: dict[str, Any]
+    ) -> Result[dict[str, Any], str]:
+        """Execute create_folder tool via command handler."""
+        from src.contexts.folders.core.commandHandlers.create_folder import (
+            create_folder,
+        )
+        from src.contexts.projects.core.commands import CreateFolderCommand
+
+        name = arguments.get("name")
+        if name is None:
+            return Failure("Missing required parameter: name")
+
+        parent_id = arguments.get("parent_id")
+
+        command = CreateFolderCommand(name=name, parent_id=parent_id)
+
+        result = create_folder(
+            command=command,
+            state=self._state,
+            folder_repo=self._folder_repo,
+            source_repo=self._source_repo,
+            event_bus=self._ctx.event_bus,
+        )
+
+        if result.is_failure:
+            return Failure(result.error or "Failed to create folder")
+
+        folder = result.data
+        return Success(
+            {
+                "success": True,
+                "folder_id": folder.id.value,
+                "name": folder.name,
+                "parent_id": folder.parent_id.value if folder.parent_id else None,
+            }
+        )
+
+    def _execute_rename_folder(
+        self, arguments: dict[str, Any]
+    ) -> Result[dict[str, Any], str]:
+        """Execute rename_folder tool via command handler."""
+        from src.contexts.folders.core.commandHandlers.rename_folder import (
+            rename_folder,
+        )
+        from src.contexts.projects.core.commands import RenameFolderCommand
+
+        folder_id = arguments.get("folder_id")
+        new_name = arguments.get("new_name")
+
+        if folder_id is None:
+            return Failure("Missing required parameter: folder_id")
+        if new_name is None:
+            return Failure("Missing required parameter: new_name")
+
+        command = RenameFolderCommand(folder_id=int(folder_id), new_name=new_name)
+
+        result = rename_folder(
+            command=command,
+            state=self._state,
+            folder_repo=self._folder_repo,
+            source_repo=self._source_repo,
+            event_bus=self._ctx.event_bus,
+        )
+
+        if result.is_failure:
+            return Failure(result.error or "Failed to rename folder")
+
+        folder = result.data
+        return Success(
+            {
+                "success": True,
+                "folder_id": folder.id.value,
+                "name": folder.name,
+            }
+        )
+
+    def _execute_delete_folder(
+        self, arguments: dict[str, Any]
+    ) -> Result[dict[str, Any], str]:
+        """Execute delete_folder tool via command handler."""
+        from src.contexts.folders.core.commandHandlers.delete_folder import (
+            delete_folder,
+        )
+        from src.contexts.projects.core.commands import DeleteFolderCommand
+
+        folder_id = arguments.get("folder_id")
+        if folder_id is None:
+            return Failure("Missing required parameter: folder_id")
+
+        command = DeleteFolderCommand(folder_id=int(folder_id))
+
+        result = delete_folder(
+            command=command,
+            state=self._state,
+            folder_repo=self._folder_repo,
+            source_repo=self._source_repo,
+            event_bus=self._ctx.event_bus,
+        )
+
+        if result.is_failure:
+            return Failure(result.error or "Failed to delete folder")
+
+        event = result.data
+        return Success(
+            {
+                "success": True,
+                "folder_id": event.folder_id.value,
+                "name": event.name,
+            }
+        )
+
+    def _execute_move_source_to_folder(
+        self, arguments: dict[str, Any]
+    ) -> Result[dict[str, Any], str]:
+        """Execute move_source_to_folder tool via command handler."""
+        from src.contexts.folders.core.commandHandlers.move_source import (
+            move_source_to_folder,
+        )
+        from src.contexts.projects.core.commands import MoveSourceToFolderCommand
+
+        source_id = arguments.get("source_id")
+        if source_id is None:
+            return Failure("Missing required parameter: source_id")
+
+        # folder_id=0 treated as None (root)
+        folder_id = arguments.get("folder_id")
+        if folder_id == 0:
+            folder_id = None
+
+        command = MoveSourceToFolderCommand(
+            source_id=int(source_id), folder_id=folder_id
+        )
+
+        result = move_source_to_folder(
+            command=command,
+            state=self._state,
+            folder_repo=self._folder_repo,
+            source_repo=self._source_repo,
+            event_bus=self._ctx.event_bus,
+        )
+
+        if result.is_failure:
+            return Failure(result.error or "Failed to move source")
+
+        event = result.data
+        return Success(
+            {
+                "success": True,
+                "source_id": event.source_id.value,
+                "old_folder_id": (
+                    event.old_folder_id.value if event.old_folder_id else None
+                ),
+                "new_folder_id": (
+                    event.new_folder_id.value if event.new_folder_id else None
+                ),
+            }
+        )
+
+    # ============================================================
+    # QC-027.15: Import File Source Tool
+    # ============================================================
+
+    def _execute_import_file_source(
+        self, arguments: dict[str, Any]
+    ) -> Result[dict[str, Any], str]:
+        """
+        Execute import_file_source tool.
+
+        Imports a file-based source by absolute file path. Supports
+        text, PDF, image, audio, and video files with auto-detection.
+        """
+        from src.contexts.projects.core.commands import ImportFileSourceCommand
+        from src.contexts.sources.core.commandHandlers.import_file_source import (
+            import_file_source,
+        )
+
+        file_path = arguments.get("file_path")
+        if file_path is None:
+            return Failure("Missing required parameter: file_path")
+
+        command = ImportFileSourceCommand(
+            file_path=str(file_path),
+            name=arguments.get("name"),
+            memo=arguments.get("memo"),
+            origin=arguments.get("origin"),
+            dry_run=arguments.get("dry_run", False),
+        )
+
+        result = import_file_source(
+            command=command,
+            state=self._state,
+            source_repo=self._source_repo,
+            event_bus=self._ctx.event_bus,
+        )
+
+        if result.is_failure:
+            return Failure(result.error or "Failed to import file source")
+
+        # Dry run returns a dict directly
+        if command.dry_run:
+            return Success(result.data)
+
+        # Normal import returns a Source entity
+        source = result.data
+        return Success(
+            {
+                "success": True,
+                "source_id": source.id.value,
+                "name": source.name,
+                "type": source.source_type.value,
+                "status": source.status.value,
+                "file_size": source.file_size,
             }
         )

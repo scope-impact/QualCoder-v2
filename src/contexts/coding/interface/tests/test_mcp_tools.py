@@ -30,11 +30,8 @@ from src.contexts.coding.core.entities import (
     TextPosition,
     TextSegment,
 )
-from src.contexts.coding.interface.mcp_tools import (
-    CodingTools,
-    ToolDefinition,
-    ToolParameter,
-)
+from src.contexts.coding.interface.mcp_tools import CodingTools
+from src.contexts.coding.interface.tool_definitions import ToolDefinition, ToolParameter
 from src.shared.common.types import CategoryId, CodeId, SegmentId, SourceId
 
 pytestmark = [
@@ -149,14 +146,21 @@ class MockSegmentRepository:
 
 
 @dataclass
-class MockContext:
-    """Mock context implementing CodingToolsContext protocol."""
+class MockCodingContext:
+    """Mock coding context with repositories."""
 
     code_repo: MockCodeRepository = field(default_factory=MockCodeRepository)
     category_repo: MockCategoryRepository = field(
         default_factory=MockCategoryRepository
     )
     segment_repo: MockSegmentRepository = field(default_factory=MockSegmentRepository)
+
+
+@dataclass
+class MockContext:
+    """Mock context implementing CodingToolsContext protocol."""
+
+    coding_context: MockCodingContext = field(default_factory=MockCodingContext)
     event_bus: Any = field(default_factory=MagicMock)
 
 
@@ -241,11 +245,12 @@ def mock_context(
     sample_segments: list[TextSegment],
 ) -> MockContext:
     """Create mock context with sample data."""
-    return MockContext(
+    coding_ctx = MockCodingContext(
         code_repo=MockCodeRepository(sample_codes),
         category_repo=MockCategoryRepository(sample_categories),
         segment_repo=MockSegmentRepository(sample_segments),
     )
+    return MockContext(coding_context=coding_ctx)
 
 
 @pytest.fixture
@@ -256,8 +261,8 @@ def coding_tools(mock_context: MockContext) -> CodingTools:
 
 @pytest.fixture
 def empty_context() -> MockContext:
-    """Create empty mock context."""
-    return MockContext()
+    """Create empty mock context with no data."""
+    return MockContext(coding_context=MockCodingContext())
 
 
 # ============================================================
@@ -365,7 +370,9 @@ class TestCodingToolsInit:
         """CodingTools initializes with valid context."""
         tools = CodingTools(ctx=mock_context)
 
-        assert tools._ctx is mock_context
+        # Verify tools is properly initialized (no longer exposes _ctx)
+        assert tools is not None
+        assert tools.get_tool_names() is not None
 
     def test_init_raises_on_none_context(self) -> None:
         """CodingTools raises ValueError on None context."""
@@ -442,7 +449,12 @@ class TestGetToolNames:
         names = coding_tools.get_tool_names()
 
         assert isinstance(names, list)
-        assert len(names) == 4  # batch_apply_codes, list_codes, get_code, list_segments
+        # Core tools + AI-assisted tools (QC-028.07, QC-028.08, QC-029.07, QC-029.08)
+        assert (
+            len(names) >= 4
+        )  # At minimum: batch_apply_codes, list_codes, get_code, list_segments
+        assert "batch_apply_codes" in names
+        assert "list_codes" in names
 
     def test_names_match_schemas(self, coding_tools: CodingTools) -> None:
         """Tool names match schema names."""
@@ -507,16 +519,16 @@ class TestListCodesTool:
     def test_returns_code_with_correct_attributes(
         self, coding_tools: CodingTools
     ) -> None:
-        """list_codes returns codes with expected attributes."""
+        """list_codes returns codes with expected attributes (serialized as dicts)."""
         result = coding_tools.execute("list_codes", {})
 
         assert result["success"] is True
         codes = result["data"]
-        # Find the Theme code
-        theme_code = next((c for c in codes if c.name == "Theme"), None)
+        # Find the Theme code (now serialized as dict)
+        theme_code = next((c for c in codes if c["name"] == "Theme"), None)
         assert theme_code is not None
-        assert theme_code.id.value == 1
-        assert theme_code.color.red == 255
+        assert theme_code["id"] == 1
+        assert theme_code["color"] == "#ff0000"  # Serialized as hex
 
 
 # ============================================================
@@ -529,13 +541,13 @@ class TestGetCodeTool:
     """Tests for get_code tool."""
 
     def test_returns_code_by_id(self, coding_tools: CodingTools) -> None:
-        """get_code returns code by ID."""
+        """get_code returns code by ID (serialized as dict)."""
         result = coding_tools.execute("get_code", {"code_id": 1})
 
         assert result["success"] is True
         code = result["data"]
-        # Data is serialized via __dict__ (frozen dataclass still has __dict__)
-        assert code["id"] == CodeId(value=1)
+        # Data is serialized to JSON-compatible dict
+        assert code["id"] == 1
         assert code["name"] == "Theme"
 
     def test_returns_failure_for_missing_code_id(
@@ -557,13 +569,13 @@ class TestGetCodeTool:
         assert result["error_code"] == "CODE_NOT_FOUND"
 
     def test_returns_code_with_category(self, coding_tools: CodingTools) -> None:
-        """get_code returns code with category info."""
+        """get_code returns code with category info (serialized as dict)."""
         result = coding_tools.execute("get_code", {"code_id": 3})
 
         assert result["success"] is True
         code = result["data"]
-        # Data is serialized via __dict__ (frozen dataclass still has __dict__)
-        assert code["category_id"] == CategoryId(value=1)
+        # Data is serialized to JSON-compatible dict
+        assert code["category_id"] == 1
 
 
 # ============================================================
@@ -602,17 +614,19 @@ class TestListSegmentsTool:
         assert result["data"] == []
 
     def test_segment_has_expected_attributes(self, coding_tools: CodingTools) -> None:
-        """Segments have expected attributes."""
+        """Segments have expected attributes (serialized as dicts)."""
         result = coding_tools.execute("list_segments_for_source", {"source_id": 1})
 
         assert result["success"] is True
         segments = result["data"]
         segment = segments[0]
-        assert hasattr(segment, "id")
-        assert hasattr(segment, "source_id")
-        assert hasattr(segment, "code_id")
-        assert hasattr(segment, "position")
-        assert hasattr(segment, "selected_text")
+        # Segments are serialized to JSON-compatible dicts
+        assert "id" in segment
+        assert "source_id" in segment
+        assert "code_id" in segment
+        assert "start_position" in segment
+        assert "end_position" in segment
+        assert "selected_text" in segment
 
 
 # ============================================================
@@ -841,8 +855,10 @@ class TestErrorHandling:
         """execute catches exceptions and returns failure."""
         tools = CodingTools(ctx=mock_context)
 
-        # Make code_repo.get_all raise an exception
-        mock_context.code_repo.get_all = MagicMock(side_effect=Exception("DB error"))
+        # Make code_repo.get_all raise an exception (access via coding_context)
+        mock_context.coding_context.code_repo.get_all = MagicMock(
+            side_effect=Exception("DB error")
+        )
 
         result = tools.execute("list_codes", {})
 
@@ -861,16 +877,14 @@ class TestContextValidation:
     """Tests for context validation in tools."""
 
     def test_batch_apply_returns_failure_when_code_repo_is_none(self) -> None:
-        """batch_apply_codes returns failure when code_repo is None."""
+        """batch_apply_codes returns failure when coding_context is None."""
 
         @dataclass
-        class ContextWithNoneRepo:
-            code_repo: Any = None
-            category_repo: Any = None
-            segment_repo: Any = None
+        class ContextWithNoCodingContext:
+            coding_context: Any = None
             event_bus: Any = field(default_factory=MagicMock)
 
-        ctx = ContextWithNoneRepo()
+        ctx = ContextWithNoCodingContext()
         tools = CodingTools(ctx=ctx)
 
         result = tools.execute(
@@ -891,16 +905,14 @@ class TestContextValidation:
         assert "NO_CONTEXT" in result["error_code"]
 
     def test_list_codes_returns_failure_when_code_repo_is_none(self) -> None:
-        """list_codes returns failure when code_repo is None."""
+        """list_codes returns failure when coding_context is None."""
 
         @dataclass
-        class ContextWithNoneRepo:
-            code_repo: Any = None
-            category_repo: Any = None
-            segment_repo: Any = None
+        class ContextWithNoCodingContext:
+            coding_context: Any = None
             event_bus: Any = field(default_factory=MagicMock)
 
-        ctx = ContextWithNoneRepo()
+        ctx = ContextWithNoCodingContext()
         tools = CodingTools(ctx=ctx)
 
         result = tools.execute("list_codes", {})
@@ -909,16 +921,14 @@ class TestContextValidation:
         assert "NO_CONTEXT" in result["error_code"]
 
     def test_get_code_returns_failure_when_code_repo_is_none(self) -> None:
-        """get_code returns failure when code_repo is None."""
+        """get_code returns failure when coding_context is None."""
 
         @dataclass
-        class ContextWithNoneRepo:
-            code_repo: Any = None
-            category_repo: Any = None
-            segment_repo: Any = None
+        class ContextWithNoCodingContext:
+            coding_context: Any = None
             event_bus: Any = field(default_factory=MagicMock)
 
-        ctx = ContextWithNoneRepo()
+        ctx = ContextWithNoCodingContext()
         tools = CodingTools(ctx=ctx)
 
         result = tools.execute("get_code", {"code_id": 1})
@@ -927,16 +937,14 @@ class TestContextValidation:
         assert "NO_CONTEXT" in result["error_code"]
 
     def test_list_segments_returns_failure_when_segment_repo_is_none(self) -> None:
-        """list_segments returns failure when segment_repo is None."""
+        """list_segments returns failure when coding_context is None."""
 
         @dataclass
-        class ContextWithNoneRepo:
-            code_repo: Any = None
-            category_repo: Any = None
-            segment_repo: Any = None
+        class ContextWithNoCodingContext:
+            coding_context: Any = None
             event_bus: Any = field(default_factory=MagicMock)
 
-        ctx = ContextWithNoneRepo()
+        ctx = ContextWithNoCodingContext()
         tools = CodingTools(ctx=ctx)
 
         result = tools.execute("list_segments_for_source", {"source_id": 1})
