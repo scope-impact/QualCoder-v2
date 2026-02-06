@@ -153,6 +153,328 @@ Suggest metadata for a source (pending human approval).
 }
 ```
 
+#### open_project
+
+Open an existing QualCoder project file (.qda). Closes any currently open project first.
+
+```json
+{
+  "name": "open_project",
+  "inputSchema": {
+    "type": "object",
+    "properties": {
+      "path": {
+        "type": "string",
+        "description": "Absolute path to the .qda project file."
+      }
+    },
+    "required": ["path"]
+  }
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "project_name": "My Research",
+  "project_path": "/path/to/project.qda",
+  "source_count": 5
+}
+```
+
+#### close_project
+
+Close the currently open project. Idempotent — safe to call when no project is open.
+
+```json
+{
+  "name": "close_project",
+  "inputSchema": {
+    "type": "object",
+    "properties": {},
+    "required": []
+  }
+}
+```
+
+**Response (project was open):**
+```json
+{
+  "success": true,
+  "closed": true,
+  "project_name": "My Research"
+}
+```
+
+**Response (no project open):**
+```json
+{
+  "success": true,
+  "closed": false,
+  "message": "No project was open"
+}
+```
+
+#### add_text_source
+
+Add a new text source to the current project with agent-provided content (no file import needed).
+
+```json
+{
+  "name": "add_text_source",
+  "inputSchema": {
+    "type": "object",
+    "properties": {
+      "name": {
+        "type": "string",
+        "description": "Name for the new source (must be unique within project)."
+      },
+      "content": {
+        "type": "string",
+        "description": "The full text content of the source."
+      },
+      "memo": {
+        "type": "string",
+        "description": "Optional memo/notes about the source."
+      },
+      "origin": {
+        "type": "string",
+        "description": "Optional origin description (e.g., 'interview transcript', 'field notes')."
+      }
+    },
+    "required": ["name", "content"]
+  }
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "source_id": 7,
+  "name": "interview_01.txt",
+  "type": "text",
+  "status": "imported",
+  "file_size": 1234
+}
+```
+
+| Error | Cause |
+|-------|-------|
+| `SOURCE_NOT_ADDED/DUPLICATE_NAME` | A source with that name already exists |
+| `Missing required parameter: name` | Empty or missing name |
+| `Missing required parameter: content` | Empty or missing content |
+
+#### remove_source
+
+Remove a source from the project. Supports preview mode (default) and confirmed deletion.
+
+**Trust Level:** T3 (Suggest) — Deletion is destructive and removes coded segments.
+
+```json
+{
+  "name": "remove_source",
+  "inputSchema": {
+    "type": "object",
+    "properties": {
+      "source_id": {
+        "type": "integer",
+        "description": "ID of the source to remove."
+      },
+      "confirm": {
+        "type": "boolean",
+        "description": "Set to true to actually delete. Default false returns a preview.",
+        "default": false
+      }
+    },
+    "required": ["source_id"]
+  }
+}
+```
+
+**Response (preview, confirm=false):**
+```json
+{
+  "preview": true,
+  "source_id": 7,
+  "source_name": "interview_01.txt",
+  "source_type": "text",
+  "coded_segments_count": 3,
+  "requires_approval": true,
+  "message": "This will delete source 'interview_01.txt' and 3 coded segment(s)"
+}
+```
+
+**Response (confirmed deletion, confirm=true):**
+```json
+{
+  "success": true,
+  "removed": true,
+  "source_id": 7,
+  "source_name": "interview_01.txt",
+  "segments_removed": 3
+}
+```
+
+### Folder Tools
+
+#### list_folders
+
+List all source folders in the current project.
+
+```json
+{
+  "name": "list_folders",
+  "inputSchema": {
+    "type": "object",
+    "properties": {},
+    "required": []
+  }
+}
+```
+
+**Response:**
+```json
+{
+  "total_count": 2,
+  "folders": [
+    {"id": 1, "name": "Interviews", "parent_id": null, "source_count": 3},
+    {"id": 2, "name": "Field Notes", "parent_id": null, "source_count": 1}
+  ]
+}
+```
+
+#### create_folder
+
+Create a new folder for organizing sources.
+
+```json
+{
+  "name": "create_folder",
+  "inputSchema": {
+    "type": "object",
+    "properties": {
+      "name": {
+        "type": "string",
+        "description": "Folder name (must be unique within parent)."
+      },
+      "parent_id": {
+        "type": "integer",
+        "description": "Parent folder ID for nesting. Omit for root-level folder."
+      }
+    },
+    "required": ["name"]
+  }
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "folder_id": 3,
+  "name": "Interviews",
+  "parent_id": null
+}
+```
+
+#### rename_folder
+
+Rename an existing folder.
+
+```json
+{
+  "name": "rename_folder",
+  "inputSchema": {
+    "type": "object",
+    "properties": {
+      "folder_id": {
+        "type": "integer",
+        "description": "ID of the folder to rename."
+      },
+      "new_name": {
+        "type": "string",
+        "description": "New folder name."
+      }
+    },
+    "required": ["folder_id", "new_name"]
+  }
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "folder_id": 3,
+  "name": "Transcripts"
+}
+```
+
+#### delete_folder
+
+Delete an empty folder. Fails if the folder contains sources.
+
+```json
+{
+  "name": "delete_folder",
+  "inputSchema": {
+    "type": "object",
+    "properties": {
+      "folder_id": {
+        "type": "integer",
+        "description": "ID of the folder to delete."
+      }
+    },
+    "required": ["folder_id"]
+  }
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "folder_id": 3,
+  "name": "Interviews"
+}
+```
+
+#### move_source_to_folder
+
+Move a source into a folder. Use folder_id=0 or null to move to root.
+
+```json
+{
+  "name": "move_source_to_folder",
+  "inputSchema": {
+    "type": "object",
+    "properties": {
+      "source_id": {
+        "type": "integer",
+        "description": "ID of the source to move."
+      },
+      "folder_id": {
+        "type": "integer",
+        "description": "Target folder ID. Use null or 0 for root."
+      }
+    },
+    "required": ["source_id"]
+  }
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "source_id": 7,
+  "old_folder_id": null,
+  "new_folder_id": 3
+}
+```
+
 ---
 
 ### Coding Tools
@@ -333,6 +655,9 @@ curl -X POST http://localhost:8765/mcp \
 | `SOURCE_NOT_FOUND` | Source ID doesn't exist |
 | `INVALID_POSITION` | Start/end position out of range |
 | `TOOL_NOT_FOUND` | Unknown tool name |
+| `SOURCE_NOT_ADDED/DUPLICATE_NAME` | Source with that name already exists |
+| `FOLDER_NOT_CREATED/DUPLICATE_NAME` | Folder with that name already exists |
+| `FOLDER_NOT_DELETED/HAS_SOURCES` | Cannot delete folder that contains sources |
 
 ---
 
@@ -398,7 +723,6 @@ The following tools are planned but not yet implemented. Progress is tracked via
 | `delete_code` | Delete a code | QC-028 |
 | `merge_codes` | Merge two codes into one | QC-028 |
 | `remove_coding` | Remove coding from a segment | QC-029 AC #10 |
-| `add_source` | Add a text source to the project | QC-027 AC #11 |
 | `auto_code_pattern` | Auto-code by text pattern | QC-032 |
 | `auto_code_speaker` | Auto-code by speaker | QC-032 |
 

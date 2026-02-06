@@ -67,14 +67,45 @@ Add to `claude_desktop_config.json`:
 
 Once connected, AI assistants can use these tools:
 
+### Project Lifecycle
+
 | Tool | What it does |
 |------|--------------|
 | `get_project_context` | See what project is open, list sources and cases |
+| `open_project` | Open an existing .qda project file |
+| `close_project` | Close the current project |
+
+### Source Management
+
+| Tool | What it does |
+|------|--------------|
 | `list_sources` | Get all documents in the project |
 | `read_source_content` | Read document text |
+| `add_text_source` | Add a new text source with content provided by the agent |
+| `remove_source` | Preview or confirm deletion of a source (preview by default) |
+| `suggest_source_metadata` | Suggest language, topics, or organization for a source |
+
+### Folder Management
+
+| Tool | What it does |
+|------|--------------|
+| `list_folders` | List all source folders |
+| `create_folder` | Create a new folder for organizing sources |
+| `rename_folder` | Rename an existing folder |
+| `delete_folder` | Delete an empty folder |
+| `move_source_to_folder` | Move a source into a folder (or to root) |
+
+### Coding
+
+| Tool | What it does |
+|------|--------------|
 | `list_codes` | See all codes in your codebook |
 | `batch_apply_codes` | Apply codes to text (you'll see it immediately) |
 | `navigate_to_segment` | Jump to a specific location in the UI |
+
+### Safety: Preview Before Destructive Actions
+
+Some tools (like `remove_source`) default to **preview mode**. The AI shows you what would happen before making changes. You must explicitly confirm destructive operations.
 
 ## Real-Time Updates
 

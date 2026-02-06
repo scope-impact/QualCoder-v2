@@ -114,6 +114,34 @@ When no sources have been imported yet:
 
 *The File Manager empty state with import options.*
 
+## AI Agent Source Management
+
+When an AI assistant is connected via MCP (see [MCP Setup](./mcp-setup.md)), it can manage sources programmatically:
+
+### Adding Sources
+
+The agent can add text sources directly using the `add_text_source` tool, providing a name and content without needing a file on disk. This is useful for:
+
+- Ingesting interview transcripts from other tools
+- Adding field notes collected during research
+- Creating sources from processed or transformed text
+
+Each source must have a unique name within the project.
+
+### Organizing into Folders
+
+The agent can create folders (`create_folder`), rename them (`rename_folder`), and move sources between folders (`move_source_to_folder`). This enables automated organization of large source collections.
+
+### Removing Sources
+
+The agent uses a **preview-then-confirm** workflow for safe deletion:
+
+1. `remove_source` with `confirm=false` (default) shows what would be deleted
+2. You review the preview (source name, type, number of coded segments affected)
+3. `remove_source` with `confirm=true` performs the actual deletion
+
+This ensures you always know what will be removed before it happens.
+
 ## Deleting Sources
 
 > **Warning: Caution**
