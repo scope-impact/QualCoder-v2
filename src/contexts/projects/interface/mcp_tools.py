@@ -588,10 +588,40 @@ class ProjectTools:
             "import_file_source": import_file_source_tool,
         }
 
+        self._handlers = {
+            "get_project_context": self._execute_get_project_context,
+            "list_sources": self._execute_list_sources,
+            "read_source_content": self._execute_read_source_content,
+            "navigate_to_segment": self._execute_navigate_to_segment,
+            "suggest_source_metadata": self._execute_suggest_source_metadata,
+            "open_project": self._execute_open_project,
+            "close_project": self._execute_close_project,
+            "add_text_source": self._execute_add_text_source,
+            "remove_source": self._execute_remove_source,
+            "list_folders": self._execute_list_folders,
+            "create_folder": self._execute_create_folder,
+            "rename_folder": self._execute_rename_folder,
+            "delete_folder": self._execute_delete_folder,
+            "move_source_to_folder": self._execute_move_source_to_folder,
+            "import_file_source": self._execute_import_file_source,
+        }
+
     @property
     def _state(self):
         """Get the project state from context."""
         return self._ctx.state
+
+    @property
+    def _source_repo(self):
+        """Get source repo (None if no project open)."""
+        ctx = self._ctx.sources_context
+        return ctx.source_repo if ctx else None
+
+    @property
+    def _folder_repo(self):
+        """Get folder repo (None if no project open)."""
+        ctx = self._ctx.sources_context
+        return ctx.folder_repo if ctx else None
 
     def get_tool_schemas(self) -> list[dict[str, Any]]:
         """
@@ -617,31 +647,7 @@ class ProjectTools:
         Returns:
             Success with result dict, or Failure with error message
         """
-        handlers = {
-            # Existing
-            "get_project_context": self._execute_get_project_context,
-            "list_sources": self._execute_list_sources,
-            "read_source_content": self._execute_read_source_content,
-            "navigate_to_segment": self._execute_navigate_to_segment,
-            "suggest_source_metadata": self._execute_suggest_source_metadata,
-            # QC-026.07
-            "open_project": self._execute_open_project,
-            "close_project": self._execute_close_project,
-            # QC-027.12
-            "add_text_source": self._execute_add_text_source,
-            # QC-027.14
-            "remove_source": self._execute_remove_source,
-            # QC-027.13
-            "list_folders": self._execute_list_folders,
-            "create_folder": self._execute_create_folder,
-            "rename_folder": self._execute_rename_folder,
-            "delete_folder": self._execute_delete_folder,
-            "move_source_to_folder": self._execute_move_source_to_folder,
-            # QC-027.15
-            "import_file_source": self._execute_import_file_source,
-        }
-
-        handler = handlers.get(tool_name)
+        handler = self._handlers.get(tool_name)
         if handler is None:
             return Failure(f"Unknown tool: {tool_name}")
 
@@ -990,14 +996,10 @@ class ProjectTools:
             origin=arguments.get("origin"),
         )
 
-        source_repo = (
-            self._ctx.sources_context.source_repo if self._ctx.sources_context else None
-        )
-
         result = add_text_source(
             command=command,
             state=self._state,
-            source_repo=source_repo,
+            source_repo=self._source_repo,
             event_bus=self._ctx.event_bus,
         )
 
@@ -1136,15 +1138,11 @@ class ProjectTools:
 
         command = CreateFolderCommand(name=name, parent_id=parent_id)
 
-        sources_ctx = self._ctx.sources_context
-        folder_repo = sources_ctx.folder_repo if sources_ctx else None
-        source_repo = sources_ctx.source_repo if sources_ctx else None
-
         result = create_folder(
             command=command,
             state=self._state,
-            folder_repo=folder_repo,
-            source_repo=source_repo,
+            folder_repo=self._folder_repo,
+            source_repo=self._source_repo,
             event_bus=self._ctx.event_bus,
         )
 
@@ -1180,15 +1178,11 @@ class ProjectTools:
 
         command = RenameFolderCommand(folder_id=int(folder_id), new_name=new_name)
 
-        sources_ctx = self._ctx.sources_context
-        folder_repo = sources_ctx.folder_repo if sources_ctx else None
-        source_repo = sources_ctx.source_repo if sources_ctx else None
-
         result = rename_folder(
             command=command,
             state=self._state,
-            folder_repo=folder_repo,
-            source_repo=source_repo,
+            folder_repo=self._folder_repo,
+            source_repo=self._source_repo,
             event_bus=self._ctx.event_bus,
         )
 
@@ -1219,15 +1213,11 @@ class ProjectTools:
 
         command = DeleteFolderCommand(folder_id=int(folder_id))
 
-        sources_ctx = self._ctx.sources_context
-        folder_repo = sources_ctx.folder_repo if sources_ctx else None
-        source_repo = sources_ctx.source_repo if sources_ctx else None
-
         result = delete_folder(
             command=command,
             state=self._state,
-            folder_repo=folder_repo,
-            source_repo=source_repo,
+            folder_repo=self._folder_repo,
+            source_repo=self._source_repo,
             event_bus=self._ctx.event_bus,
         )
 
@@ -1265,15 +1255,11 @@ class ProjectTools:
             source_id=int(source_id), folder_id=folder_id
         )
 
-        sources_ctx = self._ctx.sources_context
-        folder_repo = sources_ctx.folder_repo if sources_ctx else None
-        source_repo = sources_ctx.source_repo if sources_ctx else None
-
         result = move_source_to_folder(
             command=command,
             state=self._state,
-            folder_repo=folder_repo,
-            source_repo=source_repo,
+            folder_repo=self._folder_repo,
+            source_repo=self._source_repo,
             event_bus=self._ctx.event_bus,
         )
 
@@ -1324,14 +1310,10 @@ class ProjectTools:
             dry_run=arguments.get("dry_run", False),
         )
 
-        source_repo = (
-            self._ctx.sources_context.source_repo if self._ctx.sources_context else None
-        )
-
         result = import_file_source(
             command=command,
             state=self._state,
-            source_repo=source_repo,
+            source_repo=self._source_repo,
             event_bus=self._ctx.event_bus,
         )
 

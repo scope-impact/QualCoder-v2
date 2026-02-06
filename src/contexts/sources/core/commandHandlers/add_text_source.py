@@ -91,29 +91,30 @@ def add_text_source(
 
     # Step 3: Create Source entity
     source_id = SourceId.new()
-
-    # Derive SourceAdded event
-    event = SourceAdded.create(
-        source_id=source_id,
-        name=name,
-        source_type=SourceType.TEXT,
-        file_path=Path(f"agent://{name}"),
-        file_size=len(command.content),
-        origin=command.origin,
-        memo=command.memo,
-        owner=None,
-    )
+    file_path = Path(f"agent://{name}")
+    file_size = len(command.content)
 
     source = Source(
         id=source_id,
         name=name,
         source_type=SourceType.TEXT,
         status=SourceStatus.IMPORTED,
-        file_path=Path(f"agent://{name}"),
-        file_size=len(command.content),
+        file_path=file_path,
+        file_size=file_size,
         origin=command.origin,
         memo=command.memo,
         fulltext=command.content,
+    )
+
+    event = SourceAdded.create(
+        source_id=source_id,
+        name=name,
+        source_type=SourceType.TEXT,
+        file_path=file_path,
+        file_size=file_size,
+        origin=command.origin,
+        memo=command.memo,
+        owner=None,
     )
 
     # Step 4: Persist to repository (source of truth)

@@ -152,22 +152,14 @@ def import_file_source(
 
     # Step 4: Extract text content for text/PDF sources
     fulltext: str | None = None
-
-    if source_type == SourceType.TEXT:
-        extractor = TextExtractor()
+    extractors = {SourceType.TEXT: TextExtractor, SourceType.PDF: PdfExtractor}
+    extractor_cls = extractors.get(source_type)
+    if extractor_cls is not None:
+        extractor = extractor_cls()
         if extractor.supports(file_path):
             extraction_result = extractor.extract(file_path)
             if isinstance(extraction_result, Success):
-                extracted = extraction_result.unwrap()
-                fulltext = extracted.content
-
-    elif source_type == SourceType.PDF:
-        pdf_extractor = PdfExtractor()
-        if pdf_extractor.supports(file_path):
-            extraction_result = pdf_extractor.extract(file_path)
-            if isinstance(extraction_result, Success):
-                extracted = extraction_result.unwrap()
-                fulltext = extracted.content
+                fulltext = extraction_result.unwrap().content
 
     # Create Source entity
     source_id = SourceId.new()
