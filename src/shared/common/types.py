@@ -40,6 +40,10 @@ class SegmentId:
 class SourceId:
     value: int
 
+    @classmethod
+    def new(cls) -> SourceId:
+        return cls(value=int(uuid4().int % 1_000_000))
+
 
 @dataclass(frozen=True)
 class CategoryId:

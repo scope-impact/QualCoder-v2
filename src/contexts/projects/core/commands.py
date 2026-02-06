@@ -46,6 +46,27 @@ class AddSourceCommand:
 
 
 @dataclass(frozen=True)
+class AddTextSourceCommand:
+    """Command to add a text source directly (agent-provided content, no file)."""
+
+    name: str
+    content: str
+    origin: str | None = None
+    memo: str | None = None
+
+
+@dataclass(frozen=True)
+class ImportFileSourceCommand:
+    """Command to import a file-based source by file path (agent workflow)."""
+
+    file_path: str  # Absolute path to the source file
+    name: str | None = None  # Optional name override (defaults to filename)
+    origin: str | None = None
+    memo: str | None = None
+    dry_run: bool = False  # If True, validate without persisting
+
+
+@dataclass(frozen=True)
 class RemoveSourceCommand:
     """Command to remove a source from the project."""
 

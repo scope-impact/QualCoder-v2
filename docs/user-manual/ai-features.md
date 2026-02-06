@@ -85,9 +85,27 @@ Find passages similar to a coded segment.
 
 ## AI Agent Integration
 
-QualCoder v2 supports AI agents (like Claude Code) working alongside human researchers via the MCP protocol.
+QualCoder v2 supports AI agents (like Claude Code) working alongside human researchers via the MCP protocol. The agent can:
 
-See [MCP Setup Guide](./mcp-setup.md) for configuration and available tools.
+- **Open and close projects** programmatically for automated workflows
+- **Add text sources** directly from agent-generated or agent-collected content
+- **Organize sources** into folders (create, rename, delete folders; move sources)
+- **Remove sources** with a safe preview-then-confirm workflow
+- **Read and analyze** document content, suggest codes, and apply coding
+
+### Trust Levels
+
+Agent tools operate at different trust levels for safety:
+
+| Level | Meaning | Example Tools |
+|-------|---------|---------------|
+| T1 (Autonomous) | Agent acts freely | `get_project_context`, `list_sources` |
+| T2 (Notify) | Agent acts, researcher is notified | `open_project`, `close_project` |
+| T3 (Suggest) | Agent proposes, researcher confirms | `add_text_source`, `remove_source` |
+
+Destructive operations like `remove_source` default to **preview mode** — the agent shows what would be affected before you approve the action.
+
+See [MCP Setup Guide](./mcp-setup.md) for configuration and the full list of available tools.
 
 ## Best Practices
 

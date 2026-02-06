@@ -10,7 +10,9 @@ QualCoder MCP server at `http://localhost:8765`.
 |------|-------------|-----------------|
 | `list_codes` | Get all codes | - |
 | `get_code` | Get code details | `code_id` |
+| `create_code` | Create a new code | `name`, `color` |
 | `list_segments_for_source` | Get segments for source | `source_id` |
+| `delete_segment` | Delete a coded segment | `segment_id` |
 | `batch_apply_codes` | Apply multiple codes | `operations[]` |
 
 ### AI Code Suggestions (QC-028.07, QC-028.08)
@@ -39,6 +41,7 @@ All suggestions require researcher approval.
 | `suggest_codes_for_range` | Suggest codes for text | `source_id`, `start_pos`, `end_pos` |
 | `auto_suggest_codes` | Auto-suggest for source | `source_id` |
 | `get_suggestion_batch_status` | Check batch status | `batch_id` |
+| `respond_to_code_suggestion` | Accept/reject batch suggestions | `suggestion_batch_id`, `response` |
 | `approve_batch_coding` | Approve entire batch | `batch_id` |
 
 ### Batch Operations
