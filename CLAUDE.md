@@ -178,9 +178,7 @@ Types: `SourceId`, `CodeId`, `SegmentId`, `CaseId`, `FolderId`. Never use `hash(
 
 ### API Docs
 
-- `docs/api/mcp-api.md` — compact table reference (agents get full schemas via `tools/list`)
-- `docs/user-manual/sources.md` — includes AI Agent Source Management section
-- `docs/DOC_COVERAGE.md` — tracks doc status per AC
+`docs/api/mcp-api.md` is a compact table reference — agents get full schemas via `tools/list` at runtime.
 
 ---
 
