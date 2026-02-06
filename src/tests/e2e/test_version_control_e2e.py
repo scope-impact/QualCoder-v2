@@ -256,19 +256,18 @@ class TestVersionHistoryScreen:
                 ),
             ]
             panel.set_snapshots(snapshots)
-            panel.resize(400, 500)
+            panel.resize(800, 500)
             panel.show()
             QApplication.processEvents()
 
-        with allure.step("Verify snapshot cards are displayed"):
-            # Check that the panel has content
-            scroll_layout = panel._scroll_layout
-            # Should have 3 cards + 1 stretch
-            assert scroll_layout.count() >= 3
+        with allure.step("Verify commit list items are displayed"):
+            # Check that the panel's commit list has items
+            commit_list = panel._commit_list
+            assert commit_list.count() == 3
 
         with allure.step("Capture screenshot for documentation"):
             # Save to user manual images
-            DocScreenshot.capture(panel, "version-history-screen", max_width=500)
+            DocScreenshot.capture(panel, "version-history-screen", max_width=800)
 
         attach_screenshot(panel, "VersionHistoryPanel - With Snapshots")
         panel.close()
@@ -388,75 +387,86 @@ class TestRestoreSnapshot:
     @allure.title("AC #5: Restore button appears on non-current snapshots")
     def test_restore_button_on_non_current_snapshot(self, qapp, colors):
         """E2E: Restore button appears only on non-current snapshots."""
-        from src.shared.presentation.organisms import SnapshotCard, SnapshotItem
+        from src.shared.presentation.organisms import SnapshotItem, VersionHistoryPanel
 
-        with allure.step("Create current snapshot card (should not have restore)"):
-            current = SnapshotItem(
-                git_sha="abc123",
-                message="Current state",
-                timestamp=datetime.now(UTC),
-                is_current=True,
-            )
-            current_card = SnapshotCard(
-                snapshot=current, previous_sha=None, colors=colors
-            )
-            current_card.show()
+        with allure.step("Create panel with snapshots"):
+            panel = VersionHistoryPanel(colors=colors)
+            snapshots = [
+                SnapshotItem(
+                    git_sha="abc123",
+                    message="Current state",
+                    timestamp=datetime.now(UTC),
+                    is_current=True,
+                ),
+                SnapshotItem(
+                    git_sha="def456",
+                    message="Previous state",
+                    timestamp=datetime.now(UTC),
+                    is_current=False,
+                ),
+            ]
+            panel.set_snapshots(snapshots)
+            panel.resize(800, 500)
+            panel.show()
             QApplication.processEvents()
 
-            restore_btn = find_button_by_text(current_card, "Restore")
-            assert restore_btn is None  # No restore on current
-
-        with allure.step("Create non-current snapshot card (should have restore)"):
-            old = SnapshotItem(
-                git_sha="def456",
-                message="Previous state",
-                timestamp=datetime.now(UTC),
-                is_current=False,
-            )
-            old_card = SnapshotCard(snapshot=old, previous_sha="abc123", colors=colors)
-            old_card.show()
+        with allure.step("Select current commit (restore hidden)"):
+            panel._commit_list.setCurrentRow(0)
             QApplication.processEvents()
+            # Restore button should be hidden for HEAD
+            assert not panel._restore_btn.isVisible()
 
-            restore_btn = find_button_by_text(old_card, "Restore")
-            assert restore_btn is not None
+        with allure.step("Select non-current commit (restore visible)"):
+            panel._commit_list.setCurrentRow(1)
+            QApplication.processEvents()
+            # Restore button should be visible for non-HEAD
+            assert panel._restore_btn.isVisible()
 
-        attach_screenshot(old_card, "SnapshotCard - With Restore Button")
-        current_card.close()
-        old_card.close()
+        attach_screenshot(panel, "VersionHistoryPanel - Restore Button")
+        panel.close()
 
     @allure.title("AC #5: Restore button emits signal with SHA")
     def test_restore_button_emits_signal(self, qapp, colors):
-        """E2E: Clicking restore button emits restore_clicked signal."""
+        """E2E: Clicking restore button emits restore_requested signal."""
         from PySide6.QtTest import QSignalSpy
 
-        from src.shared.presentation.organisms import SnapshotCard, SnapshotItem
+        from src.shared.presentation.organisms import SnapshotItem, VersionHistoryPanel
 
-        with allure.step("Create snapshot card with restore button"):
-            snapshot = SnapshotItem(
-                git_sha="def456789012",
-                message="Restore target",
-                timestamp=datetime.now(UTC),
-                is_current=False,
-            )
-            card = SnapshotCard(
-                snapshot=snapshot, previous_sha="abc123456789", colors=colors
-            )
+        with allure.step("Create panel with snapshots"):
+            panel = VersionHistoryPanel(colors=colors)
+            snapshots = [
+                SnapshotItem(
+                    git_sha="abc123456789",
+                    message="Current state",
+                    timestamp=datetime.now(UTC),
+                    is_current=True,
+                ),
+                SnapshotItem(
+                    git_sha="def456789012",
+                    message="Restore target",
+                    timestamp=datetime.now(UTC),
+                    is_current=False,
+                ),
+            ]
+            panel.set_snapshots(snapshots)
+            panel.resize(800, 500)
+            panel.show()
+            QApplication.processEvents()
 
         with allure.step("Set up signal spy"):
-            spy = QSignalSpy(card.restore_clicked)
+            spy = QSignalSpy(panel.restore_requested)
 
-        with allure.step("Click restore button"):
-            card.show()
+        with allure.step("Select non-current commit and click restore"):
+            panel._commit_list.setCurrentRow(1)
             QApplication.processEvents()
-            restore_btn = find_button_by_text(card, "Restore")
-            restore_btn.click()
+            panel._restore_btn.click()
             QApplication.processEvents()
 
         with allure.step("Verify signal emitted with correct SHA"):
             assert spy.count() == 1
             assert spy.at(0)[0] == "def456789012"
 
-        card.close()
+        panel.close()
 
 
 # =============================================================================

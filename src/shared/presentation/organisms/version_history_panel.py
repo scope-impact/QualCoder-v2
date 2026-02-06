@@ -1,10 +1,15 @@
 """
 Version History Panel
 
-Displays a timeline of VCS snapshots with restore functionality.
+Displays a split-panel VCS history with inline diff viewer.
+
+Layout:
+- Left panel: Compact commit list (clickable)
+- Right panel: Diff viewer for selected commit
 
 Implements QC-048.06 Version History UI:
 - AC #3: View history of all changes
+- AC #4: See what changed between two points in time (inline)
 - AC #5: Restore to previous state
 """
 
@@ -15,14 +20,23 @@ from datetime import datetime
 from typing import TYPE_CHECKING
 
 from PySide6.QtCore import Qt, Signal
+from PySide6.QtGui import (
+    QColor,
+    QFont,
+    QSyntaxHighlighter,
+    QTextCharFormat,
+    QTextDocument,
+)
 from PySide6.QtWidgets import (
     QFrame,
     QHBoxLayout,
     QLabel,
+    QListWidget,
+    QListWidgetItem,
+    QPlainTextEdit,
     QPushButton,
-    QScrollArea,
+    QSplitter,
     QVBoxLayout,
-    QWidget,
 )
 
 from design_system import (
@@ -49,177 +63,187 @@ class SnapshotItem:
     is_current: bool = False
 
 
-class SnapshotCard(QFrame):
-    """A single snapshot entry in the timeline."""
+class DiffHighlighter(QSyntaxHighlighter):
+    """Syntax highlighter for git diff output."""
 
-    restore_clicked = Signal(str)  # git_sha
-    view_diff_clicked = Signal(str, str)  # from_sha, to_sha
+    def __init__(self, colors: ColorPalette, document: QTextDocument):
+        super().__init__(document)
+        self._colors = colors
+
+        self._add_format = QTextCharFormat()
+        self._add_format.setBackground(QColor(colors.diff_add_bg))
+        self._add_format.setForeground(QColor(colors.diff_add_fg))
+
+        self._remove_format = QTextCharFormat()
+        self._remove_format.setBackground(QColor(colors.diff_remove_bg))
+        self._remove_format.setForeground(QColor(colors.diff_remove_fg))
+
+        self._header_format = QTextCharFormat()
+        self._header_format.setForeground(QColor(colors.diff_header_fg))
+        self._header_format.setFontWeight(QFont.Weight.Bold)
+
+        self._hunk_format = QTextCharFormat()
+        self._hunk_format.setForeground(QColor(colors.diff_hunk_fg))
+
+    def highlightBlock(self, text: str):
+        """Apply highlighting to a block of text."""
+        if text.startswith("+") and not text.startswith("+++"):
+            self.setFormat(0, len(text), self._add_format)
+        elif text.startswith("-") and not text.startswith("---"):
+            self.setFormat(0, len(text), self._remove_format)
+        elif text.startswith("@@"):
+            self.setFormat(0, len(text), self._hunk_format)
+        elif (
+            text.startswith("diff ")
+            or text.startswith("index ")
+            or text.startswith("---")
+            or text.startswith("+++")
+        ):
+            self.setFormat(0, len(text), self._header_format)
+
+
+class CommitListItem(QFrame):
+    """A compact commit entry for the left panel."""
 
     def __init__(
         self,
         snapshot: SnapshotItem,
-        previous_sha: str | None,
         colors: ColorPalette,
+        is_selected: bool = False,
         parent=None,
     ):
         super().__init__(parent)
         self._snapshot = snapshot
-        self._previous_sha = previous_sha
         self._colors = colors
+        self._is_selected = is_selected
         self._setup_ui()
 
     def _setup_ui(self):
-        self.setObjectName("snapshot_card")
-
-        # Card styling
-        bg = (
-            self._colors.surface
-            if not self._snapshot.is_current
-            else self._colors.surface_light
-        )
-        border = (
-            self._colors.primary if self._snapshot.is_current else self._colors.border
-        )
-        self.setStyleSheet(f"""
-            QFrame#snapshot_card {{
-                background: {bg};
-                border: 1px solid {border};
-                border-radius: {RADIUS.md}px;
-                padding: {SPACING.sm}px;
-            }}
-            QFrame#snapshot_card:hover {{
-                background: {self._colors.surface_light};
-            }}
-        """)
+        self.setObjectName("commit_item")
+        self._update_style()
 
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(SPACING.md, SPACING.sm, SPACING.md, SPACING.sm)
-        layout.setSpacing(SPACING.xs)
+        layout.setContentsMargins(SPACING.sm, SPACING.xs, SPACING.sm, SPACING.xs)
+        layout.setSpacing(2)
 
-        # Header row: timestamp + current badge
-        header = QHBoxLayout()
-        header.setSpacing(SPACING.sm)
+        # Top row: message + current badge
+        top_row = QHBoxLayout()
+        top_row.setSpacing(SPACING.xs)
 
-        # Timeline dot
-        dot = QLabel("●")
-        dot.setStyleSheet(f"""
-            color: {self._colors.primary if self._snapshot.is_current else self._colors.text_secondary};
-            font-size: 10px;
-        """)
-        header.addWidget(dot)
+        # Truncate message
+        msg = self._snapshot.message
+        if len(msg) > 50:
+            msg = msg[:47] + "..."
 
-        # Timestamp
-        time_str = self._snapshot.timestamp.strftime("%Y-%m-%d %H:%M:%S")
-        time_label = QLabel(time_str)
-        time_label.setStyleSheet(f"""
-            color: {self._colors.text_secondary};
+        self._msg_label = QLabel(msg)
+        self._msg_label.setStyleSheet(f"""
+            color: {self._colors.text_primary};
             font-size: {TYPOGRAPHY.text_sm}px;
+            font-weight: {"600" if self._snapshot.is_current else "400"};
         """)
-        header.addWidget(time_label)
+        top_row.addWidget(self._msg_label, 1)
 
-        header.addStretch()
-
-        # Current badge
         if self._snapshot.is_current:
-            badge = QLabel("Current")
+            badge = QLabel("HEAD")
             badge.setStyleSheet(f"""
                 background: {self._colors.primary};
                 color: {self._colors.primary_foreground};
-                padding: 2px 8px;
-                border-radius: {RADIUS.sm}px;
+                padding: 1px 6px;
+                border-radius: {RADIUS.xs}px;
                 font-size: {TYPOGRAPHY.text_xs}px;
                 font-weight: 600;
             """)
-            header.addWidget(badge)
+            top_row.addWidget(badge)
 
-        layout.addLayout(header)
+        layout.addLayout(top_row)
 
-        # Message
-        msg_label = QLabel(self._snapshot.message)
-        msg_label.setWordWrap(True)
-        msg_label.setStyleSheet(f"""
-            color: {self._colors.text_primary};
-            font-size: {TYPOGRAPHY.text_base}px;
-        """)
-        layout.addWidget(msg_label)
+        # Bottom row: SHA + timestamp
+        bottom_row = QHBoxLayout()
+        bottom_row.setSpacing(SPACING.sm)
 
-        # SHA (truncated)
-        sha_short = (
-            self._snapshot.git_sha[:8]
-            if len(self._snapshot.git_sha) > 8
-            else self._snapshot.git_sha
-        )
-        sha_label = QLabel(f"SHA: {sha_short}")
-        sha_label.setStyleSheet(f"""
+        sha_short = self._snapshot.git_sha[:7]
+        self._sha_label = QLabel(sha_short)
+        self._sha_label.setStyleSheet(f"""
             color: {self._colors.text_hint};
             font-size: {TYPOGRAPHY.text_xs}px;
             font-family: monospace;
         """)
-        layout.addWidget(sha_label)
+        bottom_row.addWidget(self._sha_label)
 
-        # Action buttons (only if not current)
-        if not self._snapshot.is_current:
-            actions = QHBoxLayout()
-            actions.setSpacing(SPACING.sm)
-            actions.addStretch()
+        time_str = self._snapshot.timestamp.strftime("%m/%d %H:%M")
+        self._time_label = QLabel(time_str)
+        self._time_label.setStyleSheet(f"""
+            color: {self._colors.text_hint};
+            font-size: {TYPOGRAPHY.text_xs}px;
+        """)
+        bottom_row.addWidget(self._time_label)
+        bottom_row.addStretch()
 
-            # View diff button (if previous exists)
-            if self._previous_sha:
-                diff_btn = QPushButton("View Changes")
-                diff_btn.setIcon(get_qicon("mdi6.file-compare"))
-                diff_btn.setCursor(Qt.CursorShape.PointingHandCursor)
-                diff_btn.setStyleSheet(f"""
-                    QPushButton {{
-                        background: transparent;
-                        color: {self._colors.text_secondary};
-                        border: 1px solid {self._colors.border};
-                        border-radius: {RADIUS.sm}px;
-                        padding: 4px 8px;
-                        font-size: {TYPOGRAPHY.text_sm}px;
-                    }}
-                    QPushButton:hover {{
-                        background: {self._colors.surface_light};
-                        color: {self._colors.text_primary};
-                    }}
-                """)
-                diff_btn.clicked.connect(
-                    lambda: self.view_diff_clicked.emit(
-                        self._previous_sha, self._snapshot.git_sha
-                    )
-                )
-                actions.addWidget(diff_btn)
+        layout.addLayout(bottom_row)
 
-            # Restore button
-            restore_btn = QPushButton("Restore")
-            restore_btn.setIcon(get_qicon("mdi6.restore"))
-            restore_btn.setCursor(Qt.CursorShape.PointingHandCursor)
-            restore_btn.setStyleSheet(f"""
-                QPushButton {{
-                    background: {self._colors.warning};
-                    color: {self._colors.warning_foreground};
-                    border: none;
+    def _update_style(self):
+        if self._is_selected:
+            self.setStyleSheet(f"""
+                QFrame#commit_item {{
+                    background: {self._colors.primary};
                     border-radius: {RADIUS.sm}px;
-                    padding: 4px 12px;
-                    font-size: {TYPOGRAPHY.text_sm}px;
-                    font-weight: 600;
-                }}
-                QPushButton:hover {{
-                    background: {self._colors.warning_light};
                 }}
             """)
-            restore_btn.clicked.connect(
-                lambda: self.restore_clicked.emit(self._snapshot.git_sha)
-            )
-            actions.addWidget(restore_btn)
+        else:
+            self.setStyleSheet(f"""
+                QFrame#commit_item {{
+                    background: transparent;
+                    border-radius: {RADIUS.sm}px;
+                }}
+                QFrame#commit_item:hover {{
+                    background: {self._colors.surface_light};
+                }}
+            """)
 
-            layout.addLayout(actions)
+    def set_selected(self, selected: bool):
+        self._is_selected = selected
+        self._update_style()
+        # Update label colors when selected
+        if selected:
+            self._msg_label.setStyleSheet(f"""
+                color: {self._colors.primary_foreground};
+                font-size: {TYPOGRAPHY.text_sm}px;
+                font-weight: 600;
+            """)
+            self._sha_label.setStyleSheet(f"""
+                color: {self._colors.primary_foreground};
+                font-size: {TYPOGRAPHY.text_xs}px;
+                font-family: monospace;
+                opacity: 0.8;
+            """)
+            self._time_label.setStyleSheet(f"""
+                color: {self._colors.primary_foreground};
+                font-size: {TYPOGRAPHY.text_xs}px;
+                opacity: 0.8;
+            """)
+        else:
+            self._msg_label.setStyleSheet(f"""
+                color: {self._colors.text_primary};
+                font-size: {TYPOGRAPHY.text_sm}px;
+                font-weight: {"600" if self._snapshot.is_current else "400"};
+            """)
+            self._sha_label.setStyleSheet(f"""
+                color: {self._colors.text_hint};
+                font-size: {TYPOGRAPHY.text_xs}px;
+                font-family: monospace;
+            """)
+            self._time_label.setStyleSheet(f"""
+                color: {self._colors.text_hint};
+                font-size: {TYPOGRAPHY.text_xs}px;
+            """)
 
 
 class VersionHistoryPanel(QFrame):
     """
-    Panel showing version control history timeline.
+    Split-panel version control history with inline diff viewer.
 
-    Displays snapshots in reverse chronological order with restore options.
+    Left panel: Commit list (clickable)
+    Right panel: Diff viewer for selected commit
 
     Signals:
         restore_requested(str): Emitted when user wants to restore to a snapshot
@@ -235,6 +259,8 @@ class VersionHistoryPanel(QFrame):
         super().__init__(parent)
         self._colors = colors or get_colors()
         self._snapshots: list[SnapshotItem] = []
+        self._selected_index: int = -1
+        self._diff_content: str = ""
         self._setup_ui()
 
     def _setup_ui(self):
@@ -248,31 +274,54 @@ class VersionHistoryPanel(QFrame):
         """)
 
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(SPACING.md, SPACING.md, SPACING.md, SPACING.md)
-        layout.setSpacing(SPACING.sm)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(0)
 
-        # Header
-        header = QHBoxLayout()
-        header.setSpacing(SPACING.sm)
+        # Main splitter
+        self._splitter = QSplitter(Qt.Orientation.Horizontal)
+        self._splitter.setHandleWidth(1)
+        self._splitter.setStyleSheet(f"""
+            QSplitter::handle {{
+                background: {self._colors.border};
+            }}
+        """)
 
-        title = QLabel("Version History")
-        title.setStyleSheet(f"""
+        # Left panel: Commit list
+        self._left_panel = QFrame()
+        self._left_panel.setObjectName("left_panel")
+        self._left_panel.setStyleSheet(f"""
+            QFrame#left_panel {{
+                background: {self._colors.surface};
+                border-top-left-radius: {RADIUS.lg}px;
+                border-bottom-left-radius: {RADIUS.lg}px;
+            }}
+        """)
+        left_layout = QVBoxLayout(self._left_panel)
+        left_layout.setContentsMargins(SPACING.sm, SPACING.sm, SPACING.sm, SPACING.sm)
+        left_layout.setSpacing(SPACING.xs)
+
+        # Left header
+        left_header = QHBoxLayout()
+        left_header.setSpacing(SPACING.xs)
+
+        commits_title = QLabel("Commits")
+        commits_title.setStyleSheet(f"""
             color: {self._colors.text_primary};
-            font-size: {TYPOGRAPHY.text_lg}px;
+            font-size: {TYPOGRAPHY.text_sm}px;
             font-weight: 600;
         """)
-        header.addWidget(title)
-        header.addStretch()
+        left_header.addWidget(commits_title)
+        left_header.addStretch()
 
         refresh_btn = QPushButton()
         refresh_btn.setIcon(get_qicon("mdi6.refresh"))
-        refresh_btn.setToolTip("Refresh history")
+        refresh_btn.setToolTip("Refresh")
+        refresh_btn.setFixedSize(24, 24)
         refresh_btn.setCursor(Qt.CursorShape.PointingHandCursor)
         refresh_btn.setStyleSheet(f"""
             QPushButton {{
                 background: transparent;
                 border: none;
-                padding: 4px;
             }}
             QPushButton:hover {{
                 background: {self._colors.surface_light};
@@ -280,77 +329,289 @@ class VersionHistoryPanel(QFrame):
             }}
         """)
         refresh_btn.clicked.connect(self.refresh_requested.emit)
-        header.addWidget(refresh_btn)
+        left_header.addWidget(refresh_btn)
 
-        layout.addLayout(header)
+        left_layout.addLayout(left_header)
 
-        # Scroll area for snapshots
-        scroll = QScrollArea()
-        scroll.setWidgetResizable(True)
-        scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
-        scroll.setStyleSheet("""
-            QScrollArea {
+        # Commit list
+        self._commit_list = QListWidget()
+        self._commit_list.setStyleSheet("""
+            QListWidget {
                 background: transparent;
                 border: none;
+                outline: none;
             }
-            QScrollArea > QWidget > QWidget {
+            QListWidget::item {
+                padding: 0;
+                margin: 2px 0;
+            }
+            QListWidget::item:selected {
                 background: transparent;
             }
         """)
+        self._commit_list.currentRowChanged.connect(self._on_commit_selected)
+        left_layout.addWidget(self._commit_list, 1)
 
-        self._scroll_content = QWidget()
-        self._scroll_layout = QVBoxLayout(self._scroll_content)
-        self._scroll_layout.setContentsMargins(0, 0, 0, 0)
-        self._scroll_layout.setSpacing(SPACING.sm)
-        self._scroll_layout.addStretch()
-
-        scroll.setWidget(self._scroll_content)
-        layout.addWidget(scroll, 1)
-
-        # Empty state
-        self._empty_label = QLabel(
-            "No version history yet.\nMake changes to start tracking."
-        )
+        # Empty state for left panel
+        self._empty_label = QLabel("No commits yet")
         self._empty_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self._empty_label.setStyleSheet(f"""
             color: {self._colors.text_hint};
             font-size: {TYPOGRAPHY.text_sm}px;
-            padding: {SPACING.xl}px;
+            padding: {SPACING.lg}px;
         """)
-        self._scroll_layout.insertWidget(0, self._empty_label)
+        self._empty_label.hide()
+        left_layout.addWidget(self._empty_label)
+
+        self._splitter.addWidget(self._left_panel)
+
+        # Right panel: Diff viewer
+        self._right_panel = QFrame()
+        self._right_panel.setObjectName("right_panel")
+        self._right_panel.setStyleSheet(f"""
+            QFrame#right_panel {{
+                background: {self._colors.background};
+                border-top-right-radius: {RADIUS.lg}px;
+                border-bottom-right-radius: {RADIUS.lg}px;
+            }}
+        """)
+        right_layout = QVBoxLayout(self._right_panel)
+        right_layout.setContentsMargins(SPACING.md, SPACING.sm, SPACING.md, SPACING.md)
+        right_layout.setSpacing(SPACING.sm)
+
+        # Right header with commit info
+        self._diff_header = QFrame()
+        diff_header_layout = QHBoxLayout(self._diff_header)
+        diff_header_layout.setContentsMargins(0, 0, 0, 0)
+        diff_header_layout.setSpacing(SPACING.md)
+
+        self._diff_title = QLabel("Select a commit to view changes")
+        self._diff_title.setStyleSheet(f"""
+            color: {self._colors.text_secondary};
+            font-size: {TYPOGRAPHY.text_sm}px;
+        """)
+        diff_header_layout.addWidget(self._diff_title)
+        diff_header_layout.addStretch()
+
+        # Restore button (hidden until commit selected)
+        self._restore_btn = QPushButton("Restore")
+        self._restore_btn.setIcon(get_qicon("mdi6.restore"))
+        self._restore_btn.setCursor(Qt.CursorShape.PointingHandCursor)
+        self._restore_btn.setStyleSheet(f"""
+            QPushButton {{
+                background: {self._colors.warning};
+                color: {self._colors.warning_foreground};
+                border: none;
+                border-radius: {RADIUS.sm}px;
+                padding: 4px 12px;
+                font-size: {TYPOGRAPHY.text_sm}px;
+                font-weight: 600;
+            }}
+            QPushButton:hover {{
+                background: {self._colors.warning_light};
+            }}
+        """)
+        self._restore_btn.clicked.connect(self._on_restore_clicked)
+        self._restore_btn.hide()
+        diff_header_layout.addWidget(self._restore_btn)
+
+        right_layout.addWidget(self._diff_header)
+
+        # Stats bar
+        self._stats_bar = QFrame()
+        stats_layout = QHBoxLayout(self._stats_bar)
+        stats_layout.setContentsMargins(0, 0, 0, 0)
+        stats_layout.setSpacing(SPACING.md)
+
+        self._additions_label = QLabel("+0")
+        self._additions_label.setStyleSheet(f"""
+            color: {self._colors.diff_add_fg};
+            font-size: {TYPOGRAPHY.text_xs}px;
+            font-weight: 600;
+        """)
+        stats_layout.addWidget(self._additions_label)
+
+        self._deletions_label = QLabel("-0")
+        self._deletions_label.setStyleSheet(f"""
+            color: {self._colors.diff_remove_fg};
+            font-size: {TYPOGRAPHY.text_xs}px;
+            font-weight: 600;
+        """)
+        stats_layout.addWidget(self._deletions_label)
+
+        self._files_label = QLabel("0 files")
+        self._files_label.setStyleSheet(f"""
+            color: {self._colors.text_hint};
+            font-size: {TYPOGRAPHY.text_xs}px;
+        """)
+        stats_layout.addWidget(self._files_label)
+        stats_layout.addStretch()
+
+        self._stats_bar.hide()
+        right_layout.addWidget(self._stats_bar)
+
+        # Diff viewer
+        self._diff_view = QPlainTextEdit()
+        self._diff_view.setReadOnly(True)
+        self._diff_view.setFont(QFont("Consolas, Monaco, monospace", 10))
+        self._diff_view.setStyleSheet(f"""
+            QPlainTextEdit {{
+                background: {self._colors.surface};
+                color: {self._colors.text_primary};
+                border: 1px solid {self._colors.border};
+                border-radius: {RADIUS.md}px;
+                padding: {SPACING.xs}px;
+            }}
+        """)
+        self._diff_view.setPlaceholderText(
+            "Select a commit from the list to view its changes..."
+        )
+        self._highlighter = DiffHighlighter(self._colors, self._diff_view.document())
+        right_layout.addWidget(self._diff_view, 1)
+
+        self._splitter.addWidget(self._right_panel)
+
+        # Set initial sizes (30% left, 70% right)
+        self._splitter.setSizes([280, 520])
+
+        layout.addWidget(self._splitter)
 
     def set_snapshots(self, snapshots: list[SnapshotItem]):
         """Update the displayed snapshots."""
         self._snapshots = snapshots
+        self._commit_list.clear()
+        self._selected_index = -1
 
-        # Clear existing cards
-        while self._scroll_layout.count() > 1:  # Keep the stretch
-            item = self._scroll_layout.takeAt(0)
-            if item.widget():
-                item.widget().deleteLater()
-
-        # Show/hide empty state
         self._empty_label.setVisible(len(snapshots) == 0)
+        self._commit_list.setVisible(len(snapshots) > 0)
 
         if not snapshots:
-            self._scroll_layout.insertWidget(0, self._empty_label)
+            self._diff_view.setPlainText("")
+            self._diff_title.setText("No commits yet")
+            self._restore_btn.hide()
+            self._stats_bar.hide()
             return
 
-        # Add snapshot cards (reverse order - newest first)
-        for i, snapshot in enumerate(snapshots):
-            previous_sha = snapshots[i + 1].git_sha if i + 1 < len(snapshots) else None
-            card = SnapshotCard(
-                snapshot=snapshot,
-                previous_sha=previous_sha,
-                colors=self._colors,
+        # Add commit items
+        for snapshot in snapshots:
+            widget = CommitListItem(snapshot, self._colors)
+            item = QListWidgetItem()
+            item.setSizeHint(widget.sizeHint())
+            item.setData(Qt.ItemDataRole.UserRole, snapshot)
+            self._commit_list.addItem(item)
+            self._commit_list.setItemWidget(item, widget)
+
+        # Select first (most recent) commit
+        if snapshots:
+            self._commit_list.setCurrentRow(0)
+
+    def _on_commit_selected(self, index: int):
+        """Handle commit selection."""
+        if index < 0 or index >= len(self._snapshots):
+            return
+
+        self._selected_index = index
+        snapshot = self._snapshots[index]
+
+        # Update selection styling
+        for i in range(self._commit_list.count()):
+            item = self._commit_list.item(i)
+            widget = self._commit_list.itemWidget(item)
+            if widget and isinstance(widget, CommitListItem):
+                widget.set_selected(i == index)
+
+        # Get previous SHA for diff
+        if index + 1 < len(self._snapshots):
+            prev_sha = self._snapshots[index + 1].git_sha
+            from_ref = prev_sha
+            to_ref = snapshot.git_sha
+
+            # Update header
+            self._diff_title.setText(
+                f"{prev_sha[:7]} → {snapshot.git_sha[:7]}: {snapshot.message}"
             )
-            card.restore_clicked.connect(self.restore_requested.emit)
-            card.view_diff_clicked.connect(self.view_diff_requested.emit)
-            self._scroll_layout.insertWidget(i, card)
+
+            # Show restore button (unless it's the current/HEAD commit)
+            self._restore_btn.setVisible(not snapshot.is_current)
+
+            # Request diff load
+            self.view_diff_requested.emit(from_ref, to_ref)
+        else:
+            # First commit - no previous to compare
+            self._diff_title.setText(f"Initial commit: {snapshot.message}")
+            self._diff_view.setPlainText(
+                "This is the initial commit. No previous state to compare."
+            )
+            self._restore_btn.setVisible(not snapshot.is_current)
+            self._stats_bar.hide()
+
+    def set_diff_content(self, diff_content: str):
+        """Set the diff content to display."""
+        self._diff_content = diff_content
+
+        if diff_content.strip():
+            self._diff_view.setPlainText(diff_content)
+            stats = self._calculate_stats(diff_content)
+            self._additions_label.setText(f"+{stats['additions']}")
+            self._deletions_label.setText(f"-{stats['deletions']}")
+            self._files_label.setText(f"{stats['files']} files")
+            self._stats_bar.show()
+        else:
+            self._diff_view.setPlainText("No changes in this commit.")
+            self._stats_bar.hide()
+
+    def _calculate_stats(self, diff_content: str) -> dict:
+        """Calculate diff statistics."""
+        additions = 0
+        deletions = 0
+        files = set()
+
+        for line in diff_content.split("\n"):
+            if line.startswith("+") and not line.startswith("+++"):
+                additions += 1
+            elif line.startswith("-") and not line.startswith("---"):
+                deletions += 1
+            elif line.startswith("diff --git"):
+                parts = line.split(" ")
+                if len(parts) >= 4:
+                    files.add(parts[2])
+
+        return {
+            "additions": additions,
+            "deletions": deletions,
+            "files": len(files),
+        }
+
+    def _on_restore_clicked(self):
+        """Handle restore button click."""
+        if self._selected_index >= 0:
+            snapshot = self._snapshots[self._selected_index]
+            self.restore_requested.emit(snapshot.git_sha)
 
     def clear(self):
         """Clear all snapshots."""
         self.set_snapshots([])
 
 
-__all__ = ["VersionHistoryPanel", "SnapshotItem", "SnapshotCard"]
+# Keep SnapshotCard for backwards compatibility (used in tests)
+class SnapshotCard(QFrame):
+    """A single snapshot entry (legacy, for test compatibility)."""
+
+    restore_clicked = Signal(str)
+    view_diff_clicked = Signal(str, str)
+
+    def __init__(
+        self,
+        snapshot: SnapshotItem,
+        previous_sha: str | None,
+        colors: ColorPalette,
+        parent=None,
+    ):
+        super().__init__(parent)
+        self._snapshot = snapshot
+        self._previous_sha = previous_sha
+        self._colors = colors
+        self.setObjectName("snapshot_card")
+
+
+__all__ = ["VersionHistoryPanel", "SnapshotItem", "SnapshotCard", "CommitListItem"]

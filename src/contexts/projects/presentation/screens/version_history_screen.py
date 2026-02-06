@@ -33,7 +33,6 @@ from design_system import (
     get_pixmap,
     get_qicon,
 )
-from src.contexts.projects.presentation.dialogs import DiffViewerDialog
 from src.shared.presentation.organisms import SnapshotItem, VersionHistoryPanel
 
 if TYPE_CHECKING:
@@ -294,16 +293,9 @@ class VersionHistoryScreen(QWidget):
         if self._viewmodel:
             self._viewmodel.load_diff(from_ref, to_ref)
 
-    def _on_diff_loaded(self, from_ref: str, to_ref: str, diff_content: str):
-        """Show diff dialog."""
-        dialog = DiffViewerDialog(
-            from_ref=from_ref,
-            to_ref=to_ref,
-            diff_content=diff_content,
-            colors=self._colors,
-            parent=self,
-        )
-        dialog.exec()
+    def _on_diff_loaded(self, _from_ref: str, _to_ref: str, diff_content: str):
+        """Update inline diff viewer."""
+        self._history_panel.set_diff_content(diff_content)
 
     def _on_refresh_requested(self):
         """Handle refresh request."""
