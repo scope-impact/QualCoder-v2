@@ -1,7 +1,9 @@
 """
 Core Tool Handlers
 
-Handlers for: batch_apply_codes, list_codes, get_code, list_segments_for_source.
+Handlers for: batch_apply_codes, list_codes, get_code, list_segments_for_source, delete_segment.
+
+All mutation handlers delegate to command handlers to ensure proper event publishing.
 """
 
 from __future__ import annotations
@@ -10,14 +12,49 @@ from typing import Any
 
 from src.contexts.coding.core.commandHandlers import (
     batch_apply_codes,
+    create_code,
     get_all_codes,
     get_code,
     get_segments_for_source,
+    remove_segment,
 )
-from src.contexts.coding.core.commands import ApplyCodeCommand, BatchApplyCodesCommand
+from src.contexts.coding.core.commands import (
+    ApplyCodeCommand,
+    BatchApplyCodesCommand,
+    CreateCodeCommand,
+    RemoveCodeCommand,
+)
+from src.contexts.coding.core.entities import Code, TextSegment
 from src.shared.common.operation_result import OperationResult
 
 from .base import HandlerContext, missing_param_error, no_context_error
+
+
+def _serialize_code(code: Code) -> dict[str, Any]:
+    """Serialize Code entity to JSON-compatible dict."""
+    return {
+        "id": code.id.value,
+        "name": code.name,
+        "color": code.color.to_hex(),
+        "memo": code.memo,
+        "category_id": code.category_id.value if code.category_id else None,
+        "owner": code.owner,
+        "created_at": code.created_at.isoformat() if code.created_at else None,
+    }
+
+
+def _serialize_segment(segment: TextSegment) -> dict[str, Any]:
+    """Serialize TextSegment entity to JSON-compatible dict."""
+    return {
+        "id": segment.id.value,
+        "source_id": segment.source_id.value,
+        "code_id": segment.code_id.value,
+        "start_position": segment.position.start,
+        "end_position": segment.position.end,
+        "selected_text": segment.selected_text,
+        "memo": segment.memo,
+        "importance": segment.importance,
+    }
 
 
 def handle_batch_apply_codes(
@@ -119,7 +156,8 @@ def handle_list_codes(
         return no_context_error("CODES_NOT_LISTED")
 
     codes = get_all_codes(ctx.code_repo)
-    return OperationResult.ok(data=codes).to_dict()
+    serialized = [_serialize_code(c) for c in codes]
+    return OperationResult.ok(data=serialized).to_dict()
 
 
 def handle_get_code(
@@ -144,7 +182,7 @@ def handle_get_code(
             error=f"Code {code_id} not found",
             error_code="CODE_NOT_FOUND",
         ).to_dict()
-    return OperationResult.ok(data=code).to_dict()
+    return OperationResult.ok(data=_serialize_code(code)).to_dict()
 
 
 def handle_list_segments(
@@ -164,7 +202,98 @@ def handle_list_segments(
         return no_context_error("SEGMENTS_NOT_LISTED")
 
     segments = get_segments_for_source(ctx.segment_repo, int(source_id))
-    return OperationResult.ok(data=segments).to_dict()
+    serialized = [_serialize_segment(s) for s in segments]
+    return OperationResult.ok(data=serialized).to_dict()
+
+
+def handle_delete_segment(
+    ctx: HandlerContext,
+    arguments: dict[str, Any],
+) -> dict[str, Any]:
+    """
+    Execute delete_segment tool.
+
+    Removes a coded segment by ID.
+    Delegates to remove_segment command handler for proper event publishing.
+    """
+    segment_id = arguments.get("segment_id")
+    if segment_id is None:
+        return missing_param_error("DELETE_SEGMENT", "segment_id")
+
+    if ctx.segment_repo is None or ctx.code_repo is None:
+        return no_context_error("DELETE_SEGMENT")
+
+    # Delegate to command handler - handles validation, deletion, and event publishing
+    command = RemoveCodeCommand(segment_id=int(segment_id))
+    result = remove_segment(
+        command=command,
+        code_repo=ctx.code_repo,
+        category_repo=ctx.category_repo,
+        segment_repo=ctx.segment_repo,
+        event_bus=ctx.event_bus,
+    )
+
+    if result.is_success:
+        return OperationResult.ok(
+            data={"deleted": True, "segment_id": segment_id}
+        ).to_dict()
+
+    return result.to_dict()
+
+
+def handle_create_code(
+    ctx: HandlerContext,
+    arguments: dict[str, Any],
+) -> dict[str, Any]:
+    """
+    Execute create_code tool.
+
+    Creates a new code in the codebook directly.
+    Delegates to create_code command handler for proper event publishing.
+    """
+    name = arguments.get("name")
+    if name is None:
+        return missing_param_error("CREATE_CODE", "name")
+
+    color = arguments.get("color")
+    if color is None:
+        return missing_param_error("CREATE_CODE", "color")
+
+    if ctx.code_repo is None:
+        return no_context_error("CREATE_CODE")
+
+    # Build command with optional parameters
+    command = CreateCodeCommand(
+        name=str(name),
+        color=str(color),
+        memo=arguments.get("memo"),
+        category_id=int(arguments["category_id"])
+        if arguments.get("category_id")
+        else None,
+    )
+
+    # Delegate to command handler
+    result = create_code(
+        command=command,
+        code_repo=ctx.code_repo,
+        category_repo=ctx.category_repo,
+        segment_repo=ctx.segment_repo,
+        event_bus=ctx.event_bus,
+    )
+
+    if result.is_success and result.data:
+        code = result.data
+        return OperationResult.ok(
+            data={
+                "code_id": code.id.value,
+                "name": code.name,
+                "color": code.color.to_hex(),
+                "memo": code.memo,
+                "category_id": code.category_id.value if code.category_id else None,
+            }
+        ).to_dict()
+
+    return result.to_dict()
 
 
 # Handler registry for core tools
@@ -173,4 +302,6 @@ CORE_HANDLERS = {
     "list_codes": handle_list_codes,
     "get_code": handle_get_code,
     "list_segments_for_source": handle_list_segments,
+    "delete_segment": handle_delete_segment,
+    "create_code": handle_create_code,
 }

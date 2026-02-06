@@ -103,10 +103,67 @@ list_segments_tool = ToolDefinition(
 )
 
 
+# Tool: delete_segment
+delete_segment_tool = ToolDefinition(
+    name="delete_segment",
+    description=(
+        "Delete a coded segment by ID. Removes the code application "
+        "from the specified segment."
+    ),
+    parameters=(
+        ToolParameter(
+            name="segment_id",
+            type="integer",
+            description="ID of the segment to delete.",
+            required=True,
+        ),
+    ),
+)
+
+
+# Tool: create_code
+create_code_tool = ToolDefinition(
+    name="create_code",
+    description=(
+        "Create a new code in the codebook directly. "
+        "Use this when you want to immediately create a code without "
+        "requiring researcher approval (for approved workflows)."
+    ),
+    parameters=(
+        ToolParameter(
+            name="name",
+            type="string",
+            description="Name of the new code.",
+            required=True,
+        ),
+        ToolParameter(
+            name="color",
+            type="string",
+            description="Hex color for the code (e.g., '#FF5722').",
+            required=True,
+        ),
+        ToolParameter(
+            name="memo",
+            type="string",
+            description="Optional description/memo for the code.",
+            required=False,
+        ),
+        ToolParameter(
+            name="category_id",
+            type="integer",
+            description="Optional category ID to place the code in.",
+            required=False,
+        ),
+    ),
+)
+
+
 # Export all core tools
 CORE_TOOLS = {
     "batch_apply_codes": batch_apply_codes_tool,
     "list_codes": list_codes_tool,
     "get_code": get_code_tool,
     "list_segments_for_source": list_segments_tool,
+    "delete_segment": delete_segment_tool,
+    "create_code": create_code_tool,
 }

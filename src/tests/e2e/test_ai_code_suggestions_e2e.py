@@ -15,6 +15,7 @@ from typing import TYPE_CHECKING
 
 import allure
 import pytest
+
 # Note: CodingTools.execute() returns dict, not Result
 
 if TYPE_CHECKING:
@@ -58,12 +59,42 @@ def project_with_codes(app_context: AppContext, tmp_path: Path) -> Path:
 
     # Add sample codes
     codes = [
-        Code(id=CodeId(1), name="Theme", color=Color.from_hex("#FF5722"), memo="Main themes"),
-        Code(id=CodeId(2), name="Themes", color=Color.from_hex("#FF9800"), memo="Alternative themes"),
-        Code(id=CodeId(3), name="Positive Emotion", color=Color.from_hex("#4CAF50"), memo="Happy feelings"),
-        Code(id=CodeId(4), name="Positive Feeling", color=Color.from_hex("#8BC34A"), memo="Good feelings"),
-        Code(id=CodeId(5), name="Challenge", color=Color.from_hex("#F44336"), memo="Difficulties"),
-        Code(id=CodeId(6), name="Learning", color=Color.from_hex("#2196F3"), memo="Education related"),
+        Code(
+            id=CodeId(1),
+            name="Theme",
+            color=Color.from_hex("#FF5722"),
+            memo="Main themes",
+        ),
+        Code(
+            id=CodeId(2),
+            name="Themes",
+            color=Color.from_hex("#FF9800"),
+            memo="Alternative themes",
+        ),
+        Code(
+            id=CodeId(3),
+            name="Positive Emotion",
+            color=Color.from_hex("#4CAF50"),
+            memo="Happy feelings",
+        ),
+        Code(
+            id=CodeId(4),
+            name="Positive Feeling",
+            color=Color.from_hex("#8BC34A"),
+            memo="Good feelings",
+        ),
+        Code(
+            id=CodeId(5),
+            name="Challenge",
+            color=Color.from_hex("#F44336"),
+            memo="Difficulties",
+        ),
+        Code(
+            id=CodeId(6),
+            name="Learning",
+            color=Color.from_hex("#2196F3"),
+            memo="Education related",
+        ),
     ]
     for code in codes:
         app_context.coding_context.code_repo.save(code)
@@ -262,11 +293,21 @@ class TestAgentSuggestNewCode:
             tools = CodingTools(ctx=app_context)
             tools.execute(
                 "suggest_new_code",
-                {"name": "Code A", "color": "#FF0000", "rationale": "Test", "confidence": 70},
+                {
+                    "name": "Code A",
+                    "color": "#FF0000",
+                    "rationale": "Test",
+                    "confidence": 70,
+                },
             )
             tools.execute(
                 "suggest_new_code",
-                {"name": "Code B", "color": "#00FF00", "rationale": "Test", "confidence": 80},
+                {
+                    "name": "Code B",
+                    "color": "#00FF00",
+                    "rationale": "Test",
+                    "confidence": 80,
+                },
             )
 
         with allure.step("List pending suggestions"):
@@ -346,9 +387,7 @@ class TestAgentDetectDuplicateCodes:
         with allure.step("Verify Theme/Themes pair detected"):
             pairs = [(c["code_a_name"], c["code_b_name"]) for c in data["candidates"]]
             # Either order is valid
-            theme_pair_found = any(
-                ("Theme" in a and "Theme" in b) for a, b in pairs
-            )
+            theme_pair_found = any(("Theme" in a and "Theme" in b) for a, b in pairs)
             assert theme_pair_found
 
     @allure.title("AC #2: Agent can suggest merge candidates")
@@ -601,9 +640,7 @@ class TestAIToolsSchema:
             schemas = tools.get_tool_schemas()
 
         with allure.step("Find suggest_new_code schema"):
-            schema = next(
-                (s for s in schemas if s["name"] == "suggest_new_code"), None
-            )
+            schema = next((s for s in schemas if s["name"] == "suggest_new_code"), None)
             assert schema is not None
 
         with allure.step("Verify required parameters"):
@@ -637,3 +674,341 @@ class TestAIToolsSchema:
             props = schema["inputSchema"]["properties"]
             assert "threshold" in props
             assert props["threshold"]["type"] in ("number", "integer")
+
+
+# =============================================================================
+# QC-028.07: Agent List All Codes
+# =============================================================================
+
+
+@allure.story("QC-028.07 Agent List All Codes")
+@allure.severity(allure.severity_level.CRITICAL)
+class TestAgentListCodes:
+    """
+    QC-028.07: Agent List All Codes
+    As an AI Agent, I want to list all codes so I can understand the coding scheme.
+    """
+
+    @allure.title("AC #1: Agent can retrieve all codes")
+    def test_ac1_list_all_codes(
+        self, app_context: AppContext, project_with_codes: Path
+    ):
+        """Agent can list all codes in the codebook."""
+        from src.contexts.coding.interface.mcp_tools import CodingTools
+
+        with allure.step("Initialize CodingTools"):
+            tools = CodingTools(ctx=app_context)
+
+        with allure.step("List all codes"):
+            result = tools.execute("list_codes", {})
+
+        with allure.step("Verify codes returned"):
+            assert result.get("success") is True
+            data = result["data"]
+            assert isinstance(data, list)
+            assert len(data) == 6  # We created 6 codes in fixture
+
+    @allure.title("AC #2: Each code includes required fields")
+    def test_ac2_codes_include_required_fields(
+        self, app_context: AppContext, project_with_codes: Path
+    ):
+        """Each code returned has id, name, and color fields."""
+        from src.contexts.coding.interface.mcp_tools import CodingTools
+
+        with allure.step("List codes"):
+            tools = CodingTools(ctx=app_context)
+            result = tools.execute("list_codes", {})
+
+        with allure.step("Verify required fields for each code"):
+            assert result.get("success") is True
+            for code in result["data"]:
+                assert "id" in code
+                assert "name" in code
+                assert "color" in code
+                assert isinstance(code["id"], int)
+                assert isinstance(code["name"], str)
+                assert isinstance(code["color"], str)
+                assert code["color"].startswith("#")
+
+    @allure.title("AC #3: Each code includes memo field")
+    def test_ac3_codes_include_memo(
+        self, app_context: AppContext, project_with_codes: Path
+    ):
+        """Each code returned includes the memo field."""
+        from src.contexts.coding.interface.mcp_tools import CodingTools
+
+        with allure.step("List codes"):
+            tools = CodingTools(ctx=app_context)
+            result = tools.execute("list_codes", {})
+
+        with allure.step("Verify memo field exists"):
+            assert result.get("success") is True
+            for code in result["data"]:
+                assert "memo" in code
+                # Memo can be None or string
+                assert code["memo"] is None or isinstance(code["memo"], str)
+
+    @allure.title("AC #4: Empty project returns empty list")
+    def test_ac4_empty_when_no_codes(self, app_context: AppContext, tmp_path: Path):
+        """Listing codes on empty project returns empty list."""
+        from src.contexts.coding.interface.mcp_tools import CodingTools
+
+        with allure.step("Create empty project"):
+            project_path = tmp_path / "empty_codes_test.qda"
+            result = app_context.create_project(
+                name="Empty Codes Test", path=str(project_path)
+            )
+            assert result.is_success
+            app_context.open_project(str(project_path))
+
+        with allure.step("List codes"):
+            tools = CodingTools(ctx=app_context)
+            result = tools.execute("list_codes", {})
+
+        with allure.step("Verify empty list returned"):
+            assert result.get("success") is True
+            assert result["data"] == []
+
+    @allure.title("list_codes tool has correct schema")
+    @allure.severity(allure.severity_level.NORMAL)
+    def test_list_codes_schema(self, app_context: AppContext):
+        """Verify list_codes tool schema is correctly defined."""
+        from src.contexts.coding.interface.mcp_tools import CodingTools
+
+        with allure.step("Get tool schemas"):
+            tools = CodingTools(ctx=app_context)
+            schemas = tools.get_tool_schemas()
+
+        with allure.step("Find list_codes schema"):
+            schema = next((s for s in schemas if s["name"] == "list_codes"), None)
+            assert schema is not None
+
+        with allure.step("Verify no required parameters"):
+            # list_codes should have no required params
+            required = schema["inputSchema"].get("required", [])
+            assert len(required) == 0
+
+
+# =============================================================================
+# QC-028.10: Agent Create Code
+# =============================================================================
+
+
+@allure.story("QC-028.10 Agent Create Code")
+@allure.severity(allure.severity_level.CRITICAL)
+class TestAgentCreateCode:
+    """
+    QC-028.10: Agent Create Code
+    As an AI Agent, I want to create codes directly so I can build the coding scheme.
+    """
+
+    @allure.title("AC #1: Agent can create code with name and color")
+    def test_ac1_create_code_basic(self, app_context: AppContext, tmp_path: Path):
+        """Agent can create a code with required name and color."""
+        from src.contexts.coding.interface.mcp_tools import CodingTools
+
+        with allure.step("Create project"):
+            project_path = tmp_path / "create_code_test.qda"
+            result = app_context.create_project(
+                name="Create Code Test", path=str(project_path)
+            )
+            assert result.is_success
+            app_context.open_project(str(project_path))
+
+        with allure.step("Initialize CodingTools"):
+            tools = CodingTools(ctx=app_context)
+
+        with allure.step("Create code"):
+            result = tools.execute(
+                "create_code",
+                {"name": "New Theme", "color": "#FF5722"},
+            )
+
+        with allure.step("Verify code created"):
+            assert result.get("success") is True
+            data = result["data"]
+            assert data["name"] == "New Theme"
+            assert (
+                data["color"].lower() == "#ff5722"
+            )  # Color may be normalized to lowercase
+            assert "code_id" in data
+            assert isinstance(data["code_id"], int)
+
+    @allure.title("AC #2: Created code persisted to repository")
+    def test_ac2_code_persisted(self, app_context: AppContext, tmp_path: Path):
+        """Created code is saved to the repository."""
+        from src.contexts.coding.interface.mcp_tools import CodingTools
+
+        with allure.step("Create project"):
+            project_path = tmp_path / "persist_code_test.qda"
+            result = app_context.create_project(
+                name="Persist Code Test", path=str(project_path)
+            )
+            assert result.is_success
+            app_context.open_project(str(project_path))
+
+        with allure.step("Create code"):
+            tools = CodingTools(ctx=app_context)
+            result = tools.execute(
+                "create_code",
+                {"name": "Persisted Code", "color": "#4CAF50"},
+            )
+            assert result.get("success") is True
+
+        with allure.step("Verify code exists in repository"):
+            codes = app_context.coding_context.code_repo.get_all()
+            code_names = [c.name for c in codes]
+            assert "Persisted Code" in code_names
+
+    @allure.title("AC #3: Agent can create code with optional memo")
+    def test_ac3_code_with_memo(self, app_context: AppContext, tmp_path: Path):
+        """Agent can create a code with an optional memo/description."""
+        from src.contexts.coding.interface.mcp_tools import CodingTools
+
+        with allure.step("Create project"):
+            project_path = tmp_path / "memo_code_test.qda"
+            result = app_context.create_project(
+                name="Memo Code Test", path=str(project_path)
+            )
+            assert result.is_success
+            app_context.open_project(str(project_path))
+
+        with allure.step("Create code with memo"):
+            tools = CodingTools(ctx=app_context)
+            result = tools.execute(
+                "create_code",
+                {
+                    "name": "Documented Code",
+                    "color": "#2196F3",
+                    "memo": "This code captures positive user experiences.",
+                },
+            )
+
+        with allure.step("Verify memo saved"):
+            assert result.get("success") is True
+            data = result["data"]
+            assert data["memo"] == "This code captures positive user experiences."
+
+    @allure.title("AC #4: Agent can create code in a category")
+    def test_ac4_code_with_category(
+        self, app_context: AppContext, project_with_codes: Path
+    ):
+        """Agent can create a code in a specific category."""
+        from src.contexts.coding.interface.mcp_tools import CodingTools
+
+        with allure.step("Create code in category"):
+            tools = CodingTools(ctx=app_context)
+            result = tools.execute(
+                "create_code",
+                {
+                    "name": "Categorized Code",
+                    "color": "#9C27B0",
+                    "category_id": 1,  # Emotions category from fixture
+                },
+            )
+
+        with allure.step("Verify category assignment"):
+            assert result.get("success") is True
+            data = result["data"]
+            assert data["category_id"] == 1
+
+    @allure.title("AC #5: Invalid color returns error")
+    def test_ac5_invalid_color_error(self, app_context: AppContext, tmp_path: Path):
+        """Creating code with invalid color returns error."""
+        from src.contexts.coding.interface.mcp_tools import CodingTools
+
+        with allure.step("Create project"):
+            project_path = tmp_path / "invalid_color_test.qda"
+            result = app_context.create_project(
+                name="Invalid Color Test", path=str(project_path)
+            )
+            assert result.is_success
+            app_context.open_project(str(project_path))
+
+        with allure.step("Attempt to create code with invalid color"):
+            tools = CodingTools(ctx=app_context)
+            result = tools.execute(
+                "create_code",
+                {"name": "Bad Color", "color": "not-a-color"},
+            )
+
+        with allure.step("Verify error returned"):
+            assert result.get("success") is False
+            assert "error" in result
+            assert "INVALID_COLOR" in result.get("error_code", "")
+
+    @allure.title("AC #6: Duplicate name returns error")
+    def test_ac6_duplicate_name_error(
+        self, app_context: AppContext, project_with_codes: Path
+    ):
+        """Creating code with duplicate name returns error."""
+        from src.contexts.coding.interface.mcp_tools import CodingTools
+
+        with allure.step("Attempt to create code with existing name"):
+            tools = CodingTools(ctx=app_context)
+            result = tools.execute(
+                "create_code",
+                {"name": "Theme", "color": "#FF0000"},  # "Theme" already exists
+            )
+
+        with allure.step("Verify error returned"):
+            assert result.get("success") is False
+            assert "error" in result
+
+    @allure.title("AC #7: Missing required params returns error")
+    def test_ac7_missing_params_error(self, app_context: AppContext, tmp_path: Path):
+        """Missing required parameters returns error."""
+        from src.contexts.coding.interface.mcp_tools import CodingTools
+
+        with allure.step("Create project"):
+            project_path = tmp_path / "missing_params_test.qda"
+            result = app_context.create_project(
+                name="Missing Params Test", path=str(project_path)
+            )
+            assert result.is_success
+            app_context.open_project(str(project_path))
+
+        with allure.step("Attempt to create code without name"):
+            tools = CodingTools(ctx=app_context)
+            result = tools.execute(
+                "create_code",
+                {"color": "#FF0000"},  # Missing name
+            )
+
+        with allure.step("Verify error for missing name"):
+            assert result.get("success") is False
+            assert "name" in result.get("error", "").lower()
+
+        with allure.step("Attempt to create code without color"):
+            result = tools.execute(
+                "create_code",
+                {"name": "No Color Code"},  # Missing color
+            )
+
+        with allure.step("Verify error for missing color"):
+            assert result.get("success") is False
+            assert "color" in result.get("error", "").lower()
+
+    @allure.title("create_code tool has correct schema")
+    @allure.severity(allure.severity_level.NORMAL)
+    def test_create_code_schema(self, app_context: AppContext):
+        """Verify create_code tool schema is correctly defined."""
+        from src.contexts.coding.interface.mcp_tools import CodingTools
+
+        with allure.step("Get tool schemas"):
+            tools = CodingTools(ctx=app_context)
+            schemas = tools.get_tool_schemas()
+
+        with allure.step("Find create_code schema"):
+            schema = next((s for s in schemas if s["name"] == "create_code"), None)
+            assert schema is not None
+
+        with allure.step("Verify required parameters"):
+            required = schema["inputSchema"]["required"]
+            assert "name" in required
+            assert "color" in required
+
+        with allure.step("Verify optional parameters"):
+            props = schema["inputSchema"]["properties"]
+            assert "memo" in props
+            assert "category_id" in props
