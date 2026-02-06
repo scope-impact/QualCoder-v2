@@ -475,6 +475,76 @@ Move a source into a folder. Use folder_id=0 or null to move to root.
 }
 ```
 
+#### import_file_source
+
+Import a file-based source (document, PDF, image, audio, video) by providing its absolute file path. The file type is auto-detected from the extension.
+
+**Trust Level:** T3 (Suggest) — File imports require trust that the path is valid and intended.
+
+```json
+{
+  "name": "import_file_source",
+  "inputSchema": {
+    "type": "object",
+    "properties": {
+      "file_path": {
+        "type": "string",
+        "description": "Absolute path to the source file on the local filesystem."
+      },
+      "name": {
+        "type": "string",
+        "description": "Optional name override. Defaults to the filename."
+      },
+      "memo": {
+        "type": "string",
+        "description": "Optional memo/notes about the source."
+      },
+      "origin": {
+        "type": "string",
+        "description": "Optional origin description (e.g., 'field recording', 'scan')."
+      },
+      "dry_run": {
+        "type": "boolean",
+        "description": "If true, validate the file without importing. Default false.",
+        "default": false
+      }
+    },
+    "required": ["file_path"]
+  }
+}
+```
+
+**Response (import):**
+```json
+{
+  "success": true,
+  "source_id": 8,
+  "name": "interview.pdf",
+  "type": "pdf",
+  "status": "imported",
+  "file_size": 45678
+}
+```
+
+**Response (dry_run=true):**
+```json
+{
+  "dry_run": true,
+  "file_path": "/data/interview.pdf",
+  "name": "interview.pdf",
+  "source_type": "pdf",
+  "file_size": 45678,
+  "message": "File 'interview.pdf' (pdf, 45678 bytes) is valid and ready to import"
+}
+```
+
+| Error | Cause |
+|-------|-------|
+| `SOURCE_NOT_IMPORTED/FILE_NOT_FOUND` | File does not exist at the given path |
+| `SOURCE_NOT_IMPORTED/UNSUPPORTED_TYPE` | File extension is not supported |
+| `SOURCE_NOT_IMPORTED/DUPLICATE_NAME` | A source with that name already exists |
+| `SOURCE_NOT_IMPORTED/RELATIVE_PATH` | Path must be absolute |
+
 ---
 
 ### Coding Tools

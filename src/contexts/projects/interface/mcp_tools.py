@@ -13,6 +13,7 @@ Implements:
 - QC-027.12: Agent can add text sources
 - QC-027.13: Agent can manage folders
 - QC-027.14: Agent can remove sources
+- QC-027.15: Agent can import file-based sources
 
 These tools follow the MCP (Model Context Protocol) specification:
 - Each tool has a name, description, and input schema
@@ -472,6 +473,52 @@ move_source_to_folder_tool = ToolDefinition(
     ),
 )
 
+# Tool: import_file_source (QC-027.15)
+import_file_source_tool = ToolDefinition(
+    name="import_file_source",
+    description=(
+        "Import a file-based source (document, PDF, image, audio, video) "
+        "into the current project by providing its absolute file path. "
+        "The file type is auto-detected from the extension."
+    ),
+    parameters=(
+        ToolParameter(
+            name="file_path",
+            type="string",
+            description="Absolute path to the source file on the local filesystem.",
+            required=True,
+        ),
+        ToolParameter(
+            name="name",
+            type="string",
+            description="Optional name override. Defaults to the filename.",
+            required=False,
+            default=None,
+        ),
+        ToolParameter(
+            name="memo",
+            type="string",
+            description="Optional memo/notes about the source.",
+            required=False,
+            default=None,
+        ),
+        ToolParameter(
+            name="origin",
+            type="string",
+            description="Optional origin description (e.g., 'field recording', 'scan').",
+            required=False,
+            default=None,
+        ),
+        ToolParameter(
+            name="dry_run",
+            type="boolean",
+            description="If true, validate the file without importing. Default false.",
+            required=False,
+            default=False,
+        ),
+    ),
+)
+
 
 # ============================================================
 # Tool Implementation
@@ -531,6 +578,8 @@ class ProjectTools:
             "rename_folder": rename_folder_tool,
             "delete_folder": delete_folder_tool,
             "move_source_to_folder": move_source_to_folder_tool,
+            # QC-027.15: Import file source
+            "import_file_source": import_file_source_tool,
         }
 
     @property
@@ -582,6 +631,8 @@ class ProjectTools:
             "rename_folder": self._execute_rename_folder,
             "delete_folder": self._execute_delete_folder,
             "move_source_to_folder": self._execute_move_source_to_folder,
+            # QC-027.15
+            "import_file_source": self._execute_import_file_source,
         }
 
         handler = handlers.get(tool_name)
@@ -1236,5 +1287,66 @@ class ProjectTools:
                 "new_folder_id": (
                     event.new_folder_id.value if event.new_folder_id else None
                 ),
+            }
+        )
+
+    # ============================================================
+    # QC-027.15: Import File Source Tool
+    # ============================================================
+
+    def _execute_import_file_source(
+        self, arguments: dict[str, Any]
+    ) -> Result[dict[str, Any], str]:
+        """
+        Execute import_file_source tool.
+
+        Imports a file-based source by absolute file path. Supports
+        text, PDF, image, audio, and video files with auto-detection.
+        """
+        from src.contexts.projects.core.commands import ImportFileSourceCommand
+        from src.contexts.sources.core.commandHandlers.import_file_source import (
+            import_file_source,
+        )
+
+        file_path = arguments.get("file_path")
+        if not file_path:
+            return Failure("Missing required parameter: file_path")
+
+        command = ImportFileSourceCommand(
+            file_path=str(file_path),
+            name=arguments.get("name"),
+            memo=arguments.get("memo"),
+            origin=arguments.get("origin"),
+            dry_run=arguments.get("dry_run", False),
+        )
+
+        source_repo = (
+            self._ctx.sources_context.source_repo if self._ctx.sources_context else None
+        )
+
+        result = import_file_source(
+            command=command,
+            state=self._state,
+            source_repo=source_repo,
+            event_bus=self._ctx.event_bus,
+        )
+
+        if result.is_failure:
+            return Failure(result.error or "Failed to import file source")
+
+        # Dry run returns a dict directly
+        if command.dry_run:
+            return Success(result.data)
+
+        # Normal import returns a Source entity
+        source = result.data
+        return Success(
+            {
+                "success": True,
+                "source_id": source.id.value,
+                "name": source.name,
+                "type": source.source_type.value,
+                "status": source.status.value,
+                "file_size": source.file_size,
             }
         )

@@ -696,3 +696,379 @@ class TestAgentFullWorkflow:
             close = tools.execute("close_project", {})
             assert isinstance(close, Success)
             assert close.unwrap()["closed"] is True
+
+
+# ============================================================
+# QC-027.15: Agent Import File Source
+# ============================================================
+
+
+@pytest.fixture
+def sample_text_file(tmp_path: Path) -> Path:
+    """Create a sample text file for import tests."""
+    f = tmp_path / "interview.txt"
+    f.write_text("This is an interview transcript.\nLine 2.")
+    return f
+
+
+@pytest.fixture
+def sample_pdf_file(tmp_path: Path) -> Path:
+    """Create a minimal PDF file for import tests."""
+    f = tmp_path / "report.pdf"
+    # Minimal valid PDF structure
+    pdf_content = b"""%PDF-1.4
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R >>
+endobj
+2 0 obj
+<< /Type /Pages /Kids [3 0 R] /Count 1 >>
+endobj
+3 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] >>
+endobj
+xref
+0 4
+0000000000 65535 f
+0000000009 00000 n
+0000000058 00000 n
+0000000115 00000 n
+trailer
+<< /Size 4 /Root 1 0 R >>
+startxref
+196
+%%EOF"""
+    f.write_bytes(pdf_content)
+    return f
+
+
+@pytest.fixture
+def sample_image_file(tmp_path: Path) -> Path:
+    """Create a minimal PNG file for import tests."""
+    f = tmp_path / "photo.png"
+    # Minimal valid 1x1 PNG
+    png_bytes = (
+        b"\x89PNG\r\n\x1a\n"  # PNG signature
+        b"\x00\x00\x00\rIHDR\x00\x00\x00\x01\x00\x00\x00\x01"
+        b"\x08\x02\x00\x00\x00\x90wS\xde"
+        b"\x00\x00\x00\x0cIDATx\x9cc\xf8\x0f\x00\x00\x01\x01\x00\x05\x18\xd8N"
+        b"\x00\x00\x00\x00IEND\xaeB`\x82"
+    )
+    f.write_bytes(png_bytes)
+    return f
+
+
+@pytest.fixture
+def sample_audio_file(tmp_path: Path) -> Path:
+    """Create a stub audio file for import tests."""
+    f = tmp_path / "recording.mp3"
+    f.write_bytes(b"\xff\xfb\x90\x00" + b"\x00" * 100)  # MP3 frame header stub
+    return f
+
+
+@pytest.fixture
+def sample_video_file(tmp_path: Path) -> Path:
+    """Create a stub video file for import tests."""
+    f = tmp_path / "clip.mp4"
+    f.write_bytes(b"\x00\x00\x00\x1cftypisom" + b"\x00" * 100)  # MP4 header stub
+    return f
+
+
+@allure.story("QC-027.15 Agent Import File Source")
+@allure.severity(allure.severity_level.CRITICAL)
+@allure.feature("QC-027 Manage Sources")
+class TestAgentImportFileSource:
+    @allure.title("AC #1: import_file_source tool registered with file_path parameter")
+    def test_tool_schema(self, tools):
+        with allure.step("Get tool schemas"):
+            schemas = tools.get_tool_schemas()
+
+        with allure.step("Verify tool exists with required params"):
+            tool_names = [s["name"] for s in schemas]
+            assert "import_file_source" in tool_names
+            schema = next(s for s in schemas if s["name"] == "import_file_source")
+            assert "file_path" in schema["inputSchema"]["required"]
+
+    @allure.title("AC #2: Agent can import text files by absolute path")
+    def test_import_text_file(self, tools, open_project: Path, sample_text_file: Path):
+        with allure.step("Import text file"):
+            result = tools.execute(
+                "import_file_source", {"file_path": str(sample_text_file)}
+            )
+
+        with allure.step("Verify success"):
+            assert isinstance(result, Success)
+            data = result.unwrap()
+            assert data["success"] is True
+            assert data["name"] == "interview.txt"
+            assert data["type"] == "text"
+            assert data["status"] == "imported"
+
+    @allure.title("AC #3: Agent can import PDF files")
+    def test_import_pdf_file(self, tools, open_project: Path, sample_pdf_file: Path):
+        with allure.step("Import PDF file"):
+            result = tools.execute(
+                "import_file_source", {"file_path": str(sample_pdf_file)}
+            )
+
+        with allure.step("Verify success"):
+            assert isinstance(result, Success)
+            data = result.unwrap()
+            assert data["success"] is True
+            assert data["name"] == "report.pdf"
+            assert data["type"] == "pdf"
+
+    @allure.title("AC #4: Agent can import image files")
+    def test_import_image_file(
+        self, tools, open_project: Path, sample_image_file: Path
+    ):
+        with allure.step("Import image file"):
+            result = tools.execute(
+                "import_file_source", {"file_path": str(sample_image_file)}
+            )
+
+        with allure.step("Verify success"):
+            assert isinstance(result, Success)
+            data = result.unwrap()
+            assert data["success"] is True
+            assert data["name"] == "photo.png"
+            assert data["type"] == "image"
+
+    @allure.title("AC #5: Agent can import audio/video files")
+    def test_import_audio_file(
+        self, tools, open_project: Path, sample_audio_file: Path
+    ):
+        with allure.step("Import audio file"):
+            result = tools.execute(
+                "import_file_source", {"file_path": str(sample_audio_file)}
+            )
+
+        with allure.step("Verify success"):
+            assert isinstance(result, Success)
+            data = result.unwrap()
+            assert data["success"] is True
+            assert data["name"] == "recording.mp3"
+            assert data["type"] == "audio"
+
+    @allure.title("AC #5: Agent can import video files")
+    def test_import_video_file(
+        self, tools, open_project: Path, sample_video_file: Path
+    ):
+        with allure.step("Import video file"):
+            result = tools.execute(
+                "import_file_source", {"file_path": str(sample_video_file)}
+            )
+
+        with allure.step("Verify success"):
+            assert isinstance(result, Success)
+            data = result.unwrap()
+            assert data["success"] is True
+            assert data["name"] == "clip.mp4"
+            assert data["type"] == "video"
+
+    @allure.title("AC #6: File type is auto-detected from extension")
+    def test_file_type_auto_detected(self, tools, open_project: Path, tmp_path: Path):
+        with allure.step("Create files with various extensions"):
+            jpg = tmp_path / "photo.jpg"
+            jpg.write_bytes(b"\xff\xd8\xff\xe0" + b"\x00" * 50)
+            wav = tmp_path / "audio.wav"
+            wav.write_bytes(b"RIFF" + b"\x00" * 50)
+
+        with allure.step("Import jpg (should be image)"):
+            r1 = tools.execute("import_file_source", {"file_path": str(jpg)})
+            assert isinstance(r1, Success)
+            assert r1.unwrap()["type"] == "image"
+
+        with allure.step("Import wav (should be audio)"):
+            r2 = tools.execute("import_file_source", {"file_path": str(wav)})
+            assert isinstance(r2, Success)
+            assert r2.unwrap()["type"] == "audio"
+
+    @allure.title("AC #7: Non-existent file returns clear failure")
+    def test_import_nonexistent_file(self, tools, open_project: Path, tmp_path: Path):
+        with allure.step("Try to import non-existent file"):
+            result = tools.execute(
+                "import_file_source",
+                {"file_path": str(tmp_path / "does_not_exist.txt")},
+            )
+
+        with allure.step("Verify failure with clear message"):
+            assert isinstance(result, Failure)
+            assert "not found" in str(result.failure()).lower()
+
+    @allure.title("AC #8: Unsupported file extensions are rejected")
+    def test_import_unsupported_extension(
+        self, tools, open_project: Path, tmp_path: Path
+    ):
+        with allure.step("Create file with unsupported extension"):
+            f = tmp_path / "data.xyz"
+            f.write_bytes(b"some data")
+
+        with allure.step("Try to import"):
+            result = tools.execute("import_file_source", {"file_path": str(f)})
+
+        with allure.step("Verify rejected with supported types listed"):
+            assert isinstance(result, Failure)
+            error_msg = str(result.failure())
+            assert "unsupported" in error_msg.lower()
+            assert ".txt" in error_msg  # Lists supported extensions
+
+    @allure.title("AC #9: Duplicate source names are rejected")
+    def test_import_duplicate_name(
+        self, tools, open_project: Path, sample_text_file: Path
+    ):
+        with allure.step("Import file first time"):
+            r1 = tools.execute(
+                "import_file_source", {"file_path": str(sample_text_file)}
+            )
+            assert isinstance(r1, Success)
+
+        with allure.step("Import same file again (same default name)"):
+            r2 = tools.execute(
+                "import_file_source", {"file_path": str(sample_text_file)}
+            )
+
+        with allure.step("Verify duplicate rejected"):
+            assert isinstance(r2, Failure)
+            assert "already exists" in str(r2.failure())
+
+    @allure.title("AC #10: Optional name parameter overrides filename")
+    def test_import_with_name_override(
+        self, tools, open_project: Path, sample_text_file: Path
+    ):
+        with allure.step("Import with custom name"):
+            result = tools.execute(
+                "import_file_source",
+                {
+                    "file_path": str(sample_text_file),
+                    "name": "Custom Interview Name",
+                },
+            )
+
+        with allure.step("Verify custom name used"):
+            assert isinstance(result, Success)
+            data = result.unwrap()
+            assert data["name"] == "Custom Interview Name"
+
+    @allure.title("AC #11: SourceAdded event is published on success")
+    def test_import_publishes_event(
+        self,
+        app_context: AppContext,
+        tools,
+        open_project: Path,
+        sample_text_file: Path,
+    ):
+        events_received = []
+        app_context.event_bus.subscribe(
+            "projects.source_added", lambda e: events_received.append(e)
+        )
+
+        with allure.step("Import file"):
+            result = tools.execute(
+                "import_file_source", {"file_path": str(sample_text_file)}
+            )
+            assert isinstance(result, Success)
+
+        with allure.step("Verify SourceAdded event"):
+            assert len(events_received) >= 1
+
+    @allure.title("AC #12: Tool returns source ID, name, type, status, file_size")
+    def test_import_returns_full_details(
+        self, tools, open_project: Path, sample_text_file: Path
+    ):
+        with allure.step("Import file"):
+            result = tools.execute(
+                "import_file_source", {"file_path": str(sample_text_file)}
+            )
+
+        with allure.step("Verify all response fields"):
+            assert isinstance(result, Success)
+            data = result.unwrap()
+            assert "source_id" in data
+            assert "name" in data
+            assert "type" in data
+            assert "status" in data
+            assert "file_size" in data
+            assert data["file_size"] > 0
+
+    @allure.title("Text content is extracted and stored for text files")
+    def test_text_content_extracted(
+        self,
+        app_context: AppContext,
+        tools,
+        open_project: Path,
+        sample_text_file: Path,
+    ):
+        with allure.step("Import text file"):
+            result = tools.execute(
+                "import_file_source", {"file_path": str(sample_text_file)}
+            )
+            assert isinstance(result, Success)
+            source_id = result.unwrap()["source_id"]
+
+        with allure.step("Verify text content stored"):
+            from src.shared.common.types import SourceId
+
+            source = app_context.sources_context.source_repo.get_by_id(
+                SourceId(value=source_id)
+            )
+            assert source is not None
+            assert source.fulltext is not None
+            assert "interview transcript" in source.fulltext
+
+    @allure.title("Image/audio sources have no fulltext")
+    def test_media_no_fulltext(
+        self,
+        app_context: AppContext,
+        tools,
+        open_project: Path,
+        sample_image_file: Path,
+    ):
+        with allure.step("Import image file"):
+            result = tools.execute(
+                "import_file_source", {"file_path": str(sample_image_file)}
+            )
+            assert isinstance(result, Success)
+            source_id = result.unwrap()["source_id"]
+
+        with allure.step("Verify no fulltext"):
+            from src.shared.common.types import SourceId
+
+            source = app_context.sources_context.source_repo.get_by_id(
+                SourceId(value=source_id)
+            )
+            assert source is not None
+            assert source.fulltext is None
+
+    @allure.title("Dry run validates without importing")
+    def test_dry_run_mode(
+        self, app_context: AppContext, tools, open_project: Path, sample_text_file: Path
+    ):
+        with allure.step("Dry run import"):
+            result = tools.execute(
+                "import_file_source",
+                {"file_path": str(sample_text_file), "dry_run": True},
+            )
+
+        with allure.step("Verify dry run response"):
+            assert isinstance(result, Success)
+            data = result.unwrap()
+            assert data["dry_run"] is True
+            assert data["name"] == "interview.txt"
+            assert data["source_type"] == "text"
+            assert data["file_size"] > 0
+
+        with allure.step("Verify source NOT persisted"):
+            sources = app_context.sources_context.source_repo.get_all()
+            names = [s.name for s in sources]
+            assert "interview.txt" not in names
+
+    @allure.title("Relative path is rejected")
+    def test_relative_path_rejected(self, tools, open_project: Path):
+        with allure.step("Try relative path"):
+            result = tools.execute(
+                "import_file_source", {"file_path": "relative/path.txt"}
+            )
+
+        with allure.step("Verify rejected"):
+            assert isinstance(result, Failure)
+            assert "absolute" in str(result.failure()).lower()

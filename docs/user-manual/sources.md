@@ -118,7 +118,7 @@ When no sources have been imported yet:
 
 When an AI assistant is connected via MCP (see [MCP Setup](./mcp-setup.md)), it can manage sources programmatically:
 
-### Adding Sources
+### Adding Text Sources
 
 The agent can add text sources directly using the `add_text_source` tool, providing a name and content without needing a file on disk. This is useful for:
 
@@ -127,6 +127,18 @@ The agent can add text sources directly using the `add_text_source` tool, provid
 - Creating sources from processed or transformed text
 
 Each source must have a unique name within the project.
+
+### Importing Files
+
+The agent can import file-based sources (PDFs, images, audio, video) using the `import_file_source` tool by providing an absolute file path. The file type is auto-detected from the extension:
+
+- **Text:** `.txt`, `.docx`, `.rtf`, `.md`, `.odt`, `.epub`
+- **PDF:** `.pdf` (with automatic text extraction)
+- **Images:** `.png`, `.jpg`, `.gif`, `.bmp`, `.tiff`, `.webp`
+- **Audio:** `.mp3`, `.wav`, `.m4a`, `.ogg`, `.flac`
+- **Video:** `.mp4`, `.mov`, `.avi`, `.mkv`, `.webm`
+
+Use the `dry_run` parameter to validate a file before importing. The optional `name` parameter overrides the default filename-based source name.
 
 ### Organizing into Folders
 

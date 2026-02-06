@@ -31,6 +31,7 @@ This file tracks which features have documentation and screenshots.
 | QC-027.12 | Agent Add Text Source | [sources.md](user-manual/sources.md), [mcp-api.md](api/mcp-api.md) | - | :construction: |
 | QC-027.13 | Agent Manage Folders | [sources.md](user-manual/sources.md), [mcp-api.md](api/mcp-api.md) | - | :construction: |
 | QC-027.14 | Agent Remove Source | [sources.md](user-manual/sources.md), [mcp-api.md](api/mcp-api.md) | - | :construction: |
+| QC-027.15 | Agent Import File Source | [sources.md](user-manual/sources.md), [mcp-api.md](api/mcp-api.md) | - | :construction: |
 
 ### QC-028 Manage Codes
 

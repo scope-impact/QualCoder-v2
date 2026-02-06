@@ -82,6 +82,7 @@ Once connected, AI assistants can use these tools:
 | `list_sources` | Get all documents in the project |
 | `read_source_content` | Read document text |
 | `add_text_source` | Add a new text source with content provided by the agent |
+| `import_file_source` | Import a file (PDF, image, audio, video) by absolute path |
 | `remove_source` | Preview or confirm deletion of a source (preview by default) |
 | `suggest_source_metadata` | Suggest language, topics, or organization for a source |
 
