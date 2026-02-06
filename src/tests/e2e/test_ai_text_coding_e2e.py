@@ -15,6 +15,7 @@ from typing import TYPE_CHECKING
 
 import allure
 import pytest
+
 # Note: CodingTools.execute() returns dict, not Result
 
 if TYPE_CHECKING:
@@ -101,12 +102,18 @@ Interviewer: Thank you for your valuable insights.
     codes = [
         Code(id=CodeId(1), name="Initial Skepticism", color=Color.from_hex("#FF5722")),
         Code(id=CodeId(2), name="Positive Experience", color=Color.from_hex("#4CAF50")),
-        Code(id=CodeId(3), name="Time Management Challenge", color=Color.from_hex("#F44336")),
+        Code(
+            id=CodeId(3),
+            name="Time Management Challenge",
+            color=Color.from_hex("#F44336"),
+        ),
         Code(id=CodeId(4), name="Adaptive Learning", color=Color.from_hex("#2196F3")),
         Code(id=CodeId(5), name="Motivation", color=Color.from_hex("#9C27B0")),
         Code(id=CodeId(6), name="Support System", color=Color.from_hex("#FF9800")),
         Code(id=CodeId(7), name="Feedback Value", color=Color.from_hex("#00BCD4")),
-        Code(id=CodeId(8), name="Improvement Suggestion", color=Color.from_hex("#795548")),
+        Code(
+            id=CodeId(8), name="Improvement Suggestion", color=Color.from_hex("#795548")
+        ),
     ]
     for code in codes:
         app_context.coding_context.code_repo.save(code)
@@ -237,7 +244,8 @@ class TestAgentApplyCodeToTextRange:
             segments = app_context.coding_context.segment_repo.get_all()
             # No segments should exist until approved
             matching = [
-                s for s in segments
+                s
+                for s in segments
                 if s.source_id.value == 1 and s.position.start == 400
             ]
             assert len(matching) == 0
@@ -379,8 +387,7 @@ class TestAgentApplyCodeToTextRange:
         with allure.step("Verify segment exists in repository"):
             segments = app_context.coding_context.segment_repo.get_all()
             matching = [
-                s for s in segments
-                if s.source_id.value == 1 and s.code_id.value == 7
+                s for s in segments if s.source_id.value == 1 and s.code_id.value == 7
             ]
             assert len(matching) == 1
 
@@ -642,7 +649,11 @@ class TestBatchCodingOperations:
                 {
                     "code_id": 1,
                     "segments": [
-                        {"source_id": m["source_id"], "start_pos": m["start_pos"], "end_pos": m["end_pos"]}
+                        {
+                            "source_id": m["source_id"],
+                            "start_pos": m["start_pos"],
+                            "end_pos": m["end_pos"],
+                        }
                         for m in matches
                     ],
                     "rationale": "All segments discuss time management challenges",

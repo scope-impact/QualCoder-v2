@@ -8,9 +8,7 @@ from .base import ToolDefinition, ToolParameter
 
 analyze_uncoded_text_tool = ToolDefinition(
     name="analyze_uncoded_text",
-    description=(
-        "Analyze a source to find uncoded text ranges."
-    ),
+    description=("Analyze a source to find uncoded text ranges."),
     parameters=(
         ToolParameter(
             name="source_id",
@@ -74,9 +72,7 @@ auto_suggest_codes_tool = ToolDefinition(
 
 get_suggestion_batch_status_tool = ToolDefinition(
     name="get_suggestion_batch_status",
-    description=(
-        "Get status of a coding suggestion batch."
-    ),
+    description=("Get status of a coding suggestion batch."),
     parameters=(
         ToolParameter(
             name="batch_id",
@@ -89,9 +85,7 @@ get_suggestion_batch_status_tool = ToolDefinition(
 
 respond_to_code_suggestion_tool = ToolDefinition(
     name="respond_to_code_suggestion",
-    description=(
-        "Respond to a batch of code suggestions (accept/reject)."
-    ),
+    description=("Respond to a batch of code suggestions (accept/reject)."),
     parameters=(
         ToolParameter(
             name="suggestion_batch_id",
@@ -123,9 +117,7 @@ respond_to_code_suggestion_tool = ToolDefinition(
 
 approve_batch_coding_tool = ToolDefinition(
     name="approve_batch_coding",
-    description=(
-        "Approve an entire batch of coding suggestions."
-    ),
+    description=("Approve an entire batch of coding suggestions."),
     parameters=(
         ToolParameter(
             name="batch_id",

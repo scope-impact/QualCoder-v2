@@ -25,7 +25,6 @@ from src.contexts.coding.core.ai_entities import (
 )
 from src.shared.common.types import SourceId
 
-
 # ============================================================
 # Cache Implementations
 # ============================================================
@@ -71,8 +70,7 @@ class CodingSuggestionCache:
 
     def get_by_source(self, source_id: SourceId) -> list[CodingSuggestion]:
         return [
-            s for s in self._items.values()
-            if s.source_id == source_id and s.is_pending
+            s for s in self._items.values() if s.source_id == source_id and s.is_pending
         ]
 
     def get_all_pending(self) -> list[CodingSuggestion]:
@@ -89,7 +87,9 @@ class CodingSuggestionCache:
         for suggestion in batch.suggestions:
             self.add(suggestion)
 
-    def get_batch(self, batch_id: CodingSuggestionBatchId) -> CodingSuggestionBatch | None:
+    def get_batch(
+        self, batch_id: CodingSuggestionBatchId
+    ) -> CodingSuggestionBatch | None:
         return self._batches.get(batch_id.value)
 
     def update_batch(self, batch: CodingSuggestionBatch) -> None:
@@ -167,9 +167,15 @@ class SuggestionCache:
     """
 
     code_suggestions: CodeSuggestionCache = field(default_factory=CodeSuggestionCache)
-    coding_suggestions: CodingSuggestionCache = field(default_factory=CodingSuggestionCache)
-    duplicate_detections: DuplicateDetectionCache = field(default_factory=DuplicateDetectionCache)
-    merge_suggestions: MergeSuggestionCache = field(default_factory=MergeSuggestionCache)
+    coding_suggestions: CodingSuggestionCache = field(
+        default_factory=CodingSuggestionCache
+    )
+    duplicate_detections: DuplicateDetectionCache = field(
+        default_factory=DuplicateDetectionCache
+    )
+    merge_suggestions: MergeSuggestionCache = field(
+        default_factory=MergeSuggestionCache
+    )
 
     def clear_all(self) -> None:
         """Clear all cached suggestions."""

@@ -21,7 +21,7 @@ from .base import HandlerContext, missing_param_error
 
 
 def handle_find_similar_content(
-    ctx: HandlerContext,
+    _ctx: HandlerContext,
     arguments: dict[str, Any],
 ) -> dict[str, Any]:
     """Find similar content across sources."""

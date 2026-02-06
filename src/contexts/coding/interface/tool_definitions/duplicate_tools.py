@@ -32,9 +32,7 @@ detect_duplicate_codes_tool = ToolDefinition(
 
 suggest_merge_codes_tool = ToolDefinition(
     name="suggest_merge_codes",
-    description=(
-        "Suggest merging one code into another. Requires approval."
-    ),
+    description=("Suggest merging one code into another. Requires approval."),
     parameters=(
         ToolParameter(
             name="source_code_id",
@@ -59,9 +57,7 @@ suggest_merge_codes_tool = ToolDefinition(
 
 approve_merge_tool = ToolDefinition(
     name="approve_merge",
-    description=(
-        "Approve a pending merge suggestion, executing the merge."
-    ),
+    description=("Approve a pending merge suggestion, executing the merge."),
     parameters=(
         ToolParameter(
             name="merge_suggestion_id",

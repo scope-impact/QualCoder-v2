@@ -63,9 +63,7 @@ suggest_code_application_tool = ToolDefinition(
 
 list_pending_coding_suggestions_tool = ToolDefinition(
     name="list_pending_coding_suggestions",
-    description=(
-        "List pending coding suggestions for a source."
-    ),
+    description=("List pending coding suggestions for a source."),
     parameters=(
         ToolParameter(
             name="source_id",
@@ -78,9 +76,7 @@ list_pending_coding_suggestions_tool = ToolDefinition(
 
 approve_coding_suggestion_tool = ToolDefinition(
     name="approve_coding_suggestion",
-    description=(
-        "Approve a coding suggestion, creating the segment."
-    ),
+    description=("Approve a coding suggestion, creating the segment."),
     parameters=(
         ToolParameter(
             name="suggestion_id",
@@ -93,9 +89,7 @@ approve_coding_suggestion_tool = ToolDefinition(
 
 reject_coding_suggestion_tool = ToolDefinition(
     name="reject_coding_suggestion",
-    description=(
-        "Reject a coding suggestion with optional feedback."
-    ),
+    description=("Reject a coding suggestion with optional feedback."),
     parameters=(
         ToolParameter(
             name="suggestion_id",

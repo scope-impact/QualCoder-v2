@@ -54,21 +54,30 @@ class HandlerContext:
     @property
     def code_repo(self) -> CodeRepository | None:
         """Get the code repository from coding context."""
-        if hasattr(self._ctx, "coding_context") and self._ctx.coding_context is not None:
+        if (
+            hasattr(self._ctx, "coding_context")
+            and self._ctx.coding_context is not None
+        ):
             return self._ctx.coding_context.code_repo
         return None
 
     @property
     def category_repo(self) -> CategoryRepository | None:
         """Get the category repository from coding context."""
-        if hasattr(self._ctx, "coding_context") and self._ctx.coding_context is not None:
+        if (
+            hasattr(self._ctx, "coding_context")
+            and self._ctx.coding_context is not None
+        ):
             return self._ctx.coding_context.category_repo
         return None
 
     @property
     def segment_repo(self) -> SegmentRepository | None:
         """Get the segment repository from coding context."""
-        if hasattr(self._ctx, "coding_context") and self._ctx.coding_context is not None:
+        if (
+            hasattr(self._ctx, "coding_context")
+            and self._ctx.coding_context is not None
+        ):
             return self._ctx.coding_context.segment_repo
         return None
 

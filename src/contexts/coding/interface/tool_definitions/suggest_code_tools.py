@@ -73,17 +73,13 @@ suggest_new_code_tool = ToolDefinition(
 
 list_pending_suggestions_tool = ToolDefinition(
     name="list_pending_suggestions",
-    description=(
-        "List all pending code suggestions awaiting researcher approval."
-    ),
+    description=("List all pending code suggestions awaiting researcher approval."),
     parameters=(),
 )
 
 approve_suggestion_tool = ToolDefinition(
     name="approve_suggestion",
-    description=(
-        "Approve a pending code suggestion, creating the code."
-    ),
+    description=("Approve a pending code suggestion, creating the code."),
     parameters=(
         ToolParameter(
             name="suggestion_id",

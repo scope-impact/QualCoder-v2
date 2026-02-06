@@ -4,15 +4,16 @@ MCP Tool Handlers
 Organized by feature area for maintainability.
 """
 
-from typing import Any, Callable
+from collections.abc import Callable
+from typing import Any
 
-from .base import CodingToolsContext, HandlerContext
-from .core_handlers import CORE_HANDLERS
-from .suggest_code_handlers import SUGGEST_CODE_HANDLERS
-from .duplicate_handlers import DUPLICATE_HANDLERS
-from .coding_suggestion_handlers import CODING_SUGGESTION_HANDLERS
 from .auto_coding_handlers import AUTO_CODING_HANDLERS
+from .base import CodingToolsContext, HandlerContext
 from .batch_handlers import BATCH_HANDLERS
+from .coding_suggestion_handlers import CODING_SUGGESTION_HANDLERS
+from .core_handlers import CORE_HANDLERS
+from .duplicate_handlers import DUPLICATE_HANDLERS
+from .suggest_code_handlers import SUGGEST_CODE_HANDLERS
 
 # Type alias for handler functions
 HandlerFunc = Callable[[HandlerContext, dict[str, Any]], dict[str, Any]]

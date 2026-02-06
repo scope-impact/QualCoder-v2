@@ -8,9 +8,7 @@ from .base import ToolDefinition, ToolParameter
 
 find_similar_content_tool = ToolDefinition(
     name="find_similar_content",
-    description=(
-        "Find similar content across sources that matches a pattern."
-    ),
+    description=("Find similar content across sources that matches a pattern."),
     parameters=(
         ToolParameter(
             name="search_text",
@@ -29,9 +27,7 @@ find_similar_content_tool = ToolDefinition(
 
 suggest_batch_coding_tool = ToolDefinition(
     name="suggest_batch_coding",
-    description=(
-        "Suggest applying a code to multiple segments at once."
-    ),
+    description=("Suggest applying a code to multiple segments at once."),
     parameters=(
         ToolParameter(
             name="code_id",
