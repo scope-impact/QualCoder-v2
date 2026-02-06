@@ -38,11 +38,12 @@ The timeline shows snapshots from newest to oldest. The top entry (marked **Curr
 
 ## Viewing Changes (Diff)
 
-To see what changed between two snapshots:
+The history screen uses a split-panel layout:
 
-1. Select two snapshots from the history list
-2. Click **View Diff** (or double-click a snapshot to compare with current)
-3. A diff viewer shows the changes
+- **Left panel**: Commit list showing all snapshots
+- **Right panel**: Inline diff viewer for the selected commit
+
+Simply click any commit in the left panel to see its changes in the right panel.
 
 ### Reading the Diff
 
@@ -55,14 +56,12 @@ The diff uses color highlighting:
 | **Blue text** | File headers |
 | **Purple text** | Section markers (`@@`) |
 
-![Diff Viewer](images/diff-viewer-dialog.png)
-
 > **Tip: Stats Summary**
 >
-> The diff viewer shows a summary at the bottom:
-> - `+15 additions` - Lines added
-> - `-3 deletions` - Lines removed
-> - `2 files changed` - Number of affected files
+> The stats bar above the diff shows:
+> - `+15` - Lines added
+> - `-3` - Lines removed
+> - `2 files` - Number of affected files
 
 ## Restoring Previous States
 
