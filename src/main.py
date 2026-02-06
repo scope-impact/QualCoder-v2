@@ -252,12 +252,22 @@ class QualCoderApp:
 
         project_path = Path(self._ctx.state.project.path)
         command = InitializeVersionControlCommand(project_path=str(project_path))
-        initialize_version_control(
+        result = initialize_version_control(
             command=command,
             diffable_adapter=projects_ctx.diffable_adapter,
             git_adapter=projects_ctx.git_adapter,
             event_bus=self._ctx.event_bus,
         )
+
+        # Warn user if VCS init failed (e.g., git not installed)
+        if result.is_failure and "CLI_NOT_FOUND" in (result.error_code or ""):
+            QMessageBox.warning(
+                self._shell,
+                "Version Control Unavailable",
+                "Git is not installed. Version history will not be available.\n\n"
+                "Install Git from https://git-scm.com/downloads to enable "
+                "automatic change tracking and restore capabilities.",
+            )
 
     def _on_open_project(self):
         """Handle open project request."""
