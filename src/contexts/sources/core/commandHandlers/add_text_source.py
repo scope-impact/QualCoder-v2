@@ -11,7 +11,10 @@ from __future__ import annotations
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-from src.contexts.projects.core.commands import AddTextSourceCommand, RemoveSourceCommand
+from src.contexts.projects.core.commands import (
+    AddTextSourceCommand,
+    RemoveSourceCommand,
+)
 from src.contexts.projects.core.entities import Source, SourceStatus, SourceType
 from src.contexts.projects.core.events import SourceAdded
 from src.contexts.projects.core.invariants import is_source_name_unique

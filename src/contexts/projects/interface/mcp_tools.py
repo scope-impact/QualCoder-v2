@@ -319,8 +319,7 @@ open_project_tool = ToolDefinition(
 close_project_tool = ToolDefinition(
     name="close_project",
     description=(
-        "Close the currently open project. "
-        "Safe to call when no project is open."
+        "Close the currently open project. Safe to call when no project is open."
     ),
     parameters=(),
 )
@@ -935,9 +934,7 @@ class ProjectTools:
         )
 
         source_repo = (
-            self._ctx.sources_context.source_repo
-            if self._ctx.sources_context
-            else None
+            self._ctx.sources_context.source_repo if self._ctx.sources_context else None
         )
 
         result = add_text_source(
@@ -1057,9 +1054,7 @@ class ProjectTools:
         from src.contexts.folders.core.commandHandlers.list_folders import list_folders
 
         folder_repo = (
-            self._ctx.sources_context.folder_repo
-            if self._ctx.sources_context
-            else None
+            self._ctx.sources_context.folder_repo if self._ctx.sources_context else None
         )
 
         result = list_folders(state=self._state, folder_repo=folder_repo)

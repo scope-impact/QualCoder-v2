@@ -178,9 +178,7 @@ class TestAgentOpenCloseProject:
         self, app_context: AppContext, tools, existing_project: Path
     ):
         with allure.step("Open project"):
-            open_result = tools.execute(
-                "open_project", {"path": str(existing_project)}
-            )
+            open_result = tools.execute("open_project", {"path": str(existing_project)})
             assert isinstance(open_result, Success)
             assert app_context.has_project
 
@@ -390,9 +388,7 @@ class TestAgentRemoveSource:
             app_context.sources_context.source_repo.save(source)
 
         with allure.step("Preview deletion (confirm=false)"):
-            result = tools.execute(
-                "remove_source", {"source_id": 42, "confirm": False}
-            )
+            result = tools.execute("remove_source", {"source_id": 42, "confirm": False})
 
         with allure.step("Verify preview response"):
             assert isinstance(result, Success)
@@ -419,9 +415,7 @@ class TestAgentRemoveSource:
             app_context.sources_context.source_repo.save(source)
 
         with allure.step("Confirm deletion"):
-            result = tools.execute(
-                "remove_source", {"source_id": 43, "confirm": True}
-            )
+            result = tools.execute("remove_source", {"source_id": 43, "confirm": True})
 
         with allure.step("Verify removed"):
             assert isinstance(result, Success)
@@ -506,9 +500,7 @@ class TestAgentManageFolders:
             assert "duplicate" in str(result.failure()).lower()
 
     @allure.title("AC #4: rename_folder accepts folder_id and new_name")
-    def test_rename_folder(
-        self, app_context: AppContext, tools, open_project: Path
-    ):
+    def test_rename_folder(self, app_context: AppContext, tools, open_project: Path):
         with allure.step("Create a folder"):
             create_result = tools.execute("create_folder", {"name": "Old Name"})
             assert isinstance(create_result, Success)
@@ -640,7 +632,9 @@ class TestAgentManageFolders:
 @allure.story("QC-026.07 Agent Open/Close Project")
 @allure.severity(allure.severity_level.CRITICAL)
 class TestAgentFullWorkflow:
-    @allure.title("Integration: Agent creates project, adds sources, organizes, and cleans up")
+    @allure.title(
+        "Integration: Agent creates project, adds sources, organizes, and cleans up"
+    )
     def test_full_agent_workflow(self, app_context: AppContext, tools, tmp_path: Path):
         with allure.step("Step 1: Create and open project"):
             project_path = tmp_path / "agent_workflow.qda"
