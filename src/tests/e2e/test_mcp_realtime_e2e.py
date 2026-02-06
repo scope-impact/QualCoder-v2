@@ -44,7 +44,14 @@ def mcp_test_env(qapp, tmp_path):
     # Start MCP server
     mcp = MCPServerManager(ctx=ctx, port=port)
     mcp.start()
-    time.sleep(0.3)  # Wait for server to start
+
+    # Wait for server to be ready with retries
+    for _ in range(50):  # 5 seconds max
+        try:
+            httpx.get(f"http://localhost:{port}/", timeout=0.5)
+            break
+        except (httpx.ConnectError, httpx.TimeoutException):
+            time.sleep(0.1)
 
     yield {
         "ctx": ctx,
