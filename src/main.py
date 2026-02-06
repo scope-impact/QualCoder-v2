@@ -228,6 +228,37 @@ class QualCoderApp:
                 )
                 self._screens["history"].set_viewmodel(vcs_viewmodel)
 
+    def _auto_init_vcs(self):
+        """Auto-initialize VCS for newly created projects."""
+        from pathlib import Path
+
+        from src.contexts.projects.core.commandHandlers import (
+            initialize_version_control,
+        )
+        from src.contexts.projects.core.vcs_commands import (
+            InitializeVersionControlCommand,
+        )
+
+        projects_ctx = self._ctx.projects_context
+        if not projects_ctx or not self._ctx.state.project:
+            return
+
+        if not projects_ctx.git_adapter or not projects_ctx.diffable_adapter:
+            return
+
+        # Skip if already initialized
+        if projects_ctx.git_adapter.is_initialized():
+            return
+
+        project_path = Path(self._ctx.state.project.path)
+        command = InitializeVersionControlCommand(project_path=str(project_path))
+        initialize_version_control(
+            command=command,
+            diffable_adapter=projects_ctx.diffable_adapter,
+            git_adapter=projects_ctx.git_adapter,
+            event_bus=self._ctx.event_bus,
+        )
+
     def _on_open_project(self):
         """Handle open project request."""
         result = self._dialog_service.show_open_project_dialog(parent=self._shell)
@@ -257,6 +288,8 @@ class QualCoderApp:
             if open_result.is_success:
                 # Wire viewmodels and switch to files view
                 self._wire_viewmodels()
+                # Auto-initialize VCS for new projects
+                self._auto_init_vcs()
                 self._screens["files"].refresh()
                 self._shell.set_screen(self._screens["files"])
                 self._shell.set_active_menu("files")
