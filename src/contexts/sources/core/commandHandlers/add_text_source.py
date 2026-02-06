@@ -90,7 +90,7 @@ def add_text_source(
         )
 
     # Step 3: Create Source entity
-    source_id = SourceId(value=hash(name) % 1_000_000)
+    source_id = SourceId.new()
 
     # Derive SourceAdded event
     event = SourceAdded.create(

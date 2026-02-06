@@ -54,6 +54,7 @@ class ProjectToolsContext(Protocol):
     - event_bus: EventBus for publishing domain events
     - signal_bridge: Optional ProjectSignalBridge for UI updates
     - sources_context: SourcesContext for source/folder repos
+    - coding_context: CodingContext for segment repo (cascade deletes)
     - cases_context: CasesContext for case repo
 
     Required methods:
@@ -79,6 +80,11 @@ class ProjectToolsContext(Protocol):
     @property
     def sources_context(self):
         """Get sources context with source_repo (None if no project open)."""
+        ...
+
+    @property
+    def coding_context(self):
+        """Get coding context with segment_repo (None if no project open)."""
         ...
 
     @property
@@ -898,7 +904,7 @@ class ProjectTools:
         open_project command handler.
         """
         path = arguments.get("path")
-        if not path:
+        if path is None:
             return Failure("Missing required parameter: path")
 
         result = self._ctx.open_project(str(path))
@@ -972,9 +978,9 @@ class ProjectTools:
         name = arguments.get("name")
         content = arguments.get("content")
 
-        if not name:
+        if name is None:
             return Failure("Missing required parameter: name")
-        if not content:
+        if content is None:
             return Failure("Missing required parameter: content")
 
         command = AddTextSourceCommand(
@@ -1067,9 +1073,7 @@ class ProjectTools:
 
         # Get segment_repo from coding context for cascade delete
         segment_repo = (
-            self._ctx.coding_context.segment_repo
-            if hasattr(self._ctx, "coding_context") and self._ctx.coding_context
-            else None
+            self._ctx.coding_context.segment_repo if self._ctx.coding_context else None
         )
 
         result = remove_source(
@@ -1125,7 +1129,7 @@ class ProjectTools:
         from src.contexts.projects.core.commands import CreateFolderCommand
 
         name = arguments.get("name")
-        if not name:
+        if name is None:
             return Failure("Missing required parameter: name")
 
         parent_id = arguments.get("parent_id")
@@ -1171,7 +1175,7 @@ class ProjectTools:
 
         if folder_id is None:
             return Failure("Missing required parameter: folder_id")
-        if not new_name:
+        if new_name is None:
             return Failure("Missing required parameter: new_name")
 
         command = RenameFolderCommand(folder_id=int(folder_id), new_name=new_name)
@@ -1309,7 +1313,7 @@ class ProjectTools:
         )
 
         file_path = arguments.get("file_path")
-        if not file_path:
+        if file_path is None:
             return Failure("Missing required parameter: file_path")
 
         command = ImportFileSourceCommand(

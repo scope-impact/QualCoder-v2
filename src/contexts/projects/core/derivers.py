@@ -379,7 +379,7 @@ def derive_add_source(
     source_type = detect_source_type(source_path)
 
     # Generate source ID
-    source_id = SourceId(value=hash(str(source_path)) % 1_000_000)
+    source_id = SourceId.new()
 
     return SourceAdded.create(
         source_id=source_id,

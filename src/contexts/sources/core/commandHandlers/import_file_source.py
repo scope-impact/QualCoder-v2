@@ -170,7 +170,7 @@ def import_file_source(
                 fulltext = extracted.content
 
     # Create Source entity
-    source_id = SourceId(value=hash(name) % 1_000_000)
+    source_id = SourceId.new()
 
     source = Source(
         id=source_id,
