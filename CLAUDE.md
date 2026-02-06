@@ -148,6 +148,42 @@ docs: update CLAUDE.md
 
 ---
 
+## MCP Tools
+
+All 15 MCP tools live in `src/contexts/projects/interface/mcp_tools.py`.
+
+### Tool Inventory
+
+| Category | Tools |
+|----------|-------|
+| **Project** | `get_project_context`, `open_project`, `close_project` |
+| **Sources** | `list_sources`, `read_source_content`, `add_text_source`, `import_file_source`, `remove_source`, `suggest_source_metadata`, `navigate_to_segment` |
+| **Folders** | `list_folders`, `create_folder`, `rename_folder`, `delete_folder`, `move_source_to_folder` |
+| **Coding** | `list_codes`, `get_code`, `batch_apply_codes`, `list_segments_for_source` |
+
+### Architecture Patterns
+
+- **Handlers dict** built once in `__init__`, not per-call in `execute()`
+- **Repo access** via `_source_repo` / `_folder_repo` properties (null-safe)
+- **Param checks** use `if x is None` (missing only) — command handlers own content validation
+- **No `hasattr()` guards** — all context properties defined on `ProjectToolsContext` protocol
+- **Tools return** `Result[dict, str]` (Success/Failure from `returns` library)
+- **Command handlers return** `OperationResult` (`.is_success`, `.is_failure`, `.data`, `.error`)
+- **Error codes**: `ENTITY_NOT_OP/REASON` (e.g., `SOURCE_NOT_ADDED/DUPLICATE_NAME`)
+
+### ID Generation
+
+All typed IDs use `uuid4().int % 1_000_000` via `.new()` classmethod in `shared/common/types.py`.
+Types: `SourceId`, `CodeId`, `SegmentId`, `CaseId`, `FolderId`. Never use `hash()` for IDs.
+
+### API Docs
+
+- `docs/api/mcp-api.md` — compact table reference (agents get full schemas via `tools/list`)
+- `docs/user-manual/sources.md` — includes AI Agent Source Management section
+- `docs/DOC_COVERAGE.md` — tracks doc status per AC
+
+---
+
 ## Common Issues / Wiring Checklist
 
 ### Screen ↔ ViewModel Wiring Pattern
