@@ -10,7 +10,7 @@ Now let's update the UI integration for our new priority field.
 - Are immutable (frozen dataclasses)
 - Carry metadata for UI rendering (timestamps, session info)
 
-Look at `src/application/signal_bridge/payloads.py`:
+Look at `src/shared/infra/signal_bridge/payloads.py`:
 
 ```python
 @dataclass(frozen=True)
@@ -51,7 +51,8 @@ Notice:
 A **converter** transforms domain events to payloads:
 
 ```python
-from src.application.signal_bridge.protocols import EventConverter
+# The converter is defined alongside the signal bridge or in a converters module
+from src.shared.infra.signal_bridge.base import EventConverter
 
 class CodeCreatedConverter(EventConverter):
     """Converts CodeCreated events to CodeCreatedPayload."""
@@ -79,12 +80,19 @@ The converter:
 
 ## Registering the Converter
 
-In a context-specific SignalBridge:
+Signal bridges are context-specific and live in `src/shared/infra/signal_bridge/`:
 
 ```python
+# src/shared/infra/signal_bridge/coding.py
 class CodingSignalBridge(BaseSignalBridge):
-    # Define the Qt signal
+    # Define the Qt signals
     code_created = Signal(object)
+    code_deleted = Signal(object)
+    code_renamed = Signal(object)
+    segment_coded = Signal(object)
+
+    def _get_context_name(self) -> str:
+        return "coding"
 
     def _register_converters(self) -> None:
         self.register_converter(

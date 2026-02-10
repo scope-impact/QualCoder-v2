@@ -155,7 +155,7 @@ flowchart LR
         E3[CodeMovedToCategory]
     end
 
-    subgraph Controller
+    subgraph CommandHandler
         C[Publish each event]
     end
 
@@ -215,7 +215,7 @@ def derive_delete_category_cascade(
     )
 ```
 
-### Controller Publishes All
+### CommandHandler Publishes All
 
 ```python
 def delete_category(self, category_id, strategy):
@@ -240,7 +240,7 @@ Update the UI immediately, then confirm with server/domain.
 sequenceDiagram
     participant U as User
     participant UI as TreeView
-    participant C as Controller
+    participant C as CommandHandler
 
     U->>UI: Rename to "New Name"
     UI->>UI: 1. Show "New Name" immediately

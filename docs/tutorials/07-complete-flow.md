@@ -8,19 +8,23 @@ This is your reference for the complete Code creation flow with priority.
 flowchart TB
     subgraph User ["User Action"]
         UA[User clicks 'Create Code' button]
+        AI[AI Agent calls MCP tool]
     end
 
     subgraph Presentation ["Presentation Layer"]
         Dialog[CreateCodeDialog]
+        VM[ViewModel]
+        MCP[MCP Tools]
         TreeView[CodebookTreeView]
         ActivityPanel[ActivityPanel]
     end
 
-    subgraph Controller ["Controller (Application)"]
-        Ctrl[CodingController.create_code]
-        BuildState["Build CodingState from repos"]
-        Persist["repo.save_from_event()"]
+    subgraph Application ["Application Layer"]
+        CH[CommandHandler: create_code]
+        BuildState["build_coding_state()"]
+        Persist["code_repo.save()"]
         Publish["event_bus.publish()"]
+        Result["OperationResult.ok() / .fail()"]
     end
 
     subgraph Domain ["Domain Layer (Pure)"]
@@ -29,7 +33,7 @@ flowchart TB
         Inv2{is_code_name_unique?}
         Inv3{is_valid_priority?}
         Event[CodeCreated Event]
-        Fail[Failure]
+        Fail[FailureEvent]
     end
 
     subgraph EventBus ["EventBus"]
@@ -42,9 +46,11 @@ flowchart TB
         Emit[Thread-safe emit]
     end
 
-    UA --> Dialog
-    Dialog --> Ctrl
-    Ctrl --> BuildState
+    UA --> Dialog --> VM
+    AI --> MCP
+    VM --> CH
+    MCP --> CH
+    CH --> BuildState
     BuildState --> Deriver
 
     Deriver --> Inv1
@@ -58,22 +64,26 @@ flowchart TB
     Event --> Persist
     Persist --> Publish
     Publish --> EB
+    Fail --> Publish
+    CH --> Result
+    Result -.->|Return to caller| VM
+    Result -.->|Return to caller| MCP
+
     EB --> SB
     SB --> Convert
     Convert --> Emit
     Emit --> TreeView
     Emit --> ActivityPanel
-
-    Fail -.->|Return to UI| Dialog
 ```
 
 ## Layer Summary
 
 | Layer | Responsibility | Pure? | Side Effects |
 |-------|---------------|-------|--------------|
-| Presentation | User input, rendering | No | UI events |
-| Controller | Orchestration | No | Read/write repos, publish |
-| Domain | Business logic | **Yes** | None |
+| Presentation | User input, rendering, AI interface | No | UI events, MCP responses |
+| ViewModel | UI state, calls command handlers | No | Calls command handlers |
+| CommandHandler | Orchestration (load state, call deriver, persist, publish) | No | Read/write repos, publish events |
+| Domain (Derivers, Invariants) | Business logic | **Yes** | None |
 | EventBus | Message routing | No | Handler invocation |
 | SignalBridge | Event→Signal conversion | No | Thread marshaling |
 | UI Widgets | Display updates | No | Qt rendering |
@@ -82,21 +92,30 @@ flowchart TB
 
 ```
 src/contexts/coding/core/
-├── invariants.py          # is_valid_priority()
-├── derivers.py            # derive_create_code()
-├── events.py              # CodeCreated (with priority)
+├── invariants.py          # is_valid_code_name(), is_code_name_unique(), etc.
+├── derivers.py            # derive_create_code(), derive_rename_code(), etc.
+├── events.py              # CodeCreated, CodeRenamed, etc.
 ├── failure_events.py      # CodeNotCreated, CodeNotDeleted, etc.
-└── entities.py            # Code entity
+├── entities.py            # Code, Category, Segment entities
+├── commands.py            # CreateCodeCommand, DeleteCodeCommand, etc.
+└── commandHandlers/       # Use cases (orchestration)
+    ├── create_code.py     # create_code() handler
+    ├── rename_code.py     # rename_code() handler
+    └── _state.py          # build_coding_state() helper
 
-src/contexts/shared/core/
-├── types.py               # DomainEvent, typed IDs
+src/shared/common/
+├── types.py               # DomainEvent, CodeId, SegmentId, etc.
+├── operation_result.py    # OperationResult for command handlers
 └── failure_events.py      # FailureEvent base class
 
-src/application/
+src/shared/infra/
 ├── event_bus.py           # EventBus
 └── signal_bridge/
     ├── base.py            # BaseSignalBridge
-    └── payloads.py        # CodeCreatedPayload (with priority)
+    ├── payloads.py        # SignalPayload, ActivityItem
+    └── thread_utils.py    # Thread-safe emission
+
+src/tests/e2e/             # End-to-end tests with Allure
 ```
 
 ## Detailed Sequence
@@ -104,9 +123,9 @@ src/application/
 ```mermaid
 sequenceDiagram
     autonumber
-    participant U as User
-    participant D as Dialog
-    participant C as Controller
+    participant U as User/AI
+    participant VM as ViewModel/MCP
+    participant CH as CommandHandler
     participant R as Repository
     participant DV as Deriver
     participant EB as EventBus
@@ -114,33 +133,34 @@ sequenceDiagram
     participant TV as TreeView
     participant AP as ActivityPanel
 
-    U->>D: Click "Create Code"
-    D->>C: create_code(name, color, priority)
+    U->>VM: create_code(name, color)
+    VM->>CH: create_code(command, repos, event_bus)
 
-    Note over C: Build state from repositories
-    C->>R: get_all_codes()
-    R-->>C: existing_codes
-    C->>R: get_all_categories()
-    R-->>C: existing_categories
+    Note over CH: Build state from repositories
+    CH->>R: get_all_codes()
+    R-->>CH: existing_codes
+    CH->>R: get_all_categories()
+    R-->>CH: existing_categories
+    CH->>CH: build_coding_state()
 
-    Note over C,DV: Call pure deriver
-    C->>DV: derive_create_code(name, color, priority, state)
+    Note over CH,DV: Call pure deriver
+    CH->>DV: derive_create_code(name, color, state)
 
     Note over DV: Validate with invariants
     DV->>DV: is_valid_code_name(name)
     DV->>DV: is_code_name_unique(name, codes)
-    DV->>DV: is_valid_priority(priority)
 
     alt All validations pass
-        DV-->>C: CodeCreated event
-        Note over C: Persist change
-        C->>R: save_from_event(event)
+        DV-->>CH: CodeCreated event
+        Note over CH: Persist change
+        CH->>R: save(code)
 
-        Note over C: Publish event
-        C->>EB: publish(CodeCreated)
+        Note over CH: Publish event
+        CH->>EB: publish(CodeCreated)
+        CH-->>VM: OperationResult.ok(code, rollback)
 
         Note over EB: Route to subscribers
-        EB->>SB: handler(event)
+        EB->>SB: _dispatch_event(event)
 
         Note over SB: Convert and emit
         SB->>SB: converter.convert(event)
@@ -150,9 +170,10 @@ sequenceDiagram
         TV->>TV: Add code to tree
         AP->>AP: Show "Code created"
     else Validation fails
-        DV-->>C: FailureEvent(reason)
-        C-->>D: Failure
-        D->>D: Show error message
+        DV-->>CH: FailureEvent(reason)
+        CH->>EB: publish(FailureEvent)
+        CH-->>VM: OperationResult.from_failure(event)
+        VM->>VM: Show error + suggestions
     end
 ```
 
@@ -161,26 +182,26 @@ sequenceDiagram
 ```mermaid
 graph TB
     subgraph INV ["Invariants (src/contexts/coding/core/tests/test_invariants.py)"]
-        INV_TEST["def test_valid_priority():<br/>    assert is_valid_priority(3) is True<br/>    assert is_valid_priority(10) is False"]
+        INV_TEST["def test_valid_code_name():<br/>    assert is_valid_code_name('Theme') is True<br/>    assert is_valid_code_name('') is False"]
         INV_PROPS["✓ No setup<br/>✓ No mocks<br/>✓ Microseconds"]
     end
 
     subgraph DER ["Derivers (src/contexts/coding/core/tests/test_derivers.py)"]
-        DER_TEST["def test_create_code_with_priority(empty_state):<br/>    result = derive_create_code(..., priority=3, state=empty_state)<br/>    assert isinstance(result, CodeCreated)<br/>    assert result.priority == 3"]
+        DER_TEST["def test_create_code_success(empty_state):<br/>    result = derive_create_code(..., state=empty_state)<br/>    assert isinstance(result, CodeCreated)"]
         DER_PROPS["✓ Data fixtures<br/>✓ No database<br/>✓ Fast"]
     end
 
-    subgraph CONV ["Converters (src/application/signal_bridge/tests/test_payloads.py)"]
-        CONV_TEST["def test_converter_includes_priority():<br/>    event = CodeCreated(..., priority=3)<br/>    payload = converter.convert(event)<br/>    assert payload.priority == 3"]
-        CONV_PROPS["✓ Pure transformation<br/>✓ No Qt required"]
+    subgraph CH ["CommandHandlers (src/contexts/coding/core/tests/test_command_handlers.py)"]
+        CH_TEST["def test_create_code_handler(mock_repo):<br/>    result = create_code(cmd, mock_repo, event_bus)<br/>    assert result.success"]
+        CH_PROPS["✓ Mock repos<br/>✓ Tests orchestration"]
     end
 
-    subgraph INT ["Integration (test_integration.py)"]
-        INT_TEST["def test_full_flow():<br/>    event_bus = EventBus()<br/>    # Subscribe, derive, publish, verify"]
-        INT_PROPS["✓ No database<br/>✓ No Qt<br/>✓ Core logic only"]
+    subgraph E2E ["E2E (src/tests/e2e/)"]
+        E2E_TEST["@allure.story('QC-028.01')<br/>def test_create_code_e2e(app_context):<br/>    # Real database, full flow"]
+        E2E_PROPS["✓ Real database<br/>✓ Allure tracing<br/>✓ Full integration"]
     end
 
-    INV --> DER --> CONV --> INT
+    INV --> DER --> CH --> E2E
 ```
 
 ## Quick Reference: Adding a New Field
@@ -226,37 +247,50 @@ flowchart LR
    - [ ] Add `is_valid_<field>()` pure predicate
 
 2. **Failure Event** (`src/contexts/coding/core/failure_events.py`)
-   - [ ] Add factory method to existing failure event class (e.g., `CodeNotCreated.invalid_priority()`)
+   - [ ] Add factory method to failure event class (e.g., `CodeNotCreated.invalid_priority()`)
+   - [ ] Include `suggestions` tuple for recovery hints
 
 3. **Deriver** (`src/contexts/coding/core/derivers.py`)
    - [ ] Add parameter to function signature
-   - [ ] Add validation call
-   - [ ] Return failure event if invalid (e.g., `CodeNotCreated.invalid_priority(value)`)
+   - [ ] Add validation call using invariant
+   - [ ] Return failure event if invalid
 
 4. **Event** (`src/contexts/coding/core/events.py`)
    - [ ] Add field to event dataclass
    - [ ] Add to `create()` factory method
 
-5. **Payload** (`src/application/signal_bridge/payloads.py`)
+5. **Command** (`src/contexts/coding/core/commands.py`)
+   - [ ] Add field to command dataclass
+
+6. **CommandHandler** (`src/contexts/coding/core/commandHandlers/`)
+   - [ ] Update handler to pass new field to deriver
+   - [ ] Update entity creation from event
+
+7. **Payload** (`src/shared/infra/signal_bridge/payloads.py`)
    - [ ] Add field to payload dataclass
 
-6. **Converter** (context-specific)
+8. **Converter** (in signal bridge)
    - [ ] Map `event.<field>` to `payload.<field>`
 
-7. **Tests**
+9. **Tests**
    - [ ] `src/contexts/coding/core/tests/test_invariants.py`: Test the predicate
    - [ ] `src/contexts/coding/core/tests/test_derivers.py`: Test valid/invalid cases
+   - [ ] `src/contexts/coding/core/tests/test_command_handlers.py`: Test orchestration
+   - [ ] `src/tests/e2e/`: Add E2E test with `@allure.story` decorator
 
 ## You're Ready!
 
 You now understand the complete fDDD architecture:
 
-- **Invariants** validate business rules (pure)
-- **Derivers** compose invariants and produce events (pure)
+- **Invariants** validate business rules (pure functions)
+- **Derivers** compose invariants and produce events (pure functions)
 - **Events** are immutable records of what happened
+- **CommandHandlers** orchestrate the flow (load state → call deriver → persist → publish)
+- **OperationResult** wraps results for UI/AI consumers (error codes, suggestions, rollback)
 - **EventBus** routes events to subscribers
 - **SignalBridge** converts events to UI payloads
 - **Payloads** carry data to Qt widgets
+- **ViewModels and MCP Tools** both call the same command handlers
 
 For common patterns and recipes, see the appendices.
 

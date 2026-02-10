@@ -59,17 +59,25 @@ graph LR
         D --> E[Events]
     end
 
-    subgraph App ["Application"]
+    subgraph Application ["Application (Orchestration)"]
+        CH[CommandHandlers]
         EB[EventBus]
         SB[SignalBridge]
     end
 
-    subgraph UI ["Presentation"]
+    subgraph Presentation ["Presentation"]
+        VM[ViewModel]
+        MCP[MCP Tools]
         W[Qt Widgets]
     end
 
-    E --> EB --> SB --> W
+    VM --> CH
+    MCP --> CH
+    CH --> D
+    CH --> EB --> SB --> W
 ```
+
+**Key Insight**: ViewModels and MCP Tools both call the same CommandHandlers, ensuring consistent behavior for human and AI consumers.
 
 ## Key Files Reference
 
@@ -77,27 +85,36 @@ As you work through the tutorial, you'll reference these files:
 
 ```
 src/contexts/coding/core/
-├── invariants.py     # Pure validation functions
-├── derivers.py       # Event derivation logic
-├── events.py         # Domain event definitions
-├── failure_events.py # Failure event types
-├── entities.py       # Code, Category, Segment entities
+├── invariants.py          # Pure validation functions (is_*, can_*)
+├── derivers.py            # Event derivation (derive_*)
+├── events.py              # Success events (CodeCreated, etc.)
+├── failure_events.py      # Failure events (CodeNotCreated, etc.)
+├── entities.py            # Code, Category, Segment entities
+├── commands.py            # Command dataclasses
+├── commandHandlers/       # Use cases (orchestration)
+│   ├── create_code.py     # create_code() command handler
+│   ├── rename_code.py     # rename_code() command handler
+│   └── _state.py          # build_coding_state() helper
 └── tests/
     ├── test_invariants.py
-    └── test_derivers.py
+    ├── test_derivers.py
+    └── test_command_handlers.py
 
 src/shared/common/
-├── types.py          # DomainEvent base, typed IDs
-└── operation_result.py # Success/Failure result pattern
-
-src/shared/core/
-└── validation.py     # Shared validation helpers
+├── types.py               # DomainEvent base, typed IDs (CodeId, etc.)
+├── operation_result.py    # OperationResult pattern
+└── failure_events.py      # FailureEvent base class
 
 src/shared/infra/
-├── event_bus.py      # Pub/sub for domain events
+├── event_bus.py           # Pub/sub for domain events
 └── signal_bridge/
-    ├── base.py       # BaseSignalBridge
-    └── payloads.py   # UI-friendly DTOs
+    ├── base.py            # BaseSignalBridge abstract class
+    ├── payloads.py        # SignalPayload, ActivityItem DTOs
+    └── thread_utils.py    # Thread-safe emission helpers
+
+src/tests/e2e/             # End-to-end tests with Allure
+├── test_manage_sources_e2e.py
+└── conftest.py            # Real database fixtures
 ```
 
 ## After the Tutorial
@@ -107,7 +124,9 @@ You should be able to:
 1. Explain why invariants are pure functions
 2. Write a new invariant and its tests
 3. Modify a deriver to use new invariants
-4. Trace an event from deriver to UI
-5. Know where to look when adding new features
+4. Create a command handler that orchestrates the flow
+5. Trace an event from command handler to UI via SignalBridge
+6. Write E2E tests with Allure decorators
+7. Know where to look when adding new features
 
 Ready? Start with [Part 0: The Big Picture](./00-big-picture.md).

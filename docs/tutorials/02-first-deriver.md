@@ -65,24 +65,32 @@ Notice the pattern:
 
 ## Adding Priority Validation
 
-Let's extend this deriver to validate priority. First, we need a failure event type. In QualCoder v2, failure events are defined in `src/contexts/coding/core/failure_events.py`:
+Let's extend this deriver to validate priority. First, we need a failure event type.
+
+Failure events inherit from `FailureEvent` base class (in `src/shared/common/failure_events.py`) and are defined per-context in `src/contexts/coding/core/failure_events.py`:
 
 ```python
-# In failure_events.py
+# In src/contexts/coding/core/failure_events.py
 @dataclass(frozen=True)
 class CodeNotCreated(FailureEvent):
     """Code creation failed."""
 
+    # FailureEvent base requires: event_id, occurred_at, event_type
+    # event_type follows pattern: {ENTITY}_NOT_{OPERATION}/{REASON}
+
     reason: str
     name: str | None = None
     category_id: CategoryId | None = None
+    suggestions: tuple[str, ...] = ()  # Recovery hints for UI/AI
 
     @classmethod
     def invalid_priority(cls, value: int) -> "CodeNotCreated":
         return cls(
             event_id=cls._generate_id(),
             occurred_at=cls._now(),
+            event_type="CODE_NOT_CREATED/INVALID_PRIORITY",
             reason=f"Priority must be between 1 and 5, got {value}",
+            suggestions=("Use a value between 1 and 5", "Use None for no priority"),
         )
 ```
 

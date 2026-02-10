@@ -67,14 +67,17 @@ The architecture separates **pure logic** from **side effects**:
 
 ```mermaid
 graph TB
-    subgraph Presentation ["Presentation Layer (PySide6 Widgets)"]
-        UI[UI Widgets]
-        UI_DESC["• Receives SignalPayloads<br/>• Renders UI<br/>• Captures user input"]
+    subgraph Presentation ["Presentation Layer"]
+        UI[Qt Widgets & MCP Tools]
+        VM[ViewModels]
+        UI_DESC["• Qt Widgets receive SignalPayloads<br/>• MCP Tools serve AI agents<br/>• Both call CommandHandlers"]
     end
 
-    subgraph Application ["Application Layer (EventBus, SignalBridge)"]
-        APP[Controllers & Bridges]
-        APP_DESC["• Routes domain events<br/>• Converts events → UI payloads<br/>• Handles threading"]
+    subgraph Application ["Application Layer (CommandHandlers, EventBus)"]
+        CH[Command Handlers]
+        EB[EventBus]
+        SB[SignalBridge]
+        APP_DESC["• CommandHandlers orchestrate flow<br/>• EventBus routes events<br/>• SignalBridge converts to Qt signals"]
     end
 
     subgraph Domain ["Domain Layer (Pure Functions)"]
@@ -87,9 +90,14 @@ graph TB
         INFRA_DESC["• Database access<br/>• File I/O<br/>• External services"]
     end
 
-    INFRA -->|Data| Domain
-    Domain -->|Domain Events| Application
-    Application -->|Qt Signals| Presentation
+    VM --> CH
+    CH -->|load state| INFRA
+    CH -->|call| DOM
+    DOM -->|return event| CH
+    CH -->|persist| INFRA
+    CH -->|publish| EB
+    EB --> SB
+    SB -->|emit| UI
 ```
 
 **Key insight:** The Domain Layer is a "pure functional core" - given the same inputs, it always produces the same outputs. Side effects (database writes, UI updates) happen at the edges.
@@ -98,20 +106,27 @@ graph TB
 
 ```mermaid
 graph LR
-    subgraph "Domain Layer"
+    subgraph "Domain Layer (Pure)"
         INV[Invariants]
         DER[Derivers]
         EVT[Events]
     end
 
-    subgraph "Application Layer"
+    subgraph "Application Layer (Orchestration)"
+        CH[CommandHandlers]
         BUS[EventBus]
         BRG[SignalBridge]
     end
 
+    subgraph "Presentation Layer"
+        VM[ViewModel / MCP Tools]
+    end
+
+    VM -->|call| CH
+    CH -->|compose| INV
     INV -->|validate| DER
     DER -->|produce| EVT
-    EVT -->|publish to| BUS
+    CH -->|publish| BUS
     BUS -->|route to| BRG
     BRG -->|emit| SIG[Qt Signals]
 ```
@@ -206,35 +221,45 @@ Properties:
 
 ## How They Work Together
 
-When a user clicks "Create Code":
+When a user clicks "Create Code" (or AI calls the MCP tool):
 
 ```mermaid
 sequenceDiagram
-    participant UI as UI Widget
-    participant C as Controller
+    participant UI as UI Widget / MCP Tool
+    participant VM as ViewModel
+    participant CH as CommandHandler
     participant D as Deriver
     participant R as Repository
     participant EB as EventBus
     participant SB as SignalBridge
     participant TV as TreeView
 
-    UI->>C: create_code("Theme A", color)
-    C->>R: get_all()
-    R-->>C: existing_codes
-    C->>D: derive_create_code(name, color, state)
+    UI->>VM: create_code("Theme A", color)
+    VM->>CH: create_code(command, repos, event_bus)
+    CH->>R: get_all() [load state]
+    R-->>CH: existing_codes
+    CH->>CH: build_coding_state()
+    CH->>D: derive_create_code(name, color, state)
 
-    Note over D: Validates using invariants:<br/>is_valid_code_name() ✓<br/>is_code_name_unique() ✓
+    Note over D: Pure validation:<br/>is_valid_code_name() ✓<br/>is_code_name_unique() ✓
 
-    D-->>C: CodeCreated event
-    C->>R: save(event)
-    C->>EB: publish(event)
-    EB->>SB: _on_code_created(event)
+    D-->>CH: CodeCreated event
+    CH->>R: save(code)
+    CH->>EB: publish(event)
+    CH-->>VM: OperationResult.ok(code, rollback)
+    EB->>SB: _dispatch_event(event)
 
-    Note over SB: Convert to payload
+    Note over SB: Convert event → payload
 
     SB->>TV: code_created.emit(payload)
     TV->>TV: Update tree view
 ```
+
+**Key Points:**
+- **CommandHandler** is the orchestrator (loads state, calls deriver, persists, publishes)
+- **Deriver** contains all business logic (pure function, no I/O)
+- **OperationResult** returned to caller with data, rollback command, or error details
+- **Same flow** for both human UI and AI agents
 
 ## Next Steps
 
