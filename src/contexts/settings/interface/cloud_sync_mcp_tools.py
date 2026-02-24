@@ -5,8 +5,6 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any
 
-from returns.result import Failure
-
 from src.contexts.settings.core.commandHandlers import configure_cloud_sync
 from src.contexts.settings.core.commands import ConfigureCloudSyncCommand
 
@@ -197,22 +195,12 @@ class CloudSyncMCPTools:
             event_bus=self._event_bus,
         )
 
-        if isinstance(result, Failure):
-            error_msg = result.failure()
-            # Try to extract error_code and suggestions from failure
-            error_code = "CONFIGURATION_FAILED"
-            suggestions: list[str] = []
-
-            if hasattr(error_msg, "error_code"):
-                error_code = error_msg.error_code
-            if hasattr(error_msg, "suggestions"):
-                suggestions = list(error_msg.suggestions)
-
+        if result.is_failure:
             return {
                 "success": False,
-                "error": str(error_msg),
-                "error_code": error_code,
-                "suggestions": suggestions,
+                "error": result.error,
+                "error_code": result.error_code or "CONFIGURATION_FAILED",
+                "suggestions": list(result.suggestions),
             }
 
         return {
