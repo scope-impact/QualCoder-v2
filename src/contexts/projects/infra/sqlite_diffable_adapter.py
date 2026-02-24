@@ -8,6 +8,7 @@ from pathlib import Path
 from src.shared.common.operation_result import OperationResult
 
 VCS_DIR_NAME = ".qualcoder-vcs"
+DEFAULT_DB_FILENAME = "qualcoder.db"
 
 EXCLUDE_TABLES = (
     "sqlite_sequence",
@@ -19,12 +20,24 @@ EXCLUDE_TABLES = (
 class SqliteDiffableAdapter:
     """Converts SQLite databases to/from Git-friendly JSON format."""
 
-    def __init__(self, exclude_tables: tuple[str, ...] = EXCLUDE_TABLES) -> None:
+    def __init__(
+        self,
+        db_filename: str = DEFAULT_DB_FILENAME,
+        exclude_tables: tuple[str, ...] = EXCLUDE_TABLES,
+    ) -> None:
+        self._db_filename = db_filename
         self._exclude_tables = exclude_tables
+
+    def _resolve_db_path(self, path: Path) -> Path:
+        """Resolve a project directory or DB file path to the actual DB file."""
+        path = Path(path).resolve()
+        if path.is_dir():
+            return path / self._db_filename
+        return path
 
     def dump(self, db_path: Path, output_dir: Path) -> OperationResult:
         """Dump SQLite database to diffable JSON format."""
-        db_path = Path(db_path).resolve()
+        db_path = self._resolve_db_path(db_path)
         output_dir = Path(output_dir).resolve()
 
         if not db_path.exists():
@@ -44,7 +57,7 @@ class SqliteDiffableAdapter:
 
     def load(self, db_path: Path, snapshot_dir: Path) -> OperationResult:
         """Load database from diffable JSON format."""
-        db_path = Path(db_path).resolve()
+        db_path = self._resolve_db_path(db_path)
         snapshot_dir = Path(snapshot_dir).resolve()
 
         if not snapshot_dir.exists():

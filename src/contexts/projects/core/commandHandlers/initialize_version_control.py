@@ -68,7 +68,7 @@ def initialize_version_control(
     if init_result.is_failure:
         return init_result
 
-    gitignore_result = _create_gitignore(project_path.parent)
+    gitignore_result = _create_gitignore(project_path)
     if gitignore_result.is_failure:
         return gitignore_result
 
