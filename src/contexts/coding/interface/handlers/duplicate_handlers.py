@@ -8,8 +8,9 @@ All mutation handlers delegate to command handlers to ensure proper event publis
 
 from __future__ import annotations
 
-from difflib import SequenceMatcher
 from typing import Any
+
+from rapidfuzz import fuzz
 
 from src.contexts.coding.core.ai_entities import (
     DetectionId,
@@ -27,9 +28,29 @@ from src.shared.common.types import CodeId
 from .base import HandlerContext, missing_param_error, no_context_error
 
 
-def _calculate_similarity(a: str, b: str) -> float:
-    """Calculate similarity between two strings."""
-    return SequenceMatcher(None, a.lower(), b.lower()).ratio()
+def _calculate_similarity(
+    name_a: str,
+    name_b: str,
+    memo_a: str | None = None,
+    memo_b: str | None = None,
+) -> float:
+    """Calculate similarity using token-level matching.
+
+    Uses rapidfuzz token_set_ratio which compares unique word sets,
+    handling reordering and duplicates. This avoids false positives
+    from character-level matching (e.g. "Sports & Recreation" vs
+    "Trust & Verification" no longer match at 61%).
+
+    When both codes have memos, blends name similarity (60%) with
+    memo similarity (40%) for better accuracy.
+    """
+    name_score = fuzz.token_set_ratio(name_a, name_b) / 100.0
+
+    if memo_a and memo_b:
+        memo_score = fuzz.token_set_ratio(memo_a, memo_b) / 100.0
+        return 0.6 * name_score + 0.4 * memo_score
+
+    return name_score
 
 
 def handle_detect_duplicate_codes(
@@ -46,10 +67,15 @@ def handle_detect_duplicate_codes(
     codes = ctx.code_repo.get_all()
     candidates = []
 
-    # Simple name-based similarity detection
+    # Token-level similarity detection (names + memos)
     for i, code_a in enumerate(codes):
         for code_b in codes[i + 1 :]:
-            similarity = _calculate_similarity(code_a.name, code_b.name)
+            similarity = _calculate_similarity(
+                code_a.name,
+                code_b.name,
+                memo_a=code_a.memo,
+                memo_b=code_b.memo,
+            )
             if similarity >= threshold:
                 # Get segment counts
                 a_segments = (
@@ -63,13 +89,18 @@ def handle_detect_duplicate_codes(
                     else 0
                 )
 
+                # Build rationale with score breakdown
+                rationale = f"Names are similar: '{code_a.name}' vs '{code_b.name}'"
+                if code_a.memo and code_b.memo:
+                    rationale += " (name + memo similarity)"
+
                 candidate = DuplicateCandidate(
                     code_a_id=code_a.id,
                     code_a_name=code_a.name,
                     code_b_id=code_b.id,
                     code_b_name=code_b.name,
                     similarity=SimilarityScore(similarity),
-                    rationale=f"Names are similar: '{code_a.name}' vs '{code_b.name}'",
+                    rationale=rationale,
                     code_a_segment_count=a_segments,
                     code_b_segment_count=b_segments,
                 )

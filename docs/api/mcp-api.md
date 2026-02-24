@@ -25,7 +25,7 @@ All suggestions require researcher approval.
 | `suggest_new_code` | Suggest a new code | `name`, `rationale` |
 | `list_pending_suggestions` | List pending suggestions | - |
 | `approve_suggestion` | Approve code suggestion | `suggestion_id` |
-| `detect_duplicate_codes` | Find similar codes | - |
+| `detect_duplicate_codes` | Find similar codes (token-level + memo-aware) | - |
 | `suggest_merge_codes` | Suggest merging codes | `source_code_id`, `target_code_id`, `rationale` |
 | `approve_merge` | Approve merge | `merge_suggestion_id` |
 

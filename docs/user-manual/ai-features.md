@@ -26,7 +26,7 @@ Over time, you may create similar or redundant codes. The duplicate detector ide
 ### Finding Duplicates
 
 1. Click **AI > Find Duplicates**
-2. The AI compares all codes using semantic similarity
+2. The AI compares all codes using token-level similarity (word matching, not character matching)
 3. Review candidate pairs (each shows code names, similarity %, and segment counts)
 4. **Merge A → B** to combine codes, or **Dismiss** if they're not duplicates
 
@@ -36,6 +36,10 @@ Over time, you may create similar or redundant codes. The duplicate detector ide
 > - **90%+** - Very likely duplicates
 > - **70-90%** - Possibly related, review carefully
 > - **Below 70%** - Probably distinct concepts
+
+> **How It Works**
+>
+> Duplicate detection uses word-level (token) matching rather than character-level comparison. This means codes like "Sports & Recreation" and "Trust & Verification" are correctly identified as distinct, even though they share similar character patterns. When both codes have memos, their descriptions are also compared for a more accurate score.
 
 ## Auto-Code
 
