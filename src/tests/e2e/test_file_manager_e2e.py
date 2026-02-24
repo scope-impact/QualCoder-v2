@@ -23,7 +23,7 @@ from PySide6.QtTest import QSignalSpy
 from PySide6.QtWidgets import QApplication, QMainWindow, QVBoxLayout, QWidget
 
 from src.contexts.sources.presentation import FileManagerScreen
-from src.shared.presentation.dto import ProjectSummaryDTO, SourceDTO
+from src.shared.presentation.dto import FolderDTO, ProjectSummaryDTO, SourceDTO
 from src.tests.e2e.helpers import attach_screenshot
 from src.tests.e2e.utils import DocScreenshot
 
@@ -261,9 +261,8 @@ class TestFileManagerDisplay:
         # Verify row count matches sources
         assert table.rowCount() == len(sources)
 
-        # Screenshot for documentation
+        # Screenshot for documentation (captured in TestFolderScreenshots with folders)
         attach_screenshot(window, "FileManager - With Sources")
-        DocScreenshot.capture(window, "file-manager-with-sources", max_width=1000)
 
     def test_empty_state_shown_when_no_sources(self, empty_file_manager_window):
         """
@@ -713,3 +712,79 @@ class TestStateManagement:
         QApplication.processEvents()
 
         assert screen.page.get_search_text() == ""
+
+
+# =============================================================================
+# Folder Screenshot Fixtures & Tests
+# =============================================================================
+
+
+@pytest.fixture
+def sample_folders() -> list[FolderDTO]:
+    """Create sample folder DTOs for screenshot testing."""
+    return [
+        FolderDTO(id="1", name="Interviews", source_count=3),
+        FolderDTO(id="2", name="Round 1", parent_id="1", source_count=2),
+        FolderDTO(id="3", name="Round 2", parent_id="1", source_count=1),
+        FolderDTO(id="4", name="Field Notes", source_count=2),
+        FolderDTO(id="5", name="Media", source_count=1),
+    ]
+
+
+@pytest.fixture
+def file_manager_with_folders(
+    qapp, colors, sample_sources, sample_summary, sample_folders
+):
+    """Create a File Manager window populated with folders and sources."""
+    window = QMainWindow()
+    window.setWindowTitle("File Manager - Folders")
+    window.setMinimumSize(1200, 800)
+
+    central = QWidget()
+    window.setCentralWidget(central)
+    layout = QVBoxLayout(central)
+    layout.setContentsMargins(0, 0, 0, 0)
+
+    screen = FileManagerScreen(colors=colors)
+
+    try:
+        screen._page.import_clicked.disconnect(screen._on_import_clicked)
+        screen._page.link_clicked.disconnect(screen._on_link_clicked)
+        screen._page.export_clicked.disconnect(screen._on_export_clicked)
+        screen._page.delete_sources.disconnect(screen._on_delete_sources)
+        screen._page.export_sources.disconnect(screen._on_export_sources)
+    except RuntimeError:
+        pass
+
+    screen.set_summary(sample_summary)
+    screen.set_sources(sample_sources)
+    screen._page.set_folders(sample_folders)
+
+    layout.addWidget(screen)
+
+    window.show()
+    QApplication.processEvents()
+
+    yield {
+        "window": window,
+        "screen": screen,
+        "folders": sample_folders,
+    }
+
+    window.close()
+
+
+class TestFolderScreenshots:
+    """Capture documentation screenshots for folder features."""
+
+    def test_file_manager_with_folders(self, file_manager_with_folders):
+        """Capture File Manager showing folder tree with sources."""
+        window = file_manager_with_folders["window"]
+        screen = file_manager_with_folders["screen"]
+
+        # Verify folders are populated
+        assert screen._page._folder_tree is not None
+
+        # Capture screenshot
+        attach_screenshot(window, "FileManager - With Folders")
+        DocScreenshot.capture(window, "file-manager-with-folders", max_width=1000)
