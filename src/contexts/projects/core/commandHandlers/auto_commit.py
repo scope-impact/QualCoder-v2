@@ -10,6 +10,7 @@ from src.contexts.projects.core.vcs_derivers import derive_auto_commit
 from src.contexts.projects.core.vcs_entities import VersionControlState
 from src.contexts.projects.core.vcs_events import AutoCommitDecided, SnapshotCreated
 from src.contexts.projects.core.vcs_failure_events import AutoCommitSkipped
+from src.contexts.projects.core.vcs_invariants import resolve_db_path
 from src.shared.common.operation_result import OperationResult
 
 if TYPE_CHECKING:
@@ -55,9 +56,10 @@ def auto_commit(
     event_count = decision.event_count
 
     # 4. Execute I/O: dump database, stage, commit
+    db_path = resolve_db_path(project_path)
     vcs_dir = diffable_adapter.get_vcs_dir(project_path)
 
-    dump_result = diffable_adapter.dump(project_path, vcs_dir)
+    dump_result = diffable_adapter.dump(db_path, vcs_dir)
     if dump_result.is_failure:
         return dump_result
 

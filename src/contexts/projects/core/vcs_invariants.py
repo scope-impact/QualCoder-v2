@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from pathlib import Path
+
 
 def is_valid_snapshot_message(message: str) -> bool:
     """
@@ -48,7 +50,25 @@ def is_valid_git_ref(ref: str, valid_refs: tuple[str, ...]) -> bool:
     return ref in valid_refs
 
 
+def resolve_db_path(project_path: Path, db_filename: str = "qualcoder.db") -> Path:
+    """
+    Resolve a project path to the actual database file path.
+
+    Args:
+        project_path: Path to the .qda project (directory or file)
+        db_filename: Name of the database file within the project directory
+
+    Returns:
+        Path to the database file
+    """
+    project_path = Path(project_path).resolve()
+    if project_path.is_dir():
+        return project_path / db_filename
+    return project_path
+
+
 __all__ = [
     "is_valid_snapshot_message",
     "is_valid_git_ref",
+    "resolve_db_path",
 ]

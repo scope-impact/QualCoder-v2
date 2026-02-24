@@ -13,6 +13,7 @@ from src.contexts.projects.core.vcs_events import (
     VersionControlInitialized,
 )
 from src.contexts.projects.core.vcs_failure_events import VersionControlNotInitialized
+from src.contexts.projects.core.vcs_invariants import resolve_db_path
 from src.shared.common.operation_result import OperationResult
 
 if TYPE_CHECKING:
@@ -72,8 +73,9 @@ def initialize_version_control(
     if gitignore_result.is_failure:
         return gitignore_result
 
+    db_path = resolve_db_path(project_path)
     vcs_dir = diffable_adapter.get_vcs_dir(project_path)
-    dump_result = diffable_adapter.dump(project_path, vcs_dir)
+    dump_result = diffable_adapter.dump(db_path, vcs_dir)
     if dump_result.is_failure:
         return dump_result
 

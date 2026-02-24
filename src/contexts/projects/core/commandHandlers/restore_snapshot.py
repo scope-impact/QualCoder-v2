@@ -10,6 +10,7 @@ from src.contexts.projects.core.vcs_derivers import derive_restore_snapshot
 from src.contexts.projects.core.vcs_entities import VersionControlState
 from src.contexts.projects.core.vcs_events import RestoreDecided, SnapshotRestored
 from src.contexts.projects.core.vcs_failure_events import SnapshotNotRestored
+from src.contexts.projects.core.vcs_invariants import resolve_db_path
 from src.shared.common.operation_result import OperationResult
 
 if TYPE_CHECKING:
@@ -68,8 +69,9 @@ def restore_snapshot(
     if checkout_result.is_failure:
         return checkout_result
 
+    db_path = resolve_db_path(project_path)
     vcs_dir = diffable_adapter.get_vcs_dir(project_path)
-    load_result = diffable_adapter.load(project_path, vcs_dir)
+    load_result = diffable_adapter.load(db_path, vcs_dir)
     if load_result.is_failure:
         return load_result
 
