@@ -16,7 +16,7 @@ import logging
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
-    from src.shared.infra.event_bus import EventBus
+    from src.shared.infra.cascade_registry import CascadeRegistry
 
 logger = logging.getLogger(__name__)
 
@@ -24,15 +24,8 @@ logger = logging.getLogger(__name__)
 _case_repo: Any = None
 
 
-def set_repositories(
-    case_repo: Any = None,
-) -> None:
-    """
-    Configure repository references for policy handlers.
-
-    Args:
-        case_repo: Repository for case link operations
-    """
+def set_repositories(case_repo: Any = None) -> None:
+    """Configure repository references for policy handlers."""
     global _case_repo
     _case_repo = case_repo
 
@@ -94,19 +87,29 @@ def _handle_source_removed(event: Any) -> None:
 # ============================================================
 
 
-def configure_cases_policies(event_bus: EventBus) -> None:
-    """
-    Configure all policies for the cases context.
+def configure_cases_policies(
+    cascade_registry: CascadeRegistry,
+) -> None:
+    """Configure all policies for the cases context."""
+    from src.shared.infra.cascade_registry import CascadeRule
 
-    Subscribes to relevant events and routes them to handlers.
-
-    Args:
-        event_bus: The application's event bus
-    """
-    # Cross-context events (from projects context)
-    # Subscribe by event type string to avoid coupling to projects context imports
-    event_bus.subscribe("projects.source_renamed", _handle_source_renamed)
-    event_bus.subscribe("projects.source_removed", _handle_source_removed)
+    # --- Cascade rules (data-modifying) ---
+    cascade_registry.register(
+        CascadeRule(
+            trigger_event_type="projects.source_renamed",
+            handler=_handle_source_renamed,
+            description="Sync denormalized source_name in case links",
+            context="cases",
+        )
+    )
+    cascade_registry.register(
+        CascadeRule(
+            trigger_event_type="projects.source_removed",
+            handler=_handle_source_removed,
+            description="Remove case links when source is removed",
+            context="cases",
+        )
+    )
 
     logger.info("Cases context policies configured")
 

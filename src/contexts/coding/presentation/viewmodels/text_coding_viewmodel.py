@@ -186,112 +186,64 @@ class TextCodingViewModel(QObject):
     # Public API - Commands
     # =========================================================================
 
-    def create_code(
-        self, name: str, color: str, category_id: int | None = None
-    ) -> bool:
-        """
-        Create a new code.
+    def _execute(self, method_name: str, command, error_label: str) -> bool:
+        """Execute a command on the controller and handle the result.
 
         Args:
-            name: Code name
-            color: Hex color string
-            category_id: Optional category ID
+            method_name: Name of the controller method to call
+            command: The command object to pass
+            error_label: Label for error messages if the command fails
 
         Returns:
             True if successful, False otherwise
         """
-        command = CreateCodeCommand(
-            name=name,
-            color=color,
-            category_id=category_id,
-        )
-        result = self._controller.create_code(command)
-
+        result = getattr(self._controller, method_name)(command)
         if result.is_success:
             return True
-        else:
-            self.error_occurred.emit(result.error or "Create code failed")
-            return False
+        self.error_occurred.emit(result.error or f"{error_label} failed")
+        return False
+
+    def create_code(
+        self, name: str, color: str, category_id: int | None = None
+    ) -> bool:
+        """Create a new code."""
+        return self._execute(
+            "create_code",
+            CreateCodeCommand(name=name, color=color, category_id=category_id),
+            "Create code",
+        )
 
     def rename_code(self, code_id: int, new_name: str) -> bool:
-        """
-        Rename a code.
-
-        Args:
-            code_id: ID of code to rename
-            new_name: New name
-
-        Returns:
-            True if successful
-        """
-        command = RenameCodeCommand(code_id=code_id, new_name=new_name)
-        result = self._controller.rename_code(command)
-
-        if result.is_success:
-            return True
-        else:
-            self.error_occurred.emit(result.error or "Rename code failed")
-            return False
+        """Rename a code."""
+        return self._execute(
+            "rename_code",
+            RenameCodeCommand(code_id=code_id, new_name=new_name),
+            "Rename code",
+        )
 
     def delete_code(self, code_id: int, delete_segments: bool = False) -> bool:
-        """
-        Delete a code.
-
-        Args:
-            code_id: ID of code to delete
-            delete_segments: Whether to also delete associated segments
-
-        Returns:
-            True if successful
-        """
-        command = DeleteCodeCommand(code_id=code_id, delete_segments=delete_segments)
-        result = self._controller.delete_code(command)
-
-        if result.is_success:
-            return True
-        else:
-            self.error_occurred.emit(result.error or "Delete code failed")
-            return False
+        """Delete a code."""
+        return self._execute(
+            "delete_code",
+            DeleteCodeCommand(code_id=code_id, delete_segments=delete_segments),
+            "Delete code",
+        )
 
     def update_code_memo(self, code_id: int, new_memo: str | None) -> bool:
-        """
-        Update a code's memo.
-
-        Args:
-            code_id: ID of code to update
-            new_memo: New memo content (None to clear)
-
-        Returns:
-            True if successful
-        """
-        command = UpdateCodeMemoCommand(code_id=code_id, new_memo=new_memo)
-        result = self._controller.update_code_memo(command)
-
-        if result.is_success:
-            return True
-        else:
-            self.error_occurred.emit(result.error or "Update code memo failed")
-            return False
+        """Update a code's memo."""
+        return self._execute(
+            "update_code_memo",
+            UpdateCodeMemoCommand(code_id=code_id, new_memo=new_memo),
+            "Update code memo",
+        )
 
     def move_code_to_category(self, code_id: int, category_id: int | None) -> bool:
-        """
-        Move a code to a different category.
-
-        Args:
-            code_id: ID of code to move
-            category_id: Target category ID (None = uncategorized)
-
-        Returns:
-            True if successful
-        """
-        command = MoveCodeToCategoryCommand(code_id=code_id, category_id=category_id)
-        result = self._controller.move_code_to_category(command)
-
-        if result.is_success:
-            return True
-        else:
-            self.error_occurred.emit(result.error or "Move code failed")
-            return False
+        """Move a code to a different category."""
+        return self._execute(
+            "move_code_to_category",
+            MoveCodeToCategoryCommand(code_id=code_id, category_id=category_id),
+            "Move code",
+        )
 
     def apply_code_to_selection(
         self,
@@ -301,72 +253,34 @@ class TextCodingViewModel(QObject):
         end: int,
         memo: str | None = None,
     ) -> bool:
-        """
-        Apply a code to a text selection.
-
-        Args:
-            code_id: Code to apply
-            source_id: Source document ID
-            start: Start position
-            end: End position
-            memo: Optional memo
-
-        Returns:
-            True if successful
-        """
-        command = ApplyCodeCommand(
-            code_id=code_id,
-            source_id=source_id,
-            start_position=start,
-            end_position=end,
-            memo=memo,
+        """Apply a code to a text selection."""
+        return self._execute(
+            "apply_code",
+            ApplyCodeCommand(
+                code_id=code_id,
+                source_id=source_id,
+                start_position=start,
+                end_position=end,
+                memo=memo,
+            ),
+            "Apply code",
         )
-        result = self._controller.apply_code(command)
-
-        if result.is_success:
-            return True
-        else:
-            self.error_occurred.emit(result.error or "Apply code failed")
-            return False
 
     def remove_segment(self, segment_id: int) -> bool:
-        """
-        Remove coding from a segment.
-
-        Args:
-            segment_id: ID of segment to remove
-
-        Returns:
-            True if successful
-        """
-        command = RemoveCodeCommand(segment_id=segment_id)
-        result = self._controller.remove_segment(command)
-
-        if result.is_success:
-            return True
-        else:
-            self.error_occurred.emit(result.error or "Remove segment failed")
-            return False
+        """Remove coding from a segment."""
+        return self._execute(
+            "remove_segment",
+            RemoveCodeCommand(segment_id=segment_id),
+            "Remove segment",
+        )
 
     def create_category(self, name: str, parent_id: int | None = None) -> bool:
-        """
-        Create a new category.
-
-        Args:
-            name: Category name
-            parent_id: Optional parent category ID
-
-        Returns:
-            True if successful
-        """
-        command = CreateCategoryCommand(name=name, parent_id=parent_id)
-        result = self._controller.create_category(command)
-
-        if result.is_success:
-            return True
-        else:
-            self.error_occurred.emit(result.error or "Create category failed")
-            return False
+        """Create a new category."""
+        return self._execute(
+            "create_category",
+            CreateCategoryCommand(name=name, parent_id=parent_id),
+            "Create category",
+        )
 
     def select_code(self, code_id: int) -> None:
         """
@@ -417,22 +331,23 @@ class TextCodingViewModel(QObject):
     # Signal Handlers - React to domain events
     # =========================================================================
 
+    def _refresh_codes_and_selection(self, payload: CodePayload) -> None:
+        """Refresh codes list and re-select if the changed code is selected."""
+        self._emit_codes_changed()
+        if self._selected_code_id == payload.code_id:
+            self.select_code(payload.code_id)
+
     def _on_code_created(self, _payload: CodePayload) -> None:
         """Handle code created event."""
         self._emit_codes_changed()
 
     def _on_code_renamed(self, payload: CodePayload) -> None:
         """Handle code renamed event."""
-        self._emit_codes_changed()
-        # Update selection if this code is selected
-        if self._selected_code_id == payload.code_id:
-            self.select_code(payload.code_id)
+        self._refresh_codes_and_selection(payload)
 
     def _on_code_color_changed(self, payload: CodePayload) -> None:
         """Handle code color changed event."""
-        self._emit_codes_changed()
-        if self._selected_code_id == payload.code_id:
-            self.select_code(payload.code_id)
+        self._refresh_codes_and_selection(payload)
 
     def _on_code_deleted(self, payload: CodePayload) -> None:
         """Handle code deleted event."""
@@ -443,9 +358,7 @@ class TextCodingViewModel(QObject):
 
     def _on_code_memo_updated(self, payload: CodePayload) -> None:
         """Handle code memo updated event."""
-        self._emit_codes_changed()
-        if self._selected_code_id == payload.code_id:
-            self.select_code(payload.code_id)
+        self._refresh_codes_and_selection(payload)
 
     def _on_code_moved(self, _payload: CodePayload) -> None:
         """Handle code moved to category event."""

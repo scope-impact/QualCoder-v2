@@ -20,16 +20,16 @@ from src.contexts.coding.core.commandHandlers.merge_codes import merge_codes
 from src.contexts.coding.core.commandHandlers.move_code_to_category import (
     move_code_to_category,
 )
-from src.contexts.coding.core.commandHandlers.queries import (
+from src.contexts.coding.core.commandHandlers.remove_segment import remove_segment
+from src.contexts.coding.core.commandHandlers.rename_code import rename_code
+from src.contexts.coding.core.commandHandlers.update_code_memo import update_code_memo
+from src.contexts.coding.core.queryHandlers.queries import (
     get_all_categories,
     get_all_codes,
     get_code,
     get_segments_for_code,
     get_segments_for_source,
 )
-from src.contexts.coding.core.commandHandlers.remove_segment import remove_segment
-from src.contexts.coding.core.commandHandlers.rename_code import rename_code
-from src.contexts.coding.core.commandHandlers.update_code_memo import update_code_memo
 
 __all__ = [
     # Code use cases

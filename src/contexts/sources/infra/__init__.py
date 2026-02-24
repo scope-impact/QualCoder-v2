@@ -10,7 +10,7 @@ Provides:
 - File loading and validation
 """
 
-from src.contexts.sources.infra.folder_repository import SQLiteFolderRepository
+from src.contexts.folders.infra.folder_repository import SQLiteFolderRepository
 from src.contexts.sources.infra.image_extractor import (
     ImageExtractionResult,
     ImageExtractor,

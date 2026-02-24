@@ -18,16 +18,6 @@ pytestmark = [
 
 
 @pytest.fixture
-def app_context():
-    from src.shared.infra.app_context import create_app_context
-
-    ctx = create_app_context()
-    ctx.start()
-    yield ctx
-    ctx.stop()
-
-
-@pytest.fixture
 def temp_project_path(tmp_path: Path) -> Path:
     return tmp_path / "test_project.qda"
 
@@ -552,7 +542,7 @@ class TestAgentQueryContext:
     @allure.severity(allure.severity_level.CRITICAL)
     def test_list_sources_tool(self, app_context: AppContext, existing_project: Path):
         from src.contexts.projects.core.entities import Source, SourceType
-        from src.contexts.projects.interface.mcp_tools import ProjectTools
+        from src.contexts.sources.interface.mcp_tools import SourceTools
         from src.shared.common.types import SourceId
 
         with allure.step("Open project and add source"):
@@ -566,7 +556,7 @@ class TestAgentQueryContext:
             app_context.sources_context.source_repo.save(source)
 
         with allure.step("Execute list_sources tool"):
-            tools = ProjectTools(ctx=app_context)
+            tools = SourceTools(ctx=app_context)
             result = tools.execute("list_sources", {})
 
         with allure.step("Verify sources listed"):
@@ -581,7 +571,7 @@ class TestAgentQueryContext:
         self, app_context: AppContext, existing_project: Path
     ):
         from src.contexts.projects.core.entities import Source, SourceType
-        from src.contexts.projects.interface.mcp_tools import ProjectTools
+        from src.contexts.sources.interface.mcp_tools import SourceTools
         from src.shared.common.types import SourceId
 
         with allure.step("Open project and add mixed sources"):
@@ -596,7 +586,7 @@ class TestAgentQueryContext:
             app_context.sources_context.source_repo.save(image_src)
 
         with allure.step("Filter by text type"):
-            tools = ProjectTools(ctx=app_context)
+            tools = SourceTools(ctx=app_context)
             result = tools.execute("list_sources", {"source_type": "text"})
 
         with allure.step("Verify only text sources returned"):
@@ -611,7 +601,7 @@ class TestAgentQueryContext:
         self, app_context: AppContext, existing_project: Path
     ):
         from src.contexts.projects.core.entities import Source, SourceType
-        from src.contexts.projects.interface.mcp_tools import ProjectTools
+        from src.contexts.sources.interface.mcp_tools import SourceTools
         from src.shared.common.types import SourceId
 
         with allure.step("Open project and add source with content"):
@@ -625,7 +615,7 @@ class TestAgentQueryContext:
             app_context.sources_context.source_repo.save(source)
 
         with allure.step("Read source content via tool"):
-            tools = ProjectTools(ctx=app_context)
+            tools = SourceTools(ctx=app_context)
             result = tools.execute("read_source_content", {"source_id": 1})
 
         with allure.step("Verify content returned"):
@@ -682,10 +672,10 @@ class TestAgentQueryContext:
 class TestAgentNavigateToSegment:
     @allure.title("AC #6: Agent can navigate to a specific source")
     def test_navigate_to_segment_tool_schema(self, app_context: AppContext):
-        from src.contexts.projects.interface.mcp_tools import ProjectTools
+        from src.contexts.sources.interface.mcp_tools import SourceTools
 
         with allure.step("Get tool schemas"):
-            tools = ProjectTools(ctx=app_context)
+            tools = SourceTools(ctx=app_context)
             schemas = tools.get_tool_schemas()
 
         with allure.step("Verify navigate_to_segment tool exists"):
@@ -704,13 +694,13 @@ class TestAgentNavigateToSegment:
     def test_navigate_requires_parameters(
         self, app_context: AppContext, existing_project: Path
     ):
-        from src.contexts.projects.interface.mcp_tools import ProjectTools
+        from src.contexts.sources.interface.mcp_tools import SourceTools
 
         with allure.step("Open project"):
             app_context.open_project(str(existing_project))
 
         with allure.step("Call navigate without source_id"):
-            tools = ProjectTools(ctx=app_context)
+            tools = SourceTools(ctx=app_context)
             result = tools.execute(
                 "navigate_to_segment", {"start_pos": 0, "end_pos": 10}
             )
@@ -724,13 +714,13 @@ class TestAgentNavigateToSegment:
     def test_navigate_nonexistent_source_fails(
         self, app_context: AppContext, existing_project: Path
     ):
-        from src.contexts.projects.interface.mcp_tools import ProjectTools
+        from src.contexts.sources.interface.mcp_tools import SourceTools
 
         with allure.step("Open project"):
             app_context.open_project(str(existing_project))
 
         with allure.step("Navigate to nonexistent source"):
-            tools = ProjectTools(ctx=app_context)
+            tools = SourceTools(ctx=app_context)
             result = tools.execute(
                 "navigate_to_segment",
                 {"source_id": 9999, "start_pos": 0, "end_pos": 10},
@@ -742,10 +732,10 @@ class TestAgentNavigateToSegment:
     @allure.title("AC #3: Agent can highlight a specific segment")
     @allure.severity(allure.severity_level.NORMAL)
     def test_navigate_with_highlight_option(self, app_context: AppContext):
-        from src.contexts.projects.interface.mcp_tools import ProjectTools
+        from src.contexts.sources.interface.mcp_tools import SourceTools
 
         with allure.step("Get tool schema"):
-            tools = ProjectTools(ctx=app_context)
+            tools = SourceTools(ctx=app_context)
             schemas = tools.get_tool_schemas()
             nav_schema = next(s for s in schemas if s["name"] == "navigate_to_segment")
 
@@ -784,7 +774,7 @@ class TestAgentNavigateToSegment:
         self, app_context: AppContext, existing_project: Path
     ):
         from src.contexts.projects.core.entities import Source, SourceType
-        from src.contexts.projects.interface.mcp_tools import ProjectTools
+        from src.contexts.sources.interface.mcp_tools import SourceTools
         from src.shared.common.types import SourceId
 
         with allure.step("Open project and add source"):
@@ -798,7 +788,7 @@ class TestAgentNavigateToSegment:
             app_context.sources_context.source_repo.save(source)
 
         with allure.step("Suggest metadata via tool"):
-            tools = ProjectTools(ctx=app_context)
+            tools = SourceTools(ctx=app_context)
             result = tools.execute(
                 "suggest_source_metadata",
                 {
@@ -822,6 +812,7 @@ class TestProjectWorkflowIntegration:
     def test_full_project_workflow(self, app_context: AppContext, tmp_path: Path):
         from src.contexts.projects.core.entities import Source, SourceType
         from src.contexts.projects.interface.mcp_tools import ProjectTools
+        from src.contexts.sources.interface.mcp_tools import SourceTools
         from src.shared.common.types import SourceId
 
         project_path = tmp_path / "workflow_test.qda"
@@ -848,14 +839,15 @@ class TestProjectWorkflowIntegration:
                 app_context.sources_context.source_repo.save(source)
 
         with allure.step("Step 5: Agent queries context"):
-            tools = ProjectTools(ctx=app_context)
-            result = tools.execute("get_project_context", {})
+            project_tools = ProjectTools(ctx=app_context)
+            result = project_tools.execute("get_project_context", {})
             assert isinstance(result, Success)
             context = result.unwrap()
             assert context["source_count"] == 3
 
         with allure.step("Step 6: Agent reads source content"):
-            read_result = tools.execute("read_source_content", {"source_id": 2})
+            source_tools = SourceTools(ctx=app_context)
+            read_result = source_tools.execute("read_source_content", {"source_id": 2})
             assert isinstance(read_result, Success)
             assert "document 2" in read_result.unwrap()["content"]
 

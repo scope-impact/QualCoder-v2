@@ -18,10 +18,6 @@ from pathlib import Path
 
 from returns.result import Failure, Result, Success
 
-# ============================================================
-# Data Types
-# ============================================================
-
 
 @dataclass(frozen=True)
 class PdfExtractionResult:
@@ -30,11 +26,6 @@ class PdfExtractionResult:
     content: str
     page_count: int
     file_size: int
-
-
-# ============================================================
-# PDF Extractor Service
-# ============================================================
 
 
 class PdfExtractor:

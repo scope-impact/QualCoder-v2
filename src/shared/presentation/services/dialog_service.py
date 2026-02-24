@@ -25,12 +25,6 @@ if TYPE_CHECKING:
     from src.shared.infra.lifecycle import ProjectLifecycle
     from src.shared.infra.state import ProjectState
 
-# Conditional Qt import
-try:
-    HAS_QT = True
-except ImportError:
-    HAS_QT = False
-
 
 @runtime_checkable
 class AppContextProtocol(Protocol):
@@ -123,9 +117,6 @@ class DialogService:
             Success with Project entity if project was opened
             Failure with error message if cancelled or failed
         """
-        if not HAS_QT:
-            return Failure("Qt not available")
-
         from src.contexts.projects.presentation.dialogs import OpenProjectDialog
 
         # Get recent projects from state
@@ -163,9 +154,6 @@ class DialogService:
             Success with Project entity if project was created
             Failure with error message if cancelled or failed
         """
-        if not HAS_QT:
-            return Failure("Qt not available")
-
         from src.contexts.projects.presentation.dialogs import CreateProjectDialog
 
         if not default_directory:
@@ -210,9 +198,6 @@ class DialogService:
         Returns:
             The SettingsDialog instance (useful for testing)
         """
-        if not HAS_QT:
-            return None
-
         from src.contexts.settings.presentation import SettingsViewModel
         from src.contexts.settings.presentation.dialogs import SettingsDialog
         from src.shared.presentation.services.settings_service import SettingsService
@@ -222,10 +207,12 @@ class DialogService:
             from src.contexts.settings.infra import UserSettingsRepository
 
             temp_repo = UserSettingsRepository(config_path=config_path)
-            settings_service = SettingsService(temp_repo)
+            settings_service = SettingsService(temp_repo, event_bus=self._ctx.event_bus)
         else:
             # Use context's settings_repo
-            settings_service = SettingsService(self._ctx.settings_repo)
+            settings_service = SettingsService(
+                self._ctx.settings_repo, event_bus=self._ctx.event_bus
+            )
 
         viewmodel = SettingsViewModel(settings_provider=settings_service)
         dialog = SettingsDialog(

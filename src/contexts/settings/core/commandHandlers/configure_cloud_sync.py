@@ -9,12 +9,12 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from returns.result import Failure, Result, Success
+from returns.result import Failure
 
-from src.contexts.settings.core.commandHandlers._helpers import extract_failure_message
 from src.contexts.settings.core.commands import ConfigureCloudSyncCommand
 from src.contexts.settings.core.derivers import derive_cloud_sync_config_change
 from src.contexts.settings.core.events import CloudSyncConfigChanged
+from src.shared.common.operation_result import OperationResult
 
 if TYPE_CHECKING:
     from src.contexts.settings.infra import UserSettingsRepository
@@ -25,7 +25,7 @@ def configure_cloud_sync(
     command: ConfigureCloudSyncCommand,
     settings_repo: UserSettingsRepository,
     event_bus: EventBus | None = None,
-) -> Result[CloudSyncConfigChanged, str]:
+) -> OperationResult:
     """
     Configure cloud sync settings.
 
@@ -42,7 +42,7 @@ def configure_cloud_sync(
         event_bus: Optional event bus for publishing events
 
     Returns:
-        Success with CloudSyncConfigChanged event, or Failure with error message
+        OperationResult with CloudSyncConfigChanged event on success
     """
     # Step 1: Load current state
     current_settings = settings_repo.load()
@@ -55,7 +55,11 @@ def configure_cloud_sync(
     )
 
     if isinstance(result, Failure):
-        return Failure(extract_failure_message(result.failure()))
+        failure = result.failure()
+        return OperationResult.failure(
+            error=failure.reason,
+            error_code=failure.error_code,
+        )
 
     event: CloudSyncConfigChanged = result
 
@@ -69,4 +73,4 @@ def configure_cloud_sync(
         event_bus.publish(event)
 
     # Step 5: Return result
-    return Success(event)
+    return OperationResult.success(event)

@@ -173,15 +173,36 @@ class QualCoderApp:
         else:
             self._shell.set_sync_status("synced")
 
+    def _wire_policy_repositories(self):
+        """Wire repository references for policies now that contexts are available."""
+        from src.contexts.coding.core.policies import (
+            set_repositories as set_coding_repos,
+        )
+        from src.contexts.sources.core.policies import (
+            set_repositories as set_sources_repos,
+        )
+
+        if self._ctx.coding_context:
+            set_coding_repos(
+                code_repo=self._ctx.coding_context.code_repo,
+                segment_repo=self._ctx.coding_context.segment_repo,
+            )
+        if self._ctx.sources_context:
+            set_sources_repos(
+                source_repo=self._ctx.sources_context.source_repo,
+            )
+
     def _wire_viewmodels(self):
         """Wire viewmodels to screens after a project is opened."""
+        # Wire policy repositories now that contexts are available
+        self._wire_policy_repositories()
         # Initialize sync status (reactive updates via SignalBridge)
         self._init_sync_status()
 
         # Create FileManagerViewModel now that contexts are available
         file_manager_viewmodel = FileManagerViewModel(
             source_repo=self._ctx.sources_context.source_repo,
-            folder_repo=self._ctx.sources_context.folder_repo,
+            folder_repo=self._ctx.folders_context.folder_repo,
             case_repo=self._ctx.cases_context.case_repo,
             state=self._ctx.state,
             event_bus=self._ctx.event_bus,

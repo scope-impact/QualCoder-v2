@@ -105,17 +105,6 @@ class CaseManagerViewModel(QObject):
         signal_bridge: CasesSignalBridge | None = None,
         parent: QObject | None = None,
     ) -> None:
-        """
-        Initialize the ViewModel with direct dependencies.
-
-        Args:
-            case_repo: Repository for case queries
-            state: Project state cache
-            event_bus: Event bus for publishing events
-            cases_ctx: Cases context (for backward compatibility with use cases)
-            signal_bridge: Signal bridge for reactive updates (optional)
-            parent: Qt parent object
-        """
         super().__init__(parent)
         self._case_repo = case_repo
         self._state = state
@@ -159,13 +148,10 @@ class CaseManagerViewModel(QObject):
 
     def _on_case_updated(self, payload: CasePayload) -> None:
         """Handle case updated event."""
-        case_dto = self.get_case(payload.case_id)
-        if case_dto:
-            self.case_updated.emit(case_dto)
+        self._emit_case_update(payload.case_id)
 
     def _on_case_removed(self, payload: CasePayload) -> None:
         """Handle case removed event."""
-        # Clear selection if deleted case was selected
         if self._selected_case_id == payload.case_id:
             self._selected_case_id = None
         self.cases_changed.emit()
@@ -173,66 +159,46 @@ class CaseManagerViewModel(QObject):
 
     def _on_attribute_set(self, payload: CaseAttributePayload) -> None:
         """Handle attribute set event."""
-        case_dto = self.get_case(payload.case_id)
-        if case_dto:
-            self.case_updated.emit(case_dto)
+        self._emit_case_update(payload.case_id)
         self.summary_changed.emit()
 
     def _on_attribute_removed(self, payload: CaseAttributePayload) -> None:
         """Handle attribute removed event."""
-        case_dto = self.get_case(payload.case_id)
-        if case_dto:
-            self.case_updated.emit(case_dto)
+        self._emit_case_update(payload.case_id)
         self.summary_changed.emit()
 
     def _on_source_linked(self, payload: SourceLinkPayload) -> None:
         """Handle source linked event."""
-        case_dto = self.get_case(payload.case_id)
-        if case_dto:
-            self.case_updated.emit(case_dto)
+        self._emit_case_update(payload.case_id)
         self.summary_changed.emit()
 
     def _on_source_unlinked(self, payload: SourceLinkPayload) -> None:
         """Handle source unlinked event."""
-        case_dto = self.get_case(payload.case_id)
+        self._emit_case_update(payload.case_id)
+        self.summary_changed.emit()
+
+    def _emit_case_update(self, case_id: int) -> None:
+        """Fetch a case by ID and emit case_updated if found."""
+        case_dto = self.get_case(case_id)
         if case_dto:
             self.case_updated.emit(case_dto)
-        self.summary_changed.emit()
 
     # =========================================================================
     # Load Data (AC #4) - Queries go direct to repo (CQRS)
     # =========================================================================
 
     def load_cases(self) -> list[CaseDTO]:
-        """
-        Load all cases and return as DTOs.
-
-        Returns:
-            List of CaseDTO objects for UI display
-        """
+        """Load all cases and return as DTOs for UI display."""
         cases = self._case_repo.get_all()
         return [self._case_to_dto(c) for c in cases]
 
     def get_case(self, case_id: int) -> CaseDTO | None:
-        """
-        Get a case by ID and return as DTO.
-
-        Args:
-            case_id: ID of case to retrieve
-
-        Returns:
-            CaseDTO if found, None otherwise
-        """
+        """Get a case by ID and return as DTO, or None if not found."""
         case = self._case_repo.get_by_id(CaseId(value=case_id))
         return self._case_to_dto(case) if case else None
 
     def get_summary(self) -> CaseSummaryDTO:
-        """
-        Get case summary statistics.
-
-        Returns:
-            CaseSummaryDTO with counts
-        """
+        """Get case summary statistics."""
         cases = self._case_repo.get_all()
 
         # Collect unique attribute names
@@ -262,25 +228,9 @@ class CaseManagerViewModel(QObject):
         description: str | None = None,
         memo: str | None = None,
     ) -> bool:
-        """
-        Create a new case.
-
-        Args:
-            name: Name of the case
-            description: Optional description
-            memo: Optional memo
-
-        Returns:
-            True if successful, False otherwise
-        """
-        command = CreateCaseCommand(
-            name=name,
-            description=description,
-            memo=memo,
-        )
-
+        """Create a new case. Returns True if successful."""
         result = create_case(
-            command=command,
+            command=CreateCaseCommand(name=name, description=description, memo=memo),
             state=self._state,
             case_repo=self._case_repo,
             event_bus=self._event_bus,
@@ -298,27 +248,11 @@ class CaseManagerViewModel(QObject):
         description: str | None = None,
         memo: str | None = None,
     ) -> bool:
-        """
-        Update a case.
-
-        Args:
-            case_id: ID of case to update
-            name: New name (if provided)
-            description: New description (if provided)
-            memo: New memo (if provided)
-
-        Returns:
-            True if successful, False otherwise
-        """
-        command = UpdateCaseCommand(
-            case_id=case_id,
-            name=name,
-            description=description,
-            memo=memo,
-        )
-
+        """Update a case. Returns True if successful."""
         result = update_case(
-            command=command,
+            command=UpdateCaseCommand(
+                case_id=case_id, name=name, description=description, memo=memo
+            ),
             state=self._state,
             case_repo=self._case_repo,
             event_bus=self._event_bus,
@@ -330,54 +264,27 @@ class CaseManagerViewModel(QObject):
     # =========================================================================
 
     def delete_case(self, case_id: int) -> bool:
-        """
-        Delete a case.
-
-        Args:
-            case_id: ID of case to delete
-
-        Returns:
-            True if successful, False otherwise
-        """
-        command = RemoveCaseCommand(case_id=case_id)
-
+        """Delete a case. Returns True if successful."""
         result = remove_case(
-            command=command,
+            command=RemoveCaseCommand(case_id=case_id),
             state=self._state,
             case_repo=self._case_repo,
             event_bus=self._event_bus,
         )
 
-        if result.is_success:
-            # Clear selection if deleted case was selected
-            if self._selected_case_id == case_id:
-                self._selected_case_id = None
-            return True
+        if result.is_success and self._selected_case_id == case_id:
+            self._selected_case_id = None
 
-        return False
+        return result.is_success
 
     # =========================================================================
     # Link Source (AC #2) - Commands go through use cases
     # =========================================================================
 
     def link_source(self, case_id: int, source_id: int) -> bool:
-        """
-        Link a source to a case.
-
-        Args:
-            case_id: ID of case
-            source_id: ID of source to link
-
-        Returns:
-            True if successful, False otherwise
-        """
-        command = LinkSourceToCaseCommand(
-            case_id=case_id,
-            source_id=source_id,
-        )
-
+        """Link a source to a case. Returns True if successful."""
         result = link_source_to_case(
-            command=command,
+            command=LinkSourceToCaseCommand(case_id=case_id, source_id=source_id),
             state=self._state,
             case_repo=self._case_repo,
             event_bus=self._event_bus,
@@ -385,23 +292,9 @@ class CaseManagerViewModel(QObject):
         return result.is_success
 
     def unlink_source(self, case_id: int, source_id: int) -> bool:
-        """
-        Unlink a source from a case.
-
-        Args:
-            case_id: ID of case
-            source_id: ID of source to unlink
-
-        Returns:
-            True if successful, False otherwise
-        """
-        command = UnlinkSourceFromCaseCommand(
-            case_id=case_id,
-            source_id=source_id,
-        )
-
+        """Unlink a source from a case. Returns True if successful."""
         result = unlink_source_from_case(
-            command=command,
+            command=UnlinkSourceFromCaseCommand(case_id=case_id, source_id=source_id),
             state=self._state,
             case_repo=self._case_repo,
             event_bus=self._event_bus,
@@ -419,27 +312,11 @@ class CaseManagerViewModel(QObject):
         attr_type: str,
         value: str | int | float | bool | None = None,
     ) -> bool:
-        """
-        Add or update an attribute on a case.
-
-        Args:
-            case_id: ID of case
-            name: Attribute name
-            attr_type: Attribute type (text, number, boolean, date)
-            value: Attribute value
-
-        Returns:
-            True if successful, False otherwise
-        """
-        command = SetCaseAttributeCommand(
-            case_id=case_id,
-            attr_name=name,
-            attr_type=attr_type,
-            attr_value=value,
-        )
-
+        """Add or update an attribute on a case. Returns True if successful."""
         result = set_case_attribute(
-            command=command,
+            command=SetCaseAttributeCommand(
+                case_id=case_id, attr_name=name, attr_type=attr_type, attr_value=value
+            ),
             state=self._state,
             case_repo=self._case_repo,
             event_bus=self._event_bus,
@@ -447,17 +324,7 @@ class CaseManagerViewModel(QObject):
         return result.is_success
 
     def remove_attribute(self, case_id: int, name: str) -> bool:
-        """
-        Remove an attribute from a case.
-
-        Args:
-            case_id: ID of case
-            name: Attribute name to remove
-
-        Returns:
-            True if successful, False otherwise
-        """
-        # Remove attribute via repo directly (no use case for this yet)
+        """Remove an attribute from a case. Returns True if successful."""
         if self._case_repo is None:
             return False
 
@@ -465,22 +332,14 @@ class CaseManagerViewModel(QObject):
         if case is None:
             return False
 
-        deleted = self._case_repo.delete_attribute(CaseId(value=case_id), name)
-
-        # Note: No state mutation needed - repo is source of truth
-        return deleted
+        return self._case_repo.delete_attribute(CaseId(value=case_id), name)
 
     # =========================================================================
     # Selection
     # =========================================================================
 
     def select_case(self, case_id: int) -> None:
-        """
-        Set the selected case.
-
-        Args:
-            case_id: ID of case to select
-        """
+        """Set the selected case."""
         self._selected_case_id = case_id
 
     def get_selected_case_id(self) -> int | None:
@@ -496,18 +355,11 @@ class CaseManagerViewModel(QObject):
     # =========================================================================
 
     def search_cases(self, query: str) -> list[CaseDTO]:
-        """
-        Search cases by name.
-
-        Args:
-            query: Search query (case-insensitive)
-
-        Returns:
-            List of matching CaseDTO objects
-        """
-        cases = self._case_repo.get_all()
+        """Search cases by name (case-insensitive)."""
         query_lower = query.lower()
-        matching = [c for c in cases if query_lower in c.name.lower()]
+        matching = [
+            c for c in self._case_repo.get_all() if query_lower in c.name.lower()
+        ]
         return [self._case_to_dto(c) for c in matching]
 
     # =========================================================================

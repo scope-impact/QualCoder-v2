@@ -17,8 +17,6 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Protocol
 
-from returns.result import Success
-
 from src.contexts.settings.core.invariants import (
     VALID_FONT_FAMILIES,
     VALID_LANGUAGES,
@@ -32,32 +30,31 @@ from src.shared.presentation.dto import (
 )
 
 if TYPE_CHECKING:
-    from returns.result import Result
-
     from src.contexts.settings.core.entities import UserSettings
+    from src.shared.common.operation_result import OperationResult
 
 
 class SettingsProvider(Protocol):
     """Protocol for settings access - can be Coordinator or test double."""
 
     def get_all_settings(self) -> UserSettings: ...
-    def change_theme(self, theme: str) -> Result: ...
-    def change_font(self, family: str, size: int) -> Result: ...
-    def change_language(self, language_code: str) -> Result: ...
+    def change_theme(self, theme: str) -> OperationResult: ...
+    def change_font(self, family: str, size: int) -> OperationResult: ...
+    def change_language(self, language_code: str) -> OperationResult: ...
     def configure_backup(
         self,
         enabled: bool,
         interval_minutes: int,
         max_backups: int,
         backup_path: str | None = None,
-    ) -> Result: ...
+    ) -> OperationResult: ...
     def configure_av_coding(
         self,
         timestamp_format: str,
         speaker_format: str,
-    ) -> Result: ...
-    def set_cloud_sync_enabled(self, enabled: bool) -> Result: ...
-    def set_convex_url(self, url: str | None) -> Result: ...
+    ) -> OperationResult: ...
+    def set_cloud_sync_enabled(self, enabled: bool) -> OperationResult: ...
+    def set_convex_url(self, url: str | None) -> OperationResult: ...
 
 
 class SettingsViewModel:
@@ -168,7 +165,7 @@ class SettingsViewModel:
             True if successful, False otherwise
         """
         result = self._provider.change_theme(theme)
-        return isinstance(result, Success)
+        return result.is_success
 
     # =========================================================================
     # Font Actions (AC #2)
@@ -186,7 +183,7 @@ class SettingsViewModel:
             True if successful, False otherwise
         """
         result = self._provider.change_font(family, size)
-        return isinstance(result, Success)
+        return result.is_success
 
     # =========================================================================
     # Language Actions (AC #3)
@@ -203,7 +200,7 @@ class SettingsViewModel:
             True if successful, False otherwise
         """
         result = self._provider.change_language(code)
-        return isinstance(result, Success)
+        return result.is_success
 
     # =========================================================================
     # Backup Actions (AC #4)
@@ -234,7 +231,7 @@ class SettingsViewModel:
             max_backups=max_backups,
             backup_path=path,
         )
-        return isinstance(result, Success)
+        return result.is_success
 
     # =========================================================================
     # AV Coding Actions (AC #5, #6)
@@ -259,7 +256,7 @@ class SettingsViewModel:
             timestamp_format=timestamp_format,
             speaker_format=speaker_format,
         )
-        return isinstance(result, Success)
+        return result.is_success
 
     # =========================================================================
     # Validation Helpers
@@ -291,7 +288,7 @@ class SettingsViewModel:
             True if successful, False otherwise
         """
         result = self._provider.set_cloud_sync_enabled(enabled)
-        return isinstance(result, Success)
+        return result.is_success
 
     def set_convex_url(self, url: str | None) -> bool:
         """
@@ -304,4 +301,4 @@ class SettingsViewModel:
             True if successful, False otherwise
         """
         result = self._provider.set_convex_url(url)
-        return isinstance(result, Success)
+        return result.is_success

@@ -16,6 +16,7 @@ import logging
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
+    from src.shared.infra.cascade_registry import CascadeRegistry
     from src.shared.infra.event_bus import EventBus
 
 from src.contexts.coding.core.events import (
@@ -72,17 +73,12 @@ def _handle_category_deleted(event: CategoryDeleted) -> None:
     if event.codes_orphaned == 0:
         return
 
-    try:
-        if hasattr(_code_repo, "uncategorize_codes_in_category"):
-            _code_repo.uncategorize_codes_in_category(event.category_id)
-            logger.debug(
-                "Orphaned %d codes from category %s",
-                event.codes_orphaned,
-                event.name,
-            )
-    except Exception as e:
-        logger.error("Failed to orphan codes: %s", e)
-        raise
+    _code_repo.uncategorize_codes_in_category(event.category_id)
+    logger.debug(
+        "Orphaned %d codes from category %s",
+        event.codes_orphaned,
+        event.name,
+    )
 
 
 def _handle_code_deleted(event: CodeDeleted) -> None:
@@ -123,18 +119,13 @@ def _handle_source_renamed(event: Any) -> None:
         logger.debug("No segment repo configured - skipping segment name sync")
         return
 
-    try:
-        if hasattr(_segment_repo, "update_source_name"):
-            _segment_repo.update_source_name(event.source_id, event.new_name)
-            logger.debug(
-                "Synced segment source_name: %s -> %s (source_id=%d)",
-                event.old_name,
-                event.new_name,
-                event.source_id.value,
-            )
-    except Exception as e:
-        logger.error("Failed to sync segment source_name: %s", e)
-        raise
+    _segment_repo.update_source_name(event.source_id, event.new_name)
+    logger.debug(
+        "Synced segment source_name: %s -> %s (source_id=%d)",
+        event.old_name,
+        event.new_name,
+        event.source_id.value,
+    )
 
 
 def _handle_source_removed(event: Any) -> None:
@@ -155,23 +146,43 @@ def _handle_source_removed(event: Any) -> None:
 # ============================================================
 
 
-def configure_coding_policies(event_bus: EventBus) -> None:
+def configure_coding_policies(
+    event_bus: EventBus,
+    cascade_registry: CascadeRegistry,
+) -> None:
     """
     Configure all policies for the coding context.
 
     Subscribes to relevant events and routes them to handlers.
+    Data-modifying cascades are registered via the CascadeRegistry.
 
     Args:
         event_bus: The application's event bus
+        cascade_registry: Cascade registry for declarative cascade rules
     """
-    # Internal coding events
-    event_bus.subscribe_type(CategoryDeleted, _handle_category_deleted)
+    from src.shared.infra.cascade_registry import CascadeRule
+
+    # --- Cascade rules (data-modifying) ---
+    cascade_registry.register(
+        CascadeRule(
+            trigger_event_type="coding.category_deleted",
+            handler=_handle_category_deleted,
+            description="Uncategorize orphaned codes when category is deleted",
+            context="coding",
+        )
+    )
+    cascade_registry.register(
+        CascadeRule(
+            trigger_event_type="projects.source_renamed",
+            handler=_handle_source_renamed,
+            description="Sync denormalized source_name in coded segments",
+            context="coding",
+        )
+    )
+
+    # --- Audit-only handlers (subscribe directly to event bus) ---
     event_bus.subscribe_type(CodeDeleted, _handle_code_deleted)
     event_bus.subscribe_type(CodesMerged, _handle_codes_merged)
-
-    # Cross-context events (from projects context)
-    # Subscribe by event type string to avoid coupling to projects context imports
-    event_bus.subscribe("projects.source_renamed", _handle_source_renamed)
     event_bus.subscribe("projects.source_removed", _handle_source_removed)
 
     logger.info("Coding context policies configured")

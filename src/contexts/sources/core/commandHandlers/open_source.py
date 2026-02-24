@@ -10,11 +10,13 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from src.contexts.projects.core.commands import OpenSourceCommand
-from src.contexts.projects.core.derivers import ProjectState as DomainProjectState
 from src.contexts.projects.core.derivers import derive_open_source
 from src.contexts.projects.core.events import ScreenChanged, SourceOpened
 from src.contexts.projects.core.failure_events import SourceNotOpened
-from src.contexts.sources.core.commandHandlers._state import SourceRepository
+from src.contexts.sources.core.commandHandlers._state import (
+    SourceRepository,
+    build_domain_state,
+)
 from src.shared.common.operation_result import OperationResult
 from src.shared.common.types import SourceId
 from src.shared.infra.state import ProjectState
@@ -59,13 +61,7 @@ def open_source(
     source_id = SourceId(value=command.source_id)
 
     # Step 2: Build domain state and derive event
-    # Get existing sources from repo (source of truth)
-    existing_sources = tuple(source_repo.get_all())
-    domain_state = DomainProjectState(
-        path_exists=lambda _p: True,
-        parent_writable=lambda _p: True,
-        existing_sources=existing_sources,
-    )
+    domain_state = build_domain_state(source_repo)
 
     result = derive_open_source(source_id=source_id, state=domain_state)
 

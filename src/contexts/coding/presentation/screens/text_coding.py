@@ -51,6 +51,18 @@ from ..dialogs.auto_code_dialog import AutoCodeDialog
 from ..pages import TextCodingPage
 from ..viewmodels import AICodingViewModel, TextCodingViewModel
 
+# Mapping from string identifiers to domain enums (used by auto-coding dialog wiring)
+_MATCH_TYPE_MAP: dict[str, MatchType] = {
+    "exact": MatchType.EXACT,
+    "contains": MatchType.CONTAINS,
+    "regex": MatchType.REGEX,
+}
+_MATCH_SCOPE_MAP: dict[str, MatchScope] = {
+    "all": MatchScope.ALL,
+    "first": MatchScope.FIRST,
+    "last": MatchScope.LAST,
+}
+
 
 @dataclass
 class ActiveCode:
@@ -233,7 +245,7 @@ class TextCodingScreen(QWidget):
 
         # Connect to viewmodel if provided
         if self._viewmodel is not None:
-            self._connect_viewmodel()
+            self._connect_viewmodel_signals()
 
         # Connect to AI viewmodel if provided
         if self._ai_viewmodel is not None:
@@ -243,7 +255,7 @@ class TextCodingScreen(QWidget):
     # ViewModel Connection
     # =========================================================================
 
-    def _connect_viewmodel(self):
+    def _connect_viewmodel_signals(self):
         """Connect screen signals to viewmodel and vice versa."""
         if self._viewmodel is None:
             return
@@ -255,6 +267,16 @@ class TextCodingScreen(QWidget):
         # Connect viewmodel signals to screen
         self._viewmodel.codes_changed.connect(self._on_viewmodel_codes_changed)
         self._viewmodel.segments_changed.connect(self._on_viewmodel_segments_changed)
+
+    def _disconnect_viewmodel_signals(self):
+        """Disconnect from previous viewmodel signals."""
+        if self._viewmodel is None:
+            return
+
+        self.code_applied.disconnect(self._on_code_applied_to_viewmodel)
+        self.code_removed.disconnect(self._on_code_removed_from_viewmodel)
+        self._viewmodel.codes_changed.disconnect(self._on_viewmodel_codes_changed)
+        self._viewmodel.segments_changed.disconnect(self._on_viewmodel_segments_changed)
 
     def _on_code_applied_to_viewmodel(self, code_id: str, start: int, end: int):
         """Route code_applied signal to viewmodel."""
@@ -282,10 +304,10 @@ class TextCodingScreen(QWidget):
         if segment_id is not None:
             self._viewmodel.remove_segment(segment_id)
 
-    def _on_viewmodel_codes_changed(self, categories):
-        """Handle codes_changed from viewmodel."""
-        # Convert category DTOs to dicts for page
-        cat_dicts = [
+    @staticmethod
+    def _categories_to_dicts(categories) -> list[dict]:
+        """Convert category DTOs to dicts for the page widget."""
+        return [
             {
                 "name": cat.name,
                 "codes": [
@@ -295,7 +317,10 @@ class TextCodingScreen(QWidget):
             }
             for cat in categories
         ]
-        self._page.set_codes(cat_dicts)
+
+    def _on_viewmodel_codes_changed(self, categories):
+        """Handle codes_changed from viewmodel."""
+        self._page.set_codes(self._categories_to_dicts(categories))
 
     def _on_viewmodel_segments_changed(self, segments: list[dict]):
         """Handle segments_changed from viewmodel - update highlights."""
@@ -435,8 +460,12 @@ class TextCodingScreen(QWidget):
         Args:
             viewmodel: The text coding viewmodel
         """
+        # Disconnect previous viewmodel signals if any
+        if self._viewmodel is not None:
+            self._disconnect_viewmodel_signals()
+
         self._viewmodel = viewmodel
-        self._connect_viewmodel()
+        self._connect_viewmodel_signals()
 
         # Load initial data from viewmodel
         data = viewmodel.load_initial_data()
@@ -1119,17 +1148,7 @@ class TextCodingScreen(QWidget):
         self._page.set_files(files)
 
         # Codes - convert DTOs to nested dicts for Page
-        categories = [
-            {
-                "name": cat.name,
-                "codes": [
-                    {"id": c.id, "name": c.name, "color": c.color, "count": c.count}
-                    for c in cat.codes
-                ],
-            }
-            for cat in data.categories
-        ]
-        self._page.set_codes(categories)
+        self._page.set_codes(self._categories_to_dicts(data.categories))
 
         # Initialize code counts from data
         for cat in data.categories:
@@ -1272,12 +1291,11 @@ class TextCodingScreen(QWidget):
             print(f"TextCodingScreen: Error getting selected text: {e}")
         return ""
 
-    def _action_auto_exact(self):
-        """
-        Auto-code exact text matches.
+    def _open_auto_code(self, match_type: str) -> None:
+        """Open the auto-code dialog with the given match type.
 
-        Opens the AutoCodeDialog with 'exact' match type pre-selected.
-        Dialog signals are connected to the AutoCodingController.
+        Args:
+            match_type: The match type preset ("exact" or "contains")
         """
         if not self._active_code.code_id:
             print("TextCodingScreen: Select a code first for auto-coding")
@@ -1294,34 +1312,17 @@ class TextCodingScreen(QWidget):
 
         self._show_auto_code_dialog(
             pattern=selection,
-            match_type="exact",
+            match_type=match_type,
             text=document_text,
         )
+
+    def _action_auto_exact(self):
+        """Auto-code exact text matches."""
+        self._open_auto_code("exact")
 
     def _action_auto_fragment(self):
-        """
-        Auto-code similar text fragments.
-
-        Opens the AutoCodeDialog with 'contains' match type pre-selected.
-        """
-        if not self._active_code.code_id:
-            print("TextCodingScreen: Select a code first for auto-coding")
-            return
-
-        selection = self._get_selected_text()
-        document_text = ""
-        if self._page and hasattr(self._page, "editor_panel"):
-            document_text = self._page.editor_panel.get_text() or ""
-
-        if not document_text:
-            print("TextCodingScreen: No document loaded for auto-coding")
-            return
-
-        self._show_auto_code_dialog(
-            pattern=selection,
-            match_type="contains",
-            text=document_text,
-        )
+        """Auto-code similar text fragments."""
+        self._open_auto_code("contains")
 
     def _action_mark_speakers(self):
         """
@@ -1420,7 +1421,7 @@ class TextCodingScreen(QWidget):
     def _show_auto_code_dialog(
         self,
         pattern: str = "",
-        _match_type: str = "exact",
+        match_type: str = "exact",  # noqa: ARG002 - reserved for future use
         text: str = "",
     ):
         """
@@ -1466,20 +1467,9 @@ class TextCodingScreen(QWidget):
 
         Routes to controller and sends results back to dialog.
         """
-        # Convert string types to domain enums
-        mt = {
-            "exact": MatchType.EXACT,
-            "contains": MatchType.CONTAINS,
-            "regex": MatchType.REGEX,
-        }.get(match_type, MatchType.EXACT)
+        mt = _MATCH_TYPE_MAP.get(match_type, MatchType.EXACT)
+        sc = _MATCH_SCOPE_MAP.get(scope, MatchScope.ALL)
 
-        sc = {
-            "all": MatchScope.ALL,
-            "first": MatchScope.FIRST,
-            "last": MatchScope.LAST,
-        }.get(scope, MatchScope.ALL)
-
-        # Call controller
         result = self._auto_coding_controller.find_matches(
             text=text,
             pattern=pattern,
@@ -1519,17 +1509,8 @@ class TextCodingScreen(QWidget):
             match_type = config.get("match_type", "exact")
             scope = config.get("scope", "all")
 
-            mt = {
-                "exact": MatchType.EXACT,
-                "contains": MatchType.CONTAINS,
-                "regex": MatchType.REGEX,
-            }.get(match_type, MatchType.EXACT)
-
-            sc = {
-                "all": MatchScope.ALL,
-                "first": MatchScope.FIRST,
-                "last": MatchScope.LAST,
-            }.get(scope, MatchScope.ALL)
+            mt = _MATCH_TYPE_MAP.get(match_type, MatchType.EXACT)
+            sc = _MATCH_SCOPE_MAP.get(scope, MatchScope.ALL)
 
             result = self._auto_coding_controller.find_matches(
                 text=text,

@@ -9,14 +9,12 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from returns.result import Failure, Result, Success
-
-from src.contexts.settings.core.commandHandlers._helpers import extract_failure_message
 from src.contexts.settings.core.commands import ChangeLanguageCommand
 from src.contexts.settings.core.derivers import derive_language_change
 from src.contexts.settings.core.entities import LanguagePreference
-from src.contexts.settings.core.events import LanguageChanged
+from src.contexts.settings.core.failure_events import SettingsNotChanged
 from src.contexts.settings.core.invariants import VALID_LANGUAGES
+from src.shared.common.operation_result import OperationResult
 
 if TYPE_CHECKING:
     from src.contexts.settings.infra import UserSettingsRepository
@@ -26,8 +24,8 @@ if TYPE_CHECKING:
 def change_language(
     command: ChangeLanguageCommand,
     settings_repo: UserSettingsRepository,
-    event_bus: EventBus | None = None,
-) -> Result[LanguageChanged, str]:
+    event_bus: EventBus,
+) -> OperationResult:
     """
     Change the application language.
 
@@ -41,10 +39,10 @@ def change_language(
     Args:
         command: Command with language code
         settings_repo: Repository for settings persistence
-        event_bus: Optional event bus for publishing events
+        event_bus: Event bus for publishing events
 
     Returns:
-        Success with LanguageChanged event, or Failure with error message
+        OperationResult with LanguageChanged event on success
     """
     # Step 1: Load current state
     current_settings = settings_repo.load()
@@ -55,10 +53,10 @@ def change_language(
         current_settings=current_settings,
     )
 
-    if isinstance(result, Failure):
-        return Failure(extract_failure_message(result.failure()))
+    if isinstance(result, SettingsNotChanged):
+        return OperationResult.from_failure(result)
 
-    event: LanguageChanged = result
+    event = result
 
     # Step 3: Persist changes
     language_name = VALID_LANGUAGES.get(command.language_code, "Unknown")
@@ -69,8 +67,7 @@ def change_language(
     settings_repo.set_language(new_language)
 
     # Step 4: Publish event
-    if event_bus is not None:
-        event_bus.publish(event)
+    event_bus.publish(event)
 
     # Step 5: Return result
-    return Success(event)
+    return OperationResult.ok(data=event)

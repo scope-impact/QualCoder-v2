@@ -35,15 +35,13 @@ if TYPE_CHECKING:
 @dataclass
 class SourcesContext:
     """
-    Sources bounded context - manages source files and folders.
+    Sources bounded context - manages source files.
 
     Provides access to:
     - SourceRepository: CRUD for source files
-    - FolderRepository: CRUD for folder hierarchy
     """
 
     source_repo: SourceRepositoryProtocol
-    folder_repo: FolderRepositoryProtocol
 
     @classmethod
     def create(
@@ -58,39 +56,82 @@ class SourcesContext:
             if convex_client is None:
                 raise ValueError("ConvexClientWrapper required for Convex backend")
             from src.contexts.sources.infra.convex_repositories import (
-                ConvexFolderRepository,
                 ConvexSourceRepository,
             )
 
             return cls(
                 source_repo=ConvexSourceRepository(convex_client),
-                folder_repo=ConvexFolderRepository(convex_client),
             )
         else:
             if connection is None:
                 raise ValueError("SQLAlchemy connection required for SQLite backend")
-            from src.contexts.sources.infra.folder_repository import (
-                SQLiteFolderRepository,
-            )
             from src.contexts.sources.infra.source_repository import (
                 SQLiteSourceRepository,
             )
 
             source_repo = SQLiteSourceRepository(connection)
+
+            # Wrap with sync if enabled
+            if sync_engine is not None:
+                from src.shared.infra.sync.synced_repositories import (
+                    SyncedSourceRepository,
+                )
+
+                source_repo = SyncedSourceRepository(source_repo, sync_engine)
+
+            return cls(
+                source_repo=source_repo,
+            )
+
+
+@dataclass
+class FoldersContext:
+    """
+    Folders bounded context - manages folder hierarchy for organizing sources.
+
+    Provides access to:
+    - FolderRepository: CRUD for folder hierarchy
+    """
+
+    folder_repo: FolderRepositoryProtocol
+
+    @classmethod
+    def create(
+        cls,
+        connection: Connection | None = None,
+        convex_client: ConvexClientWrapper | None = None,
+        backend_type: BackendType = BackendType.SQLITE,
+        sync_engine: SyncEngine | None = None,
+    ) -> FoldersContext:
+        """Create a FoldersContext with all repositories."""
+        if backend_type == BackendType.CONVEX:
+            if convex_client is None:
+                raise ValueError("ConvexClientWrapper required for Convex backend")
+            from src.contexts.sources.infra.convex_repositories import (
+                ConvexFolderRepository,
+            )
+
+            return cls(
+                folder_repo=ConvexFolderRepository(convex_client),
+            )
+        else:
+            if connection is None:
+                raise ValueError("SQLAlchemy connection required for SQLite backend")
+            from src.contexts.folders.infra.folder_repository import (
+                SQLiteFolderRepository,
+            )
+
             folder_repo = SQLiteFolderRepository(connection)
 
             # Wrap with sync if enabled
             if sync_engine is not None:
                 from src.shared.infra.sync.synced_repositories import (
                     SyncedFolderRepository,
-                    SyncedSourceRepository,
                 )
 
-                source_repo = SyncedSourceRepository(source_repo, sync_engine)
                 folder_repo = SyncedFolderRepository(folder_repo, sync_engine)
 
             return cls(
-                source_repo=source_repo,
                 folder_repo=folder_repo,
             )
 

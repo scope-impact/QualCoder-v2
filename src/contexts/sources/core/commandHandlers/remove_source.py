@@ -10,13 +10,13 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from src.contexts.projects.core.commands import RemoveSourceCommand
-from src.contexts.projects.core.derivers import ProjectState as DomainProjectState
 from src.contexts.projects.core.derivers import derive_remove_source
 from src.contexts.projects.core.events import SourceRemoved
 from src.contexts.projects.core.failure_events import SourceNotRemoved
 from src.contexts.sources.core.commandHandlers._state import (
     SegmentRepository,
     SourceRepository,
+    build_domain_state,
 )
 from src.shared.common.operation_result import OperationResult
 from src.shared.common.types import SourceId
@@ -64,34 +64,26 @@ def remove_source(
     source_id = SourceId(value=command.source_id)
 
     # Step 2: Build domain state and derive event
-    # Get existing sources from repo (source of truth) instead of state cache
-    existing_sources = tuple(source_repo.get_all()) if source_repo else ()
-    domain_state = DomainProjectState(
-        path_exists=lambda _p: True,
-        parent_writable=lambda _p: True,
-        existing_sources=existing_sources,
-    )
+    domain_state = build_domain_state(source_repo)
 
     result = derive_remove_source(source_id=source_id, state=domain_state)
 
     if isinstance(result, SourceNotRemoved):
         return OperationResult.fail(
-            error=result.reason,
-            error_code=f"SOURCE_NOT_REMOVED/{result.event_type.upper()}",
+            error=result.message,
+            error_code=result.event_type,
         )
 
     event: SourceRemoved = result
 
-    # Step 3: Cascade delete segments
-    if segment_repo:
-        segment_repo.delete_by_source(source_id)
+    # Atomic: cascade delete segments + delete source in one transaction
+    from src.shared.infra.unit_of_work import UnitOfWork
 
-    # Step 4: Delete from repository (source of truth)
-    if source_repo:
+    with UnitOfWork(source_repo._conn) as uow:
+        if segment_repo:
+            segment_repo.delete_by_source(source_id)
         source_repo.delete(source_id)
+        uow.commit()
 
-    # Step 5: Publish event
     event_bus.publish(event)
-
-    # No rollback - would need to recreate source with all data
     return OperationResult.ok(data=event)

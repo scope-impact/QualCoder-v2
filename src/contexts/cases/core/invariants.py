@@ -21,20 +21,8 @@ MAX_CASE_NAME_LENGTH = 100
 
 
 def is_valid_case_name(name: str) -> bool:
-    """
-    Check if case name meets requirements.
-
-    Args:
-        name: The case name to validate
-
-    Returns:
-        True if name is 1-100 non-whitespace characters
-    """
-    if not name:
-        return False
-    stripped = name.strip()
-    if not stripped:
-        return False
+    """Check if case name is 1-100 non-whitespace characters."""
+    stripped = name.strip() if name else ""
     return 1 <= len(stripped) <= MAX_CASE_NAME_LENGTH
 
 
@@ -43,24 +31,13 @@ def is_case_name_unique(
     existing_cases: list[Case],
     exclude_id: int | None = None,
 ) -> bool:
-    """
-    Check if case name is unique among existing cases.
-
-    Args:
-        name: The case name to check
-        existing_cases: List of existing cases
-        exclude_id: Optional case ID to exclude (for updates)
-
-    Returns:
-        True if name is unique (case-insensitive)
-    """
+    """Check if case name is unique (case-insensitive) among existing cases."""
     name_lower = name.lower().strip()
-    for case in existing_cases:
-        if exclude_id is not None and case.id.value == exclude_id:
-            continue
-        if case.name.lower().strip() == name_lower:
-            return False
-    return True
+    return all(
+        case.name.lower().strip() != name_lower
+        for case in existing_cases
+        if exclude_id is None or case.id.value != exclude_id
+    )
 
 
 # =============================================================================
@@ -71,15 +48,7 @@ VALID_ATTRIBUTE_TYPES = frozenset({"text", "number", "date", "boolean"})
 
 
 def is_valid_attribute_type(attr_type: str) -> bool:
-    """
-    Check if attribute type is valid.
-
-    Args:
-        attr_type: The attribute type to validate
-
-    Returns:
-        True if type is one of: text, number, date, boolean
-    """
+    """Check if attribute type is one of: text, number, date, boolean."""
     return attr_type.lower() in VALID_ATTRIBUTE_TYPES
 
 
@@ -91,20 +60,8 @@ MAX_ATTRIBUTE_NAME_LENGTH = 50
 
 
 def is_valid_attribute_name(name: str) -> bool:
-    """
-    Check if attribute name meets requirements.
-
-    Args:
-        name: The attribute name to validate
-
-    Returns:
-        True if name is 1-50 non-whitespace characters
-    """
-    if not name:
-        return False
-    stripped = name.strip()
-    if not stripped:
-        return False
+    """Check if attribute name is 1-50 non-whitespace characters."""
+    stripped = name.strip() if name else ""
     return 1 <= len(stripped) <= MAX_ATTRIBUTE_NAME_LENGTH
 
 
@@ -114,23 +71,16 @@ def is_valid_attribute_name(name: str) -> bool:
 
 
 def is_valid_attribute_value(value: Any, attr_type: str) -> bool:
-    """
-    Check if attribute value matches the expected type.
-
-    Args:
-        value: The value to validate
-        attr_type: The expected attribute type
-
-    Returns:
-        True if value matches the type requirements
-    """
+    """Check if attribute value matches the expected type."""
     attr_type_lower = attr_type.lower()
 
     if attr_type_lower == "text":
         return isinstance(value, str)
 
     if attr_type_lower == "number":
-        if isinstance(value, int | float) and not isinstance(value, bool):
+        if isinstance(value, bool):
+            return False
+        if isinstance(value, int | float):
             return True
         if isinstance(value, str):
             try:

@@ -18,17 +18,15 @@ from collections.abc import Callable, Iterable
 from src.contexts.coding.core.entities import (
     Category,
     Code,
-    Color,
     ImageRegion,
     Segment,
     TextPosition,
     TextSegment,
     TimeRange,
 )
-from src.shared.common.types import CategoryId, CodeId, SourceId
+from src.shared.common.types import CategoryId, CodeId
 from src.shared.core.validation import (
     is_acyclic_hierarchy,
-    is_in_range,
     is_non_empty_string,
     is_within_bounds,
     is_within_length,
@@ -72,20 +70,6 @@ def is_code_name_unique(
         if code.name.lower() == name.lower():
             return False
     return True
-
-
-def is_valid_color(color: Color) -> bool:
-    """
-    Check that a color is valid.
-
-    Rules:
-    - RGB values between 0-255 (enforced by Color class)
-    """
-    return (
-        is_in_range(color.red, 0, 255)
-        and is_in_range(color.green, 0, 255)
-        and is_in_range(color.blue, 0, 255)
-    )
 
 
 def can_code_be_deleted(
@@ -237,11 +221,11 @@ def can_category_be_deleted(
         return True
 
     # Check for codes in this category
-    if not all(code.category_id != category_id for code in codes):
+    if any(code.category_id == category_id for code in codes):
         return False
 
     # Check for child categories
-    return all(cat.parent_id != category_id for cat in categories)
+    return not any(cat.parent_id == category_id for cat in categories)
 
 
 # ============================================================
@@ -362,23 +346,6 @@ def does_category_exist(
 ) -> bool:
     """Check if a category exists."""
     return any(c.id == category_id for c in categories)
-
-
-def does_source_exist(
-    source_id: SourceId,
-    source_exists_fn: Callable[[SourceId], bool],
-) -> bool:
-    """
-    Check if a source exists.
-
-    Args:
-        source_id: The source ID to check
-        source_exists_fn: Function to check source existence
-
-    Returns:
-        True if source exists
-    """
-    return source_exists_fn(source_id)
 
 
 def count_segments_for_code(

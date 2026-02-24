@@ -48,14 +48,10 @@ class TestDeriveThemeChange:
         assert result.new_theme == "system"
 
     def test_fails_with_invalid_theme(self):
-        """Should fail with InvalidTheme for unknown theme."""
-        from returns.result import Failure
-
-        from src.contexts.settings.core.derivers import (
-            InvalidTheme,
-            derive_theme_change,
-        )
+        """Should fail with SettingsNotChanged for unknown theme."""
+        from src.contexts.settings.core.derivers import derive_theme_change
         from src.contexts.settings.core.entities import UserSettings
+        from src.contexts.settings.core.failure_events import SettingsNotChanged
 
         settings = UserSettings.default()
 
@@ -64,9 +60,9 @@ class TestDeriveThemeChange:
             current_settings=settings,
         )
 
-        assert isinstance(result, Failure)
-        assert isinstance(result.failure(), InvalidTheme)
-        assert "neon" in result.failure().message
+        assert isinstance(result, SettingsNotChanged)
+        assert result.reason == "INVALID_THEME"
+        assert "neon" in result.message
 
 
 class TestDeriveFontChange:
@@ -91,14 +87,10 @@ class TestDeriveFontChange:
         assert result.size == 16
 
     def test_fails_with_invalid_font_family(self):
-        """Should fail with InvalidFontFamily for unknown font."""
-        from returns.result import Failure
-
-        from src.contexts.settings.core.derivers import (
-            InvalidFontFamily,
-            derive_font_change,
-        )
+        """Should fail with SettingsNotChanged for unknown font."""
+        from src.contexts.settings.core.derivers import derive_font_change
         from src.contexts.settings.core.entities import UserSettings
+        from src.contexts.settings.core.failure_events import SettingsNotChanged
 
         settings = UserSettings.default()
 
@@ -108,19 +100,15 @@ class TestDeriveFontChange:
             current_settings=settings,
         )
 
-        assert isinstance(result, Failure)
-        assert isinstance(result.failure(), InvalidFontFamily)
-        assert "Comic Sans" in result.failure().message
+        assert isinstance(result, SettingsNotChanged)
+        assert result.reason == "INVALID_FONT_FAMILY"
+        assert "Comic Sans" in result.message
 
     def test_fails_with_font_size_too_small(self):
-        """Should fail with InvalidFontSize for size below 10."""
-        from returns.result import Failure
-
-        from src.contexts.settings.core.derivers import (
-            InvalidFontSize,
-            derive_font_change,
-        )
+        """Should fail with SettingsNotChanged for size below 10."""
+        from src.contexts.settings.core.derivers import derive_font_change
         from src.contexts.settings.core.entities import UserSettings
+        from src.contexts.settings.core.failure_events import SettingsNotChanged
 
         settings = UserSettings.default()
 
@@ -130,18 +118,14 @@ class TestDeriveFontChange:
             current_settings=settings,
         )
 
-        assert isinstance(result, Failure)
-        assert isinstance(result.failure(), InvalidFontSize)
+        assert isinstance(result, SettingsNotChanged)
+        assert result.reason == "INVALID_FONT_SIZE"
 
     def test_fails_with_font_size_too_large(self):
-        """Should fail with InvalidFontSize for size above 24."""
-        from returns.result import Failure
-
-        from src.contexts.settings.core.derivers import (
-            InvalidFontSize,
-            derive_font_change,
-        )
+        """Should fail with SettingsNotChanged for size above 24."""
+        from src.contexts.settings.core.derivers import derive_font_change
         from src.contexts.settings.core.entities import UserSettings
+        from src.contexts.settings.core.failure_events import SettingsNotChanged
 
         settings = UserSettings.default()
 
@@ -151,8 +135,8 @@ class TestDeriveFontChange:
             current_settings=settings,
         )
 
-        assert isinstance(result, Failure)
-        assert isinstance(result.failure(), InvalidFontSize)
+        assert isinstance(result, SettingsNotChanged)
+        assert result.reason == "INVALID_FONT_SIZE"
 
     def test_accepts_boundary_font_sizes(self):
         """Should accept font sizes at boundaries (10 and 24)."""
@@ -195,14 +179,10 @@ class TestDeriveLanguageChange:
         assert result.language_name == "Español"
 
     def test_fails_with_invalid_language_code(self):
-        """Should fail with InvalidLanguage for unsupported code."""
-        from returns.result import Failure
-
-        from src.contexts.settings.core.derivers import (
-            InvalidLanguage,
-            derive_language_change,
-        )
+        """Should fail with SettingsNotChanged for unsupported code."""
+        from src.contexts.settings.core.derivers import derive_language_change
         from src.contexts.settings.core.entities import UserSettings
+        from src.contexts.settings.core.failure_events import SettingsNotChanged
 
         settings = UserSettings.default()
 
@@ -211,9 +191,9 @@ class TestDeriveLanguageChange:
             current_settings=settings,
         )
 
-        assert isinstance(result, Failure)
-        assert isinstance(result.failure(), InvalidLanguage)
-        assert "xx" in result.failure().message
+        assert isinstance(result, SettingsNotChanged)
+        assert result.reason == "INVALID_LANGUAGE"
+        assert "xx" in result.message
 
     def test_supports_all_valid_languages(self):
         """Should accept all supported language codes."""
@@ -278,14 +258,10 @@ class TestDeriveBackupConfigChange:
         assert result.backup_path is None
 
     def test_fails_with_interval_too_small(self):
-        """Should fail with InvalidBackupInterval for interval below 5."""
-        from returns.result import Failure
-
-        from src.contexts.settings.core.derivers import (
-            InvalidBackupInterval,
-            derive_backup_config_change,
-        )
+        """Should fail with SettingsNotChanged for interval below 5."""
+        from src.contexts.settings.core.derivers import derive_backup_config_change
         from src.contexts.settings.core.entities import UserSettings
+        from src.contexts.settings.core.failure_events import SettingsNotChanged
 
         settings = UserSettings.default()
 
@@ -297,18 +273,14 @@ class TestDeriveBackupConfigChange:
             current_settings=settings,
         )
 
-        assert isinstance(result, Failure)
-        assert isinstance(result.failure(), InvalidBackupInterval)
+        assert isinstance(result, SettingsNotChanged)
+        assert result.reason == "INVALID_BACKUP_INTERVAL"
 
     def test_fails_with_interval_too_large(self):
-        """Should fail with InvalidBackupInterval for interval above 120."""
-        from returns.result import Failure
-
-        from src.contexts.settings.core.derivers import (
-            InvalidBackupInterval,
-            derive_backup_config_change,
-        )
+        """Should fail with SettingsNotChanged for interval above 120."""
+        from src.contexts.settings.core.derivers import derive_backup_config_change
         from src.contexts.settings.core.entities import UserSettings
+        from src.contexts.settings.core.failure_events import SettingsNotChanged
 
         settings = UserSettings.default()
 
@@ -320,18 +292,14 @@ class TestDeriveBackupConfigChange:
             current_settings=settings,
         )
 
-        assert isinstance(result, Failure)
-        assert isinstance(result.failure(), InvalidBackupInterval)
+        assert isinstance(result, SettingsNotChanged)
+        assert result.reason == "INVALID_BACKUP_INTERVAL"
 
     def test_fails_with_max_backups_too_small(self):
-        """Should fail with InvalidMaxBackups for max_backups below 1."""
-        from returns.result import Failure
-
-        from src.contexts.settings.core.derivers import (
-            InvalidMaxBackups,
-            derive_backup_config_change,
-        )
+        """Should fail with SettingsNotChanged for max_backups below 1."""
+        from src.contexts.settings.core.derivers import derive_backup_config_change
         from src.contexts.settings.core.entities import UserSettings
+        from src.contexts.settings.core.failure_events import SettingsNotChanged
 
         settings = UserSettings.default()
 
@@ -343,18 +311,14 @@ class TestDeriveBackupConfigChange:
             current_settings=settings,
         )
 
-        assert isinstance(result, Failure)
-        assert isinstance(result.failure(), InvalidMaxBackups)
+        assert isinstance(result, SettingsNotChanged)
+        assert result.reason == "INVALID_MAX_BACKUPS"
 
     def test_fails_with_max_backups_too_large(self):
-        """Should fail with InvalidMaxBackups for max_backups above 20."""
-        from returns.result import Failure
-
-        from src.contexts.settings.core.derivers import (
-            InvalidMaxBackups,
-            derive_backup_config_change,
-        )
+        """Should fail with SettingsNotChanged for max_backups above 20."""
+        from src.contexts.settings.core.derivers import derive_backup_config_change
         from src.contexts.settings.core.entities import UserSettings
+        from src.contexts.settings.core.failure_events import SettingsNotChanged
 
         settings = UserSettings.default()
 
@@ -366,8 +330,8 @@ class TestDeriveBackupConfigChange:
             current_settings=settings,
         )
 
-        assert isinstance(result, Failure)
-        assert isinstance(result.failure(), InvalidMaxBackups)
+        assert isinstance(result, SettingsNotChanged)
+        assert result.reason == "INVALID_MAX_BACKUPS"
 
     def test_accepts_boundary_values(self):
         """Should accept values at boundaries."""
@@ -438,14 +402,10 @@ class TestDeriveAVCodingConfigChange:
             assert result.timestamp_format == fmt
 
     def test_fails_with_invalid_timestamp_format(self):
-        """Should fail with InvalidTimestampFormat for unknown format."""
-        from returns.result import Failure
-
-        from src.contexts.settings.core.derivers import (
-            InvalidTimestampFormat,
-            derive_av_coding_config_change,
-        )
+        """Should fail with SettingsNotChanged for unknown format."""
+        from src.contexts.settings.core.derivers import derive_av_coding_config_change
         from src.contexts.settings.core.entities import UserSettings
+        from src.contexts.settings.core.failure_events import SettingsNotChanged
 
         settings = UserSettings.default()
 
@@ -455,19 +415,15 @@ class TestDeriveAVCodingConfigChange:
             current_settings=settings,
         )
 
-        assert isinstance(result, Failure)
-        assert isinstance(result.failure(), InvalidTimestampFormat)
-        assert "YYYY-MM-DD" in result.failure().message
+        assert isinstance(result, SettingsNotChanged)
+        assert result.reason == "INVALID_TIMESTAMP_FORMAT"
+        assert "YYYY-MM-DD" in result.message
 
     def test_fails_with_speaker_format_missing_placeholder(self):
-        """Should fail with InvalidSpeakerFormat when {n} is missing."""
-        from returns.result import Failure
-
-        from src.contexts.settings.core.derivers import (
-            InvalidSpeakerFormat,
-            derive_av_coding_config_change,
-        )
+        """Should fail with SettingsNotChanged when {n} is missing."""
+        from src.contexts.settings.core.derivers import derive_av_coding_config_change
         from src.contexts.settings.core.entities import UserSettings
+        from src.contexts.settings.core.failure_events import SettingsNotChanged
 
         settings = UserSettings.default()
 
@@ -477,18 +433,14 @@ class TestDeriveAVCodingConfigChange:
             current_settings=settings,
         )
 
-        assert isinstance(result, Failure)
-        assert isinstance(result.failure(), InvalidSpeakerFormat)
+        assert isinstance(result, SettingsNotChanged)
+        assert result.reason == "INVALID_SPEAKER_FORMAT"
 
     def test_fails_with_empty_speaker_format(self):
-        """Should fail with InvalidSpeakerFormat for empty format."""
-        from returns.result import Failure
-
-        from src.contexts.settings.core.derivers import (
-            InvalidSpeakerFormat,
-            derive_av_coding_config_change,
-        )
+        """Should fail with SettingsNotChanged for empty format."""
+        from src.contexts.settings.core.derivers import derive_av_coding_config_change
         from src.contexts.settings.core.entities import UserSettings
+        from src.contexts.settings.core.failure_events import SettingsNotChanged
 
         settings = UserSettings.default()
 
@@ -498,8 +450,8 @@ class TestDeriveAVCodingConfigChange:
             current_settings=settings,
         )
 
-        assert isinstance(result, Failure)
-        assert isinstance(result.failure(), InvalidSpeakerFormat)
+        assert isinstance(result, SettingsNotChanged)
+        assert result.reason == "INVALID_SPEAKER_FORMAT"
 
     def test_accepts_various_speaker_formats(self):
         """Should accept various valid speaker formats with {n}."""

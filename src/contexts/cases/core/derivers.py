@@ -57,6 +57,16 @@ class CaseState:
 
 
 # =============================================================================
+# Helpers
+# =============================================================================
+
+
+def _find_case(case_id: CaseId, state: CaseState) -> Case | None:
+    """Find a case by ID in the state container."""
+    return next((c for c in state.existing_cases if c.id == case_id), None)
+
+
+# =============================================================================
 # Derivers
 # =============================================================================
 
@@ -67,29 +77,13 @@ def derive_create_case(
     memo: str | None,
     state: CaseState,
 ) -> CaseCreated | CaseCreationFailed:
-    """
-    Derive a case creation event from inputs and state.
-
-    Pure function - no I/O, no side effects.
-
-    Args:
-        name: The case name (1-100 characters)
-        description: Optional description
-        memo: Optional memo
-        state: Current case state for invariant checking
-
-    Returns:
-        CaseCreated event on success, CaseCreationFailed on error
-    """
-    # Check for empty/whitespace name
+    """Derive a case creation event. Pure function -- no I/O, no side effects."""
     if not name or not name.strip():
         return CaseCreationFailed.empty_name()
 
-    # Check name length
     if not is_valid_case_name(name):
         return CaseCreationFailed.name_too_long(name)
 
-    # Check uniqueness
     if not is_case_name_unique(name, list(state.existing_cases)):
         return CaseCreationFailed.duplicate_name(name)
 
@@ -107,35 +101,16 @@ def derive_update_case(
     memo: str | None,
     state: CaseState,
 ) -> CaseUpdated | CaseUpdateFailed:
-    """
-    Derive a case update event from inputs and state.
-
-    Pure function - no I/O, no side effects.
-
-    Args:
-        case_id: The case ID to update
-        name: The new case name
-        description: New description
-        memo: New memo
-        state: Current case state for invariant checking
-
-    Returns:
-        CaseUpdated event on success, CaseUpdateFailed on error
-    """
-    # Check case exists
-    case_exists = any(c.id == case_id for c in state.existing_cases)
-    if not case_exists:
+    """Derive a case update event. Pure function -- no I/O, no side effects."""
+    if not any(c.id == case_id for c in state.existing_cases):
         return CaseUpdateFailed.not_found(case_id.value)
 
-    # Check for empty/whitespace name
     if not name or not name.strip():
         return CaseUpdateFailed.empty_name(case_id.value)
 
-    # Check name length
     if not is_valid_case_name(name):
         return CaseUpdateFailed.name_too_long(case_id.value, name)
 
-    # Check uniqueness (excluding current case)
     if not is_case_name_unique(
         name, list(state.existing_cases), exclude_id=case_id.value
     ):
@@ -153,21 +128,8 @@ def derive_remove_case(
     case_id: CaseId,
     state: CaseState,
 ) -> CaseRemoved | CaseDeletionFailed:
-    """
-    Derive a case removal event from inputs and state.
-
-    Pure function - no I/O, no side effects.
-
-    Args:
-        case_id: The case ID to remove
-        state: Current case state for invariant checking
-
-    Returns:
-        CaseRemoved event on success, CaseDeletionFailed on error
-    """
-    # Check case exists
-    case_exists = any(c.id == case_id for c in state.existing_cases)
-    if not case_exists:
+    """Derive a case removal event. Pure function -- no I/O, no side effects."""
+    if not any(c.id == case_id for c in state.existing_cases):
         return CaseDeletionFailed.not_found(case_id.value)
 
     return CaseRemoved.create(case_id=case_id)
@@ -180,35 +142,16 @@ def derive_set_case_attribute(
     attr_value: Any,
     state: CaseState,
 ) -> CaseAttributeSet | AttributeSetFailed:
-    """
-    Derive a case attribute set event from inputs and state.
-
-    Pure function - no I/O, no side effects.
-
-    Args:
-        case_id: The case ID to update
-        attr_name: The attribute name
-        attr_type: The attribute type (text, number, date, boolean)
-        attr_value: The attribute value
-        state: Current case state for invariant checking
-
-    Returns:
-        CaseAttributeSet event on success, AttributeSetFailed on error
-    """
-    # Check case exists
-    case_exists = any(c.id == case_id for c in state.existing_cases)
-    if not case_exists:
+    """Derive a case attribute set event. Pure function -- no I/O, no side effects."""
+    if not any(c.id == case_id for c in state.existing_cases):
         return AttributeSetFailed.case_not_found(case_id.value)
 
-    # Validate attribute name
     if not is_valid_attribute_name(attr_name):
         return AttributeSetFailed.invalid_name(case_id.value)
 
-    # Validate attribute type
     if not is_valid_attribute_type(attr_type):
         return AttributeSetFailed.invalid_type(case_id.value, attr_type)
 
-    # Validate attribute value matches type
     if not is_valid_attribute_value(attr_value, attr_type):
         return AttributeSetFailed.invalid_value(case_id.value, attr_name, attr_type)
 
@@ -225,25 +168,11 @@ def derive_link_source_to_case(
     source_id: SourceId,
     state: CaseState,
 ) -> SourceLinkedToCase | SourceLinkFailed:
-    """
-    Derive a source linked to case event from inputs and state.
-
-    Pure function - no I/O, no side effects.
-
-    Args:
-        case_id: The case ID to link to
-        source_id: The source ID to link
-        state: Current case state for invariant checking
-
-    Returns:
-        SourceLinkedToCase event on success, SourceLinkFailed on error
-    """
-    # Find the case
-    case = next((c for c in state.existing_cases if c.id == case_id), None)
+    """Derive a source-linked-to-case event. Pure function -- no I/O, no side effects."""
+    case = _find_case(case_id, state)
     if case is None:
         return SourceLinkFailed.case_not_found(case_id.value, source_id.value)
 
-    # Check if source is already linked
     if source_id.value in case.source_ids:
         return SourceLinkFailed.already_linked(case_id.value, source_id.value)
 
@@ -258,25 +187,11 @@ def derive_unlink_source_from_case(
     source_id: SourceId,
     state: CaseState,
 ) -> SourceUnlinkedFromCase | SourceUnlinkFailed:
-    """
-    Derive a source unlinked from case event from inputs and state.
-
-    Pure function - no I/O, no side effects.
-
-    Args:
-        case_id: The case ID to unlink from
-        source_id: The source ID to unlink
-        state: Current case state for invariant checking
-
-    Returns:
-        SourceUnlinkedFromCase event on success, SourceUnlinkFailed on error
-    """
-    # Find the case
-    case = next((c for c in state.existing_cases if c.id == case_id), None)
+    """Derive a source-unlinked-from-case event. Pure function -- no I/O, no side effects."""
+    case = _find_case(case_id, state)
     if case is None:
         return SourceUnlinkFailed.case_not_found(case_id.value, source_id.value)
 
-    # Check if source is linked
     if source_id.value not in case.source_ids:
         return SourceUnlinkFailed.not_linked(case_id.value, source_id.value)
 
@@ -291,27 +206,12 @@ def derive_remove_case_attribute(
     attr_name: str,
     state: CaseState,
 ) -> CaseAttributeRemoved | AttributeRemovalFailed:
-    """
-    Derive a case attribute removal event from inputs and state.
-
-    Pure function - no I/O, no side effects.
-
-    Args:
-        case_id: The case ID to remove attribute from
-        attr_name: The attribute name to remove
-        state: Current case state for invariant checking
-
-    Returns:
-        CaseAttributeRemoved event on success, AttributeRemovalFailed on error
-    """
-    # Find the case
-    case = next((c for c in state.existing_cases if c.id == case_id), None)
+    """Derive a case attribute removal event. Pure function -- no I/O, no side effects."""
+    case = _find_case(case_id, state)
     if case is None:
         return AttributeRemovalFailed.case_not_found(case_id.value, attr_name)
 
-    # Check if attribute exists on case
-    attr_exists = any(attr.name == attr_name for attr in case.attributes)
-    if not attr_exists:
+    if not any(attr.name == attr_name for attr in case.attributes):
         return AttributeRemovalFailed.attribute_not_found(case_id.value, attr_name)
 
     return CaseAttributeRemoved.create(

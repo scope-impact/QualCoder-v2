@@ -136,13 +136,12 @@ class AISuggestionCard(Card):
 
         # Confidence badge
         confidence_pct = int(self._confidence * 100)
-        badge_color = (
-            self._colors.success
-            if self._confidence >= 0.7
-            else (
-                self._colors.warning if self._confidence >= 0.5 else self._colors.error
-            )
-        )
+        if self._confidence >= 0.7:
+            badge_color = self._colors.success
+        elif self._confidence >= 0.5:
+            badge_color = self._colors.warning
+        else:
+            badge_color = self._colors.error
         confidence_label = QLabel(f"{confidence_pct}%")
         confidence_label.setStyleSheet(
             f"""

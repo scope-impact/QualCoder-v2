@@ -10,12 +10,14 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from src.contexts.projects.core.commands import UpdateSourceCommand
-from src.contexts.projects.core.derivers import ProjectState as DomainProjectState
 from src.contexts.projects.core.derivers import derive_update_source
 from src.contexts.projects.core.entities import SourceStatus
 from src.contexts.projects.core.events import SourceUpdated
 from src.contexts.projects.core.failure_events import SourceNotUpdated
-from src.contexts.sources.core.commandHandlers._state import SourceRepository
+from src.contexts.sources.core.commandHandlers._state import (
+    SourceRepository,
+    build_domain_state,
+)
 from src.shared.common.operation_result import OperationResult
 from src.shared.common.types import SourceId
 from src.shared.infra.state import ProjectState
@@ -60,13 +62,7 @@ def update_source(
     source_id = SourceId(value=command.source_id)
 
     # Step 2: Build domain state and derive event
-    # Get existing sources from repo (source of truth) instead of state cache
-    existing_sources = tuple(source_repo.get_all()) if source_repo else ()
-    domain_state = DomainProjectState(
-        path_exists=lambda _p: True,
-        parent_writable=lambda _p: True,
-        existing_sources=existing_sources,
-    )
+    domain_state = build_domain_state(source_repo)
 
     result = derive_update_source(
         source_id=source_id,
@@ -102,8 +98,7 @@ def update_source(
         updated_source = updated_source.with_status(SourceStatus(event.status))
 
     # Step 4: Persist to repository (source of truth)
-    if source_repo:
-        source_repo.save(updated_source)
+    source_repo.save(updated_source)
 
     # Step 5: Publish event
     event_bus.publish(event)

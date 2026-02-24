@@ -21,78 +21,24 @@ Note: Uses fixtures from root conftest.py (qapp, colors) and local fixtures.
 
 from __future__ import annotations
 
-from dataclasses import dataclass
 from datetime import UTC, datetime
 
 import pytest
 from PySide6.QtTest import QSignalSpy
 from PySide6.QtWidgets import QApplication, QMainWindow, QVBoxLayout, QWidget
-from sqlalchemy import create_engine
 
 from src.contexts.cases.core.entities import AttributeType, Case, CaseAttribute
-from src.contexts.cases.infra.case_repository import SQLiteCaseRepository
 from src.contexts.cases.interface.signal_bridge import CasesSignalBridge
 from src.contexts.cases.presentation import CaseManagerScreen, CaseManagerViewModel
-from src.contexts.projects.infra.schema import create_all_contexts, drop_all_contexts
 from src.shared.common.types import CaseId, SourceId
-from src.shared.infra.event_bus import EventBus
-from src.shared.infra.state import ProjectState
 from src.tests.e2e.helpers import attach_screenshot
 
 pytestmark = pytest.mark.e2e  # All tests in this module are E2E tests
 
 
-# =============================================================================
-# Minimal CasesContext for E2E Tests (real infrastructure, no mocks)
-# =============================================================================
-
-
-@dataclass
-class E2ECasesContext:
-    """Real CasesContext for E2E tests - wraps actual repository."""
-
-    case_repo: SQLiteCaseRepository
-
-
-# =============================================================================
-# Database Fixtures
-# =============================================================================
-
-
-@pytest.fixture
-def db_engine():
-    """Create in-memory SQLite engine for testing."""
-    engine = create_engine("sqlite:///:memory:", echo=False)
-    create_all_contexts(engine)
-    yield engine
-    drop_all_contexts(engine)
-    engine.dispose()
-
-
-@pytest.fixture
-def db_connection(db_engine):
-    """Create a database connection."""
-    conn = db_engine.connect()
-    yield conn
-    conn.close()
-
-
-@pytest.fixture
-def case_repo(db_connection):
-    """Create a case repository connected to test database."""
-    return SQLiteCaseRepository(db_connection)
-
-
-@pytest.fixture
-def event_bus():
-    """Create event bus for reactive updates."""
-    return EventBus(history_size=100)
-
-
 @pytest.fixture
 def signal_bridge(event_bus):
     """Create and start CasesSignalBridge for reactive UI updates."""
-    # Clear any existing singleton instance for test isolation
     CasesSignalBridge.clear_instance()
     bridge = CasesSignalBridge.instance(event_bus)
     bridge.start()
@@ -102,41 +48,13 @@ def signal_bridge(event_bus):
 
 
 @pytest.fixture
-def state():
-    """Create project state with test project."""
-    from pathlib import Path
-
-    from src.contexts.projects.core.entities import Project, ProjectId
-
-    ps = ProjectState()
-    ps.project = Project(
-        id=ProjectId(value="test-project"),
-        name="Test Project",
-        path=Path("/tmp/test.qda"),
-    )
-    return ps
-
-
-@pytest.fixture
-def cases_ctx(case_repo):
-    """Create minimal CasesContext for testing."""
-    from dataclasses import dataclass
-
-    @dataclass
-    class MinimalCasesContext:
-        case_repo: SQLiteCaseRepository
-
-    return MinimalCasesContext(case_repo=case_repo)
-
-
-@pytest.fixture
-def viewmodel(case_repo, state, event_bus, cases_ctx, signal_bridge):
+def viewmodel(case_repo, project_state, event_bus, cases_context, signal_bridge):
     """Create CaseManagerViewModel with real infrastructure and SignalBridge."""
     return CaseManagerViewModel(
         case_repo=case_repo,
-        state=state,
+        state=project_state,
         event_bus=event_bus,
-        cases_ctx=cases_ctx,
+        cases_ctx=cases_context,
         signal_bridge=signal_bridge,
     )
 
@@ -207,27 +125,21 @@ def seeded_cases(case_repo):
 
 
 @pytest.fixture
-def seeded_state(case_repo, seeded_cases, state):
+def seeded_state(case_repo, seeded_cases, project_state):
     """Create state with project set (repos are source of truth)."""
-    # State just needs project set, repos are source of truth
-    return state
+    return project_state
 
 
 @pytest.fixture
-def seeded_viewmodel(case_repo, seeded_state, event_bus, seeded_cases, signal_bridge):
+def seeded_viewmodel(
+    case_repo, seeded_state, event_bus, seeded_cases, cases_context, signal_bridge
+):
     """Create viewmodel with seeded test data and SignalBridge."""
-    from dataclasses import dataclass
-
-    @dataclass
-    class MinimalCasesContext:
-        case_repo: SQLiteCaseRepository
-
-    cases_ctx = MinimalCasesContext(case_repo=case_repo)
     return CaseManagerViewModel(
         case_repo=case_repo,
         state=seeded_state,
         event_bus=event_bus,
-        cases_ctx=cases_ctx,
+        cases_ctx=cases_context,
         signal_bridge=signal_bridge,
     )
 
@@ -1098,7 +1010,7 @@ class TestReactiveSignalBridgeFlow:
         )
 
     def test_signal_bridge_required_for_reactive_updates(
-        self, case_repo, state, event_bus, cases_ctx, qapp
+        self, case_repo, project_state, event_bus, cases_context, qapp
     ):
         """
         E2E: ViewModel without SignalBridge does NOT receive reactive updates.
@@ -1108,9 +1020,9 @@ class TestReactiveSignalBridgeFlow:
         # Create viewmodel WITHOUT signal_bridge
         vm_no_bridge = CaseManagerViewModel(
             case_repo=case_repo,
-            state=state,
+            state=project_state,
             event_bus=event_bus,
-            cases_ctx=cases_ctx,
+            cases_ctx=cases_context,
             signal_bridge=None,  # No bridge
         )
 

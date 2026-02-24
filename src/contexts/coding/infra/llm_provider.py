@@ -21,6 +21,28 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
+def _extract_json_from_text(text: str) -> Result[dict, str]:
+    """Parse JSON from LLM response text, handling markdown code blocks.
+
+    Strips ```json or ``` fences if present, then parses JSON.
+    Returns Success with parsed dict or Failure with parse error.
+    """
+    cleaned = text
+    if "```json" in cleaned:
+        start = cleaned.find("```json") + 7
+        end = cleaned.find("```", start)
+        cleaned = cleaned[start:end].strip()
+    elif "```" in cleaned:
+        start = cleaned.find("```") + 3
+        end = cleaned.find("```", start)
+        cleaned = cleaned[start:end].strip()
+
+    try:
+        return Success(json.loads(cleaned))
+    except json.JSONDecodeError as e:
+        return Failure(f"Failed to parse JSON: {e!s}")
+
+
 # ============================================================
 # Anthropic Provider
 # ============================================================
@@ -146,24 +168,7 @@ class AnthropicLLMProvider:
         if isinstance(result, Failure):
             return result
 
-        text = result.unwrap()
-
-        # Try to extract JSON from response
-        try:
-            # Handle markdown code blocks
-            if "```json" in text:
-                start = text.find("```json") + 7
-                end = text.find("```", start)
-                text = text[start:end].strip()
-            elif "```" in text:
-                start = text.find("```") + 3
-                end = text.find("```", start)
-                text = text[start:end].strip()
-
-            return Success(json.loads(text))
-
-        except json.JSONDecodeError as e:
-            return Failure(f"Failed to parse JSON: {e!s}")
+        return _extract_json_from_text(result.unwrap())
 
 
 # ============================================================
@@ -287,24 +292,7 @@ class OpenAICompatibleLLMProvider:
         if isinstance(result, Failure):
             return result
 
-        text = result.unwrap()
-
-        # Try to extract JSON from response
-        try:
-            # Handle markdown code blocks
-            if "```json" in text:
-                start = text.find("```json") + 7
-                end = text.find("```", start)
-                text = text[start:end].strip()
-            elif "```" in text:
-                start = text.find("```") + 3
-                end = text.find("```", start)
-                text = text[start:end].strip()
-
-            return Success(json.loads(text))
-
-        except json.JSONDecodeError as e:
-            return Failure(f"Failed to parse JSON: {e!s}")
+        return _extract_json_from_text(result.unwrap())
 
 
 # ============================================================
@@ -440,11 +428,12 @@ def create_llm_provider(
     else:
         llm_config = config or DEFAULT_LLM_CONFIG
 
-    if llm_config.provider == "openai-compatible":
-        return OpenAICompatibleLLMProvider(llm_config)
-    elif llm_config.provider == "anthropic":
-        return AnthropicLLMProvider(llm_config)
-    elif llm_config.provider == "mock":
-        return MockLLMProvider()
-    else:
-        raise ValueError(f"Unknown provider: {llm_config.provider}")
+    match llm_config.provider:
+        case "openai-compatible":
+            return OpenAICompatibleLLMProvider(llm_config)
+        case "anthropic":
+            return AnthropicLLMProvider(llm_config)
+        case "mock":
+            return MockLLMProvider()
+        case _:
+            raise ValueError(f"Unknown provider: {llm_config.provider}")

@@ -9,13 +9,11 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from returns.result import Failure, Result, Success
-
-from src.contexts.settings.core.commandHandlers._helpers import extract_failure_message
 from src.contexts.settings.core.commands import ConfigureAVCodingCommand
 from src.contexts.settings.core.derivers import derive_av_coding_config_change
 from src.contexts.settings.core.entities import AVCodingConfig
-from src.contexts.settings.core.events import AVCodingConfigChanged
+from src.contexts.settings.core.failure_events import SettingsNotChanged
+from src.shared.common.operation_result import OperationResult
 
 if TYPE_CHECKING:
     from src.contexts.settings.infra import UserSettingsRepository
@@ -25,8 +23,8 @@ if TYPE_CHECKING:
 def configure_av_coding(
     command: ConfigureAVCodingCommand,
     settings_repo: UserSettingsRepository,
-    event_bus: EventBus | None = None,
-) -> Result[AVCodingConfigChanged, str]:
+    event_bus: EventBus,
+) -> OperationResult:
     """
     Configure AV coding settings.
 
@@ -40,10 +38,10 @@ def configure_av_coding(
     Args:
         command: Command with timestamp format and speaker format
         settings_repo: Repository for settings persistence
-        event_bus: Optional event bus for publishing events
+        event_bus: Event bus for publishing events
 
     Returns:
-        Success with AVCodingConfigChanged event, or Failure with error message
+        OperationResult with AVCodingConfigChanged event on success
     """
     # Step 1: Load current state
     current_settings = settings_repo.load()
@@ -55,10 +53,10 @@ def configure_av_coding(
         current_settings=current_settings,
     )
 
-    if isinstance(result, Failure):
-        return Failure(extract_failure_message(result.failure()))
+    if isinstance(result, SettingsNotChanged):
+        return OperationResult.from_failure(result)
 
-    event: AVCodingConfigChanged = result
+    event = result
 
     # Step 3: Persist changes
     new_av_coding = AVCodingConfig(
@@ -68,8 +66,7 @@ def configure_av_coding(
     settings_repo.set_av_coding_config(new_av_coding)
 
     # Step 4: Publish event
-    if event_bus is not None:
-        event_bus.publish(event)
+    event_bus.publish(event)
 
     # Step 5: Return result
-    return Success(event)
+    return OperationResult.ok(data=event)

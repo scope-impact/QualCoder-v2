@@ -60,6 +60,7 @@ class MemoDialog(QDialog):
         content: str = "",
         author: str = "",
         timestamp: datetime | None = None,
+        icon_name: str = "mdi6.note-text",
         colors: ColorPalette = None,
         parent=None,
     ):
@@ -68,6 +69,7 @@ class MemoDialog(QDialog):
         self._title = title
         self._author = author
         self._timestamp = timestamp
+        self._icon_name = icon_name
 
         self.setWindowTitle(title)
         self.setModal(True)
@@ -150,9 +152,8 @@ class MemoDialog(QDialog):
         header_layout = QHBoxLayout(header)
         header_layout.setContentsMargins(SPACING.lg, SPACING.md, SPACING.lg, SPACING.md)
 
-        # Icon (can be overridden in subclasses)
         self._icon = Icon(
-            "mdi6.note-text",
+            self._icon_name,
             size=20,
             color=self._colors.primary,
             colors=self._colors,
@@ -279,42 +280,10 @@ class FileMemoDialog(MemoDialog):
             content=content,
             author=author,
             timestamp=timestamp,
+            icon_name="mdi6.file-document",
             colors=colors,
             parent=parent,
         )
-
-    def _setup_header(self, layout: QVBoxLayout):
-        """Setup header with file icon."""
-        header = QFrame()
-        header.setStyleSheet(f"""
-            QFrame {{
-                background-color: {self._colors.surface_light};
-                border-bottom: 1px solid {self._colors.border};
-            }}
-        """)
-        header_layout = QHBoxLayout(header)
-        header_layout.setContentsMargins(SPACING.lg, SPACING.md, SPACING.lg, SPACING.md)
-
-        # File icon
-        self._icon = Icon(
-            "mdi6.file-document",
-            size=20,
-            color=self._colors.primary,
-            colors=self._colors,
-        )
-        header_layout.addWidget(self._icon)
-
-        # Title
-        title_label = QLabel(self._title)
-        title_label.setStyleSheet(f"""
-            color: {self._colors.text_primary};
-            font-size: {TYPOGRAPHY.text_lg}px;
-            font-weight: {TYPOGRAPHY.weight_semibold};
-        """)
-        header_layout.addWidget(title_label)
-        header_layout.addStretch()
-
-        layout.addWidget(header)
 
     def get_title(self) -> str:
         """Get the dialog title including filename."""
@@ -345,6 +314,7 @@ class CodeMemoDialog(MemoDialog):
             content=content,
             author=author,
             timestamp=timestamp,
+            icon_name="mdi6.label",
             colors=colors,
             parent=parent,
         )

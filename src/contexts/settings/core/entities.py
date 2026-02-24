@@ -6,7 +6,7 @@ Immutable entities and value objects representing user settings and preferences.
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 
 # =============================================================================
 # Value Objects
@@ -41,11 +41,11 @@ class FontPreference:
 
     def with_family(self, new_family: str) -> FontPreference:
         """Return new FontPreference with updated family."""
-        return FontPreference(family=new_family, size=self.size)
+        return replace(self, family=new_family)
 
     def with_size(self, new_size: int) -> FontPreference:
         """Return new FontPreference with updated size."""
-        return FontPreference(family=self.family, size=new_size)
+        return replace(self, size=new_size)
 
 
 @dataclass(frozen=True)
@@ -79,39 +79,19 @@ class BackupConfig:
 
     def with_enabled(self, enabled: bool) -> BackupConfig:
         """Return new BackupConfig with updated enabled state."""
-        return BackupConfig(
-            enabled=enabled,
-            interval_minutes=self.interval_minutes,
-            max_backups=self.max_backups,
-            backup_path=self.backup_path,
-        )
+        return replace(self, enabled=enabled)
 
     def with_interval(self, interval_minutes: int) -> BackupConfig:
         """Return new BackupConfig with updated interval."""
-        return BackupConfig(
-            enabled=self.enabled,
-            interval_minutes=interval_minutes,
-            max_backups=self.max_backups,
-            backup_path=self.backup_path,
-        )
+        return replace(self, interval_minutes=interval_minutes)
 
     def with_max_backups(self, max_backups: int) -> BackupConfig:
         """Return new BackupConfig with updated max backups."""
-        return BackupConfig(
-            enabled=self.enabled,
-            interval_minutes=self.interval_minutes,
-            max_backups=max_backups,
-            backup_path=self.backup_path,
-        )
+        return replace(self, max_backups=max_backups)
 
     def with_backup_path(self, backup_path: str | None) -> BackupConfig:
         """Return new BackupConfig with updated backup path."""
-        return BackupConfig(
-            enabled=self.enabled,
-            interval_minutes=self.interval_minutes,
-            max_backups=self.max_backups,
-            backup_path=backup_path,
-        )
+        return replace(self, backup_path=backup_path)
 
 
 @dataclass(frozen=True)
@@ -127,17 +107,11 @@ class AVCodingConfig:
 
     def with_timestamp_format(self, timestamp_format: str) -> AVCodingConfig:
         """Return new AVCodingConfig with updated timestamp format."""
-        return AVCodingConfig(
-            timestamp_format=timestamp_format,
-            speaker_format=self.speaker_format,
-        )
+        return replace(self, timestamp_format=timestamp_format)
 
     def with_speaker_format(self, speaker_format: str) -> AVCodingConfig:
         """Return new AVCodingConfig with updated speaker format."""
-        return AVCodingConfig(
-            timestamp_format=self.timestamp_format,
-            speaker_format=speaker_format,
-        )
+        return replace(self, speaker_format=speaker_format)
 
 
 @dataclass(frozen=True)
@@ -210,66 +184,24 @@ class UserSettings:
 
     def with_theme(self, theme: ThemePreference) -> UserSettings:
         """Return new UserSettings with updated theme."""
-        return UserSettings(
-            theme=theme,
-            font=self.font,
-            language=self.language,
-            backup=self.backup,
-            av_coding=self.av_coding,
-            backend=self.backend,
-        )
+        return replace(self, theme=theme)
 
     def with_font(self, font: FontPreference) -> UserSettings:
         """Return new UserSettings with updated font."""
-        return UserSettings(
-            theme=self.theme,
-            font=font,
-            language=self.language,
-            backup=self.backup,
-            av_coding=self.av_coding,
-            backend=self.backend,
-        )
+        return replace(self, font=font)
 
     def with_language(self, language: LanguagePreference) -> UserSettings:
         """Return new UserSettings with updated language."""
-        return UserSettings(
-            theme=self.theme,
-            font=self.font,
-            language=language,
-            backup=self.backup,
-            av_coding=self.av_coding,
-            backend=self.backend,
-        )
+        return replace(self, language=language)
 
     def with_backup(self, backup: BackupConfig) -> UserSettings:
         """Return new UserSettings with updated backup config."""
-        return UserSettings(
-            theme=self.theme,
-            font=self.font,
-            language=self.language,
-            backup=backup,
-            av_coding=self.av_coding,
-            backend=self.backend,
-        )
+        return replace(self, backup=backup)
 
     def with_av_coding(self, av_coding: AVCodingConfig) -> UserSettings:
         """Return new UserSettings with updated AV coding config."""
-        return UserSettings(
-            theme=self.theme,
-            font=self.font,
-            language=self.language,
-            backup=self.backup,
-            av_coding=av_coding,
-            backend=self.backend,
-        )
+        return replace(self, av_coding=av_coding)
 
     def with_backend(self, backend: BackendConfig) -> UserSettings:
         """Return new UserSettings with updated backend config."""
-        return UserSettings(
-            theme=self.theme,
-            font=self.font,
-            language=self.language,
-            backup=self.backup,
-            av_coding=self.av_coding,
-            backend=backend,
-        )
+        return replace(self, backend=backend)

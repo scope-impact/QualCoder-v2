@@ -173,8 +173,37 @@ class FileManagerScreen(QWidget):
         Args:
             viewmodel: The new viewmodel to use
         """
+        # Disconnect previous viewmodel signals if any
+        if self._viewmodel is not None:
+            self._disconnect_viewmodel_signals()
+
         self._viewmodel = viewmodel
+        self._connect_viewmodel_signals()
         self._load_data()
+
+    def _connect_viewmodel_signals(self) -> None:
+        """Connect to viewmodel signals for reactive UI updates (e.g. MCP-triggered changes)."""
+        if self._viewmodel is None:
+            return
+
+        self._viewmodel.sources_changed.connect(self._load_data)
+        self._viewmodel.summary_changed.connect(self._refresh_summary)
+        self._viewmodel.folders_changed.connect(self._load_folders)
+
+    def _disconnect_viewmodel_signals(self) -> None:
+        """Disconnect from previous viewmodel signals."""
+        if self._viewmodel is None:
+            return
+
+        self._viewmodel.sources_changed.disconnect(self._load_data)
+        self._viewmodel.summary_changed.disconnect(self._refresh_summary)
+        self._viewmodel.folders_changed.disconnect(self._load_folders)
+
+    def _refresh_summary(self) -> None:
+        """Refresh only the summary stats from viewmodel."""
+        if self._viewmodel:
+            summary = self._viewmodel.get_summary()
+            self._page.set_summary(summary)
 
     # =========================================================================
     # Toolbar Action Handlers

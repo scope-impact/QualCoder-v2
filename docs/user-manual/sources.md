@@ -21,9 +21,9 @@ Sources are the documents and media files you analyze. QualCoder supports text, 
 3. Select one or more files
 4. Click **Open**
 
-![File Manager - With Sources](images/file-manager-with-sources.png)
+![File Manager - With Sources](images/file-manager-with-folders.png)
 
-*The File Manager showing imported source files with type statistics.*
+*The File Manager showing imported source files with type statistics and folder tree.*
 
 > **Tip: Bulk Import**
 >
@@ -44,13 +44,37 @@ To import all files from a folder:
 
 Organize sources into folders for better management:
 
-1. Click **New Folder** button
-2. Enter a folder name
-3. Click **Create**
+1. Click **New Folder** in the File Manager toolbar
+2. Enter a folder name (1–255 characters, must be unique within the parent folder, no slashes)
+3. Optionally select a **parent folder** to create a nested folder
+4. Click **Create**
+
+> **Tip: Nested Folders**
+>
+> You can create folders inside other folders for hierarchical organization — for example, `Interviews / Round 1` and `Interviews / Round 2`.
+
+### Rename Folders
+
+1. Right-click the folder in the folder tree
+2. Select **Rename**
+3. Enter the new name (must be unique within the same parent)
+4. Press **Enter** or click **OK**
+
+### Delete Folders
+
+1. Right-click the folder
+2. Select **Delete**
+3. Confirm the deletion
+
+> **Warning:** A folder must be empty before it can be deleted. Move or remove all sources from the folder first.
 
 ### Move Sources
 
-Drag and drop sources into folders to organize them.
+Move sources into folders using one of these methods:
+
+- **Drag and drop** — Drag a source onto a folder in the tree
+- **Right-click** — Right-click a source, select **Move to Folder**, and choose the target folder
+- **Move to root** — Select **No Folder** (or root) to remove a source from its current folder
 
 ### Source Metadata
 
@@ -113,6 +137,72 @@ When no sources have been imported yet:
 ![File Manager - Empty](images/file-manager-empty.png)
 
 *The File Manager empty state with import options.*
+
+## AI Agent Source Management
+
+When an AI assistant is connected via MCP (see [MCP Setup](./mcp-setup.md)), it can manage sources programmatically:
+
+### Adding Text Sources
+
+The agent can add text sources directly using the `add_text_source` tool, providing a name and content without needing a file on disk. This is useful for:
+
+- Ingesting interview transcripts from other tools
+- Adding field notes collected during research
+- Creating sources from processed or transformed text
+
+Each source must have a unique name within the project.
+
+### Importing Files
+
+The agent can import file-based sources (PDFs, images, audio, video) using the `import_file_source` tool by providing an absolute file path. The file type is auto-detected from the extension:
+
+- **Text:** `.txt`, `.docx`, `.rtf`, `.md`, `.odt`, `.epub`
+- **PDF:** `.pdf` (with automatic text extraction)
+- **Images:** `.png`, `.jpg`, `.gif`, `.bmp`, `.tiff`, `.webp`
+- **Audio:** `.mp3`, `.wav`, `.m4a`, `.ogg`, `.flac`
+- **Video:** `.mp4`, `.mov`, `.avi`, `.mkv`, `.webm`
+
+Use the `dry_run` parameter to validate a file before importing. The optional `name` parameter overrides the default filename-based source name.
+
+### Listing and Reading Sources
+
+The agent can browse and read your sources programmatically:
+
+- **`list_sources`** — Lists all sources in the project. Use the optional `source_type` filter (`text`, `pdf`, `image`, `audio`, `video`) to narrow results.
+- **`read_source_content`** — Reads the text content of a source document. For large documents, content is paginated using `start_pos`, `end_pos`, and `max_length` parameters. The response includes `has_more: true` when additional content is available.
+- **`navigate_to_segment`** — Opens a source in the coding screen and scrolls to a specific character position. Optionally highlights the segment for easy identification.
+
+### Suggesting Metadata
+
+The agent can analyze sources and suggest metadata using `suggest_source_metadata`:
+
+- **Language detection** — Suggests a language code (e.g., `en`, `es`, `fr`)
+- **Topic extraction** — Suggests key topics and themes found in the text
+- **Organization hints** — Suggests how the source might be grouped or categorized
+
+All metadata suggestions are stored with pending status and require your approval before being applied.
+
+### Organizing into Folders
+
+The agent can manage the full folder lifecycle:
+
+- **`list_folders`** — Lists all folders with their hierarchy (parent-child relationships)
+- **`create_folder`** — Creates a new folder, optionally nested under a parent folder via `parent_id`
+- **`rename_folder`** — Renames an existing folder (new name must be unique within the parent)
+- **`delete_folder`** — Deletes an empty folder (fails if the folder still contains sources)
+- **`move_source_to_folder`** — Moves a source into a folder, or back to root by passing `folder_id=0` or `null`
+
+This enables automated organization of large source collections — for example, sorting interview transcripts by participant or date.
+
+### Removing Sources
+
+The agent uses a **preview-then-confirm** workflow for safe deletion:
+
+1. `remove_source` with `confirm=false` (default) shows what would be deleted
+2. You review the preview (source name, type, number of coded segments affected)
+3. `remove_source` with `confirm=true` performs the actual deletion
+
+This ensures you always know what will be removed before it happens.
 
 ## Deleting Sources
 

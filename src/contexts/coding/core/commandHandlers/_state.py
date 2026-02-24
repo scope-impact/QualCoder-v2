@@ -7,7 +7,7 @@ not entire bounded contexts.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Protocol, runtime_checkable
+from typing import TYPE_CHECKING, Any, Protocol, runtime_checkable
 
 from src.contexts.coding.core.derivers import CodingState
 from src.shared.common.types import SourceId
@@ -98,3 +98,27 @@ def build_coding_state(
         source_length=source_length,
         source_exists=source_exists,
     )
+
+
+def get_selected_text(
+    source_provider: Any | None,
+    source_id: SourceId,
+    start: int,
+    end: int,
+) -> str:
+    """Get the selected text from a source content provider.
+
+    Args:
+        source_provider: Optional provider with get_content(source_id) method
+        source_id: ID of the source document
+        start: Start character position
+        end: End character position
+
+    Returns:
+        The selected text, or a placeholder if provider is unavailable
+    """
+    if source_provider:
+        content = source_provider.get_content(source_id)
+        if content:
+            return content[start:end]
+    return f"[text from {start} to {end}]"

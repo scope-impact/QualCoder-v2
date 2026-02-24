@@ -205,22 +205,6 @@ class AICodingViewModel(QObject):
         """
         return self._provider.get_suggestion(suggestion_id)
 
-    def get_all_suggestions(self) -> list[SuggestionDTO]:
-        """
-        Get all current suggestions as DTOs.
-
-        Returns:
-            List of suggestion DTOs
-        """
-        # Get suggestions from provider cache
-        # Note: Provider maintains the cache, we just transform to DTOs
-        if not self._provider.has_suggestions():
-            return []
-
-        # We need to get the actual suggestions - this requires a method
-        # For now, return empty (the UI uses the signal-based flow)
-        return []
-
     def has_suggestions(self) -> bool:
         """Check if there are any current suggestions."""
         return self._provider.has_suggestions()

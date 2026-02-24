@@ -9,10 +9,13 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from src.contexts.cases.core.commandHandlers._state import CaseRepository
-from src.contexts.cases.core.derivers import CaseState, derive_create_case
+from src.contexts.cases.core.commandHandlers._state import (
+    CaseRepository,
+    build_case_state,
+    require_project,
+)
+from src.contexts.cases.core.derivers import derive_create_case
 from src.contexts.cases.core.entities import Case
-from src.contexts.cases.core.events import CaseCreated
 from src.contexts.cases.core.failure_events import CaseCreationFailed
 from src.contexts.projects.core.commands import CreateCaseCommand, RemoveCaseCommand
 from src.shared.common.operation_result import OperationResult
@@ -28,45 +31,22 @@ def create_case(
     case_repo: CaseRepository | None,
     event_bus: EventBus,
 ) -> OperationResult:
-    """
-    Create a new case in the current project.
-
-    Args:
-        command: Command with case name and description
-        state: Project state cache
-        case_repo: Repository for cases
-        event_bus: Event bus for publishing events
-
-    Returns:
-        OperationResult with Case entity on success, or error details on failure
-    """
-    if state.project is None:
-        return OperationResult.fail(
-            error="No project is currently open",
-            error_code="CASE_NOT_CREATED/NO_PROJECT",
-            suggestions=("Open a project first",),
-        )
-
-    # Build state and derive event
-    # Get existing cases from repo (source of truth) instead of state cache
-    existing_cases = tuple(case_repo.get_all()) if case_repo else ()
-    case_state = CaseState(existing_cases=existing_cases)
+    """Create a new case in the current project."""
+    if failure := require_project(state, "CASE_NOT_CREATED/NO_PROJECT"):
+        return failure
 
     result = derive_create_case(
         name=command.name,
         description=command.description,
         memo=command.memo,
-        state=case_state,
+        state=build_case_state(case_repo),
     )
 
-    # Derivers now return failure events directly (per SKILL.md)
     if isinstance(result, CaseCreationFailed):
-        event_bus.publish(result)  # Publish failure for observability
+        event_bus.publish(result)
         return OperationResult.from_failure(result)
 
-    event: CaseCreated = result
-
-    # Create case entity
+    event = result
     case = Case(
         id=event.case_id,
         name=event.name,
@@ -74,14 +54,11 @@ def create_case(
         memo=event.memo,
     )
 
-    # Persist to repository (source of truth)
     if case_repo:
         case_repo.save(case)
 
-    # Publish event
     event_bus.publish(event)
 
-    # Return success with rollback command
     return OperationResult.ok(
         data=case,
         rollback=RemoveCaseCommand(case_id=case.id.value),

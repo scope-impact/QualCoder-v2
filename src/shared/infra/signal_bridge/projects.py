@@ -20,10 +20,13 @@ from datetime import UTC, datetime
 
 from PySide6.QtCore import Signal
 
-from src.contexts.projects.core.events import (
+from src.contexts.folders.core.events import (
     FolderCreated,
     FolderDeleted,
     FolderRenamed,
+    SourceMovedToFolder,
+)
+from src.contexts.projects.core.events import (
     NavigatedToSegment,
     ProjectClosed,
     ProjectCreated,
@@ -31,7 +34,6 @@ from src.contexts.projects.core.events import (
     ProjectRenamed,
     ScreenChanged,
     SourceAdded,
-    SourceMovedToFolder,
     SourceOpened,
     SourceRemoved,
     SourceRenamed,
@@ -282,7 +284,7 @@ class FolderCreatedConverter(EventConverter):
 
     def convert(self, event: FolderCreated) -> FolderPayload:
         return FolderPayload(
-            event_type="projects.folder_created",
+            event_type="folders.folder_created",
             folder_id=event.folder_id.value,
             name=event.name,
             parent_id=event.parent_id.value if event.parent_id else None,
@@ -294,7 +296,7 @@ class FolderRenamedConverter(EventConverter):
 
     def convert(self, event: FolderRenamed) -> FolderPayload:
         return FolderPayload(
-            event_type="projects.folder_renamed",
+            event_type="folders.folder_renamed",
             folder_id=event.folder_id.value,
             name=event.new_name,
             parent_id=None,  # FolderRenamed event doesn't include parent_id
@@ -306,7 +308,7 @@ class FolderDeletedConverter(EventConverter):
 
     def convert(self, event: FolderDeleted) -> FolderPayload:
         return FolderPayload(
-            event_type="projects.folder_deleted",
+            event_type="folders.folder_deleted",
             folder_id=event.folder_id.value,
             name=event.name,
             parent_id=None,  # FolderDeleted event doesn't include parent_id
@@ -318,7 +320,7 @@ class SourceMovedToFolderConverter(EventConverter):
 
     def convert(self, event: SourceMovedToFolder) -> SourceMovedPayload:
         return SourceMovedPayload(
-            event_type="projects.source_moved_to_folder",
+            event_type="folders.source_moved_to_folder",
             source_id=event.source_id.value,
             old_folder_id=event.old_folder_id.value if event.old_folder_id else None,
             new_folder_id=event.new_folder_id.value if event.new_folder_id else None,
@@ -495,22 +497,22 @@ class ProjectSignalBridge(BaseSignalBridge):
 
         # Folder events
         self.register_converter(
-            "projects.folder_created",
+            "folders.folder_created",
             FolderCreatedConverter(),
             "folder_created",
         )
         self.register_converter(
-            "projects.folder_renamed",
+            "folders.folder_renamed",
             FolderRenamedConverter(),
             "folder_renamed",
         )
         self.register_converter(
-            "projects.folder_deleted",
+            "folders.folder_deleted",
             FolderDeletedConverter(),
             "folder_deleted",
         )
         self.register_converter(
-            "projects.source_moved_to_folder",
+            "folders.source_moved_to_folder",
             SourceMovedToFolderConverter(),
             "source_moved",
         )
