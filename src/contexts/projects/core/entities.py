@@ -6,7 +6,7 @@ Immutable data types representing domain concepts for project management.
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from datetime import UTC, datetime
 from enum import Enum
 from pathlib import Path
@@ -105,117 +105,27 @@ class Source:
 
     def with_status(self, new_status: SourceStatus) -> Source:
         """Return new Source with updated status."""
-        return Source(
-            id=self.id,
-            name=self.name,
-            source_type=self.source_type,
-            status=new_status,
-            file_path=self.file_path,
-            file_size=self.file_size,
-            memo=self.memo,
-            origin=self.origin,
-            folder_id=self.folder_id,
-            case_ids=self.case_ids,
-            code_count=self.code_count,
-            fulltext=self.fulltext,
-            created_at=self.created_at,
-            modified_at=datetime.now(UTC),
-        )
+        return replace(self, status=new_status, modified_at=datetime.now(UTC))
 
     def with_memo(self, new_memo: str | None) -> Source:
         """Return new Source with updated memo."""
-        return Source(
-            id=self.id,
-            name=self.name,
-            source_type=self.source_type,
-            status=self.status,
-            file_path=self.file_path,
-            file_size=self.file_size,
-            memo=new_memo,
-            origin=self.origin,
-            folder_id=self.folder_id,
-            case_ids=self.case_ids,
-            code_count=self.code_count,
-            fulltext=self.fulltext,
-            created_at=self.created_at,
-            modified_at=datetime.now(UTC),
-        )
+        return replace(self, memo=new_memo, modified_at=datetime.now(UTC))
 
     def with_origin(self, new_origin: str | None) -> Source:
         """Return new Source with updated origin."""
-        return Source(
-            id=self.id,
-            name=self.name,
-            source_type=self.source_type,
-            status=self.status,
-            file_path=self.file_path,
-            file_size=self.file_size,
-            memo=self.memo,
-            origin=new_origin,
-            folder_id=self.folder_id,
-            case_ids=self.case_ids,
-            code_count=self.code_count,
-            fulltext=self.fulltext,
-            created_at=self.created_at,
-            modified_at=datetime.now(UTC),
-        )
+        return replace(self, origin=new_origin, modified_at=datetime.now(UTC))
 
     def with_folder(self, new_folder_id: FolderId | None) -> Source:
         """Return new Source with updated folder."""
-        return Source(
-            id=self.id,
-            name=self.name,
-            source_type=self.source_type,
-            status=self.status,
-            file_path=self.file_path,
-            file_size=self.file_size,
-            memo=self.memo,
-            origin=self.origin,
-            folder_id=new_folder_id,
-            case_ids=self.case_ids,
-            code_count=self.code_count,
-            fulltext=self.fulltext,
-            created_at=self.created_at,
-            modified_at=datetime.now(UTC),
-        )
+        return replace(self, folder_id=new_folder_id, modified_at=datetime.now(UTC))
 
     def with_code_count(self, new_count: int) -> Source:
         """Return new Source with updated code count."""
-        return Source(
-            id=self.id,
-            name=self.name,
-            source_type=self.source_type,
-            status=self.status,
-            file_path=self.file_path,
-            file_size=self.file_size,
-            memo=self.memo,
-            origin=self.origin,
-            folder_id=self.folder_id,
-            case_ids=self.case_ids,
-            code_count=new_count,
-            fulltext=self.fulltext,
-            created_at=self.created_at,
-            modified_at=datetime.now(UTC),
-        )
+        return replace(self, code_count=new_count, modified_at=datetime.now(UTC))
 
     def with_name(self, new_name: str) -> Source:
         """Return new Source with updated name."""
-        return Source(
-            id=self.id,
-            name=new_name,
-            source_type=self.source_type,
-            status=self.status,
-            file_path=self.file_path,
-            file_size=self.file_size,
-            memo=self.memo,
-            origin=self.origin,
-            folder_id=self.folder_id,
-            case_ids=self.case_ids,
-            code_count=self.code_count,
-            fulltext=self.fulltext,
-            created_at=self.created_at,
-            modified_at=datetime.now(UTC),
-        )
+        return replace(self, name=new_name, modified_at=datetime.now(UTC))
 
 
 @dataclass(frozen=True)
@@ -233,21 +143,11 @@ class Folder:
 
     def with_name(self, new_name: str) -> Folder:
         """Return new Folder with updated name."""
-        return Folder(
-            id=self.id,
-            name=new_name,
-            parent_id=self.parent_id,
-            created_at=self.created_at,
-        )
+        return replace(self, name=new_name)
 
     def with_parent(self, new_parent_id: FolderId | None) -> Folder:
         """Return new Folder with updated parent."""
-        return Folder(
-            id=self.id,
-            name=self.name,
-            parent_id=new_parent_id,
-            created_at=self.created_at,
-        )
+        return replace(self, parent_id=new_parent_id)
 
 
 @dataclass(frozen=True)
@@ -272,55 +172,19 @@ class Project:
 
     def with_name(self, new_name: str) -> Project:
         """Return new Project with updated name."""
-        return Project(
-            id=self.id,
-            name=new_name,
-            path=self.path,
-            memo=self.memo,
-            owner=self.owner,
-            created_at=self.created_at,
-            last_opened_at=self.last_opened_at,
-            summary=self.summary,
-        )
+        return replace(self, name=new_name)
 
     def with_memo(self, new_memo: str | None) -> Project:
         """Return new Project with updated memo."""
-        return Project(
-            id=self.id,
-            name=self.name,
-            path=self.path,
-            memo=new_memo,
-            owner=self.owner,
-            created_at=self.created_at,
-            last_opened_at=self.last_opened_at,
-            summary=self.summary,
-        )
+        return replace(self, memo=new_memo)
 
     def with_summary(self, new_summary: ProjectSummary) -> Project:
         """Return new Project with updated summary."""
-        return Project(
-            id=self.id,
-            name=self.name,
-            path=self.path,
-            memo=self.memo,
-            owner=self.owner,
-            created_at=self.created_at,
-            last_opened_at=self.last_opened_at,
-            summary=new_summary,
-        )
+        return replace(self, summary=new_summary)
 
     def touch(self) -> Project:
         """Return new Project with updated last_opened_at."""
-        return Project(
-            id=self.id,
-            name=self.name,
-            path=self.path,
-            memo=self.memo,
-            owner=self.owner,
-            created_at=self.created_at,
-            last_opened_at=datetime.now(UTC),
-            summary=self.summary,
-        )
+        return replace(self, last_opened_at=datetime.now(UTC))
 
 
 @dataclass(frozen=True)
@@ -337,8 +201,4 @@ class RecentProject:
 
     def touch(self) -> RecentProject:
         """Return new RecentProject with updated timestamp."""
-        return RecentProject(
-            path=self.path,
-            name=self.name,
-            last_opened=datetime.now(UTC),
-        )
+        return replace(self, last_opened=datetime.now(UTC))

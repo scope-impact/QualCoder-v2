@@ -18,6 +18,7 @@ from src.contexts.coding.core.commandHandlers._state import (
     CodeRepository,
     SegmentRepository,
     build_coding_state,
+    get_selected_text,
 )
 from src.contexts.coding.core.commands import ApplyCodeCommand, BatchApplyCodesCommand
 from src.contexts.coding.core.derivers import derive_apply_code_to_text
@@ -161,7 +162,7 @@ def _apply_single_code(
     source_id = SourceId(value=op.source_id)
 
     # Get source content for the selected text
-    selected_text = _get_selected_text(
+    selected_text = get_selected_text(
         source_content_provider,
         source_id,
         op.start_position,
@@ -222,18 +223,3 @@ def _apply_single_code(
         success=True,
         segment=segment,
     )
-
-
-def _get_selected_text(
-    source_provider: Any | None,
-    source_id: SourceId,
-    start: int,
-    end: int,
-) -> str:
-    """Get the selected text from a source."""
-    if source_provider:
-        content = source_provider.get_content(source_id)
-        if content:
-            return content[start:end]
-    # Fallback: return placeholder
-    return f"[text from {start} to {end}]"

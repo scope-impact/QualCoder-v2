@@ -25,7 +25,13 @@ from src.contexts.coding.core.commands import MergeCodesCommand
 from src.shared.common.operation_result import OperationResult
 from src.shared.common.types import CodeId
 
-from .base import HandlerContext, missing_param_error, no_context_error
+from .base import (
+    HandlerContext,
+    missing_param_error,
+    missing_params_error,
+    no_context_error,
+    not_found_error,
+)
 
 
 def _calculate_similarity(
@@ -37,12 +43,8 @@ def _calculate_similarity(
     """Calculate similarity using token-level matching.
 
     Uses rapidfuzz token_set_ratio which compares unique word sets,
-    handling reordering and duplicates. This avoids false positives
-    from character-level matching (e.g. "Sports & Recreation" vs
-    "Trust & Verification" no longer match at 61%).
-
-    When both codes have memos, blends name similarity (60%) with
-    memo similarity (40%) for better accuracy.
+    handling reordering and duplicates. When both codes have memos,
+    blends name similarity (60%) with memo similarity (40%).
     """
     name_score = fuzz.token_set_ratio(name_a, name_b) / 100.0
 
@@ -59,7 +61,6 @@ def handle_detect_duplicate_codes(
 ) -> dict[str, Any]:
     """Detect semantically similar codes."""
     threshold = arguments.get("threshold", 0.8)
-    _include_usage = arguments.get("include_usage_analysis", False)  # Reserved
 
     if ctx.code_repo is None:
         return no_context_error("DETECT_DUPLICATES")
@@ -67,7 +68,6 @@ def handle_detect_duplicate_codes(
     codes = ctx.code_repo.get_all()
     candidates = []
 
-    # Token-level similarity detection (names + memos)
     for i, code_a in enumerate(codes):
         for code_b in codes[i + 1 :]:
             similarity = _calculate_similarity(
@@ -76,25 +76,22 @@ def handle_detect_duplicate_codes(
                 memo_a=code_a.memo,
                 memo_b=code_b.memo,
             )
-            if similarity >= threshold:
-                # Get segment counts
-                a_segments = (
-                    len(ctx.segment_repo.get_by_code(code_a.id))
-                    if ctx.segment_repo
-                    else 0
-                )
-                b_segments = (
-                    len(ctx.segment_repo.get_by_code(code_b.id))
-                    if ctx.segment_repo
-                    else 0
-                )
+            if similarity < threshold:
+                continue
 
-                # Build rationale with score breakdown
-                rationale = f"Names are similar: '{code_a.name}' vs '{code_b.name}'"
-                if code_a.memo and code_b.memo:
-                    rationale += " (name + memo similarity)"
+            a_segments = (
+                len(ctx.segment_repo.get_by_code(code_a.id)) if ctx.segment_repo else 0
+            )
+            b_segments = (
+                len(ctx.segment_repo.get_by_code(code_b.id)) if ctx.segment_repo else 0
+            )
 
-                candidate = DuplicateCandidate(
+            rationale = f"Names are similar: '{code_a.name}' vs '{code_b.name}'"
+            if code_a.memo and code_b.memo:
+                rationale += " (name + memo similarity)"
+
+            candidates.append(
+                DuplicateCandidate(
                     code_a_id=code_a.id,
                     code_a_name=code_a.name,
                     code_b_id=code_b.id,
@@ -104,12 +101,10 @@ def handle_detect_duplicate_codes(
                     code_a_segment_count=a_segments,
                     code_b_segment_count=b_segments,
                 )
-                candidates.append(candidate)
+            )
 
-    # Sort by similarity (highest first)
     candidates.sort(key=lambda c: c.similarity.value, reverse=True)
 
-    # Store detection result
     detection = DuplicateDetectionResult(
         id=DetectionId.new(),
         candidates=tuple(candidates),
@@ -149,10 +144,7 @@ def handle_suggest_merge_codes(
     rationale = arguments.get("rationale")
 
     if source_code_id is None or target_code_id is None:
-        return OperationResult.fail(
-            error="Missing required parameters: source_code_id and target_code_id",
-            error_code="SUGGEST_MERGE/MISSING_PARAMS",
-        ).to_dict()
+        return missing_params_error("SUGGEST_MERGE")
 
     if not rationale:
         return missing_param_error("SUGGEST_MERGE", "rationale")
@@ -182,8 +174,7 @@ def handle_approve_merge(
     ctx: HandlerContext,
     arguments: dict[str, Any],
 ) -> dict[str, Any]:
-    """
-    Approve a merge suggestion.
+    """Approve a merge suggestion.
 
     Delegates to merge_codes command handler for proper event publishing
     (CodesMerged) for UI refresh.
@@ -196,15 +187,11 @@ def handle_approve_merge(
         MergeSuggestionId(merge_id)
     )
     if suggestion is None:
-        return OperationResult.fail(
-            error=f"Merge suggestion {merge_id} not found",
-            error_code="APPROVE_MERGE/NOT_FOUND",
-        ).to_dict()
+        return not_found_error("APPROVE_MERGE", "Merge suggestion", merge_id)
 
     if ctx.code_repo is None or ctx.segment_repo is None:
         return no_context_error("APPROVE_MERGE")
 
-    # Delegate to merge_codes command handler - publishes CodesMerged event
     command = MergeCodesCommand(
         source_code_id=suggestion.source_code_id.value,
         target_code_id=suggestion.target_code_id.value,
@@ -218,10 +205,8 @@ def handle_approve_merge(
     )
 
     if result.is_success:
-        # Update suggestion status
         updated = suggestion.with_status("approved")
         ctx.suggestion_cache.merge_suggestions.update(updated)
-
         return OperationResult.ok(
             data={
                 "status": "merged",

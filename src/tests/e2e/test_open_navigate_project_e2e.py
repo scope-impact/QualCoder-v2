@@ -18,16 +18,6 @@ pytestmark = [
 
 
 @pytest.fixture
-def app_context():
-    from src.shared.infra.app_context import create_app_context
-
-    ctx = create_app_context()
-    ctx.start()
-    yield ctx
-    ctx.stop()
-
-
-@pytest.fixture
 def temp_project_path(tmp_path: Path) -> Path:
     return tmp_path / "test_project.qda"
 

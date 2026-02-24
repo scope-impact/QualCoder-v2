@@ -134,18 +134,12 @@ class SQLiteSourceRepository:
 
     def get_by_folder(self, folder_id: FolderId | None) -> list[Source]:
         """Get all sources in a folder (None for root level)."""
-        if folder_id is None:
-            stmt = (
-                select(src_source)
-                .where(src_source.c.folder_id.is_(None))
-                .order_by(src_source.c.name)
-            )
-        else:
-            stmt = (
-                select(src_source)
-                .where(src_source.c.folder_id == folder_id.value)
-                .order_by(src_source.c.name)
-            )
+        folder_filter = (
+            src_source.c.folder_id.is_(None)
+            if folder_id is None
+            else src_source.c.folder_id == folder_id.value
+        )
+        stmt = select(src_source).where(folder_filter).order_by(src_source.c.name)
         result = self._conn.execute(stmt)
         return [self._row_to_source(row) for row in result]
 

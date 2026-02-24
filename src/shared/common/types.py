@@ -49,6 +49,10 @@ class SourceId:
 class CategoryId:
     value: int
 
+    @classmethod
+    def new(cls) -> CategoryId:
+        return cls(value=int(uuid4().int % 1_000_000))
+
 
 @dataclass(frozen=True)
 class CaseId:
@@ -126,7 +130,7 @@ class DuplicateName:
     name: str
     message: str = ""
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         object.__setattr__(self, "message", f"Code name '{self.name}' already exists")
 
 
@@ -135,7 +139,7 @@ class CodeNotFound:
     code_id: CodeId
     message: str = ""
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         object.__setattr__(
             self, "message", f"Code with id {self.code_id.value} not found"
         )
@@ -146,7 +150,7 @@ class SourceNotFound:
     source_id: SourceId
     message: str = ""
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         object.__setattr__(
             self, "message", f"Source with id {self.source_id.value} not found"
         )
@@ -159,7 +163,7 @@ class InvalidPosition:
     source_length: int
     message: str = ""
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         object.__setattr__(
             self,
             "message",
@@ -177,7 +181,7 @@ class FolderNotFound:
     folder_id: FolderId
     message: str = ""
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         object.__setattr__(
             self, "message", f"Folder with id {self.folder_id.value} not found"
         )

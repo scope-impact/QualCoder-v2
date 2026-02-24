@@ -22,10 +22,6 @@ from sqlalchemy import (
 # Metadata for Sources context tables
 metadata = MetaData()
 
-# ============================================================
-# Table Definitions
-# ============================================================
-
 # src_folder - Hierarchical folder organization for sources
 src_folder = Table(
     "src_folder",

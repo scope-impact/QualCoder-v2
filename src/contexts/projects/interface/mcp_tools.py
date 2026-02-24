@@ -262,7 +262,9 @@ open_project_tool = ToolDefinition(
     name="open_project",
     description=(
         "Open an existing QualCoder project file (.qda). "
-        "Closes any currently open project first."
+        "NOTE: Projects must be opened from the QualCoder UI "
+        "(File > Open Project) to ensure proper database initialization. "
+        "This tool returns guidance to the user."
     ),
     parameters=(
         ToolParameter(
@@ -278,7 +280,10 @@ open_project_tool = ToolDefinition(
 close_project_tool = ToolDefinition(
     name="close_project",
     description=(
-        "Close the currently open project. Safe to call when no project is open."
+        "Close the currently open project. "
+        "NOTE: Projects must be closed from the QualCoder UI "
+        "(File > Close Project) to ensure proper cleanup. "
+        "This tool returns guidance to the user."
     ),
     parameters=(),
 )
@@ -716,8 +721,6 @@ class ProjectTools:
         if not sources_ctx:
             return Failure("No project open")
 
-        from src.shared.common.types import SourceId
-
         source = sources_ctx.source_repo.get_by_id(SourceId(value=int(source_id)))
         if source is None:
             return Failure(f"Source not found: {source_id}")
@@ -817,9 +820,7 @@ class ProjectTools:
         if not sources_ctx:
             return Failure("No project open")
 
-        from src.shared.common.types import SourceId as SId
-
-        source = sources_ctx.source_repo.get_by_id(SId(value=int(source_id)))
+        source = sources_ctx.source_repo.get_by_id(SourceId(value=int(source_id)))
         if source is None:
             return Failure(f"Source not found: {source_id}")
 
@@ -855,31 +856,16 @@ class ProjectTools:
     def _execute_open_project(
         self, arguments: dict[str, Any]
     ) -> Result[dict[str, Any], str]:
-        """
-        Execute open_project tool.
-
-        Calls AppContext.open_project() which delegates to the
-        open_project command handler.
-        """
-        path = arguments.get("path")
-        if path is None:
-            return Failure("Missing required parameter: path")
-
-        result = self._ctx.open_project(str(path))
-
-        if result.is_failure:
-            return Failure(result.error or "Failed to open project")
-
-        project = result.data
+        """Return guidance to open the project from the QualCoder UI."""
+        path = arguments.get("path", "")
         return Success(
             {
-                "success": True,
-                "project_name": project.name,
-                "project_path": str(project.path),
-                "source_count": len(
-                    self._ctx.sources_context.source_repo.get_all()
-                    if self._ctx.sources_context
-                    else []
+                "success": False,
+                "message": (
+                    "Please open the project from the QualCoder UI "
+                    "(File > Open Project) to ensure database connections "
+                    "are properly initialized. "
+                    f"Requested path: {path}"
                 ),
             }
         )
@@ -887,31 +873,15 @@ class ProjectTools:
     def _execute_close_project(
         self, _arguments: dict[str, Any]
     ) -> Result[dict[str, Any], str]:
-        """
-        Execute close_project tool.
-
-        Idempotent - safe to call when no project is open.
-        """
-        if self._state.project is None:
-            return Success(
-                {
-                    "success": True,
-                    "closed": False,
-                    "message": "No project was open",
-                }
-            )
-
-        project_name = self._state.project.name
-        result = self._ctx.close_project()
-
-        if result.is_failure:
-            return Failure(result.error or "Failed to close project")
-
+        """Return guidance to close the project from the QualCoder UI."""
         return Success(
             {
-                "success": True,
-                "closed": True,
-                "project_name": project_name,
+                "success": False,
+                "message": (
+                    "Please close the project from the QualCoder UI "
+                    "(File > Close Project) to ensure database connections "
+                    "are properly cleaned up."
+                ),
             }
         )
 
@@ -993,8 +963,6 @@ class ProjectTools:
         sources_ctx = self._ctx.sources_context
         if not sources_ctx:
             return Failure("No project open")
-
-        from src.shared.common.types import SourceId
 
         source = sources_ctx.source_repo.get_by_id(SourceId(value=int(source_id)))
         if source is None:

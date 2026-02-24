@@ -17,7 +17,12 @@ from src.contexts.coding.core.ai_entities import (
 from src.shared.common.operation_result import OperationResult
 from src.shared.common.types import CodeId, SourceId
 
-from .base import HandlerContext, missing_param_error
+from .base import (
+    HandlerContext,
+    missing_param_error,
+    missing_params_error,
+    no_context_error,
+)
 
 
 def handle_find_similar_content(
@@ -31,13 +36,8 @@ def handle_find_similar_content(
 
     source_repo = ctx.source_repo
     if source_repo is None:
-        return OperationResult.fail(
-            error="No sources context available",
-            error_code="FIND_SIMILAR/NO_CONTEXT",
-            suggestions=("Open a project first",),
-        ).to_dict()
+        return no_context_error("FIND_SIMILAR")
 
-    # Search across all text sources for matching content
     matches = []
     search_lower = search_text.lower()
     search_words = [w for w in search_lower.split() if len(w) > 2]
@@ -72,7 +72,6 @@ def handle_find_similar_content(
 
         # 2. Word-proximity match: all search words within a sentence
         if not source_matched and len(search_words) > 1:
-            # Split into sentences (rough heuristic)
             sentences = content.replace("!", ".").replace("?", ".").split(".")
             char_offset = 0
             for sentence in sentences:
@@ -108,10 +107,7 @@ def handle_suggest_batch_coding(
     rationale = arguments.get("rationale")
 
     if code_id is None or not segments or not rationale:
-        return OperationResult.fail(
-            error="Missing required parameters",
-            error_code="BATCH_CODING/MISSING_PARAMS",
-        ).to_dict()
+        return missing_params_error("BATCH_CODING")
 
     batch_id = CodingSuggestionBatchId.new()
     coding_suggestions = []
@@ -129,7 +125,6 @@ def handle_suggest_batch_coding(
         )
         coding_suggestions.append(csug)
 
-    # Store batch
     batch = CodingSuggestionBatch(
         id=batch_id,
         source_id=SourceId(int(segments[0]["source_id"])),

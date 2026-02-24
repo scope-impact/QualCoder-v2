@@ -70,20 +70,10 @@ cas_source_link = Table(
 
 
 def create_all(engine) -> None:
-    """
-    Create all tables for the Cases context.
-
-    Args:
-        engine: SQLAlchemy engine instance
-    """
+    """Create all tables for the Cases context."""
     metadata.create_all(engine)
 
 
 def drop_all(engine) -> None:
-    """
-    Drop all Cases context tables (for testing).
-
-    Args:
-        engine: SQLAlchemy engine instance
-    """
+    """Drop all Cases context tables (for testing)."""
     metadata.drop_all(engine)

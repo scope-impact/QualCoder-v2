@@ -26,10 +26,6 @@ from returns.result import Failure, Result, Success
 # Register HEIC/HEIF support with Pillow
 register_heif_opener()
 
-# ============================================================
-# Data Types
-# ============================================================
-
 
 @dataclass(frozen=True)
 class ImageExtractionResult:
@@ -40,11 +36,6 @@ class ImageExtractionResult:
     format: str
     file_size: int
     metadata: dict[str, Any]
-
-
-# ============================================================
-# Supported Extensions
-# ============================================================
 
 
 IMAGE_EXTENSIONS = frozenset(
@@ -61,11 +52,6 @@ IMAGE_EXTENSIONS = frozenset(
         ".heif",
     }
 )
-
-
-# ============================================================
-# Image Extractor Service
-# ============================================================
 
 
 class ImageExtractor:

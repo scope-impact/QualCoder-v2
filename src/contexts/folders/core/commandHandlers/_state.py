@@ -9,14 +9,11 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Protocol, runtime_checkable
 
+from src.contexts.projects.core.derivers import FolderState
+
 if TYPE_CHECKING:
     from src.contexts.projects.core.entities import Folder, Source
     from src.shared.common.types import FolderId, SourceId
-
-
-# ============================================================
-# Repository Protocols (for DI)
-# ============================================================
 
 
 @runtime_checkable
@@ -47,3 +44,16 @@ class SourceRepository(Protocol):
     def get_by_id(self, source_id: SourceId) -> Source | None: ...
     def get_by_folder(self, folder_id: FolderId | None) -> list[Source]: ...
     def save(self, source: Source) -> None: ...
+
+
+def build_folder_state(
+    folder_repo: FolderRepository | None,
+    source_repo: SourceRepository | None,
+) -> FolderState:
+    """Build FolderState from repos (source of truth) for use with derivers."""
+    existing_folders = tuple(folder_repo.get_all()) if folder_repo else ()
+    existing_sources = tuple(source_repo.get_all()) if source_repo else ()
+    return FolderState(
+        existing_folders=existing_folders,
+        existing_sources=existing_sources,
+    )

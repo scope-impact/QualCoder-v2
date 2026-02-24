@@ -154,26 +154,23 @@ class MCPServerManager:
         """Create request/response logging middleware."""
         from aiohttp import web
 
-        server = self  # Capture reference for closure
-
         @web.middleware
         async def logging_middleware(request, handler):
-            # Generate unique request ID
             request_id = uuid.uuid4().hex[:8]
             request["request_id"] = request_id
-            server._stats["requests"] += 1
+            self._stats["requests"] += 1
 
             log = MCPLogAdapter(logger, {"request_id": request_id})
             start_time = time.perf_counter()
 
-            if server._debug:
+            if self._debug:
                 log.debug("%s %s", request.method, request.path)
 
             try:
                 response = await handler(request)
                 elapsed = (time.perf_counter() - start_time) * 1000
 
-                if server._debug:
+                if self._debug:
                     log.debug(
                         "%s %s -> %d (%.1fms)",
                         request.method,
@@ -184,7 +181,7 @@ class MCPServerManager:
                 return response
             except Exception as e:
                 elapsed = (time.perf_counter() - start_time) * 1000
-                server._stats["errors"] += 1
+                self._stats["errors"] += 1
                 log.error(
                     "%s %s -> ERROR (%.1fms): %s",
                     request.method,
@@ -281,60 +278,41 @@ class MCPServerManager:
         if self._debug:
             log.debug("JSON-RPC method=%s id=%s", method, req_id)
 
-        # MCP Protocol: initialize
+        def _jsonrpc_ok(result: Any) -> Any:
+            return web.json_response({"jsonrpc": "2.0", "id": req_id, "result": result})
+
         if method == "initialize":
             log.info("Client initialized")
-            return web.json_response(
+            return _jsonrpc_ok(
                 {
-                    "jsonrpc": "2.0",
-                    "id": req_id,
-                    "result": {
-                        "protocolVersion": "2024-11-05",
-                        "capabilities": {
-                            "tools": {"listChanged": False},
-                        },
-                        "serverInfo": {
-                            "name": "qualcoder-v2",
-                            "version": "0.2.0",
-                        },
-                    },
+                    "protocolVersion": "2024-11-05",
+                    "capabilities": {"tools": {"listChanged": False}},
+                    "serverInfo": {"name": "qualcoder-v2", "version": "0.2.0"},
                 }
             )
-        # MCP Protocol: initialized notification (no response needed)
-        elif method == "notifications/initialized" or method == "ping":
-            return web.json_response({"jsonrpc": "2.0", "id": req_id, "result": {}})
-        # MCP Protocol: tools/list
-        elif method == "tools/list":
-            return web.json_response(
-                {
-                    "jsonrpc": "2.0",
-                    "id": req_id,
-                    "result": {"tools": self._get_tool_schemas()},
-                }
-            )
-        # MCP Protocol: tools/call
-        elif method == "tools/call":
+
+        if method in ("notifications/initialized", "ping"):
+            return _jsonrpc_ok({})
+
+        if method == "tools/list":
+            return _jsonrpc_ok({"tools": self._get_tool_schemas()})
+
+        if method == "tools/call":
             tool_name = params.get("name")
             tool_args = params.get("arguments", {})
             result = self._execute_tool(tool_name, tool_args, log)
-            return web.json_response(
-                {
-                    "jsonrpc": "2.0",
-                    "id": req_id,
-                    "result": {
-                        "content": [{"type": "text", "text": json.dumps(result)}]
-                    },
-                }
+            return _jsonrpc_ok(
+                {"content": [{"type": "text", "text": json.dumps(result)}]}
             )
-        else:
-            log.warning("Unknown method: %s", method)
-            return web.json_response(
-                {
-                    "jsonrpc": "2.0",
-                    "id": req_id,
-                    "error": {"code": -32601, "message": f"Unknown method: {method}"},
-                }
-            )
+
+        log.warning("Unknown method: %s", method)
+        return web.json_response(
+            {
+                "jsonrpc": "2.0",
+                "id": req_id,
+                "error": {"code": -32601, "message": f"Unknown method: {method}"},
+            }
+        )
 
     async def _handle_debug_status(self, _request: Any) -> Any:
         """Debug endpoint: server status and state."""
@@ -445,12 +423,12 @@ class MCPServerManager:
         ]
 
     def _get_tool_schemas(self) -> list[dict]:
-        """Get all tool schemas."""
+        """Get all tool schemas for project and coding tools."""
         from src.contexts.coding.interface.tool_definitions import ALL_TOOLS
 
-        schemas = [t.to_schema() for t in self._get_project_tool_definitions()]
-        schemas.extend([t.to_schema() for t in ALL_TOOLS.values()])
-        return schemas
+        project_schemas = [t.to_schema() for t in self._get_project_tool_definitions()]
+        coding_schemas = [t.to_schema() for t in ALL_TOOLS.values()]
+        return project_schemas + coding_schemas
 
     def _execute_tool(
         self,
@@ -479,17 +457,16 @@ class MCPServerManager:
 
         try:
             if tool_name in project_tool_names:
-                from returns.result import Failure as ReturnsFailure
-                from returns.result import Success as ReturnsSuccess
+                from returns.result import Failure, Success
 
                 from src.contexts.projects.interface.mcp_tools import ProjectTools
 
                 tools = ProjectTools(ctx=self._ctx)
                 result = tools.execute(tool_name, arguments)
                 # Convert returns.Result to plain dict for MCP response
-                if isinstance(result, ReturnsSuccess):
+                if isinstance(result, Success):
                     result = {"success": True, "data": result.unwrap()}
-                elif isinstance(result, ReturnsFailure):
+                elif isinstance(result, Failure):
                     result = {"success": False, "error": result.failure()}
                 else:
                     result = {"success": True, "data": result}

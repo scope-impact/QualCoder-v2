@@ -196,6 +196,3 @@ def test_mcp_segment_coded_emits_signal(mcp_test_env, qapp):
     assert payload.source_id == 99
     assert payload.start_pos == 0
     assert payload.end_pos == 15
-    print(
-        f"✓ Received segment_coded signal: code={payload.code_id}, pos={payload.start_pos}-{payload.end_pos}"
-    )

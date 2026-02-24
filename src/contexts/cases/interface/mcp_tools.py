@@ -33,6 +33,7 @@ from typing import TYPE_CHECKING, Any, Protocol, runtime_checkable
 from src.contexts.cases.core.commandHandlers import get_case, list_cases
 from src.shared.common.mcp_types import ToolDefinition, ToolParameter
 from src.shared.common.operation_result import OperationResult
+from src.shared.common.types import CaseId, SourceId
 
 if TYPE_CHECKING:
     from src.shared.infra.state import ProjectState
@@ -186,18 +187,26 @@ class CaseTools:
             "compare_cases": compare_cases_tool,
         }
 
+        self._handlers: dict[str, Any] = {
+            "list_cases": self._execute_list_cases,
+            "get_case": self._execute_get_case,
+            "suggest_case_groupings": self._execute_suggest_case_groupings,
+            "compare_cases": self._execute_compare_cases,
+        }
+
     @property
     def _state(self):
         """Get the project state from context."""
         return self._ctx.state
 
-    def get_tool_schemas(self) -> list[dict[str, Any]]:
-        """
-        Get MCP-compatible tool schemas for registration.
+    @property
+    def _case_repo(self):
+        """Get case_repo from context (None if no project open)."""
+        cases_ctx = self._ctx.cases_context
+        return cases_ctx.case_repo if cases_ctx else None
 
-        Returns:
-            List of tool schema dicts for MCP registration
-        """
+    def get_tool_schemas(self) -> list[dict[str, Any]]:
+        """Get MCP-compatible tool schemas for registration."""
         return [tool.to_schema() for tool in self._tools.values()]
 
     def get_tool_names(self) -> list[str]:
@@ -205,35 +214,13 @@ class CaseTools:
         return list(self._tools.keys())
 
     def execute(self, tool_name: str, arguments: dict[str, Any]) -> dict[str, Any]:
-        """
-        Execute an MCP tool by name with arguments.
-
-        Args:
-            tool_name: Name of the tool to execute
-            arguments: Tool arguments as dict
-
-        Returns:
-            Dictionary with success/failure and data/error fields
-        """
-        if tool_name not in self._tools:
+        """Execute an MCP tool by name with arguments."""
+        handler = self._handlers.get(tool_name)
+        if handler is None:
             return OperationResult.fail(
                 error=f"Unknown tool: {tool_name}",
                 error_code="TOOL_NOT_FOUND",
                 suggestions=(f"Available tools: {', '.join(self._tools.keys())}",),
-            ).to_dict()
-
-        handlers = {
-            "list_cases": self._execute_list_cases,
-            "get_case": self._execute_get_case,
-            "suggest_case_groupings": self._execute_suggest_case_groupings,
-            "compare_cases": self._execute_compare_cases,
-        }
-
-        handler = handlers.get(tool_name)
-        if handler is None:
-            return OperationResult.fail(
-                error=f"No handler for tool: {tool_name}",
-                error_code="HANDLER_NOT_FOUND",
             ).to_dict()
 
         try:
@@ -261,12 +248,7 @@ class CaseTools:
                 suggestions=("Open a project first",),
             ).to_dict()
 
-        # Get case_repo from context (source of truth)
-        cases_ctx = self._ctx.cases_context
-        case_repo = cases_ctx.case_repo if cases_ctx else None
-
-        # Call use case with repo
-        result = list_cases(self._state, case_repo=case_repo)
+        result = list_cases(self._state, case_repo=self._case_repo)
         return result.to_dict()
 
     # ============================================================
@@ -294,12 +276,7 @@ class CaseTools:
                 suggestions=("Open a project first",),
             ).to_dict()
 
-        # Get case_repo from context (source of truth)
-        cases_ctx = self._ctx.cases_context
-        case_repo = cases_ctx.case_repo if cases_ctx else None
-
-        # Call use case with repo
-        result = get_case(int(case_id), self._state, case_repo=case_repo)
+        result = get_case(int(case_id), self._state, case_repo=self._case_repo)
         return result.to_dict()
 
     # ============================================================
@@ -315,7 +292,7 @@ class CaseTools:
         Analyzes case attributes and suggests meaningful groupings.
         """
         attribute_names = arguments.get("attribute_names")
-        min_group_size = arguments.get("min_group_size", 2) or 2
+        min_group_size = arguments.get("min_group_size") or 2
 
         if self._state is None:
             return OperationResult.fail(
@@ -324,9 +301,8 @@ class CaseTools:
                 suggestions=("Open a project first",),
             ).to_dict()
 
-        # Get cases from repo (source of truth)
-        cases_ctx = self._ctx.cases_context
-        cases = cases_ctx.case_repo.get_all() if cases_ctx else []
+        case_repo = self._case_repo
+        cases = case_repo.get_all() if case_repo else []
 
         if not cases:
             return OperationResult.ok(
@@ -425,9 +401,7 @@ class CaseTools:
                 suggestions=("Open a project first",),
             ).to_dict()
 
-        # Get case_repo from context (source of truth)
-        cases_ctx = self._ctx.cases_context
-        case_repo = cases_ctx.case_repo if cases_ctx else None
+        case_repo = self._case_repo
 
         # Fetch all cases using get_case use case
         cases = []
@@ -442,9 +416,6 @@ class CaseTools:
                         f"Check if case ID {cid} exists",
                     ),
                 ).to_dict()
-            # Get case from repo for building comparison
-            from src.shared.common.types import CaseId
-
             case = case_repo.get_by_id(CaseId(value=int(cid))) if case_repo else None
             if case:
                 cases.append(case)
@@ -464,8 +435,6 @@ class CaseTools:
             code_ids: set[int] = set()
             seg_count = 0
             if segment_repo and case.source_ids:
-                from src.shared.common.types import SourceId
-
                 for sid in case.source_ids:
                     segs = segment_repo.get_by_source(SourceId(sid))
                     seg_count += len(segs)

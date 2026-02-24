@@ -58,18 +58,12 @@ class SQLiteFolderRepository:
 
     def get_children(self, parent_id: FolderId | None) -> list[Folder]:
         """Get all folders with the given parent (None for root level)."""
-        if parent_id is None:
-            stmt = (
-                select(src_folder)
-                .where(src_folder.c.parent_id.is_(None))
-                .order_by(src_folder.c.name)
-            )
-        else:
-            stmt = (
-                select(src_folder)
-                .where(src_folder.c.parent_id == parent_id.value)
-                .order_by(src_folder.c.name)
-            )
+        parent_filter = (
+            src_folder.c.parent_id.is_(None)
+            if parent_id is None
+            else src_folder.c.parent_id == parent_id.value
+        )
+        stmt = select(src_folder).where(parent_filter).order_by(src_folder.c.name)
         result = self._conn.execute(stmt)
         return [self._row_to_folder(row) for row in result]
 

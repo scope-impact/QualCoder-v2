@@ -10,7 +10,7 @@ These are part of the Coding context, not a separate AI context.
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from datetime import UTC, datetime
 from uuid import uuid4
 
@@ -132,45 +132,15 @@ class CodeSuggestion:
 
     def with_status(self, new_status: str) -> CodeSuggestion:
         """Return new CodeSuggestion with updated status."""
-        return CodeSuggestion(
-            id=self.id,
-            name=self.name,
-            color=self.color,
-            rationale=self.rationale,
-            contexts=self.contexts,
-            confidence=self.confidence,
-            memo=self.memo,
-            status=new_status,
-            created_at=self.created_at,
-        )
+        return replace(self, status=new_status)
 
     def with_name(self, new_name: str) -> CodeSuggestion:
         """Return new CodeSuggestion with updated name."""
-        return CodeSuggestion(
-            id=self.id,
-            name=new_name,
-            color=self.color,
-            rationale=self.rationale,
-            contexts=self.contexts,
-            confidence=self.confidence,
-            memo=self.memo,
-            status=self.status,
-            created_at=self.created_at,
-        )
+        return replace(self, name=new_name)
 
     def with_color(self, new_color: Color) -> CodeSuggestion:
         """Return new CodeSuggestion with updated color."""
-        return CodeSuggestion(
-            id=self.id,
-            name=self.name,
-            color=new_color,
-            rationale=self.rationale,
-            contexts=self.contexts,
-            confidence=self.confidence,
-            memo=self.memo,
-            status=self.status,
-            created_at=self.created_at,
-        )
+        return replace(self, color=new_color)
 
     @property
     def is_pending(self) -> bool:
@@ -209,18 +179,7 @@ class DuplicateCandidate:
 
     def with_status(self, new_status: str) -> DuplicateCandidate:
         """Return new DuplicateCandidate with updated status."""
-        return DuplicateCandidate(
-            code_a_id=self.code_a_id,
-            code_a_name=self.code_a_name,
-            code_b_id=self.code_b_id,
-            code_b_name=self.code_b_name,
-            similarity=self.similarity,
-            rationale=self.rationale,
-            code_a_segment_count=self.code_a_segment_count,
-            code_b_segment_count=self.code_b_segment_count,
-            status=new_status,
-            created_at=self.created_at,
-        )
+        return replace(self, status=new_status)
 
     @property
     def is_pending(self) -> bool:
@@ -342,18 +301,7 @@ class CodingSuggestion:
 
     def with_status(self, new_status: str) -> CodingSuggestion:
         """Return new CodingSuggestion with updated status."""
-        return CodingSuggestion(
-            id=self.id,
-            source_id=self.source_id,
-            code_id=self.code_id,
-            start_pos=self.start_pos,
-            end_pos=self.end_pos,
-            rationale=self.rationale,
-            confidence=self.confidence,
-            text_excerpt=self.text_excerpt,
-            status=new_status,
-            created_at=self.created_at,
-        )
+        return replace(self, status=new_status)
 
     @property
     def is_pending(self) -> bool:
@@ -443,14 +391,7 @@ class MergeSuggestion:
 
     def with_status(self, new_status: str) -> MergeSuggestion:
         """Return new MergeSuggestion with updated status."""
-        return MergeSuggestion(
-            id=self.id,
-            source_code_id=self.source_code_id,
-            target_code_id=self.target_code_id,
-            rationale=self.rationale,
-            status=new_status,
-            created_at=self.created_at,
-        )
+        return replace(self, status=new_status)
 
     @property
     def is_pending(self) -> bool:

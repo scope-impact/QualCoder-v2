@@ -61,7 +61,7 @@ from design_system import (
 )
 
 if TYPE_CHECKING:
-    from src.contexts.coding.presentation.viewmodels.settings_viewmodel import (
+    from src.contexts.settings.presentation.viewmodels.settings_viewmodel import (
         SettingsViewModel,
     )
 

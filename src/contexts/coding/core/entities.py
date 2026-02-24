@@ -7,8 +7,9 @@ This file defines the CONTRACT for data shapes in the Coding context.
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from datetime import UTC, datetime
+from uuid import uuid4
 
 from src.shared.common.types import CategoryId, CodeId, SegmentId, SourceId
 
@@ -146,52 +147,20 @@ class Code:
     created_at: datetime = field(default_factory=lambda: datetime.now(UTC))
 
     def with_name(self, new_name: str) -> Code:
-        """Return new Code with updated name"""
-        return Code(
-            id=self.id,
-            name=new_name,
-            color=self.color,
-            memo=self.memo,
-            category_id=self.category_id,
-            owner=self.owner,
-            created_at=self.created_at,
-        )
+        """Return new Code with updated name."""
+        return replace(self, name=new_name)
 
     def with_color(self, new_color: Color) -> Code:
-        """Return new Code with updated color"""
-        return Code(
-            id=self.id,
-            name=self.name,
-            color=new_color,
-            memo=self.memo,
-            category_id=self.category_id,
-            owner=self.owner,
-            created_at=self.created_at,
-        )
+        """Return new Code with updated color."""
+        return replace(self, color=new_color)
 
     def with_memo(self, new_memo: str | None) -> Code:
-        """Return new Code with updated memo"""
-        return Code(
-            id=self.id,
-            name=self.name,
-            color=self.color,
-            memo=new_memo,
-            category_id=self.category_id,
-            owner=self.owner,
-            created_at=self.created_at,
-        )
+        """Return new Code with updated memo."""
+        return replace(self, memo=new_memo)
 
     def with_category(self, new_category_id: CategoryId | None) -> Code:
-        """Return new Code with updated category"""
-        return Code(
-            id=self.id,
-            name=self.name,
-            color=self.color,
-            memo=self.memo,
-            category_id=new_category_id,
-            owner=self.owner,
-            created_at=self.created_at,
-        )
+        """Return new Code with updated category."""
+        return replace(self, category_id=new_category_id)
 
 
 @dataclass(frozen=True)
@@ -209,24 +178,10 @@ class Category:
     created_at: datetime = field(default_factory=lambda: datetime.now(UTC))
 
     def with_name(self, new_name: str) -> Category:
-        return Category(
-            id=self.id,
-            name=new_name,
-            parent_id=self.parent_id,
-            memo=self.memo,
-            owner=self.owner,
-            created_at=self.created_at,
-        )
+        return replace(self, name=new_name)
 
     def with_parent(self, new_parent_id: CategoryId | None) -> Category:
-        return Category(
-            id=self.id,
-            name=self.name,
-            parent_id=new_parent_id,
-            memo=self.memo,
-            owner=self.owner,
-            created_at=self.created_at,
-        )
+        return replace(self, parent_id=new_parent_id)
 
 
 @dataclass(frozen=True)
@@ -249,30 +204,10 @@ class TextSegment:
     created_at: datetime = field(default_factory=lambda: datetime.now(UTC))
 
     def with_memo(self, new_memo: str | None) -> TextSegment:
-        return TextSegment(
-            id=self.id,
-            source_id=self.source_id,
-            code_id=self.code_id,
-            position=self.position,
-            selected_text=self.selected_text,
-            memo=new_memo,
-            importance=self.importance,
-            owner=self.owner,
-            created_at=self.created_at,
-        )
+        return replace(self, memo=new_memo)
 
     def with_importance(self, new_importance: int) -> TextSegment:
-        return TextSegment(
-            id=self.id,
-            source_id=self.source_id,
-            code_id=self.code_id,
-            position=self.position,
-            selected_text=self.selected_text,
-            memo=self.memo,
-            importance=new_importance,
-            owner=self.owner,
-            created_at=self.created_at,
-        )
+        return replace(self, importance=new_importance)
 
 
 @dataclass(frozen=True)
@@ -326,9 +261,7 @@ class BatchId:
     @classmethod
     def new(cls) -> BatchId:
         """Generate a new unique batch ID."""
-        import uuid
-
-        return cls(value=f"batch_{uuid.uuid4().hex[:12]}")
+        return cls(value=f"batch_{uuid4().hex[:12]}")
 
 
 @dataclass(frozen=True)

@@ -164,6 +164,14 @@ class MockContext:
     event_bus: Any = field(default_factory=MagicMock)
 
 
+@dataclass
+class NoCodingContext:
+    """Mock context with no coding context (simulates missing project)."""
+
+    coding_context: Any = None
+    event_bus: Any = field(default_factory=MagicMock)
+
+
 # ============================================================
 # Fixtures
 # ============================================================
@@ -263,6 +271,12 @@ def coding_tools(mock_context: MockContext) -> CodingTools:
 def empty_context() -> MockContext:
     """Create empty mock context with no data."""
     return MockContext(coding_context=MockCodingContext())
+
+
+@pytest.fixture
+def no_coding_context() -> NoCodingContext:
+    """Create mock context with coding_context=None."""
+    return NoCodingContext()
 
 
 # ============================================================
@@ -566,7 +580,7 @@ class TestGetCodeTool:
         result = coding_tools.execute("get_code", {"code_id": 999})
 
         assert result["success"] is False
-        assert result["error_code"] == "CODE_NOT_FOUND"
+        assert result["error_code"] == "CODE_NOT_FOUND/NOT_FOUND"
 
     def test_returns_code_with_category(self, coding_tools: CodingTools) -> None:
         """get_code returns code with category info (serialized as dict)."""
@@ -876,16 +890,11 @@ class TestErrorHandling:
 class TestContextValidation:
     """Tests for context validation in tools."""
 
-    def test_batch_apply_returns_failure_when_code_repo_is_none(self) -> None:
+    def test_batch_apply_returns_failure_when_code_repo_is_none(
+        self, no_coding_context: NoCodingContext
+    ) -> None:
         """batch_apply_codes returns failure when coding_context is None."""
-
-        @dataclass
-        class ContextWithNoCodingContext:
-            coding_context: Any = None
-            event_bus: Any = field(default_factory=MagicMock)
-
-        ctx = ContextWithNoCodingContext()
-        tools = CodingTools(ctx=ctx)
+        tools = CodingTools(ctx=no_coding_context)
 
         result = tools.execute(
             "batch_apply_codes",
@@ -904,48 +913,33 @@ class TestContextValidation:
         assert result["success"] is False
         assert "NO_CONTEXT" in result["error_code"]
 
-    def test_list_codes_returns_failure_when_code_repo_is_none(self) -> None:
+    def test_list_codes_returns_failure_when_code_repo_is_none(
+        self, no_coding_context: NoCodingContext
+    ) -> None:
         """list_codes returns failure when coding_context is None."""
-
-        @dataclass
-        class ContextWithNoCodingContext:
-            coding_context: Any = None
-            event_bus: Any = field(default_factory=MagicMock)
-
-        ctx = ContextWithNoCodingContext()
-        tools = CodingTools(ctx=ctx)
+        tools = CodingTools(ctx=no_coding_context)
 
         result = tools.execute("list_codes", {})
 
         assert result["success"] is False
         assert "NO_CONTEXT" in result["error_code"]
 
-    def test_get_code_returns_failure_when_code_repo_is_none(self) -> None:
+    def test_get_code_returns_failure_when_code_repo_is_none(
+        self, no_coding_context: NoCodingContext
+    ) -> None:
         """get_code returns failure when coding_context is None."""
-
-        @dataclass
-        class ContextWithNoCodingContext:
-            coding_context: Any = None
-            event_bus: Any = field(default_factory=MagicMock)
-
-        ctx = ContextWithNoCodingContext()
-        tools = CodingTools(ctx=ctx)
+        tools = CodingTools(ctx=no_coding_context)
 
         result = tools.execute("get_code", {"code_id": 1})
 
         assert result["success"] is False
         assert "NO_CONTEXT" in result["error_code"]
 
-    def test_list_segments_returns_failure_when_segment_repo_is_none(self) -> None:
+    def test_list_segments_returns_failure_when_segment_repo_is_none(
+        self, no_coding_context: NoCodingContext
+    ) -> None:
         """list_segments returns failure when coding_context is None."""
-
-        @dataclass
-        class ContextWithNoCodingContext:
-            coding_context: Any = None
-            event_bus: Any = field(default_factory=MagicMock)
-
-        ctx = ContextWithNoCodingContext()
-        tools = CodingTools(ctx=ctx)
+        tools = CodingTools(ctx=no_coding_context)
 
         result = tools.execute("list_segments_for_source", {"source_id": 1})
 

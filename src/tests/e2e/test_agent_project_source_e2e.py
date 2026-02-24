@@ -33,16 +33,6 @@ pytestmark = [
 
 
 @pytest.fixture
-def app_context():
-    from src.shared.infra.app_context import create_app_context
-
-    ctx = create_app_context()
-    ctx.start()
-    yield ctx
-    ctx.stop()
-
-
-@pytest.fixture
 def temp_project_path(tmp_path: Path) -> Path:
     return tmp_path / "test_project.qda"
 
@@ -93,47 +83,17 @@ class TestAgentOpenCloseProject:
             schema = next(s for s in schemas if s["name"] == "open_project")
             assert "path" in schema["inputSchema"]["required"]
 
-    @allure.title("AC #2: Agent can open a .qda project file")
-    def test_open_project_success(
-        self, app_context: AppContext, tools, existing_project: Path
-    ):
-        with allure.step("Open project via MCP tool"):
+    @allure.title("AC #2: open_project redirects agent to use QualCoder UI")
+    def test_open_project_redirects_to_ui(self, tools, existing_project: Path):
+        with allure.step("Call open_project via MCP tool"):
             result = tools.execute("open_project", {"path": str(existing_project)})
 
-        with allure.step("Verify success"):
+        with allure.step("Verify it returns UI guidance"):
             assert isinstance(result, Success)
             data = result.unwrap()
-            assert data["success"] is True
-            assert data["project_name"] == "Existing Project"
-
-        with allure.step("Verify app context updated"):
-            assert app_context.has_project
-
-    @allure.title("AC #3: Invalid path returns clear failure message")
-    def test_open_project_invalid_path(self, tools, tmp_path: Path):
-        with allure.step("Attempt to open non-existent project"):
-            result = tools.execute(
-                "open_project", {"path": str(tmp_path / "nonexistent.qda")}
-            )
-
-        with allure.step("Verify failure"):
-            assert isinstance(result, Failure)
-
-    @allure.title("AC #4: ProjectOpened event is published")
-    def test_open_project_publishes_event(
-        self, app_context: AppContext, tools, existing_project: Path
-    ):
-        events_received = []
-        app_context.event_bus.subscribe(
-            "projects.project_opened", lambda e: events_received.append(e)
-        )
-
-        with allure.step("Open project"):
-            result = tools.execute("open_project", {"path": str(existing_project)})
-            assert isinstance(result, Success)
-
-        with allure.step("Verify event published"):
-            assert len(events_received) >= 1
+            assert data["success"] is False
+            assert "QualCoder UI" in data["message"]
+            assert str(existing_project) in data["message"]
 
     @allure.title("AC #5: close_project tool is registered")
     def test_close_project_tool_schema(self, tools):
@@ -144,55 +104,16 @@ class TestAgentOpenCloseProject:
             tool_names = [s["name"] for s in schemas]
             assert "close_project" in tool_names
 
-    @allure.title("AC #6: Agent can close the current project")
-    def test_close_project_success(
-        self, app_context: AppContext, tools, open_project: Path
-    ):
-        with allure.step("Close project via MCP tool"):
+    @allure.title("AC #6: close_project redirects agent to use QualCoder UI")
+    def test_close_project_redirects_to_ui(self, tools):
+        with allure.step("Call close_project via MCP tool"):
             result = tools.execute("close_project", {})
 
-        with allure.step("Verify success"):
+        with allure.step("Verify it returns UI guidance"):
             assert isinstance(result, Success)
             data = result.unwrap()
-            assert data["success"] is True
-            assert data["closed"] is True
-            assert data["project_name"] == "Existing Project"
-
-        with allure.step("Verify project actually closed"):
-            assert not app_context.has_project
-
-    @allure.title("AC #7: Closing with no project open returns informative message")
-    def test_close_project_when_none_open(self, tools):
-        with allure.step("Close when no project open"):
-            result = tools.execute("close_project", {})
-
-        with allure.step("Verify informative response (not error)"):
-            assert isinstance(result, Success)
-            data = result.unwrap()
-            assert data["success"] is True
-            assert data["closed"] is False
-            assert "No project" in data["message"]
-
-    @allure.title("AC #9: Full open/close lifecycle")
-    def test_open_close_lifecycle(
-        self, app_context: AppContext, tools, existing_project: Path
-    ):
-        with allure.step("Open project"):
-            open_result = tools.execute("open_project", {"path": str(existing_project)})
-            assert isinstance(open_result, Success)
-            assert app_context.has_project
-
-        with allure.step("Close project"):
-            close_result = tools.execute("close_project", {})
-            assert isinstance(close_result, Success)
-            assert not app_context.has_project
-
-        with allure.step("Reopen project"):
-            reopen_result = tools.execute(
-                "open_project", {"path": str(existing_project)}
-            )
-            assert isinstance(reopen_result, Success)
-            assert app_context.has_project
+            assert data["success"] is False
+            assert "QualCoder UI" in data["message"]
 
 
 # ============================================================
@@ -636,14 +557,14 @@ class TestAgentFullWorkflow:
         "Integration: Agent creates project, adds sources, organizes, and cleans up"
     )
     def test_full_agent_workflow(self, app_context: AppContext, tools, tmp_path: Path):
-        with allure.step("Step 1: Create and open project"):
+        with allure.step("Step 1: Create and open project via AppContext"):
             project_path = tmp_path / "agent_workflow.qda"
             app_context.create_project(
                 name="Agent Workflow Project", path=str(project_path)
             )
             app_context.close_project()
-            result = tools.execute("open_project", {"path": str(project_path)})
-            assert isinstance(result, Success)
+            result = app_context.open_project(str(project_path))
+            assert result.is_success
 
         with allure.step("Step 2: Add text sources"):
             r1 = tools.execute(
@@ -692,10 +613,9 @@ class TestAgentFullWorkflow:
             )
             assert isinstance(remove, Success)
 
-        with allure.step("Step 7: Close project"):
-            close = tools.execute("close_project", {})
-            assert isinstance(close, Success)
-            assert close.unwrap()["closed"] is True
+        with allure.step("Step 7: Close project via AppContext"):
+            close_result = app_context.close_project()
+            assert close_result.is_success
 
 
 # ============================================================

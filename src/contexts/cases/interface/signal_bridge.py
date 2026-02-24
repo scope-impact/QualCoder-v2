@@ -86,29 +86,21 @@ class SourceLinkPayload:
 
 
 class CaseCreatedConverter(EventConverter[CaseCreated, CasePayload]):
-    """Convert CaseCreated event to CasePayload."""
-
     def convert(self, event: CaseCreated) -> CasePayload:
         return CasePayload(
             event_type="case_created",
-            case_id=event.case_id.value
-            if hasattr(event.case_id, "value")
-            else int(event.case_id),
+            case_id=event.case_id.value,
             name=event.name,
-            description=getattr(event, "description", None),
-            memo=getattr(event, "memo", None),
+            description=event.description,
+            memo=event.memo,
         )
 
 
 class CaseUpdatedConverter(EventConverter[CaseUpdated, CasePayload]):
-    """Convert CaseUpdated event to CasePayload."""
-
     def convert(self, event: CaseUpdated) -> CasePayload:
         return CasePayload(
             event_type="case_updated",
-            case_id=event.case_id.value
-            if hasattr(event.case_id, "value")
-            else int(event.case_id),
+            case_id=event.case_id.value,
             name=event.name,
             description=event.description,
             memo=event.memo,
@@ -116,27 +108,19 @@ class CaseUpdatedConverter(EventConverter[CaseUpdated, CasePayload]):
 
 
 class CaseRemovedConverter(EventConverter[CaseRemoved, CasePayload]):
-    """Convert CaseRemoved event to CasePayload."""
-
     def convert(self, event: CaseRemoved) -> CasePayload:
         return CasePayload(
             event_type="case_removed",
-            case_id=event.case_id.value
-            if hasattr(event.case_id, "value")
-            else int(event.case_id),
+            case_id=event.case_id.value,
             name="",
         )
 
 
 class CaseAttributeSetConverter(EventConverter[CaseAttributeSet, CaseAttributePayload]):
-    """Convert CaseAttributeSet event to CaseAttributePayload."""
-
     def convert(self, event: CaseAttributeSet) -> CaseAttributePayload:
         return CaseAttributePayload(
             event_type="case_attribute_set",
-            case_id=event.case_id.value
-            if hasattr(event.case_id, "value")
-            else int(event.case_id),
+            case_id=event.case_id.value,
             attribute_name=event.attr_name,
             attribute_type=str(event.attr_type),
             value=event.attr_value,
@@ -146,48 +130,32 @@ class CaseAttributeSetConverter(EventConverter[CaseAttributeSet, CaseAttributePa
 class CaseAttributeRemovedConverter(
     EventConverter[CaseAttributeRemoved, CaseAttributePayload]
 ):
-    """Convert CaseAttributeRemoved event to CaseAttributePayload."""
-
     def convert(self, event: CaseAttributeRemoved) -> CaseAttributePayload:
         return CaseAttributePayload(
             event_type="case_attribute_removed",
-            case_id=event.case_id.value
-            if hasattr(event.case_id, "value")
-            else int(event.case_id),
+            case_id=event.case_id.value,
             attribute_name=event.attr_name,
             attribute_type="",
         )
 
 
 class SourceLinkedConverter(EventConverter[SourceLinkedToCase, SourceLinkPayload]):
-    """Convert SourceLinkedToCase event to SourceLinkPayload."""
-
     def convert(self, event: SourceLinkedToCase) -> SourceLinkPayload:
         return SourceLinkPayload(
             event_type="source_linked",
-            case_id=event.case_id.value
-            if hasattr(event.case_id, "value")
-            else int(event.case_id),
-            source_id=event.source_id.value
-            if hasattr(event.source_id, "value")
-            else int(event.source_id),
+            case_id=event.case_id.value,
+            source_id=event.source_id,
         )
 
 
 class SourceUnlinkedConverter(
     EventConverter[SourceUnlinkedFromCase, SourceLinkPayload]
 ):
-    """Convert SourceUnlinkedFromCase event to SourceLinkPayload."""
-
     def convert(self, event: SourceUnlinkedFromCase) -> SourceLinkPayload:
         return SourceLinkPayload(
             event_type="source_unlinked",
-            case_id=event.case_id.value
-            if hasattr(event.case_id, "value")
-            else int(event.case_id),
-            source_id=event.source_id.value
-            if hasattr(event.source_id, "value")
-            else int(event.source_id),
+            case_id=event.case_id.value,
+            source_id=event.source_id,
         )
 
 

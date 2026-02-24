@@ -7,7 +7,8 @@ and inherit from DomainEvent base class.
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
+from typing import ClassVar
 
 from src.shared.common.types import DomainEvent
 
@@ -20,7 +21,8 @@ from src.shared.common.types import DomainEvent
 class ThemeChanged(DomainEvent):
     """Emitted when the user changes the application theme."""
 
-    event_type: str = field(default="settings.theme_changed", init=False)
+    event_type: ClassVar[str] = "settings.theme_changed"
+
     old_theme: str = ""
     new_theme: str = ""
 
@@ -44,7 +46,8 @@ class ThemeChanged(DomainEvent):
 class FontChanged(DomainEvent):
     """Emitted when the user changes font settings."""
 
-    event_type: str = field(default="settings.font_changed", init=False)
+    event_type: ClassVar[str] = "settings.font_changed"
+
     old_family: str = ""
     old_size: int = 14
     family: str = ""
@@ -78,7 +81,8 @@ class FontChanged(DomainEvent):
 class LanguageChanged(DomainEvent):
     """Emitted when the user changes the application language."""
 
-    event_type: str = field(default="settings.language_changed", init=False)
+    event_type: ClassVar[str] = "settings.language_changed"
+
     old_language: str = ""
     new_language: str = ""
     language_name: str = ""
@@ -109,7 +113,8 @@ class LanguageChanged(DomainEvent):
 class BackupConfigChanged(DomainEvent):
     """Emitted when the user changes backup configuration."""
 
-    event_type: str = field(default="settings.backup_config_changed", init=False)
+    event_type: ClassVar[str] = "settings.backup_config_changed"
+
     old_enabled: bool = False
     old_interval_minutes: int = 30
     old_max_backups: int = 5
@@ -155,7 +160,8 @@ class BackupConfigChanged(DomainEvent):
 class AVCodingConfigChanged(DomainEvent):
     """Emitted when the user changes AV coding configuration."""
 
-    event_type: str = field(default="settings.av_coding_config_changed", init=False)
+    event_type: ClassVar[str] = "settings.av_coding_config_changed"
+
     old_timestamp_format: str = ""
     old_speaker_format: str = ""
     timestamp_format: str = ""

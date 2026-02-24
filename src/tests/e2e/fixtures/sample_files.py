@@ -251,16 +251,3 @@ startxref
 %%EOF
 """
     path.write_bytes(pdf_content)
-
-
-def _crc32(data: bytes) -> int:
-    """Calculate CRC32 for PNG chunks."""
-    crc = 0xFFFFFFFF
-    for byte in data:
-        crc ^= byte
-        for _ in range(8):
-            if crc & 1:
-                crc = (crc >> 1) ^ 0xEDB88320
-            else:
-                crc >>= 1
-    return crc ^ 0xFFFFFFFF

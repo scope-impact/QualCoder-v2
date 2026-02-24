@@ -24,15 +24,8 @@ logger = logging.getLogger(__name__)
 _case_repo: Any = None
 
 
-def set_repositories(
-    case_repo: Any = None,
-) -> None:
-    """
-    Configure repository references for policy handlers.
-
-    Args:
-        case_repo: Repository for case link operations
-    """
+def set_repositories(case_repo: Any = None) -> None:
+    """Configure repository references for policy handlers."""
     global _case_repo
     _case_repo = case_repo
 
@@ -95,19 +88,10 @@ def _handle_source_removed(event: Any) -> None:
 
 
 def configure_cases_policies(event_bus: EventBus) -> None:
-    """
-    Configure all policies for the cases context.
-
-    Subscribes to relevant events and routes them to handlers.
-
-    Args:
-        event_bus: The application's event bus
-    """
-    # Cross-context events (from projects context)
-    # Subscribe by event type string to avoid coupling to projects context imports
+    """Configure all policies for the cases context."""
+    # Cross-context events: subscribe by event type string to avoid import coupling
     event_bus.subscribe("projects.source_renamed", _handle_source_renamed)
     event_bus.subscribe("projects.source_removed", _handle_source_removed)
-
     logger.info("Cases context policies configured")
 
 

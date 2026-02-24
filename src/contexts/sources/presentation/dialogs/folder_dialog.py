@@ -27,21 +27,11 @@ if TYPE_CHECKING:
     from PySide6.QtWidgets import QWidget
 
 
-# ============================================================
-# Data Types
-# ============================================================
-
-
 @dataclass(frozen=True)
 class FolderFormData:
     """Data from the folder dialog form."""
 
     name: str
-
-
-# ============================================================
-# Folder Dialog
-# ============================================================
 
 
 class FolderDialog(QDialog):

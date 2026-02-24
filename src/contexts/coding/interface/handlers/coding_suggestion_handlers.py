@@ -11,12 +11,16 @@ from __future__ import annotations
 from typing import Any
 
 from src.contexts.coding.core.ai_entities import CodingSuggestion, CodingSuggestionId
-from src.contexts.coding.core.commandHandlers import apply_code
-from src.contexts.coding.core.commands import ApplyCodeCommand
 from src.shared.common.operation_result import OperationResult
 from src.shared.common.types import CodeId, SourceId
 
-from .base import HandlerContext, missing_param_error, no_context_error
+from .base import (
+    HandlerContext,
+    missing_param_error,
+    missing_params_error,
+    no_context_error,
+    not_found_error,
+)
 
 
 def handle_suggest_code_application(
@@ -30,10 +34,7 @@ def handle_suggest_code_application(
     end_pos = arguments.get("end_pos")
 
     if source_id is None or code_id is None or start_pos is None or end_pos is None:
-        return OperationResult.fail(
-            error="Missing required parameters",
-            error_code="SUGGEST_APPLICATION/MISSING_PARAMS",
-        ).to_dict()
+        return missing_params_error("SUGGEST_APPLICATION")
 
     rationale = arguments.get("rationale", "")
     confidence = min(100, max(0, arguments.get("confidence", 70))) / 100.0
@@ -52,7 +53,7 @@ def handle_suggest_code_application(
 
     ctx.suggestion_cache.coding_suggestions.add(suggestion)
 
-    result = {
+    data: dict[str, Any] = {
         "status": "pending_approval",
         "requires_approval": True,
         "suggestion_id": suggestion_id.value,
@@ -65,17 +66,10 @@ def handle_suggest_code_application(
     }
 
     if include_text:
-        source_repo = ctx.source_repo
-        if source_repo is not None:
-            source = source_repo.get_by_id(SourceId(int(source_id)))
-            if source and source.fulltext:
-                result["text_excerpt"] = source.fulltext[int(start_pos) : int(end_pos)]
-            else:
-                result["text_excerpt"] = ""
-        else:
-            result["text_excerpt"] = ""
+        source_text = ctx.get_source_text(int(source_id))
+        data["text_excerpt"] = source_text[int(start_pos) : int(end_pos)]
 
-    return OperationResult.ok(data=result).to_dict()
+    return OperationResult.ok(data=data).to_dict()
 
 
 def handle_list_pending_coding_suggestions(
@@ -116,8 +110,7 @@ def handle_approve_coding_suggestion(
     ctx: HandlerContext,
     arguments: dict[str, Any],
 ) -> dict[str, Any]:
-    """
-    Approve a coding suggestion.
+    """Approve a coding suggestion.
 
     Delegates to apply_code command handler for proper event publishing
     (SegmentCoded) for UI refresh.
@@ -130,42 +123,18 @@ def handle_approve_coding_suggestion(
         CodingSuggestionId(suggestion_id)
     )
     if suggestion is None:
-        return OperationResult.fail(
-            error=f"Suggestion {suggestion_id} not found",
-            error_code="APPROVE_CODING/NOT_FOUND",
-        ).to_dict()
+        return not_found_error("APPROVE_CODING", "Suggestion", suggestion_id)
 
     if ctx.segment_repo is None or ctx.code_repo is None:
         return no_context_error("APPROVE_CODING")
 
-    # Delegate to apply_code command handler - publishes SegmentCoded event
-    command = ApplyCodeCommand(
-        code_id=suggestion.code_id.value,
-        source_id=suggestion.source_id.value,
-        start_position=suggestion.start_pos,
-        end_position=suggestion.end_pos,
-        memo=suggestion.rationale,
-    )
-    result = apply_code(
-        command=command,
-        code_repo=ctx.code_repo,
-        category_repo=ctx.category_repo,
-        segment_repo=ctx.segment_repo,
-        event_bus=ctx.event_bus,
-    )
-
+    result = ctx.apply_suggestion(suggestion)
     if result.is_success:
-        # Update suggestion status
         updated = suggestion.with_status("approved")
         ctx.suggestion_cache.coding_suggestions.update(updated)
-
-        # Extract segment from result
         segment = result.data
         return OperationResult.ok(
-            data={
-                "status": "applied",
-                "segment_id": segment.id.value,
-            }
+            data={"status": "applied", "segment_id": segment.id.value}
         ).to_dict()
 
     return result.to_dict()
@@ -184,20 +153,13 @@ def handle_reject_coding_suggestion(
         CodingSuggestionId(suggestion_id)
     )
     if suggestion is None:
-        return OperationResult.fail(
-            error=f"Suggestion {suggestion_id} not found",
-            error_code="REJECT_CODING/NOT_FOUND",
-        ).to_dict()
+        return not_found_error("REJECT_CODING", "Suggestion", suggestion_id)
 
-    # Update suggestion status
     updated = suggestion.with_status("rejected")
     ctx.suggestion_cache.coding_suggestions.update(updated)
 
     return OperationResult.ok(
-        data={
-            "status": "rejected",
-            "suggestion_id": suggestion_id,
-        }
+        data={"status": "rejected", "suggestion_id": suggestion_id}
     ).to_dict()
 
 

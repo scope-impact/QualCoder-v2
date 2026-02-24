@@ -17,16 +17,20 @@ from src.contexts.coding.core.entities import Color
 from src.shared.common.operation_result import OperationResult
 from src.shared.common.types import SourceId
 
-from .base import HandlerContext, missing_param_error, no_context_error
+from .base import (
+    HandlerContext,
+    compute_uncoded_ranges,
+    missing_param_error,
+    no_context_error,
+    not_found_error,
+)
 
 
 def handle_analyze_content_for_codes(
     ctx: HandlerContext,
     arguments: dict[str, Any],
 ) -> dict[str, Any]:
-    """Analyze uncoded content in a source."""
-    from .auto_coding_handlers import _compute_uncoded_ranges
-
+    """Analyze uncoded content in a source with text excerpts."""
     source_id = arguments.get("source_id")
     if source_id is None:
         return missing_param_error("ANALYZE_CONTENT", "source_id")
@@ -34,20 +38,11 @@ def handle_analyze_content_for_codes(
     if ctx.segment_repo is None:
         return no_context_error("ANALYZE_CONTENT")
 
-    # Get existing segments for this source
     segments = ctx.segment_repo.get_by_source(SourceId(int(source_id)))
+    source_text = ctx.get_source_text(int(source_id))
+    total_length = len(source_text)
 
-    # Get actual source length and text
-    total_length = 0
-    source_text = ""
-    source_repo = ctx.source_repo
-    if source_repo is not None:
-        source = source_repo.get_by_id(SourceId(int(source_id)))
-        if source and source.fulltext:
-            total_length = len(source.fulltext)
-            source_text = source.fulltext
-
-    uncoded_ranges = _compute_uncoded_ranges(segments, total_length)
+    uncoded_ranges = compute_uncoded_ranges(segments, total_length)
     total_uncoded = sum(r["length"] for r in uncoded_ranges)
     uncoded_pct = int((total_uncoded / total_length) * 100) if total_length > 0 else 0
 
@@ -91,14 +86,12 @@ def handle_suggest_new_code(
 
     if not name:
         return missing_param_error("SUGGEST_CODE", "name")
-
     if not rationale:
         return missing_param_error("SUGGEST_CODE", "rationale")
 
     color_hex = arguments.get("color", "#808080")
     confidence = min(100, max(0, arguments.get("confidence", 70))) / 100.0
 
-    # Create suggestion
     suggestion_id = SuggestionId.new()
     suggestion = CodeSuggestion(
         id=suggestion_id,
@@ -110,7 +103,6 @@ def handle_suggest_new_code(
         status="pending",
     )
 
-    # Store in suggestion cache
     ctx.suggestion_cache.code_suggestions.add(suggestion)
 
     return OperationResult.ok(
@@ -155,8 +147,7 @@ def handle_approve_suggestion(
     ctx: HandlerContext,
     arguments: dict[str, Any],
 ) -> dict[str, Any]:
-    """
-    Approve a pending code suggestion.
+    """Approve a pending code suggestion.
 
     Delegates to create_code command handler for proper event publishing
     (CodeCreated) for UI refresh.
@@ -169,10 +160,7 @@ def handle_approve_suggestion(
         SuggestionId(suggestion_id)
     )
     if suggestion is None:
-        return OperationResult.fail(
-            error=f"Suggestion {suggestion_id} not found",
-            error_code="APPROVE_SUGGESTION/NOT_FOUND",
-        ).to_dict()
+        return not_found_error("APPROVE_SUGGESTION", "Suggestion", suggestion_id)
 
     if not suggestion.is_pending:
         return OperationResult.fail(
@@ -183,7 +171,6 @@ def handle_approve_suggestion(
     if ctx.code_repo is None:
         return no_context_error("APPROVE_SUGGESTION")
 
-    # Delegate to create_code command handler - publishes CodeCreated event
     command = CreateCodeCommand(
         name=suggestion.name,
         color=suggestion.color.to_hex(),
@@ -198,11 +185,8 @@ def handle_approve_suggestion(
     )
 
     if result.is_success:
-        # Update suggestion status
         updated = suggestion.with_status("approved")
         ctx.suggestion_cache.code_suggestions.update(updated)
-
-        # Extract code from result
         code = result.data
         return OperationResult.ok(
             data={

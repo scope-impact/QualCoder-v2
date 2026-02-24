@@ -15,7 +15,6 @@ Architecture:
 from __future__ import annotations
 
 from dataclasses import dataclass
-from uuid import uuid4
 
 from src.contexts.coding.core.entities import (
     AutoCodeBatch,
@@ -473,7 +472,7 @@ def derive_create_category(
     ):
         return CategoryNotCreated.parent_not_found(parent_id)
 
-    new_id = CategoryId(value=int(uuid4().int % 1_000_000))
+    new_id = CategoryId.new()
 
     return CategoryCreated.create(
         category_id=new_id,
@@ -652,11 +651,9 @@ def derive_update_segment_memo(
     if segment is None:
         return SegmentNotUpdated.not_found(segment_id)
 
-    old_memo = getattr(segment, "memo", None)
-
     return SegmentMemoUpdated.create(
         segment_id=segment_id,
-        old_memo=old_memo,
+        old_memo=segment.memo,
         new_memo=new_memo,
     )
 

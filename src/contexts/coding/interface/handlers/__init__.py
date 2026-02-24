@@ -29,14 +29,8 @@ ALL_HANDLERS: dict[str, HandlerFunc] = {
 }
 
 __all__ = [
+    "ALL_HANDLERS",
     "CodingToolsContext",
     "HandlerContext",
     "HandlerFunc",
-    "ALL_HANDLERS",
-    "CORE_HANDLERS",
-    "SUGGEST_CODE_HANDLERS",
-    "DUPLICATE_HANDLERS",
-    "CODING_SUGGESTION_HANDLERS",
-    "AUTO_CODING_HANDLERS",
-    "BATCH_HANDLERS",
 ]

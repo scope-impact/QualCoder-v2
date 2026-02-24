@@ -10,13 +10,13 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from src.contexts.projects.core.commands import RemoveSourceCommand
-from src.contexts.projects.core.derivers import ProjectState as DomainProjectState
 from src.contexts.projects.core.derivers import derive_remove_source
 from src.contexts.projects.core.events import SourceRemoved
 from src.contexts.projects.core.failure_events import SourceNotRemoved
 from src.contexts.sources.core.commandHandlers._state import (
     SegmentRepository,
     SourceRepository,
+    build_domain_state,
 )
 from src.shared.common.operation_result import OperationResult
 from src.shared.common.types import SourceId
@@ -64,13 +64,7 @@ def remove_source(
     source_id = SourceId(value=command.source_id)
 
     # Step 2: Build domain state and derive event
-    # Get existing sources from repo (source of truth) instead of state cache
-    existing_sources = tuple(source_repo.get_all()) if source_repo else ()
-    domain_state = DomainProjectState(
-        path_exists=lambda _p: True,
-        parent_writable=lambda _p: True,
-        existing_sources=existing_sources,
-    )
+    domain_state = build_domain_state(source_repo)
 
     result = derive_remove_source(source_id=source_id, state=domain_state)
 

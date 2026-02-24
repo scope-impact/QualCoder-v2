@@ -100,26 +100,6 @@ class TestIsCodeNameUnique:
         )
 
 
-class TestIsValidColor:
-    """Tests for is_valid_color invariant."""
-
-    def test_accepts_valid_colors(self):
-        """Valid RGB values should be accepted."""
-        from src.contexts.coding.core.entities import Color
-        from src.contexts.coding.core.invariants import is_valid_color
-
-        assert is_valid_color(Color(0, 0, 0)) is True
-        assert is_valid_color(Color(255, 255, 255)) is True
-        assert is_valid_color(Color(128, 64, 32)) is True
-
-    def test_accepts_boundary_values(self):
-        """Boundary values (0 and 255) should be valid."""
-        from src.contexts.coding.core.entities import Color
-        from src.contexts.coding.core.invariants import is_valid_color
-
-        assert is_valid_color(Color(0, 128, 255)) is True
-
-
 class TestCanCodeBeDeleted:
     """Tests for can_code_be_deleted invariant."""
 

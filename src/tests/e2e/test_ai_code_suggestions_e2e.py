@@ -16,7 +16,7 @@ from typing import TYPE_CHECKING
 import allure
 import pytest
 
-# Note: CodingTools.execute() returns dict, not Result
+from src.contexts.coding.interface.mcp_tools import CodingTools
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -33,17 +33,6 @@ pytestmark = [
 # =============================================================================
 # Fixtures
 # =============================================================================
-
-
-@pytest.fixture
-def app_context():
-    """Create AppContext for testing."""
-    from src.shared.infra.app_context import create_app_context
-
-    ctx = create_app_context()
-    ctx.start()
-    yield ctx
-    ctx.stop()
 
 
 @pytest.fixture
@@ -156,6 +145,12 @@ def project_with_uncoded_content(app_context: AppContext, tmp_path: Path) -> Pat
     return project_path
 
 
+@pytest.fixture
+def coding_tools(app_context: AppContext) -> CodingTools:
+    """Create CodingTools instance bound to the test AppContext."""
+    return CodingTools(ctx=app_context)
+
+
 # =============================================================================
 # QC-028.07: Agent Suggest New Code
 # =============================================================================
@@ -171,16 +166,15 @@ class TestAgentSuggestNewCode:
 
     @allure.title("AC #1: Agent can analyze uncoded content")
     def test_ac1_analyze_uncoded_content(
-        self, app_context: AppContext, project_with_uncoded_content: Path
+        self,
+        coding_tools: CodingTools,
+        app_context: AppContext,
+        project_with_uncoded_content: Path,
     ):
         """Agent can analyze text content that has not been coded."""
-        from src.contexts.coding.interface.mcp_tools import CodingTools
-
-        with allure.step("Initialize CodingTools"):
-            tools = CodingTools(ctx=app_context)
 
         with allure.step("Analyze uncoded content for potential codes"):
-            result = tools.execute(
+            result = coding_tools.execute(
                 "analyze_content_for_codes",
                 {"source_id": 1},
             )
@@ -193,16 +187,15 @@ class TestAgentSuggestNewCode:
 
     @allure.title("AC #2: Agent can propose new code with name and description")
     def test_ac2_propose_new_code(
-        self, app_context: AppContext, project_with_uncoded_content: Path
+        self,
+        coding_tools: CodingTools,
+        app_context: AppContext,
+        project_with_uncoded_content: Path,
     ):
         """Agent can propose a new code with name, color, and description."""
-        from src.contexts.coding.interface.mcp_tools import CodingTools
-
-        with allure.step("Initialize CodingTools"):
-            tools = CodingTools(ctx=app_context)
 
         with allure.step("Propose new code"):
-            result = tools.execute(
+            result = coding_tools.execute(
                 "suggest_new_code",
                 {
                     "name": "Learning Experience",
@@ -226,14 +219,15 @@ class TestAgentSuggestNewCode:
 
     @allure.title("AC #3: Suggestion includes rationale")
     def test_ac3_suggestion_includes_rationale(
-        self, app_context: AppContext, project_with_uncoded_content: Path
+        self,
+        coding_tools: CodingTools,
+        app_context: AppContext,
+        project_with_uncoded_content: Path,
     ):
         """Code suggestions include rationale explaining why the code is needed."""
-        from src.contexts.coding.interface.mcp_tools import CodingTools
 
         with allure.step("Submit suggestion with rationale"):
-            tools = CodingTools(ctx=app_context)
-            result = tools.execute(
+            result = coding_tools.execute(
                 "suggest_new_code",
                 {
                     "name": "Time Management",
@@ -252,14 +246,15 @@ class TestAgentSuggestNewCode:
 
     @allure.title("AC #4: Researcher must approve before creation")
     def test_ac4_researcher_approval_required(
-        self, app_context: AppContext, project_with_uncoded_content: Path
+        self,
+        coding_tools: CodingTools,
+        app_context: AppContext,
+        project_with_uncoded_content: Path,
     ):
         """Suggested codes are not created until researcher approves."""
-        from src.contexts.coding.interface.mcp_tools import CodingTools
 
         with allure.step("Submit code suggestion"):
-            tools = CodingTools(ctx=app_context)
-            result = tools.execute(
+            result = coding_tools.execute(
                 "suggest_new_code",
                 {
                     "name": "Collaboration",
@@ -284,14 +279,15 @@ class TestAgentSuggestNewCode:
     @allure.title("Agent can list pending code suggestions")
     @allure.severity(allure.severity_level.NORMAL)
     def test_list_pending_suggestions(
-        self, app_context: AppContext, project_with_uncoded_content: Path
+        self,
+        coding_tools: CodingTools,
+        app_context: AppContext,
+        project_with_uncoded_content: Path,
     ):
         """Agent can retrieve list of pending code suggestions."""
-        from src.contexts.coding.interface.mcp_tools import CodingTools
 
         with allure.step("Submit multiple suggestions"):
-            tools = CodingTools(ctx=app_context)
-            tools.execute(
+            coding_tools.execute(
                 "suggest_new_code",
                 {
                     "name": "Code A",
@@ -300,7 +296,7 @@ class TestAgentSuggestNewCode:
                     "confidence": 70,
                 },
             )
-            tools.execute(
+            coding_tools.execute(
                 "suggest_new_code",
                 {
                     "name": "Code B",
@@ -311,7 +307,7 @@ class TestAgentSuggestNewCode:
             )
 
         with allure.step("List pending suggestions"):
-            result = tools.execute("list_pending_suggestions", {})
+            result = coding_tools.execute("list_pending_suggestions", {})
 
         with allure.step("Verify pending suggestions returned"):
             assert result.get("success") is True
@@ -324,14 +320,15 @@ class TestAgentSuggestNewCode:
     @allure.title("Suggestion includes confidence score")
     @allure.severity(allure.severity_level.NORMAL)
     def test_suggestion_confidence_score(
-        self, app_context: AppContext, project_with_uncoded_content: Path
+        self,
+        coding_tools: CodingTools,
+        app_context: AppContext,
+        project_with_uncoded_content: Path,
     ):
         """Code suggestions include confidence score (0-100)."""
-        from src.contexts.coding.interface.mcp_tools import CodingTools
 
         with allure.step("Submit suggestion with confidence"):
-            tools = CodingTools(ctx=app_context)
-            result = tools.execute(
+            result = coding_tools.execute(
                 "suggest_new_code",
                 {
                     "name": "High Confidence Code",
@@ -364,16 +361,15 @@ class TestAgentDetectDuplicateCodes:
 
     @allure.title("AC #1: Agent can identify semantically similar codes")
     def test_ac1_identify_similar_codes(
-        self, app_context: AppContext, project_with_codes: Path
+        self,
+        coding_tools: CodingTools,
+        app_context: AppContext,
+        project_with_codes: Path,
     ):
         """Agent can detect codes that are semantically similar."""
-        from src.contexts.coding.interface.mcp_tools import CodingTools
-
-        with allure.step("Initialize CodingTools"):
-            tools = CodingTools(ctx=app_context)
 
         with allure.step("Detect duplicate codes"):
-            result = tools.execute(
+            result = coding_tools.execute(
                 "detect_duplicate_codes",
                 {"threshold": 0.8},  # 80% similarity threshold
             )
@@ -392,14 +388,15 @@ class TestAgentDetectDuplicateCodes:
 
     @allure.title("AC #2: Agent can suggest merge candidates")
     def test_ac2_suggest_merge_candidates(
-        self, app_context: AppContext, project_with_codes: Path
+        self,
+        coding_tools: CodingTools,
+        app_context: AppContext,
+        project_with_codes: Path,
     ):
         """Agent can suggest which codes should be merged."""
-        from src.contexts.coding.interface.mcp_tools import CodingTools
 
         with allure.step("Detect duplicates"):
-            tools = CodingTools(ctx=app_context)
-            result = tools.execute("detect_duplicate_codes", {"threshold": 0.7})
+            result = coding_tools.execute("detect_duplicate_codes", {"threshold": 0.7})
 
         with allure.step("Verify merge suggestions include both code IDs"):
             assert result.get("success") is True
@@ -412,14 +409,15 @@ class TestAgentDetectDuplicateCodes:
 
     @allure.title("AC #3: Detection considers code names and usage")
     def test_ac3_considers_names_and_usage(
-        self, app_context: AppContext, project_with_codes: Path
+        self,
+        coding_tools: CodingTools,
+        app_context: AppContext,
+        project_with_codes: Path,
     ):
         """Detection considers both code names and how codes are used."""
-        from src.contexts.coding.interface.mcp_tools import CodingTools
 
         with allure.step("Detect duplicates with analysis"):
-            tools = CodingTools(ctx=app_context)
-            result = tools.execute(
+            result = coding_tools.execute(
                 "detect_duplicate_codes",
                 {"threshold": 0.6, "include_usage_analysis": True},
             )
@@ -434,18 +432,19 @@ class TestAgentDetectDuplicateCodes:
 
     @allure.title("AC #4: Researcher decides on merge actions")
     def test_ac4_researcher_decides_merge(
-        self, app_context: AppContext, project_with_codes: Path
+        self,
+        coding_tools: CodingTools,
+        app_context: AppContext,
+        project_with_codes: Path,
     ):
         """Detected duplicates are not merged automatically - researcher decides."""
-        from src.contexts.coding.interface.mcp_tools import CodingTools
 
         with allure.step("Get initial code count"):
             initial_codes = app_context.coding_context.code_repo.get_all()
             initial_count = len(initial_codes)
 
         with allure.step("Detect duplicates"):
-            tools = CodingTools(ctx=app_context)
-            result = tools.execute("detect_duplicate_codes", {"threshold": 0.8})
+            result = coding_tools.execute("detect_duplicate_codes", {"threshold": 0.8})
             assert result.get("success") is True
 
         with allure.step("Verify codes NOT merged automatically"):
@@ -459,14 +458,15 @@ class TestAgentDetectDuplicateCodes:
     @allure.title("Detection returns similarity scores")
     @allure.severity(allure.severity_level.NORMAL)
     def test_similarity_scores_returned(
-        self, app_context: AppContext, project_with_codes: Path
+        self,
+        coding_tools: CodingTools,
+        app_context: AppContext,
+        project_with_codes: Path,
     ):
         """Each duplicate pair includes a similarity score."""
-        from src.contexts.coding.interface.mcp_tools import CodingTools
 
         with allure.step("Detect duplicates"):
-            tools = CodingTools(ctx=app_context)
-            result = tools.execute("detect_duplicate_codes", {"threshold": 0.5})
+            result = coding_tools.execute("detect_duplicate_codes", {"threshold": 0.5})
 
         with allure.step("Verify similarity scores"):
             assert result.get("success") is True
@@ -478,14 +478,15 @@ class TestAgentDetectDuplicateCodes:
     @allure.title("Detection shows segment counts for merge decision")
     @allure.severity(allure.severity_level.NORMAL)
     def test_shows_segment_counts(
-        self, app_context: AppContext, project_with_codes: Path
+        self,
+        coding_tools: CodingTools,
+        app_context: AppContext,
+        project_with_codes: Path,
     ):
         """Detection results show segment counts to help merge decision."""
-        from src.contexts.coding.interface.mcp_tools import CodingTools
 
         with allure.step("Detect duplicates"):
-            tools = CodingTools(ctx=app_context)
-            result = tools.execute("detect_duplicate_codes", {"threshold": 0.7})
+            result = coding_tools.execute("detect_duplicate_codes", {"threshold": 0.7})
 
         with allure.step("Verify segment counts included"):
             assert result.get("success") is True
@@ -498,13 +499,16 @@ class TestAgentDetectDuplicateCodes:
 
     @allure.title("Agent can request merge after detection")
     @allure.severity(allure.severity_level.CRITICAL)
-    def test_request_merge(self, app_context: AppContext, project_with_codes: Path):
+    def test_request_merge(
+        self,
+        coding_tools: CodingTools,
+        app_context: AppContext,
+        project_with_codes: Path,
+    ):
         """Agent can request a merge operation (still requires approval)."""
-        from src.contexts.coding.interface.mcp_tools import CodingTools
 
         with allure.step("Request merge"):
-            tools = CodingTools(ctx=app_context)
-            result = tools.execute(
+            result = coding_tools.execute(
                 "suggest_merge_codes",
                 {
                     "source_code_id": 1,  # Theme
@@ -533,19 +537,20 @@ class TestAICodeManagementIntegration:
 
     @allure.title("Complete workflow: Analyze -> Suggest -> Approve -> Create")
     def test_full_suggestion_workflow(
-        self, app_context: AppContext, project_with_uncoded_content: Path
+        self,
+        coding_tools: CodingTools,
+        app_context: AppContext,
+        project_with_uncoded_content: Path,
     ):
         """Test complete workflow from analysis to code creation."""
-        from src.contexts.coding.interface.mcp_tools import CodingTools
-
-        tools = CodingTools(ctx=app_context)
-
         with allure.step("Step 1: Analyze content for potential codes"):
-            analysis = tools.execute("analyze_content_for_codes", {"source_id": 1})
+            analysis = coding_tools.execute(
+                "analyze_content_for_codes", {"source_id": 1}
+            )
             assert analysis.get("success") is True
 
         with allure.step("Step 2: Suggest a new code based on analysis"):
-            suggestion = tools.execute(
+            suggestion = coding_tools.execute(
                 "suggest_new_code",
                 {
                     "name": "Frustration",
@@ -559,14 +564,14 @@ class TestAICodeManagementIntegration:
             suggestion_id = suggestion["data"]["suggestion_id"]
 
         with allure.step("Step 3: Verify suggestion is pending"):
-            pending = tools.execute("list_pending_suggestions", {})
+            pending = coding_tools.execute("list_pending_suggestions", {})
             assert pending.get("success") is True
             ids = [s["suggestion_id"] for s in pending["data"]["suggestions"]]
             assert suggestion_id in ids
 
         with allure.step("Step 4: Approve suggestion (simulated researcher action)"):
             # This would be done via UI/ViewModel, but we test the MCP interface
-            approval = tools.execute(
+            approval = coding_tools.execute(
                 "approve_suggestion",
                 {"suggestion_id": suggestion_id},
             )
@@ -580,22 +585,23 @@ class TestAICodeManagementIntegration:
 
     @allure.title("Complete workflow: Detect duplicates -> Review -> Merge")
     def test_full_duplicate_workflow(
-        self, app_context: AppContext, project_with_codes: Path
+        self,
+        coding_tools: CodingTools,
+        app_context: AppContext,
+        project_with_codes: Path,
     ):
         """Test complete workflow from detection to merge."""
-        from src.contexts.coding.interface.mcp_tools import CodingTools
-
-        tools = CodingTools(ctx=app_context)
-
         with allure.step("Step 1: Detect duplicate codes"):
-            detection = tools.execute("detect_duplicate_codes", {"threshold": 0.8})
+            detection = coding_tools.execute(
+                "detect_duplicate_codes", {"threshold": 0.8}
+            )
             assert detection.get("success") is True
             candidates = detection["data"]["candidates"]
             assert len(candidates) > 0
 
         with allure.step("Step 2: Suggest merge for a detected pair"):
             pair = candidates[0]
-            merge_suggestion = tools.execute(
+            merge_suggestion = coding_tools.execute(
                 "suggest_merge_codes",
                 {
                     "source_code_id": pair["code_a_id"],
@@ -607,7 +613,7 @@ class TestAICodeManagementIntegration:
             merge_id = merge_suggestion["data"]["merge_suggestion_id"]
 
         with allure.step("Step 3: Approve merge"):
-            approval = tools.execute(
+            approval = coding_tools.execute(
                 "approve_merge",
                 {"merge_suggestion_id": merge_id},
             )
@@ -631,13 +637,13 @@ class TestAIToolsSchema:
     """Tests to verify MCP tool schemas are correctly defined."""
 
     @allure.title("suggest_new_code tool has correct schema")
-    def test_suggest_new_code_schema(self, app_context: AppContext):
+    def test_suggest_new_code_schema(
+        self, coding_tools: CodingTools, app_context: AppContext
+    ):
         """Verify suggest_new_code tool schema."""
-        from src.contexts.coding.interface.mcp_tools import CodingTools
 
         with allure.step("Get tool schemas"):
-            tools = CodingTools(ctx=app_context)
-            schemas = tools.get_tool_schemas()
+            schemas = coding_tools.get_tool_schemas()
 
         with allure.step("Find suggest_new_code schema"):
             schema = next((s for s in schemas if s["name"] == "suggest_new_code"), None)
@@ -656,13 +662,13 @@ class TestAIToolsSchema:
             assert "sample_contexts" in props
 
     @allure.title("detect_duplicate_codes tool has correct schema")
-    def test_detect_duplicate_codes_schema(self, app_context: AppContext):
+    def test_detect_duplicate_codes_schema(
+        self, coding_tools: CodingTools, app_context: AppContext
+    ):
         """Verify detect_duplicate_codes tool schema."""
-        from src.contexts.coding.interface.mcp_tools import CodingTools
 
         with allure.step("Get tool schemas"):
-            tools = CodingTools(ctx=app_context)
-            schemas = tools.get_tool_schemas()
+            schemas = coding_tools.get_tool_schemas()
 
         with allure.step("Find detect_duplicate_codes schema"):
             schema = next(
@@ -691,16 +697,15 @@ class TestAgentListCodes:
 
     @allure.title("AC #1: Agent can retrieve all codes")
     def test_ac1_list_all_codes(
-        self, app_context: AppContext, project_with_codes: Path
+        self,
+        coding_tools: CodingTools,
+        app_context: AppContext,
+        project_with_codes: Path,
     ):
         """Agent can list all codes in the codebook."""
-        from src.contexts.coding.interface.mcp_tools import CodingTools
-
-        with allure.step("Initialize CodingTools"):
-            tools = CodingTools(ctx=app_context)
 
         with allure.step("List all codes"):
-            result = tools.execute("list_codes", {})
+            result = coding_tools.execute("list_codes", {})
 
         with allure.step("Verify codes returned"):
             assert result.get("success") is True
@@ -710,14 +715,15 @@ class TestAgentListCodes:
 
     @allure.title("AC #2: Each code includes required fields")
     def test_ac2_codes_include_required_fields(
-        self, app_context: AppContext, project_with_codes: Path
+        self,
+        coding_tools: CodingTools,
+        app_context: AppContext,
+        project_with_codes: Path,
     ):
         """Each code returned has id, name, and color fields."""
-        from src.contexts.coding.interface.mcp_tools import CodingTools
 
         with allure.step("List codes"):
-            tools = CodingTools(ctx=app_context)
-            result = tools.execute("list_codes", {})
+            result = coding_tools.execute("list_codes", {})
 
         with allure.step("Verify required fields for each code"):
             assert result.get("success") is True
@@ -732,14 +738,15 @@ class TestAgentListCodes:
 
     @allure.title("AC #3: Each code includes memo field")
     def test_ac3_codes_include_memo(
-        self, app_context: AppContext, project_with_codes: Path
+        self,
+        coding_tools: CodingTools,
+        app_context: AppContext,
+        project_with_codes: Path,
     ):
         """Each code returned includes the memo field."""
-        from src.contexts.coding.interface.mcp_tools import CodingTools
 
         with allure.step("List codes"):
-            tools = CodingTools(ctx=app_context)
-            result = tools.execute("list_codes", {})
+            result = coding_tools.execute("list_codes", {})
 
         with allure.step("Verify memo field exists"):
             assert result.get("success") is True
@@ -749,9 +756,10 @@ class TestAgentListCodes:
                 assert code["memo"] is None or isinstance(code["memo"], str)
 
     @allure.title("AC #4: Empty project returns empty list")
-    def test_ac4_empty_when_no_codes(self, app_context: AppContext, tmp_path: Path):
+    def test_ac4_empty_when_no_codes(
+        self, coding_tools: CodingTools, app_context: AppContext, tmp_path: Path
+    ):
         """Listing codes on empty project returns empty list."""
-        from src.contexts.coding.interface.mcp_tools import CodingTools
 
         with allure.step("Create empty project"):
             project_path = tmp_path / "empty_codes_test.qda"
@@ -762,8 +770,7 @@ class TestAgentListCodes:
             app_context.open_project(str(project_path))
 
         with allure.step("List codes"):
-            tools = CodingTools(ctx=app_context)
-            result = tools.execute("list_codes", {})
+            result = coding_tools.execute("list_codes", {})
 
         with allure.step("Verify empty list returned"):
             assert result.get("success") is True
@@ -771,13 +778,13 @@ class TestAgentListCodes:
 
     @allure.title("list_codes tool has correct schema")
     @allure.severity(allure.severity_level.NORMAL)
-    def test_list_codes_schema(self, app_context: AppContext):
+    def test_list_codes_schema(
+        self, coding_tools: CodingTools, app_context: AppContext
+    ):
         """Verify list_codes tool schema is correctly defined."""
-        from src.contexts.coding.interface.mcp_tools import CodingTools
 
         with allure.step("Get tool schemas"):
-            tools = CodingTools(ctx=app_context)
-            schemas = tools.get_tool_schemas()
+            schemas = coding_tools.get_tool_schemas()
 
         with allure.step("Find list_codes schema"):
             schema = next((s for s in schemas if s["name"] == "list_codes"), None)
@@ -803,9 +810,10 @@ class TestAgentCreateCode:
     """
 
     @allure.title("AC #1: Agent can create code with name and color")
-    def test_ac1_create_code_basic(self, app_context: AppContext, tmp_path: Path):
+    def test_ac1_create_code_basic(
+        self, coding_tools: CodingTools, app_context: AppContext, tmp_path: Path
+    ):
         """Agent can create a code with required name and color."""
-        from src.contexts.coding.interface.mcp_tools import CodingTools
 
         with allure.step("Create project"):
             project_path = tmp_path / "create_code_test.qda"
@@ -815,11 +823,8 @@ class TestAgentCreateCode:
             assert result.is_success
             app_context.open_project(str(project_path))
 
-        with allure.step("Initialize CodingTools"):
-            tools = CodingTools(ctx=app_context)
-
         with allure.step("Create code"):
-            result = tools.execute(
+            result = coding_tools.execute(
                 "create_code",
                 {"name": "New Theme", "color": "#FF5722"},
             )
@@ -835,9 +840,10 @@ class TestAgentCreateCode:
             assert isinstance(data["code_id"], int)
 
     @allure.title("AC #2: Created code persisted to repository")
-    def test_ac2_code_persisted(self, app_context: AppContext, tmp_path: Path):
+    def test_ac2_code_persisted(
+        self, coding_tools: CodingTools, app_context: AppContext, tmp_path: Path
+    ):
         """Created code is saved to the repository."""
-        from src.contexts.coding.interface.mcp_tools import CodingTools
 
         with allure.step("Create project"):
             project_path = tmp_path / "persist_code_test.qda"
@@ -848,8 +854,7 @@ class TestAgentCreateCode:
             app_context.open_project(str(project_path))
 
         with allure.step("Create code"):
-            tools = CodingTools(ctx=app_context)
-            result = tools.execute(
+            result = coding_tools.execute(
                 "create_code",
                 {"name": "Persisted Code", "color": "#4CAF50"},
             )
@@ -861,9 +866,10 @@ class TestAgentCreateCode:
             assert "Persisted Code" in code_names
 
     @allure.title("AC #3: Agent can create code with optional memo")
-    def test_ac3_code_with_memo(self, app_context: AppContext, tmp_path: Path):
+    def test_ac3_code_with_memo(
+        self, coding_tools: CodingTools, app_context: AppContext, tmp_path: Path
+    ):
         """Agent can create a code with an optional memo/description."""
-        from src.contexts.coding.interface.mcp_tools import CodingTools
 
         with allure.step("Create project"):
             project_path = tmp_path / "memo_code_test.qda"
@@ -874,8 +880,7 @@ class TestAgentCreateCode:
             app_context.open_project(str(project_path))
 
         with allure.step("Create code with memo"):
-            tools = CodingTools(ctx=app_context)
-            result = tools.execute(
+            result = coding_tools.execute(
                 "create_code",
                 {
                     "name": "Documented Code",
@@ -891,14 +896,15 @@ class TestAgentCreateCode:
 
     @allure.title("AC #4: Agent can create code in a category")
     def test_ac4_code_with_category(
-        self, app_context: AppContext, project_with_codes: Path
+        self,
+        coding_tools: CodingTools,
+        app_context: AppContext,
+        project_with_codes: Path,
     ):
         """Agent can create a code in a specific category."""
-        from src.contexts.coding.interface.mcp_tools import CodingTools
 
         with allure.step("Create code in category"):
-            tools = CodingTools(ctx=app_context)
-            result = tools.execute(
+            result = coding_tools.execute(
                 "create_code",
                 {
                     "name": "Categorized Code",
@@ -913,9 +919,10 @@ class TestAgentCreateCode:
             assert data["category_id"] == 1
 
     @allure.title("AC #5: Invalid color returns error")
-    def test_ac5_invalid_color_error(self, app_context: AppContext, tmp_path: Path):
+    def test_ac5_invalid_color_error(
+        self, coding_tools: CodingTools, app_context: AppContext, tmp_path: Path
+    ):
         """Creating code with invalid color returns error."""
-        from src.contexts.coding.interface.mcp_tools import CodingTools
 
         with allure.step("Create project"):
             project_path = tmp_path / "invalid_color_test.qda"
@@ -926,8 +933,7 @@ class TestAgentCreateCode:
             app_context.open_project(str(project_path))
 
         with allure.step("Attempt to create code with invalid color"):
-            tools = CodingTools(ctx=app_context)
-            result = tools.execute(
+            result = coding_tools.execute(
                 "create_code",
                 {"name": "Bad Color", "color": "not-a-color"},
             )
@@ -939,14 +945,15 @@ class TestAgentCreateCode:
 
     @allure.title("AC #6: Duplicate name returns error")
     def test_ac6_duplicate_name_error(
-        self, app_context: AppContext, project_with_codes: Path
+        self,
+        coding_tools: CodingTools,
+        app_context: AppContext,
+        project_with_codes: Path,
     ):
         """Creating code with duplicate name returns error."""
-        from src.contexts.coding.interface.mcp_tools import CodingTools
 
         with allure.step("Attempt to create code with existing name"):
-            tools = CodingTools(ctx=app_context)
-            result = tools.execute(
+            result = coding_tools.execute(
                 "create_code",
                 {"name": "Theme", "color": "#FF0000"},  # "Theme" already exists
             )
@@ -956,9 +963,10 @@ class TestAgentCreateCode:
             assert "error" in result
 
     @allure.title("AC #7: Missing required params returns error")
-    def test_ac7_missing_params_error(self, app_context: AppContext, tmp_path: Path):
+    def test_ac7_missing_params_error(
+        self, coding_tools: CodingTools, app_context: AppContext, tmp_path: Path
+    ):
         """Missing required parameters returns error."""
-        from src.contexts.coding.interface.mcp_tools import CodingTools
 
         with allure.step("Create project"):
             project_path = tmp_path / "missing_params_test.qda"
@@ -969,8 +977,7 @@ class TestAgentCreateCode:
             app_context.open_project(str(project_path))
 
         with allure.step("Attempt to create code without name"):
-            tools = CodingTools(ctx=app_context)
-            result = tools.execute(
+            result = coding_tools.execute(
                 "create_code",
                 {"color": "#FF0000"},  # Missing name
             )
@@ -980,7 +987,7 @@ class TestAgentCreateCode:
             assert "name" in result.get("error", "").lower()
 
         with allure.step("Attempt to create code without color"):
-            result = tools.execute(
+            result = coding_tools.execute(
                 "create_code",
                 {"name": "No Color Code"},  # Missing color
             )
@@ -991,13 +998,13 @@ class TestAgentCreateCode:
 
     @allure.title("create_code tool has correct schema")
     @allure.severity(allure.severity_level.NORMAL)
-    def test_create_code_schema(self, app_context: AppContext):
+    def test_create_code_schema(
+        self, coding_tools: CodingTools, app_context: AppContext
+    ):
         """Verify create_code tool schema is correctly defined."""
-        from src.contexts.coding.interface.mcp_tools import CodingTools
 
         with allure.step("Get tool schemas"):
-            tools = CodingTools(ctx=app_context)
-            schemas = tools.get_tool_schemas()
+            schemas = coding_tools.get_tool_schemas()
 
         with allure.step("Find create_code schema"):
             schema = next((s for s in schemas if s["name"] == "create_code"), None)

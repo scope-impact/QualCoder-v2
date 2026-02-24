@@ -7,7 +7,10 @@ Returns OperationResult for consistent handling in UI and AI consumers.
 
 from __future__ import annotations
 
-from src.contexts.cases.core.commandHandlers._state import CaseRepository
+from src.contexts.cases.core.commandHandlers._state import (
+    CaseRepository,
+    require_project,
+)
 from src.shared.common.operation_result import OperationResult
 from src.shared.infra.state import ProjectState
 
@@ -16,24 +19,10 @@ def list_cases(
     state: ProjectState,
     case_repo: CaseRepository | None = None,
 ) -> OperationResult:
-    """
-    List all cases in the current project.
+    """List all cases in the current project."""
+    if failure := require_project(state, "CASES_NOT_LISTED/NO_PROJECT"):
+        return failure
 
-    Args:
-        state: Project state (for project check)
-        case_repo: Repository for case queries (source of truth)
-
-    Returns:
-        OperationResult with list of Case entities on success, or error details on failure
-    """
-    if state.project is None:
-        return OperationResult.fail(
-            error="No project is currently open",
-            error_code="CASES_NOT_LISTED/NO_PROJECT",
-            suggestions=("Open a project first",),
-        )
-
-    # Get cases from repo (source of truth)
     cases = case_repo.get_all() if case_repo else []
 
     return OperationResult.ok(

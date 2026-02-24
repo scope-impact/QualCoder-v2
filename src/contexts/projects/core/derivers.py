@@ -18,7 +18,7 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
 
-from src.contexts.projects.core.entities import Folder, Source
+from src.contexts.projects.core.entities import Folder, Source, SourceStatus
 from src.contexts.projects.core.events import (
     FolderCreated,
     FolderDeleted,
@@ -106,16 +106,12 @@ class InvalidProjectPath:
     message: str = ""
 
     def __post_init__(self) -> None:
-        if self.path:
-            object.__setattr__(
-                self,
-                "message",
-                f"Invalid project path: {self.path}. Must have .qda extension.",
-            )
-        else:
-            object.__setattr__(
-                self, "message", "Invalid project path. Must have .qda extension."
-            )
+        prefix = (
+            f"Invalid project path: {self.path}"
+            if self.path
+            else "Invalid project path"
+        )
+        object.__setattr__(self, "message", f"{prefix}. Must have .qda extension.")
 
 
 @dataclass(frozen=True)
@@ -467,8 +463,6 @@ def derive_update_source(
     Returns:
         SourceUpdated event or SourceNotUpdated failure event
     """
-    from src.contexts.projects.core.entities import SourceStatus
-
     # Find the source
     source = next((s for s in state.existing_sources if s.id == source_id), None)
 

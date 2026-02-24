@@ -315,10 +315,7 @@ class SQLiteCaseRepository:
         """Convert a database row to a CaseAttribute."""
         attr_type = AttributeType(row.attr_type)
 
-        # Get value based on type
-        if attr_type == AttributeType.TEXT:
-            value = row.value_text
-        elif attr_type == AttributeType.NUMBER:
+        if attr_type == AttributeType.NUMBER:
             value = row.value_number
         elif attr_type == AttributeType.DATE:
             value = row.value_date
@@ -335,25 +332,24 @@ class SQLiteCaseRepository:
 
     def _attribute_to_values(self, case_id: CaseId, attr: CaseAttribute) -> dict:
         """Convert a CaseAttribute to database column values."""
-        values = {
+        value_text = None
+        value_number = None
+        value_date = None
+
+        if attr.attr_type == AttributeType.TEXT:
+            value_text = str(attr.value) if attr.value else None
+        elif attr.attr_type == AttributeType.NUMBER:
+            value_number = int(attr.value) if attr.value else None
+        elif attr.attr_type == AttributeType.DATE:
+            value_date = attr.value
+        elif attr.attr_type == AttributeType.BOOLEAN:
+            value_text = str(attr.value).lower() if attr.value is not None else None
+
+        return {
             "case_id": case_id.value,
             "name": attr.name,
             "attr_type": attr.attr_type.value,
-            "value_text": None,
-            "value_number": None,
-            "value_date": None,
+            "value_text": value_text,
+            "value_number": value_number,
+            "value_date": value_date,
         }
-
-        # Set appropriate value column based on type
-        if attr.attr_type == AttributeType.TEXT:
-            values["value_text"] = str(attr.value) if attr.value else None
-        elif attr.attr_type == AttributeType.NUMBER:
-            values["value_number"] = int(attr.value) if attr.value else None
-        elif attr.attr_type == AttributeType.DATE:
-            values["value_date"] = attr.value
-        elif attr.attr_type == AttributeType.BOOLEAN:
-            values["value_text"] = (
-                str(attr.value).lower() if attr.value is not None else None
-            )
-
-        return values

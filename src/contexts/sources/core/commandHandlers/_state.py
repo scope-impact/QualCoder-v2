@@ -9,14 +9,11 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Protocol, runtime_checkable
 
+from src.contexts.projects.core.derivers import ProjectState as DomainProjectState
+
 if TYPE_CHECKING:
     from src.contexts.projects.core.entities import Source, SourceStatus, SourceType
     from src.shared.common.types import FolderId, SourceId
-
-
-# ============================================================
-# Repository Protocols (for DI)
-# ============================================================
 
 
 @runtime_checkable
@@ -40,3 +37,13 @@ class SegmentRepository(Protocol):
     """Protocol for segment repository operations needed for cascade deletes."""
 
     def delete_by_source(self, source_id: SourceId) -> int: ...
+
+
+def build_domain_state(source_repo: SourceRepository | None) -> DomainProjectState:
+    """Build DomainProjectState from repo (source of truth) for use with derivers."""
+    existing_sources = tuple(source_repo.get_all()) if source_repo else ()
+    return DomainProjectState(
+        path_exists=lambda p: p.exists(),
+        parent_writable=lambda _p: True,
+        existing_sources=existing_sources,
+    )

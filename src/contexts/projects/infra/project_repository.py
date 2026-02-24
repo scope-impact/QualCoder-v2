@@ -123,12 +123,12 @@ class SQLiteProjectRepository:
                 summary=ProjectSummary(),
             )
 
-        except Exception as e:
+        except Exception:
             # Clean up partial database on failure
             if path.exists():
                 with contextlib.suppress(OSError):
                     path.unlink()
-            raise e
+            raise
 
         finally:
             engine.dispose()
@@ -203,9 +203,6 @@ class SQLiteProjectRepository:
                     owner = self._get_setting(conn, self.SETTING_PROJECT_OWNER)
                     memo = self._get_setting(conn, self.SETTING_PROJECT_MEMO)
                     created_at_str = self._get_setting(conn, self.SETTING_CREATED_AT)
-                    last_opened_str = self._get_setting(
-                        conn, self.SETTING_LAST_OPENED_AT
-                    )
 
                     # Parse timestamps
                     now = datetime.now(UTC)
@@ -214,9 +211,6 @@ class SQLiteProjectRepository:
                         if created_at_str
                         else now
                     )
-                    # Note: last_opened_str is parsed but we use 'now' for the
-                    # returned entity since we update last_opened on load
-                    _ = last_opened_str  # Unused, but retrieved for completeness
 
                     # Compute summary statistics
                     summary = self._compute_summary(conn)
@@ -281,73 +275,32 @@ class SQLiteProjectRepository:
 
     def _compute_summary(self, conn: Connection) -> ProjectSummary:
         """Compute project summary statistics from the database."""
-        from sqlalchemy import func
-
         from src.contexts.coding.infra.schema import cod_code, cod_segment
         from src.contexts.sources.infra.schema import src_source
 
-        # Count sources by type
+        def _count_where(table, condition=None) -> int:
+            """Count rows in a table, optionally filtered by condition."""
+            stmt = select(func.count()).select_from(table)
+            if condition is not None:
+                stmt = select(func.count()).where(condition)
+            return conn.execute(stmt).scalar() or 0
+
         try:
-            total_sources = (
-                conn.execute(select(func.count()).select_from(src_source)).scalar() or 0
-            )
-
-            text_count = (
-                conn.execute(
-                    select(func.count()).where(src_source.c.source_type == "text")
-                ).scalar()
-                or 0
-            )
-
-            audio_count = (
-                conn.execute(
-                    select(func.count()).where(src_source.c.source_type == "audio")
-                ).scalar()
-                or 0
-            )
-
-            video_count = (
-                conn.execute(
-                    select(func.count()).where(src_source.c.source_type == "video")
-                ).scalar()
-                or 0
-            )
-
-            image_count = (
-                conn.execute(
-                    select(func.count()).where(src_source.c.source_type == "image")
-                ).scalar()
-                or 0
-            )
-
-            pdf_count = (
-                conn.execute(
-                    select(func.count()).where(src_source.c.source_type == "pdf")
-                ).scalar()
-                or 0
-            )
-
-            # Count codes
-            total_codes = (
-                conn.execute(select(func.count()).select_from(cod_code)).scalar() or 0
-            )
-
-            # Count segments (coded text)
-            total_segments = (
-                conn.execute(select(func.count()).select_from(cod_segment)).scalar()
-                or 0
-            )
-
             return ProjectSummary(
-                total_sources=total_sources,
-                text_count=text_count,
-                audio_count=audio_count,
-                video_count=video_count,
-                image_count=image_count,
-                pdf_count=pdf_count,
-                total_codes=total_codes,
-                total_segments=total_segments,
+                total_sources=_count_where(src_source),
+                text_count=_count_where(src_source, src_source.c.source_type == "text"),
+                audio_count=_count_where(
+                    src_source, src_source.c.source_type == "audio"
+                ),
+                video_count=_count_where(
+                    src_source, src_source.c.source_type == "video"
+                ),
+                image_count=_count_where(
+                    src_source, src_source.c.source_type == "image"
+                ),
+                pdf_count=_count_where(src_source, src_source.c.source_type == "pdf"),
+                total_codes=_count_where(cod_code),
+                total_segments=_count_where(cod_segment),
             )
         except Exception:
-            # Return empty summary if tables don't exist or other error
             return ProjectSummary()

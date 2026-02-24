@@ -1,7 +1,8 @@
 """
 Core Tool Handlers
 
-Handlers for: batch_apply_codes, list_codes, get_code, list_segments_for_source, delete_segment.
+Handlers for: batch_apply_codes, list_codes, get_code, list_segments_for_source,
+delete_segment, create_code.
 
 All mutation handlers delegate to command handlers to ensure proper event publishing.
 """
@@ -27,7 +28,7 @@ from src.contexts.coding.core.commands import (
 from src.contexts.coding.core.entities import Code, TextSegment
 from src.shared.common.operation_result import OperationResult
 
-from .base import HandlerContext, missing_param_error, no_context_error
+from .base import HandlerContext, missing_param_error, no_context_error, not_found_error
 
 
 def _serialize_code(code: Code) -> dict[str, Any]:
@@ -61,11 +62,7 @@ def handle_batch_apply_codes(
     ctx: HandlerContext,
     arguments: dict[str, Any],
 ) -> dict[str, Any]:
-    """
-    Execute batch_apply_codes tool.
-
-    Applies multiple codes efficiently in a single batch operation.
-    """
+    """Apply multiple codes efficiently in a single batch operation."""
     operations_data = arguments.get("operations")
     if operations_data is None:
         return missing_param_error(
@@ -84,7 +81,6 @@ def handle_batch_apply_codes(
     if ctx.code_repo is None:
         return no_context_error("BATCH_APPLY_CODES")
 
-    # Convert operation dicts to ApplyCodeCommand objects
     operations = []
     for i, op in enumerate(operations_data):
         try:
@@ -108,7 +104,6 @@ def handle_batch_apply_codes(
                 ),
             ).to_dict()
 
-    # Create batch command and execute
     command = BatchApplyCodesCommand(operations=tuple(operations))
     result = batch_apply_codes(
         command=command,
@@ -118,7 +113,6 @@ def handle_batch_apply_codes(
         event_bus=ctx.event_bus,
     )
 
-    # Convert BatchApplyCodesResult to dict-friendly format
     if result.is_success and result.data:
         batch_result = result.data
         return OperationResult.ok(
@@ -147,28 +141,19 @@ def handle_list_codes(
     ctx: HandlerContext,
     _arguments: dict[str, Any],
 ) -> dict[str, Any]:
-    """
-    Execute list_codes tool.
-
-    Returns list of all codes with summary information.
-    """
+    """Return all codes with summary information."""
     if ctx.code_repo is None:
         return no_context_error("CODES_NOT_LISTED")
 
     codes = get_all_codes(ctx.code_repo)
-    serialized = [_serialize_code(c) for c in codes]
-    return OperationResult.ok(data=serialized).to_dict()
+    return OperationResult.ok(data=[_serialize_code(c) for c in codes]).to_dict()
 
 
 def handle_get_code(
     ctx: HandlerContext,
     arguments: dict[str, Any],
 ) -> dict[str, Any]:
-    """
-    Execute get_code tool.
-
-    Returns detailed code information.
-    """
+    """Return detailed information for a single code."""
     code_id = arguments.get("code_id")
     if code_id is None:
         return missing_param_error("CODE_NOT_FOUND", "code_id")
@@ -178,10 +163,8 @@ def handle_get_code(
 
     code = get_code(ctx.code_repo, int(code_id))
     if code is None:
-        return OperationResult.fail(
-            error=f"Code {code_id} not found",
-            error_code="CODE_NOT_FOUND",
-        ).to_dict()
+        return not_found_error("CODE_NOT_FOUND", "Code", str(code_id))
+
     return OperationResult.ok(data=_serialize_code(code)).to_dict()
 
 
@@ -189,11 +172,7 @@ def handle_list_segments(
     ctx: HandlerContext,
     arguments: dict[str, Any],
 ) -> dict[str, Any]:
-    """
-    Execute list_segments_for_source tool.
-
-    Returns all coded segments for a source document.
-    """
+    """Return all coded segments for a source document."""
     source_id = arguments.get("source_id")
     if source_id is None:
         return missing_param_error("SEGMENTS_NOT_LISTED", "source_id")
@@ -202,20 +181,14 @@ def handle_list_segments(
         return no_context_error("SEGMENTS_NOT_LISTED")
 
     segments = get_segments_for_source(ctx.segment_repo, int(source_id))
-    serialized = [_serialize_segment(s) for s in segments]
-    return OperationResult.ok(data=serialized).to_dict()
+    return OperationResult.ok(data=[_serialize_segment(s) for s in segments]).to_dict()
 
 
 def handle_delete_segment(
     ctx: HandlerContext,
     arguments: dict[str, Any],
 ) -> dict[str, Any]:
-    """
-    Execute delete_segment tool.
-
-    Removes a coded segment by ID.
-    Delegates to remove_segment command handler for proper event publishing.
-    """
+    """Remove a coded segment by ID via the remove_segment command handler."""
     segment_id = arguments.get("segment_id")
     if segment_id is None:
         return missing_param_error("DELETE_SEGMENT", "segment_id")
@@ -223,7 +196,6 @@ def handle_delete_segment(
     if ctx.segment_repo is None or ctx.code_repo is None:
         return no_context_error("DELETE_SEGMENT")
 
-    # Delegate to command handler - handles validation, deletion, and event publishing
     command = RemoveCodeCommand(segment_id=int(segment_id))
     result = remove_segment(
         command=command,
@@ -245,12 +217,7 @@ def handle_create_code(
     ctx: HandlerContext,
     arguments: dict[str, Any],
 ) -> dict[str, Any]:
-    """
-    Execute create_code tool.
-
-    Creates a new code in the codebook directly.
-    Delegates to create_code command handler for proper event publishing.
-    """
+    """Create a new code in the codebook via the create_code command handler."""
     name = arguments.get("name")
     if name is None:
         return missing_param_error("CREATE_CODE", "name")
@@ -262,17 +229,14 @@ def handle_create_code(
     if ctx.code_repo is None:
         return no_context_error("CREATE_CODE")
 
-    # Build command with optional parameters
+    category_id_raw = arguments.get("category_id")
     command = CreateCodeCommand(
         name=str(name),
         color=str(color),
         memo=arguments.get("memo"),
-        category_id=int(arguments["category_id"])
-        if arguments.get("category_id")
-        else None,
+        category_id=int(category_id_raw) if category_id_raw is not None else None,
     )
 
-    # Delegate to command handler
     result = create_code(
         command=command,
         code_repo=ctx.code_repo,

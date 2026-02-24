@@ -18,10 +18,6 @@ from pathlib import Path
 
 from returns.result import Failure, Result, Success
 
-# ============================================================
-# Data Types
-# ============================================================
-
 
 @dataclass(frozen=True)
 class ExtractionResult:
@@ -32,17 +28,7 @@ class ExtractionResult:
     encoding: str = "utf-8"
 
 
-# ============================================================
-# Supported Extensions
-# ============================================================
-
-
 TEXT_EXTENSIONS = frozenset({".txt", ".docx", ".doc", ".odt", ".rtf", ".md"})
-
-
-# ============================================================
-# Text Extractor Service
-# ============================================================
 
 
 class TextExtractor:

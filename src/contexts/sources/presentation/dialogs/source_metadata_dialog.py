@@ -79,7 +79,6 @@ class SourceMetadataDialog(QDialog):
         self.setMinimumSize(500, 400)
 
         self._setup_ui()
-        self._connect_signals()
 
     def _setup_ui(self):
         """Build the dialog UI."""
@@ -301,10 +300,6 @@ class SourceMetadataDialog(QDialog):
         footer_layout.addWidget(save_btn)
 
         parent_layout.addWidget(footer)
-
-    def _connect_signals(self):
-        """Connect internal signals."""
-        pass
 
     def _on_save(self):
         """Handle save button click."""

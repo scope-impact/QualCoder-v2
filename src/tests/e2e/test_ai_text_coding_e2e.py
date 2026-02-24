@@ -16,7 +16,7 @@ from typing import TYPE_CHECKING
 import allure
 import pytest
 
-# Note: CodingTools.execute() returns dict, not Result
+from src.contexts.coding.interface.mcp_tools import CodingTools
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -33,17 +33,6 @@ pytestmark = [
 # =============================================================================
 # Fixtures
 # =============================================================================
-
-
-@pytest.fixture
-def app_context():
-    """Create AppContext for testing."""
-    from src.shared.infra.app_context import create_app_context
-
-    ctx = create_app_context()
-    ctx.start()
-    yield ctx
-    ctx.stop()
 
 
 @pytest.fixture
@@ -170,6 +159,12 @@ def project_with_multiple_sources(app_context: AppContext, tmp_path: Path) -> Pa
     return project_path
 
 
+@pytest.fixture
+def coding_tools(app_context: AppContext) -> CodingTools:
+    """Create CodingTools instance bound to the test AppContext."""
+    return CodingTools(ctx=app_context)
+
+
 # =============================================================================
 # QC-029.07: Agent Apply Code to Text Range
 # =============================================================================
@@ -185,16 +180,15 @@ class TestAgentApplyCodeToTextRange:
 
     @allure.title("AC #1: Agent can specify source, start, end, and code")
     def test_ac1_specify_coding_parameters(
-        self, app_context: AppContext, project_with_text_and_codes: Path
+        self,
+        coding_tools: CodingTools,
+        app_context: AppContext,
+        project_with_text_and_codes: Path,
     ):
         """Agent can specify all parameters needed to apply a code to text."""
-        from src.contexts.coding.interface.mcp_tools import CodingTools
-
-        with allure.step("Initialize CodingTools"):
-            tools = CodingTools(ctx=app_context)
 
         with allure.step("Suggest code application with parameters"):
-            result = tools.execute(
+            result = coding_tools.execute(
                 "suggest_code_application",
                 {
                     "source_id": 1,
@@ -216,14 +210,15 @@ class TestAgentApplyCodeToTextRange:
 
     @allure.title("AC #2: Action requires researcher approval")
     def test_ac2_requires_researcher_approval(
-        self, app_context: AppContext, project_with_text_and_codes: Path
+        self,
+        coding_tools: CodingTools,
+        app_context: AppContext,
+        project_with_text_and_codes: Path,
     ):
         """Code application suggestions require researcher approval."""
-        from src.contexts.coding.interface.mcp_tools import CodingTools
 
         with allure.step("Submit coding suggestion"):
-            tools = CodingTools(ctx=app_context)
-            result = tools.execute(
+            result = coding_tools.execute(
                 "suggest_code_application",
                 {
                     "source_id": 1,
@@ -252,14 +247,15 @@ class TestAgentApplyCodeToTextRange:
 
     @allure.title("AC #3: Agent can provide rationale for suggestion")
     def test_ac3_provide_rationale(
-        self, app_context: AppContext, project_with_text_and_codes: Path
+        self,
+        coding_tools: CodingTools,
+        app_context: AppContext,
+        project_with_text_and_codes: Path,
     ):
         """Agent includes rationale explaining why this code fits the text."""
-        from src.contexts.coding.interface.mcp_tools import CodingTools
 
         with allure.step("Submit suggestion with detailed rationale"):
-            tools = CodingTools(ctx=app_context)
-            result = tools.execute(
+            result = coding_tools.execute(
                 "suggest_code_application",
                 {
                     "source_id": 1,
@@ -279,15 +275,15 @@ class TestAgentApplyCodeToTextRange:
 
     @allure.title("AC #4: Researcher sees pending suggestions")
     def test_ac4_pending_suggestions_visible(
-        self, app_context: AppContext, project_with_text_and_codes: Path
+        self,
+        coding_tools: CodingTools,
+        app_context: AppContext,
+        project_with_text_and_codes: Path,
     ):
         """Researcher can see all pending coding suggestions."""
-        from src.contexts.coding.interface.mcp_tools import CodingTools
-
-        tools = CodingTools(ctx=app_context)
 
         with allure.step("Submit multiple coding suggestions"):
-            tools.execute(
+            coding_tools.execute(
                 "suggest_code_application",
                 {
                     "source_id": 1,
@@ -297,7 +293,7 @@ class TestAgentApplyCodeToTextRange:
                     "rationale": "Initial skepticism",
                 },
             )
-            tools.execute(
+            coding_tools.execute(
                 "suggest_code_application",
                 {
                     "source_id": 1,
@@ -309,7 +305,7 @@ class TestAgentApplyCodeToTextRange:
             )
 
         with allure.step("List pending coding suggestions"):
-            result = tools.execute(
+            result = coding_tools.execute(
                 "list_pending_coding_suggestions",
                 {"source_id": 1},
             )
@@ -324,14 +320,15 @@ class TestAgentApplyCodeToTextRange:
     @allure.title("Agent can suggest with text excerpt")
     @allure.severity(allure.severity_level.NORMAL)
     def test_suggest_with_text_excerpt(
-        self, app_context: AppContext, project_with_text_and_codes: Path
+        self,
+        coding_tools: CodingTools,
+        app_context: AppContext,
+        project_with_text_and_codes: Path,
     ):
         """Agent can include the actual text being coded in the suggestion."""
-        from src.contexts.coding.interface.mcp_tools import CodingTools
 
         with allure.step("Submit suggestion"):
-            tools = CodingTools(ctx=app_context)
-            result = tools.execute(
+            result = coding_tools.execute(
                 "suggest_code_application",
                 {
                     "source_id": 1,
@@ -352,15 +349,15 @@ class TestAgentApplyCodeToTextRange:
     @allure.title("Agent can approve/reject suggestions via MCP")
     @allure.severity(allure.severity_level.CRITICAL)
     def test_approve_coding_suggestion(
-        self, app_context: AppContext, project_with_text_and_codes: Path
+        self,
+        coding_tools: CodingTools,
+        app_context: AppContext,
+        project_with_text_and_codes: Path,
     ):
         """Agent (or UI) can approve a coding suggestion."""
-        from src.contexts.coding.interface.mcp_tools import CodingTools
-
-        tools = CodingTools(ctx=app_context)
 
         with allure.step("Submit coding suggestion"):
-            suggestion = tools.execute(
+            suggestion = coding_tools.execute(
                 "suggest_code_application",
                 {
                     "source_id": 1,
@@ -373,7 +370,7 @@ class TestAgentApplyCodeToTextRange:
             suggestion_id = suggestion["data"]["suggestion_id"]
 
         with allure.step("Approve suggestion"):
-            approval = tools.execute(
+            approval = coding_tools.execute(
                 "approve_coding_suggestion",
                 {"suggestion_id": suggestion_id},
             )
@@ -407,16 +404,15 @@ class TestAgentSuggestCodesForText:
 
     @allure.title("AC #1: Agent can analyze uncoded text")
     def test_ac1_analyze_uncoded_text(
-        self, app_context: AppContext, project_with_text_and_codes: Path
+        self,
+        coding_tools: CodingTools,
+        app_context: AppContext,
+        project_with_text_and_codes: Path,
     ):
         """Agent can analyze text to find uncoded segments."""
-        from src.contexts.coding.interface.mcp_tools import CodingTools
-
-        with allure.step("Initialize CodingTools"):
-            tools = CodingTools(ctx=app_context)
 
         with allure.step("Analyze source for uncoded segments"):
-            result = tools.execute(
+            result = coding_tools.execute(
                 "analyze_uncoded_text",
                 {"source_id": 1},
             )
@@ -430,14 +426,15 @@ class TestAgentSuggestCodesForText:
 
     @allure.title("AC #2: Agent can suggest appropriate codes")
     def test_ac2_suggest_appropriate_codes(
-        self, app_context: AppContext, project_with_text_and_codes: Path
+        self,
+        coding_tools: CodingTools,
+        app_context: AppContext,
+        project_with_text_and_codes: Path,
     ):
         """Agent can suggest which existing codes fit uncoded text segments."""
-        from src.contexts.coding.interface.mcp_tools import CodingTools
 
         with allure.step("Request code suggestions for a text range"):
-            tools = CodingTools(ctx=app_context)
-            result = tools.execute(
+            result = coding_tools.execute(
                 "suggest_codes_for_range",
                 {
                     "source_id": 1,
@@ -461,14 +458,15 @@ class TestAgentSuggestCodesForText:
 
     @allure.title("AC #3: Suggestions include confidence score")
     def test_ac3_suggestions_include_confidence(
-        self, app_context: AppContext, project_with_text_and_codes: Path
+        self,
+        coding_tools: CodingTools,
+        app_context: AppContext,
+        project_with_text_and_codes: Path,
     ):
         """Code suggestions include confidence scores (0-100)."""
-        from src.contexts.coding.interface.mcp_tools import CodingTools
 
         with allure.step("Request suggestions"):
-            tools = CodingTools(ctx=app_context)
-            result = tools.execute(
+            result = coding_tools.execute(
                 "suggest_codes_for_range",
                 {
                     "source_id": 1,
@@ -486,15 +484,15 @@ class TestAgentSuggestCodesForText:
 
     @allure.title("AC #4: Researcher can accept, reject, or modify")
     def test_ac4_researcher_can_respond(
-        self, app_context: AppContext, project_with_text_and_codes: Path
+        self,
+        coding_tools: CodingTools,
+        app_context: AppContext,
+        project_with_text_and_codes: Path,
     ):
         """Researcher can accept, reject, or modify code suggestions."""
-        from src.contexts.coding.interface.mcp_tools import CodingTools
-
-        tools = CodingTools(ctx=app_context)
 
         with allure.step("Get code suggestions"):
-            suggestions = tools.execute(
+            suggestions = coding_tools.execute(
                 "suggest_codes_for_range",
                 {"source_id": 1, "start_pos": 400, "end_pos": 600},
             )
@@ -502,7 +500,7 @@ class TestAgentSuggestCodesForText:
             suggestion_id = suggestions["data"]["suggestion_batch_id"]
 
         with allure.step("Accept a suggestion"):
-            accept_result = tools.execute(
+            accept_result = coding_tools.execute(
                 "respond_to_code_suggestion",
                 {
                     "suggestion_batch_id": suggestion_id,
@@ -515,13 +513,13 @@ class TestAgentSuggestCodesForText:
 
         with allure.step("Reject a suggestion"):
             # Get new suggestions first
-            suggestions2 = tools.execute(
+            suggestions2 = coding_tools.execute(
                 "suggest_codes_for_range",
                 {"source_id": 1, "start_pos": 100, "end_pos": 200},
             )
             batch_id = suggestions2["data"]["suggestion_batch_id"]
 
-            reject_result = tools.execute(
+            reject_result = coding_tools.execute(
                 "respond_to_code_suggestion",
                 {
                     "suggestion_batch_id": batch_id,
@@ -535,14 +533,15 @@ class TestAgentSuggestCodesForText:
     @allure.title("Auto-suggest codes for entire source")
     @allure.severity(allure.severity_level.NORMAL)
     def test_auto_suggest_for_source(
-        self, app_context: AppContext, project_with_text_and_codes: Path
+        self,
+        coding_tools: CodingTools,
+        app_context: AppContext,
+        project_with_text_and_codes: Path,
     ):
         """Agent can auto-suggest codes for all uncoded portions of a source."""
-        from src.contexts.coding.interface.mcp_tools import CodingTools
 
         with allure.step("Auto-suggest for entire source"):
-            tools = CodingTools(ctx=app_context)
-            result = tools.execute(
+            result = coding_tools.execute(
                 "auto_suggest_codes",
                 {
                     "source_id": 1,
@@ -565,15 +564,15 @@ class TestAgentSuggestCodesForText:
     @allure.title("Batch suggestion creates pending items")
     @allure.severity(allure.severity_level.CRITICAL)
     def test_batch_suggestion_pending(
-        self, app_context: AppContext, project_with_text_and_codes: Path
+        self,
+        coding_tools: CodingTools,
+        app_context: AppContext,
+        project_with_text_and_codes: Path,
     ):
         """Batch suggestions are created as pending items for review."""
-        from src.contexts.coding.interface.mcp_tools import CodingTools
-
-        tools = CodingTools(ctx=app_context)
 
         with allure.step("Generate batch suggestions"):
-            result = tools.execute(
+            result = coding_tools.execute(
                 "auto_suggest_codes",
                 {"source_id": 1, "min_confidence": 60},
             )
@@ -581,7 +580,7 @@ class TestAgentSuggestCodesForText:
             batch_id = result["data"]["batch_id"]
 
         with allure.step("Verify batch is pending"):
-            status = tools.execute(
+            status = coding_tools.execute(
                 "get_suggestion_batch_status",
                 {"batch_id": batch_id},
             )
@@ -602,14 +601,15 @@ class TestBatchCodingOperations:
 
     @allure.title("Agent can suggest same code across multiple sources")
     def test_cross_source_suggestions(
-        self, app_context: AppContext, project_with_multiple_sources: Path
+        self,
+        coding_tools: CodingTools,
+        app_context: AppContext,
+        project_with_multiple_sources: Path,
     ):
         """Agent can identify similar content across sources and suggest codes."""
-        from src.contexts.coding.interface.mcp_tools import CodingTools
 
         with allure.step("Find similar content across sources"):
-            tools = CodingTools(ctx=app_context)
-            result = tools.execute(
+            result = coding_tools.execute(
                 "find_similar_content",
                 {
                     "search_text": "time management",
@@ -629,22 +629,22 @@ class TestBatchCodingOperations:
 
     @allure.title("Agent can batch apply code to similar segments")
     def test_batch_apply_to_similar(
-        self, app_context: AppContext, project_with_multiple_sources: Path
+        self,
+        coding_tools: CodingTools,
+        app_context: AppContext,
+        project_with_multiple_sources: Path,
     ):
         """Agent can request batch application of code to similar segments."""
-        from src.contexts.coding.interface.mcp_tools import CodingTools
-
-        tools = CodingTools(ctx=app_context)
 
         with allure.step("Find similar content"):
-            find_result = tools.execute(
+            find_result = coding_tools.execute(
                 "find_similar_content",
                 {"search_text": "time management", "code_id": 1},
             )
             matches = find_result["data"]["matches"]
 
         with allure.step("Suggest batch application"):
-            batch_result = tools.execute(
+            batch_result = coding_tools.execute(
                 "suggest_batch_coding",
                 {
                     "code_id": 1,
@@ -668,15 +668,15 @@ class TestBatchCodingOperations:
 
     @allure.title("Batch approval applies all segments")
     def test_batch_approval(
-        self, app_context: AppContext, project_with_multiple_sources: Path
+        self,
+        coding_tools: CodingTools,
+        app_context: AppContext,
+        project_with_multiple_sources: Path,
     ):
         """Approving a batch applies all suggested segments at once."""
-        from src.contexts.coding.interface.mcp_tools import CodingTools
-
-        tools = CodingTools(ctx=app_context)
 
         with allure.step("Create batch suggestion"):
-            batch_result = tools.execute(
+            batch_result = coding_tools.execute(
                 "suggest_batch_coding",
                 {
                     "code_id": 1,
@@ -691,7 +691,7 @@ class TestBatchCodingOperations:
             batch_id = batch_result["data"]["batch_id"]
 
         with allure.step("Approve entire batch"):
-            approval = tools.execute(
+            approval = coding_tools.execute(
                 "approve_batch_coding",
                 {"batch_id": batch_id},
             )
@@ -719,21 +719,21 @@ class TestAITextCodingIntegration:
 
     @allure.title("Complete workflow: Analyze -> Suggest -> Review -> Apply")
     def test_full_ai_coding_workflow(
-        self, app_context: AppContext, project_with_text_and_codes: Path
+        self,
+        coding_tools: CodingTools,
+        app_context: AppContext,
+        project_with_text_and_codes: Path,
     ):
         """Test complete AI-assisted coding workflow."""
-        from src.contexts.coding.interface.mcp_tools import CodingTools
-
-        tools = CodingTools(ctx=app_context)
 
         with allure.step("Step 1: Analyze uncoded text"):
-            analysis = tools.execute("analyze_uncoded_text", {"source_id": 1})
+            analysis = coding_tools.execute("analyze_uncoded_text", {"source_id": 1})
             assert analysis.get("success") is True
             uncoded_pct = analysis["data"]["uncoded_percentage"]
             assert uncoded_pct == 100  # Nothing coded yet
 
         with allure.step("Step 2: Auto-suggest codes"):
-            suggestions = tools.execute(
+            suggestions = coding_tools.execute(
                 "auto_suggest_codes",
                 {"source_id": 1, "min_confidence": 75},
             )
@@ -743,14 +743,14 @@ class TestAITextCodingIntegration:
             assert total_suggested > 0
 
         with allure.step("Step 3: Review suggestions"):
-            status = tools.execute(
+            status = coding_tools.execute(
                 "get_suggestion_batch_status",
                 {"batch_id": batch_id},
             )
             assert status["data"]["status"] == "pending_review"
 
         with allure.step("Step 4: Approve suggestions"):
-            approval = tools.execute(
+            approval = coding_tools.execute(
                 "approve_batch_coding",
                 {"batch_id": batch_id},
             )
@@ -759,22 +759,22 @@ class TestAITextCodingIntegration:
             assert applied > 0
 
         with allure.step("Step 5: Verify coding completed"):
-            analysis2 = tools.execute("analyze_uncoded_text", {"source_id": 1})
+            analysis2 = coding_tools.execute("analyze_uncoded_text", {"source_id": 1})
             uncoded_pct2 = analysis2["data"]["uncoded_percentage"]
             # Should have less uncoded text now
             assert uncoded_pct2 < uncoded_pct
 
     @allure.title("Reject and modify workflow")
     def test_reject_modify_workflow(
-        self, app_context: AppContext, project_with_text_and_codes: Path
+        self,
+        coding_tools: CodingTools,
+        app_context: AppContext,
+        project_with_text_and_codes: Path,
     ):
         """Test workflow for rejecting and modifying AI suggestions."""
-        from src.contexts.coding.interface.mcp_tools import CodingTools
-
-        tools = CodingTools(ctx=app_context)
 
         with allure.step("Get AI suggestion"):
-            suggestion = tools.execute(
+            suggestion = coding_tools.execute(
                 "suggest_code_application",
                 {
                     "source_id": 1,
@@ -787,7 +787,7 @@ class TestAITextCodingIntegration:
             suggestion_id = suggestion["data"]["suggestion_id"]
 
         with allure.step("Reject with feedback"):
-            rejection = tools.execute(
+            rejection = coding_tools.execute(
                 "reject_coding_suggestion",
                 {
                     "suggestion_id": suggestion_id,
@@ -798,7 +798,7 @@ class TestAITextCodingIntegration:
             assert rejection.get("success") is True
 
         with allure.step("Submit modified suggestion"):
-            modified = tools.execute(
+            modified = coding_tools.execute(
                 "suggest_code_application",
                 {
                     "source_id": 1,
@@ -811,7 +811,7 @@ class TestAITextCodingIntegration:
             new_suggestion_id = modified["data"]["suggestion_id"]
 
         with allure.step("Approve modified suggestion"):
-            approval = tools.execute(
+            approval = coding_tools.execute(
                 "approve_coding_suggestion",
                 {"suggestion_id": new_suggestion_id},
             )
@@ -829,13 +829,13 @@ class TestAICodingToolsSchema:
     """Tests to verify MCP tool schemas are correctly defined."""
 
     @allure.title("suggest_code_application tool has correct schema")
-    def test_suggest_code_application_schema(self, app_context: AppContext):
+    def test_suggest_code_application_schema(
+        self, coding_tools: CodingTools, app_context: AppContext
+    ):
         """Verify suggest_code_application tool schema."""
-        from src.contexts.coding.interface.mcp_tools import CodingTools
 
         with allure.step("Get tool schemas"):
-            tools = CodingTools(ctx=app_context)
-            schemas = tools.get_tool_schemas()
+            schemas = coding_tools.get_tool_schemas()
 
         with allure.step("Find suggest_code_application schema"):
             schema = next(
@@ -856,13 +856,13 @@ class TestAICodingToolsSchema:
             assert "confidence" in props
 
     @allure.title("suggest_codes_for_range tool has correct schema")
-    def test_suggest_codes_for_range_schema(self, app_context: AppContext):
+    def test_suggest_codes_for_range_schema(
+        self, coding_tools: CodingTools, app_context: AppContext
+    ):
         """Verify suggest_codes_for_range tool schema."""
-        from src.contexts.coding.interface.mcp_tools import CodingTools
 
         with allure.step("Get tool schemas"):
-            tools = CodingTools(ctx=app_context)
-            schemas = tools.get_tool_schemas()
+            schemas = coding_tools.get_tool_schemas()
 
         with allure.step("Find suggest_codes_for_range schema"):
             schema = next(
@@ -877,13 +877,13 @@ class TestAICodingToolsSchema:
             assert "end_pos" in props
 
     @allure.title("auto_suggest_codes tool has correct schema")
-    def test_auto_suggest_codes_schema(self, app_context: AppContext):
+    def test_auto_suggest_codes_schema(
+        self, coding_tools: CodingTools, app_context: AppContext
+    ):
         """Verify auto_suggest_codes tool schema."""
-        from src.contexts.coding.interface.mcp_tools import CodingTools
 
         with allure.step("Get tool schemas"):
-            tools = CodingTools(ctx=app_context)
-            schemas = tools.get_tool_schemas()
+            schemas = coding_tools.get_tool_schemas()
 
         with allure.step("Find auto_suggest_codes schema"):
             schema = next(

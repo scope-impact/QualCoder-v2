@@ -47,6 +47,25 @@ ALL_SUPPORTED_EXTENSIONS = sorted(
     | VIDEO_EXTENSIONS
 )
 
+_TEXT_EXTRACTORS = {
+    SourceType.TEXT: TextExtractor,
+    SourceType.PDF: PdfExtractor,
+}
+
+
+def _extract_text(source_type: SourceType, file_path: Path) -> str | None:
+    """Extract text content from a file if the source type supports it."""
+    extractor_cls = _TEXT_EXTRACTORS.get(source_type)
+    if extractor_cls is None:
+        return None
+    extractor = extractor_cls()
+    if not extractor.supports(file_path):
+        return None
+    result = extractor.extract(file_path)
+    if isinstance(result, Success):
+        return result.unwrap().content
+    return None
+
 
 def import_file_source(
     command: ImportFileSourceCommand,
@@ -151,15 +170,7 @@ def import_file_source(
         )
 
     # Step 4: Extract text content for text/PDF sources
-    fulltext: str | None = None
-    extractors = {SourceType.TEXT: TextExtractor, SourceType.PDF: PdfExtractor}
-    extractor_cls = extractors.get(source_type)
-    if extractor_cls is not None:
-        extractor = extractor_cls()
-        if extractor.supports(file_path):
-            extraction_result = extractor.extract(file_path)
-            if isinstance(extraction_result, Success):
-                fulltext = extraction_result.unwrap().content
+    fulltext = _extract_text(source_type, file_path)
 
     # Create Source entity
     source_id = SourceId.new()

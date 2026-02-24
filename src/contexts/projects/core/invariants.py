@@ -62,11 +62,7 @@ def is_valid_project_path(path: Path) -> bool:
     - Must have .qda extension
     - Filename must not be empty (not just ".qda")
     """
-    if path.suffix.lower() != ".qda":
-        return False
-
-    # Check filename is not just ".qda"
-    return path.stem != ""
+    return path.suffix.lower() == ".qda" and path.stem != ""
 
 
 def can_open_project(
@@ -79,14 +75,8 @@ def can_open_project(
     Args:
         path: Path to the project file
         path_exists: Function to check if path exists
-
-    Returns:
-        True if project can be opened
     """
-    if not is_valid_project_path(path):
-        return False
-
-    return path_exists(path)
+    return is_valid_project_path(path) and path_exists(path)
 
 
 def can_create_project(
@@ -243,21 +233,13 @@ def is_valid_folder_name(name: str) -> bool:
     - Not empty or whitespace-only
     - No path separators (/, \\)
     - Between 1 and 255 characters
-
-    Args:
-        name: The proposed folder name
-
-    Returns:
-        True if name is valid
     """
-    if not is_non_empty_string(name):
-        return False
-
-    if not is_within_length(name, 1, 255):
-        return False
-
-    # Reject path separators
-    return "/" not in name and "\\" not in name
+    return (
+        is_non_empty_string(name)
+        and is_within_length(name, 1, 255)
+        and "/" not in name
+        and "\\" not in name
+    )
 
 
 def is_folder_name_unique(
