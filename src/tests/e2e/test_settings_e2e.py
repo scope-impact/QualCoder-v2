@@ -67,11 +67,19 @@ def settings_repo(temp_config_path):
 
 
 @pytest.fixture
-def settings_provider(settings_repo):
+def settings_event_bus():
+    """Create a lightweight event bus for settings tests."""
+    from src.shared.infra.event_bus import EventBus
+
+    return EventBus()
+
+
+@pytest.fixture
+def settings_provider(settings_repo, settings_event_bus):
     """Create a settings service for use as a provider."""
     from src.shared.presentation.services import SettingsService
 
-    return SettingsService(settings_repo)
+    return SettingsService(settings_repo, event_bus=settings_event_bus)
 
 
 @pytest.fixture
@@ -518,6 +526,7 @@ class TestFullRoundTrip:
         from src.contexts.settings.infra import UserSettingsRepository
         from src.contexts.settings.presentation import SettingsViewModel
         from src.contexts.settings.presentation.dialogs import SettingsDialog
+        from src.shared.infra.event_bus import EventBus
         from src.shared.presentation.services import SettingsService
 
         # =========================================================================
@@ -526,7 +535,8 @@ class TestFullRoundTrip:
 
         with allure.step("Create first dialog session"):
             repo1 = UserSettingsRepository(config_path=temp_config_path)
-            provider1 = SettingsService(repo1)
+            event_bus1 = EventBus()
+            provider1 = SettingsService(repo1, event_bus=event_bus1)
             viewmodel1 = SettingsViewModel(settings_provider=provider1)
             dialog1 = SettingsDialog(viewmodel=viewmodel1, colors=colors)
 
@@ -591,7 +601,8 @@ class TestFullRoundTrip:
 
         with allure.step("Create NEW dialog session (simulates app restart)"):
             repo2 = UserSettingsRepository(config_path=temp_config_path)
-            provider2 = SettingsService(repo2)
+            event_bus2 = EventBus()
+            provider2 = SettingsService(repo2, event_bus=event_bus2)
             viewmodel2 = SettingsViewModel(settings_provider=provider2)
             dialog2 = SettingsDialog(viewmodel=viewmodel2, colors=colors)
 
@@ -784,6 +795,7 @@ class TestUIApplication:
         from src.contexts.settings.infra import UserSettingsRepository
         from src.contexts.settings.presentation import SettingsViewModel
         from src.contexts.settings.presentation.dialogs import SettingsDialog
+        from src.shared.infra.event_bus import EventBus
         from src.shared.presentation.services.settings_service import SettingsService
         from src.shared.presentation.templates import AppShell
 
@@ -797,7 +809,8 @@ class TestUIApplication:
             assert shell._colors.background == light_colors.background
 
         with allure.step("Open settings dialog (non-blocking for test)"):
-            settings_service = SettingsService(repo)
+            event_bus = EventBus()
+            settings_service = SettingsService(repo, event_bus=event_bus)
             viewmodel = SettingsViewModel(settings_provider=settings_service)
             dialog = SettingsDialog(
                 viewmodel=viewmodel,

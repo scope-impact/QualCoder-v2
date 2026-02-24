@@ -33,13 +33,7 @@ from dataclasses import dataclass
 
 @dataclass(frozen=True)
 class Speaker:
-    """
-    Immutable value object representing a detected speaker.
-
-    Attributes:
-        name: The speaker's name/identifier
-        count: Number of times this speaker appears
-    """
+    """Immutable value object representing a detected speaker."""
 
     name: str
     count: int
@@ -47,14 +41,7 @@ class Speaker:
 
 @dataclass(frozen=True)
 class SpeakerSegment:
-    """
-    Immutable value object representing a speaker's text segment.
-
-    Attributes:
-        start: Start position in the text (0-indexed)
-        end: End position in the text (exclusive)
-        text: The text content spoken by the speaker
-    """
+    """Immutable value object representing a speaker's text segment."""
 
     start: int
     end: int

@@ -151,19 +151,11 @@ def can_codes_be_compared(
     Rules:
     - Codes must be different
     - Both must have valid names
-
-    Args:
-        code_a: First code
-        code_b: Second code
-
-    Returns:
-        True if comparison is valid
     """
-    if code_a.id == code_b.id:
-        return False
-
-    return is_valid_suggestion_name(code_a.name) and is_valid_suggestion_name(
-        code_b.name
+    return (
+        code_a.id != code_b.id
+        and is_valid_suggestion_name(code_a.name)
+        and is_valid_suggestion_name(code_b.name)
     )
 
 
@@ -204,13 +196,10 @@ def is_duplicate_pair_unique(
     Returns:
         True if this pair hasn't been detected before
     """
-    for candidate in existing_candidates:
-        # Check both orderings
-        if candidate.code_a_id == code_a_id and candidate.code_b_id == code_b_id:
-            return False
-        if candidate.code_a_id == code_b_id and candidate.code_b_id == code_a_id:
-            return False
-    return True
+    pair = frozenset((code_a_id, code_b_id))
+    return all(
+        frozenset((c.code_a_id, c.code_b_id)) != pair for c in existing_candidates
+    )
 
 
 # ============================================================

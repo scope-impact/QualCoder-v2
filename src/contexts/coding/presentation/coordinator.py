@@ -63,19 +63,20 @@ class CodingCoordinator:
         segment_repo: SQLiteSegmentRepository,
         event_bus: EventBus,
     ) -> None:
-        """
-        Initialize the coordinator.
-
-        Args:
-            code_repo: Repository for codes
-            category_repo: Repository for categories
-            segment_repo: Repository for segments
-            event_bus: Event bus for publishing domain events
-        """
         self._code_repo = code_repo
         self._category_repo = category_repo
         self._segment_repo = segment_repo
         self._event_bus = event_bus
+
+    def _dispatch(self, handler, command) -> OperationResult:
+        """Dispatch a command to a handler with all standard dependencies."""
+        return handler(
+            command,
+            self._code_repo,
+            self._category_repo,
+            self._segment_repo,
+            self._event_bus,
+        )
 
     # =========================================================================
     # Commands
@@ -83,85 +84,37 @@ class CodingCoordinator:
 
     def create_code(self, command: CreateCodeCommand) -> OperationResult:
         """Create a new code."""
-        return create_code(
-            command,
-            self._code_repo,
-            self._category_repo,
-            self._segment_repo,
-            self._event_bus,
-        )
+        return self._dispatch(create_code, command)
 
     def rename_code(self, command: RenameCodeCommand) -> OperationResult:
         """Rename an existing code."""
-        return rename_code(
-            command,
-            self._code_repo,
-            self._category_repo,
-            self._segment_repo,
-            self._event_bus,
-        )
+        return self._dispatch(rename_code, command)
 
     def delete_code(self, command: DeleteCodeCommand) -> OperationResult:
         """Delete a code."""
-        return delete_code(
-            command,
-            self._code_repo,
-            self._category_repo,
-            self._segment_repo,
-            self._event_bus,
-        )
+        return self._dispatch(delete_code, command)
 
     def update_code_memo(self, command: UpdateCodeMemoCommand) -> OperationResult:
         """Update a code's memo."""
-        return update_code_memo(
-            command,
-            self._code_repo,
-            self._category_repo,
-            self._segment_repo,
-            self._event_bus,
-        )
+        return self._dispatch(update_code_memo, command)
 
     def move_code_to_category(
         self, command: MoveCodeToCategoryCommand
     ) -> OperationResult:
         """Move a code to a different category."""
-        return move_code_to_category(
-            command,
-            self._code_repo,
-            self._category_repo,
-            self._segment_repo,
-            self._event_bus,
-        )
+        return self._dispatch(move_code_to_category, command)
 
     def apply_code(self, command: ApplyCodeCommand) -> OperationResult:
         """Apply a code to a text segment."""
-        return apply_code(
-            command,
-            self._code_repo,
-            self._category_repo,
-            self._segment_repo,
-            self._event_bus,
-        )
+        return self._dispatch(apply_code, command)
 
     def remove_segment(self, command: RemoveCodeCommand) -> OperationResult:
         """Remove coding from a segment."""
-        return remove_segment(
-            command,
-            self._code_repo,
-            self._category_repo,
-            self._segment_repo,
-            self._event_bus,
-        )
+        return self._dispatch(remove_segment, command)
 
     def create_category(self, command: CreateCategoryCommand) -> OperationResult:
         """Create a new category."""
-        return create_category(
-            command,
-            self._code_repo,
-            self._category_repo,
-            self._segment_repo,
-            self._event_bus,
-        )
+        return self._dispatch(create_category, command)
 
     # =========================================================================
     # Queries

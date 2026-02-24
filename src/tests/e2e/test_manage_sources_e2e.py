@@ -634,7 +634,7 @@ class TestOrganizeSources:
             folder_result = create_folder(
                 cmd,
                 ctx.state,
-                ctx.sources_context.folder_repo,
+                ctx.folders_context.folder_repo,
                 ctx.sources_context.source_repo,
                 ctx.event_bus,
             )
@@ -662,7 +662,7 @@ class TestOrganizeSources:
             assert open_result.is_success
 
         with allure.step("Step 4: Verify folder persisted"):
-            folders = ctx2.sources_context.folder_repo.get_all()
+            folders = ctx2.folders_context.folder_repo.get_all()
             assert len(folders) == 1
             persisted_folder = folders[0]
             assert persisted_folder.name == "Interviews"
@@ -1427,10 +1427,10 @@ class TestAgentListSources:
     def test_ac1_list_all_sources_with_ids(self, app_context, project_with_sources):
         from returns.result import Success
 
-        from src.contexts.projects.interface.mcp_tools import ProjectTools
+        from src.contexts.sources.interface.mcp_tools import SourceTools
 
-        with allure.step("Initialize ProjectTools"):
-            tools = ProjectTools(ctx=app_context)
+        with allure.step("Initialize SourceTools"):
+            tools = SourceTools(ctx=app_context)
 
         with allure.step("Execute list_sources tool"):
             result = tools.execute("list_sources", {})
@@ -1447,10 +1447,10 @@ class TestAgentListSources:
     def test_ac2_filter_by_source_type(self, app_context, project_with_sources):
         from returns.result import Success
 
-        from src.contexts.projects.interface.mcp_tools import ProjectTools
+        from src.contexts.sources.interface.mcp_tools import SourceTools
 
-        with allure.step("Initialize ProjectTools"):
-            tools = ProjectTools(ctx=app_context)
+        with allure.step("Initialize SourceTools"):
+            tools = SourceTools(ctx=app_context)
 
         with allure.step("Filter by text type"):
             result = tools.execute("list_sources", {"source_type": "text"})
@@ -1472,10 +1472,10 @@ class TestAgentListSources:
     def test_ac3_source_metadata_visible(self, app_context, project_with_sources):
         from returns.result import Success
 
-        from src.contexts.projects.interface.mcp_tools import ProjectTools
+        from src.contexts.sources.interface.mcp_tools import SourceTools
 
         with allure.step("Execute list_sources tool"):
-            tools = ProjectTools(ctx=app_context)
+            tools = SourceTools(ctx=app_context)
             result = tools.execute("list_sources", {})
 
         with allure.step("Verify metadata fields present"):
@@ -1492,10 +1492,10 @@ class TestAgentListSources:
     def test_ac4_coding_status_visible(self, app_context, project_with_sources):
         from returns.result import Success
 
-        from src.contexts.projects.interface.mcp_tools import ProjectTools
+        from src.contexts.sources.interface.mcp_tools import SourceTools
 
         with allure.step("Execute list_sources tool"):
-            tools = ProjectTools(ctx=app_context)
+            tools = SourceTools(ctx=app_context)
             result = tools.execute("list_sources", {})
 
         with allure.step("Verify code_count present in results"):
@@ -1563,10 +1563,10 @@ class TestAgentReadSourceContent:
     def test_ac1_get_text_content(self, app_context, project_with_content):
         from returns.result import Success
 
-        from src.contexts.projects.interface.mcp_tools import ProjectTools
+        from src.contexts.sources.interface.mcp_tools import SourceTools
 
-        with allure.step("Initialize ProjectTools"):
-            tools = ProjectTools(ctx=app_context)
+        with allure.step("Initialize SourceTools"):
+            tools = SourceTools(ctx=app_context)
 
         with allure.step("Read source content"):
             result = tools.execute("read_source_content", {"source_id": 1})
@@ -1583,10 +1583,10 @@ class TestAgentReadSourceContent:
     def test_ac2_get_content_by_position(self, app_context, project_with_content):
         from returns.result import Success
 
-        from src.contexts.projects.interface.mcp_tools import ProjectTools
+        from src.contexts.sources.interface.mcp_tools import SourceTools
 
-        with allure.step("Initialize ProjectTools"):
-            tools = ProjectTools(ctx=app_context)
+        with allure.step("Initialize SourceTools"):
+            tools = SourceTools(ctx=app_context)
 
         with allure.step("Read specific position range (middle section)"):
             result = tools.execute(
@@ -1605,10 +1605,10 @@ class TestAgentReadSourceContent:
     def test_ac3_position_markers_included(self, app_context, project_with_content):
         from returns.result import Success
 
-        from src.contexts.projects.interface.mcp_tools import ProjectTools
+        from src.contexts.sources.interface.mcp_tools import SourceTools
 
         with allure.step("Read source content"):
-            tools = ProjectTools(ctx=app_context)
+            tools = SourceTools(ctx=app_context)
             result = tools.execute(
                 "read_source_content", {"source_id": 1, "start_pos": 50, "end_pos": 100}
             )
@@ -1625,10 +1625,10 @@ class TestAgentReadSourceContent:
     def test_ac4_large_sources_paginated(self, app_context, project_with_content):
         from returns.result import Success
 
-        from src.contexts.projects.interface.mcp_tools import ProjectTools
+        from src.contexts.sources.interface.mcp_tools import SourceTools
 
         with allure.step("Read with pagination (max_length)"):
-            tools = ProjectTools(ctx=app_context)
+            tools = SourceTools(ctx=app_context)
             result = tools.execute(
                 "read_source_content", {"source_id": 1, "max_length": 1000}
             )
@@ -1697,10 +1697,10 @@ class TestAgentExtractMetadata:
     def test_ac1_suggest_language(self, app_context, project_with_source):
         from returns.result import Success
 
-        from src.contexts.projects.interface.mcp_tools import ProjectTools
+        from src.contexts.sources.interface.mcp_tools import SourceTools
 
-        with allure.step("Initialize ProjectTools"):
-            tools = ProjectTools(ctx=app_context)
+        with allure.step("Initialize SourceTools"):
+            tools = SourceTools(ctx=app_context)
 
         with allure.step("Suggest language metadata"):
             result = tools.execute(
@@ -1716,10 +1716,10 @@ class TestAgentExtractMetadata:
     def test_ac2_suggest_topics(self, app_context, project_with_source):
         from returns.result import Success
 
-        from src.contexts.projects.interface.mcp_tools import ProjectTools
+        from src.contexts.sources.interface.mcp_tools import SourceTools
 
         with allure.step("Suggest topics"):
-            tools = ProjectTools(ctx=app_context)
+            tools = SourceTools(ctx=app_context)
             result = tools.execute(
                 "suggest_source_metadata",
                 {"source_id": 1, "topics": ["education", "interview", "spanish"]},
@@ -1735,10 +1735,10 @@ class TestAgentExtractMetadata:
     def test_ac3_suggest_organization(self, app_context, project_with_source):
         from returns.result import Success
 
-        from src.contexts.projects.interface.mcp_tools import ProjectTools
+        from src.contexts.sources.interface.mcp_tools import SourceTools
 
         with allure.step("Suggest organization"):
-            tools = ProjectTools(ctx=app_context)
+            tools = SourceTools(ctx=app_context)
             result = tools.execute(
                 "suggest_source_metadata",
                 {
@@ -1756,10 +1756,10 @@ class TestAgentExtractMetadata:
     def test_ac4_requires_approval(self, app_context, project_with_source):
         from returns.result import Success
 
-        from src.contexts.projects.interface.mcp_tools import ProjectTools
+        from src.contexts.sources.interface.mcp_tools import SourceTools
 
         with allure.step("Submit metadata suggestion"):
-            tools = ProjectTools(ctx=app_context)
+            tools = SourceTools(ctx=app_context)
             result = tools.execute(
                 "suggest_source_metadata",
                 {

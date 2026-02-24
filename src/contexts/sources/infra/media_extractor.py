@@ -19,10 +19,6 @@ from typing import Any
 
 from returns.result import Failure, Result, Success
 
-# ============================================================
-# Data Types
-# ============================================================
-
 
 @dataclass(frozen=True)
 class MediaExtractionResult:
@@ -37,11 +33,6 @@ class MediaExtractionResult:
     width: int | None
     height: int | None
     metadata: dict[str, Any]
-
-
-# ============================================================
-# Supported Extensions
-# ============================================================
 
 
 AUDIO_EXTENSIONS = frozenset(
@@ -69,11 +60,6 @@ VIDEO_EXTENSIONS = frozenset(
 )
 
 MEDIA_EXTENSIONS = AUDIO_EXTENSIONS | VIDEO_EXTENSIONS
-
-
-# ============================================================
-# Media Extractor Service
-# ============================================================
 
 
 class MediaExtractor:
@@ -186,93 +172,56 @@ class MediaExtractor:
         ext = path.suffix.upper().lstrip(".")
         return ext
 
+    def _get_info_int(self, media: Any, attr: str) -> int | None:
+        """Get an integer attribute from media.info, or None if unavailable."""
+        info = getattr(media, "info", None)
+        if info is None:
+            return None
+        value = getattr(info, attr, None)
+        return int(value) if value is not None else None
+
     def _extract_codec(self, media: Any) -> str | None:
         """Extract codec information from media file."""
         info = getattr(media, "info", None)
         if info is None:
             return None
 
-        # Try various codec attributes
-        codec_attrs = ["codec", "codec_name", "format"]
-        for attr in codec_attrs:
-            if hasattr(info, attr):
-                codec = getattr(info, attr)
-                if codec:
-                    return str(codec)
+        for attr in ("codec", "codec_name", "format"):
+            codec = getattr(info, attr, None)
+            if codec:
+                return str(codec)
 
         return None
 
     def _extract_bitrate(self, media: Any) -> int | None:
         """Extract bitrate in bits per second."""
-        info = getattr(media, "info", None)
-        if info is None:
-            return None
-
-        # Try to get bitrate
-        if hasattr(info, "bitrate"):
-            return int(info.bitrate)
-
-        return None
+        return self._get_info_int(media, "bitrate")
 
     def _extract_sample_rate(self, media: Any) -> int | None:
         """Extract sample rate in Hz (for audio files)."""
-        info = getattr(media, "info", None)
-        if info is None:
-            return None
-
-        # Try to get sample rate
-        if hasattr(info, "sample_rate"):
-            return int(info.sample_rate)
-
-        return None
+        return self._get_info_int(media, "sample_rate")
 
     def _extract_dimensions(self, media: Any) -> tuple[int | None, int | None]:
         """Extract video dimensions (width, height)."""
-        info = getattr(media, "info", None)
-        if info is None:
-            return None, None
-
-        width = None
-        height = None
-
-        # Try to get dimensions
-        if hasattr(info, "width"):
-            width = int(info.width)
-        if hasattr(info, "height"):
-            height = int(info.height)
-
-        return width, height
+        return self._get_info_int(media, "width"), self._get_info_int(media, "height")
 
     def _extract_metadata_dict(self, media: Any) -> dict[str, Any]:
-        """
-        Extract metadata dictionary from media file.
+        """Extract metadata dictionary from media tags (ID3, Vorbis, etc.)."""
+        tags = getattr(media, "tags", None)
+        if tags is None:
+            return {}
 
-        Includes ID3 tags, Vorbis comments, or other metadata.
-        """
         metadata: dict[str, Any] = {}
-
-        # Extract tags if present
-        if hasattr(media, "tags") and media.tags is not None:
-            for key, value in media.tags.items():
-                # Convert tag values to strings or lists of strings
-                if isinstance(value, list):
-                    # Handle list values (common in mutagen)
-                    str_values = []
-                    for item in value:
-                        if isinstance(item, bytes):
-                            try:
-                                str_values.append(item.decode("utf-8", errors="ignore"))
-                            except Exception:
-                                str_values.append(str(item))
-                        else:
-                            str_values.append(str(item))
-                    metadata[str(key)] = str_values
-                elif isinstance(value, bytes):
-                    try:
-                        metadata[str(key)] = value.decode("utf-8", errors="ignore")
-                    except Exception:
-                        metadata[str(key)] = str(value)
-                else:
-                    metadata[str(key)] = str(value)
-
+        for key, value in tags.items():
+            if isinstance(value, list):
+                metadata[str(key)] = [self._to_str(item) for item in value]
+            else:
+                metadata[str(key)] = self._to_str(value)
         return metadata
+
+    @staticmethod
+    def _to_str(value: Any) -> str:
+        """Convert a tag value to string, decoding bytes as UTF-8."""
+        if isinstance(value, bytes):
+            return value.decode("utf-8", errors="ignore")
+        return str(value)

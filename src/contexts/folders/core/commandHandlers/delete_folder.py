@@ -12,11 +12,12 @@ from typing import TYPE_CHECKING
 from src.contexts.folders.core.commandHandlers._state import (
     FolderRepository,
     SourceRepository,
+    build_folder_state,
 )
-from src.contexts.projects.core.commands import DeleteFolderCommand
-from src.contexts.projects.core.derivers import FolderState, derive_delete_folder
-from src.contexts.projects.core.events import FolderDeleted
-from src.contexts.projects.core.failure_events import FolderNotDeleted
+from src.contexts.folders.core.commands import DeleteFolderCommand
+from src.contexts.folders.core.derivers import derive_delete_folder
+from src.contexts.folders.core.events import FolderDeleted
+from src.contexts.folders.core.failure_events import FolderNotDeleted
 from src.shared.common.operation_result import OperationResult
 from src.shared.common.types import FolderId
 from src.shared.infra.state import ProjectState
@@ -39,6 +40,7 @@ def delete_folder(
         command: Command with folder ID
         state: Project state cache
         folder_repo: Repository for folder operations
+        source_repo: Repository for source operations
         event_bus: Event bus for publishing events
 
     Returns:
@@ -54,13 +56,7 @@ def delete_folder(
     folder_id = FolderId(value=command.folder_id)
 
     # Build state and derive event
-    # Get existing data from repos (source of truth) instead of state cache
-    existing_folders = tuple(folder_repo.get_all()) if folder_repo else ()
-    existing_sources = tuple(source_repo.get_all()) if source_repo else ()
-    folder_state = FolderState(
-        existing_folders=existing_folders,
-        existing_sources=existing_sources,
-    )
+    folder_state = build_folder_state(folder_repo, source_repo)
 
     result = derive_delete_folder(folder_id=folder_id, state=folder_state)
 

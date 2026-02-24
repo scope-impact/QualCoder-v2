@@ -5,9 +5,7 @@ Command handlers for case management operations.
 """
 
 from src.contexts.cases.core.commandHandlers.create_case import create_case
-from src.contexts.cases.core.commandHandlers.get_case import get_case
 from src.contexts.cases.core.commandHandlers.link_source import link_source_to_case
-from src.contexts.cases.core.commandHandlers.list_cases import list_cases
 from src.contexts.cases.core.commandHandlers.remove_attribute import (
     remove_case_attribute,
 )
@@ -17,6 +15,8 @@ from src.contexts.cases.core.commandHandlers.unlink_source import (
     unlink_source_from_case,
 )
 from src.contexts.cases.core.commandHandlers.update_case import update_case
+from src.contexts.cases.core.queryHandlers.get_case import get_case
+from src.contexts.cases.core.queryHandlers.list_cases import list_cases
 
 __all__ = [
     "create_case",

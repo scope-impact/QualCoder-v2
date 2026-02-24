@@ -6,14 +6,6 @@ language, backup configuration, and AV coding preferences.
 """
 
 from src.contexts.settings.core.derivers import (
-    InvalidBackupInterval,
-    InvalidFontFamily,
-    InvalidFontSize,
-    InvalidLanguage,
-    InvalidMaxBackups,
-    InvalidSpeakerFormat,
-    InvalidTheme,
-    InvalidTimestampFormat,
     derive_av_coding_config_change,
     derive_backup_config_change,
     derive_font_change,
@@ -35,6 +27,7 @@ from src.contexts.settings.core.events import (
     LanguageChanged,
     ThemeChanged,
 )
+from src.contexts.settings.core.failure_events import SettingsNotChanged
 from src.contexts.settings.core.invariants import (
     MAX_BACKUP_INTERVAL,
     MAX_FONT_SIZE,
@@ -70,21 +63,14 @@ __all__ = [
     "FontChanged",
     "LanguageChanged",
     "ThemeChanged",
+    # Failure Events
+    "SettingsNotChanged",
     # Derivers
     "derive_av_coding_config_change",
     "derive_backup_config_change",
     "derive_font_change",
     "derive_language_change",
     "derive_theme_change",
-    # Failure types
-    "InvalidBackupInterval",
-    "InvalidFontFamily",
-    "InvalidFontSize",
-    "InvalidLanguage",
-    "InvalidMaxBackups",
-    "InvalidSpeakerFormat",
-    "InvalidTheme",
-    "InvalidTimestampFormat",
     # Invariants
     "VALID_THEMES",
     "VALID_TIMESTAMP_FORMATS",

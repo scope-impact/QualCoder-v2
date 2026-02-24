@@ -12,12 +12,13 @@ from typing import TYPE_CHECKING
 from src.contexts.folders.core.commandHandlers._state import (
     FolderRepository,
     SourceRepository,
+    build_folder_state,
 )
-from src.contexts.projects.core.commands import CreateFolderCommand, DeleteFolderCommand
-from src.contexts.projects.core.derivers import FolderState, derive_create_folder
-from src.contexts.projects.core.entities import Folder
-from src.contexts.projects.core.events import FolderCreated
-from src.contexts.projects.core.failure_events import FolderNotCreated
+from src.contexts.folders.core.commands import CreateFolderCommand, DeleteFolderCommand
+from src.contexts.folders.core.derivers import derive_create_folder
+from src.contexts.folders.core.entities import Folder
+from src.contexts.folders.core.events import FolderCreated
+from src.contexts.folders.core.failure_events import FolderNotCreated
 from src.shared.common.operation_result import OperationResult
 from src.shared.common.types import FolderId
 from src.shared.infra.state import ProjectState
@@ -40,6 +41,7 @@ def create_folder(
         command: Command with folder name and parent ID
         state: Project state cache
         folder_repo: Repository for folder operations
+        source_repo: Repository for source operations
         event_bus: Event bus for publishing events
 
     Returns:
@@ -55,13 +57,7 @@ def create_folder(
     parent_id = FolderId(value=command.parent_id) if command.parent_id else None
 
     # Build state and derive event
-    # Get existing data from repos (source of truth) instead of state cache
-    existing_folders = tuple(folder_repo.get_all()) if folder_repo else ()
-    existing_sources = tuple(source_repo.get_all()) if source_repo else ()
-    folder_state = FolderState(
-        existing_folders=existing_folders,
-        existing_sources=existing_sources,
-    )
+    folder_state = build_folder_state(folder_repo, source_repo)
 
     result = derive_create_folder(
         name=command.name,

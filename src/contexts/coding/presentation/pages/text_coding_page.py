@@ -126,11 +126,11 @@ class TextCodingPage(QWidget):
 
         self._files_panel = FilesPanel(colors=self._colors)
         self._files_panel.setMaximumHeight(220)
-        self._files_panel.file_selected.connect(self._on_file_selected)
+        self._files_panel.file_selected.connect(self.file_selected.emit)
         left_layout.addWidget(self._files_panel)
 
         self._codes_panel = CodesPanel(colors=self._colors)
-        self._codes_panel.code_selected.connect(self._on_code_selected)
+        self._codes_panel.code_selected.connect(self.code_selected.emit)
         self._codes_panel.navigation_clicked.connect(self.navigation_clicked.emit)
         left_layout.addWidget(self._codes_panel, 1)
 
@@ -138,7 +138,7 @@ class TextCodingPage(QWidget):
 
         # Center panel - Text editor
         self._editor_panel = TextEditorPanel(colors=self._colors)
-        self._editor_panel.text_selected.connect(self._on_text_selected)
+        self._editor_panel.text_selected.connect(self.text_selected.emit)
         self._editor_panel.code_applied.connect(self.editor_code_applied.emit)
         self._layout.set_center(self._editor_panel)
 
@@ -265,18 +265,6 @@ class TextCodingPage(QWidget):
     # =========================================================================
     # Internal signal handlers
     # =========================================================================
-
-    def _on_file_selected(self, file_data: dict):
-        """Handle file selection."""
-        self.file_selected.emit(file_data)
-
-    def _on_code_selected(self, code_data: dict):
-        """Handle code selection."""
-        self.code_selected.emit(code_data)
-
-    def _on_text_selected(self, text: str, start: int, end: int):
-        """Handle text selection."""
-        self.text_selected.emit(text, start, end)
 
     def _toggle_details_panel(self):
         """Toggle visibility of the details panel."""

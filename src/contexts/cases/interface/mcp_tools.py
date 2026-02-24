@@ -28,11 +28,12 @@ Usage:
 from __future__ import annotations
 
 from collections import defaultdict
-from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Any, Protocol, runtime_checkable
 
 from src.contexts.cases.core.commandHandlers import get_case, list_cases
+from src.shared.common.mcp_types import ToolDefinition, ToolParameter
 from src.shared.common.operation_result import OperationResult
+from src.shared.common.types import CaseId, SourceId
 
 if TYPE_CHECKING:
     from src.shared.infra.state import ProjectState
@@ -60,56 +61,6 @@ class CaseToolsContext(Protocol):
     def cases_context(self):
         """Get cases context with case_repo (None if no project open)."""
         ...
-
-
-# ============================================================
-# Tool Definitions (MCP Schema)
-# ============================================================
-
-
-@dataclass(frozen=True)
-class ToolParameter:
-    """MCP tool parameter definition."""
-
-    name: str
-    type: str
-    description: str
-    required: bool = True
-    default: Any = None
-
-
-@dataclass(frozen=True)
-class ToolDefinition:
-    """MCP tool definition with schema."""
-
-    name: str
-    description: str
-    parameters: tuple[ToolParameter, ...] = field(default_factory=tuple)
-
-    def to_schema(self) -> dict[str, Any]:
-        """Convert to MCP-compatible JSON schema."""
-        properties = {}
-        required = []
-
-        for param in self.parameters:
-            properties[param.name] = {
-                "type": param.type,
-                "description": param.description,
-            }
-            if param.default is not None:
-                properties[param.name]["default"] = param.default
-            if param.required:
-                required.append(param.name)
-
-        return {
-            "name": self.name,
-            "description": self.description,
-            "inputSchema": {
-                "type": "object",
-                "properties": properties,
-                "required": required,
-            },
-        }
 
 
 # Tool: list_cases
@@ -236,18 +187,26 @@ class CaseTools:
             "compare_cases": compare_cases_tool,
         }
 
+        self._handlers: dict[str, Any] = {
+            "list_cases": self._execute_list_cases,
+            "get_case": self._execute_get_case,
+            "suggest_case_groupings": self._execute_suggest_case_groupings,
+            "compare_cases": self._execute_compare_cases,
+        }
+
     @property
     def _state(self):
         """Get the project state from context."""
         return self._ctx.state
 
-    def get_tool_schemas(self) -> list[dict[str, Any]]:
-        """
-        Get MCP-compatible tool schemas for registration.
+    @property
+    def _case_repo(self):
+        """Get case_repo from context (None if no project open)."""
+        cases_ctx = self._ctx.cases_context
+        return cases_ctx.case_repo if cases_ctx else None
 
-        Returns:
-            List of tool schema dicts for MCP registration
-        """
+    def get_tool_schemas(self) -> list[dict[str, Any]]:
+        """Get MCP-compatible tool schemas for registration."""
         return [tool.to_schema() for tool in self._tools.values()]
 
     def get_tool_names(self) -> list[str]:
@@ -255,35 +214,13 @@ class CaseTools:
         return list(self._tools.keys())
 
     def execute(self, tool_name: str, arguments: dict[str, Any]) -> dict[str, Any]:
-        """
-        Execute an MCP tool by name with arguments.
-
-        Args:
-            tool_name: Name of the tool to execute
-            arguments: Tool arguments as dict
-
-        Returns:
-            Dictionary with success/failure and data/error fields
-        """
-        if tool_name not in self._tools:
+        """Execute an MCP tool by name with arguments."""
+        handler = self._handlers.get(tool_name)
+        if handler is None:
             return OperationResult.fail(
                 error=f"Unknown tool: {tool_name}",
                 error_code="TOOL_NOT_FOUND",
                 suggestions=(f"Available tools: {', '.join(self._tools.keys())}",),
-            ).to_dict()
-
-        handlers = {
-            "list_cases": self._execute_list_cases,
-            "get_case": self._execute_get_case,
-            "suggest_case_groupings": self._execute_suggest_case_groupings,
-            "compare_cases": self._execute_compare_cases,
-        }
-
-        handler = handlers.get(tool_name)
-        if handler is None:
-            return OperationResult.fail(
-                error=f"No handler for tool: {tool_name}",
-                error_code="HANDLER_NOT_FOUND",
             ).to_dict()
 
         try:
@@ -311,12 +248,7 @@ class CaseTools:
                 suggestions=("Open a project first",),
             ).to_dict()
 
-        # Get case_repo from context (source of truth)
-        cases_ctx = self._ctx.cases_context
-        case_repo = cases_ctx.case_repo if cases_ctx else None
-
-        # Call use case with repo
-        result = list_cases(self._state, case_repo=case_repo)
+        result = list_cases(self._state, case_repo=self._case_repo)
         return result.to_dict()
 
     # ============================================================
@@ -344,12 +276,7 @@ class CaseTools:
                 suggestions=("Open a project first",),
             ).to_dict()
 
-        # Get case_repo from context (source of truth)
-        cases_ctx = self._ctx.cases_context
-        case_repo = cases_ctx.case_repo if cases_ctx else None
-
-        # Call use case with repo
-        result = get_case(int(case_id), self._state, case_repo=case_repo)
+        result = get_case(int(case_id), self._state, case_repo=self._case_repo)
         return result.to_dict()
 
     # ============================================================
@@ -365,7 +292,7 @@ class CaseTools:
         Analyzes case attributes and suggests meaningful groupings.
         """
         attribute_names = arguments.get("attribute_names")
-        min_group_size = arguments.get("min_group_size", 2) or 2
+        min_group_size = arguments.get("min_group_size") or 2
 
         if self._state is None:
             return OperationResult.fail(
@@ -374,9 +301,8 @@ class CaseTools:
                 suggestions=("Open a project first",),
             ).to_dict()
 
-        # Get cases from repo (source of truth)
-        cases_ctx = self._ctx.cases_context
-        cases = cases_ctx.case_repo.get_all() if cases_ctx else []
+        case_repo = self._case_repo
+        cases = case_repo.get_all() if case_repo else []
 
         if not cases:
             return OperationResult.ok(
@@ -475,9 +401,7 @@ class CaseTools:
                 suggestions=("Open a project first",),
             ).to_dict()
 
-        # Get case_repo from context (source of truth)
-        cases_ctx = self._ctx.cases_context
-        case_repo = cases_ctx.case_repo if cases_ctx else None
+        case_repo = self._case_repo
 
         # Fetch all cases using get_case use case
         cases = []
@@ -492,36 +416,84 @@ class CaseTools:
                         f"Check if case ID {cid} exists",
                     ),
                 ).to_dict()
-            # Get case from repo for building comparison
-            from src.shared.common.types import CaseId
-
             case = case_repo.get_by_id(CaseId(value=int(cid))) if case_repo else None
             if case:
                 cases.append(case)
 
-        # Build comparison data
+        # Build comparison data using segment repo from coding context
+        coding_ctx = (
+            self._ctx.coding_context if hasattr(self._ctx, "coding_context") else None
+        )
+        segment_repo = coding_ctx.segment_repo if coding_ctx else None
+        code_repo = coding_ctx.code_repo if coding_ctx else None
+
+        # Collect code sets per case from their linked sources
+        case_code_sets: dict[int, set[int]] = {}
+        case_segment_counts: dict[int, int] = {}
+
+        for case in cases:
+            code_ids: set[int] = set()
+            seg_count = 0
+            if segment_repo and case.source_ids:
+                for sid in case.source_ids:
+                    segs = segment_repo.get_by_source(SourceId(sid))
+                    seg_count += len(segs)
+                    for seg in segs:
+                        code_ids.add(seg.code_id.value)
+            case_code_sets[case.id.value] = code_ids
+            case_segment_counts[case.id.value] = seg_count
+
+        # Compute common codes (intersection of all cases)
+        all_code_sets = list(case_code_sets.values())
+        common_code_ids = set.intersection(*all_code_sets) if all_code_sets else set()
+
+        # Build code name lookup
+        code_names: dict[int, str] = {}
+        if code_repo:
+            for code in code_repo.get_all():
+                code_names[code.id.value] = code.name
+
+        # Build per-case comparison
         case_comparisons = []
         for case in cases:
+            case_codes = case_code_sets[case.id.value]
+            unique = case_codes - common_code_ids
             case_comparisons.append(
                 {
                     "case_id": case.id.value,
                     "case_name": case.name,
-                    "unique_codes": [],  # Would need segment/code data
-                    "total_segments": 0,  # Would need segment data
+                    "unique_codes": [
+                        {"code_id": cid, "code_name": code_names.get(cid, str(cid))}
+                        for cid in sorted(unique)
+                    ],
+                    "total_segments": case_segment_counts[case.id.value],
                 }
             )
 
+        common_codes = [
+            {"code_id": cid, "code_name": code_names.get(cid, str(cid))}
+            for cid in sorted(common_code_ids)
+        ]
+
         # Generate analysis summary
         case_names = [c.name for c in cases]
-        analysis_summary = (
-            f"Comparison of {len(cases)} cases: {', '.join(case_names)}. "
-            "No coded segments available for detailed code comparison."
-        )
+        total_segs = sum(case_segment_counts.values())
+        if total_segs > 0:
+            analysis_summary = (
+                f"Comparison of {len(cases)} cases: {', '.join(case_names)}. "
+                f"{len(common_code_ids)} common code(s), "
+                f"{total_segs} total segment(s) across all cases."
+            )
+        else:
+            analysis_summary = (
+                f"Comparison of {len(cases)} cases: {', '.join(case_names)}. "
+                "No coded segments found across linked sources."
+            )
 
         return OperationResult.ok(
             data={
                 "cases": case_comparisons,
-                "common_codes": [],  # Would need segment/code data
+                "common_codes": common_codes,
                 "analysis_summary": analysis_summary,
             }
         ).to_dict()

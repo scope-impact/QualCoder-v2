@@ -43,6 +43,11 @@ def _now() -> datetime:
     return datetime.now(UTC)
 
 
+def _extract_int(value: object) -> int:
+    """Extract integer from a value that may be a ValueObject with .value or a raw int."""
+    return value.value if hasattr(value, "value") else int(value)
+
+
 @dataclass(frozen=True)
 class CodePayload:
     """Payload for code-related signals."""
@@ -204,15 +209,9 @@ class SegmentCodedConverter(EventConverter[SegmentCoded, SegmentPayload]):
     def convert(self, event: SegmentCoded) -> SegmentPayload:
         return SegmentPayload(
             event_type="segment_coded",
-            segment_id=event.segment_id.value
-            if hasattr(event.segment_id, "value")
-            else int(event.segment_id),
-            code_id=event.code_id.value
-            if hasattr(event.code_id, "value")
-            else int(event.code_id),
-            source_id=event.source_id.value
-            if hasattr(event.source_id, "value")
-            else int(event.source_id),
+            segment_id=_extract_int(event.segment_id),
+            code_id=_extract_int(event.code_id),
+            source_id=_extract_int(event.source_id),
             start_pos=event.position.start,
             end_pos=event.position.end,
             text=event.selected_text,
@@ -225,15 +224,9 @@ class SegmentUncodedConverter(EventConverter[SegmentUncoded, SegmentPayload]):
     def convert(self, event: SegmentUncoded) -> SegmentPayload:
         return SegmentPayload(
             event_type="segment_uncoded",
-            segment_id=event.segment_id.value
-            if hasattr(event.segment_id, "value")
-            else int(event.segment_id),
-            code_id=event.code_id.value
-            if hasattr(event.code_id, "value")
-            else int(event.code_id),
-            source_id=event.source_id.value
-            if hasattr(event.source_id, "value")
-            else int(event.source_id),
+            segment_id=_extract_int(event.segment_id),
+            code_id=_extract_int(event.code_id),
+            source_id=_extract_int(event.source_id),
             start_pos=0,
             end_pos=0,
         )

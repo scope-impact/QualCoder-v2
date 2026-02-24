@@ -97,6 +97,22 @@ def db_connection(db_engine):
 
 
 # =============================================================================
+# AppContext Fixture (shared by MCP tool E2E tests)
+# =============================================================================
+
+
+@pytest.fixture
+def app_context():
+    """Create a real AppContext for E2E testing of MCP tools."""
+    from src.shared.infra.app_context import create_app_context
+
+    ctx = create_app_context()
+    ctx.start()
+    yield ctx
+    ctx.stop()
+
+
+# =============================================================================
 # Event Bus Fixture
 # =============================================================================
 
@@ -150,6 +166,14 @@ def source_repo(db_connection):
     from src.contexts.sources.infra.source_repository import SQLiteSourceRepository
 
     return SQLiteSourceRepository(db_connection)
+
+
+@pytest.fixture
+def folder_repo(db_connection):
+    """Create a real folder repository."""
+    from src.contexts.folders.infra.folder_repository import SQLiteFolderRepository
+
+    return SQLiteFolderRepository(db_connection)
 
 
 # =============================================================================

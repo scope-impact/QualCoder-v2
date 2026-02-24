@@ -10,17 +10,16 @@ from __future__ import annotations
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-from returns.result import Success
-
 from src.contexts.projects.core.commands import AddSourceCommand, RemoveSourceCommand
-from src.contexts.projects.core.derivers import ProjectState as DomainProjectState
 from src.contexts.projects.core.derivers import derive_add_source
-from src.contexts.projects.core.entities import Source, SourceStatus, SourceType
+from src.contexts.projects.core.entities import Source, SourceStatus
 from src.contexts.projects.core.events import SourceAdded
 from src.contexts.projects.core.failure_events import SourceNotAdded
-from src.contexts.sources.core.commandHandlers._state import SourceRepository
-from src.contexts.sources.infra.pdf_extractor import PdfExtractor
-from src.contexts.sources.infra.text_extractor import TextExtractor
+from src.contexts.sources.core.commandHandlers._state import (
+    SourceRepository,
+    build_domain_state,
+)
+from src.contexts.sources.core.commandHandlers.import_file_source import _extract_text
 from src.shared.common.operation_result import OperationResult
 from src.shared.infra.state import ProjectState
 
@@ -47,7 +46,7 @@ def add_source(
     Args:
         command: Command with source path and metadata
         state: Project state cache
-        sources_ctx: Sources context with repository
+        source_repo: Repository for source operations
         event_bus: Event bus for publishing events
 
     Returns:
@@ -64,13 +63,7 @@ def add_source(
     source_path = Path(command.source_path)
 
     # Step 2: Build domain state and derive event
-    # Get existing sources from repo (source of truth) instead of state cache
-    existing_sources = tuple(source_repo.get_all()) if source_repo else ()
-    domain_state = DomainProjectState(
-        path_exists=lambda p: p.exists(),
-        parent_writable=lambda _p: True,
-        existing_sources=existing_sources,
-    )
+    domain_state = build_domain_state(source_repo)
 
     result = derive_add_source(
         source_path=source_path,
@@ -89,26 +82,8 @@ def add_source(
     event: SourceAdded = result
 
     # Step 3: Extract text content for text/PDF sources
-    fulltext: str | None = None
+    fulltext = _extract_text(event.source_type, event.file_path)
     file_size = event.file_size
-
-    if event.source_type == SourceType.TEXT:
-        extractor = TextExtractor()
-        if extractor.supports(event.file_path):
-            extraction_result = extractor.extract(event.file_path)
-            if isinstance(extraction_result, Success):
-                extracted = extraction_result.unwrap()
-                fulltext = extracted.content
-                file_size = extracted.file_size
-
-    elif event.source_type == SourceType.PDF:
-        pdf_extractor = PdfExtractor()
-        if pdf_extractor.supports(event.file_path):
-            extraction_result = pdf_extractor.extract(event.file_path)
-            if isinstance(extraction_result, Success):
-                extracted = extraction_result.unwrap()
-                fulltext = extracted.content
-                file_size = extracted.file_size
 
     # Create source entity
     source = Source(

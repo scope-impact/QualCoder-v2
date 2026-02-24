@@ -46,17 +46,26 @@ def create_app_context(
     # Local imports to avoid circular dependencies
     from src.contexts.cases.core.policies import configure_cases_policies
     from src.contexts.coding.core.policies import configure_coding_policies
+    from src.contexts.folders.core.policies import configure_folders_policies
+    from src.contexts.settings.core.policies import configure_settings_policies
+    from src.contexts.sources.core.policies import configure_sources_policies
     from src.shared.core.sync import SourceSyncHandler
+    from src.shared.infra.cascade_registry import CascadeRegistry
 
     # Create core infrastructure components
     event_bus = EventBus(history_size=100)
+    cascade_registry = CascadeRegistry(event_bus)
     lifecycle = ProjectLifecycle()
     state = ProjectState()
     source_sync_handler = SourceSyncHandler(event_bus=event_bus)
 
     # Configure context-specific policies (subscribe to event bus)
-    configure_coding_policies(event_bus)
-    configure_cases_policies(event_bus)
+    # Data-modifying cascades are registered via cascade_registry
+    configure_coding_policies(event_bus, cascade_registry=cascade_registry)
+    configure_cases_policies(cascade_registry=cascade_registry)
+    configure_folders_policies(event_bus, cascade_registry=cascade_registry)
+    configure_sources_policies(event_bus, cascade_registry=cascade_registry)
+    configure_settings_policies(event_bus, cascade_registry=cascade_registry)
 
     # Create settings repository (global, always available)
     if settings_repo is None:
@@ -71,6 +80,7 @@ def create_app_context(
 
     return AppContext(
         event_bus=event_bus,
+        cascade_registry=cascade_registry,
         lifecycle=lifecycle,
         state=state,
         source_sync_handler=source_sync_handler,

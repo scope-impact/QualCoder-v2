@@ -19,35 +19,52 @@ if TYPE_CHECKING:
         SQLiteCodeRepository,
         SQLiteSegmentRepository,
     )
+    from src.contexts.folders.infra.folder_repository import SQLiteFolderRepository
     from src.contexts.projects.infra.project_repository import SQLiteProjectRepository
     from src.contexts.projects.infra.settings_repository import (
         SQLiteProjectSettingsRepository,
     )
-    from src.contexts.sources.infra.folder_repository import SQLiteFolderRepository
     from src.contexts.sources.infra.source_repository import SQLiteSourceRepository
 
 
 @dataclass
 class SourcesContext:
     """
-    Sources bounded context - manages source files and folders.
+    Sources bounded context - manages source files.
 
     Provides access to:
     - SourceRepository: CRUD for source files
-    - FolderRepository: CRUD for folder hierarchy
     """
 
     source_repo: SQLiteSourceRepository
-    folder_repo: SQLiteFolderRepository
 
     @classmethod
     def create(cls, connection: Connection) -> SourcesContext:
         """Create a SourcesContext with all repositories."""
-        from src.contexts.sources.infra.folder_repository import SQLiteFolderRepository
         from src.contexts.sources.infra.source_repository import SQLiteSourceRepository
 
         return cls(
             source_repo=SQLiteSourceRepository(connection),
+        )
+
+
+@dataclass
+class FoldersContext:
+    """
+    Folders bounded context - manages folder hierarchy for organizing sources.
+
+    Provides access to:
+    - FolderRepository: CRUD for folder hierarchy
+    """
+
+    folder_repo: SQLiteFolderRepository
+
+    @classmethod
+    def create(cls, connection: Connection) -> FoldersContext:
+        """Create a FoldersContext with all repositories."""
+        from src.contexts.folders.infra.folder_repository import SQLiteFolderRepository
+
+        return cls(
             folder_repo=SQLiteFolderRepository(connection),
         )
 

@@ -15,10 +15,10 @@ import pytest
 # Import repositories from new bounded context locations
 from src.contexts.cases.infra.case_repository import SQLiteCaseRepository
 from src.contexts.coding.infra.repositories import SQLiteSegmentRepository
+from src.contexts.folders.infra.folder_repository import SQLiteFolderRepository
 from src.contexts.projects.infra.settings_repository import (
     SQLiteProjectSettingsRepository,
 )
-from src.contexts.sources.infra.folder_repository import SQLiteFolderRepository
 from src.contexts.sources.infra.source_repository import SQLiteSourceRepository
 
 

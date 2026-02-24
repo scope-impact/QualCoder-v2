@@ -46,6 +46,27 @@ class AddSourceCommand:
 
 
 @dataclass(frozen=True)
+class AddTextSourceCommand:
+    """Command to add a text source directly (agent-provided content, no file)."""
+
+    name: str
+    content: str
+    origin: str | None = None
+    memo: str | None = None
+
+
+@dataclass(frozen=True)
+class ImportFileSourceCommand:
+    """Command to import a file-based source by file path (agent workflow)."""
+
+    file_path: str  # Absolute path to the source file
+    name: str | None = None  # Optional name override (defaults to filename)
+    origin: str | None = None
+    memo: str | None = None
+    dry_run: bool = False  # If True, validate without persisting
+
+
+@dataclass(frozen=True)
 class RemoveSourceCommand:
     """Command to remove a source from the project."""
 
@@ -157,36 +178,12 @@ class RemoveCaseAttributeCommand:
 
 
 # ============================================================
-# Folder Commands
+# Folder Commands (re-exported from folders context)
 # ============================================================
 
-
-@dataclass(frozen=True)
-class CreateFolderCommand:
-    """Command to create a new folder."""
-
-    name: str
-    parent_id: int | None = None
-
-
-@dataclass(frozen=True)
-class RenameFolderCommand:
-    """Command to rename a folder."""
-
-    folder_id: int
-    new_name: str
-
-
-@dataclass(frozen=True)
-class DeleteFolderCommand:
-    """Command to delete an empty folder."""
-
-    folder_id: int
-
-
-@dataclass(frozen=True)
-class MoveSourceToFolderCommand:
-    """Command to move a source to a folder."""
-
-    source_id: int
-    folder_id: int | None  # None = move to root (no folder)
+from src.contexts.folders.core.commands import (  # noqa: F401, E402
+    CreateFolderCommand,
+    DeleteFolderCommand,
+    MoveSourceToFolderCommand,
+    RenameFolderCommand,
+)

@@ -608,15 +608,19 @@ class CreateProjectDialog(QDialog):
         if directory:
             self._location_input.setText(directory)
 
+    @staticmethod
+    def _sanitize_name(name: str) -> str:
+        """Sanitize a project name into a safe filename stem."""
+        safe = "".join(c for c in name if c.isalnum() or c in " _-")
+        return safe.strip().replace(" ", "_")
+
     def _update_path_preview(self):
         """Update the path preview label."""
         name = self._name_input.text().strip()
         location = self._location_input.text().strip()
 
         if name and location:
-            # Sanitize name for filename
-            safe_name = "".join(c for c in name if c.isalnum() or c in " _-")
-            safe_name = safe_name.strip().replace(" ", "_")
+            safe_name = self._sanitize_name(name)
             if safe_name:
                 full_path = Path(location) / f"{safe_name}.qda"
                 self._path_preview.setText(f"Project will be created at: {full_path}")
@@ -638,11 +642,8 @@ class CreateProjectDialog(QDialog):
         location = self._location_input.text().strip()
 
         if name and location:
-            # Generate safe filename
-            safe_name = "".join(c for c in name if c.isalnum() or c in " _-")
-            safe_name = safe_name.strip().replace(" ", "_")
+            safe_name = self._sanitize_name(name)
             full_path = str(Path(location) / f"{safe_name}.qda")
-
             self.project_created.emit(name, full_path)
             self.accept()
 

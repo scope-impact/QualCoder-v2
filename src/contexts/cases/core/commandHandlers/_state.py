@@ -9,9 +9,13 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Protocol, runtime_checkable
 
+from src.contexts.cases.core.derivers import CaseState
+from src.shared.common.operation_result import OperationResult
+
 if TYPE_CHECKING:
     from src.contexts.cases.core.entities import Case, CaseAttribute
     from src.shared.common.types import CaseId, SourceId
+    from src.shared.infra.state import ProjectState
 
 
 # ============================================================
@@ -33,3 +37,25 @@ class CaseRepository(Protocol):
     def unlink_source(self, case_id: CaseId, source_id: SourceId) -> None: ...
     def save_attribute(self, case_id: CaseId, attribute: CaseAttribute) -> None: ...
     def delete_attribute(self, case_id: CaseId, attr_name: str) -> None: ...
+
+
+# ============================================================
+# Shared Helpers
+# ============================================================
+
+
+def require_project(state: ProjectState, error_code: str) -> OperationResult | None:
+    """Return a failure OperationResult if no project is open, else None."""
+    if state.project is None:
+        return OperationResult.fail(
+            error="No project is currently open",
+            error_code=error_code,
+            suggestions=("Open a project first",),
+        )
+    return None
+
+
+def build_case_state(case_repo: CaseRepository | None) -> CaseState:
+    """Build a CaseState from the repository (source of truth)."""
+    existing_cases = tuple(case_repo.get_all()) if case_repo else ()
+    return CaseState(existing_cases=existing_cases)

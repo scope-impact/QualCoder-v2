@@ -1,5 +1,5 @@
 """
-Folder Repository - SQLAlchemy Core Implementation for Sources Context.
+Folder Repository - SQLAlchemy Core Implementation for Folders Context.
 
 Implements the repository for Folder entities using the src_folder table.
 """
@@ -11,8 +11,8 @@ from typing import TYPE_CHECKING
 
 from sqlalchemy import delete, func, select, update
 
-from src.contexts.projects.core.entities import Folder
-from src.contexts.sources.infra.schema import src_folder
+from src.contexts.folders.core.entities import Folder
+from src.contexts.folders.infra.schema import src_folder
 from src.shared.common.types import FolderId
 
 if TYPE_CHECKING:
@@ -24,7 +24,6 @@ class SQLiteFolderRepository:
     SQLAlchemy Core implementation of FolderRepository.
 
     Maps between domain Folder entities and the src_folder table.
-    Uses the prefixed table from the Sources bounded context.
     """
 
     def __init__(self, connection: Connection) -> None:
@@ -58,18 +57,12 @@ class SQLiteFolderRepository:
 
     def get_children(self, parent_id: FolderId | None) -> list[Folder]:
         """Get all folders with the given parent (None for root level)."""
-        if parent_id is None:
-            stmt = (
-                select(src_folder)
-                .where(src_folder.c.parent_id.is_(None))
-                .order_by(src_folder.c.name)
-            )
-        else:
-            stmt = (
-                select(src_folder)
-                .where(src_folder.c.parent_id == parent_id.value)
-                .order_by(src_folder.c.name)
-            )
+        parent_filter = (
+            src_folder.c.parent_id.is_(None)
+            if parent_id is None
+            else src_folder.c.parent_id == parent_id.value
+        )
+        stmt = select(src_folder).where(parent_filter).order_by(src_folder.c.name)
         result = self._conn.execute(stmt)
         return [self._row_to_folder(row) for row in result]
 

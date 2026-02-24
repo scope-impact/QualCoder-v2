@@ -26,7 +26,7 @@ Over time, you may create similar or redundant codes. The duplicate detector ide
 ### Finding Duplicates
 
 1. Click **AI > Find Duplicates**
-2. The AI compares all codes using semantic similarity
+2. The AI compares all codes using token-level similarity (word matching, not character matching)
 3. Review candidate pairs (each shows code names, similarity %, and segment counts)
 4. **Merge A → B** to combine codes, or **Dismiss** if they're not duplicates
 
@@ -36,6 +36,10 @@ Over time, you may create similar or redundant codes. The duplicate detector ide
 > - **90%+** - Very likely duplicates
 > - **70-90%** - Possibly related, review carefully
 > - **Below 70%** - Probably distinct concepts
+
+> **How It Works**
+>
+> Duplicate detection uses word-level (token) matching rather than character-level comparison. This means codes like "Sports & Recreation" and "Trust & Verification" are correctly identified as distinct, even though they share similar character patterns. When both codes have memos, their descriptions are also compared for a more accurate score.
 
 ## Auto-Code
 
@@ -85,9 +89,27 @@ Find passages similar to a coded segment.
 
 ## AI Agent Integration
 
-QualCoder v2 supports AI agents (like Claude Code) working alongside human researchers via the MCP protocol.
+QualCoder v2 supports AI agents (like Claude Code) working alongside human researchers via the MCP protocol. The agent can:
 
-See [MCP Setup Guide](./mcp-setup.md) for configuration and available tools.
+- **Open and close projects** programmatically for automated workflows
+- **Add text sources** directly from agent-generated or agent-collected content
+- **Organize sources** into folders (create, rename, delete folders; move sources)
+- **Remove sources** with a safe preview-then-confirm workflow
+- **Read and analyze** document content, suggest codes, and apply coding
+
+### Trust Levels
+
+Agent tools operate at different trust levels for safety:
+
+| Level | Meaning | Example Tools |
+|-------|---------|---------------|
+| T1 (Autonomous) | Agent acts freely | `get_project_context`, `list_sources` |
+| T2 (Notify) | Agent acts, researcher is notified | `open_project`, `close_project` |
+| T3 (Suggest) | Agent proposes, researcher confirms | `add_text_source`, `remove_source` |
+
+Destructive operations like `remove_source` default to **preview mode** — the agent shows what would be affected before you approve the action.
+
+See [MCP Setup Guide](./mcp-setup.md) for configuration and the full list of available tools.
 
 ## Best Practices
 

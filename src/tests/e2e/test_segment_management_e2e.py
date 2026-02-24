@@ -21,7 +21,6 @@ import allure
 import pytest
 from PySide6.QtWidgets import QApplication
 
-from design_system import get_colors
 from src.contexts.coding.presentation.dialogs.memo_dialog import (
     MemosPanel,
     SegmentMemoDialog,
@@ -46,12 +45,6 @@ pytestmark = [
 # =============================================================================
 # Fixtures
 # =============================================================================
-
-
-@pytest.fixture
-def colors():
-    """Get color palette for UI."""
-    return get_colors()
 
 
 @pytest.fixture

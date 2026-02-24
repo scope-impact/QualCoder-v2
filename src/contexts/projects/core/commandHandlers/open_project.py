@@ -82,9 +82,6 @@ def open_project(
 
     # Get contexts for loading data
     contexts = get_contexts(connection)
-    _sources_ctx = contexts.get("sources")  # Reserved for future use
-    _cases_ctx = contexts.get("cases")  # Reserved for future use
-    _folders_ctx = contexts.get("folders")  # Reserved for future use
     projects_ctx = contexts.get("projects")
 
     # Load project metadata
@@ -101,7 +98,7 @@ def open_project(
 
     # Step 4: Update state (minimal session tracking only)
     state.clear()
-    state.project = project.touch() if hasattr(project, "touch") else project
+    state.project = project.touch()
     state.add_to_recent(project)
 
     # Step 5: Publish event

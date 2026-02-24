@@ -7,7 +7,10 @@ Returns OperationResult for consistent handling in UI and AI consumers.
 
 from __future__ import annotations
 
-from src.contexts.cases.core.commandHandlers._state import CaseRepository
+from src.contexts.cases.core.commandHandlers._state import (
+    CaseRepository,
+    require_project,
+)
 from src.shared.common.operation_result import OperationResult
 from src.shared.common.types import CaseId
 from src.shared.infra.state import ProjectState
@@ -18,27 +21,11 @@ def get_case(
     state: ProjectState,
     case_repo: CaseRepository | None = None,
 ) -> OperationResult:
-    """
-    Get a single case by ID.
+    """Get a single case by ID."""
+    if failure := require_project(state, "CASE_NOT_FOUND/NO_PROJECT"):
+        return failure
 
-    Args:
-        case_id: ID of the case to retrieve
-        state: Project state (for project check)
-        case_repo: Repository for case queries (source of truth)
-
-    Returns:
-        OperationResult with Case details on success, or error details on failure
-    """
-    if state.project is None:
-        return OperationResult.fail(
-            error="No project is currently open",
-            error_code="CASE_NOT_FOUND/NO_PROJECT",
-            suggestions=("Open a project first",),
-        )
-
-    # Get case from repo (source of truth)
-    cid = CaseId(value=case_id)
-    case = case_repo.get_by_id(cid) if case_repo else None
+    case = case_repo.get_by_id(CaseId(value=case_id)) if case_repo else None
 
     if case is None:
         return OperationResult.fail(
