@@ -449,29 +449,82 @@ class CaseTools:
             if case:
                 cases.append(case)
 
-        # Build comparison data
+        # Build comparison data using segment repo from coding context
+        coding_ctx = (
+            self._ctx.coding_context if hasattr(self._ctx, "coding_context") else None
+        )
+        segment_repo = coding_ctx.segment_repo if coding_ctx else None
+        code_repo = coding_ctx.code_repo if coding_ctx else None
+
+        # Collect code sets per case from their linked sources
+        case_code_sets: dict[int, set[int]] = {}
+        case_segment_counts: dict[int, int] = {}
+
+        for case in cases:
+            code_ids: set[int] = set()
+            seg_count = 0
+            if segment_repo and case.source_ids:
+                from src.shared.common.types import SourceId
+
+                for sid in case.source_ids:
+                    segs = segment_repo.get_by_source(SourceId(sid))
+                    seg_count += len(segs)
+                    for seg in segs:
+                        code_ids.add(seg.code_id.value)
+            case_code_sets[case.id.value] = code_ids
+            case_segment_counts[case.id.value] = seg_count
+
+        # Compute common codes (intersection of all cases)
+        all_code_sets = list(case_code_sets.values())
+        common_code_ids = set.intersection(*all_code_sets) if all_code_sets else set()
+
+        # Build code name lookup
+        code_names: dict[int, str] = {}
+        if code_repo:
+            for code in code_repo.get_all():
+                code_names[code.id.value] = code.name
+
+        # Build per-case comparison
         case_comparisons = []
         for case in cases:
+            case_codes = case_code_sets[case.id.value]
+            unique = case_codes - common_code_ids
             case_comparisons.append(
                 {
                     "case_id": case.id.value,
                     "case_name": case.name,
-                    "unique_codes": [],  # Would need segment/code data
-                    "total_segments": 0,  # Would need segment data
+                    "unique_codes": [
+                        {"code_id": cid, "code_name": code_names.get(cid, str(cid))}
+                        for cid in sorted(unique)
+                    ],
+                    "total_segments": case_segment_counts[case.id.value],
                 }
             )
 
+        common_codes = [
+            {"code_id": cid, "code_name": code_names.get(cid, str(cid))}
+            for cid in sorted(common_code_ids)
+        ]
+
         # Generate analysis summary
         case_names = [c.name for c in cases]
-        analysis_summary = (
-            f"Comparison of {len(cases)} cases: {', '.join(case_names)}. "
-            "No coded segments available for detailed code comparison."
-        )
+        total_segs = sum(case_segment_counts.values())
+        if total_segs > 0:
+            analysis_summary = (
+                f"Comparison of {len(cases)} cases: {', '.join(case_names)}. "
+                f"{len(common_code_ids)} common code(s), "
+                f"{total_segs} total segment(s) across all cases."
+            )
+        else:
+            analysis_summary = (
+                f"Comparison of {len(cases)} cases: {', '.join(case_names)}. "
+                "No coded segments found across linked sources."
+            )
 
         return OperationResult.ok(
             data={
                 "cases": case_comparisons,
-                "common_codes": [],  # Would need segment/code data
+                "common_codes": common_codes,
                 "analysis_summary": analysis_summary,
             }
         ).to_dict()

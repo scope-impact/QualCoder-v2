@@ -25,6 +25,8 @@ def handle_analyze_content_for_codes(
     arguments: dict[str, Any],
 ) -> dict[str, Any]:
     """Analyze uncoded content in a source."""
+    from .auto_coding_handlers import _compute_uncoded_ranges
+
     source_id = arguments.get("source_id")
     if source_id is None:
         return missing_param_error("ANALYZE_CONTENT", "source_id")
@@ -35,12 +37,46 @@ def handle_analyze_content_for_codes(
     # Get existing segments for this source
     segments = ctx.segment_repo.get_by_source(SourceId(int(source_id)))
 
+    # Get actual source length and text
+    total_length = 0
+    source_text = ""
+    source_repo = ctx.source_repo
+    if source_repo is not None:
+        source = source_repo.get_by_id(SourceId(int(source_id)))
+        if source and source.fulltext:
+            total_length = len(source.fulltext)
+            source_text = source.fulltext
+
+    uncoded_ranges = _compute_uncoded_ranges(segments, total_length)
+    total_uncoded = sum(r["length"] for r in uncoded_ranges)
+    uncoded_pct = int((total_uncoded / total_length) * 100) if total_length > 0 else 0
+
+    # Build uncoded segments with text excerpts (truncated to 200 chars)
+    uncoded_segments = []
+    for r in uncoded_ranges:
+        excerpt = source_text[r["start_pos"] : r["end_pos"]]
+        if len(excerpt) > 200:
+            excerpt = excerpt[:200] + "..."
+        uncoded_segments.append(
+            {
+                "start_pos": r["start_pos"],
+                "end_pos": r["end_pos"],
+                "length": r["length"],
+                "text_excerpt": excerpt,
+            }
+        )
+
+    analysis = (
+        f"{uncoded_pct}% uncoded, {len(uncoded_ranges)} uncoded region(s) found, "
+        f"{len(segments)} existing segment(s)"
+    )
+
     return OperationResult.ok(
         data={
             "source_id": source_id,
             "segment_count": len(segments),
-            "analysis": "Content analysis complete",
-            "uncoded_segments": [],  # Would be computed from source text
+            "analysis": analysis,
+            "uncoded_segments": uncoded_segments,
         }
     ).to_dict()
 

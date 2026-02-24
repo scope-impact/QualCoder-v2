@@ -21,7 +21,7 @@ from .base import HandlerContext, missing_param_error
 
 
 def handle_find_similar_content(
-    _ctx: HandlerContext,
+    ctx: HandlerContext,
     arguments: dict[str, Any],
 ) -> dict[str, Any]:
     """Find similar content across sources."""
@@ -29,13 +29,65 @@ def handle_find_similar_content(
     if not search_text:
         return missing_param_error("FIND_SIMILAR", "search_text")
 
-    # Simplified: return mock matches
-    # In real implementation, would search source content
-    matches = [
-        {"source_id": 1, "start_pos": 10, "end_pos": 50, "text": search_text[:20]},
-        {"source_id": 2, "start_pos": 25, "end_pos": 65, "text": search_text[:20]},
-        {"source_id": 3, "start_pos": 5, "end_pos": 45, "text": search_text[:20]},
-    ]
+    source_repo = ctx.source_repo
+    if source_repo is None:
+        return OperationResult.fail(
+            error="No sources context available",
+            error_code="FIND_SIMILAR/NO_CONTEXT",
+            suggestions=("Open a project first",),
+        ).to_dict()
+
+    # Search across all text sources for matching content
+    matches = []
+    search_lower = search_text.lower()
+    search_words = [w for w in search_lower.split() if len(w) > 2]
+
+    for source in source_repo.get_all():
+        content = source.fulltext
+        if not content:
+            continue
+
+        content_lower = content.lower()
+        source_matched = False
+
+        # 1. Exact phrase match
+        start = 0
+        while True:
+            pos = content_lower.find(search_lower, start)
+            if pos == -1:
+                break
+            source_matched = True
+            ctx_start = max(0, pos - 40)
+            ctx_end = min(len(content), pos + len(search_text) + 40)
+            matches.append(
+                {
+                    "source_id": source.id.value,
+                    "source_name": source.name,
+                    "start_pos": pos,
+                    "end_pos": pos + len(search_text),
+                    "text": content[ctx_start:ctx_end],
+                }
+            )
+            start = pos + 1
+
+        # 2. Word-proximity match: all search words within a sentence
+        if not source_matched and len(search_words) > 1:
+            # Split into sentences (rough heuristic)
+            sentences = content.replace("!", ".").replace("?", ".").split(".")
+            char_offset = 0
+            for sentence in sentences:
+                sent_lower = sentence.lower()
+                if all(w in sent_lower for w in search_words):
+                    matches.append(
+                        {
+                            "source_id": source.id.value,
+                            "source_name": source.name,
+                            "start_pos": char_offset,
+                            "end_pos": char_offset + len(sentence),
+                            "text": sentence.strip(),
+                        }
+                    )
+                char_offset += len(sentence) + 1  # +1 for the period
 
     return OperationResult.ok(
         data={

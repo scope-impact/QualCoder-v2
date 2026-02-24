@@ -65,7 +65,15 @@ def handle_suggest_code_application(
     }
 
     if include_text:
-        result["text_excerpt"] = f"[Text from position {start_pos} to {end_pos}]"
+        source_repo = ctx.source_repo
+        if source_repo is not None:
+            source = source_repo.get_by_id(SourceId(int(source_id)))
+            if source and source.fulltext:
+                result["text_excerpt"] = source.fulltext[int(start_pos) : int(end_pos)]
+            else:
+                result["text_excerpt"] = ""
+        else:
+            result["text_excerpt"] = ""
 
     return OperationResult.ok(data=result).to_dict()
 

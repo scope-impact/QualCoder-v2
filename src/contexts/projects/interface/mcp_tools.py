@@ -39,6 +39,7 @@ from typing import TYPE_CHECKING, Any, Protocol, runtime_checkable
 from returns.result import Failure, Result, Success
 
 from src.shared.common.mcp_types import ToolDefinition, ToolParameter
+from src.shared.common.types import SourceId
 
 if TYPE_CHECKING:
     from src.shared.common.operation_result import OperationResult
@@ -773,7 +774,7 @@ class ProjectTools:
 
         # Validate source exists
         source_repo = self._ctx.sources_context.source_repo
-        source = source_repo.get(int(source_id))
+        source = source_repo.get_by_id(SourceId(int(source_id)))
         if source is None:
             return Failure(f"Source not found: {source_id}")
 

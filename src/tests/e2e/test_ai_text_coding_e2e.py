@@ -153,7 +153,7 @@ def project_with_multiple_sources(app_context: AppContext, tmp_path: Path) -> Pa
             id=SourceId(3),
             name="interview_03.txt",
             source_type=SourceType.TEXT,
-            fulltext="Managing time effectively was the biggest hurdle. I had to reorganize my daily routine.",
+            fulltext="Time management was the biggest hurdle for me. I had to reorganize my daily routine.",
         ),
     ]
     for source in sources:

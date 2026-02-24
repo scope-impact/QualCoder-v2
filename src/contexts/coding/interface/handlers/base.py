@@ -87,6 +87,16 @@ class HandlerContext:
         return self._ctx.event_bus
 
     @property
+    def source_repo(self):
+        """Get the source repository from sources context."""
+        if (
+            hasattr(self._ctx, "sources_context")
+            and self._ctx.sources_context is not None
+        ):
+            return self._ctx.sources_context.source_repo
+        return None
+
+    @property
     def suggestion_cache(self) -> SuggestionCache:
         """Get the suggestion cache."""
         return self._suggestion_cache

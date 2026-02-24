@@ -506,6 +506,7 @@ class MCPServerManager:
                 if self._coding_tools is None:
                     coding_ctx = _CodingToolsContextWrapper(
                         coding_context=self._ctx.coding_context,
+                        sources_context=self._ctx.sources_context,
                         event_bus=self._ctx.event_bus,
                     )
                     self._coding_tools = CodingTools(ctx=coding_ctx)
@@ -547,13 +548,18 @@ class MCPServerManager:
 class _CodingToolsContextWrapper:
     """Wrapper providing CodingToolsContext interface from AppContext."""
 
-    def __init__(self, coding_context, event_bus):
+    def __init__(self, coding_context, sources_context, event_bus):
         self._coding_context = coding_context
+        self._sources_context = sources_context
         self._event_bus = event_bus
 
     @property
     def coding_context(self):
         return self._coding_context
+
+    @property
+    def sources_context(self):
+        return self._sources_context
 
     @property
     def code_repo(self):
