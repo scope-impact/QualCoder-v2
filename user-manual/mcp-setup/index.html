@@ -3412,7 +3412,7 @@
     
   
   
-    <span class="md-status md-status--To Do"></span>
+    <span class="md-status md-status--In Progress"></span>
   
 
   
@@ -4195,6 +4195,67 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Available AI Tools">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#project-lifecycle" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Project Lifecycle
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#source-management" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Source Management
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#folder-management" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Folder Management
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#coding" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Coding
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#safety-preview-before-destructive-actions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Safety: Preview Before Destructive Actions
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -4345,6 +4406,7 @@
 </span></code></pre></div>
 <h2 id="available-ai-tools">Available AI Tools<a class="headerlink" href="#available-ai-tools" title="Permanent link">&para;</a></h2>
 <p>Once connected, AI assistants can use these tools:</p>
+<h3 id="project-lifecycle">Project Lifecycle<a class="headerlink" href="#project-lifecycle" title="Permanent link">&para;</a></h3>
 <table>
 <thead>
 <tr>
@@ -4358,6 +4420,25 @@
 <td>See what project is open, list sources and cases</td>
 </tr>
 <tr>
+<td><code>open_project</code></td>
+<td>Open an existing .qda project file</td>
+</tr>
+<tr>
+<td><code>close_project</code></td>
+<td>Close the current project</td>
+</tr>
+</tbody>
+</table>
+<h3 id="source-management">Source Management<a class="headerlink" href="#source-management" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Tool</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
 <td><code>list_sources</code></td>
 <td>Get all documents in the project</td>
 </tr>
@@ -4365,6 +4446,64 @@
 <td><code>read_source_content</code></td>
 <td>Read document text</td>
 </tr>
+<tr>
+<td><code>add_text_source</code></td>
+<td>Add a new text source with content provided by the agent</td>
+</tr>
+<tr>
+<td><code>import_file_source</code></td>
+<td>Import a file (PDF, image, audio, video) by absolute path</td>
+</tr>
+<tr>
+<td><code>remove_source</code></td>
+<td>Preview or confirm deletion of a source (preview by default)</td>
+</tr>
+<tr>
+<td><code>suggest_source_metadata</code></td>
+<td>Suggest language, topics, or organization for a source</td>
+</tr>
+</tbody>
+</table>
+<h3 id="folder-management">Folder Management<a class="headerlink" href="#folder-management" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Tool</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>list_folders</code></td>
+<td>List all source folders</td>
+</tr>
+<tr>
+<td><code>create_folder</code></td>
+<td>Create a new folder for organizing sources</td>
+</tr>
+<tr>
+<td><code>rename_folder</code></td>
+<td>Rename an existing folder</td>
+</tr>
+<tr>
+<td><code>delete_folder</code></td>
+<td>Delete an empty folder</td>
+</tr>
+<tr>
+<td><code>move_source_to_folder</code></td>
+<td>Move a source into a folder (or to root)</td>
+</tr>
+</tbody>
+</table>
+<h3 id="coding">Coding<a class="headerlink" href="#coding" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Tool</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
 <tr>
 <td><code>list_codes</code></td>
 <td>See all codes in your codebook</td>
@@ -4379,6 +4518,8 @@
 </tr>
 </tbody>
 </table>
+<h3 id="safety-preview-before-destructive-actions">Safety: Preview Before Destructive Actions<a class="headerlink" href="#safety-preview-before-destructive-actions" title="Permanent link">&para;</a></h3>
+<p>Some tools (like <code>remove_source</code>) default to <strong>preview mode</strong>. The AI shows you what would happen before making changes. You must explicitly confirm destructive operations.</p>
 <h2 id="real-time-updates">Real-Time Updates<a class="headerlink" href="#real-time-updates" title="Permanent link">&para;</a></h2>
 <p>When AI applies a code:</p>
 <ol>

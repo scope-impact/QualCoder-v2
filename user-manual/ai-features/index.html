@@ -908,6 +908,23 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="AI Agent Integration">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#trust-levels" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Trust Levels
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -3613,7 +3630,7 @@
     
   
   
-    <span class="md-status md-status--To Do"></span>
+    <span class="md-status md-status--In Progress"></span>
   
 
   
@@ -4430,6 +4447,23 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="AI Agent Integration">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#trust-levels" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Trust Levels
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -4484,7 +4518,7 @@
 <h3 id="finding-duplicates">Finding Duplicates<a class="headerlink" href="#finding-duplicates" title="Permanent link">&para;</a></h3>
 <ol>
 <li>Click <strong>AI &gt; Find Duplicates</strong></li>
-<li>The AI compares all codes using semantic similarity</li>
+<li>The AI compares all codes using token-level similarity (word matching, not character matching)</li>
 <li>Review candidate pairs (each shows code names, similarity %, and segment counts)</li>
 <li><strong>Merge A → B</strong> to combine codes, or <strong>Dismiss</strong> if they're not duplicates</li>
 </ol>
@@ -4494,6 +4528,8 @@
 - <strong>90%+</strong> - Very likely duplicates
 - <strong>70-90%</strong> - Possibly related, review carefully
 - <strong>Below 70%</strong> - Probably distinct concepts</p>
+<p><strong>How It Works</strong></p>
+<p>Duplicate detection uses word-level (token) matching rather than character-level comparison. This means codes like "Sports &amp; Recreation" and "Trust &amp; Verification" are correctly identified as distinct, even though they share similar character patterns. When both codes have memos, their descriptions are also compared for a more accurate score.</p>
 </blockquote>
 <h2 id="auto-code">Auto-Code<a class="headerlink" href="#auto-code" title="Permanent link">&para;</a></h2>
 <p>Automatically apply codes to text matching a pattern.</p>
@@ -4533,8 +4569,44 @@
 <p>This uses semantic similarity, not just keyword matching. It finds passages with similar meaning even if they use different words.</p>
 </blockquote>
 <h2 id="ai-agent-integration">AI Agent Integration<a class="headerlink" href="#ai-agent-integration" title="Permanent link">&para;</a></h2>
-<p>QualCoder v2 supports AI agents (like Claude Code) working alongside human researchers via the MCP protocol.</p>
-<p>See <a href="../mcp-setup/">MCP Setup Guide</a> for configuration and available tools.</p>
+<p>QualCoder v2 supports AI agents (like Claude Code) working alongside human researchers via the MCP protocol. The agent can:</p>
+<ul>
+<li><strong>Open and close projects</strong> programmatically for automated workflows</li>
+<li><strong>Add text sources</strong> directly from agent-generated or agent-collected content</li>
+<li><strong>Organize sources</strong> into folders (create, rename, delete folders; move sources)</li>
+<li><strong>Remove sources</strong> with a safe preview-then-confirm workflow</li>
+<li><strong>Read and analyze</strong> document content, suggest codes, and apply coding</li>
+</ul>
+<h3 id="trust-levels">Trust Levels<a class="headerlink" href="#trust-levels" title="Permanent link">&para;</a></h3>
+<p>Agent tools operate at different trust levels for safety:</p>
+<table>
+<thead>
+<tr>
+<th>Level</th>
+<th>Meaning</th>
+<th>Example Tools</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>T1 (Autonomous)</td>
+<td>Agent acts freely</td>
+<td><code>get_project_context</code>, <code>list_sources</code></td>
+</tr>
+<tr>
+<td>T2 (Notify)</td>
+<td>Agent acts, researcher is notified</td>
+<td><code>open_project</code>, <code>close_project</code></td>
+</tr>
+<tr>
+<td>T3 (Suggest)</td>
+<td>Agent proposes, researcher confirms</td>
+<td><code>add_text_source</code>, <code>remove_source</code></td>
+</tr>
+</tbody>
+</table>
+<p>Destructive operations like <code>remove_source</code> default to <strong>preview mode</strong> — the agent shows what would be affected before you approve the action.</p>
+<p>See <a href="../mcp-setup/">MCP Setup Guide</a> for configuration and the full list of available tools.</p>
 <h2 id="best-practices">Best Practices<a class="headerlink" href="#best-practices" title="Permanent link">&para;</a></h2>
 <blockquote>
 <p><strong>Review All Suggestions</strong>

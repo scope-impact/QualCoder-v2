@@ -3434,7 +3434,7 @@
     
   
   
-    <span class="md-status md-status--To Do"></span>
+    <span class="md-status md-status--In Progress"></span>
   
 
   
@@ -3459,7 +3459,7 @@
     
   
   
-    <span class="md-status md-status--To Do"></span>
+    <span class="md-status md-status--In Progress"></span>
   
 
   
@@ -3495,6 +3495,17 @@
     <span class="md-ellipsis">
       
         Acceptance Criteria
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#implementation-notes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Implementation Notes
       
     </span>
   </a>
@@ -4204,6 +4215,17 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#implementation-notes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Implementation Notes
+      
+    </span>
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -4243,6 +4265,22 @@
 <li>[ ] #7 Agent can compare across cases</li>
 </ul>
 <!-- AC:END -->
+
+<h2 id="implementation-notes">Implementation Notes<a class="headerlink" href="#implementation-notes" title="Permanent link">&para;</a></h2>
+<!-- SECTION:NOTES:BEGIN -->
+<p><strong>Overall Status (2026-02-06): ~80% core implementation done</strong></p>
+<p>Domain + Infra + Command Handlers: COMPLETE for all 7 subtasks
+MCP Tools: 4 tools implemented (list, get, suggest_groupings, compare)
+MCP Server: Case tools NOT exposed yet (same gap fixed for project tools today)</p>
+<p><strong>Remaining work across all subtasks:</strong>
+1. Expose case tools in MCP server (quick win)
+2. Add missing MCP tools: create_case, link_source, set_attribute, unlink_source, remove_case
+3. Wire CaseManagerViewModel in main.py
+4. Build UI dialogs (Create, Edit, Link, Attribute)
+5. E2E tests with @allure.story decorators
+6. Documentation (API + user manual)
+7. compare_cases cross-context integration with coding</p>
+<!-- SECTION:NOTES:END -->
 
 
 
