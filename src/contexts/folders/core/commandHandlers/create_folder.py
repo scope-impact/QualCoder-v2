@@ -14,11 +14,11 @@ from src.contexts.folders.core.commandHandlers._state import (
     SourceRepository,
     build_folder_state,
 )
-from src.contexts.projects.core.commands import CreateFolderCommand, DeleteFolderCommand
-from src.contexts.projects.core.derivers import derive_create_folder
-from src.contexts.projects.core.entities import Folder
-from src.contexts.projects.core.events import FolderCreated
-from src.contexts.projects.core.failure_events import FolderNotCreated
+from src.contexts.folders.core.commands import CreateFolderCommand, DeleteFolderCommand
+from src.contexts.folders.core.derivers import derive_create_folder
+from src.contexts.folders.core.entities import Folder
+from src.contexts.folders.core.events import FolderCreated
+from src.contexts.folders.core.failure_events import FolderNotCreated
 from src.shared.common.operation_result import OperationResult
 from src.shared.common.types import FolderId
 from src.shared.infra.state import ProjectState
@@ -41,6 +41,7 @@ def create_folder(
         command: Command with folder name and parent ID
         state: Project state cache
         folder_repo: Repository for folder operations
+        source_repo: Repository for source operations
         event_bus: Event bus for publishing events
 
     Returns:

@@ -9,10 +9,11 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Protocol, runtime_checkable
 
-from src.contexts.projects.core.derivers import FolderState
+from src.contexts.folders.core.derivers import FolderState
 
 if TYPE_CHECKING:
-    from src.contexts.projects.core.entities import Folder, Source
+    from src.contexts.folders.core.entities import Folder
+    from src.contexts.projects.core.entities import Source
     from src.shared.common.types import FolderId, SourceId
 
 

@@ -63,13 +63,13 @@ def merge_codes(
 
     event: CodesMerged = result
 
-    # Reassign segments from source to target
-    segment_repo.reassign_code(source_code_id, target_code_id)
+    # Atomic: reassign segments + delete source code in one transaction
+    from src.shared.infra.unit_of_work import UnitOfWork
 
-    # Delete the source code
-    code_repo.delete(source_code_id)
+    with UnitOfWork(code_repo._conn) as uow:
+        segment_repo.reassign_code(source_code_id, target_code_id)
+        code_repo.delete(source_code_id)
+        uow.commit()
 
     event_bus.publish(event)
-
-    # No rollback for merge - would need to recreate source code and reassign segments
     return OperationResult.ok(data=event)

@@ -62,14 +62,14 @@ def delete_code(
 
     event: CodeDeleted = result
 
-    # Delete segments if requested
-    if command.delete_segments:
-        segment_repo.delete_by_code(code_id)
+    # Atomic: delete segments + code in one transaction
+    from src.shared.infra.unit_of_work import UnitOfWork
 
-    # Delete the code
-    code_repo.delete(code_id)
+    with UnitOfWork(code_repo._conn) as uow:
+        if command.delete_segments:
+            segment_repo.delete_by_code(code_id)
+        code_repo.delete(code_id)
+        uow.commit()
 
     event_bus.publish(event)
-
-    # No rollback for delete - would need to recreate code with all data
     return OperationResult.ok(data=event)

@@ -8,6 +8,9 @@ Policies are configured at startup via context-specific configure_*_policies()
 functions that subscribe to the event bus. See:
 - src/contexts/coding/core/policies.py
 - src/contexts/cases/core/policies.py
+- src/contexts/folders/core/policies.py
+- src/contexts/sources/core/policies.py
+- src/contexts/settings/core/policies.py
 """
 
 from __future__ import annotations
@@ -17,6 +20,7 @@ from dataclasses import dataclass, field
 from typing import TYPE_CHECKING
 
 from src.shared.common.operation_result import OperationResult
+from src.shared.infra.cascade_registry import CascadeRegistry
 from src.shared.infra.event_bus import EventBus
 from src.shared.infra.lifecycle import ProjectLifecycle
 from src.shared.infra.state import ProjectState
@@ -24,6 +28,7 @@ from src.shared.infra.state import ProjectState
 from .bounded_contexts import (
     CasesContext,
     CodingContext,
+    FoldersContext,
     ProjectsContext,
     SourcesContext,
 )
@@ -53,6 +58,7 @@ class AppContext:
 
     Attributes:
         event_bus: Domain event pub/sub infrastructure
+        cascade_registry: Declarative cross-context cascade rules
         lifecycle: Database connection management
         state: In-memory session state
         source_sync_handler: Cross-context synchronization
@@ -67,6 +73,7 @@ class AppContext:
 
     # Core infrastructure (always available)
     event_bus: EventBus
+    cascade_registry: CascadeRegistry
     lifecycle: ProjectLifecycle
     state: ProjectState
     source_sync_handler: SourceSyncHandler
@@ -80,6 +87,7 @@ class AppContext:
     cases_context: CasesContext | None = None
     coding_context: CodingContext | None = None
     projects_context: ProjectsContext | None = None
+    folders_context: FoldersContext | None = None
 
     # Internal state
     _started: bool = field(default=False, init=False, repr=False)
@@ -233,6 +241,7 @@ class AppContext:
         self.coding_context = CodingContext.create(connection)
         self.cases_context = CasesContext.create(connection)
         self.projects_context = ProjectsContext.create(connection)
+        self.folders_context = FoldersContext.create(connection)
 
         logger.debug("Created bounded contexts for project")
 
@@ -240,7 +249,7 @@ class AppContext:
             "sources": self.sources_context,
             "cases": self.cases_context,
             "coding": self.coding_context,
-            "folders": self.sources_context,  # Folders are in sources context
+            "folders": self.folders_context,
             "projects": self.projects_context,
         }
 
@@ -250,6 +259,7 @@ class AppContext:
         self.cases_context = None
         self.coding_context = None
         self.projects_context = None
+        self.folders_context = None
         logger.debug("Cleared bounded contexts")
 
     def _wire_sync_handler(self) -> None:

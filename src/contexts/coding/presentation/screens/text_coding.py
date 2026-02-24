@@ -245,7 +245,7 @@ class TextCodingScreen(QWidget):
 
         # Connect to viewmodel if provided
         if self._viewmodel is not None:
-            self._connect_viewmodel()
+            self._connect_viewmodel_signals()
 
         # Connect to AI viewmodel if provided
         if self._ai_viewmodel is not None:
@@ -255,7 +255,7 @@ class TextCodingScreen(QWidget):
     # ViewModel Connection
     # =========================================================================
 
-    def _connect_viewmodel(self):
+    def _connect_viewmodel_signals(self):
         """Connect screen signals to viewmodel and vice versa."""
         if self._viewmodel is None:
             return
@@ -267,6 +267,16 @@ class TextCodingScreen(QWidget):
         # Connect viewmodel signals to screen
         self._viewmodel.codes_changed.connect(self._on_viewmodel_codes_changed)
         self._viewmodel.segments_changed.connect(self._on_viewmodel_segments_changed)
+
+    def _disconnect_viewmodel_signals(self):
+        """Disconnect from previous viewmodel signals."""
+        if self._viewmodel is None:
+            return
+
+        self.code_applied.disconnect(self._on_code_applied_to_viewmodel)
+        self.code_removed.disconnect(self._on_code_removed_from_viewmodel)
+        self._viewmodel.codes_changed.disconnect(self._on_viewmodel_codes_changed)
+        self._viewmodel.segments_changed.disconnect(self._on_viewmodel_segments_changed)
 
     def _on_code_applied_to_viewmodel(self, code_id: str, start: int, end: int):
         """Route code_applied signal to viewmodel."""
@@ -450,8 +460,12 @@ class TextCodingScreen(QWidget):
         Args:
             viewmodel: The text coding viewmodel
         """
+        # Disconnect previous viewmodel signals if any
+        if self._viewmodel is not None:
+            self._disconnect_viewmodel_signals()
+
         self._viewmodel = viewmodel
-        self._connect_viewmodel()
+        self._connect_viewmodel_signals()
 
         # Load initial data from viewmodel
         data = viewmodel.load_initial_data()

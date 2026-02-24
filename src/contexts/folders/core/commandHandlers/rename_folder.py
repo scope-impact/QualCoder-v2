@@ -14,10 +14,10 @@ from src.contexts.folders.core.commandHandlers._state import (
     SourceRepository,
     build_folder_state,
 )
-from src.contexts.projects.core.commands import RenameFolderCommand
-from src.contexts.projects.core.derivers import derive_rename_folder
-from src.contexts.projects.core.events import FolderRenamed
-from src.contexts.projects.core.failure_events import FolderNotRenamed
+from src.contexts.folders.core.commands import RenameFolderCommand
+from src.contexts.folders.core.derivers import derive_rename_folder
+from src.contexts.folders.core.events import FolderRenamed
+from src.contexts.folders.core.failure_events import FolderNotRenamed
 from src.shared.common.operation_result import OperationResult
 from src.shared.common.types import FolderId
 from src.shared.infra.state import ProjectState
@@ -40,6 +40,7 @@ def rename_folder(
         command: Command with folder ID and new name
         state: Project state cache
         folder_repo: Repository for folder operations
+        source_repo: Repository for source operations
         event_bus: Event bus for publishing events
 
     Returns:

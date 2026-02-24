@@ -14,10 +14,10 @@ from src.contexts.folders.core.commandHandlers._state import (
     SourceRepository,
     build_folder_state,
 )
-from src.contexts.projects.core.commands import MoveSourceToFolderCommand
-from src.contexts.projects.core.derivers import derive_move_source_to_folder
-from src.contexts.projects.core.events import SourceMovedToFolder
-from src.contexts.projects.core.failure_events import SourceNotMoved
+from src.contexts.folders.core.commands import MoveSourceToFolderCommand
+from src.contexts.folders.core.derivers import derive_move_source_to_folder
+from src.contexts.folders.core.events import SourceMovedToFolder
+from src.contexts.folders.core.failure_events import SourceNotMoved
 from src.shared.common.operation_result import OperationResult
 from src.shared.common.types import FolderId, SourceId
 from src.shared.infra.state import ProjectState
@@ -39,6 +39,7 @@ def move_source_to_folder(
     Args:
         command: Command with source ID and target folder ID
         state: Project state cache
+        folder_repo: Repository for folder operations
         source_repo: Repository for source operations
         event_bus: Event bus for publishing events
 

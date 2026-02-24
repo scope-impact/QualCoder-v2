@@ -168,6 +168,14 @@ def source_repo(db_connection):
     return SQLiteSourceRepository(db_connection)
 
 
+@pytest.fixture
+def folder_repo(db_connection):
+    """Create a real folder repository."""
+    from src.contexts.folders.infra.folder_repository import SQLiteFolderRepository
+
+    return SQLiteFolderRepository(db_connection)
+
+
 # =============================================================================
 # Context Fixtures (bundles of repositories)
 # =============================================================================

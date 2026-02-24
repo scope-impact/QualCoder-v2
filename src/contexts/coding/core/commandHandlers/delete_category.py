@@ -62,19 +62,18 @@ def delete_category(
 
     event: CategoryDeleted = result
 
-    # Handle orphaned codes based on strategy
-    if command.orphan_strategy == "move_to_parent":
-        category = category_repo.get_by_id(category_id)
-        parent_id = category.parent_id if category else None
-        # Update codes to point to parent (or None)
-        for code in code_repo.get_by_category(category_id):
-            updated_code = code.with_category(parent_id)
-            code_repo.save(updated_code)
+    # Atomic: handle orphaned codes + delete category in one transaction
+    from src.shared.infra.unit_of_work import UnitOfWork
 
-    # Delete the category
-    category_repo.delete(category_id)
+    with UnitOfWork(category_repo._conn) as uow:
+        if command.orphan_strategy == "move_to_parent":
+            category = category_repo.get_by_id(category_id)
+            parent_id = category.parent_id if category else None
+            for code in code_repo.get_by_category(category_id):
+                updated_code = code.with_category(parent_id)
+                code_repo.save(updated_code)
+        category_repo.delete(category_id)
+        uow.commit()
 
     event_bus.publish(event)
-
-    # No rollback for delete - would need to recreate category and reassign codes
     return OperationResult.ok(data=event)

@@ -55,11 +55,27 @@ def open_project(app_context: AppContext, existing_project: Path) -> Path:
 
 
 @pytest.fixture
-def tools(app_context: AppContext):
-    """Create ProjectTools instance."""
+def project_tools(app_context: AppContext):
+    """Create ProjectTools instance for project lifecycle tools."""
     from src.contexts.projects.interface.mcp_tools import ProjectTools
 
     return ProjectTools(ctx=app_context)
+
+
+@pytest.fixture
+def source_tools(app_context: AppContext):
+    """Create SourceTools instance for source management tools."""
+    from src.contexts.sources.interface.mcp_tools import SourceTools
+
+    return SourceTools(ctx=app_context)
+
+
+@pytest.fixture
+def folder_tools(app_context: AppContext):
+    """Create FolderTools instance for folder management tools."""
+    from src.contexts.folders.interface.mcp_tools import FolderTools
+
+    return FolderTools(ctx=app_context)
 
 
 # ============================================================
@@ -71,9 +87,9 @@ def tools(app_context: AppContext):
 @allure.severity(allure.severity_level.CRITICAL)
 class TestAgentOpenCloseProject:
     @allure.title("AC #1: open_project tool is registered with path parameter")
-    def test_open_project_tool_schema(self, tools):
+    def test_open_project_tool_schema(self, project_tools):
         with allure.step("Get tool schemas"):
-            schemas = tools.get_tool_schemas()
+            schemas = project_tools.get_tool_schemas()
 
         with allure.step("Verify open_project tool exists"):
             tool_names = [s["name"] for s in schemas]
@@ -84,9 +100,11 @@ class TestAgentOpenCloseProject:
             assert "path" in schema["inputSchema"]["required"]
 
     @allure.title("AC #2: open_project redirects agent to use QualCoder UI")
-    def test_open_project_redirects_to_ui(self, tools, existing_project: Path):
+    def test_open_project_redirects_to_ui(self, project_tools, existing_project: Path):
         with allure.step("Call open_project via MCP tool"):
-            result = tools.execute("open_project", {"path": str(existing_project)})
+            result = project_tools.execute(
+                "open_project", {"path": str(existing_project)}
+            )
 
         with allure.step("Verify it returns UI guidance"):
             assert isinstance(result, Success)
@@ -96,18 +114,18 @@ class TestAgentOpenCloseProject:
             assert str(existing_project) in data["message"]
 
     @allure.title("AC #5: close_project tool is registered")
-    def test_close_project_tool_schema(self, tools):
+    def test_close_project_tool_schema(self, project_tools):
         with allure.step("Get tool schemas"):
-            schemas = tools.get_tool_schemas()
+            schemas = project_tools.get_tool_schemas()
 
         with allure.step("Verify close_project tool exists"):
             tool_names = [s["name"] for s in schemas]
             assert "close_project" in tool_names
 
     @allure.title("AC #6: close_project redirects agent to use QualCoder UI")
-    def test_close_project_redirects_to_ui(self, tools):
+    def test_close_project_redirects_to_ui(self, project_tools):
         with allure.step("Call close_project via MCP tool"):
-            result = tools.execute("close_project", {})
+            result = project_tools.execute("close_project", {})
 
         with allure.step("Verify it returns UI guidance"):
             assert isinstance(result, Success)
@@ -126,9 +144,9 @@ class TestAgentOpenCloseProject:
 @allure.feature("QC-027 Manage Sources")
 class TestAgentAddTextSource:
     @allure.title("AC #1: add_text_source tool is registered with proper schema")
-    def test_add_text_source_tool_schema(self, tools):
+    def test_add_text_source_tool_schema(self, source_tools):
         with allure.step("Get tool schemas"):
-            schemas = tools.get_tool_schemas()
+            schemas = source_tools.get_tool_schemas()
 
         with allure.step("Verify tool exists"):
             tool_names = [s["name"] for s in schemas]
@@ -142,10 +160,10 @@ class TestAgentAddTextSource:
 
     @allure.title("AC #2: Agent can provide name, content, and optional metadata")
     def test_add_text_source_success(
-        self, app_context: AppContext, tools, open_project: Path
+        self, app_context: AppContext, source_tools, open_project: Path
     ):
         with allure.step("Add text source via MCP tool"):
-            result = tools.execute(
+            result = source_tools.execute(
                 "add_text_source",
                 {
                     "name": "interview_01.txt",
@@ -166,17 +184,17 @@ class TestAgentAddTextSource:
 
     @allure.title("AC #3: Duplicate source names are rejected")
     def test_add_text_source_duplicate_name(
-        self, app_context: AppContext, tools, open_project: Path
+        self, app_context: AppContext, source_tools, open_project: Path
     ):
         with allure.step("Add first source"):
-            result1 = tools.execute(
+            result1 = source_tools.execute(
                 "add_text_source",
                 {"name": "unique_doc.txt", "content": "First version"},
             )
             assert isinstance(result1, Success)
 
         with allure.step("Add source with same name"):
-            result2 = tools.execute(
+            result2 = source_tools.execute(
                 "add_text_source",
                 {"name": "unique_doc.txt", "content": "Second version"},
             )
@@ -187,7 +205,7 @@ class TestAgentAddTextSource:
 
     @allure.title("AC #4: Source is persisted and SourceAdded event published")
     def test_add_text_source_persisted_and_event(
-        self, app_context: AppContext, tools, open_project: Path
+        self, app_context: AppContext, source_tools, open_project: Path
     ):
         events_received = []
         app_context.event_bus.subscribe(
@@ -195,7 +213,7 @@ class TestAgentAddTextSource:
         )
 
         with allure.step("Add text source"):
-            result = tools.execute(
+            result = source_tools.execute(
                 "add_text_source",
                 {"name": "persisted_doc.txt", "content": "Persisted content"},
             )
@@ -214,9 +232,9 @@ class TestAgentAddTextSource:
             assert len(events_received) >= 1
 
     @allure.title("AC #5: Tool returns source ID, name, type, and status")
-    def test_add_text_source_returns_details(self, tools, open_project: Path):
+    def test_add_text_source_returns_details(self, source_tools, open_project: Path):
         with allure.step("Add text source"):
-            result = tools.execute(
+            result = source_tools.execute(
                 "add_text_source",
                 {"name": "detailed_doc.txt", "content": "Some content"},
             )
@@ -230,9 +248,9 @@ class TestAgentAddTextSource:
             assert "status" in data
 
     @allure.title("AC #6: Empty name is rejected")
-    def test_add_text_source_empty_name(self, tools, open_project: Path):
+    def test_add_text_source_empty_name(self, source_tools, open_project: Path):
         with allure.step("Add source with empty name"):
-            result = tools.execute(
+            result = source_tools.execute(
                 "add_text_source", {"name": "", "content": "Some content"}
             )
 
@@ -240,9 +258,9 @@ class TestAgentAddTextSource:
             assert isinstance(result, Failure)
 
     @allure.title("AC #6: Empty content is rejected")
-    def test_add_text_source_empty_content(self, tools, open_project: Path):
+    def test_add_text_source_empty_content(self, source_tools, open_project: Path):
         with allure.step("Add source with empty content"):
-            result = tools.execute(
+            result = source_tools.execute(
                 "add_text_source", {"name": "empty_doc.txt", "content": ""}
             )
 
@@ -250,9 +268,9 @@ class TestAgentAddTextSource:
             assert isinstance(result, Failure)
 
     @allure.title("AC #8: Tool schema includes optional memo and origin parameters")
-    def test_add_text_source_optional_params(self, tools):
+    def test_add_text_source_optional_params(self, source_tools):
         with allure.step("Get schema"):
-            schemas = tools.get_tool_schemas()
+            schemas = source_tools.get_tool_schemas()
             schema = next(s for s in schemas if s["name"] == "add_text_source")
             props = schema["inputSchema"]["properties"]
 
@@ -271,9 +289,9 @@ class TestAgentAddTextSource:
 @allure.feature("QC-027 Manage Sources")
 class TestAgentRemoveSource:
     @allure.title("AC #1: remove_source tool registered with source_id parameter")
-    def test_remove_source_tool_schema(self, tools):
+    def test_remove_source_tool_schema(self, source_tools):
         with allure.step("Get tool schemas"):
-            schemas = tools.get_tool_schemas()
+            schemas = source_tools.get_tool_schemas()
 
         with allure.step("Verify tool exists with required params"):
             tool_names = [s["name"] for s in schemas]
@@ -282,9 +300,9 @@ class TestAgentRemoveSource:
             assert "source_id" in schema["inputSchema"]["required"]
 
     @allure.title("AC #3: Non-existent source returns failure")
-    def test_remove_source_not_found(self, tools, open_project: Path):
+    def test_remove_source_not_found(self, source_tools, open_project: Path):
         with allure.step("Try to remove non-existent source"):
-            result = tools.execute(
+            result = source_tools.execute(
                 "remove_source", {"source_id": 9999, "confirm": True}
             )
 
@@ -294,7 +312,7 @@ class TestAgentRemoveSource:
 
     @allure.title("AC #6: Preview mode returns requires_approval flag")
     def test_remove_source_preview_mode(
-        self, app_context: AppContext, tools, open_project: Path
+        self, app_context: AppContext, source_tools, open_project: Path
     ):
         from src.contexts.projects.core.entities import Source, SourceType
         from src.shared.common.types import SourceId
@@ -309,7 +327,9 @@ class TestAgentRemoveSource:
             app_context.sources_context.source_repo.save(source)
 
         with allure.step("Preview deletion (confirm=false)"):
-            result = tools.execute("remove_source", {"source_id": 42, "confirm": False})
+            result = source_tools.execute(
+                "remove_source", {"source_id": 42, "confirm": False}
+            )
 
         with allure.step("Verify preview response"):
             assert isinstance(result, Success)
@@ -321,7 +341,7 @@ class TestAgentRemoveSource:
 
     @allure.title("AC #2: Agent can remove a source with confirm=true")
     def test_remove_source_confirmed(
-        self, app_context: AppContext, tools, open_project: Path
+        self, app_context: AppContext, source_tools, open_project: Path
     ):
         from src.contexts.projects.core.entities import Source, SourceType
         from src.shared.common.types import SourceId
@@ -336,7 +356,9 @@ class TestAgentRemoveSource:
             app_context.sources_context.source_repo.save(source)
 
         with allure.step("Confirm deletion"):
-            result = tools.execute("remove_source", {"source_id": 43, "confirm": True})
+            result = source_tools.execute(
+                "remove_source", {"source_id": 43, "confirm": True}
+            )
 
         with allure.step("Verify removed"):
             assert isinstance(result, Success)
@@ -351,7 +373,7 @@ class TestAgentRemoveSource:
 
     @allure.title("AC #7: Default confirm=false returns preview")
     def test_remove_source_default_preview(
-        self, app_context: AppContext, tools, open_project: Path
+        self, app_context: AppContext, source_tools, open_project: Path
     ):
         from src.contexts.projects.core.entities import Source, SourceType
         from src.shared.common.types import SourceId
@@ -365,7 +387,7 @@ class TestAgentRemoveSource:
             app_context.sources_context.source_repo.save(source)
 
         with allure.step("Call without confirm param (should default to preview)"):
-            result = tools.execute("remove_source", {"source_id": 44})
+            result = source_tools.execute("remove_source", {"source_id": 44})
 
         with allure.step("Verify preview mode"):
             assert isinstance(result, Success)
@@ -387,9 +409,9 @@ class TestAgentRemoveSource:
 @allure.feature("QC-027 Manage Sources")
 class TestAgentManageFolders:
     @allure.title("AC #1: list_folders returns all folders")
-    def test_list_folders_empty(self, tools, open_project: Path):
+    def test_list_folders_empty(self, folder_tools, open_project: Path):
         with allure.step("List folders in empty project"):
-            result = tools.execute("list_folders", {})
+            result = folder_tools.execute("list_folders", {})
 
         with allure.step("Verify empty list"):
             assert isinstance(result, Success)
@@ -397,9 +419,9 @@ class TestAgentManageFolders:
             assert data["total_count"] == 0
 
     @allure.title("AC #2: create_folder accepts name and returns folder ID")
-    def test_create_folder_success(self, tools, open_project: Path):
+    def test_create_folder_success(self, folder_tools, open_project: Path):
         with allure.step("Create a folder"):
-            result = tools.execute("create_folder", {"name": "Interviews"})
+            result = folder_tools.execute("create_folder", {"name": "Interviews"})
 
         with allure.step("Verify folder created"):
             assert isinstance(result, Success)
@@ -409,26 +431,28 @@ class TestAgentManageFolders:
             assert "folder_id" in data
 
     @allure.title("AC #3: Duplicate folder names rejected")
-    def test_create_folder_duplicate(self, tools, open_project: Path):
+    def test_create_folder_duplicate(self, folder_tools, open_project: Path):
         with allure.step("Create first folder"):
-            tools.execute("create_folder", {"name": "Duplicated"})
+            folder_tools.execute("create_folder", {"name": "Duplicated"})
 
         with allure.step("Try to create duplicate"):
-            result = tools.execute("create_folder", {"name": "Duplicated"})
+            result = folder_tools.execute("create_folder", {"name": "Duplicated"})
 
         with allure.step("Verify rejected"):
             assert isinstance(result, Failure)
             assert "duplicate" in str(result.failure()).lower()
 
     @allure.title("AC #4: rename_folder accepts folder_id and new_name")
-    def test_rename_folder(self, app_context: AppContext, tools, open_project: Path):
+    def test_rename_folder(
+        self, app_context: AppContext, folder_tools, open_project: Path
+    ):
         with allure.step("Create a folder"):
-            create_result = tools.execute("create_folder", {"name": "Old Name"})
+            create_result = folder_tools.execute("create_folder", {"name": "Old Name"})
             assert isinstance(create_result, Success)
             folder_id = create_result.unwrap()["folder_id"]
 
         with allure.step("Rename folder"):
-            result = tools.execute(
+            result = folder_tools.execute(
                 "rename_folder",
                 {"folder_id": folder_id, "new_name": "New Name"},
             )
@@ -441,13 +465,13 @@ class TestAgentManageFolders:
 
     @allure.title("AC #5: delete_folder rejects non-empty folder")
     def test_delete_folder_not_empty(
-        self, app_context: AppContext, tools, open_project: Path
+        self, app_context: AppContext, folder_tools, open_project: Path
     ):
         from src.contexts.projects.core.entities import Source, SourceType
         from src.shared.common.types import FolderId, SourceId
 
         with allure.step("Create folder and source in it"):
-            create_result = tools.execute("create_folder", {"name": "Non-Empty"})
+            create_result = folder_tools.execute("create_folder", {"name": "Non-Empty"})
             assert isinstance(create_result, Success)
             folder_id = create_result.unwrap()["folder_id"]
 
@@ -460,20 +484,20 @@ class TestAgentManageFolders:
             app_context.sources_context.source_repo.save(source)
 
         with allure.step("Try to delete non-empty folder"):
-            result = tools.execute("delete_folder", {"folder_id": folder_id})
+            result = folder_tools.execute("delete_folder", {"folder_id": folder_id})
 
         with allure.step("Verify rejected"):
             assert isinstance(result, Failure)
 
     @allure.title("AC #5: delete_folder succeeds for empty folder")
-    def test_delete_empty_folder(self, tools, open_project: Path):
+    def test_delete_empty_folder(self, folder_tools, open_project: Path):
         with allure.step("Create folder"):
-            create_result = tools.execute("create_folder", {"name": "To Delete"})
+            create_result = folder_tools.execute("create_folder", {"name": "To Delete"})
             assert isinstance(create_result, Success)
             folder_id = create_result.unwrap()["folder_id"]
 
         with allure.step("Delete empty folder"):
-            result = tools.execute("delete_folder", {"folder_id": folder_id})
+            result = folder_tools.execute("delete_folder", {"folder_id": folder_id})
 
         with allure.step("Verify deleted"):
             assert isinstance(result, Success)
@@ -482,13 +506,15 @@ class TestAgentManageFolders:
 
     @allure.title("AC #6: move_source_to_folder moves source between folders")
     def test_move_source_to_folder(
-        self, app_context: AppContext, tools, open_project: Path
+        self, app_context: AppContext, folder_tools, open_project: Path
     ):
         from src.contexts.projects.core.entities import Source, SourceType
         from src.shared.common.types import SourceId
 
         with allure.step("Create folder and source"):
-            create_result = tools.execute("create_folder", {"name": "Target Folder"})
+            create_result = folder_tools.execute(
+                "create_folder", {"name": "Target Folder"}
+            )
             assert isinstance(create_result, Success)
             folder_id = create_result.unwrap()["folder_id"]
 
@@ -500,7 +526,7 @@ class TestAgentManageFolders:
             app_context.sources_context.source_repo.save(source)
 
         with allure.step("Move source to folder"):
-            result = tools.execute(
+            result = folder_tools.execute(
                 "move_source_to_folder",
                 {"source_id": 200, "folder_id": folder_id},
             )
@@ -513,28 +539,28 @@ class TestAgentManageFolders:
 
     @allure.title("AC #7: Folder operations publish domain events")
     def test_folder_events_published(
-        self, app_context: AppContext, tools, open_project: Path
+        self, app_context: AppContext, folder_tools, open_project: Path
     ):
         events_received = []
         app_context.event_bus.subscribe(
-            "projects.folder_created", lambda e: events_received.append(e)
+            "folders.folder_created", lambda e: events_received.append(e)
         )
 
         with allure.step("Create folder"):
-            result = tools.execute("create_folder", {"name": "Events Folder"})
+            result = folder_tools.execute("create_folder", {"name": "Events Folder"})
             assert isinstance(result, Success)
 
         with allure.step("Verify event published"):
             assert len(events_received) >= 1
 
     @allure.title("AC #1 + AC #2: Create folders and list them")
-    def test_create_and_list_folders(self, tools, open_project: Path):
+    def test_create_and_list_folders(self, folder_tools, open_project: Path):
         with allure.step("Create two folders"):
-            tools.execute("create_folder", {"name": "Folder A"})
-            tools.execute("create_folder", {"name": "Folder B"})
+            folder_tools.execute("create_folder", {"name": "Folder A"})
+            folder_tools.execute("create_folder", {"name": "Folder B"})
 
         with allure.step("List all folders"):
-            result = tools.execute("list_folders", {})
+            result = folder_tools.execute("list_folders", {})
 
         with allure.step("Verify both returned"):
             assert isinstance(result, Success)
@@ -556,7 +582,9 @@ class TestAgentFullWorkflow:
     @allure.title(
         "Integration: Agent creates project, adds sources, organizes, and cleans up"
     )
-    def test_full_agent_workflow(self, app_context: AppContext, tools, tmp_path: Path):
+    def test_full_agent_workflow(
+        self, app_context: AppContext, source_tools, folder_tools, tmp_path: Path
+    ):
         with allure.step("Step 1: Create and open project via AppContext"):
             project_path = tmp_path / "agent_workflow.qda"
             app_context.create_project(
@@ -567,11 +595,11 @@ class TestAgentFullWorkflow:
             assert result.is_success
 
         with allure.step("Step 2: Add text sources"):
-            r1 = tools.execute(
+            r1 = source_tools.execute(
                 "add_text_source",
                 {"name": "interview_01.txt", "content": "First interview..."},
             )
-            r2 = tools.execute(
+            r2 = source_tools.execute(
                 "add_text_source",
                 {"name": "interview_02.txt", "content": "Second interview..."},
             )
@@ -579,36 +607,38 @@ class TestAgentFullWorkflow:
             assert isinstance(r2, Success)
 
         with allure.step("Step 3: Organize into folders"):
-            folder_result = tools.execute("create_folder", {"name": "Interviews"})
+            folder_result = folder_tools.execute(
+                "create_folder", {"name": "Interviews"}
+            )
             assert isinstance(folder_result, Success)
             folder_id = folder_result.unwrap()["folder_id"]
 
             source_id_1 = r1.unwrap()["source_id"]
-            move_result = tools.execute(
+            move_result = folder_tools.execute(
                 "move_source_to_folder",
                 {"source_id": source_id_1, "folder_id": folder_id},
             )
             assert isinstance(move_result, Success)
 
         with allure.step("Step 4: List and verify"):
-            sources = tools.execute("list_sources", {})
+            sources = source_tools.execute("list_sources", {})
             assert isinstance(sources, Success)
             assert sources.unwrap()["count"] == 2
 
-            folders = tools.execute("list_folders", {})
+            folders = folder_tools.execute("list_folders", {})
             assert isinstance(folders, Success)
             assert folders.unwrap()["total_count"] == 1
 
         with allure.step("Step 5: Preview deletion"):
             source_id_2 = r2.unwrap()["source_id"]
-            preview = tools.execute(
+            preview = source_tools.execute(
                 "remove_source", {"source_id": source_id_2, "confirm": False}
             )
             assert isinstance(preview, Success)
             assert preview.unwrap()["preview"] is True
 
         with allure.step("Step 6: Confirm deletion"):
-            remove = tools.execute(
+            remove = source_tools.execute(
                 "remove_source", {"source_id": source_id_2, "confirm": True}
             )
             assert isinstance(remove, Success)
@@ -698,9 +728,9 @@ def sample_video_file(tmp_path: Path) -> Path:
 @allure.feature("QC-027 Manage Sources")
 class TestAgentImportFileSource:
     @allure.title("AC #1: import_file_source tool registered with file_path parameter")
-    def test_tool_schema(self, tools):
+    def test_tool_schema(self, source_tools):
         with allure.step("Get tool schemas"):
-            schemas = tools.get_tool_schemas()
+            schemas = source_tools.get_tool_schemas()
 
         with allure.step("Verify tool exists with required params"):
             tool_names = [s["name"] for s in schemas]
@@ -709,9 +739,11 @@ class TestAgentImportFileSource:
             assert "file_path" in schema["inputSchema"]["required"]
 
     @allure.title("AC #2: Agent can import text files by absolute path")
-    def test_import_text_file(self, tools, open_project: Path, sample_text_file: Path):
+    def test_import_text_file(
+        self, source_tools, open_project: Path, sample_text_file: Path
+    ):
         with allure.step("Import text file"):
-            result = tools.execute(
+            result = source_tools.execute(
                 "import_file_source", {"file_path": str(sample_text_file)}
             )
 
@@ -724,9 +756,11 @@ class TestAgentImportFileSource:
             assert data["status"] == "imported"
 
     @allure.title("AC #3: Agent can import PDF files")
-    def test_import_pdf_file(self, tools, open_project: Path, sample_pdf_file: Path):
+    def test_import_pdf_file(
+        self, source_tools, open_project: Path, sample_pdf_file: Path
+    ):
         with allure.step("Import PDF file"):
-            result = tools.execute(
+            result = source_tools.execute(
                 "import_file_source", {"file_path": str(sample_pdf_file)}
             )
 
@@ -739,10 +773,10 @@ class TestAgentImportFileSource:
 
     @allure.title("AC #4: Agent can import image files")
     def test_import_image_file(
-        self, tools, open_project: Path, sample_image_file: Path
+        self, source_tools, open_project: Path, sample_image_file: Path
     ):
         with allure.step("Import image file"):
-            result = tools.execute(
+            result = source_tools.execute(
                 "import_file_source", {"file_path": str(sample_image_file)}
             )
 
@@ -755,10 +789,10 @@ class TestAgentImportFileSource:
 
     @allure.title("AC #5: Agent can import audio/video files")
     def test_import_audio_file(
-        self, tools, open_project: Path, sample_audio_file: Path
+        self, source_tools, open_project: Path, sample_audio_file: Path
     ):
         with allure.step("Import audio file"):
-            result = tools.execute(
+            result = source_tools.execute(
                 "import_file_source", {"file_path": str(sample_audio_file)}
             )
 
@@ -771,10 +805,10 @@ class TestAgentImportFileSource:
 
     @allure.title("AC #5: Agent can import video files")
     def test_import_video_file(
-        self, tools, open_project: Path, sample_video_file: Path
+        self, source_tools, open_project: Path, sample_video_file: Path
     ):
         with allure.step("Import video file"):
-            result = tools.execute(
+            result = source_tools.execute(
                 "import_file_source", {"file_path": str(sample_video_file)}
             )
 
@@ -786,7 +820,9 @@ class TestAgentImportFileSource:
             assert data["type"] == "video"
 
     @allure.title("AC #6: File type is auto-detected from extension")
-    def test_file_type_auto_detected(self, tools, open_project: Path, tmp_path: Path):
+    def test_file_type_auto_detected(
+        self, source_tools, open_project: Path, tmp_path: Path
+    ):
         with allure.step("Create files with various extensions"):
             jpg = tmp_path / "photo.jpg"
             jpg.write_bytes(b"\xff\xd8\xff\xe0" + b"\x00" * 50)
@@ -794,19 +830,21 @@ class TestAgentImportFileSource:
             wav.write_bytes(b"RIFF" + b"\x00" * 50)
 
         with allure.step("Import jpg (should be image)"):
-            r1 = tools.execute("import_file_source", {"file_path": str(jpg)})
+            r1 = source_tools.execute("import_file_source", {"file_path": str(jpg)})
             assert isinstance(r1, Success)
             assert r1.unwrap()["type"] == "image"
 
         with allure.step("Import wav (should be audio)"):
-            r2 = tools.execute("import_file_source", {"file_path": str(wav)})
+            r2 = source_tools.execute("import_file_source", {"file_path": str(wav)})
             assert isinstance(r2, Success)
             assert r2.unwrap()["type"] == "audio"
 
     @allure.title("AC #7: Non-existent file returns clear failure")
-    def test_import_nonexistent_file(self, tools, open_project: Path, tmp_path: Path):
+    def test_import_nonexistent_file(
+        self, source_tools, open_project: Path, tmp_path: Path
+    ):
         with allure.step("Try to import non-existent file"):
-            result = tools.execute(
+            result = source_tools.execute(
                 "import_file_source",
                 {"file_path": str(tmp_path / "does_not_exist.txt")},
             )
@@ -817,14 +855,14 @@ class TestAgentImportFileSource:
 
     @allure.title("AC #8: Unsupported file extensions are rejected")
     def test_import_unsupported_extension(
-        self, tools, open_project: Path, tmp_path: Path
+        self, source_tools, open_project: Path, tmp_path: Path
     ):
         with allure.step("Create file with unsupported extension"):
             f = tmp_path / "data.xyz"
             f.write_bytes(b"some data")
 
         with allure.step("Try to import"):
-            result = tools.execute("import_file_source", {"file_path": str(f)})
+            result = source_tools.execute("import_file_source", {"file_path": str(f)})
 
         with allure.step("Verify rejected with supported types listed"):
             assert isinstance(result, Failure)
@@ -834,16 +872,16 @@ class TestAgentImportFileSource:
 
     @allure.title("AC #9: Duplicate source names are rejected")
     def test_import_duplicate_name(
-        self, tools, open_project: Path, sample_text_file: Path
+        self, source_tools, open_project: Path, sample_text_file: Path
     ):
         with allure.step("Import file first time"):
-            r1 = tools.execute(
+            r1 = source_tools.execute(
                 "import_file_source", {"file_path": str(sample_text_file)}
             )
             assert isinstance(r1, Success)
 
         with allure.step("Import same file again (same default name)"):
-            r2 = tools.execute(
+            r2 = source_tools.execute(
                 "import_file_source", {"file_path": str(sample_text_file)}
             )
 
@@ -853,10 +891,10 @@ class TestAgentImportFileSource:
 
     @allure.title("AC #10: Optional name parameter overrides filename")
     def test_import_with_name_override(
-        self, tools, open_project: Path, sample_text_file: Path
+        self, source_tools, open_project: Path, sample_text_file: Path
     ):
         with allure.step("Import with custom name"):
-            result = tools.execute(
+            result = source_tools.execute(
                 "import_file_source",
                 {
                     "file_path": str(sample_text_file),
@@ -873,7 +911,7 @@ class TestAgentImportFileSource:
     def test_import_publishes_event(
         self,
         app_context: AppContext,
-        tools,
+        source_tools,
         open_project: Path,
         sample_text_file: Path,
     ):
@@ -883,7 +921,7 @@ class TestAgentImportFileSource:
         )
 
         with allure.step("Import file"):
-            result = tools.execute(
+            result = source_tools.execute(
                 "import_file_source", {"file_path": str(sample_text_file)}
             )
             assert isinstance(result, Success)
@@ -893,10 +931,10 @@ class TestAgentImportFileSource:
 
     @allure.title("AC #12: Tool returns source ID, name, type, status, file_size")
     def test_import_returns_full_details(
-        self, tools, open_project: Path, sample_text_file: Path
+        self, source_tools, open_project: Path, sample_text_file: Path
     ):
         with allure.step("Import file"):
-            result = tools.execute(
+            result = source_tools.execute(
                 "import_file_source", {"file_path": str(sample_text_file)}
             )
 
@@ -914,12 +952,12 @@ class TestAgentImportFileSource:
     def test_text_content_extracted(
         self,
         app_context: AppContext,
-        tools,
+        source_tools,
         open_project: Path,
         sample_text_file: Path,
     ):
         with allure.step("Import text file"):
-            result = tools.execute(
+            result = source_tools.execute(
                 "import_file_source", {"file_path": str(sample_text_file)}
             )
             assert isinstance(result, Success)
@@ -939,12 +977,12 @@ class TestAgentImportFileSource:
     def test_media_no_fulltext(
         self,
         app_context: AppContext,
-        tools,
+        source_tools,
         open_project: Path,
         sample_image_file: Path,
     ):
         with allure.step("Import image file"):
-            result = tools.execute(
+            result = source_tools.execute(
                 "import_file_source", {"file_path": str(sample_image_file)}
             )
             assert isinstance(result, Success)
@@ -961,10 +999,14 @@ class TestAgentImportFileSource:
 
     @allure.title("Dry run validates without importing")
     def test_dry_run_mode(
-        self, app_context: AppContext, tools, open_project: Path, sample_text_file: Path
+        self,
+        app_context: AppContext,
+        source_tools,
+        open_project: Path,
+        sample_text_file: Path,
     ):
         with allure.step("Dry run import"):
-            result = tools.execute(
+            result = source_tools.execute(
                 "import_file_source",
                 {"file_path": str(sample_text_file), "dry_run": True},
             )
@@ -983,9 +1025,9 @@ class TestAgentImportFileSource:
             assert "interview.txt" not in names
 
     @allure.title("Relative path is rejected")
-    def test_relative_path_rejected(self, tools, open_project: Path):
+    def test_relative_path_rejected(self, source_tools, open_project: Path):
         with allure.step("Try relative path"):
-            result = tools.execute(
+            result = source_tools.execute(
                 "import_file_source", {"file_path": "relative/path.txt"}
             )
 

@@ -16,7 +16,7 @@ import logging
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
-    from src.shared.infra.event_bus import EventBus
+    from src.shared.infra.cascade_registry import CascadeRegistry
 
 logger = logging.getLogger(__name__)
 
@@ -87,11 +87,30 @@ def _handle_source_removed(event: Any) -> None:
 # ============================================================
 
 
-def configure_cases_policies(event_bus: EventBus) -> None:
+def configure_cases_policies(
+    cascade_registry: CascadeRegistry,
+) -> None:
     """Configure all policies for the cases context."""
-    # Cross-context events: subscribe by event type string to avoid import coupling
-    event_bus.subscribe("projects.source_renamed", _handle_source_renamed)
-    event_bus.subscribe("projects.source_removed", _handle_source_removed)
+    from src.shared.infra.cascade_registry import CascadeRule
+
+    # --- Cascade rules (data-modifying) ---
+    cascade_registry.register(
+        CascadeRule(
+            trigger_event_type="projects.source_renamed",
+            handler=_handle_source_renamed,
+            description="Sync denormalized source_name in case links",
+            context="cases",
+        )
+    )
+    cascade_registry.register(
+        CascadeRule(
+            trigger_event_type="projects.source_removed",
+            handler=_handle_source_removed,
+            description="Remove case links when source is removed",
+            context="cases",
+        )
+    )
+
     logger.info("Cases context policies configured")
 
 

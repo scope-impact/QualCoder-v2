@@ -113,6 +113,7 @@ class TestSettingsDialogIntegration:
         from src.contexts.settings.infra import UserSettingsRepository
         from src.contexts.settings.presentation import SettingsViewModel
         from src.contexts.settings.presentation.dialogs import SettingsDialog
+        from src.shared.infra.event_bus import EventBus
         from src.shared.presentation.services import SettingsService
         from src.shared.presentation.templates.app_shell import AppShell
 
@@ -123,7 +124,8 @@ class TestSettingsDialogIntegration:
         with tempfile.TemporaryDirectory() as tmpdir:
             config_path = Path(tmpdir) / "settings.json"
             repo = UserSettingsRepository(config_path=config_path)
-            provider = SettingsService(repo)
+            event_bus = EventBus()
+            provider = SettingsService(repo, event_bus=event_bus)
             viewmodel = SettingsViewModel(settings_provider=provider)
 
             # Variable to track dialog

@@ -143,27 +143,47 @@ class SQLiteSourceRepository:
         result = self._conn.execute(stmt)
         return [self._row_to_source(row) for row in result]
 
-    def _row_to_source(self, row) -> Source:
-        """
-        Map database row to domain Source entity.
+    def clear_folder_assignment(self, folder_id: FolderId) -> int:
+        """Unassign all sources from a folder (set folder_id=NULL).
 
-        This mapper enforces invariants via the Source constructor.
+        Returns the number of sources unassigned.
         """
+        count_stmt = select(func.count()).where(
+            src_source.c.folder_id == folder_id.value
+        )
+        count = self._conn.execute(count_stmt).scalar()
+
+        if count > 0:
+            stmt = (
+                update(src_source)
+                .where(src_source.c.folder_id == folder_id.value)
+                .values(folder_id=None)
+            )
+            self._conn.execute(stmt)
+            self._conn.commit()
+
+        return count
+
+    def _row_to_source(self, row) -> Source:
+        """Map database row to domain Source entity."""
+        source_type = (
+            SourceType(row.source_type) if row.source_type else SourceType.TEXT
+        )
+        status = SourceStatus(row.status) if row.status else SourceStatus.IMPORTED
         folder_id = FolderId(value=row.folder_id) if row.folder_id else None
+        file_path = Path(row.mediapath) if row.mediapath else None
+        created_at = datetime.fromisoformat(row.date) if row.date else datetime.now(UTC)
+
         return Source(
             id=SourceId(value=row.id),
             name=row.name,
-            source_type=SourceType(row.source_type)
-            if row.source_type
-            else SourceType.TEXT,
-            status=SourceStatus(row.status) if row.status else SourceStatus.IMPORTED,
-            file_path=Path(row.mediapath) if row.mediapath else None,
+            source_type=source_type,
+            status=status,
+            file_path=file_path,
             file_size=row.file_size or 0,
             memo=row.memo,
             origin=row.origin,
             folder_id=folder_id,
             fulltext=row.fulltext,
-            created_at=datetime.fromisoformat(row.date)
-            if row.date
-            else datetime.now(UTC),
+            created_at=created_at,
         )

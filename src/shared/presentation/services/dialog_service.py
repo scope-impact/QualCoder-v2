@@ -207,10 +207,12 @@ class DialogService:
             from src.contexts.settings.infra import UserSettingsRepository
 
             temp_repo = UserSettingsRepository(config_path=config_path)
-            settings_service = SettingsService(temp_repo)
+            settings_service = SettingsService(temp_repo, event_bus=self._ctx.event_bus)
         else:
             # Use context's settings_repo
-            settings_service = SettingsService(self._ctx.settings_repo)
+            settings_service = SettingsService(
+                self._ctx.settings_repo, event_bus=self._ctx.event_bus
+            )
 
         viewmodel = SettingsViewModel(settings_provider=settings_service)
         dialog = SettingsDialog(

@@ -70,22 +70,20 @@ def remove_source(
 
     if isinstance(result, SourceNotRemoved):
         return OperationResult.fail(
-            error=result.reason,
-            error_code=f"SOURCE_NOT_REMOVED/{result.event_type.upper()}",
+            error=result.message,
+            error_code=result.event_type,
         )
 
     event: SourceRemoved = result
 
-    # Step 3: Cascade delete segments
-    if segment_repo:
-        segment_repo.delete_by_source(source_id)
+    # Atomic: cascade delete segments + delete source in one transaction
+    from src.shared.infra.unit_of_work import UnitOfWork
 
-    # Step 4: Delete from repository (source of truth)
-    if source_repo:
+    with UnitOfWork(source_repo._conn) as uow:
+        if segment_repo:
+            segment_repo.delete_by_source(source_id)
         source_repo.delete(source_id)
+        uow.commit()
 
-    # Step 5: Publish event
     event_bus.publish(event)
-
-    # No rollback - would need to recreate source with all data
     return OperationResult.ok(data=event)

@@ -2,14 +2,10 @@
 Settings Context: Derivers
 
 Pure functions that compose invariants and derive domain events.
-No I/O, no side effects - returns events or Failure.
+No I/O, no side effects - returns events or SettingsNotChanged failure events.
 """
 
 from __future__ import annotations
-
-from dataclasses import dataclass
-
-from returns.result import Failure
 
 from src.contexts.settings.core.entities import UserSettings
 from src.contexts.settings.core.events import (
@@ -19,6 +15,7 @@ from src.contexts.settings.core.events import (
     LanguageChanged,
     ThemeChanged,
 )
+from src.contexts.settings.core.failure_events import SettingsNotChanged
 from src.contexts.settings.core.invariants import (
     VALID_LANGUAGES,
     is_valid_backup_interval,
@@ -32,139 +29,6 @@ from src.contexts.settings.core.invariants import (
 )
 
 # =============================================================================
-# Failure Reasons
-# =============================================================================
-
-
-@dataclass(frozen=True)
-class InvalidTheme:
-    """Theme is not valid."""
-
-    theme: str = ""
-    message: str = ""
-
-    def __post_init__(self) -> None:
-        if not self.message:
-            object.__setattr__(
-                self,
-                "message",
-                f"Invalid theme '{self.theme}'. Must be: light, dark, or system",
-            )
-
-
-@dataclass(frozen=True)
-class InvalidFontSize:
-    """Font size is outside valid range."""
-
-    size: int = 0
-    message: str = ""
-
-    def __post_init__(self) -> None:
-        if not self.message:
-            object.__setattr__(
-                self,
-                "message",
-                f"Font size {self.size} is invalid. Must be between 10 and 24",
-            )
-
-
-@dataclass(frozen=True)
-class InvalidFontFamily:
-    """Font family is not supported."""
-
-    family: str = ""
-    message: str = ""
-
-    def __post_init__(self) -> None:
-        if not self.message:
-            object.__setattr__(
-                self,
-                "message",
-                f"Font family '{self.family}' is not supported",
-            )
-
-
-@dataclass(frozen=True)
-class InvalidLanguage:
-    """Language code is not supported."""
-
-    code: str = ""
-    message: str = ""
-
-    def __post_init__(self) -> None:
-        if not self.message:
-            object.__setattr__(
-                self,
-                "message",
-                f"Language code '{self.code}' is not supported",
-            )
-
-
-@dataclass(frozen=True)
-class InvalidBackupInterval:
-    """Backup interval is outside valid range."""
-
-    interval: int = 0
-    message: str = ""
-
-    def __post_init__(self) -> None:
-        if not self.message:
-            object.__setattr__(
-                self,
-                "message",
-                f"Backup interval {self.interval} minutes is invalid. Must be between 5 and 120",
-            )
-
-
-@dataclass(frozen=True)
-class InvalidMaxBackups:
-    """Max backups is outside valid range."""
-
-    max_backups: int = 0
-    message: str = ""
-
-    def __post_init__(self) -> None:
-        if not self.message:
-            object.__setattr__(
-                self,
-                "message",
-                f"Max backups {self.max_backups} is invalid. Must be between 1 and 20",
-            )
-
-
-@dataclass(frozen=True)
-class InvalidTimestampFormat:
-    """Timestamp format is not valid."""
-
-    format_str: str = ""
-    message: str = ""
-
-    def __post_init__(self) -> None:
-        if not self.message:
-            object.__setattr__(
-                self,
-                "message",
-                f"Timestamp format '{self.format_str}' is invalid. Use HH:MM:SS, HH:MM:SS.mmm, or MM:SS",
-            )
-
-
-@dataclass(frozen=True)
-class InvalidSpeakerFormat:
-    """Speaker format is not valid."""
-
-    format_str: str = ""
-    message: str = ""
-
-    def __post_init__(self) -> None:
-        if not self.message:
-            object.__setattr__(
-                self,
-                "message",
-                f"Speaker format '{self.format_str}' must contain {{n}} placeholder",
-            )
-
-
-# =============================================================================
 # Derivers
 # =============================================================================
 
@@ -172,7 +36,7 @@ class InvalidSpeakerFormat:
 def derive_theme_change(
     new_theme: str,
     current_settings: UserSettings,
-) -> ThemeChanged | Failure:
+) -> ThemeChanged | SettingsNotChanged:
     """
     Derive a theme change event from inputs and state.
 
@@ -183,10 +47,10 @@ def derive_theme_change(
         current_settings: Current user settings for old theme value
 
     Returns:
-        ThemeChanged event on success, Failure with reason on error
+        ThemeChanged event on success, SettingsNotChanged on error
     """
     if not is_valid_theme(new_theme):
-        return Failure(InvalidTheme(theme=new_theme))
+        return SettingsNotChanged.invalid_theme(new_theme)
 
     return ThemeChanged.create(
         old_theme=current_settings.theme.name,
@@ -198,7 +62,7 @@ def derive_font_change(
     family: str,
     size: int,
     current_settings: UserSettings,
-) -> FontChanged | Failure:
+) -> FontChanged | SettingsNotChanged:
     """
     Derive a font change event from inputs and state.
 
@@ -210,13 +74,13 @@ def derive_font_change(
         current_settings: Current user settings for old font values
 
     Returns:
-        FontChanged event on success, Failure with reason on error
+        FontChanged event on success, SettingsNotChanged on error
     """
     if not is_valid_font_family(family):
-        return Failure(InvalidFontFamily(family=family))
+        return SettingsNotChanged.invalid_font_family(family)
 
     if not is_valid_font_size(size):
-        return Failure(InvalidFontSize(size=size))
+        return SettingsNotChanged.invalid_font_size(size)
 
     return FontChanged.create(
         old_family=current_settings.font.family,
@@ -229,7 +93,7 @@ def derive_font_change(
 def derive_language_change(
     new_language_code: str,
     current_settings: UserSettings,
-) -> LanguageChanged | Failure:
+) -> LanguageChanged | SettingsNotChanged:
     """
     Derive a language change event from inputs and state.
 
@@ -240,10 +104,10 @@ def derive_language_change(
         current_settings: Current user settings for old language value
 
     Returns:
-        LanguageChanged event on success, Failure with reason on error
+        LanguageChanged event on success, SettingsNotChanged on error
     """
     if not is_valid_language_code(new_language_code):
-        return Failure(InvalidLanguage(code=new_language_code))
+        return SettingsNotChanged.invalid_language(new_language_code)
 
     language_name = VALID_LANGUAGES.get(new_language_code, "Unknown")
 
@@ -260,7 +124,7 @@ def derive_backup_config_change(
     max_backups: int,
     backup_path: str | None,
     current_settings: UserSettings,
-) -> BackupConfigChanged | Failure:
+) -> BackupConfigChanged | SettingsNotChanged:
     """
     Derive a backup config change event from inputs.
 
@@ -274,13 +138,13 @@ def derive_backup_config_change(
         current_settings: Current user settings for old backup values
 
     Returns:
-        BackupConfigChanged event on success, Failure with reason on error
+        BackupConfigChanged event on success, SettingsNotChanged on error
     """
     if not is_valid_backup_interval(interval_minutes):
-        return Failure(InvalidBackupInterval(interval=interval_minutes))
+        return SettingsNotChanged.invalid_backup_interval(interval_minutes)
 
     if not is_valid_max_backups(max_backups):
-        return Failure(InvalidMaxBackups(max_backups=max_backups))
+        return SettingsNotChanged.invalid_max_backups(max_backups)
 
     return BackupConfigChanged.create(
         old_enabled=current_settings.backup.enabled,
@@ -298,7 +162,7 @@ def derive_av_coding_config_change(
     timestamp_format: str,
     speaker_format: str,
     current_settings: UserSettings,
-) -> AVCodingConfigChanged | Failure:
+) -> AVCodingConfigChanged | SettingsNotChanged:
     """
     Derive an AV coding config change event from inputs.
 
@@ -310,13 +174,13 @@ def derive_av_coding_config_change(
         current_settings: Current user settings for old AV coding values
 
     Returns:
-        AVCodingConfigChanged event on success, Failure with reason on error
+        AVCodingConfigChanged event on success, SettingsNotChanged on error
     """
     if not is_valid_timestamp_format(timestamp_format):
-        return Failure(InvalidTimestampFormat(format_str=timestamp_format))
+        return SettingsNotChanged.invalid_timestamp_format(timestamp_format)
 
     if not is_valid_speaker_format(speaker_format):
-        return Failure(InvalidSpeakerFormat(format_str=speaker_format))
+        return SettingsNotChanged.invalid_speaker_format(speaker_format)
 
     return AVCodingConfigChanged.create(
         old_timestamp_format=current_settings.av_coding.timestamp_format,

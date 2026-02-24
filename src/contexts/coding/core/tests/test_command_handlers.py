@@ -49,6 +49,7 @@ class MockCodeRepository:
     """In-memory mock code repository for testing."""
 
     _codes: dict[int, Code] = field(default_factory=dict)
+    _conn: MagicMock = field(default_factory=MagicMock)
 
     def get_all(self) -> list[Code]:
         return list(self._codes.values())
@@ -71,6 +72,7 @@ class MockCategoryRepository:
     """In-memory mock category repository for testing."""
 
     _categories: dict[int, Category] = field(default_factory=dict)
+    _conn: MagicMock = field(default_factory=MagicMock)
 
     def get_all(self) -> list[Category]:
         return list(self._categories.values())
@@ -90,6 +92,7 @@ class MockSegmentRepository:
     """In-memory mock segment repository for testing."""
 
     _segments: dict[int, TextSegment] = field(default_factory=dict)
+    _conn: MagicMock = field(default_factory=MagicMock)
 
     def get_all(self) -> list[TextSegment]:
         return list(self._segments.values())

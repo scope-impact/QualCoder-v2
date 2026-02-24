@@ -15,12 +15,12 @@ import allure
 import pytest
 
 from src.contexts.folders.core.commandHandlers.delete_folder import delete_folder
-from src.contexts.folders.core.commandHandlers.get_folder import get_folder
-from src.contexts.folders.core.commandHandlers.list_folders import list_folders
 from src.contexts.folders.core.commandHandlers.move_source import (
     move_source_to_folder,
 )
 from src.contexts.folders.core.commandHandlers.rename_folder import rename_folder
+from src.contexts.folders.core.queryHandlers.get_folder import get_folder
+from src.contexts.folders.core.queryHandlers.list_folders import list_folders
 from src.contexts.projects.core.commands import (
     DeleteFolderCommand,
     MoveSourceToFolderCommand,

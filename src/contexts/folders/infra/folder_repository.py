@@ -1,5 +1,5 @@
 """
-Folder Repository - SQLAlchemy Core Implementation for Sources Context.
+Folder Repository - SQLAlchemy Core Implementation for Folders Context.
 
 Implements the repository for Folder entities using the src_folder table.
 """
@@ -11,8 +11,8 @@ from typing import TYPE_CHECKING
 
 from sqlalchemy import delete, func, select, update
 
-from src.contexts.projects.core.entities import Folder
-from src.contexts.sources.infra.schema import src_folder
+from src.contexts.folders.core.entities import Folder
+from src.contexts.folders.infra.schema import src_folder
 from src.shared.common.types import FolderId
 
 if TYPE_CHECKING:
@@ -24,7 +24,6 @@ class SQLiteFolderRepository:
     SQLAlchemy Core implementation of FolderRepository.
 
     Maps between domain Folder entities and the src_folder table.
-    Uses the prefixed table from the Sources bounded context.
     """
 
     def __init__(self, connection: Connection) -> None:
