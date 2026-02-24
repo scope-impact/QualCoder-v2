@@ -54,9 +54,10 @@ def settings_repo(temp_config_path):
 @pytest.fixture
 def settings_provider(settings_repo):
     """Create a settings service for use as a provider."""
+    from src.shared.infra.event_bus import EventBus
     from src.shared.presentation.services import SettingsService
 
-    return SettingsService(settings_repo)
+    return SettingsService(settings_repo, EventBus())
 
 
 @pytest.fixture
@@ -365,7 +366,9 @@ class TestCloudSyncPersistence:
 
         with allure.step("Create settings with cloud sync enabled"):
             repo = UserSettingsRepository(config_path=temp_config_path)
-            service = SettingsService(repo)
+            from src.shared.infra.event_bus import EventBus
+
+            service = SettingsService(repo, EventBus())
             viewmodel = SettingsViewModel(settings_provider=service)
 
             dialog = SettingsDialog(viewmodel=viewmodel, colors=colors)

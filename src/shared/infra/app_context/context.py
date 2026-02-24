@@ -416,13 +416,13 @@ class AppContext:
             OperationResult from the sync pull operation.
         """
         if not self.is_cloud_sync_enabled():
-            return OperationResult.failure(
+            return OperationResult.fail(
                 error="Cloud sync is not enabled",
                 error_code="SYNC_DISABLED",
             )
 
         if self._sync_engine is None:
-            return OperationResult.failure(
+            return OperationResult.fail(
                 error="Sync engine not initialized",
                 error_code="SYNC_NOT_READY",
             )

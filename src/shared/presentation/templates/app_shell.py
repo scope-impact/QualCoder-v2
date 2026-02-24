@@ -578,7 +578,9 @@ class AppShell(QMainWindow):
 
             self._settings_repo = UserSettingsRepository()
 
-        settings_service = SettingsService(self._settings_repo)
+        from src.shared.infra.event_bus import EventBus
+
+        settings_service = SettingsService(self._settings_repo, EventBus())
         viewmodel = SettingsViewModel(settings_provider=settings_service)
 
         dialog = SettingsDialog(

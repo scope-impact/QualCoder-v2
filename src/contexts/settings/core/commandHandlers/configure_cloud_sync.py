@@ -56,9 +56,10 @@ def configure_cloud_sync(
 
     if isinstance(result, Failure):
         failure = result.failure()
-        return OperationResult.failure(
+        return OperationResult.fail(
             error=failure.reason,
             error_code=failure.error_code,
+            suggestions=failure.suggestions,
         )
 
     event: CloudSyncConfigChanged = result
@@ -73,4 +74,4 @@ def configure_cloud_sync(
         event_bus.publish(event)
 
     # Step 5: Return result
-    return OperationResult.success(event)
+    return OperationResult.ok(data=event)
