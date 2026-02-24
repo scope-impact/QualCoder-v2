@@ -50,9 +50,31 @@ def is_valid_git_ref(ref: str, valid_refs: tuple[str, ...]) -> bool:
     return ref in valid_refs
 
 
+def resolve_project_dir(project_path: Path) -> Path:
+    """
+    Resolve the project directory where VCS operations (git, .gitignore) occur.
+
+    For v2 format (.qda directory): returns the directory itself.
+    For v1 format (.qda file): returns the parent directory.
+
+    Args:
+        project_path: Path to the .qda project (directory or file)
+
+    Returns:
+        Path to the directory where git should operate
+    """
+    project_path = Path(project_path).resolve()
+    if project_path.is_dir():
+        return project_path
+    return project_path.parent
+
+
 def resolve_db_path(project_path: Path, db_filename: str = "qualcoder.db") -> Path:
     """
     Resolve a project path to the actual database file path.
+
+    For v2 format (.qda directory): returns directory / db_filename.
+    For v1 format (.qda file): returns the file itself (it IS the database).
 
     Args:
         project_path: Path to the .qda project (directory or file)
@@ -71,4 +93,5 @@ __all__ = [
     "is_valid_snapshot_message",
     "is_valid_git_ref",
     "resolve_db_path",
+    "resolve_project_dir",
 ]

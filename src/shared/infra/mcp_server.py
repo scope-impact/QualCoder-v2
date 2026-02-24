@@ -21,10 +21,17 @@ import asyncio
 import json
 import logging
 import os
+import queue
 import threading
 import time
 import uuid
+from collections.abc import Callable
+from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Any
+
+from PySide6.QtCore import QMetaObject, QObject, Qt, Slot
+
+from src.shared.infra.signal_bridge.thread_utils import is_main_thread
 
 if TYPE_CHECKING:
     from src.shared.infra.app_context import AppContext
@@ -59,6 +66,66 @@ class MCPLogAdapter(logging.LoggerAdapter):
         return msg, kwargs
 
 
+@dataclass
+class _ToolRequest:
+    """A request to execute tool logic on the main thread."""
+
+    fn: Callable[[], dict]
+    result: dict | None = None
+    exception: Exception | None = None
+    done_event: threading.Event = field(default_factory=threading.Event)
+
+
+class _MainThreadExecutor(QObject):
+    """Marshals callable execution to the Qt main thread.
+
+    Uses a thread-safe queue + QMetaObject.invokeMethod(QueuedConnection) to
+    schedule work on the main event loop, then blocks the caller until the
+    work completes via threading.Event.
+    """
+
+    _TIMEOUT_SECONDS = 30.0
+
+    def __init__(self, parent: QObject | None = None) -> None:
+        super().__init__(parent)
+        self._queue: queue.Queue[_ToolRequest] = queue.Queue()
+
+    def execute(self, fn: Callable[[], dict]) -> dict:
+        """Execute *fn* on the Qt main thread, blocking the caller until done.
+
+        If already on the main thread (e.g. in tests), runs directly.
+        """
+        if is_main_thread():
+            return fn()
+
+        request = _ToolRequest(fn=fn)
+        self._queue.put(request)
+        QMetaObject.invokeMethod(self, "_process", Qt.ConnectionType.QueuedConnection)
+        if not request.done_event.wait(timeout=self._TIMEOUT_SECONDS):
+            raise TimeoutError(
+                f"Main-thread execution timed out after {self._TIMEOUT_SECONDS}s"
+            )
+        if request.exception is not None:
+            raise request.exception
+        assert request.result is not None  # noqa: S101
+        return request.result
+
+    @Slot()
+    def _process(self) -> None:
+        """Drain the queue on the main thread and execute each request."""
+        while True:
+            try:
+                request = self._queue.get_nowait()
+            except queue.Empty:
+                break
+            try:
+                request.result = request.fn()
+            except Exception as exc:
+                request.exception = exc
+            finally:
+                request.done_event.set()
+
+
 class MCPServerManager:
     """Manages embedded MCP HTTP server lifecycle."""
 
@@ -76,6 +143,7 @@ class MCPServerManager:
         self._loop: asyncio.AbstractEventLoop | None = None
         self._running = False
         self._coding_tools: Any = None  # Cached CodingTools instance
+        self._executor: _MainThreadExecutor | None = None
 
         # Debug mode: explicit param > env var > default False
         if debug is None:
@@ -120,6 +188,8 @@ class MCPServerManager:
 
         self._running = True
         self._stats["start_time"] = time.time()
+        # Create executor on main thread so its QObject affinity is correct
+        self._executor = _MainThreadExecutor()
         self._thread = threading.Thread(target=self._run_server, daemon=True)
         self._thread.start()
         self._log.info("Server starting on port %d (debug=%s)", self._port, self._debug)
@@ -131,6 +201,7 @@ class MCPServerManager:
 
         self._log.info("Server stopping...")
         self._running = False
+        self._executor = None
         if self._loop and self._loop.is_running():
             self._loop.call_soon_threadsafe(self._loop.stop)
         if self._thread:
@@ -201,7 +272,10 @@ class MCPServerManager:
             self._log.error("aiohttp not installed. Run: uv add aiohttp")
             return
 
-        app = web.Application(middlewares=[self._create_logging_middleware()])
+        app = web.Application(
+            middlewares=[self._create_logging_middleware()],
+            handler_args={"tcp_keepalive": False},
+        )
         app.router.add_get("/", self._handle_info)
         app.router.add_get("/tools", self._handle_list_tools)
         app.router.add_post("/tools/{tool_name}", self._handle_call_tool)
@@ -255,8 +329,8 @@ class MCPServerManager:
         except Exception:
             args = {}
 
-        result = self._execute_tool(tool_name, args, log)
-        return web.json_response(result)
+        result = await self._run_tool_on_main_thread(tool_name, args, log)
+        return web.json_response(result, dumps=lambda o: json.dumps(o, default=str))
 
     async def _handle_jsonrpc(self, request: Any) -> Any:
         """Handle MCP JSON-RPC 2.0 requests."""
@@ -300,9 +374,9 @@ class MCPServerManager:
         if method == "tools/call":
             tool_name = params.get("name")
             tool_args = params.get("arguments", {})
-            result = self._execute_tool(tool_name, tool_args, log)
+            result = await self._run_tool_on_main_thread(tool_name, tool_args, log)
             return _jsonrpc_ok(
-                {"content": [{"type": "text", "text": json.dumps(result)}]}
+                {"content": [{"type": "text", "text": json.dumps(result, default=str)}]}
             )
 
         log.warning("Unknown method: %s", method)
@@ -368,14 +442,55 @@ class MCPServerManager:
             log.info(
                 "Publishing SegmentCoded event: source=%d code=%d", source_id, code_id
             )
-            self._ctx.event_bus.publish(event)
+
+            def _publish() -> dict:
+                self._ctx.event_bus.publish(event)
+                return {"published": True, "source_id": source_id}
+
+            result = await self._run_on_main_thread(_publish)
             log.info("Event published successfully")
 
-            return web.json_response({"published": True, "source_id": source_id})
+            return web.json_response(result)
 
         except Exception as e:
             log.exception("Failed to publish debug event: %s", e)
             return web.json_response({"error": str(e)}, status=500)
+
+    # ── Main-Thread Marshalling ─────────────────────────────────
+
+    async def _run_tool_on_main_thread(
+        self,
+        tool_name: str,
+        args: dict,
+        log: MCPLogAdapter,
+    ) -> dict:
+        """Marshal tool execution to the Qt main thread without blocking asyncio.
+
+        Uses ``run_in_executor`` so the blocking ``_MainThreadExecutor.execute()``
+        call happens on a pool thread, keeping the asyncio event loop responsive.
+        """
+        executor = self._executor
+        if executor is None:
+            # Fallback: no executor (tests, or server not fully started)
+            return self._execute_tool(tool_name, args, log)
+
+        loop = asyncio.get_event_loop()
+        return await loop.run_in_executor(
+            None,  # default ThreadPoolExecutor
+            lambda: executor.execute(lambda: self._execute_tool(tool_name, args, log)),
+        )
+
+    async def _run_on_main_thread(self, fn: Callable[[], dict]) -> dict:
+        """Marshal an arbitrary callable to the main thread."""
+        executor = self._executor
+        if executor is None:
+            return fn()
+
+        loop = asyncio.get_event_loop()
+        return await loop.run_in_executor(
+            None,
+            lambda: executor.execute(fn),
+        )
 
     # ── Tool Execution ─────────────────────────────────────────
 
@@ -384,7 +499,20 @@ class MCPServerManager:
         from src.contexts.coding.interface.tool_definitions import ALL_TOOLS
         from src.contexts.folders.interface.mcp_tools import ALL_FOLDER_TOOLS
         from src.contexts.projects.interface.mcp_tools import ALL_PROJECT_TOOLS
+        from src.contexts.projects.interface.vcs_mcp_tools import (
+            initialize_version_control_tool,
+            list_snapshots_tool,
+            restore_snapshot_tool,
+            view_diff_tool,
+        )
         from src.contexts.sources.interface.mcp_tools import ALL_SOURCE_TOOLS
+
+        vcs_tools_list = [
+            list_snapshots_tool,
+            view_diff_tool,
+            restore_snapshot_tool,
+            initialize_version_control_tool,
+        ]
 
         schemas = []
         for tools_dict in [
@@ -394,6 +522,9 @@ class MCPServerManager:
             ALL_TOOLS,
         ]:
             schemas.extend(t.to_schema() for t in tools_dict.values())
+
+        # VCS tools
+        schemas.extend(t.to_schema() for t in vcs_tools_list)
 
         # Cloud sync tools
         try:
@@ -432,6 +563,15 @@ class MCPServerManager:
         """Get cloud sync tool names."""
         return {"get_sync_status", "configure_cloud_sync", "get_sync_settings"}
 
+    def _get_vcs_tool_names(self) -> set[str]:
+        """Get version control tool names."""
+        return {
+            "list_snapshots",
+            "view_diff",
+            "restore_snapshot",
+            "initialize_version_control",
+        }
+
     def _execute_tool(
         self,
         tool_name: str,
@@ -447,6 +587,7 @@ class MCPServerManager:
         result_tool_names = self._get_all_result_tool_names()
         coding_tools = set(ALL_TOOLS.keys())
         cloud_sync_tools = self._get_cloud_sync_tool_names()
+        vcs_tools = self._get_vcs_tool_names()
 
         self._stats["tool_calls"] += 1
         start_time = time.perf_counter()
@@ -470,11 +611,7 @@ class MCPServerManager:
                     return {"success": False, "error": "No project open"}
 
                 if self._coding_tools is None:
-                    coding_ctx = _CodingToolsContextWrapper(
-                        coding_context=self._ctx.coding_context,
-                        sources_context=self._ctx.sources_context,
-                        event_bus=self._ctx.event_bus,
-                    )
+                    coding_ctx = _CodingToolsContextWrapper(ctx=self._ctx)
                     self._coding_tools = CodingTools(ctx=coding_ctx)
                 result = self._coding_tools.execute(tool_name, arguments)
 
@@ -488,6 +625,24 @@ class MCPServerManager:
                     event_bus=self._ctx.event_bus,
                 )
                 return tools.handle_tool_call(tool_name, arguments)
+
+            elif tool_name in vcs_tools:
+                from src.contexts.projects.interface.vcs_mcp_tools import (
+                    VersionControlMCPTools,
+                )
+
+                projects_ctx = self._ctx.projects_context
+                if projects_ctx is None:
+                    log.warning("Tool %s called with no project open", tool_name)
+                    return {"success": False, "error": "No project open"}
+
+                vcs = VersionControlMCPTools(
+                    diffable=projects_ctx.diffable_adapter,
+                    git=projects_ctx.git_adapter,
+                    event_bus=self._ctx.event_bus,
+                    state=self._ctx.state,
+                )
+                result = vcs.execute(tool_name, arguments)
 
             else:
                 log.warning("Unknown tool requested: %s", tool_name)
@@ -552,33 +707,38 @@ class MCPServerManager:
 
 
 class _CodingToolsContextWrapper:
-    """Wrapper providing CodingToolsContext interface from AppContext."""
+    """Wrapper providing CodingToolsContext interface from AppContext.
 
-    def __init__(self, coding_context, sources_context, event_bus):
-        self._coding_context = coding_context
-        self._sources_context = sources_context
-        self._event_bus = event_bus
+    Delegates to the live AppContext so that project close/reopen cycles
+    always provide fresh contexts with active database connections.
+    """
+
+    def __init__(self, ctx: AppContext) -> None:
+        self._ctx = ctx
 
     @property
     def coding_context(self):
-        return self._coding_context
+        return self._ctx.coding_context
 
     @property
     def sources_context(self):
-        return self._sources_context
+        return self._ctx.sources_context
 
     @property
     def code_repo(self):
-        return self._coding_context.code_repo
+        cc = self._ctx.coding_context
+        return cc.code_repo if cc else None
 
     @property
     def category_repo(self):
-        return self._coding_context.category_repo
+        cc = self._ctx.coding_context
+        return cc.category_repo if cc else None
 
     @property
     def segment_repo(self):
-        return self._coding_context.segment_repo
+        cc = self._ctx.coding_context
+        return cc.segment_repo if cc else None
 
     @property
     def event_bus(self):
-        return self._event_bus
+        return self._ctx.event_bus

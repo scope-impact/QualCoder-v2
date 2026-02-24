@@ -13,7 +13,10 @@ from src.contexts.projects.core.vcs_events import (
     VersionControlInitialized,
 )
 from src.contexts.projects.core.vcs_failure_events import VersionControlNotInitialized
-from src.contexts.projects.core.vcs_invariants import resolve_db_path
+from src.contexts.projects.core.vcs_invariants import (
+    resolve_db_path,
+    resolve_project_dir,
+)
 from src.shared.common.operation_result import OperationResult
 
 if TYPE_CHECKING:
@@ -69,7 +72,7 @@ def initialize_version_control(
     if init_result.is_failure:
         return init_result
 
-    gitignore_result = _create_gitignore(project_path)
+    gitignore_result = _create_gitignore(resolve_project_dir(project_path))
     if gitignore_result.is_failure:
         return gitignore_result
 

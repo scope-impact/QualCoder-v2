@@ -90,6 +90,9 @@ class AppContext:
     # Optional sync engine for SQLite-Convex sync
     _sync_engine: Any = field(default=None, init=False, repr=False)
 
+    # VCS auto-commit listener (enabled per-project)
+    _vcs_listener: Any = field(default=None, init=False, repr=False)
+
     # Bounded contexts (None when no project is open)
     sources_context: SourcesContext | None = None
     cases_context: CasesContext | None = None
@@ -314,6 +317,28 @@ class AppContext:
             self._sync_engine.start()
             logger.info("SyncEngine started")
 
+        # Enable VCS auto-commit listener if adapters are available
+        if (
+            self.projects_context
+            and self.projects_context.git_adapter
+            and self.projects_context.diffable_adapter
+            and project_path
+        ):
+            from pathlib import Path
+
+            from src.contexts.projects.infra.version_control_listener import (
+                VersionControlListener,
+            )
+
+            self._vcs_listener = VersionControlListener(
+                event_bus=self.event_bus,
+                diffable_adapter=self.projects_context.diffable_adapter,
+                git_adapter=self.projects_context.git_adapter,
+                project_path=Path(project_path),
+            )
+            self._vcs_listener.enable()
+            logger.info("VCS auto-commit listener enabled")
+
         sync_status = "enabled" if self._sync_engine else "disabled"
         logger.debug(
             f"Created bounded contexts for project (cloud sync: {sync_status})"
@@ -329,6 +354,12 @@ class AppContext:
 
     def _clear_contexts(self) -> None:
         """Clear bounded context objects when project closes."""
+        # Disable VCS listener first (flushes pending events before repos go away)
+        if self._vcs_listener is not None:
+            self._vcs_listener.disable()
+            self._vcs_listener = None
+            logger.debug("VCS auto-commit listener disabled")
+
         self.sources_context = None
         self.cases_context = None
         self.coding_context = None

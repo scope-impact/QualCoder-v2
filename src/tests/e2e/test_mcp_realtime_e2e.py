@@ -5,6 +5,7 @@ Verifies that when MCP tools are called from a background thread,
 the UI updates in real-time via SignalBridge.
 """
 
+import concurrent.futures
 import random
 import time
 from pathlib import Path
@@ -15,6 +16,21 @@ import pytest
 from src.contexts.coding.interface.signal_bridge import CodingSignalBridge
 from src.shared.infra.app_context import create_app_context
 from src.shared.infra.mcp_server import MCPServerManager
+
+
+def _post_pumping_events(qapp, url: str, *, json: dict, timeout: float = 5.0):
+    """POST to MCP server while pumping the Qt event loop.
+
+    MCP tool execution is now marshalled to the main thread via
+    QMetaObject.invokeMethod(QueuedConnection). In tests the main
+    thread must keep processing events while the HTTP response is pending.
+    """
+    with concurrent.futures.ThreadPoolExecutor(max_workers=1) as pool:
+        future = pool.submit(httpx.post, url, json=json, timeout=timeout)
+        while not future.done():
+            qapp.processEvents()
+            time.sleep(0.01)
+        return future.result()
 
 
 @pytest.fixture
@@ -94,14 +110,14 @@ def test_mcp_lists_tools(mcp_test_env):
 
 
 @pytest.mark.e2e
-def test_mcp_get_project_context(mcp_test_env):
+def test_mcp_get_project_context(mcp_test_env, qapp):
     """Test get_project_context returns open project."""
     mcp_url = mcp_test_env["mcp_url"]
 
-    response = httpx.post(
+    response = _post_pumping_events(
+        qapp,
         f"{mcp_url}/tools/get_project_context",
         json={"arguments": {}},
-        timeout=5.0,
     )
     assert response.status_code == 200
     data = response.json()
@@ -163,8 +179,9 @@ def test_mcp_segment_coded_emits_signal(mcp_test_env, qapp):
 
     signal_bridge.segment_coded.connect(on_segment_coded)
 
-    # Call batch_apply_codes via MCP
-    response = httpx.post(
+    # Call batch_apply_codes via MCP (pumps event loop while waiting)
+    response = _post_pumping_events(
+        qapp,
         f"{mcp_url}/tools/batch_apply_codes",
         json={
             "arguments": {
@@ -178,13 +195,12 @@ def test_mcp_segment_coded_emits_signal(mcp_test_env, qapp):
                 ]
             }
         },
-        timeout=5.0,
     )
     assert response.status_code == 200
     result = response.json()
     assert result.get("is_success", result.get("success")), f"Failed: {result}"
 
-    # Process Qt events to allow cross-thread signals
+    # Process any remaining Qt events
     for _ in range(20):
         qapp.processEvents()
         time.sleep(0.02)

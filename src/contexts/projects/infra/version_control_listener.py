@@ -43,7 +43,12 @@ MUTATION_EVENTS: tuple[str, ...] = (
 
 
 class VersionControlListener:
-    """Batches mutation events with debouncing and triggers auto-commit."""
+    """Batches mutation events with debouncing and triggers auto-commit.
+
+    All mutation events now arrive on the Qt main thread (marshalled by the
+    MCP server's _MainThreadExecutor), so we can use a simple QTimer for
+    debouncing without any threading concerns.
+    """
 
     DEBOUNCE_MS = 500
 
@@ -59,7 +64,10 @@ class VersionControlListener:
         self._git_adapter = git_adapter
         self._project_path = project_path
         self._pending_events: list[Any] = []
-        self._timer: QTimer | None = None
+        self._timer = QTimer()
+        self._timer.setSingleShot(True)
+        self._timer.setInterval(self.DEBOUNCE_MS)
+        self._timer.timeout.connect(self._flush)
         self._subscriptions: list[Subscription] = []
         self._enabled: bool = False
 
@@ -86,9 +94,7 @@ class VersionControlListener:
             return
         self._enabled = False
 
-        if self._timer is not None:
-            self._timer.stop()
-            self._timer = None
+        self._timer.stop()
 
         if self._pending_events:
             self._flush()
@@ -98,32 +104,19 @@ class VersionControlListener:
         self._subscriptions.clear()
 
     def _on_mutation(self, event: Any) -> None:
-        """Handle a mutation event - add to pending and reset timer."""
+        """Handle a mutation event - add to pending and restart timer."""
         if not self._enabled:
             return
         self._pending_events.append(event)
-        self._reset_timer()
-
-    def _reset_timer(self) -> None:
-        """Reset the debounce timer."""
-        if self._timer is not None:
-            self._timer.stop()
-        self._timer = QTimer()
-        self._timer.setSingleShot(True)
-        self._timer.timeout.connect(self._flush)
-        self._timer.start(self.DEBOUNCE_MS)
+        self._timer.start()  # (re)starts the single-shot timer
 
     def _flush(self) -> None:
         """Flush pending events via auto_commit command handler."""
         if not self._pending_events:
             return
-
         events_to_commit = tuple(self._pending_events)
         self._pending_events.clear()
-
-        if self._timer is not None:
-            self._timer.stop()
-            self._timer = None
+        self._timer.stop()
 
         from src.contexts.projects.core.commandHandlers.auto_commit import auto_commit
         from src.contexts.projects.core.vcs_commands import AutoCommitCommand

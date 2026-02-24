@@ -110,7 +110,7 @@ class VersionControlViewModel(QObject):
             snapshot = SnapshotItem(
                 git_sha=commit.sha,
                 message=commit.message,
-                timestamp=commit.timestamp,
+                timestamp=commit.date,
                 event_count=0,  # Could parse from message if needed
                 is_current=(i == 0),  # First is current
             )
