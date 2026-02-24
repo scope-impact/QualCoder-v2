@@ -202,8 +202,8 @@ class MCPServerManager:
         self._log.info("Server stopping...")
         self._running = False
         self._executor = None
-        if self._loop and self._loop.is_running():
-            self._loop.call_soon_threadsafe(self._loop.stop)
+        # Don't force-stop the loop; _serve() checks _running every 100ms
+        # and exits gracefully, allowing run_until_complete to finish cleanly.
         if self._thread:
             self._thread.join(timeout=2.0)
         self._log.info("Server stopped")
