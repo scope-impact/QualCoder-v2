@@ -1,0 +1,11 @@
+INFO     qualcoder.mcp:mcp_server.py:125 Server starting on port 19605 (debug=False)
+INFO     qualcoder.mcp:mcp_server.py:219 Server ready at http://localhost:19605
+INFO     qualcoder.mcp:mcp_server.py:132 Server stopping...
+ERROR    qualcoder.mcp:mcp_server.py:148 Server error: Event loop stopped before Future completed.
+Traceback (most recent call last):
+  File "/home/runner/work/QualCoder-v2/QualCoder-v2/src/shared/infra/mcp_server.py", line 146, in _run_server
+    self._loop.run_until_complete(self._serve())
+  File "/home/runner/work/_temp/uv-python-dir/cpython-3.11.14-linux-x86_64-gnu/lib/python3.11/asyncio/base_events.py", line 652, in run_until_complete
+    raise RuntimeError('Event loop stopped before Future completed.')
+RuntimeError: Event loop stopped before Future completed.
+INFO     qualcoder.mcp:mcp_server.py:138 Server stopped

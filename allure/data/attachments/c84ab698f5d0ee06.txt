@@ -1,0 +1,11 @@
+[MCP] 15:00:00.255 INFO [init] Server starting on port 19888 (debug=False)
+[MCP] 15:00:00.579 INFO [init] Server ready at http://localhost:19888
+[MCP] 15:00:00.664 INFO [init] Server stopping...
+[MCP] 15:00:00.664 ERROR [init] Server error: Event loop stopped before Future completed.
+Traceback (most recent call last):
+  File "/home/runner/work/QualCoder-v2/QualCoder-v2/src/shared/infra/mcp_server.py", line 146, in _run_server
+    self._loop.run_until_complete(self._serve())
+  File "/home/runner/work/_temp/uv-python-dir/cpython-3.11.14-linux-x86_64-gnu/lib/python3.11/asyncio/base_events.py", line 652, in run_until_complete
+    raise RuntimeError('Event loop stopped before Future completed.')
+RuntimeError: Event loop stopped before Future completed.
+[MCP] 15:00:00.667 INFO [init] Server stopped
