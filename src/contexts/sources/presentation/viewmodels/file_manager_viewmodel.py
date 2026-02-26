@@ -150,8 +150,8 @@ class FileManagerViewModel(QObject):
         self._signal_bridge = signal_bridge
 
         # Selection state
-        self._selected_source_ids: set[int] = set()
-        self._current_source_id: int | None = None
+        self._selected_source_ids: set[str] = set()
+        self._current_source_id: str | None = None
 
         # Connect to signal bridge if provided
         if self._signal_bridge is not None:
@@ -176,6 +176,23 @@ class FileManagerViewModel(QObject):
         self._signal_bridge.folder_renamed.connect(self._on_folder_renamed)
         self._signal_bridge.folder_deleted.connect(self._on_folder_deleted)
         self._signal_bridge.source_moved.connect(self._on_source_moved)
+
+    def teardown(self) -> None:
+        """Disconnect all signal bridge connections. Call before replacing this ViewModel."""
+        if self._signal_bridge is None:
+            return
+
+        self._signal_bridge.source_added.disconnect(self._on_source_added)
+        self._signal_bridge.source_removed.disconnect(self._on_source_removed)
+        self._signal_bridge.source_renamed.disconnect(self._on_source_renamed)
+        self._signal_bridge.source_opened.disconnect(self._on_source_opened)
+        self._signal_bridge.source_status_changed.disconnect(
+            self._on_source_status_changed
+        )
+        self._signal_bridge.folder_created.disconnect(self._on_folder_created)
+        self._signal_bridge.folder_renamed.disconnect(self._on_folder_renamed)
+        self._signal_bridge.folder_deleted.disconnect(self._on_folder_deleted)
+        self._signal_bridge.source_moved.disconnect(self._on_source_moved)
 
     # =========================================================================
     # Signal Bridge Handlers - React to domain events
@@ -295,7 +312,7 @@ class FileManagerViewModel(QObject):
         source = self._source_repo.get_by_id(SourceId(value=self._current_source_id))
         return self._source_to_dto(source) if source else None
 
-    def get_source(self, source_id: int) -> SourceDTO | None:
+    def get_source(self, source_id: str) -> SourceDTO | None:
         """
         Get a specific source by ID.
 
@@ -344,7 +361,7 @@ class FileManagerViewModel(QObject):
 
         return result.is_success
 
-    def remove_source(self, source_id: int) -> bool:
+    def remove_source(self, source_id: str) -> bool:
         """
         Remove a source from the project.
 
@@ -372,7 +389,7 @@ class FileManagerViewModel(QObject):
 
         return False
 
-    def remove_sources(self, source_ids: list[int]) -> bool:
+    def remove_sources(self, source_ids: list[str]) -> bool:
         """
         Remove multiple sources from the project.
 
@@ -389,7 +406,7 @@ class FileManagerViewModel(QObject):
 
         return all_success
 
-    def get_segment_count_for_source(self, source_id: int) -> int:
+    def get_segment_count_for_source(self, source_id: str) -> int:
         """
         Get the count of coded segments for a source.
 
@@ -405,7 +422,7 @@ class FileManagerViewModel(QObject):
             return self._segment_repo.count_by_source(SourceId(value=source_id))
         return 0
 
-    def open_source(self, source_id: int) -> bool:
+    def open_source(self, source_id: str) -> bool:
         """
         Open a source for viewing/coding.
 
@@ -432,7 +449,7 @@ class FileManagerViewModel(QObject):
 
     def update_source(
         self,
-        source_id: int,
+        source_id: str,
         memo: str | None = None,
         origin: str | None = None,
         status: str | None = None,
@@ -469,7 +486,7 @@ class FileManagerViewModel(QObject):
     # Selection
     # =========================================================================
 
-    def select_sources(self, source_ids: list[int]) -> None:
+    def select_sources(self, source_ids: list[str]) -> None:
         """
         Set the selected sources.
 
@@ -478,7 +495,7 @@ class FileManagerViewModel(QObject):
         """
         self._selected_source_ids = set(source_ids)
 
-    def toggle_source_selection(self, source_id: int) -> None:
+    def toggle_source_selection(self, source_id: str) -> None:
         """
         Toggle selection state of a source.
 
@@ -562,7 +579,7 @@ class FileManagerViewModel(QObject):
     # Folder Commands - Commands go through use cases
     # =========================================================================
 
-    def create_folder(self, name: str, parent_id: int | None = None) -> bool:
+    def create_folder(self, name: str, parent_id: str | None = None) -> bool:
         """
         Create a new folder.
 
@@ -585,7 +602,7 @@ class FileManagerViewModel(QObject):
 
         return result.is_success
 
-    def rename_folder(self, folder_id: int, new_name: str) -> bool:
+    def rename_folder(self, folder_id: str, new_name: str) -> bool:
         """
         Rename a folder.
 
@@ -608,7 +625,7 @@ class FileManagerViewModel(QObject):
 
         return result.is_success
 
-    def delete_folder(self, folder_id: int) -> bool:
+    def delete_folder(self, folder_id: str) -> bool:
         """
         Delete an empty folder.
 
@@ -630,7 +647,7 @@ class FileManagerViewModel(QObject):
 
         return result.is_success
 
-    def move_source_to_folder(self, source_id: int, folder_id: int | None) -> bool:
+    def move_source_to_folder(self, source_id: str, folder_id: str | None) -> bool:
         """
         Move a source to a folder (or root if None).
 

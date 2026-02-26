@@ -38,8 +38,8 @@ def handle_analyze_content_for_codes(
     if ctx.segment_repo is None:
         return no_context_error("ANALYZE_CONTENT")
 
-    segments = ctx.segment_repo.get_by_source(SourceId(int(source_id)))
-    source_text = ctx.get_source_text(int(source_id))
+    segments = ctx.segment_repo.get_by_source(SourceId(value=str(source_id)))
+    source_text = ctx.get_source_text(source_id)
     total_length = len(source_text)
 
     uncoded_ranges = compute_uncoded_ranges(segments, total_length)

@@ -26,15 +26,17 @@ MUTATION_EVENTS: tuple[str, ...] = (
     "coding.segment_uncoded",
     "coding.segment_memo_updated",
     # Sources
-    "sources.source_imported",
-    "sources.source_deleted",
-    "sources.source_updated",
+    "projects.source_added",
+    "projects.source_removed",
+    "projects.source_updated",
     # Cases
     "cases.case_created",
     "cases.case_updated",
     "cases.case_deleted",
-    "cases.attribute_added",
-    "cases.attribute_updated",
+    "cases.attribute_set",
+    "cases.attribute_removed",
+    "cases.source_linked",
+    "cases.source_unlinked",
     # Folders
     "folders.folder_created",
     "folders.folder_deleted",

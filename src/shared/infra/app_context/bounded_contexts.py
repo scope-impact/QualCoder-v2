@@ -30,6 +30,18 @@ if TYPE_CHECKING:
         SourceRepositoryProtocol,
     )
     from src.shared.infra.sync import SyncEngine
+    from src.shared.infra.sync.outbox import OutboxWriter
+
+
+def _create_outbox(
+    connection: Connection, sync_engine: SyncEngine | None
+) -> OutboxWriter | None:
+    """Create an OutboxWriter when cloud sync is enabled, otherwise None."""
+    if sync_engine is None:
+        return None
+    from src.shared.infra.sync.outbox import OutboxWriter
+
+    return OutboxWriter(connection)
 
 
 @dataclass
@@ -50,6 +62,7 @@ class SourcesContext:
         convex_client: ConvexClientWrapper | None = None,
         backend_type: BackendType = BackendType.SQLITE,
         sync_engine: SyncEngine | None = None,
+        event_bus: Any = None,  # noqa: ARG003
     ) -> SourcesContext:
         """Create a SourcesContext with all repositories."""
         if backend_type == BackendType.CONVEX:
@@ -69,18 +82,10 @@ class SourcesContext:
                 SQLiteSourceRepository,
             )
 
-            source_repo = SQLiteSourceRepository(connection)
-
-            # Wrap with sync if enabled
-            if sync_engine is not None:
-                from src.shared.infra.sync.synced_repositories import (
-                    SyncedSourceRepository,
-                )
-
-                source_repo = SyncedSourceRepository(source_repo, sync_engine)
-
             return cls(
-                source_repo=source_repo,
+                source_repo=SQLiteSourceRepository(
+                    connection, outbox=_create_outbox(connection, sync_engine)
+                ),
             )
 
 
@@ -102,6 +107,7 @@ class FoldersContext:
         convex_client: ConvexClientWrapper | None = None,
         backend_type: BackendType = BackendType.SQLITE,
         sync_engine: SyncEngine | None = None,
+        event_bus: Any = None,  # noqa: ARG003
     ) -> FoldersContext:
         """Create a FoldersContext with all repositories."""
         if backend_type == BackendType.CONVEX:
@@ -121,18 +127,10 @@ class FoldersContext:
                 SQLiteFolderRepository,
             )
 
-            folder_repo = SQLiteFolderRepository(connection)
-
-            # Wrap with sync if enabled
-            if sync_engine is not None:
-                from src.shared.infra.sync.synced_repositories import (
-                    SyncedFolderRepository,
-                )
-
-                folder_repo = SyncedFolderRepository(folder_repo, sync_engine)
-
             return cls(
-                folder_repo=folder_repo,
+                folder_repo=SQLiteFolderRepository(
+                    connection, outbox=_create_outbox(connection, sync_engine)
+                ),
             )
 
 
@@ -154,6 +152,7 @@ class CasesContext:
         convex_client: ConvexClientWrapper | None = None,
         backend_type: BackendType = BackendType.SQLITE,
         sync_engine: SyncEngine | None = None,
+        event_bus: Any = None,  # noqa: ARG003
     ) -> CasesContext:
         """Create a CasesContext with all repositories."""
         if backend_type == BackendType.CONVEX:
@@ -167,17 +166,11 @@ class CasesContext:
                 raise ValueError("SQLAlchemy connection required for SQLite backend")
             from src.contexts.cases.infra.case_repository import SQLiteCaseRepository
 
-            case_repo = SQLiteCaseRepository(connection)
-
-            # Wrap with sync if enabled
-            if sync_engine is not None:
-                from src.shared.infra.sync.synced_repositories import (
-                    SyncedCaseRepository,
+            return cls(
+                case_repo=SQLiteCaseRepository(
+                    connection, outbox=_create_outbox(connection, sync_engine)
                 )
-
-                case_repo = SyncedCaseRepository(case_repo, sync_engine)
-
-            return cls(case_repo=case_repo)
+            )
 
 
 @dataclass
@@ -202,6 +195,7 @@ class CodingContext:
         convex_client: ConvexClientWrapper | None = None,
         backend_type: BackendType = BackendType.SQLITE,
         sync_engine: SyncEngine | None = None,
+        event_bus: Any = None,  # noqa: ARG003
     ) -> CodingContext:
         """Create a CodingContext with all repositories."""
         if backend_type == BackendType.CONVEX:
@@ -227,26 +221,11 @@ class CodingContext:
                 SQLiteSegmentRepository,
             )
 
-            code_repo = SQLiteCodeRepository(connection)
-            category_repo = SQLiteCategoryRepository(connection)
-            segment_repo = SQLiteSegmentRepository(connection)
-
-            # Wrap with sync if enabled
-            if sync_engine is not None:
-                from src.shared.infra.sync.synced_repositories import (
-                    SyncedCategoryRepository,
-                    SyncedCodeRepository,
-                    SyncedSegmentRepository,
-                )
-
-                code_repo = SyncedCodeRepository(code_repo, sync_engine)
-                category_repo = SyncedCategoryRepository(category_repo, sync_engine)
-                segment_repo = SyncedSegmentRepository(segment_repo, sync_engine)
-
+            outbox = _create_outbox(connection, sync_engine)
             return cls(
-                code_repo=code_repo,
-                category_repo=category_repo,
-                segment_repo=segment_repo,
+                code_repo=SQLiteCodeRepository(connection, outbox=outbox),
+                category_repo=SQLiteCategoryRepository(connection, outbox=outbox),
+                segment_repo=SQLiteSegmentRepository(connection, outbox=outbox),
             )
 
 

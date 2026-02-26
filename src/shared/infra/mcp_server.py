@@ -429,7 +429,7 @@ class MCPServerManager:
                 source_id, code_id = 114101, 284370
 
             event = SegmentCoded.create(
-                segment_id=SegmentId(value=999999),
+                segment_id=SegmentId(value="999999"),
                 code_id=CodeId(value=code_id),
                 code_name="test",
                 source_id=SourceId(value=source_id),

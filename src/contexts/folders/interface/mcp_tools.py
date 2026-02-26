@@ -240,7 +240,7 @@ class FolderTools:
         if new_name is None:
             return Failure("Missing required parameter: new_name")
 
-        command = RenameFolderCommand(folder_id=int(folder_id), new_name=new_name)
+        command = RenameFolderCommand(folder_id=str(folder_id), new_name=new_name)
 
         result = rename_folder(
             command=command,
@@ -274,7 +274,7 @@ class FolderTools:
         if folder_id is None:
             return Failure("Missing required parameter: folder_id")
 
-        command = DeleteFolderCommand(folder_id=int(folder_id))
+        command = DeleteFolderCommand(folder_id=str(folder_id))
 
         result = delete_folder(
             command=command,
@@ -313,7 +313,8 @@ class FolderTools:
             folder_id = None
 
         command = MoveSourceToFolderCommand(
-            source_id=int(source_id), folder_id=folder_id
+            source_id=str(source_id),
+            folder_id=str(folder_id) if folder_id is not None else None,
         )
 
         result = move_source_to_folder(

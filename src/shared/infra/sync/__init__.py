@@ -5,7 +5,7 @@ Provides real-time sync between local SQLite and cloud Convex.
 
 Components:
 - SyncEngine: Core sync orchestration (I/O layer)
-- SyncedRepositories: Decorators that add sync to SQLite repos
+- OutboxWriter: Transactional outbox for atomic domain + sync writes
 - Command Handlers: handle_sync_pull, handle_sync_status
 """
 
@@ -20,14 +20,7 @@ from src.shared.infra.sync.engine import (
     SyncState,
     SyncStatus,
 )
-from src.shared.infra.sync.synced_repositories import (
-    SyncedCaseRepository,
-    SyncedCategoryRepository,
-    SyncedCodeRepository,
-    SyncedFolderRepository,
-    SyncedSegmentRepository,
-    SyncedSourceRepository,
-)
+from src.shared.infra.sync.outbox import OutboxWriter
 
 __all__ = [
     # Engine
@@ -36,13 +29,8 @@ __all__ = [
     "SyncEngine",
     "SyncState",
     "SyncStatus",
-    # Synced Repositories
-    "SyncedCaseRepository",
-    "SyncedCategoryRepository",
-    "SyncedCodeRepository",
-    "SyncedFolderRepository",
-    "SyncedSegmentRepository",
-    "SyncedSourceRepository",
+    # Outbox
+    "OutboxWriter",
     # Command Handlers
     "handle_sync_pull",
     "handle_sync_status",

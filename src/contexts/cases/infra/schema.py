@@ -30,7 +30,7 @@ metadata = MetaData()
 cas_case = Table(
     "cas_case",
     metadata,
-    Column("id", Integer, primary_key=True),
+    Column("id", String(36), primary_key=True),
     Column("name", String(255), nullable=False),
     Column("description", Text),
     Column("memo", Text),
@@ -44,12 +44,12 @@ cas_case = Table(
 cas_attribute = Table(
     "cas_attribute",
     metadata,
-    Column("id", Integer, primary_key=True),
-    Column("case_id", Integer, nullable=False),
+    Column("id", String(36), primary_key=True),
+    Column("case_id", String(36), nullable=False),
     Column("name", String(100), nullable=False),
     Column("attr_type", String(20), nullable=False),  # text, number, date, boolean
     Column("value_text", Text),
-    Column("value_number", Integer),
+    Column("value_number", Integer),  # Non-ID data column, kept as Integer
     Column("value_date", DateTime),
     Index("idx_cas_attr_case_name", "case_id", "name", unique=True),
 )
@@ -59,9 +59,9 @@ cas_attribute = Table(
 cas_source_link = Table(
     "cas_source_link",
     metadata,
-    Column("id", Integer, primary_key=True),
-    Column("case_id", Integer, nullable=False),
-    Column("source_id", Integer, nullable=False),  # References src_source.id
+    Column("id", String(36), primary_key=True),
+    Column("case_id", String(36), nullable=False),
+    Column("source_id", String(36), nullable=False),  # References src_source.id
     Column("owner", String(100)),
     Column("date", String(50)),
     Column("source_name", String(255)),  # Denormalized for display

@@ -162,7 +162,7 @@ def test_mcp_segment_coded_emits_signal(mcp_test_env, qapp):
     from src.shared.common.types import SourceId
 
     source = Source(
-        id=SourceId(value=99),
+        id=SourceId(value="99"),
         name="mcp_test_source.txt",
         source_type=SourceType.TEXT,
         status=SourceStatus.READY,
@@ -209,6 +209,6 @@ def test_mcp_segment_coded_emits_signal(mcp_test_env, qapp):
     assert len(received) > 0, "No segment_coded signal received!"
     payload = received[0]
     assert payload.code_id == code_id
-    assert payload.source_id == 99
+    assert payload.source_id == "99"
     assert payload.start_pos == 0
     assert payload.end_pos == 15

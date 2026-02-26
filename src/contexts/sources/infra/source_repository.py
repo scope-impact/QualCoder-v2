@@ -19,6 +19,8 @@ from src.shared.common.types import FolderId, SourceId
 if TYPE_CHECKING:
     from sqlalchemy import Connection
 
+    from src.shared.infra.sync.outbox import OutboxWriter
+
 
 class SQLiteSourceRepository:
     """
@@ -28,8 +30,11 @@ class SQLiteSourceRepository:
     Uses the prefixed table from the Sources bounded context.
     """
 
-    def __init__(self, connection: Connection) -> None:
+    def __init__(
+        self, connection: Connection, outbox: OutboxWriter | None = None
+    ) -> None:
         self._conn = connection
+        self._outbox = outbox
 
     def get_all(self) -> list[Source]:
         """Get all sources in the project."""
@@ -110,12 +115,20 @@ class SQLiteSourceRepository:
             )
 
         self._conn.execute(stmt)
+        if self._outbox:
+            self._outbox.write_upsert(
+                "source",
+                src.id.value,
+                {"name": src.name, "source_type": src.source_type.value},
+            )
         self._conn.commit()
 
     def delete(self, source_id: SourceId) -> None:
         """Delete a source by ID."""
         stmt = delete(src_source).where(src_source.c.id == source_id.value)
         self._conn.execute(stmt)
+        if self._outbox:
+            self._outbox.write_delete("source", source_id.value)
         self._conn.commit()
 
     def exists(self, source_id: SourceId) -> bool:

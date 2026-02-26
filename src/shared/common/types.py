@@ -9,9 +9,10 @@ from __future__ import annotations
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from typing import ClassVar
-from uuid import uuid4
 
 from returns.result import Failure, Result, Success
+
+from src.shared.common.uuid7 import new_uuid7
 
 # ============================================================
 # Typed Identifiers
@@ -20,60 +21,60 @@ from returns.result import Failure, Result, Success
 
 @dataclass(frozen=True)
 class CodeId:
-    value: int
+    value: str
 
     @classmethod
     def new(cls) -> CodeId:
-        return cls(value=int(uuid4().int % 1_000_000))
+        return cls(value=new_uuid7())
 
 
 @dataclass(frozen=True)
 class SegmentId:
-    value: int
+    value: str
 
     @classmethod
     def new(cls) -> SegmentId:
-        return cls(value=int(uuid4().int % 1_000_000))
+        return cls(value=new_uuid7())
 
 
 @dataclass(frozen=True)
 class SourceId:
-    value: int
+    value: str
 
     @classmethod
     def new(cls) -> SourceId:
-        return cls(value=int(uuid4().int % 1_000_000))
+        return cls(value=new_uuid7())
 
 
 @dataclass(frozen=True)
 class CategoryId:
-    value: int
+    value: str
 
     @classmethod
     def new(cls) -> CategoryId:
-        return cls(value=int(uuid4().int % 1_000_000))
+        return cls(value=new_uuid7())
 
 
 @dataclass(frozen=True)
 class CaseId:
     """Typed identifier for Case entities."""
 
-    value: int
+    value: str
 
     @classmethod
     def new(cls) -> CaseId:
-        return cls(value=int(uuid4().int % 1_000_000))
+        return cls(value=new_uuid7())
 
 
 @dataclass(frozen=True)
 class FolderId:
     """Unique identifier for a source folder."""
 
-    value: int
+    value: str
 
     @classmethod
     def new(cls) -> FolderId:
-        return cls(value=int(uuid4().int % 1_000_000))
+        return cls(value=new_uuid7())
 
 
 # ============================================================
@@ -113,7 +114,7 @@ class DomainEvent:
 
     @classmethod
     def _generate_id(cls) -> str:
-        return str(uuid4())
+        return new_uuid7()
 
     @classmethod
     def _now(cls) -> datetime:

@@ -285,24 +285,28 @@ class AppContext:
             convex_client=self.convex_client,
             backend_type=backend_type,
             sync_engine=sync_engine,
+            event_bus=self.event_bus,
         )
         self.coding_context = CodingContext.create(
             connection=connection,
             convex_client=self.convex_client,
             backend_type=backend_type,
             sync_engine=sync_engine,
+            event_bus=self.event_bus,
         )
         self.cases_context = CasesContext.create(
             connection=connection,
             convex_client=self.convex_client,
             backend_type=backend_type,
             sync_engine=sync_engine,
+            event_bus=self.event_bus,
         )
         self.folders_context = FoldersContext.create(
             connection=connection,
             convex_client=self.convex_client,
             backend_type=backend_type,
             sync_engine=sync_engine,
+            event_bus=self.event_bus,
         )
         # ProjectsContext always uses SQLite for local project file management
         self.projects_context = ProjectsContext.create(

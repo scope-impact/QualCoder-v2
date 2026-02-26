@@ -354,23 +354,17 @@ class QualCoderApp:
 
     def _on_navigate_to_coding(self, source_id: str):
         """Handle navigation to coding screen with a specific source."""
-        try:
-            source_id_int = int(source_id)
-            sources_ctx = self._ctx.sources_context
-            if sources_ctx:
-                source = sources_ctx.source_repo.get_by_id(
-                    SourceId(value=source_id_int)
+        sources_ctx = self._ctx.sources_context
+        if sources_ctx:
+            source = sources_ctx.source_repo.get_by_id(SourceId(value=source_id))
+            if source and source.fulltext:
+                # Load the source content into the coding screen
+                self._screens["coding"].set_document(
+                    title=source.name,
+                    badge=source.source_type.value,
+                    text=source.fulltext,
                 )
-                if source and source.fulltext:
-                    # Load the source content into the coding screen
-                    self._screens["coding"].set_document(
-                        title=source.name,
-                        badge=source.source_type.value,
-                        text=source.fulltext,
-                    )
-                    self._screens["coding"].set_current_source(source_id_int)
-        except (ValueError, TypeError):
-            pass  # Invalid source_id, just show the screen
+                self._screens["coding"].set_current_source(source_id)
 
         self._shell.set_screen(self._screens["coding"])
         self._shell.set_active_menu("coding")

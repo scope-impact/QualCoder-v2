@@ -263,6 +263,14 @@ class ConvexClientWrapper:
         """Delete a case."""
         self.mutation("cases:remove", id=case_id)
 
+    def get_all_attributes(self) -> list[dict[str, Any]]:
+        """Get all case attributes."""
+        return self.query("cases:getAllAttributes")
+
+    def get_all_source_links(self) -> list[dict[str, Any]]:
+        """Get all case-source links."""
+        return self.query("cases:getAllSourceLinks")
+
     # =========================================================================
     # Project Settings Shortcuts
     # =========================================================================

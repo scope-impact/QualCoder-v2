@@ -276,7 +276,7 @@ class CaseTools:
                 suggestions=("Open a project first",),
             ).to_dict()
 
-        result = get_case(int(case_id), self._state, case_repo=self._case_repo)
+        result = get_case(str(case_id), self._state, case_repo=self._case_repo)
         return result.to_dict()
 
     # ============================================================
@@ -406,7 +406,7 @@ class CaseTools:
         # Fetch all cases using get_case use case
         cases = []
         for cid in case_ids:
-            result = get_case(int(cid), self._state, case_repo=case_repo)
+            result = get_case(str(cid), self._state, case_repo=case_repo)
             if result.is_failure:
                 return OperationResult.fail(
                     error=f"Case not found: {cid}",
@@ -416,7 +416,7 @@ class CaseTools:
                         f"Check if case ID {cid} exists",
                     ),
                 ).to_dict()
-            case = case_repo.get_by_id(CaseId(value=int(cid))) if case_repo else None
+            case = case_repo.get_by_id(CaseId(value=str(cid))) if case_repo else None
             if case:
                 cases.append(case)
 

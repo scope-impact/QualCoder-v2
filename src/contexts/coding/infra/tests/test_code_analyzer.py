@@ -26,13 +26,13 @@ def sample_codes() -> tuple[Code, ...]:
     """Create sample codes for testing."""
     return (
         Code(
-            id=CodeId(value=1),
+            id=CodeId(value="1"),
             name="anxiety",
             color=Color.from_hex("#FF0000"),
             memo="Feelings of worry",
         ),
         Code(
-            id=CodeId(value=2),
+            id=CodeId(value="2"),
             name="stress",
             color=Color.from_hex("#00FF00"),
             memo="Tension and pressure",
@@ -92,7 +92,7 @@ class TestMockCodeAnalyzer:
             contexts=(
                 TextContext(
                     text="test text",
-                    source_id=SourceId(value=1),
+                    source_id=SourceId(value="1"),
                     position=TextPosition(start=0, end=9),
                 ),
             ),
@@ -104,7 +104,7 @@ class TestMockCodeAnalyzer:
         result = analyzer.suggest_codes(
             text="Some text",
             existing_codes=(),
-            source_id=SourceId(value=1),
+            source_id=SourceId(value="1"),
         )
 
         assert isinstance(result, Success)
@@ -119,7 +119,7 @@ class TestMockCodeAnalyzer:
         result = analyzer.suggest_codes(
             text="Some text",
             existing_codes=(),
-            source_id=SourceId(value=1),
+            source_id=SourceId(value="1"),
         )
 
         assert isinstance(result, Success)
@@ -139,7 +139,7 @@ class TestMockCodeAnalyzer:
                 contexts=(
                     TextContext(
                         text="test",
-                        source_id=SourceId(value=1),
+                        source_id=SourceId(value="1"),
                         position=TextPosition(start=0, end=4),
                     ),
                 ),
@@ -153,7 +153,7 @@ class TestMockCodeAnalyzer:
         result = analyzer.suggest_codes(
             text="Some text",
             existing_codes=(),
-            source_id=SourceId(value=1),
+            source_id=SourceId(value="1"),
             max_suggestions=2,
         )
 
@@ -163,8 +163,8 @@ class TestMockCodeAnalyzer:
         """suggest_codes tracks number of calls."""
         analyzer = MockCodeAnalyzer()
 
-        analyzer.suggest_codes("text1", (), SourceId(value=1))
-        analyzer.suggest_codes("text2", (), SourceId(value=1))
+        analyzer.suggest_codes("text1", (), SourceId(value="1"))
+        analyzer.suggest_codes("text2", (), SourceId(value="1"))
 
         assert analyzer.call_count == 2
 
@@ -200,7 +200,7 @@ class TestLLMCodeAnalyzer:
         result = analyzer.suggest_codes(
             text="I feel so frustrated with the deadline at work. " * 5,
             existing_codes=sample_codes,
-            source_id=SourceId(value=1),
+            source_id=SourceId(value="1"),
         )
 
         assert isinstance(result, Success)
@@ -222,7 +222,7 @@ class TestLLMCodeAnalyzer:
         result = analyzer.suggest_codes(
             text="Too short",
             existing_codes=(),
-            source_id=SourceId(value=1),
+            source_id=SourceId(value="1"),
         )
 
         assert isinstance(result, Failure)
@@ -258,7 +258,7 @@ class TestLLMCodeAnalyzer:
         result = analyzer.suggest_codes(
             text="A longer text that meets the minimum length requirement. " * 3,
             existing_codes=(),
-            source_id=SourceId(value=1),
+            source_id=SourceId(value="1"),
         )
 
         assert isinstance(result, Success)
@@ -297,7 +297,7 @@ class TestLLMCodeAnalyzer:
         result = analyzer.suggest_codes(
             text="A longer text that meets the minimum length requirement. " * 3,
             existing_codes=sample_codes,
-            source_id=SourceId(value=1),
+            source_id=SourceId(value="1"),
         )
 
         assert isinstance(result, Success)
@@ -357,7 +357,7 @@ class TestLLMCodeAnalyzer:
         result = analyzer.suggest_codes(
             text="A longer text that meets the minimum length requirement. " * 3,
             existing_codes=(),
-            source_id=SourceId(value=1),
+            source_id=SourceId(value="1"),
         )
 
         # Should return empty suggestions (not failure) when LLM returns empty

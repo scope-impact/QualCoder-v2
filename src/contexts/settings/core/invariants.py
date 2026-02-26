@@ -104,14 +104,12 @@ def is_valid_convex_url(url: str | None) -> bool:
     """
     Check if Convex URL is valid.
 
-    Valid URLs must:
-    - Start with https://
-    - End with .convex.cloud
+    Accepts any http:// or https:// URL.
     """
     if not url:
         return True  # Empty/None is valid (disabled state)
     url = url.strip()
-    return url.startswith("https://") and url.endswith(".convex.cloud")
+    return url.startswith("http://") or url.startswith("https://")
 
 
 def can_enable_cloud_sync(url: str | None) -> bool:

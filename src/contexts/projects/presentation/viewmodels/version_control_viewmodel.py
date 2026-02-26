@@ -83,6 +83,16 @@ class VersionControlViewModel(QObject):
                 self._on_vcs_initialized
             )
 
+    def teardown(self) -> None:
+        """Disconnect all signal bridge connections. Call before replacing this ViewModel."""
+        if self._signal_bridge is None:
+            return
+        self._signal_bridge.snapshot_created.disconnect(self._on_snapshot_created)
+        self._signal_bridge.snapshot_restored.disconnect(self._on_snapshot_restored)
+        self._signal_bridge.version_control_initialized.disconnect(
+            self._on_vcs_initialized
+        )
+
     @property
     def is_initialized(self) -> bool:
         """Check if VCS is initialized for this project."""

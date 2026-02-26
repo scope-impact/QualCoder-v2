@@ -41,7 +41,7 @@ def project_with_data(app_context: AppContext, tmp_path: Path) -> Path:
     app_context.open_project(str(project_path))
 
     source = Source(
-        id=SourceId(1),
+        id=SourceId("1"),
         name="saved_document.txt",
         source_type=SourceType.TEXT,
         fulltext="Previously saved content",
@@ -274,7 +274,7 @@ class TestViewSourcesList:
 
         with allure.step("Add source via repository"):
             source = Source(
-                id=SourceId(1),
+                id=SourceId("1"),
                 name="test_document.txt",
                 source_type=SourceType.TEXT,
                 fulltext="Test content for the document",
@@ -300,7 +300,7 @@ class TestViewSourcesList:
 
         with allure.step("Add source with all attributes"):
             source = Source(
-                id=SourceId(1),
+                id=SourceId("1"),
                 name="interview_01.txt",
                 source_type=SourceType.TEXT,
                 status=SourceStatus.IMPORTED,
@@ -329,13 +329,13 @@ class TestViewSourcesList:
 
         with allure.step("Add sources of different types"):
             text_source = Source(
-                id=SourceId(1),
+                id=SourceId("1"),
                 name="document.txt",
                 source_type=SourceType.TEXT,
                 fulltext="Text content",
             )
             image_source = Source(
-                id=SourceId(2),
+                id=SourceId("2"),
                 name="photo.png",
                 source_type=SourceType.IMAGE,
             )
@@ -389,7 +389,7 @@ class TestViewSourcesList:
         with allure.step("Open project and add source"):
             app_context.open_project(str(existing_project))
             source = Source(
-                id=SourceId(1),
+                id=SourceId("1"),
                 name="selected.txt",
                 source_type=SourceType.TEXT,
                 fulltext="Content to code",
@@ -399,11 +399,11 @@ class TestViewSourcesList:
         with allure.step("Select source (set current_source_id)"):
             from src.shared.common.types import SourceId as SId
 
-            app_context.state.current_source_id = SId(value=1)
+            app_context.state.current_source_id = SId(value="1")
 
         with allure.step("Verify current source ID is set"):
             assert app_context.state.current_source_id is not None
-            assert app_context.state.current_source_id.value == 1
+            assert app_context.state.current_source_id.value == "1"
 
 
 @allure.story("QC-026.04 Switch Screens/Views")
@@ -460,11 +460,13 @@ class TestSwitchScreens:
 
         with allure.step("Open project and set current source"):
             app_context.open_project(str(existing_project))
-            source = Source(id=SourceId(1), name="doc.txt", source_type=SourceType.TEXT)
+            source = Source(
+                id=SourceId("1"), name="doc.txt", source_type=SourceType.TEXT
+            )
             app_context.sources_context.source_repo.save(source)
             from src.shared.common.types import SourceId as SId
 
-            app_context.state.current_source_id = SId(value=1)
+            app_context.state.current_source_id = SId(value="1")
             app_context.state.current_screen = "coding"
 
         with allure.step("Switch to sources screen"):
@@ -472,13 +474,13 @@ class TestSwitchScreens:
 
         with allure.step("Verify current source ID still set"):
             assert app_context.state.current_source_id is not None
-            assert app_context.state.current_source_id.value == 1
+            assert app_context.state.current_source_id.value == "1"
 
         with allure.step("Switch back to coding"):
             app_context.state.current_screen = "coding"
 
         with allure.step("Verify context preserved"):
-            assert app_context.state.current_source_id.value == 1
+            assert app_context.state.current_source_id.value == "1"
 
     @allure.title("AC #5: Screen navigation supports all main views")
     @allure.severity(allure.severity_level.NORMAL)
@@ -548,7 +550,7 @@ class TestAgentQueryContext:
         with allure.step("Open project and add source"):
             app_context.open_project(str(existing_project))
             source = Source(
-                id=SourceId(1),
+                id=SourceId("1"),
                 name="interview.txt",
                 source_type=SourceType.TEXT,
                 fulltext="Interview content",
@@ -577,10 +579,10 @@ class TestAgentQueryContext:
         with allure.step("Open project and add mixed sources"):
             app_context.open_project(str(existing_project))
             text_src = Source(
-                id=SourceId(1), name="doc.txt", source_type=SourceType.TEXT
+                id=SourceId("1"), name="doc.txt", source_type=SourceType.TEXT
             )
             image_src = Source(
-                id=SourceId(2), name="img.png", source_type=SourceType.IMAGE
+                id=SourceId("2"), name="img.png", source_type=SourceType.IMAGE
             )
             app_context.sources_context.source_repo.save(text_src)
             app_context.sources_context.source_repo.save(image_src)
@@ -607,7 +609,7 @@ class TestAgentQueryContext:
         with allure.step("Open project and add source with content"):
             app_context.open_project(str(existing_project))
             source = Source(
-                id=SourceId(1),
+                id=SourceId("1"),
                 name="document.txt",
                 source_type=SourceType.TEXT,
                 fulltext="This is the full text content of the document.",
@@ -650,13 +652,13 @@ class TestAgentQueryContext:
         with allure.step("Open project and set current source"):
             app_context.open_project(str(existing_project))
             source = Source(
-                id=SourceId(1),
+                id=SourceId("1"),
                 name="current_doc.txt",
                 source_type=SourceType.TEXT,
                 fulltext="Current document content",
             )
             app_context.sources_context.source_repo.save(source)
-            app_context.state.current_source_id = SourceId(value=1)
+            app_context.state.current_source_id = SourceId(value="1")
 
         with allure.step("Query project context"):
             tools = ProjectTools(ctx=app_context)
@@ -664,7 +666,7 @@ class TestAgentQueryContext:
 
         with allure.step("Verify current source ID accessible via state"):
             assert app_context.state.current_source_id is not None
-            assert app_context.state.current_source_id.value == 1
+            assert app_context.state.current_source_id.value == "1"
 
 
 @allure.story("QC-026.06 Agent Navigate to Segment")
@@ -755,7 +757,7 @@ class TestAgentNavigateToSegment:
         with allure.step("Open project and add source"):
             app_context.open_project(str(existing_project))
             source = Source(
-                id=SourceId(1),
+                id=SourceId("1"),
                 name="navigate_target.txt",
                 source_type=SourceType.TEXT,
                 fulltext="Content to navigate to",
@@ -780,7 +782,7 @@ class TestAgentNavigateToSegment:
         with allure.step("Open project and add source"):
             app_context.open_project(str(existing_project))
             source = Source(
-                id=SourceId(1),
+                id=SourceId("1"),
                 name="interview_spanish.txt",
                 source_type=SourceType.TEXT,
                 fulltext="Entrevista en español",
@@ -867,7 +869,7 @@ class TestProjectWorkflowIntegration:
         with allure.step("Open and populate project"):
             app_context.open_project(str(existing_project))
             source = Source(
-                id=SourceId(1), name="temp.txt", source_type=SourceType.TEXT
+                id=SourceId("1"), name="temp.txt", source_type=SourceType.TEXT
             )
             app_context.sources_context.source_repo.save(source)
             sources = app_context.sources_context.source_repo.get_all()

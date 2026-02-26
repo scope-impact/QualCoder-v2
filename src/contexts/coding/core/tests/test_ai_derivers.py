@@ -35,7 +35,7 @@ class TestDeriveSuggestCode:
 
         context = TextContext(
             text="This relates to the theme of resilience",
-            source_id=SourceId(value=1),
+            source_id=SourceId(value="1"),
             position=TextPosition(start=0, end=40),
         )
 
@@ -45,7 +45,7 @@ class TestDeriveSuggestCode:
             rationale="This text discusses overcoming challenges, which indicates resilience",
             contexts=(context,),
             confidence=0.85,
-            source_id=SourceId(value=1),
+            source_id=SourceId(value="1"),
             state=state,
         )
 
@@ -73,7 +73,7 @@ class TestDeriveSuggestCode:
             rationale="Valid rationale for the suggestion",
             contexts=(),
             confidence=0.8,
-            source_id=SourceId(value=1),
+            source_id=SourceId(value="1"),
             state=state,
         )
 
@@ -98,7 +98,7 @@ class TestDeriveSuggestCode:
             rationale="Valid rationale for the suggestion",
             contexts=(),
             confidence=0.8,
-            source_id=SourceId(value=1),
+            source_id=SourceId(value="1"),
             state=state,
         )
 
@@ -116,7 +116,7 @@ class TestDeriveSuggestCode:
         from src.shared import CodeId, SourceId
 
         existing_code = Code(
-            id=CodeId(value=1),
+            id=CodeId(value="1"),
             name="Resilience",
             color=Color(255, 0, 0),
         )
@@ -128,7 +128,7 @@ class TestDeriveSuggestCode:
             rationale="Valid rationale for the suggestion",
             contexts=(),
             confidence=0.8,
-            source_id=SourceId(value=1),
+            source_id=SourceId(value="1"),
             state=state,
         )
 
@@ -147,7 +147,7 @@ class TestDeriveSuggestCode:
         from src.shared import CodeId, SourceId
 
         existing_code = Code(
-            id=CodeId(value=1),
+            id=CodeId(value="1"),
             name="Resilience",
             color=Color(255, 0, 0),
         )
@@ -159,7 +159,7 @@ class TestDeriveSuggestCode:
             rationale="Valid rationale for the suggestion",
             contexts=(),
             confidence=0.8,
-            source_id=SourceId(value=1),
+            source_id=SourceId(value="1"),
             state=state,
         )
 
@@ -184,7 +184,7 @@ class TestDeriveSuggestCode:
             rationale="Valid rationale for the suggestion",
             contexts=(),
             confidence=1.5,
-            source_id=SourceId(value=1),
+            source_id=SourceId(value="1"),
             state=state,
         )
 
@@ -210,7 +210,7 @@ class TestDeriveSuggestCode:
             rationale="Valid rationale for the suggestion",
             contexts=(),
             confidence=-0.1,
-            source_id=SourceId(value=1),
+            source_id=SourceId(value="1"),
             state=state,
         )
 
@@ -235,7 +235,7 @@ class TestDeriveSuggestCode:
             rationale="",
             contexts=(),
             confidence=0.8,
-            source_id=SourceId(value=1),
+            source_id=SourceId(value="1"),
             state=state,
         )
 
@@ -261,7 +261,7 @@ class TestDeriveSuggestCode:
             rationale="Valid rationale for the suggestion",
             contexts=(),
             confidence=0.0,
-            source_id=SourceId(value=1),
+            source_id=SourceId(value="1"),
             state=state,
         )
         assert isinstance(result_zero, CodeSuggested)
@@ -274,7 +274,7 @@ class TestDeriveSuggestCode:
             rationale="Valid rationale for the suggestion",
             contexts=(),
             confidence=1.0,
-            source_id=SourceId(value=1),
+            source_id=SourceId(value="1"),
             state=state,
         )
         assert isinstance(result_one, CodeSuggested)
@@ -459,7 +459,7 @@ class TestDeriveApproveSuggestion:
             status="pending",
         )
         existing_code = Code(
-            id=CodeId(value=1),
+            id=CodeId(value="1"),
             name="Existing Theme",
             color=Color(255, 0, 0),
         )
@@ -652,14 +652,14 @@ class TestDeriveDetectDuplicates:
         from src.contexts.coding.core.entities import Code, Color
         from src.shared import CodeId
 
-        code1 = Code(id=CodeId(value=1), name="Resilience", color=Color(255, 0, 0))
-        code2 = Code(id=CodeId(value=2), name="Perseverance", color=Color(0, 255, 0))
+        code1 = Code(id=CodeId(value="1"), name="Resilience", color=Color(255, 0, 0))
+        code2 = Code(id=CodeId(value="2"), name="Perseverance", color=Color(0, 255, 0))
         state = AISuggestionState(existing_codes=(code1, code2))
 
         candidate = DuplicateCandidate(
-            code_a_id=CodeId(value=1),
+            code_a_id=CodeId(value="1"),
             code_a_name="Resilience",
-            code_b_id=CodeId(value=2),
+            code_b_id=CodeId(value="2"),
             code_b_name="Perseverance",
             similarity=SimilarityScore(0.85),
             rationale="Both relate to overcoming difficulties",
@@ -687,8 +687,8 @@ class TestDeriveDetectDuplicates:
         from src.contexts.coding.core.entities import Code, Color
         from src.shared import CodeId
 
-        code1 = Code(id=CodeId(value=1), name="Theme", color=Color(255, 0, 0))
-        code2 = Code(id=CodeId(value=2), name="Pattern", color=Color(0, 255, 0))
+        code1 = Code(id=CodeId(value="1"), name="Theme", color=Color(255, 0, 0))
+        code2 = Code(id=CodeId(value="2"), name="Pattern", color=Color(0, 255, 0))
         state = AISuggestionState(existing_codes=(code1, code2))
 
         result = derive_detect_duplicates(
@@ -711,8 +711,8 @@ class TestDeriveDetectDuplicates:
         from src.contexts.coding.core.entities import Code, Color
         from src.shared import CodeId
 
-        code1 = Code(id=CodeId(value=1), name="Theme", color=Color(255, 0, 0))
-        code2 = Code(id=CodeId(value=2), name="Pattern", color=Color(0, 255, 0))
+        code1 = Code(id=CodeId(value="1"), name="Theme", color=Color(255, 0, 0))
+        code2 = Code(id=CodeId(value="2"), name="Pattern", color=Color(0, 255, 0))
         state = AISuggestionState(existing_codes=(code1, code2))
 
         result = derive_detect_duplicates(
@@ -736,8 +736,8 @@ class TestDeriveDetectDuplicates:
         from src.contexts.coding.core.entities import Code, Color
         from src.shared import CodeId
 
-        code1 = Code(id=CodeId(value=1), name="Theme", color=Color(255, 0, 0))
-        code2 = Code(id=CodeId(value=2), name="Pattern", color=Color(0, 255, 0))
+        code1 = Code(id=CodeId(value="1"), name="Theme", color=Color(255, 0, 0))
+        code2 = Code(id=CodeId(value="2"), name="Pattern", color=Color(0, 255, 0))
         state = AISuggestionState(existing_codes=(code1, code2))
 
         result = derive_detect_duplicates(
@@ -760,7 +760,7 @@ class TestDeriveDetectDuplicates:
         from src.contexts.coding.core.entities import Code, Color
         from src.shared import CodeId
 
-        code1 = Code(id=CodeId(value=1), name="Theme", color=Color(255, 0, 0))
+        code1 = Code(id=CodeId(value="1"), name="Theme", color=Color(255, 0, 0))
         state = AISuggestionState(existing_codes=(code1,))
 
         result = derive_detect_duplicates(
@@ -811,29 +811,29 @@ class TestDeriveSuggestMerge:
         from src.shared import CodeId
 
         source_code = Code(
-            id=CodeId(value=1),
+            id=CodeId(value="1"),
             name="Resilience",
             color=Color(255, 0, 0),
         )
         target_code = Code(
-            id=CodeId(value=2),
+            id=CodeId(value="2"),
             name="Perseverance",
             color=Color(0, 255, 0),
         )
         state = AISuggestionState(existing_codes=(source_code, target_code))
 
         result = derive_suggest_merge(
-            source_code_id=CodeId(value=1),
-            target_code_id=CodeId(value=2),
+            source_code_id=CodeId(value="1"),
+            target_code_id=CodeId(value="2"),
             similarity=SimilarityScore(0.9),
             rationale="Both codes relate to overcoming obstacles",
             state=state,
         )
 
         assert isinstance(result, MergeSuggested)
-        assert result.source_code_id == CodeId(value=1)
+        assert result.source_code_id == CodeId(value="1")
         assert result.source_code_name == "Resilience"
-        assert result.target_code_id == CodeId(value=2)
+        assert result.target_code_id == CodeId(value="2")
         assert result.target_code_name == "Perseverance"
         assert result.similarity == SimilarityScore(0.9)
 
@@ -849,15 +849,15 @@ class TestDeriveSuggestMerge:
         from src.shared import CodeId
 
         target_code = Code(
-            id=CodeId(value=2),
+            id=CodeId(value="2"),
             name="Perseverance",
             color=Color(0, 255, 0),
         )
         state = AISuggestionState(existing_codes=(target_code,))
 
         result = derive_suggest_merge(
-            source_code_id=CodeId(value=1),
-            target_code_id=CodeId(value=2),
+            source_code_id=CodeId(value="1"),
+            target_code_id=CodeId(value="2"),
             similarity=SimilarityScore(0.9),
             rationale="Both codes are similar",
             state=state,
@@ -865,7 +865,7 @@ class TestDeriveSuggestMerge:
 
         assert isinstance(result, MergeNotCreated)
         assert result.reason == "CODE_NOT_FOUND"
-        assert result.code_id == CodeId(value=1)
+        assert result.code_id == CodeId(value="1")
 
     def test_fails_when_target_code_not_found(self):
         """Should fail when target code doesn't exist."""
@@ -879,15 +879,15 @@ class TestDeriveSuggestMerge:
         from src.shared import CodeId
 
         source_code = Code(
-            id=CodeId(value=1),
+            id=CodeId(value="1"),
             name="Resilience",
             color=Color(255, 0, 0),
         )
         state = AISuggestionState(existing_codes=(source_code,))
 
         result = derive_suggest_merge(
-            source_code_id=CodeId(value=1),
-            target_code_id=CodeId(value=2),
+            source_code_id=CodeId(value="1"),
+            target_code_id=CodeId(value="2"),
             similarity=SimilarityScore(0.9),
             rationale="Both codes are similar",
             state=state,
@@ -895,7 +895,7 @@ class TestDeriveSuggestMerge:
 
         assert isinstance(result, MergeNotCreated)
         assert result.reason == "CODE_NOT_FOUND"
-        assert result.code_id == CodeId(value=2)
+        assert result.code_id == CodeId(value="2")
 
     def test_fails_with_empty_rationale(self):
         """Should fail when rationale is empty."""
@@ -909,20 +909,20 @@ class TestDeriveSuggestMerge:
         from src.shared import CodeId
 
         source_code = Code(
-            id=CodeId(value=1),
+            id=CodeId(value="1"),
             name="Resilience",
             color=Color(255, 0, 0),
         )
         target_code = Code(
-            id=CodeId(value=2),
+            id=CodeId(value="2"),
             name="Perseverance",
             color=Color(0, 255, 0),
         )
         state = AISuggestionState(existing_codes=(source_code, target_code))
 
         result = derive_suggest_merge(
-            source_code_id=CodeId(value=1),
-            target_code_id=CodeId(value=2),
+            source_code_id=CodeId(value="1"),
+            target_code_id=CodeId(value="2"),
             similarity=SimilarityScore(0.9),
             rationale="",
             state=state,
@@ -946,27 +946,27 @@ class TestDeriveApproveMerge:
         from src.shared import CodeId
 
         source_code = Code(
-            id=CodeId(value=1),
+            id=CodeId(value="1"),
             name="Resilience",
             color=Color(255, 0, 0),
         )
         target_code = Code(
-            id=CodeId(value=2),
+            id=CodeId(value="2"),
             name="Perseverance",
             color=Color(0, 255, 0),
         )
         state = AISuggestionState(existing_codes=(source_code, target_code))
 
         result = derive_approve_merge(
-            source_code_id=CodeId(value=1),
-            target_code_id=CodeId(value=2),
+            source_code_id=CodeId(value="1"),
+            target_code_id=CodeId(value="2"),
             segments_to_move=5,
             state=state,
         )
 
         assert isinstance(result, MergeSuggestionApproved)
-        assert result.source_code_id == CodeId(value=1)
-        assert result.target_code_id == CodeId(value=2)
+        assert result.source_code_id == CodeId(value="1")
+        assert result.target_code_id == CodeId(value="2")
         assert result.segments_moved == 5
 
     def test_fails_when_source_code_not_found(self):
@@ -980,22 +980,22 @@ class TestDeriveApproveMerge:
         from src.shared import CodeId
 
         target_code = Code(
-            id=CodeId(value=2),
+            id=CodeId(value="2"),
             name="Perseverance",
             color=Color(0, 255, 0),
         )
         state = AISuggestionState(existing_codes=(target_code,))
 
         result = derive_approve_merge(
-            source_code_id=CodeId(value=1),
-            target_code_id=CodeId(value=2),
+            source_code_id=CodeId(value="1"),
+            target_code_id=CodeId(value="2"),
             segments_to_move=5,
             state=state,
         )
 
         assert isinstance(result, MergeNotApproved)
         assert result.reason == "CODE_NOT_FOUND"
-        assert result.code_id == CodeId(value=1)
+        assert result.code_id == CodeId(value="1")
 
     def test_fails_when_target_code_not_found(self):
         """Should fail when target code doesn't exist."""
@@ -1008,22 +1008,22 @@ class TestDeriveApproveMerge:
         from src.shared import CodeId
 
         source_code = Code(
-            id=CodeId(value=1),
+            id=CodeId(value="1"),
             name="Resilience",
             color=Color(255, 0, 0),
         )
         state = AISuggestionState(existing_codes=(source_code,))
 
         result = derive_approve_merge(
-            source_code_id=CodeId(value=1),
-            target_code_id=CodeId(value=2),
+            source_code_id=CodeId(value="1"),
+            target_code_id=CodeId(value="2"),
             segments_to_move=5,
             state=state,
         )
 
         assert isinstance(result, MergeNotApproved)
         assert result.reason == "CODE_NOT_FOUND"
-        assert result.code_id == CodeId(value=2)
+        assert result.code_id == CodeId(value="2")
 
     def test_approves_with_zero_segments(self):
         """Should allow merge with zero segments to move."""
@@ -1036,20 +1036,20 @@ class TestDeriveApproveMerge:
         from src.shared import CodeId
 
         source_code = Code(
-            id=CodeId(value=1),
+            id=CodeId(value="1"),
             name="Resilience",
             color=Color(255, 0, 0),
         )
         target_code = Code(
-            id=CodeId(value=2),
+            id=CodeId(value="2"),
             name="Perseverance",
             color=Color(0, 255, 0),
         )
         state = AISuggestionState(existing_codes=(source_code, target_code))
 
         result = derive_approve_merge(
-            source_code_id=CodeId(value=1),
-            target_code_id=CodeId(value=2),
+            source_code_id=CodeId(value="1"),
+            target_code_id=CodeId(value="2"),
             segments_to_move=0,
             state=state,
         )
@@ -1073,15 +1073,15 @@ class TestDeriveDismissMerge:
         state = AISuggestionState(pending_duplicates=())
 
         result = derive_dismiss_merge(
-            source_code_id=CodeId(value=1),
-            target_code_id=CodeId(value=2),
+            source_code_id=CodeId(value="1"),
+            target_code_id=CodeId(value="2"),
             reason="Not actually duplicates",
             state=state,
         )
 
         assert isinstance(result, MergeSuggestionDismissed)
-        assert result.source_code_id == CodeId(value=1)
-        assert result.target_code_id == CodeId(value=2)
+        assert result.source_code_id == CodeId(value="1")
+        assert result.target_code_id == CodeId(value="2")
         assert result.reason == "Not actually duplicates"
 
     def test_dismisses_with_pending_candidate(self):
@@ -1098,9 +1098,9 @@ class TestDeriveDismissMerge:
         from src.shared import CodeId
 
         candidate = DuplicateCandidate(
-            code_a_id=CodeId(value=1),
+            code_a_id=CodeId(value="1"),
             code_a_name="Resilience",
-            code_b_id=CodeId(value=2),
+            code_b_id=CodeId(value="2"),
             code_b_name="Perseverance",
             similarity=SimilarityScore(0.85),
             rationale="Similar codes",
@@ -1109,8 +1109,8 @@ class TestDeriveDismissMerge:
         state = AISuggestionState(pending_duplicates=(candidate,))
 
         result = derive_dismiss_merge(
-            source_code_id=CodeId(value=1),
-            target_code_id=CodeId(value=2),
+            source_code_id=CodeId(value="1"),
+            target_code_id=CodeId(value="2"),
             reason="Different contexts",
             state=state,
         )
@@ -1130,8 +1130,8 @@ class TestDeriveDismissMerge:
         state = AISuggestionState(pending_duplicates=())
 
         result = derive_dismiss_merge(
-            source_code_id=CodeId(value=1),
-            target_code_id=CodeId(value=2),
+            source_code_id=CodeId(value="1"),
+            target_code_id=CodeId(value="2"),
             reason=None,
             state=state,
         )
@@ -1153,9 +1153,9 @@ class TestDeriveDismissMerge:
         from src.shared import CodeId
 
         candidate = DuplicateCandidate(
-            code_a_id=CodeId(value=1),
+            code_a_id=CodeId(value="1"),
             code_a_name="Resilience",
-            code_b_id=CodeId(value=2),
+            code_b_id=CodeId(value="2"),
             code_b_name="Perseverance",
             similarity=SimilarityScore(0.85),
             rationale="Similar codes",
@@ -1164,8 +1164,8 @@ class TestDeriveDismissMerge:
         state = AISuggestionState(pending_duplicates=(candidate,))
 
         result = derive_dismiss_merge(
-            source_code_id=CodeId(value=1),
-            target_code_id=CodeId(value=2),
+            source_code_id=CodeId(value="1"),
+            target_code_id=CodeId(value="2"),
             reason="Not duplicates",
             state=state,
         )
@@ -1189,9 +1189,9 @@ class TestDeriveDismissMerge:
 
         # Candidate has code_a=1, code_b=2
         candidate = DuplicateCandidate(
-            code_a_id=CodeId(value=1),
+            code_a_id=CodeId(value="1"),
             code_a_name="Resilience",
-            code_b_id=CodeId(value=2),
+            code_b_id=CodeId(value="2"),
             code_b_name="Perseverance",
             similarity=SimilarityScore(0.85),
             rationale="Similar codes",
@@ -1201,8 +1201,8 @@ class TestDeriveDismissMerge:
 
         # Dismiss with reversed order (source=2, target=1)
         result = derive_dismiss_merge(
-            source_code_id=CodeId(value=2),
-            target_code_id=CodeId(value=1),
+            source_code_id=CodeId(value="2"),
+            target_code_id=CodeId(value="1"),
             reason="Not duplicates",
             state=state,
         )

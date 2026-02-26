@@ -156,10 +156,10 @@ class SourceLinkedToCase(DomainEvent):
 
     event_type: str = field(default="cases.source_linked", init=False)
     case_id: CaseId = field(default_factory=CaseId.new)
-    source_id: int = 0
+    source_id: str = ""
 
     @classmethod
-    def create(cls, case_id: CaseId, source_id: int) -> SourceLinkedToCase:
+    def create(cls, case_id: CaseId, source_id: str) -> SourceLinkedToCase:
         """Factory method to create event with auto-generated metadata."""
         return cls(
             event_id=cls._generate_id(),
@@ -175,10 +175,10 @@ class SourceUnlinkedFromCase(DomainEvent):
 
     event_type: str = field(default="cases.source_unlinked", init=False)
     case_id: CaseId = field(default_factory=CaseId.new)
-    source_id: int = 0
+    source_id: str = ""
 
     @classmethod
-    def create(cls, case_id: CaseId, source_id: int) -> SourceUnlinkedFromCase:
+    def create(cls, case_id: CaseId, source_id: str) -> SourceUnlinkedFromCase:
         """Factory method to create event with auto-generated metadata."""
         return cls(
             event_id=cls._generate_id(),

@@ -49,37 +49,37 @@ def project_with_codes(app_context: AppContext, tmp_path: Path) -> Path:
     # Add sample codes
     codes = [
         Code(
-            id=CodeId(1),
+            id=CodeId("1"),
             name="Theme",
             color=Color.from_hex("#FF5722"),
             memo="Main themes",
         ),
         Code(
-            id=CodeId(2),
+            id=CodeId("2"),
             name="Themes",
             color=Color.from_hex("#FF9800"),
             memo="Alternative themes",
         ),
         Code(
-            id=CodeId(3),
+            id=CodeId("3"),
             name="Positive Emotion",
             color=Color.from_hex("#4CAF50"),
             memo="Happy feelings",
         ),
         Code(
-            id=CodeId(4),
+            id=CodeId("4"),
             name="Positive Feeling",
             color=Color.from_hex("#8BC34A"),
             memo="Good feelings",
         ),
         Code(
-            id=CodeId(5),
+            id=CodeId("5"),
             name="Challenge",
             color=Color.from_hex("#F44336"),
             memo="Difficulties",
         ),
         Code(
-            id=CodeId(6),
+            id=CodeId("6"),
             name="Learning",
             color=Color.from_hex("#2196F3"),
             memo="Education related",
@@ -89,7 +89,7 @@ def project_with_codes(app_context: AppContext, tmp_path: Path) -> Path:
         app_context.coding_context.code_repo.save(code)
 
     # Add a category
-    category = Category(id=CategoryId(1), name="Emotions", memo="Emotional codes")
+    category = Category(id=CategoryId("1"), name="Emotions", memo="Emotional codes")
     app_context.coding_context.category_repo.save(category)
 
     return project_path
@@ -109,7 +109,7 @@ def project_with_uncoded_content(app_context: AppContext, tmp_path: Path) -> Pat
 
     # Add a source with uncoded content
     source = Source(
-        id=SourceId(1),
+        id=SourceId("1"),
         name="interview_01.txt",
         source_type=SourceType.TEXT,
         fulltext="""
@@ -136,8 +136,8 @@ def project_with_uncoded_content(app_context: AppContext, tmp_path: Path) -> Pat
 
     # Add a few existing codes
     codes = [
-        Code(id=CodeId(1), name="Challenge", color=Color.from_hex("#F44336")),
-        Code(id=CodeId(2), name="Achievement", color=Color.from_hex("#4CAF50")),
+        Code(id=CodeId("1"), name="Challenge", color=Color.from_hex("#F44336")),
+        Code(id=CodeId("2"), name="Achievement", color=Color.from_hex("#4CAF50")),
     ]
     for code in codes:
         app_context.coding_context.code_repo.save(code)
@@ -731,7 +731,7 @@ class TestAgentListCodes:
                 assert "id" in code
                 assert "name" in code
                 assert "color" in code
-                assert isinstance(code["id"], int)
+                assert isinstance(code["id"], str)
                 assert isinstance(code["name"], str)
                 assert isinstance(code["color"], str)
                 assert code["color"].startswith("#")
@@ -837,7 +837,7 @@ class TestAgentCreateCode:
                 data["color"].lower() == "#ff5722"
             )  # Color may be normalized to lowercase
             assert "code_id" in data
-            assert isinstance(data["code_id"], int)
+            assert isinstance(data["code_id"], str)
 
     @allure.title("AC #2: Created code persisted to repository")
     def test_ac2_code_persisted(
@@ -916,7 +916,7 @@ class TestAgentCreateCode:
         with allure.step("Verify category assignment"):
             assert result.get("success") is True
             data = result["data"]
-            assert data["category_id"] == 1
+            assert data["category_id"] == "1"
 
     @allure.title("AC #5: Invalid color returns error")
     def test_ac5_invalid_color_error(

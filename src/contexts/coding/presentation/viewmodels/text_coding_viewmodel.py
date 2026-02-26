@@ -128,6 +128,20 @@ class TextCodingViewModel(QObject):
         self._signal_bridge.segment_coded.connect(self._on_segment_coded)
         self._signal_bridge.segment_uncoded.connect(self._on_segment_uncoded)
 
+    def teardown(self) -> None:
+        """Disconnect all signal bridge connections. Call before replacing this ViewModel."""
+        self._signal_bridge.code_created.disconnect(self._on_code_created)
+        self._signal_bridge.code_renamed.disconnect(self._on_code_renamed)
+        self._signal_bridge.code_color_changed.disconnect(self._on_code_color_changed)
+        self._signal_bridge.code_deleted.disconnect(self._on_code_deleted)
+        self._signal_bridge.code_memo_updated.disconnect(self._on_code_memo_updated)
+        self._signal_bridge.code_moved.disconnect(self._on_code_moved)
+        self._signal_bridge.codes_merged.disconnect(self._on_codes_merged)
+        self._signal_bridge.category_created.disconnect(self._on_category_created)
+        self._signal_bridge.category_deleted.disconnect(self._on_category_deleted)
+        self._signal_bridge.segment_coded.disconnect(self._on_segment_coded)
+        self._signal_bridge.segment_uncoded.disconnect(self._on_segment_uncoded)
+
     # =========================================================================
     # Public API - Load Data
     # =========================================================================

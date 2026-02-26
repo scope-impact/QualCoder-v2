@@ -116,8 +116,8 @@ def handle_suggest_batch_coding(
         csug_id = CodingSuggestionId.new()
         csug = CodingSuggestion(
             id=csug_id,
-            source_id=SourceId(int(seg["source_id"])),
-            code_id=CodeId(int(code_id)),
+            source_id=SourceId(value=str(seg["source_id"])),
+            code_id=CodeId(value=str(code_id)),
             start_pos=int(seg["start_pos"]),
             end_pos=int(seg["end_pos"]),
             rationale=rationale,
@@ -127,7 +127,7 @@ def handle_suggest_batch_coding(
 
     batch = CodingSuggestionBatch(
         id=batch_id,
-        source_id=SourceId(int(segments[0]["source_id"])),
+        source_id=SourceId(value=str(segments[0]["source_id"])),
         suggestions=tuple(coding_suggestions),
     )
     ctx.suggestion_cache.coding_suggestions.add_batch(batch)

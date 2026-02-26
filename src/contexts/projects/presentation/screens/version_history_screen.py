@@ -209,6 +209,9 @@ class VersionHistoryScreen(QWidget):
 
     def set_viewmodel(self, viewmodel: VersionControlViewModel):
         """Wire up the viewmodel."""
+        if self._viewmodel is not None:
+            self._viewmodel.teardown()
+
         self._viewmodel = viewmodel
 
         # Connect signals

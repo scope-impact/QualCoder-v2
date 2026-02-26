@@ -68,7 +68,7 @@ class TestCaseNameUniqueness:
 
         existing = [
             Case(
-                id=CaseId(value=1),
+                id=CaseId(value="1"),
                 name="Participant A",
             )
         ]

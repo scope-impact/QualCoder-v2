@@ -337,12 +337,12 @@ class TestCode:
         from src.shared import CodeId
 
         code = Code(
-            id=CodeId(value=1),
+            id=CodeId(value="1"),
             name="Theme",
             color=Color(255, 0, 0),
         )
 
-        assert code.id == CodeId(value=1)
+        assert code.id == CodeId(value="1")
         assert code.name == "Theme"
         assert code.color == Color(255, 0, 0)
         assert code.memo is None
@@ -353,7 +353,7 @@ class TestCode:
         from src.contexts.coding.core.entities import Code, Color
         from src.shared import CodeId
 
-        original = Code(id=CodeId(value=1), name="Old", color=Color(255, 0, 0))
+        original = Code(id=CodeId(value="1"), name="Old", color=Color(255, 0, 0))
         updated = original.with_name("New")
 
         assert updated.name == "New"
@@ -365,7 +365,7 @@ class TestCode:
         from src.contexts.coding.core.entities import Code, Color
         from src.shared import CodeId
 
-        original = Code(id=CodeId(value=1), name="Theme", color=Color(255, 0, 0))
+        original = Code(id=CodeId(value="1"), name="Theme", color=Color(255, 0, 0))
         updated = original.with_color(Color(0, 255, 0))
 
         assert updated.color == Color(0, 255, 0)
@@ -376,7 +376,7 @@ class TestCode:
         from src.contexts.coding.core.entities import Code, Color
         from src.shared import CodeId
 
-        original = Code(id=CodeId(value=1), name="Theme", color=Color(255, 0, 0))
+        original = Code(id=CodeId(value="1"), name="Theme", color=Color(255, 0, 0))
         updated = original.with_memo("New memo")
 
         assert updated.memo == "New memo"
@@ -387,10 +387,10 @@ class TestCode:
         from src.contexts.coding.core.entities import Code, Color
         from src.shared import CategoryId, CodeId
 
-        original = Code(id=CodeId(value=1), name="Theme", color=Color(255, 0, 0))
-        updated = original.with_category(CategoryId(value=5))
+        original = Code(id=CodeId(value="1"), name="Theme", color=Color(255, 0, 0))
+        updated = original.with_category(CategoryId(value="5"))
 
-        assert updated.category_id == CategoryId(value=5)
+        assert updated.category_id == CategoryId(value="5")
         assert original.category_id is None
 
     def test_is_frozen(self):
@@ -398,7 +398,7 @@ class TestCode:
         from src.contexts.coding.core.entities import Code, Color
         from src.shared import CodeId
 
-        code = Code(id=CodeId(value=1), name="Theme", color=Color(255, 0, 0))
+        code = Code(id=CodeId(value="1"), name="Theme", color=Color(255, 0, 0))
 
         with pytest.raises(AttributeError):
             code.name = "Changed"
@@ -418,11 +418,11 @@ class TestCategory:
         from src.shared import CategoryId
 
         category = Category(
-            id=CategoryId(value=1),
+            id=CategoryId(value="1"),
             name="Themes",
         )
 
-        assert category.id == CategoryId(value=1)
+        assert category.id == CategoryId(value="1")
         assert category.name == "Themes"
         assert category.parent_id is None
         assert category.memo is None
@@ -432,7 +432,7 @@ class TestCategory:
         from src.contexts.coding.core.entities import Category
         from src.shared import CategoryId
 
-        original = Category(id=CategoryId(value=1), name="Old")
+        original = Category(id=CategoryId(value="1"), name="Old")
         updated = original.with_name("New")
 
         assert updated.name == "New"
@@ -443,10 +443,10 @@ class TestCategory:
         from src.contexts.coding.core.entities import Category
         from src.shared import CategoryId
 
-        original = Category(id=CategoryId(value=1), name="Child")
-        updated = original.with_parent(CategoryId(value=5))
+        original = Category(id=CategoryId(value="1"), name="Child")
+        updated = original.with_parent(CategoryId(value="5"))
 
-        assert updated.parent_id == CategoryId(value=5)
+        assert updated.parent_id == CategoryId(value="5")
         assert original.parent_id is None
 
 
@@ -464,16 +464,16 @@ class TestTextSegment:
         from src.shared import CodeId, SegmentId, SourceId
 
         segment = TextSegment(
-            id=SegmentId(value=1),
-            source_id=SourceId(value=10),
-            code_id=CodeId(value=5),
+            id=SegmentId(value="1"),
+            source_id=SourceId(value="10"),
+            code_id=CodeId(value="5"),
             position=TextPosition(start=0, end=100),
             selected_text="Sample text",
         )
 
-        assert segment.id == SegmentId(value=1)
-        assert segment.source_id == SourceId(value=10)
-        assert segment.code_id == CodeId(value=5)
+        assert segment.id == SegmentId(value="1")
+        assert segment.source_id == SourceId(value="10")
+        assert segment.code_id == CodeId(value="5")
         assert segment.position.start == 0
         assert segment.position.end == 100
         assert segment.selected_text == "Sample text"
@@ -486,9 +486,9 @@ class TestTextSegment:
         from src.shared import CodeId, SegmentId, SourceId
 
         original = TextSegment(
-            id=SegmentId(value=1),
-            source_id=SourceId(value=10),
-            code_id=CodeId(value=5),
+            id=SegmentId(value="1"),
+            source_id=SourceId(value="10"),
+            code_id=CodeId(value="5"),
             position=TextPosition(start=0, end=100),
             selected_text="Sample text",
         )
@@ -503,9 +503,9 @@ class TestTextSegment:
         from src.shared import CodeId, SegmentId, SourceId
 
         original = TextSegment(
-            id=SegmentId(value=1),
-            source_id=SourceId(value=10),
-            code_id=CodeId(value=5),
+            id=SegmentId(value="1"),
+            source_id=SourceId(value="10"),
+            code_id=CodeId(value="5"),
             position=TextPosition(start=0, end=100),
             selected_text="Sample text",
         )
@@ -557,13 +557,13 @@ class TestAutoCodeBatch:
 
         batch = AutoCodeBatch(
             id=BatchId(value="batch_123"),
-            code_id=CodeId(value=5),
+            code_id=CodeId(value="5"),
             pattern="test pattern",
-            segment_ids=(SegmentId(value=1), SegmentId(value=2)),
+            segment_ids=(SegmentId(value="1"), SegmentId(value="2")),
         )
 
         assert batch.id.value == "batch_123"
-        assert batch.code_id == CodeId(value=5)
+        assert batch.code_id == CodeId(value="5")
         assert batch.pattern == "test pattern"
         assert len(batch.segment_ids) == 2
 
@@ -574,9 +574,9 @@ class TestAutoCodeBatch:
 
         batch = AutoCodeBatch(
             id=BatchId(value="batch_123"),
-            code_id=CodeId(value=5),
+            code_id=CodeId(value="5"),
             pattern="test pattern",
-            segment_ids=(SegmentId(value=1),),
+            segment_ids=(SegmentId(value="1"),),
         )
 
         assert batch.can_undo() is True
@@ -588,7 +588,7 @@ class TestAutoCodeBatch:
 
         batch = AutoCodeBatch(
             id=BatchId(value="batch_123"),
-            code_id=CodeId(value=5),
+            code_id=CodeId(value="5"),
             pattern="test pattern",
             segment_ids=(),
         )
@@ -602,9 +602,13 @@ class TestAutoCodeBatch:
 
         batch = AutoCodeBatch(
             id=BatchId(value="batch_123"),
-            code_id=CodeId(value=5),
+            code_id=CodeId(value="5"),
             pattern="test pattern",
-            segment_ids=(SegmentId(value=1), SegmentId(value=2), SegmentId(value=3)),
+            segment_ids=(
+                SegmentId(value="1"),
+                SegmentId(value="2"),
+                SegmentId(value="3"),
+            ),
         )
 
         assert batch.segment_count == 3

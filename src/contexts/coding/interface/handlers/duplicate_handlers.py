@@ -152,8 +152,8 @@ def handle_suggest_merge_codes(
     merge_id = MergeSuggestionId.new()
     suggestion = MergeSuggestion(
         id=merge_id,
-        source_code_id=CodeId(int(source_code_id)),
-        target_code_id=CodeId(int(target_code_id)),
+        source_code_id=CodeId(value=str(source_code_id)),
+        target_code_id=CodeId(value=str(target_code_id)),
         rationale=rationale,
     )
 

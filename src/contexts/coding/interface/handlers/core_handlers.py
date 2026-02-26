@@ -86,8 +86,8 @@ def handle_batch_apply_codes(
         try:
             operations.append(
                 ApplyCodeCommand(
-                    code_id=int(op["code_id"]),
-                    source_id=int(op["source_id"]),
+                    code_id=str(op["code_id"]),
+                    source_id=str(op["source_id"]),
                     start_position=int(op["start_position"]),
                     end_position=int(op["end_position"]),
                     memo=op.get("memo"),
@@ -161,7 +161,7 @@ def handle_get_code(
     if ctx.code_repo is None:
         return no_context_error("CODE_NOT_FOUND")
 
-    code = get_code(ctx.code_repo, int(code_id))
+    code = get_code(ctx.code_repo, str(code_id))
     if code is None:
         return not_found_error("CODE_NOT_FOUND", "Code", str(code_id))
 
@@ -180,7 +180,7 @@ def handle_list_segments(
     if ctx.segment_repo is None:
         return no_context_error("SEGMENTS_NOT_LISTED")
 
-    segments = get_segments_for_source(ctx.segment_repo, int(source_id))
+    segments = get_segments_for_source(ctx.segment_repo, str(source_id))
     return OperationResult.ok(data=[_serialize_segment(s) for s in segments]).to_dict()
 
 
@@ -196,7 +196,7 @@ def handle_delete_segment(
     if ctx.segment_repo is None or ctx.code_repo is None:
         return no_context_error("DELETE_SEGMENT")
 
-    command = RemoveCodeCommand(segment_id=int(segment_id))
+    command = RemoveCodeCommand(segment_id=segment_id)
     result = remove_segment(
         command=command,
         code_repo=ctx.code_repo,
@@ -234,7 +234,7 @@ def handle_create_code(
         name=str(name),
         color=str(color),
         memo=arguments.get("memo"),
-        category_id=int(category_id_raw) if category_id_raw is not None else None,
+        category_id=str(category_id_raw) if category_id_raw is not None else None,
     )
 
     result = create_code(

@@ -18,6 +18,8 @@ from src.shared.common.types import FolderId
 if TYPE_CHECKING:
     from sqlalchemy import Connection
 
+    from src.shared.infra.sync.outbox import OutboxWriter
+
 
 class SQLiteFolderRepository:
     """
@@ -26,8 +28,11 @@ class SQLiteFolderRepository:
     Maps between domain Folder entities and the src_folder table.
     """
 
-    def __init__(self, connection: Connection) -> None:
+    def __init__(
+        self, connection: Connection, outbox: OutboxWriter | None = None
+    ) -> None:
         self._conn = connection
+        self._outbox = outbox
 
     def get_all(self) -> list[Folder]:
         """Get all folders in the project."""
@@ -93,12 +98,23 @@ class SQLiteFolderRepository:
             )
 
         self._conn.execute(stmt)
+        if self._outbox:
+            self._outbox.write_upsert(
+                "folder",
+                folder.id.value,
+                {
+                    "name": folder.name,
+                    "parent_id": folder.parent_id.value if folder.parent_id else None,
+                },
+            )
         self._conn.commit()
 
     def delete(self, folder_id: FolderId) -> None:
         """Delete a folder by ID."""
         stmt = delete(src_folder).where(src_folder.c.id == folder_id.value)
         self._conn.execute(stmt)
+        if self._outbox:
+            self._outbox.write_delete("folder", folder_id.value)
         self._conn.commit()
 
     def exists(self, folder_id: FolderId) -> bool:

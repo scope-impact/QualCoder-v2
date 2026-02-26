@@ -73,8 +73,8 @@ class SourceLinkPayload:
     """Payload for source link/unlink signals."""
 
     event_type: str
-    case_id: int
-    source_id: int
+    case_id: str
+    source_id: str
     timestamp: datetime = field(default_factory=_now)
     session_id: str = "local"
     is_ai_action: bool = False

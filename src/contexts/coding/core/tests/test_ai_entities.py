@@ -77,19 +77,19 @@ class TestTextContext:
         position = TextPosition(start=10, end=50)
         context = TextContext(
             text="This is some relevant text",
-            source_id=SourceId(value=1),
+            source_id=SourceId(value="1"),
             position=position,
         )
 
         assert context.text == "This is some relevant text"
-        assert context.source_id.value == 1
+        assert context.source_id.value == "1"
         assert context.position.start == 10
 
     def test_preview_short_text(self):
         """preview should return full text if under 100 chars."""
         context = TextContext(
             text="Short text",
-            source_id=SourceId(value=1),
+            source_id=SourceId(value="1"),
             position=TextPosition(start=0, end=10),
         )
 
@@ -100,7 +100,7 @@ class TestTextContext:
         long_text = "x" * 150
         context = TextContext(
             text=long_text,
-            source_id=SourceId(value=1),
+            source_id=SourceId(value="1"),
             position=TextPosition(start=0, end=150),
         )
 
@@ -189,9 +189,9 @@ class TestDuplicateCandidate:
     def test_create_duplicate_candidate(self):
         """DuplicateCandidate should store all properties."""
         candidate = DuplicateCandidate(
-            code_a_id=CodeId(value=1),
+            code_a_id=CodeId(value="1"),
             code_a_name="Anxiety",
-            code_b_id=CodeId(value=2),
+            code_b_id=CodeId(value="2"),
             code_b_name="Anxiousness",
             similarity=SimilarityScore(value=0.92),
             rationale="Both codes refer to feelings of worry",
@@ -208,9 +208,9 @@ class TestDuplicateCandidate:
     def test_with_status(self):
         """with_status should return new candidate with updated status."""
         original = DuplicateCandidate(
-            code_a_id=CodeId(value=1),
+            code_a_id=CodeId(value="1"),
             code_a_name="A",
-            code_b_id=CodeId(value=2),
+            code_b_id=CodeId(value="2"),
             code_b_name="B",
             similarity=SimilarityScore(value=0.8),
             rationale="Test",
@@ -237,7 +237,7 @@ class TestSuggestionBatch:
 
         batch = SuggestionBatch(
             suggestions=(suggestion,),
-            source_id=SourceId(value=1),
+            source_id=SourceId(value="1"),
             text_analyzed="Some text to analyze",
         )
 
@@ -248,7 +248,7 @@ class TestSuggestionBatch:
         """text_preview should truncate long text."""
         batch = SuggestionBatch(
             suggestions=(),
-            source_id=SourceId(value=1),
+            source_id=SourceId(value="1"),
             text_analyzed="x" * 300,
         )
 
@@ -262,9 +262,9 @@ class TestDuplicateDetectionResult:
     def test_create_detection_result(self):
         """DuplicateDetectionResult should store results."""
         candidate = DuplicateCandidate(
-            code_a_id=CodeId(value=1),
+            code_a_id=CodeId(value="1"),
             code_a_name="A",
-            code_b_id=CodeId(value=2),
+            code_b_id=CodeId(value="2"),
             code_b_name="B",
             similarity=SimilarityScore(value=0.85),
             rationale="Similar",

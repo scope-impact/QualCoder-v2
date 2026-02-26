@@ -43,8 +43,8 @@ def handle_suggest_code_application(
     suggestion_id = CodingSuggestionId.new()
     suggestion = CodingSuggestion(
         id=suggestion_id,
-        source_id=SourceId(int(source_id)),
-        code_id=CodeId(int(code_id)),
+        source_id=SourceId(value=str(source_id)),
+        code_id=CodeId(value=str(code_id)),
         start_pos=int(start_pos),
         end_pos=int(end_pos),
         rationale=rationale,
@@ -66,7 +66,7 @@ def handle_suggest_code_application(
     }
 
     if include_text:
-        source_text = ctx.get_source_text(int(source_id))
+        source_text = ctx.get_source_text(source_id)
         data["text_excerpt"] = source_text[int(start_pos) : int(end_pos)]
 
     return OperationResult.ok(data=data).to_dict()
@@ -81,7 +81,7 @@ def handle_list_pending_coding_suggestions(
 
     if source_id:
         suggestions = ctx.suggestion_cache.coding_suggestions.get_by_source(
-            SourceId(int(source_id))
+            SourceId(value=str(source_id))
         )
     else:
         suggestions = ctx.suggestion_cache.coding_suggestions.get_all_pending()

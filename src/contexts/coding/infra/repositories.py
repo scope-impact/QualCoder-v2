@@ -25,6 +25,8 @@ from src.shared.common.types import CategoryId, CodeId, SegmentId, SourceId
 if TYPE_CHECKING:
     from sqlalchemy import Connection
 
+    from src.shared.infra.sync.outbox import OutboxWriter
+
 
 class SQLiteCodeRepository:
     """
@@ -33,8 +35,11 @@ class SQLiteCodeRepository:
     Maps between domain Code entities and the code_name table.
     """
 
-    def __init__(self, connection: Connection) -> None:
+    def __init__(
+        self, connection: Connection, outbox: OutboxWriter | None = None
+    ) -> None:
         self._conn = connection
+        self._outbox = outbox
 
     def get_all(self) -> list[Code]:
         """Get all codes in the project."""
@@ -94,12 +99,20 @@ class SQLiteCodeRepository:
             )
 
         self._conn.execute(stmt)
+        if self._outbox:
+            self._outbox.write_upsert(
+                "code",
+                code.id.value,
+                {"name": code.name, "color": code.color.to_hex(), "memo": code.memo},
+            )
         self._conn.commit()
 
     def delete(self, code_id: CodeId) -> None:
         """Delete a code by ID."""
         stmt = delete(code_name).where(code_name.c.cid == code_id.value)
         self._conn.execute(stmt)
+        if self._outbox:
+            self._outbox.write_delete("code", code_id.value)
         self._conn.commit()
 
     def exists(self, code_id: CodeId) -> bool:
@@ -142,8 +155,11 @@ class SQLiteCategoryRepository:
     Maps between domain Category entities and the code_cat table.
     """
 
-    def __init__(self, connection: Connection) -> None:
+    def __init__(
+        self, connection: Connection, outbox: OutboxWriter | None = None
+    ) -> None:
         self._conn = connection
+        self._outbox = outbox
 
     def get_all(self) -> list[Category]:
         """Get all categories."""
@@ -202,12 +218,20 @@ class SQLiteCategoryRepository:
             )
 
         self._conn.execute(stmt)
+        if self._outbox:
+            self._outbox.write_upsert(
+                "category",
+                category.id.value,
+                {"name": category.name, "memo": category.memo},
+            )
         self._conn.commit()
 
     def delete(self, category_id: CategoryId) -> None:
         """Delete a category."""
         stmt = delete(code_cat).where(code_cat.c.catid == category_id.value)
         self._conn.execute(stmt)
+        if self._outbox:
+            self._outbox.write_delete("category", category_id.value)
         self._conn.commit()
 
     def name_exists(self, name: str, exclude_id: CategoryId | None = None) -> bool:
@@ -243,8 +267,11 @@ class SQLiteSegmentRepository:
     Maps between domain TextSegment entities and the code_text table.
     """
 
-    def __init__(self, connection: Connection) -> None:
+    def __init__(
+        self, connection: Connection, outbox: OutboxWriter | None = None
+    ) -> None:
         self._conn = connection
+        self._outbox = outbox
 
     def get_all(self) -> list[TextSegment]:
         """Get all text segments."""
@@ -327,12 +354,29 @@ class SQLiteSegmentRepository:
             )
 
         self._conn.execute(stmt)
+        if self._outbox:
+            self._outbox.write_upsert(
+                "segment",
+                segment.id.value,
+                {
+                    "cid": segment.code_id.value,
+                    "fid": segment.source_id.value,
+                    "pos0": segment.position.start,
+                    "pos1": segment.position.end,
+                    "seltext": segment.selected_text,
+                    "memo": segment.memo,
+                    "owner": segment.owner,
+                    "important": segment.importance,
+                },
+            )
         self._conn.commit()
 
     def delete(self, segment_id: SegmentId) -> None:
         """Delete a segment by ID."""
         stmt = delete(code_text).where(code_text.c.ctid == segment_id.value)
         self._conn.execute(stmt)
+        if self._outbox:
+            self._outbox.write_delete("segment", segment_id.value)
         self._conn.commit()
 
     def delete_by_code(self, code_id: CodeId) -> int:

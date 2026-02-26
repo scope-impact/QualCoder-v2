@@ -33,6 +33,7 @@ dependencies = [
     "opentelemetry-api>=1.39.1",
     "opentelemetry-sdk>=1.39.1",
     "opentelemetry-instrumentation-sqlalchemy>=0.60b1",
+    "uuid-utils>=0.14.1",
 ]
 
 [tool.uv.workspace]
@@ -50,6 +51,7 @@ ddd = [
 dev = [
     "pytest>=8.0.0",
     "pytest-qt>=4.5.0",
+    "pytest-xdist[psutil]>=3.0",
     "pre-commit>=4.0.0",
     "ruff>=0.9.0",
     "returns>=0.22",  # Result monad for domain layer
@@ -105,6 +107,8 @@ addopts = [
     "-v",
     "--tb=short",
     "--strict-markers",
+    "-n",
+    "auto",
 ]
 markers = [
     "unit: fast isolated tests with no external dependencies",

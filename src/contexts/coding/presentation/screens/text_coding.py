@@ -282,16 +282,12 @@ class TextCodingScreen(QWidget):
         """Route code_applied signal to viewmodel."""
         if self._viewmodel is None:
             return
-        try:
-            code_id_int = int(code_id)
-            self._viewmodel.apply_code_to_selection(
-                code_id=code_id_int,
-                source_id=self._source_id,
-                start=start,
-                end=end,
-            )
-        except (ValueError, TypeError):
-            print(f"TextCodingScreen: Invalid code_id '{code_id}'")
+        self._viewmodel.apply_code_to_selection(
+            code_id=code_id,
+            source_id=self._source_id,
+            start=start,
+            end=end,
+        )
 
     def _on_code_removed_from_viewmodel(self, _code_id: str, start: int, end: int):
         """Route code_removed signal to viewmodel."""
@@ -462,6 +458,7 @@ class TextCodingScreen(QWidget):
         """
         # Disconnect previous viewmodel signals if any
         if self._viewmodel is not None:
+            self._viewmodel.teardown()
             self._disconnect_viewmodel_signals()
 
         self._viewmodel = viewmodel

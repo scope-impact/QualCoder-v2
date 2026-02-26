@@ -117,7 +117,7 @@ def mock_case_repo_with_cases():
     """Create a mock case repository with test cases."""
     cases = [
         Case(
-            id=CaseId(value=1),
+            id=CaseId(value="1"),
             name="Participant A",
             description="First participant",
             memo="Notes about A",
@@ -125,10 +125,10 @@ def mock_case_repo_with_cases():
                 CaseAttribute(name="age", attr_type=AttributeType.NUMBER, value=25),
                 CaseAttribute(name="gender", attr_type=AttributeType.TEXT, value="M"),
             ),
-            source_ids=(10, 11),
+            source_ids=("10", "11"),
         ),
         Case(
-            id=CaseId(value=2),
+            id=CaseId(value="2"),
             name="Participant B",
             description="Second participant",
             memo=None,
@@ -136,10 +136,10 @@ def mock_case_repo_with_cases():
                 CaseAttribute(name="age", attr_type=AttributeType.NUMBER, value=30),
                 CaseAttribute(name="gender", attr_type=AttributeType.TEXT, value="F"),
             ),
-            source_ids=(12,),
+            source_ids=("12",),
         ),
         Case(
-            id=CaseId(value=3),
+            id=CaseId(value="3"),
             name="Participant C",
             description="Third participant",
             memo="Different notes",
@@ -434,7 +434,7 @@ class TestListCasesTool:
 
         # Check first case has expected fields
         case_a = next(c for c in cases if c["name"] == "Participant A")
-        assert case_a["case_id"] == 1
+        assert case_a["case_id"] == "1"
         assert case_a["description"] == "First participant"
         assert case_a["attribute_count"] == 2
         assert case_a["source_count"] == 2
@@ -483,13 +483,13 @@ class TestGetCaseTool:
 
         assert result["success"] is True
         data = result["data"]
-        assert data["case_id"] == 1
+        assert data["case_id"] == "1"
         assert data["name"] == "Participant A"
         assert data["description"] == "First participant"
         assert data["memo"] == "Notes about A"
         assert len(data["attributes"]) == 2
         assert data["source_count"] == 2
-        assert data["source_ids"] == [10, 11]
+        assert data["source_ids"] == ["10", "11"]
 
     @allure.title("get_case returns attributes with type and value")
     def test_get_case_attributes(self, context_with_cases):
@@ -653,7 +653,7 @@ class TestCompareCasesTool:
         assert "analysis_summary" in data
 
         # Check case comparison entries
-        case_1 = next(c for c in data["cases"] if c["case_id"] == 1)
+        case_1 = next(c for c in data["cases"] if c["case_id"] == "1")
         assert case_1["case_name"] == "Participant A"
 
     @allure.title("compare_cases includes analysis summary")
@@ -698,7 +698,7 @@ class TestEdgeCases:
         result = tools.execute("get_case", {"case_id": "1"})
 
         assert result["success"] is True
-        assert result["data"]["case_id"] == 1
+        assert result["data"]["case_id"] == "1"
 
     @allure.title("suggest_case_groupings handles None min_group_size")
     def test_suggest_groupings_none_min_size(self, context_with_cases):

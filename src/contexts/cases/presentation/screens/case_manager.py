@@ -213,6 +213,7 @@ class CaseManagerScreen(QWidget):
         """
         # Disconnect previous viewmodel signals if any
         if self._viewmodel is not None:
+            self._viewmodel.teardown()
             self._disconnect_viewmodel_signals()
 
         self._viewmodel = viewmodel
@@ -306,7 +307,7 @@ class CaseManagerScreen(QWidget):
     def _on_case_clicked(self, case_id: str):
         """Handle single click on a case."""
         if self._viewmodel:
-            self._viewmodel.select_case(int(case_id))
+            self._viewmodel.select_case(case_id)
 
     def _on_case_double_clicked(self, case_id: str):
         """Handle double-click on a case - open for details."""
@@ -345,7 +346,7 @@ class CaseManagerScreen(QWidget):
         if self._viewmodel:
             deleted = []
             for case_id in case_ids:
-                if self._viewmodel.delete_case(int(case_id)):
+                if self._viewmodel.delete_case(case_id):
                     deleted.append(case_id)
 
             if deleted:

@@ -27,14 +27,14 @@ metadata = MetaData()
 cod_category = Table(
     "cod_category",
     metadata,
-    Column("catid", Integer, primary_key=True),
+    Column("catid", String(36), primary_key=True),
     Column("name", String(100), nullable=False, unique=True),
     Column("memo", Text),
     Column("owner", String(100)),
     Column("date", String(50)),
     Column(
         "supercatid",
-        Integer,
+        String(36),
         ForeignKey("cod_category.catid", ondelete="SET NULL"),
         nullable=True,
     ),
@@ -44,7 +44,7 @@ cod_category = Table(
 cod_code = Table(
     "cod_code",
     metadata,
-    Column("cid", Integer, primary_key=True),
+    Column("cid", String(36), primary_key=True),
     Column("name", String(100), nullable=False, unique=True),
     Column("color", String(7), nullable=False, default="#999999"),
     Column("memo", Text),
@@ -52,7 +52,7 @@ cod_code = Table(
     Column("date", String(50)),
     Column(
         "catid",
-        Integer,
+        String(36),
         ForeignKey("cod_category.catid", ondelete="SET NULL"),
         nullable=True,
     ),
@@ -63,14 +63,14 @@ cod_code = Table(
 cod_segment = Table(
     "cod_segment",
     metadata,
-    Column("ctid", Integer, primary_key=True),
+    Column("ctid", String(36), primary_key=True),
     Column(
         "cid",
-        Integer,
+        String(36),
         ForeignKey("cod_code.cid", ondelete="CASCADE"),
         nullable=False,
     ),
-    Column("fid", Integer, nullable=False),  # References src_source.id
+    Column("fid", String(36), nullable=False),  # References src_source.id
     Column("pos0", Integer, nullable=False),
     Column("pos1", Integer, nullable=False),
     Column("seltext", Text, nullable=False),

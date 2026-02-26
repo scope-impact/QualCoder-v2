@@ -57,10 +57,10 @@ class TestCodeSuggested:
         color = Color(red=255, green=100, blue=50)
         context = TextContext(
             text="Sample text for analysis",
-            source_id=SourceId(value=1),
+            source_id=SourceId(value="1"),
             position=TextPosition(start=0, end=24),
         )
-        source_id = SourceId(value=1)
+        source_id = SourceId(value="1")
 
         event = CodeSuggested.create(
             suggestion_id=suggestion_id,
@@ -86,7 +86,7 @@ class TestCodeSuggested:
         """Each created event should have a unique event_id."""
         suggestion_id = SuggestionId.new()
         color = Color(red=100, green=100, blue=100)
-        source_id = SourceId(value=1)
+        source_id = SourceId(value="1")
 
         event1 = CodeSuggested.create(
             suggestion_id=suggestion_id,
@@ -118,7 +118,7 @@ class TestCodeSuggested:
             rationale="Test",
             contexts=(),
             confidence=0.5,
-            source_id=SourceId(value=1),
+            source_id=SourceId(value="1"),
         )
 
         with pytest.raises(AttributeError):
@@ -135,7 +135,7 @@ class TestCodeSuggestionApproved:
     def test_create_without_modification(self):
         """create() should handle unmodified approvals."""
         suggestion_id = SuggestionId.new()
-        code_id = CodeId(value=42)
+        code_id = CodeId(value="42")
 
         event = CodeSuggestionApproved.create(
             suggestion_id=suggestion_id,
@@ -155,7 +155,7 @@ class TestCodeSuggestionApproved:
         """create() should track when researcher modified the suggestion."""
         event = CodeSuggestionApproved.create(
             suggestion_id=SuggestionId.new(),
-            created_code_id=CodeId(value=42),
+            created_code_id=CodeId(value="42"),
             original_name="Anxiety",
             final_name="General Anxiety",
             modified=True,
@@ -169,7 +169,7 @@ class TestCodeSuggestionApproved:
         """modified parameter should default to False."""
         event = CodeSuggestionApproved.create(
             suggestion_id=SuggestionId.new(),
-            created_code_id=CodeId(value=42),
+            created_code_id=CodeId(value="42"),
             original_name="Test",
             final_name="Test",
         )
@@ -180,7 +180,7 @@ class TestCodeSuggestionApproved:
         """CodeSuggestionApproved should be immutable."""
         event = CodeSuggestionApproved.create(
             suggestion_id=SuggestionId.new(),
-            created_code_id=CodeId(value=42),
+            created_code_id=CodeId(value="42"),
             original_name="Test",
             final_name="Test",
         )
@@ -256,9 +256,9 @@ class TestDuplicatesDetected:
         """create() should store detection results."""
         detection_id = DetectionId.new()
         candidate = DuplicateCandidate(
-            code_a_id=CodeId(value=1),
+            code_a_id=CodeId(value="1"),
             code_a_name="Anxiety",
-            code_b_id=CodeId(value=2),
+            code_b_id=CodeId(value="2"),
             code_b_name="Anxiousness",
             similarity=SimilarityScore(value=0.92),
             rationale="Both codes refer to worry",
@@ -311,8 +311,8 @@ class TestMergeSuggested:
 
     def test_create_with_all_fields(self):
         """create() should store merge suggestion details."""
-        source_code_id = CodeId(value=1)
-        target_code_id = CodeId(value=2)
+        source_code_id = CodeId(value="1")
+        target_code_id = CodeId(value="2")
         similarity = SimilarityScore(value=0.88)
 
         event = MergeSuggested.create(
@@ -334,9 +334,9 @@ class TestMergeSuggested:
     def test_immutability(self):
         """MergeSuggested should be immutable."""
         event = MergeSuggested.create(
-            source_code_id=CodeId(value=1),
+            source_code_id=CodeId(value="1"),
             source_code_name="A",
-            target_code_id=CodeId(value=2),
+            target_code_id=CodeId(value="2"),
             target_code_name="B",
             similarity=SimilarityScore(value=0.8),
             rationale="Test",
@@ -357,8 +357,8 @@ class TestMergeSuggestionApproved:
 
     def test_create_with_segment_count(self):
         """create() should track segments moved."""
-        source_code_id = CodeId(value=1)
-        target_code_id = CodeId(value=2)
+        source_code_id = CodeId(value="1")
+        target_code_id = CodeId(value="2")
 
         event = MergeSuggestionApproved.create(
             source_code_id=source_code_id,
@@ -373,8 +373,8 @@ class TestMergeSuggestionApproved:
     def test_immutability(self):
         """MergeSuggestionApproved should be immutable."""
         event = MergeSuggestionApproved.create(
-            source_code_id=CodeId(value=1),
-            target_code_id=CodeId(value=2),
+            source_code_id=CodeId(value="1"),
+            target_code_id=CodeId(value="2"),
             segments_moved=5,
         )
 
@@ -395,20 +395,20 @@ class TestMergeSuggestionDismissed:
     def test_create_with_reason(self):
         """create() should store dismissal reason."""
         event = MergeSuggestionDismissed.create(
-            source_code_id=CodeId(value=1),
-            target_code_id=CodeId(value=2),
+            source_code_id=CodeId(value="1"),
+            target_code_id=CodeId(value="2"),
             reason="Codes are conceptually different",
         )
 
-        assert event.source_code_id.value == 1
-        assert event.target_code_id.value == 2
+        assert event.source_code_id.value == "1"
+        assert event.target_code_id.value == "2"
         assert event.reason == "Codes are conceptually different"
 
     def test_create_without_reason(self):
         """create() should work without a reason."""
         event = MergeSuggestionDismissed.create(
-            source_code_id=CodeId(value=1),
-            target_code_id=CodeId(value=2),
+            source_code_id=CodeId(value="1"),
+            target_code_id=CodeId(value="2"),
             reason=None,
         )
 
@@ -417,8 +417,8 @@ class TestMergeSuggestionDismissed:
     def test_reason_defaults_to_none(self):
         """reason parameter should default to None."""
         event = MergeSuggestionDismissed.create(
-            source_code_id=CodeId(value=1),
-            target_code_id=CodeId(value=2),
+            source_code_id=CodeId(value="1"),
+            target_code_id=CodeId(value="2"),
         )
 
         assert event.reason is None
@@ -426,8 +426,8 @@ class TestMergeSuggestionDismissed:
     def test_immutability(self):
         """MergeSuggestionDismissed should be immutable."""
         event = MergeSuggestionDismissed.create(
-            source_code_id=CodeId(value=1),
-            target_code_id=CodeId(value=2),
+            source_code_id=CodeId(value="1"),
+            target_code_id=CodeId(value="2"),
         )
 
         with pytest.raises(AttributeError):
@@ -623,7 +623,7 @@ class TestMergeNotCreated:
 
     def test_code_not_found_factory(self):
         """code_not_found() should create correct failure event."""
-        code_id = CodeId(value=42)
+        code_id = CodeId(value="42")
         event = MergeNotCreated.code_not_found(code_id)
 
         assert event.event_type == "MERGE_NOT_CREATED/CODE_NOT_FOUND"
@@ -641,10 +641,10 @@ class TestMergeNotCreated:
 
     def test_immutability(self):
         """MergeNotCreated should be immutable."""
-        event = MergeNotCreated.code_not_found(CodeId(value=1))
+        event = MergeNotCreated.code_not_found(CodeId(value="1"))
 
         with pytest.raises(AttributeError):
-            event.code_id = CodeId(value=2)  # type: ignore
+            event.code_id = CodeId(value="2")  # type: ignore
 
 
 class TestMergeNotApproved:
@@ -652,7 +652,7 @@ class TestMergeNotApproved:
 
     def test_code_not_found_factory(self):
         """code_not_found() should create correct failure event."""
-        code_id = CodeId(value=99)
+        code_id = CodeId(value="99")
         event = MergeNotApproved.code_not_found(code_id)
 
         assert event.event_type == "MERGE_NOT_APPROVED/CODE_NOT_FOUND"
@@ -662,10 +662,10 @@ class TestMergeNotApproved:
 
     def test_immutability(self):
         """MergeNotApproved should be immutable."""
-        event = MergeNotApproved.code_not_found(CodeId(value=1))
+        event = MergeNotApproved.code_not_found(CodeId(value="1"))
 
         with pytest.raises(AttributeError):
-            event.code_id = CodeId(value=2)  # type: ignore
+            event.code_id = CodeId(value="2")  # type: ignore
 
 
 class TestMergeNotDismissed:
@@ -673,8 +673,8 @@ class TestMergeNotDismissed:
 
     def test_not_pending_factory(self):
         """not_pending() should create correct failure event."""
-        code_a_id = CodeId(value=1)
-        code_b_id = CodeId(value=2)
+        code_a_id = CodeId(value="1")
+        code_b_id = CodeId(value="2")
         event = MergeNotDismissed.not_pending(code_a_id, code_b_id, "merged")
 
         assert event.event_type == "MERGE_NOT_DISMISSED/NOT_PENDING"
@@ -687,8 +687,8 @@ class TestMergeNotDismissed:
     def test_message_includes_both_code_ids(self):
         """Message should reference both code IDs."""
         event = MergeNotDismissed.not_pending(
-            CodeId(value=10),
-            CodeId(value=20),
+            CodeId(value="10"),
+            CodeId(value="20"),
             "dismissed",
         )
 
@@ -697,8 +697,8 @@ class TestMergeNotDismissed:
     def test_immutability(self):
         """MergeNotDismissed should be immutable."""
         event = MergeNotDismissed.not_pending(
-            CodeId(value=1),
-            CodeId(value=2),
+            CodeId(value="1"),
+            CodeId(value="2"),
             "merged",
         )
 

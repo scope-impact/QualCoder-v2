@@ -30,7 +30,7 @@ services:
       # Uncomment below for PostgreSQL in production:
       # - POSTGRES_URL=postgresql://user:pass@postgres:5432/convex
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3210/health"]
+      test: ["CMD", "curl", "-f", "http://localhost:3210/version"]
       interval: 10s
       timeout: 5s
       retries: 5

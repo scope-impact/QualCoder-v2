@@ -303,7 +303,7 @@ class TestAgentRemoveSource:
     def test_remove_source_not_found(self, source_tools, open_project: Path):
         with allure.step("Try to remove non-existent source"):
             result = source_tools.execute(
-                "remove_source", {"source_id": 9999, "confirm": True}
+                "remove_source", {"source_id": "9999", "confirm": True}
             )
 
         with allure.step("Verify failure"):
@@ -319,7 +319,7 @@ class TestAgentRemoveSource:
 
         with allure.step("Add a source to remove"):
             source = Source(
-                id=SourceId(42),
+                id=SourceId("42"),
                 name="to_delete.txt",
                 source_type=SourceType.TEXT,
                 fulltext="Content to delete",
@@ -328,7 +328,7 @@ class TestAgentRemoveSource:
 
         with allure.step("Preview deletion (confirm=false)"):
             result = source_tools.execute(
-                "remove_source", {"source_id": 42, "confirm": False}
+                "remove_source", {"source_id": "42", "confirm": False}
             )
 
         with allure.step("Verify preview response"):
@@ -348,7 +348,7 @@ class TestAgentRemoveSource:
 
         with allure.step("Add a source"):
             source = Source(
-                id=SourceId(43),
+                id=SourceId("43"),
                 name="confirmed_delete.txt",
                 source_type=SourceType.TEXT,
                 fulltext="Will be deleted",
@@ -357,7 +357,7 @@ class TestAgentRemoveSource:
 
         with allure.step("Confirm deletion"):
             result = source_tools.execute(
-                "remove_source", {"source_id": 43, "confirm": True}
+                "remove_source", {"source_id": "43", "confirm": True}
             )
 
         with allure.step("Verify removed"):
@@ -368,7 +368,7 @@ class TestAgentRemoveSource:
             assert data["source_name"] == "confirmed_delete.txt"
 
         with allure.step("Verify source gone from repo"):
-            source = app_context.sources_context.source_repo.get_by_id(SourceId(43))
+            source = app_context.sources_context.source_repo.get_by_id(SourceId("43"))
             assert source is None
 
     @allure.title("AC #7: Default confirm=false returns preview")
@@ -380,14 +380,14 @@ class TestAgentRemoveSource:
 
         with allure.step("Add source"):
             source = Source(
-                id=SourceId(44),
+                id=SourceId("44"),
                 name="default_preview.txt",
                 source_type=SourceType.TEXT,
             )
             app_context.sources_context.source_repo.save(source)
 
         with allure.step("Call without confirm param (should default to preview)"):
-            result = source_tools.execute("remove_source", {"source_id": 44})
+            result = source_tools.execute("remove_source", {"source_id": "44"})
 
         with allure.step("Verify preview mode"):
             assert isinstance(result, Success)
@@ -395,7 +395,7 @@ class TestAgentRemoveSource:
             assert data["preview"] is True
 
         with allure.step("Verify source still exists"):
-            source = app_context.sources_context.source_repo.get_by_id(SourceId(44))
+            source = app_context.sources_context.source_repo.get_by_id(SourceId("44"))
             assert source is not None
 
 
@@ -476,7 +476,7 @@ class TestAgentManageFolders:
             folder_id = create_result.unwrap()["folder_id"]
 
             source = Source(
-                id=SourceId(100),
+                id=SourceId("100"),
                 name="in_folder.txt",
                 source_type=SourceType.TEXT,
                 folder_id=FolderId(value=folder_id),
@@ -519,7 +519,7 @@ class TestAgentManageFolders:
             folder_id = create_result.unwrap()["folder_id"]
 
             source = Source(
-                id=SourceId(200),
+                id=SourceId("200"),
                 name="movable.txt",
                 source_type=SourceType.TEXT,
             )
@@ -528,7 +528,7 @@ class TestAgentManageFolders:
         with allure.step("Move source to folder"):
             result = folder_tools.execute(
                 "move_source_to_folder",
-                {"source_id": 200, "folder_id": folder_id},
+                {"source_id": "200", "folder_id": folder_id},
             )
 
         with allure.step("Verify moved"):

@@ -33,19 +33,24 @@ Architecture:
 from __future__ import annotations
 
 import contextlib
+import json
 import logging
 import queue
 import threading
+import time
 from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from enum import Enum
 from typing import TYPE_CHECKING, Any
 
+from sqlalchemy import text
+
 if TYPE_CHECKING:
     from sqlalchemy import Connection
 
     from src.shared.infra.convex import ConvexClientWrapper
+    from src.shared.infra.sync.id_map import SyncIdMap
 
 # Import ConvexClient at module level to avoid import deadlock in threads
 # (PyO3-based modules can deadlock if imported from a thread while main holds import lock)
@@ -195,44 +200,75 @@ class SyncEngine:
         self._running = False
         self._lock = threading.Lock()
 
+        # Dedicated connection for sync infrastructure (sync_queue, sync_id_map tables).
+        # Separate from self._sqlite to avoid cross-thread commit conflicts between
+        # the Qt main thread (repo operations) and the sync daemon thread.
+        self._sync_db_lock = threading.Lock()
+        try:
+            self._sync_connection = sqlite_connection.engine.connect()
+            # Wait up to 5 s instead of immediately failing with "database is locked"
+            # when the main connection holds a write transaction during pull.
+            self._sync_connection.execute(text("PRAGMA busy_timeout = 5000"))
+            self._sync_connection.commit()
+        except Exception:
+            # Fallback: share the main connection (less safe but functional)
+            self._sync_connection = sqlite_connection
+
         # Ensure sync queue table exists for persistence
         self._ensure_sync_table()
 
-    def _ensure_sync_table(self) -> None:
-        """Create the sync_queue table if it doesn't exist."""
-        try:
-            from sqlalchemy import text
+        # ID mapping between local SQLite integer PKs and Convex document IDs
+        from src.shared.infra.sync.id_map import SyncIdMap
 
-            self._sqlite.execute(
-                text("""
-                    CREATE TABLE IF NOT EXISTS sync_queue (
-                        id INTEGER PRIMARY KEY AUTOINCREMENT,
-                        entity_type TEXT NOT NULL,
-                        change_type TEXT NOT NULL,
-                        entity_id TEXT NOT NULL,
-                        data TEXT NOT NULL,
-                        timestamp TEXT NOT NULL,
-                        retry_count INTEGER DEFAULT 0
-                    )
-                """)
-            )
-            self._sqlite.commit()
+        self._id_map = SyncIdMap(self._sync_connection, self._sync_db_lock)
+
+    def _ensure_sync_table(self) -> None:
+        """Create sync infrastructure tables if they don't exist."""
+        try:
+            with self._sync_db_lock:
+                self._sync_connection.execute(
+                    text("""
+                        CREATE TABLE IF NOT EXISTS sync_queue (
+                            id INTEGER PRIMARY KEY AUTOINCREMENT,
+                            entity_type TEXT NOT NULL,
+                            change_type TEXT NOT NULL,
+                            entity_id TEXT NOT NULL,
+                            data TEXT NOT NULL,
+                            timestamp TEXT NOT NULL,
+                            retry_count INTEGER DEFAULT 0
+                        )
+                    """)
+                )
+                # Transactional outbox — written atomically with domain writes
+                self._sync_connection.execute(
+                    text("""
+                        CREATE TABLE IF NOT EXISTS sync_outbox (
+                            id TEXT PRIMARY KEY,
+                            entity_type TEXT NOT NULL,
+                            entity_id TEXT NOT NULL,
+                            operation TEXT NOT NULL,
+                            data TEXT,
+                            created_at TEXT NOT NULL,
+                            UNIQUE(entity_type, entity_id)
+                        )
+                    """)
+                )
+                self._sync_connection.commit()
         except Exception as e:
-            logger.warning(f"Failed to create sync_queue table: {e}")
+            logger.warning(f"Failed to create sync tables: {e}")
 
     def _load_pending_changes(self) -> None:
         """Load pending changes from SQLite into the queue."""
         try:
-            import json
-
-            from sqlalchemy import text
-
-            result = self._sqlite.execute(
-                text(
-                    "SELECT id, entity_type, change_type, entity_id, data, timestamp, retry_count FROM sync_queue ORDER BY id"
+            with self._sync_db_lock:
+                result = self._sync_connection.execute(
+                    text(
+                        "SELECT id, entity_type, change_type, entity_id, data, timestamp, retry_count FROM sync_queue ORDER BY id"
+                    )
                 )
-            )
-            for row in result.fetchall():
+                rows = result.fetchall()
+
+            for row in rows:
                 change = SyncChange(
                     entity_type=row[1],
                     change_type=ChangeType(row[2]),
@@ -253,40 +289,42 @@ class SyncEngine:
     def _persist_change(self, change: SyncChange) -> None:
         """Persist a change to SQLite for durability."""
         try:
-            import json
+            # Serialize data, converting Enum values for JSON compatibility
+            serializable_data = {
+                k: (v.value if isinstance(v, Enum) else v)
+                for k, v in change.data.items()
+            }
 
-            from sqlalchemy import text
-
-            self._sqlite.execute(
-                text("""
-                    INSERT INTO sync_queue (entity_type, change_type, entity_id, data, timestamp, retry_count)
-                    VALUES (:entity_type, :change_type, :entity_id, :data, :timestamp, :retry_count)
-                """),
-                {
-                    "entity_type": change.entity_type,
-                    "change_type": change.change_type.value,
-                    "entity_id": change.entity_id,
-                    "data": json.dumps(change.data),
-                    "timestamp": change.timestamp.isoformat(),
-                    "retry_count": change.retry_count,
-                },
-            )
-            self._sqlite.commit()
+            with self._sync_db_lock:
+                self._sync_connection.execute(
+                    text("""
+                        INSERT INTO sync_queue (entity_type, change_type, entity_id, data, timestamp, retry_count)
+                        VALUES (:entity_type, :change_type, :entity_id, :data, :timestamp, :retry_count)
+                    """),
+                    {
+                        "entity_type": change.entity_type,
+                        "change_type": change.change_type.value,
+                        "entity_id": change.entity_id,
+                        "data": json.dumps(serializable_data),
+                        "timestamp": change.timestamp.isoformat(),
+                        "retry_count": change.retry_count,
+                    },
+                )
+                self._sync_connection.commit()
         except Exception as e:
             logger.warning(f"Failed to persist sync change: {e}")
 
     def _remove_persisted_change(self, change: SyncChange) -> None:
         """Remove a successfully synced change from SQLite."""
         try:
-            from sqlalchemy import text
-
-            self._sqlite.execute(
-                text(
-                    "DELETE FROM sync_queue WHERE entity_type = :entity_type AND entity_id = :entity_id"
-                ),
-                {"entity_type": change.entity_type, "entity_id": change.entity_id},
-            )
-            self._sqlite.commit()
+            with self._sync_db_lock:
+                self._sync_connection.execute(
+                    text(
+                        "DELETE FROM sync_queue WHERE entity_type = :entity_type AND entity_id = :entity_id"
+                    ),
+                    {"entity_type": change.entity_type, "entity_id": change.entity_id},
+                )
+                self._sync_connection.commit()
         except Exception as e:
             logger.warning(f"Failed to remove synced change from database: {e}")
 
@@ -299,6 +337,11 @@ class SyncEngine:
     def is_online(self) -> bool:
         """Check if connected to Convex."""
         return self._convex is not None
+
+    @property
+    def id_map(self) -> SyncIdMap:
+        """Access the ID mapping between local SQLite PKs and Convex document IDs."""
+        return self._id_map
 
     # =========================================================================
     # Lifecycle
@@ -347,6 +390,12 @@ class SyncEngine:
 
         self._subscription_threads.clear()
         self._state.status = SyncStatus.OFFLINE
+
+        # Close dedicated sync connection if it's separate from main
+        if self._sync_connection is not self._sqlite:
+            with contextlib.suppress(Exception):
+                self._sync_connection.close()
+
         logger.info("SyncEngine stopped")
 
     def set_convex_client(self, client: ConvexClientWrapper | None) -> None:
@@ -400,6 +449,8 @@ class SyncEngine:
                 ("source", self._convex.get_all_sources),
                 ("folder", self._convex.get_all_folders),
                 ("case", self._convex.get_all_cases),
+                ("attribute", self._convex.get_all_attributes),
+                ("source_link", self._convex.get_all_source_links),
             ]
 
             for entity_type, query_func in pull_queries:
@@ -490,52 +541,156 @@ class SyncEngine:
     # =========================================================================
 
     def _outbound_sync_loop(self) -> None:
-        """Background thread for syncing local changes to Convex."""
+        """Background thread: drains sync_outbox and pushes each row to Convex."""
         while self._running:
             try:
-                # Get change with timeout
-                try:
-                    change = self._outbound_queue.get(timeout=1.0)
-                except queue.Empty:
-                    continue
-
-                # Skip if offline - re-queue for later
-                if not self.is_online:
-                    self._outbound_queue.put(change)
-                    continue
-
-                # Sync to Convex
-                success = self._sync_to_convex(change)
-
-                if success:
-                    # Remove from persistent queue after successful sync
-                    self._remove_persisted_change(change)
-                else:
-                    change.retry_count += 1
-                    if change.retry_count < self.MAX_RETRY:
-                        self._outbound_queue.put(change)
-                    else:
-                        # Max retries exceeded, remove from persistent queue
-                        self._remove_persisted_change(change)
-                        logger.error(
-                            f"Sync failed after {self.MAX_RETRY} retries: "
-                            f"{change.entity_type}/{change.entity_id}"
-                        )
-
-                self._state.pending_changes = self._outbound_queue.qsize()
-                if self._state.pending_changes == 0:
-                    self._state.status = SyncStatus.SYNCED
-                    self._state.last_sync = datetime.now(UTC)
-
+                self._drain_legacy_queue()
+                self._drain_sync_outbox()
+                time.sleep(5.0)
             except Exception as e:
-                logger.exception(f"Error in outbound sync: {e}")
-                self._state.status = SyncStatus.ERROR
-                self._state.error_message = str(e)
+                logger.exception(f"Error in outbound sync loop: {e}")
 
-    def _sync_to_convex(self, change: SyncChange) -> bool:
-        """Sync a single change to Convex."""
+    def _drain_legacy_queue(self) -> None:
+        """Drain the legacy in-memory queue (no longer populated after SyncedRepos removal)."""
+        while True:
+            try:
+                change = self._outbound_queue.get_nowait()
+            except queue.Empty:
+                break
+            logger.debug(
+                f"Convex push disabled -- skipping: "
+                f"{change.entity_type}/{change.entity_id}"
+            )
+            self._remove_persisted_change(change)
+
+    def _drain_sync_outbox(self) -> None:
+        """
+        Drain pending rows from sync_outbox and push each one to Convex.
+
+        - "upsert" rows: CREATE if no id_map entry exists, UPDATE otherwise.
+        - "delete" rows: look up Convex ID from id_map and call remove mutation.
+        - Rows that succeed are deleted from the outbox.
+        - Rows that are deferred (FK dependency not yet mapped) or that error
+          are left in the outbox and retried on the next cycle.
+        - If no Convex client is available the method returns immediately so
+          outbox rows accumulate until the engine comes online.
+        """
         if not self._convex:
-            return False
+            return
+
+        try:
+            with self._sync_db_lock:
+                result = self._sync_connection.execute(
+                    text(
+                        "SELECT id, entity_type, entity_id, operation, data"
+                        " FROM sync_outbox LIMIT 50"
+                    )
+                )
+                rows = result.fetchall()
+
+            if not rows:
+                return
+
+            succeeded_ids: list[str] = []
+            deferred_count = 0
+
+            for outbox_id, entity_type, entity_id, operation, data_json in rows:
+                if operation == "delete":
+                    change = SyncChange(
+                        entity_type=entity_type,
+                        change_type=ChangeType.DELETE,
+                        entity_id=entity_id,
+                        data={},
+                    )
+                else:
+                    # "upsert" — resolve to CREATE or UPDATE via id_map
+                    data = json.loads(data_json) if data_json else {}
+                    change_type = (
+                        ChangeType.UPDATE
+                        if self._id_map.has_mapping(entity_type, entity_id)
+                        else ChangeType.CREATE
+                    )
+                    change = SyncChange(
+                        entity_type=entity_type,
+                        change_type=change_type,
+                        entity_id=entity_id,
+                        data=data,
+                    )
+
+                outcome = self._sync_to_convex(change)
+
+                if outcome == "success":
+                    succeeded_ids.append(outbox_id)
+                    logger.debug(
+                        f"Pushed to Convex: {entity_type}/{entity_id} op={operation}"
+                    )
+                elif outcome == "deferred":
+                    deferred_count += 1
+                    logger.debug(f"Deferred (FK not mapped): {entity_type}/{entity_id}")
+                else:
+                    logger.warning(
+                        f"Failed to push to Convex: {entity_type}/{entity_id}"
+                    )
+
+            if succeeded_ids:
+                with self._sync_db_lock:
+                    for outbox_id in succeeded_ids:
+                        self._sync_connection.execute(
+                            text("DELETE FROM sync_outbox WHERE id = :id"),
+                            {"id": outbox_id},
+                        )
+                    self._sync_connection.commit()
+                logger.info(f"Drained {len(succeeded_ids)} outbox row(s) to Convex")
+
+            if deferred_count:
+                logger.debug(
+                    f"{deferred_count} outbox row(s) deferred (FK dependency pending)"
+                )
+
+        except Exception as e:
+            logger.warning(f"Failed to drain sync_outbox: {e}")
+
+    def _translate_fk_ids(
+        self, entity_type: str, data: dict[str, Any]
+    ) -> dict[str, Any] | None:
+        """
+        Translate local integer FK fields to Convex document IDs.
+
+        Returns translated data dict, or None if a required FK isn't mapped yet
+        (dependency not synced).
+        """
+        from src.shared.infra.sync.id_map import FK_DEPENDENCIES
+
+        fk_fields = FK_DEPENDENCIES.get(entity_type, {})
+        if not fk_fields:
+            return data
+
+        translated = dict(data)
+        for field_name, referenced_type in fk_fields.items():
+            local_fk = translated.get(field_name)
+            if local_fk is None:
+                continue
+
+            convex_fk = self._id_map.get_convex_id(referenced_type, str(local_fk))
+            if convex_fk is None:
+                logger.debug(
+                    f"FK not mapped yet: {entity_type}.{field_name}={local_fk} "
+                    f"-> {referenced_type} (deferring)"
+                )
+                return None
+
+            translated[field_name] = convex_fk
+
+        return translated
+
+    def _sync_to_convex(self, change: SyncChange) -> str:
+        """
+        Sync a single change to Convex.
+
+        Returns: "success", "deferred" (FK not mapped yet), or "error"
+        """
+        if not self._convex:
+            return "error"
 
         try:
             self._state.status = SyncStatus.SYNCING
@@ -560,6 +715,11 @@ class SyncEngine:
                 ("case", ChangeType.CREATE): "cases:create",
                 ("case", ChangeType.UPDATE): "cases:update",
                 ("case", ChangeType.DELETE): "cases:remove",
+                ("attribute", ChangeType.CREATE): "cases:saveAttribute",
+                ("attribute", ChangeType.UPDATE): "cases:saveAttribute",
+                ("attribute", ChangeType.DELETE): "cases:removeAttribute",
+                ("source_link", ChangeType.CREATE): "cases:linkSource",
+                ("source_link", ChangeType.DELETE): "cases:removeSourceLink",
             }
 
             mutation = mutation_map.get((change.entity_type, change.change_type))
@@ -567,19 +727,80 @@ class SyncEngine:
                 logger.warning(
                     f"Unknown change: {change.entity_type}/{change.change_type}"
                 )
-                return True
+                return "success"
 
             if change.change_type == ChangeType.DELETE:
-                self._convex.mutation(mutation, id=change.entity_id)
+                # Look up the Convex document ID for this entity
+                convex_id = self._id_map.get_convex_id(
+                    change.entity_type, str(change.entity_id)
+                )
+                if convex_id is None:
+                    logger.warning(
+                        f"No Convex ID mapped for delete: "
+                        f"{change.entity_type}/{change.entity_id}, skipping"
+                    )
+                    return "success"
+
+                self._convex.mutation(mutation, id=convex_id)
+                self._id_map.remove(change.entity_type, str(change.entity_id))
+
+            elif change.change_type == ChangeType.CREATE:
+                # Strip None values and convert Enums
+                data = {
+                    k: (v.value if isinstance(v, Enum) else v)
+                    for k, v in change.data.items()
+                    if v is not None
+                }
+
+                # Translate FK fields to Convex document IDs
+                translated = self._translate_fk_ids(change.entity_type, data)
+                if translated is None:
+                    return "deferred"
+
+                # Call mutation — returns the new Convex document _id
+                convex_doc_id = self._convex.mutation(mutation, **translated)
+
+                # Store the mapping: local integer PK → Convex document _id
+                if convex_doc_id:
+                    self._id_map.put(
+                        change.entity_type,
+                        str(change.entity_id),
+                        str(convex_doc_id),
+                    )
+
             else:
-                self._convex.mutation(mutation, **change.data)
+                # UPDATE
+                data = {
+                    k: (v.value if isinstance(v, Enum) else v)
+                    for k, v in change.data.items()
+                    if v is not None
+                }
+
+                # Look up entity's own Convex ID
+                convex_id = self._id_map.get_convex_id(
+                    change.entity_type, str(change.entity_id)
+                )
+                if convex_id is None:
+                    logger.warning(
+                        f"No Convex ID mapped for update: "
+                        f"{change.entity_type}/{change.entity_id}, skipping"
+                    )
+                    return "success"
+
+                # Translate FK fields
+                translated = self._translate_fk_ids(change.entity_type, data)
+                if translated is None:
+                    return "deferred"
+
+                translated["id"] = convex_id
+                self._convex.mutation(mutation, **translated)
 
             logger.debug(f"Synced to Convex: {change.entity_type}/{change.entity_id}")
-            return True
+            return "success"
 
         except Exception as e:
             logger.warning(f"Failed to sync to Convex: {e}")
-            return False
+            return "error"
 
     # =========================================================================
     # Inbound Subscriptions (Convex -> Local)
@@ -622,50 +843,6 @@ class SyncEngine:
 
         self._state.status = SyncStatus.SYNCED
         logger.info(f"Started {len(subscriptions)} Convex subscriptions")
-
-    def _set_subscription_error(self, message: str) -> None:
-        """Set subscription error state (thread-safe helper)."""
-        self._state.status = SyncStatus.ERROR
-        self._state.error_message = message
-
-    def _subscription_loop(self, query: str, entity_type: str) -> None:
-        """
-        Subscribe to a Convex query and handle updates.
-
-        Uses Convex's subscribe() which yields new data on every change.
-
-        Note: Each subscription thread creates its own ConvexClient instance
-        to avoid PyO3 "already borrowed" threading errors. The Convex Python
-        client uses Rust bindings (PyO3) which don't support concurrent access
-        from multiple threads on the same client instance.
-        """
-        if not self._convex_url:
-            return
-
-        try:
-            # Create a dedicated client for this thread to avoid PyO3 threading issues
-            if _ConvexClient is None:
-                logger.error("ConvexClient not available")
-                return
-
-            thread_client = _ConvexClient(self._convex_url)
-            logger.debug(
-                f"Created dedicated Convex client for {entity_type} subscription"
-            )
-
-            # The subscribe() method yields new data whenever it changes
-            for data in thread_client.subscribe(query, {}):
-                if not self._running:
-                    break
-
-                # Notify listeners of the update
-                self._notify_listeners(entity_type, data)
-
-        except Exception as e:
-            if self._running:
-                logger.error(f"Subscription error for {entity_type}: {e}")
-                self._state.status = SyncStatus.ERROR
-                self._state.error_message = str(e)
 
     def _notify_listeners(self, entity_type: str, data: list[dict]) -> None:
         """Notify registered listeners of remote data."""

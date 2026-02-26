@@ -236,3 +236,35 @@ export const deleteAttribute = mutation({
     }
   },
 });
+
+// =========================================================================
+// Pull Queries (used by sync engine)
+// =========================================================================
+
+export const getAllAttributes = query({
+  args: {},
+  handler: async (ctx) => ctx.db.query("cas_attribute").collect(),
+});
+
+export const getAllSourceLinks = query({
+  args: {},
+  handler: async (ctx) => ctx.db.query("cas_source_link").collect(),
+});
+
+// =========================================================================
+// Delete-by-id Mutations (used by sync engine DELETE branch)
+// =========================================================================
+
+export const removeAttribute = mutation({
+  args: { id: v.id("cas_attribute") },
+  handler: async (ctx, args) => {
+    await ctx.db.delete(args.id);
+  },
+});
+
+export const removeSourceLink = mutation({
+  args: { id: v.id("cas_source_link") },
+  handler: async (ctx, args) => {
+    await ctx.db.delete(args.id);
+  },
+});

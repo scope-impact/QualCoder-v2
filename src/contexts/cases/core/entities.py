@@ -59,7 +59,7 @@ class Case:
     description: str | None = None
     memo: str | None = None
     attributes: tuple[CaseAttribute, ...] = field(default_factory=tuple)
-    source_ids: tuple[int, ...] = field(default_factory=tuple)
+    source_ids: tuple[str, ...] = field(default_factory=tuple)
     created_at: datetime = field(default_factory=lambda: datetime.now(UTC))
     updated_at: datetime = field(default_factory=lambda: datetime.now(UTC))
 
@@ -101,13 +101,13 @@ class Case:
             attributes=tuple(a for a in self.attributes if a.name != attr_name),
         )
 
-    def with_source(self, source_id: int) -> Case:
+    def with_source(self, source_id: str) -> Case:
         """Return new Case with source linked."""
         if source_id in self.source_ids:
             return self
         return self._evolve(source_ids=self.source_ids + (source_id,))
 
-    def without_source(self, source_id: int) -> Case:
+    def without_source(self, source_id: str) -> Case:
         """Return new Case with source unlinked."""
         return self._evolve(
             source_ids=tuple(s for s in self.source_ids if s != source_id),

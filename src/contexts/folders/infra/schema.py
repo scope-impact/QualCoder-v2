@@ -9,7 +9,6 @@ from sqlalchemy import (
     Column,
     DateTime,
     Index,
-    Integer,
     MetaData,
     String,
     Table,
@@ -22,9 +21,9 @@ metadata = MetaData()
 src_folder = Table(
     "src_folder",
     metadata,
-    Column("id", Integer, primary_key=True),
+    Column("id", String(36), primary_key=True),
     Column("name", String(255), nullable=False),
-    Column("parent_id", Integer),  # Self-referential for hierarchy
+    Column("parent_id", String(36)),  # Self-referential for hierarchy
     Column("created_at", DateTime),
     Index("idx_src_folder_parent", "parent_id"),
 )

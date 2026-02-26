@@ -17,7 +17,7 @@ from src.shared.infra.state import ProjectState
 
 
 def get_case(
-    case_id: int,
+    case_id: str,
     state: ProjectState,
     case_repo: CaseRepository | None = None,
 ) -> OperationResult:

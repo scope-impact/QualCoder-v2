@@ -163,9 +163,8 @@ class CloudSyncSettingsFailed:
             reason=f"Invalid Convex URL: '{url}'",
             error_code="INVALID_CONVEX_URL",
             suggestions=(
-                "URL must start with https://",
-                "URL must end with .convex.cloud",
-                "Example: https://your-project.convex.cloud",
+                "Cloud: https://<project>.convex.cloud",
+                "Self-hosted: http://127.0.0.1:<port> or http://localhost:<port>",
             ),
         )
 

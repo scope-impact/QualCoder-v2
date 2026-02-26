@@ -76,7 +76,7 @@ class TestIsSuggestionNameUnique:
         from src.contexts.coding.core.entities import Code, Color
         from src.shared import CodeId
 
-        existing = [Code(id=CodeId(value=1), name="Theme", color=Color(255, 0, 0))]
+        existing = [Code(id=CodeId(value="1"), name="Theme", color=Color(255, 0, 0))]
 
         assert is_suggestion_name_unique("Theme", existing) is False
         assert is_suggestion_name_unique("theme", existing) is False
@@ -90,9 +90,9 @@ class TestIsSuggestionNameUnique:
         from src.shared import CodeId
 
         existing = [
-            Code(id=CodeId(value=1), name="Theme", color=Color(255, 0, 0)),
-            Code(id=CodeId(value=2), name="Pattern", color=Color(0, 255, 0)),
-            Code(id=CodeId(value=3), name="Category", color=Color(0, 0, 255)),
+            Code(id=CodeId(value="1"), name="Theme", color=Color(255, 0, 0)),
+            Code(id=CodeId(value="2"), name="Pattern", color=Color(0, 255, 0)),
+            Code(id=CodeId(value="3"), name="Category", color=Color(0, 0, 255)),
         ]
 
         assert is_suggestion_name_unique("Theme", existing) is False
@@ -249,7 +249,7 @@ class TestCanSuggestionBeApproved:
         )
 
         existing = [
-            Code(id=CodeId(value=1), name="ExistingCode", color=Color(0, 255, 0))
+            Code(id=CodeId(value="1"), name="ExistingCode", color=Color(0, 255, 0))
         ]
 
         assert can_suggestion_be_approved(suggestion, existing) is False
@@ -270,7 +270,7 @@ class TestCanSuggestionBeApproved:
         )
 
         existing = [
-            Code(id=CodeId(value=1), name="ExistingCode", color=Color(0, 255, 0))
+            Code(id=CodeId(value="1"), name="ExistingCode", color=Color(0, 255, 0))
         ]
 
         assert can_suggestion_be_approved(suggestion, existing) is False
@@ -412,8 +412,8 @@ class TestCanCodesBeCompared:
         from src.contexts.coding.core.entities import Code, Color
         from src.shared import CodeId
 
-        code_a = Code(id=CodeId(value=1), name="Theme", color=Color(255, 0, 0))
-        code_b = Code(id=CodeId(value=2), name="Pattern", color=Color(0, 255, 0))
+        code_a = Code(id=CodeId(value="1"), name="Theme", color=Color(255, 0, 0))
+        code_b = Code(id=CodeId(value="2"), name="Pattern", color=Color(0, 255, 0))
 
         assert can_codes_be_compared(code_a, code_b) is True
 
@@ -423,7 +423,7 @@ class TestCanCodesBeCompared:
         from src.contexts.coding.core.entities import Code, Color
         from src.shared import CodeId
 
-        code = Code(id=CodeId(value=1), name="Theme", color=Color(255, 0, 0))
+        code = Code(id=CodeId(value="1"), name="Theme", color=Color(255, 0, 0))
 
         assert can_codes_be_compared(code, code) is False
 
@@ -433,8 +433,8 @@ class TestCanCodesBeCompared:
         from src.contexts.coding.core.entities import Code, Color
         from src.shared import CodeId
 
-        code_a = Code(id=CodeId(value=1), name="", color=Color(255, 0, 0))
-        code_b = Code(id=CodeId(value=2), name="Pattern", color=Color(0, 255, 0))
+        code_a = Code(id=CodeId(value="1"), name="", color=Color(255, 0, 0))
+        code_b = Code(id=CodeId(value="2"), name="Pattern", color=Color(0, 255, 0))
 
         assert can_codes_be_compared(code_a, code_b) is False
 
@@ -444,8 +444,8 @@ class TestCanCodesBeCompared:
         from src.contexts.coding.core.entities import Code, Color
         from src.shared import CodeId
 
-        code_a = Code(id=CodeId(value=1), name="Theme", color=Color(255, 0, 0))
-        code_b = Code(id=CodeId(value=2), name="   ", color=Color(0, 255, 0))
+        code_a = Code(id=CodeId(value="1"), name="Theme", color=Color(255, 0, 0))
+        code_b = Code(id=CodeId(value="2"), name="   ", color=Color(0, 255, 0))
 
         assert can_codes_be_compared(code_a, code_b) is False
 
@@ -455,8 +455,8 @@ class TestCanCodesBeCompared:
         from src.contexts.coding.core.entities import Code, Color
         from src.shared import CodeId
 
-        code_a = Code(id=CodeId(value=1), name="a" * 101, color=Color(255, 0, 0))
-        code_b = Code(id=CodeId(value=2), name="Pattern", color=Color(0, 255, 0))
+        code_a = Code(id=CodeId(value="1"), name="a" * 101, color=Color(255, 0, 0))
+        code_b = Code(id=CodeId(value="2"), name="Pattern", color=Color(0, 255, 0))
 
         assert can_codes_be_compared(code_a, code_b) is False
 
@@ -474,9 +474,9 @@ class TestCanMergeBeApproved:
         from src.shared import CodeId
 
         candidate = DuplicateCandidate(
-            code_a_id=CodeId(value=1),
+            code_a_id=CodeId(value="1"),
             code_a_name="Theme",
-            code_b_id=CodeId(value=2),
+            code_b_id=CodeId(value="2"),
             code_b_name="Pattern",
             similarity=SimilarityScore(value=0.9),
             rationale="Similar concepts",
@@ -484,7 +484,7 @@ class TestCanMergeBeApproved:
         )
 
         def code_exists(code_id: CodeId) -> bool:
-            return code_id.value in (1, 2)
+            return code_id.value in ("1", "2")
 
         assert can_merge_be_approved(candidate, code_exists) is True
 
@@ -498,9 +498,9 @@ class TestCanMergeBeApproved:
         from src.shared import CodeId
 
         candidate = DuplicateCandidate(
-            code_a_id=CodeId(value=1),
+            code_a_id=CodeId(value="1"),
             code_a_name="Theme",
-            code_b_id=CodeId(value=2),
+            code_b_id=CodeId(value="2"),
             code_b_name="Pattern",
             similarity=SimilarityScore(value=0.9),
             rationale="Similar concepts",
@@ -522,9 +522,9 @@ class TestCanMergeBeApproved:
         from src.shared import CodeId
 
         candidate = DuplicateCandidate(
-            code_a_id=CodeId(value=1),
+            code_a_id=CodeId(value="1"),
             code_a_name="Theme",
-            code_b_id=CodeId(value=2),
+            code_b_id=CodeId(value="2"),
             code_b_name="Pattern",
             similarity=SimilarityScore(value=0.9),
             rationale="Similar concepts",
@@ -546,9 +546,9 @@ class TestCanMergeBeApproved:
         from src.shared import CodeId
 
         candidate = DuplicateCandidate(
-            code_a_id=CodeId(value=1),
+            code_a_id=CodeId(value="1"),
             code_a_name="Theme",
-            code_b_id=CodeId(value=2),
+            code_b_id=CodeId(value="2"),
             code_b_name="Pattern",
             similarity=SimilarityScore(value=0.9),
             rationale="Similar concepts",
@@ -556,7 +556,7 @@ class TestCanMergeBeApproved:
         )
 
         def code_exists(code_id: CodeId) -> bool:
-            return code_id.value == 2  # Only code B exists
+            return code_id.value == "2"  # Only code B exists
 
         assert can_merge_be_approved(candidate, code_exists) is False
 
@@ -570,9 +570,9 @@ class TestCanMergeBeApproved:
         from src.shared import CodeId
 
         candidate = DuplicateCandidate(
-            code_a_id=CodeId(value=1),
+            code_a_id=CodeId(value="1"),
             code_a_name="Theme",
-            code_b_id=CodeId(value=2),
+            code_b_id=CodeId(value="2"),
             code_b_name="Pattern",
             similarity=SimilarityScore(value=0.9),
             rationale="Similar concepts",
@@ -580,7 +580,7 @@ class TestCanMergeBeApproved:
         )
 
         def code_exists(code_id: CodeId) -> bool:
-            return code_id.value == 1  # Only code A exists
+            return code_id.value == "1"  # Only code A exists
 
         assert can_merge_be_approved(candidate, code_exists) is False
 
@@ -593,7 +593,9 @@ class TestIsDuplicatePairUnique:
         from src.contexts.coding.core.ai_invariants import is_duplicate_pair_unique
         from src.shared import CodeId
 
-        assert is_duplicate_pair_unique(CodeId(value=1), CodeId(value=2), []) is True
+        assert (
+            is_duplicate_pair_unique(CodeId(value="1"), CodeId(value="2"), []) is True
+        )
 
     def test_detects_existing_pair(self):
         """Should detect pair that already exists."""
@@ -606,9 +608,9 @@ class TestIsDuplicatePairUnique:
 
         existing = [
             DuplicateCandidate(
-                code_a_id=CodeId(value=1),
+                code_a_id=CodeId(value="1"),
                 code_a_name="Theme",
-                code_b_id=CodeId(value=2),
+                code_b_id=CodeId(value="2"),
                 code_b_name="Pattern",
                 similarity=SimilarityScore(value=0.9),
                 rationale="Similar",
@@ -616,7 +618,7 @@ class TestIsDuplicatePairUnique:
         ]
 
         assert (
-            is_duplicate_pair_unique(CodeId(value=1), CodeId(value=2), existing)
+            is_duplicate_pair_unique(CodeId(value="1"), CodeId(value="2"), existing)
             is False
         )
 
@@ -631,9 +633,9 @@ class TestIsDuplicatePairUnique:
 
         existing = [
             DuplicateCandidate(
-                code_a_id=CodeId(value=1),
+                code_a_id=CodeId(value="1"),
                 code_a_name="Theme",
-                code_b_id=CodeId(value=2),
+                code_b_id=CodeId(value="2"),
                 code_b_name="Pattern",
                 similarity=SimilarityScore(value=0.9),
                 rationale="Similar",
@@ -642,7 +644,7 @@ class TestIsDuplicatePairUnique:
 
         # Check reverse order (2, 1) should also be detected as duplicate
         assert (
-            is_duplicate_pair_unique(CodeId(value=2), CodeId(value=1), existing)
+            is_duplicate_pair_unique(CodeId(value="2"), CodeId(value="1"), existing)
             is False
         )
 
@@ -657,9 +659,9 @@ class TestIsDuplicatePairUnique:
 
         existing = [
             DuplicateCandidate(
-                code_a_id=CodeId(value=1),
+                code_a_id=CodeId(value="1"),
                 code_a_name="Theme",
-                code_b_id=CodeId(value=2),
+                code_b_id=CodeId(value="2"),
                 code_b_name="Pattern",
                 similarity=SimilarityScore(value=0.9),
                 rationale="Similar",
@@ -668,7 +670,8 @@ class TestIsDuplicatePairUnique:
 
         # Different pair (3, 4) should be unique
         assert (
-            is_duplicate_pair_unique(CodeId(value=3), CodeId(value=4), existing) is True
+            is_duplicate_pair_unique(CodeId(value="3"), CodeId(value="4"), existing)
+            is True
         )
 
     def test_unique_partially_different_pair(self):
@@ -682,9 +685,9 @@ class TestIsDuplicatePairUnique:
 
         existing = [
             DuplicateCandidate(
-                code_a_id=CodeId(value=1),
+                code_a_id=CodeId(value="1"),
                 code_a_name="Theme",
-                code_b_id=CodeId(value=2),
+                code_b_id=CodeId(value="2"),
                 code_b_name="Pattern",
                 similarity=SimilarityScore(value=0.9),
                 rationale="Similar",
@@ -693,7 +696,8 @@ class TestIsDuplicatePairUnique:
 
         # Pair (1, 3) shares one code but is a different pair
         assert (
-            is_duplicate_pair_unique(CodeId(value=1), CodeId(value=3), existing) is True
+            is_duplicate_pair_unique(CodeId(value="1"), CodeId(value="3"), existing)
+            is True
         )
 
 
@@ -721,7 +725,7 @@ class TestHasMinimumCodesForDetection:
         from src.contexts.coding.core.entities import Code, Color
         from src.shared import CodeId
 
-        codes = [Code(id=CodeId(value=1), name="Theme", color=Color(255, 0, 0))]
+        codes = [Code(id=CodeId(value="1"), name="Theme", color=Color(255, 0, 0))]
 
         assert has_minimum_codes_for_detection(codes) is False
 
@@ -734,8 +738,8 @@ class TestHasMinimumCodesForDetection:
         from src.shared import CodeId
 
         codes = [
-            Code(id=CodeId(value=1), name="Theme", color=Color(255, 0, 0)),
-            Code(id=CodeId(value=2), name="Pattern", color=Color(0, 255, 0)),
+            Code(id=CodeId(value="1"), name="Theme", color=Color(255, 0, 0)),
+            Code(id=CodeId(value="2"), name="Pattern", color=Color(0, 255, 0)),
         ]
 
         assert has_minimum_codes_for_detection(codes) is True
@@ -764,8 +768,8 @@ class TestHasMinimumCodesForDetection:
         from src.shared import CodeId
 
         codes = [
-            Code(id=CodeId(value=1), name="Theme", color=Color(255, 0, 0)),
-            Code(id=CodeId(value=2), name="Pattern", color=Color(0, 255, 0)),
+            Code(id=CodeId(value="1"), name="Theme", color=Color(255, 0, 0)),
+            Code(id=CodeId(value="2"), name="Pattern", color=Color(0, 255, 0)),
         ]
 
         # Default minimum (2) is satisfied
