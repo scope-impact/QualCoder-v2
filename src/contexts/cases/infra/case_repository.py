@@ -6,6 +6,7 @@ Implements the repository for Case entities using the cas_* tables.
 
 from __future__ import annotations
 
+import logging
 from datetime import UTC, datetime
 from typing import TYPE_CHECKING
 
@@ -20,6 +21,8 @@ if TYPE_CHECKING:
     from sqlalchemy import Connection
 
     from src.shared.infra.sync.outbox import OutboxWriter
+
+logger = logging.getLogger("qualcoder.cases.infra")
 
 
 class SQLiteCaseRepository:
@@ -40,10 +43,13 @@ class SQLiteCaseRepository:
         """Get all cases in the project."""
         stmt = select(cas_case).order_by(cas_case.c.name)
         result = self._conn.execute(stmt)
-        return [self._row_to_case(row) for row in result]
+        cases = [self._row_to_case(row) for row in result]
+        logger.debug("get_all: count=%d", len(cases))
+        return cases
 
     def get_by_id(self, case_id: CaseId) -> Case | None:
         """Get a case by its ID."""
+        logger.debug("get_by_id: %s", case_id.value)
         stmt = select(cas_case).where(cas_case.c.id == case_id.value)
         result = self._conn.execute(stmt)
         row = result.fetchone()
@@ -58,6 +64,7 @@ class SQLiteCaseRepository:
 
     def save(self, case: Case) -> None:
         """Save a case (insert or update)."""
+        logger.debug("save: %s (name=%s)", case.id.value, case.name)
         exists = self.exists(case.id)
 
         if exists:
@@ -98,6 +105,7 @@ class SQLiteCaseRepository:
 
     def delete(self, case_id: CaseId) -> None:
         """Delete a case and its attributes/links."""
+        logger.debug("delete: %s", case_id.value)
         # Delete attributes first
         self._conn.execute(
             delete(cas_attribute).where(cas_attribute.c.case_id == case_id.value)

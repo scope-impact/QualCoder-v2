@@ -7,6 +7,7 @@ Returns OperationResult with error codes, suggestions, and rollback support.
 
 from __future__ import annotations
 
+import logging
 from typing import TYPE_CHECKING
 
 from src.contexts.coding.core.commandHandlers._state import (
@@ -21,11 +22,15 @@ from src.contexts.coding.core.events import CodeRenamed
 from src.shared.common.failure_events import FailureEvent
 from src.shared.common.operation_result import OperationResult
 from src.shared.common.types import CodeId
+from src.shared.infra.metrics import metered_command
 
 if TYPE_CHECKING:
     from src.shared.infra.event_bus import EventBus
 
+logger = logging.getLogger("qualcoder.coding.core")
 
+
+@metered_command("rename_code")
 def rename_code(
     command: RenameCodeCommand,
     code_repo: CodeRepository,
@@ -46,6 +51,8 @@ def rename_code(
     Returns:
         OperationResult with CodeRenamed event on success, or error details on failure
     """
+    logger.debug("rename_code: code_id=%s, new_name=%s", command.code_id, command.new_name)
+
     state = build_coding_state(code_repo, category_repo, segment_repo)
     code_id = CodeId(value=command.code_id)
 
@@ -57,6 +64,7 @@ def rename_code(
 
     # Handle failure events
     if isinstance(result, FailureEvent):
+        logger.error("rename_code failed: %s", result.event_type)
         event_bus.publish(result)
         return OperationResult.from_failure(result)
 
@@ -69,6 +77,8 @@ def rename_code(
         code_repo.save(updated_code)
 
     event_bus.publish(event)
+
+    logger.info("Code renamed: code_id=%s, new_name=%s", command.code_id, command.new_name)
 
     return OperationResult.ok(
         data=event,

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -12,6 +13,7 @@ from src.contexts.projects.core.vcs_events import AutoCommitDecided, SnapshotCre
 from src.contexts.projects.core.vcs_failure_events import AutoCommitSkipped
 from src.contexts.projects.core.vcs_invariants import resolve_db_path
 from src.shared.common.operation_result import OperationResult
+from src.shared.infra.metrics import metered_command
 
 if TYPE_CHECKING:
     from src.contexts.projects.infra.git_repository_adapter import GitRepositoryAdapter
@@ -20,7 +22,10 @@ if TYPE_CHECKING:
     )
     from src.shared.infra.event_bus import EventBus
 
+logger = logging.getLogger("qualcoder.projects.core")
 
+
+@metered_command("auto_commit")
 def auto_commit(
     command: AutoCommitCommand,
     diffable_adapter: SqliteDiffableAdapter,
@@ -37,6 +42,7 @@ def auto_commit(
     4. Execute I/O (dump, stage, commit)
     5. Publish domain event
     """
+    logger.debug("auto_commit: project_path=%s, event_count=%s", command.project_path, len(command.events))
     project_path = Path(command.project_path)
     events = tuple(command.events)
 
@@ -48,6 +54,7 @@ def auto_commit(
 
     # 3. Handle failure
     if isinstance(decision, AutoCommitSkipped):
+        logger.error("auto_commit: skipped reason=%s", decision.reason)
         return OperationResult.from_failure(decision)
 
     # Decision is AutoCommitDecided - extract message and count
@@ -61,10 +68,12 @@ def auto_commit(
 
     dump_result = diffable_adapter.dump(db_path, vcs_dir)
     if dump_result.is_failure:
+        logger.error("auto_commit: dump failed for project_path=%s", project_path)
         return dump_result
 
     stage_result = git_adapter.add_all(vcs_dir.name)
     if stage_result.is_failure:
+        logger.error("auto_commit: stage failed for project_path=%s", project_path)
         return stage_result
 
     commit_result = git_adapter.commit(commit_message)
@@ -74,6 +83,7 @@ def auto_commit(
             return OperationResult.ok(
                 data=SnapshotCreated.create("no-changes", commit_message, event_count)
             )
+        logger.error("auto_commit: commit failed for project_path=%s", project_path)
         return commit_result
 
     # 5. Create and publish domain event with actual SHA
@@ -84,4 +94,5 @@ def auto_commit(
     )
     event_bus.publish(final_event)
 
+    logger.info("auto_commit: committed sha=%s, event_count=%s", commit_result.data, event_count)
     return OperationResult.ok(data=final_event)

@@ -7,6 +7,7 @@ Returns OperationResult for rich error handling in UI and AI consumers.
 
 from __future__ import annotations
 
+import logging
 from typing import TYPE_CHECKING
 
 from src.contexts.cases.core.commandHandlers._state import (
@@ -20,12 +21,17 @@ from src.contexts.cases.core.failure_events import AttributeSetFailed
 from src.contexts.projects.core.commands import SetCaseAttributeCommand
 from src.shared.common.operation_result import OperationResult
 from src.shared.common.types import CaseId
+from src.shared.infra.metrics import metered_command
 
 if TYPE_CHECKING:
     from src.shared.infra.event_bus import EventBus
     from src.shared.infra.state import ProjectState
 
 
+logger = logging.getLogger("qualcoder.cases.core")
+
+
+@metered_command("set_case_attribute")
 def set_case_attribute(
     command: SetCaseAttributeCommand,
     state: ProjectState,
@@ -33,6 +39,7 @@ def set_case_attribute(
     event_bus: EventBus,
 ) -> OperationResult:
     """Set an attribute on a case."""
+    logger.debug("set_case_attribute: case_id=%s, attribute_name=%s", command.case_id, command.attr_name)
     if failure := require_project(state, "ATTRIBUTE_NOT_SET/NO_PROJECT"):
         return failure
 
@@ -47,6 +54,7 @@ def set_case_attribute(
     )
 
     if isinstance(result, AttributeSetFailed):
+        logger.error("set_case_attribute failed: %s", result.event_type)
         event_bus.publish(result)
         return OperationResult.from_failure(result)
 
@@ -62,4 +70,5 @@ def set_case_attribute(
 
     event_bus.publish(event)
 
+    logger.info("Attribute set: case_id=%s, attribute_name=%s", command.case_id, command.attr_name)
     return OperationResult.ok(data=event)

@@ -12,10 +12,13 @@ This extracts database management from the controller into a focused module.
 from __future__ import annotations
 
 import contextlib
+import logging
 from pathlib import Path
 from typing import TYPE_CHECKING
 
 from returns.result import Failure, Result, Success
+
+logger = logging.getLogger("qualcoder.shared.lifecycle")
 
 if TYPE_CHECKING:
     from sqlalchemy import Connection, Engine
@@ -68,8 +71,11 @@ class ProjectLifecycle:
         """
         from sqlalchemy import create_engine
 
+        logger.debug("Opening database: %s", path)
+
         # Validate file exists
         if not path.exists():
+            logger.error("Database file not found: %s", path)
             return Failure(f"Database file not found: {path}")
 
         # Close any existing connection first
@@ -88,9 +94,11 @@ class ProjectLifecycle:
             self._connection = self._engine.connect()
             self._current_path = path
 
+            logger.info("Database opened: %s", path)
             return Success(self._connection)
 
         except Exception as e:
+            logger.error("Failed to open database %s: %s", path, e, exc_info=True)
             self._cleanup()
             return Failure(f"Failed to open database: {e}")
 
@@ -127,15 +135,20 @@ class ProjectLifecycle:
             if isinstance(result, Failure):
                 return result
 
+            logger.info("Database created: %s (name=%s)", path, name)
             return Success(project)
 
         except (FileExistsError, ValueError, PermissionError) as e:
+            logger.error("Failed to create database %s: %s", path, e)
             return Failure(str(e))
         except Exception as e:
+            logger.error("Failed to create database %s: %s", path, e, exc_info=True)
             return Failure(f"Failed to create database: {e}")
 
     def close_database(self) -> None:
         """Close the current database connection."""
+        if self._current_path:
+            logger.info("Closing database: %s", self._current_path)
         self._cleanup()
 
     def _cleanup(self) -> None:

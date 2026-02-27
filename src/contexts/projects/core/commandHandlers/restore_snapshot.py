@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -12,6 +13,7 @@ from src.contexts.projects.core.vcs_events import RestoreDecided, SnapshotRestor
 from src.contexts.projects.core.vcs_failure_events import SnapshotNotRestored
 from src.contexts.projects.core.vcs_invariants import resolve_db_path
 from src.shared.common.operation_result import OperationResult
+from src.shared.infra.metrics import metered_command
 
 if TYPE_CHECKING:
     from src.contexts.projects.infra.git_repository_adapter import GitRepositoryAdapter
@@ -20,7 +22,10 @@ if TYPE_CHECKING:
     )
     from src.shared.infra.event_bus import EventBus
 
+logger = logging.getLogger("qualcoder.projects.core")
 
+
+@metered_command("restore_snapshot")
 def restore_snapshot(
     command: RestoreSnapshotCommand,
     diffable_adapter: SqliteDiffableAdapter,
@@ -37,6 +42,7 @@ def restore_snapshot(
     4. Execute I/O (checkout, load)
     5. Publish domain event
     """
+    logger.debug("restore_snapshot: project_path=%s, ref=%s", command.project_path, command.ref)
     project_path = Path(command.project_path)
     ref = command.ref
 
@@ -58,6 +64,7 @@ def restore_snapshot(
 
     # 3. Handle failure
     if isinstance(decision, SnapshotNotRestored):
+        logger.error("restore_snapshot: deriver rejected ref=%s", ref)
         return OperationResult.from_failure(decision)
 
     # Decision is RestoreDecided - extract ref
@@ -67,16 +74,19 @@ def restore_snapshot(
     # 4. Execute I/O: git checkout then load database
     checkout_result = git_adapter.checkout(target_ref)
     if checkout_result.is_failure:
+        logger.error("restore_snapshot: checkout failed for ref=%s", target_ref)
         return checkout_result
 
     db_path = resolve_db_path(project_path)
     vcs_dir = diffable_adapter.get_vcs_dir(project_path)
     load_result = diffable_adapter.load(db_path, vcs_dir)
     if load_result.is_failure:
+        logger.error("restore_snapshot: load failed for ref=%s, project_path=%s", target_ref, project_path)
         return load_result
 
     # 5. Create and publish domain event
     final_event = SnapshotRestored.create(ref=target_ref, git_sha=target_ref)
     event_bus.publish(final_event)
 
+    logger.info("restore_snapshot: restored to ref=%s, project_path=%s", target_ref, project_path)
     return OperationResult.ok(data=final_event)

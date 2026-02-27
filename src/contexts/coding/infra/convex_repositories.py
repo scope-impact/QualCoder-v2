@@ -6,6 +6,7 @@ Implements the repository protocols using the Convex cloud database.
 
 from __future__ import annotations
 
+import logging
 from datetime import UTC, datetime
 from typing import TYPE_CHECKING, Any
 
@@ -21,6 +22,8 @@ from src.shared.common.types import CategoryId, CodeId, SegmentId, SourceId
 if TYPE_CHECKING:
     from src.shared.infra.convex import ConvexClientWrapper
 
+logger = logging.getLogger("qualcoder.coding.infra")
+
 
 class ConvexCodeRepository:
     """
@@ -35,10 +38,13 @@ class ConvexCodeRepository:
     def get_all(self) -> list[Code]:
         """Get all codes in the project."""
         docs = self._client.get_all_codes()
-        return [self._doc_to_code(doc) for doc in docs]
+        codes = [self._doc_to_code(doc) for doc in docs]
+        logger.debug("get_all: count=%d", len(codes))
+        return codes
 
     def get_by_id(self, code_id: CodeId) -> Code | None:
         """Get a code by its ID."""
+        logger.debug("get_by_id: %s", code_id.value)
         doc = self._client.get_code_by_id(code_id.value)
         return self._doc_to_code(doc) if doc else None
 
@@ -54,6 +60,7 @@ class ConvexCodeRepository:
 
     def save(self, code: Code) -> None:
         """Save a code (insert or update)."""
+        logger.debug("save: %s (name=%s)", code.id.value, code.name)
         if self.exists(code.id):
             self._client.update_code(
                 code.id.value,
@@ -76,6 +83,7 @@ class ConvexCodeRepository:
 
     def delete(self, code_id: CodeId) -> None:
         """Delete a code by ID."""
+        logger.debug("delete: %s", code_id.value)
         self._client.delete_code(code_id.value)
 
     def exists(self, code_id: CodeId) -> bool:
@@ -120,10 +128,13 @@ class ConvexCategoryRepository:
     def get_all(self) -> list[Category]:
         """Get all categories."""
         docs = self._client.get_all_categories()
-        return [self._doc_to_category(doc) for doc in docs]
+        categories = [self._doc_to_category(doc) for doc in docs]
+        logger.debug("get_all: count=%d", len(categories))
+        return categories
 
     def get_by_id(self, category_id: CategoryId) -> Category | None:
         """Get a category by ID."""
+        logger.debug("get_by_id: %s", category_id.value)
         doc = self._client.get_category_by_id(category_id.value)
         return self._doc_to_category(doc) if doc else None
 
@@ -137,6 +148,7 @@ class ConvexCategoryRepository:
 
     def save(self, category: Category) -> None:
         """Save a category."""
+        logger.debug("save: %s (name=%s)", category.id.value, category.name)
         exists = self.get_by_id(category.id) is not None
 
         if exists:
@@ -159,6 +171,7 @@ class ConvexCategoryRepository:
 
     def delete(self, category_id: CategoryId) -> None:
         """Delete a category."""
+        logger.debug("delete: %s", category_id.value)
         self._client.delete_category(category_id.value)
 
     def name_exists(self, name: str, exclude_id: CategoryId | None = None) -> bool:
@@ -198,10 +211,13 @@ class ConvexSegmentRepository:
     def get_all(self) -> list[TextSegment]:
         """Get all text segments."""
         docs = self._client.get_all_segments()
-        return [self._doc_to_segment(doc) for doc in docs]
+        segments = [self._doc_to_segment(doc) for doc in docs]
+        logger.debug("get_all: count=%d", len(segments))
+        return segments
 
     def get_by_id(self, segment_id: SegmentId) -> TextSegment | None:
         """Get a segment by ID."""
+        logger.debug("get_by_id: %s", segment_id.value)
         doc = self._client.query("segments:getById", id=segment_id.value)
         return self._doc_to_segment(doc) if doc else None
 
@@ -228,6 +244,7 @@ class ConvexSegmentRepository:
 
     def save(self, segment: TextSegment) -> None:
         """Save a segment."""
+        logger.debug("save: %s (code=%s, source=%s)", segment.id.value, segment.code_id.value, segment.source_id.value)
         exists = self.get_by_id(segment.id) is not None
 
         if exists:
@@ -258,14 +275,17 @@ class ConvexSegmentRepository:
 
     def delete(self, segment_id: SegmentId) -> None:
         """Delete a segment by ID."""
+        logger.debug("delete: %s", segment_id.value)
         self._client.delete_segment(segment_id.value)
 
     def delete_by_code(self, code_id: CodeId) -> int:
         """Delete all segments with a code, returns count deleted."""
+        logger.debug("delete_by_code: %s", code_id.value)
         return self._client.mutation("segments:deleteByCode", codeId=code_id.value)
 
     def delete_by_source(self, source_id: SourceId) -> int:
         """Delete all segments for a source, returns count deleted."""
+        logger.debug("delete_by_source: %s", source_id.value)
         return self._client.mutation(
             "segments:deleteBySource", sourceId=source_id.value
         )

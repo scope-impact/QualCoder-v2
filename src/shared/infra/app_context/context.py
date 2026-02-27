@@ -182,6 +182,9 @@ class AppContext:
         )
 
         if result.is_success:
+            from src.shared.infra.metrics import project_open
+
+            project_open.add(1)
             # Wire sync handler with newly created contexts
             self._wire_sync_handler()
 
@@ -227,6 +230,11 @@ class AppContext:
             state=self.state,
             event_bus=self.event_bus,
         )
+
+        if result.is_success:
+            from src.shared.infra.metrics import project_open
+
+            project_open.add(-1)
 
         # Clear bounded contexts
         self._clear_contexts()

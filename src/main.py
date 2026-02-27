@@ -6,6 +6,7 @@ Run with: uv run python -m src.main
 
 from __future__ import annotations
 
+import os
 import sys
 
 from PySide6.QtWidgets import QApplication, QMessageBox
@@ -29,6 +30,7 @@ from src.contexts.projects.presentation import (
 from src.contexts.sources.presentation import FileManagerScreen, FileManagerViewModel
 from src.shared.common.types import SourceId
 from src.shared.infra.app_context import create_app_context
+from src.shared.infra.logging_config import configure_logging
 from src.shared.infra.mcp_server import MCPServerManager
 from src.shared.infra.signal_bridge.projects import ProjectSignalBridge
 from src.shared.infra.signal_bridge.sync import SyncSignalBridge
@@ -51,6 +53,10 @@ class QualCoderApp:
     """
 
     def __init__(self):
+        # Configure structured logging before anything else
+        _log_level = "DEBUG" if os.environ.get("QUALCODER_DEV") else "INFO"
+        configure_logging(level=_log_level)
+
         # Initialize telemetry for performance monitoring (logs to file in dev mode)
         init_telemetry(service_name="qualcoder")
 

@@ -6,6 +6,7 @@ Implements the repository protocols using the Convex cloud database.
 
 from __future__ import annotations
 
+import logging
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
@@ -21,6 +22,8 @@ from src.shared.common.types import FolderId, SourceId
 if TYPE_CHECKING:
     from src.shared.infra.convex import ConvexClientWrapper
 
+logger = logging.getLogger("qualcoder.sources.infra")
+
 
 class ConvexSourceRepository:
     """
@@ -35,10 +38,13 @@ class ConvexSourceRepository:
     def get_all(self) -> list[Source]:
         """Get all sources in the project."""
         docs = self._client.get_all_sources()
-        return [self._doc_to_source(doc) for doc in docs]
+        sources = [self._doc_to_source(doc) for doc in docs]
+        logger.debug("get_all: count=%d", len(sources))
+        return sources
 
     def get_by_id(self, source_id: SourceId) -> Source | None:
         """Get a source by its ID."""
+        logger.debug("get_by_id: %s", source_id.value)
         doc = self._client.get_source_by_id(source_id.value)
         return self._doc_to_source(doc) if doc else None
 
@@ -67,6 +73,7 @@ class ConvexSourceRepository:
 
     def save(self, source: Source) -> None:
         """Save a source (insert or update)."""
+        logger.debug("save: %s (name=%s)", source.id.value, source.name)
         folder_id_value = source.folder_id.value if source.folder_id else None
 
         if self.exists(source.id):
@@ -99,6 +106,7 @@ class ConvexSourceRepository:
 
     def delete(self, source_id: SourceId) -> None:
         """Delete a source by ID."""
+        logger.debug("delete: %s", source_id.value)
         self._client.delete_source(source_id.value)
 
     def exists(self, source_id: SourceId) -> bool:
@@ -142,10 +150,13 @@ class ConvexFolderRepository:
     def get_all(self) -> list[Folder]:
         """Get all folders."""
         docs = self._client.get_all_folders()
-        return [self._doc_to_folder(doc) for doc in docs]
+        folders = [self._doc_to_folder(doc) for doc in docs]
+        logger.debug("get_all: count=%d", len(folders))
+        return folders
 
     def get_by_id(self, folder_id: FolderId) -> Folder | None:
         """Get a folder by ID."""
+        logger.debug("get_by_id: %s", folder_id.value)
         doc = self._client.get_folder_by_id(folder_id.value)
         return self._doc_to_folder(doc) if doc else None
 
@@ -169,6 +180,7 @@ class ConvexFolderRepository:
 
     def save(self, folder: Folder) -> None:
         """Save a folder (insert or update)."""
+        logger.debug("save: %s (name=%s)", folder.id.value, folder.name)
         exists = self.get_by_id(folder.id) is not None
 
         if exists:
@@ -187,6 +199,7 @@ class ConvexFolderRepository:
 
     def delete(self, folder_id: FolderId) -> None:
         """Delete a folder by ID."""
+        logger.debug("delete: %s", folder_id.value)
         self._client.delete_folder(folder_id.value)
 
     def update_parent(

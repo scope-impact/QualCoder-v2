@@ -1,7 +1,8 @@
 """
 OpenTelemetry instrumentation for QualCoder v2.
 
-Provides automatic tracing for SQLAlchemy queries and manual tracing for key operations.
+Provides automatic tracing for SQLAlchemy queries, manual tracing for key
+operations, and application-level metrics via MeterProvider.
 
 Usage:
     # Initialize once at startup
@@ -16,6 +17,11 @@ Usage:
     @traced("operation_name")
     def my_function():
         ...
+
+    # Get a meter for custom metrics
+    from src.shared.infra.telemetry import get_meter
+    meter = get_meter("qualcoder.coding")
+    counter = meter.create_counter("qualcoder.coding.operations")
 """
 
 from __future__ import annotations
@@ -28,7 +34,14 @@ from datetime import datetime
 from pathlib import Path
 from typing import TYPE_CHECKING, ParamSpec, TypeVar
 
-from opentelemetry import trace
+from opentelemetry import metrics, trace
+from opentelemetry.sdk.metrics import MeterProvider
+from opentelemetry.sdk.metrics.export import (
+    MetricExporter,
+    MetricExportResult,
+    MetricsData,
+    PeriodicExportingMetricReader,
+)
 from opentelemetry.sdk.resources import Resource
 from opentelemetry.sdk.trace import ReadableSpan, TracerProvider
 from opentelemetry.sdk.trace.export import (
@@ -91,6 +104,52 @@ class FileSpanExporter(SpanExporter):
         pass
 
 
+class FileMetricExporter(MetricExporter):
+    """Exports OTEL metrics to a JSONL file for development debugging."""
+
+    def __init__(self, file_path: str | Path) -> None:
+        super().__init__()
+        self.file_path = Path(file_path)
+        self.file_path.parent.mkdir(parents=True, exist_ok=True)
+        self.file_path.write_text("")
+
+    def export(
+        self,
+        metrics_data: MetricsData,
+        _timeout_millis: float = 10_000,
+        **_kwargs,
+    ) -> MetricExportResult:
+        try:
+            with open(self.file_path, "a") as f:
+                for resource_metric in metrics_data.resource_metrics:
+                    for scope_metric in resource_metric.scope_metrics:
+                        for metric in scope_metric.metrics:
+                            for data_point in metric.data.data_points:
+                                record = {
+                                    "timestamp": datetime.now().isoformat(),
+                                    "name": metric.name,
+                                    "description": metric.description,
+                                    "unit": metric.unit,
+                                    "value": getattr(
+                                        data_point, "value", None
+                                    )
+                                    or getattr(data_point, "sum", None),
+                                    "attributes": dict(data_point.attributes)
+                                    if data_point.attributes
+                                    else {},
+                                }
+                                f.write(json.dumps(record) + "\n")
+            return MetricExportResult.SUCCESS
+        except Exception:
+            return MetricExportResult.FAILURE
+
+    def shutdown(self, _timeout_millis: float = 30_000, **_kwargs) -> None:
+        pass
+
+    def force_flush(self, _timeout_millis: float = 10_000) -> bool:
+        return True
+
+
 # -----------------------------------------------------------------------------
 # Setup
 # -----------------------------------------------------------------------------
@@ -148,6 +207,23 @@ def init_telemetry(
         provider.add_span_processor(console_processor)
 
     trace.set_tracer_provider(provider)
+
+    # ── Metrics ──────────────────────────────────────────────────
+    metric_readers = []
+    if log_file:
+        metrics_file = Path(log_file).with_suffix(".metrics.jsonl")
+        file_metric_reader = PeriodicExportingMetricReader(
+            FileMetricExporter(metrics_file),
+            export_interval_millis=30_000,
+        )
+        metric_readers.append(file_metric_reader)
+
+    meter_provider = MeterProvider(
+        resource=resource,
+        metric_readers=metric_readers,
+    )
+    metrics.set_meter_provider(meter_provider)
+
     _initialized = True
 
 
@@ -174,6 +250,11 @@ def instrument_sqlalchemy(engine: Engine) -> None:
 def get_tracer(name: str) -> trace.Tracer:
     """Get a tracer for the given component name."""
     return trace.get_tracer(name)
+
+
+def get_meter(name: str) -> metrics.Meter:
+    """Get a meter for the given component name."""
+    return metrics.get_meter(name)
 
 
 # Default tracer for coding context

@@ -39,6 +39,7 @@ Structure:
 
 from __future__ import annotations
 
+import logging
 from typing import TYPE_CHECKING
 
 from PySide6.QtCore import Signal
@@ -48,6 +49,8 @@ from design_system import ColorPalette, get_colors
 from src.shared.presentation.dto import ProjectSummaryDTO, SourceDTO
 
 from ..pages import FileManagerPage
+
+logger = logging.getLogger("qualcoder.sources.presentation")
 
 if TYPE_CHECKING:
     from ..viewmodels import FileManagerViewModel
@@ -264,7 +267,7 @@ class FileManagerScreen(QWidget):
     def _on_create_text_clicked(self):
         """Handle create new text button click."""
         # For now, just print - would show a dialog in full implementation
-        print("FileManagerScreen: Create new text document")
+        logger.debug("FileManagerScreen: Create new text document")
         # TODO: Show dialog to create new text document
 
     def _on_export_clicked(self):
@@ -527,7 +530,7 @@ class FileManagerScreen(QWidget):
             return
 
         # Export logic would go here
-        print(f"FileManagerScreen: Exporting {len(source_ids)} files to {export_dir}")
+        logger.debug("FileManagerScreen: Exporting %d files to %s", len(source_ids), export_dir)
         # TODO: Implement actual export via viewmodel/controller
 
         QMessageBox.information(

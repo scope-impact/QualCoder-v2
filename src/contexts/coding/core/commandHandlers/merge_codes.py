@@ -7,6 +7,7 @@ Returns OperationResult with error codes and suggestions.
 
 from __future__ import annotations
 
+import logging
 from typing import TYPE_CHECKING
 
 from src.contexts.coding.core.commandHandlers._state import (
@@ -21,11 +22,15 @@ from src.contexts.coding.core.events import CodesMerged
 from src.shared.common.failure_events import FailureEvent
 from src.shared.common.operation_result import OperationResult
 from src.shared.common.types import CodeId
+from src.shared.infra.metrics import metered_command
 
 if TYPE_CHECKING:
     from src.shared.infra.event_bus import EventBus
 
+logger = logging.getLogger("qualcoder.coding.core")
 
+
+@metered_command("merge_codes")
 def merge_codes(
     command: MergeCodesCommand,
     code_repo: CodeRepository,
@@ -46,6 +51,8 @@ def merge_codes(
     Returns:
         OperationResult with CodesMerged event on success, or error details on failure
     """
+    logger.debug("merge_codes: source_code_id=%s, target_code_id=%s", command.source_code_id, command.target_code_id)
+
     state = build_coding_state(code_repo, category_repo, segment_repo)
     source_code_id = CodeId(value=command.source_code_id)
     target_code_id = CodeId(value=command.target_code_id)
@@ -58,6 +65,7 @@ def merge_codes(
 
     # Handle failure events
     if isinstance(result, FailureEvent):
+        logger.error("merge_codes failed: %s", result.event_type)
         event_bus.publish(result)
         return OperationResult.from_failure(result)
 
@@ -72,4 +80,7 @@ def merge_codes(
         uow.commit()
 
     event_bus.publish(event)
+
+    logger.info("Codes merged: source_code_id=%s, target_code_id=%s", command.source_code_id, command.target_code_id)
+
     return OperationResult.ok(data=event)

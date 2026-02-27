@@ -2,12 +2,15 @@
 
 from __future__ import annotations
 
+import logging
 import subprocess
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
 
 from src.shared.common.operation_result import OperationResult
+
+logger = logging.getLogger("qualcoder.projects.infra")
 
 
 @dataclass(frozen=True)
@@ -50,6 +53,7 @@ class GitRepositoryAdapter:
 
     def init(self) -> OperationResult:
         """Initialize a new Git repository."""
+        logger.debug("init: %s", self._repo_path)
         if self.is_initialized():
             return OperationResult.ok()
         return self._run_git(["init"], "GIT_NOT_INITIALIZED")
@@ -60,6 +64,7 @@ class GitRepositoryAdapter:
 
     def commit(self, message: str) -> OperationResult:
         """Create a commit with staged changes. Returns SHA on success."""
+        logger.debug("commit: %s", message[:80] if message else "(empty)")
         if not message or not message.strip():
             return OperationResult.fail(
                 error="Commit message cannot be empty",
@@ -114,6 +119,7 @@ class GitRepositoryAdapter:
 
     def checkout(self, ref: str) -> OperationResult:
         """Checkout a specific commit. WARNING: Discards uncommitted changes."""
+        logger.debug("checkout: %s", ref)
         return self._run_git(["checkout", ref], "GIT_CHECKOUT_FAILED")
 
     def get_valid_refs(self) -> OperationResult:
@@ -164,6 +170,7 @@ class GitRepositoryAdapter:
             )
             if result.returncode != 0:
                 error_msg = result.stderr.strip() or result.stdout.strip()
+                logger.error("git %s failed: %s", args[0], error_msg)
                 return OperationResult.fail(
                     error=f"git {args[0]} failed: {error_msg}",
                     error_code=f"{error_prefix}/CLI_ERROR",
@@ -172,12 +179,14 @@ class GitRepositoryAdapter:
                 return OperationResult.ok(data=result.stdout)
             return OperationResult.ok()
         except FileNotFoundError:
+            logger.error("git command not found")
             return OperationResult.fail(
                 error="git command not found",
                 error_code=f"{error_prefix}/CLI_NOT_FOUND",
                 suggestions=("Install Git: https://git-scm.com/downloads",),
             )
         except OSError as e:
+            logger.error("Failed to run git: %s", e)
             return OperationResult.fail(
                 error=f"Failed to run git: {e}",
                 error_code=f"{error_prefix}/OS_ERROR",

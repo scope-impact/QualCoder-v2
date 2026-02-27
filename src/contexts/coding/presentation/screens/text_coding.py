@@ -34,6 +34,7 @@ Structure:
 └────────────┴─────────────────────────────────┴──────────────┘
 """
 
+import logging
 from dataclasses import dataclass
 from typing import Any
 
@@ -50,6 +51,8 @@ from src.shared.presentation.dto import TextCodingDataDTO, create_empty_text_cod
 from ..dialogs.auto_code_dialog import AutoCodeDialog
 from ..pages import TextCodingPage
 from ..viewmodels import AICodingViewModel, TextCodingViewModel
+
+logger = logging.getLogger("qualcoder.coding.presentation")
 
 # Mapping from string identifiers to domain enums (used by auto-coding dialog wiring)
 _MATCH_TYPE_MAP: dict[str, MatchType] = {
@@ -378,7 +381,7 @@ class TextCodingScreen(QWidget):
             if self._page and hasattr(self._page, "editor_panel"):
                 text = self._page.editor_panel.get_text() or ""
             if not text:
-                print("TextCodingScreen: No text available for AI suggestions")
+                logger.debug("TextCodingScreen: No text available for AI suggestions")
                 return
 
         # Request suggestions
@@ -669,14 +672,14 @@ class TextCodingScreen(QWidget):
         """
         # Check prerequisites
         if not self._active_code.code_id:
-            print("TextCodingScreen: No code selected for quick mark")
+            logger.debug("TextCodingScreen: No code selected for quick mark")
             return
 
         if (
             not self._text_selection.text
             or self._text_selection.start >= self._text_selection.end
         ):
-            print("TextCodingScreen: No text selected for quick mark")
+            logger.debug("TextCodingScreen: No text selected for quick mark")
             return
 
         # Apply the code
@@ -722,7 +725,7 @@ class TextCodingScreen(QWidget):
         Creates a code using the selected text as name, then applies it.
         """
         if not self._text_selection.text:
-            print("TextCodingScreen: No text selected for in-vivo coding")
+            logger.debug("TextCodingScreen: No text selected for in-vivo coding")
             return
 
         # Use selected text as code name (truncate if too long)
@@ -835,7 +838,7 @@ class TextCodingScreen(QWidget):
             not self._text_selection.text
             and self._text_selection.start == self._text_selection.end
         ):
-            print("TextCodingScreen: No code at cursor to unmark")
+            logger.debug("TextCodingScreen: No code at cursor to unmark")
             return
 
         # Save to history for undo (AC #5)
@@ -875,7 +878,7 @@ class TextCodingScreen(QWidget):
         Implements AC #5: Undo last unmark (Ctrl+Z).
         """
         if not self._unmark_history:
-            print("TextCodingScreen: No unmark history to undo")
+            logger.debug("TextCodingScreen: No unmark history to undo")
             return
 
         # Pop last unmark from history
@@ -923,13 +926,15 @@ class TextCodingScreen(QWidget):
         """
         if self._text_selection.start == self._text_selection.end:
             # No selection - try to find segment at cursor
-            print(
+            logger.debug(
                 "TextCodingScreen: M key - would open memo dialog for segment at cursor"
             )
         else:
             # Has selection - add memo to this selection
-            print(
-                f"TextCodingScreen: M key - would add memo to selection {self._text_selection.start}-{self._text_selection.end}"
+            logger.debug(
+                "TextCodingScreen: M key - would add memo to selection %d-%d",
+                self._text_selection.start,
+                self._text_selection.end,
             )
 
     # =========================================================================
@@ -943,11 +948,12 @@ class TextCodingScreen(QWidget):
         Implements QC-007.10 AC #6: A key annotates selection.
         """
         if not self._text_selection.text:
-            print("TextCodingScreen: A key - no text selected to annotate")
+            logger.debug("TextCodingScreen: A key - no text selected to annotate")
             return
 
-        print(
-            f"TextCodingScreen: A key - would open annotation dialog for '{self._text_selection.text[:30]}...'"
+        logger.debug(
+            "TextCodingScreen: A key - would open annotation dialog for '%s...'",
+            self._text_selection.text[:30],
         )
 
     # =========================================================================
@@ -961,7 +967,7 @@ class TextCodingScreen(QWidget):
         Implements QC-007.10 AC #8: I key toggles importance.
         """
         if self._text_selection.start == self._text_selection.end:
-            print("TextCodingScreen: I key - no segment selected to mark important")
+            logger.debug("TextCodingScreen: I key - no segment selected to mark important")
             return
 
         # Find segment at selection and toggle its importance
@@ -972,11 +978,12 @@ class TextCodingScreen(QWidget):
                 self._text_selection.end,
             )
             if segment_id:
-                print(
-                    f"TextCodingScreen: I key - would toggle importance for segment {segment_id}"
+                logger.debug(
+                    "TextCodingScreen: I key - would toggle importance for segment %s",
+                    segment_id,
                 )
             else:
-                print("TextCodingScreen: I key - no segment found at selection")
+                logger.debug("TextCodingScreen: I key - no segment found at selection")
 
     # =========================================================================
     # Navigation Shortcuts (QC-007.10)
@@ -993,7 +1000,7 @@ class TextCodingScreen(QWidget):
         ):
             self._page.toolbar.focus_search()
         else:
-            print("TextCodingScreen: Ctrl+F - would focus search box")
+            logger.debug("TextCodingScreen: Ctrl+F - would focus search box")
 
     def cycle_overlapping_codes(self):
         """
@@ -1005,18 +1012,19 @@ class TextCodingScreen(QWidget):
             not self._text_selection.text
             and self._text_selection.start == self._text_selection.end
         ):
-            print("TextCodingScreen: O key - no position selected to check overlaps")
+            logger.debug("TextCodingScreen: O key - no position selected to check overlaps")
             return
 
         # Get overlapping regions from editor
         if hasattr(self._page, "editor_panel"):
             overlaps = self._page.editor_panel.get_overlap_regions()
             if overlaps:
-                print(
-                    f"TextCodingScreen: O key - found {len(overlaps)} overlap regions"
+                logger.debug(
+                    "TextCodingScreen: O key - found %d overlap regions",
+                    len(overlaps),
                 )
             else:
-                print("TextCodingScreen: O key - no overlapping codes at cursor")
+                logger.debug("TextCodingScreen: O key - no overlapping codes at cursor")
 
     # =========================================================================
     # Display Toggles (QC-007.10 AC #19)
@@ -1041,8 +1049,9 @@ class TextCodingScreen(QWidget):
                 self._page.codes_panel.setVisible(self._panels_visible)
             if hasattr(self._page, "details_panel"):
                 self._page.details_panel.setVisible(self._panels_visible)
-        print(
-            f"TextCodingScreen: H key - panels {'shown' if self._panels_visible else 'hidden'}"
+        logger.debug(
+            "TextCodingScreen: H key - panels %s",
+            "shown" if self._panels_visible else "hidden",
         )
 
     def are_panels_visible(self) -> bool:
@@ -1124,7 +1133,7 @@ class TextCodingScreen(QWidget):
             data: The data transfer object containing all display data
         """
         if data is None:
-            print("TextCodingScreen: Cannot load None data")
+            logger.debug("TextCodingScreen: Cannot load None data")
             return
 
         self._data = data
@@ -1212,9 +1221,9 @@ class TextCodingScreen(QWidget):
             try:
                 handler()
             except Exception as e:
-                print(f"TextCodingScreen: Error in action '{action_id}': {e}")
+                logger.debug("TextCodingScreen: Error in action '%s': %s", action_id, e)
         else:
-            print(f"TextCodingScreen: Unknown action: {action_id}")
+            logger.debug("TextCodingScreen: Unknown action: %s", action_id)
 
     # =========================================================================
     # Action Handlers
@@ -1222,21 +1231,21 @@ class TextCodingScreen(QWidget):
 
     def _action_help(self):
         """Show help dialog."""
-        print("TODO: Show help dialog")
+        logger.debug("TODO: Show help dialog")
 
     def _action_text_size(self):
         """Change text size."""
-        print("TODO: Show text size options")
+        logger.debug("TODO: Show text size options")
 
     def _action_toggle_important(self):
         """Toggle showing only important codes."""
         self._show_important_only = not self._show_important_only
-        print(f"Important only: {self._show_important_only}")
+        logger.debug("Important only: %s", self._show_important_only)
 
     def _action_toggle_annotations(self):
         """Toggle showing annotations."""
         self._show_annotations = not self._show_annotations
-        print(f"Show annotations: {self._show_annotations}")
+        logger.debug("Show annotations: %s", self._show_annotations)
 
     def _action_prev_file(self):
         """Navigate to previous file."""
@@ -1259,7 +1268,7 @@ class TextCodingScreen(QWidget):
 
         # Bounds check
         if not (0 <= index < total_files):
-            print(f"TextCodingScreen: Invalid file index {index}, total={total_files}")
+            logger.debug("TextCodingScreen: Invalid file index %d, total=%d", index, total_files)
             return
 
         # Update selection in files panel
@@ -1277,7 +1286,7 @@ class TextCodingScreen(QWidget):
             f"File {index + 1}",
             f"Content of {file_data.get('name', '')}...\n\n(Load actual content here)",
         )
-        print(f"Navigated to file: {file_data.get('name')}")
+        logger.debug("Navigated to file: %s", file_data.get('name'))
 
     def _get_selected_text(self) -> str:
         """Safely get selected text from editor panel."""
@@ -1285,7 +1294,7 @@ class TextCodingScreen(QWidget):
             if self._page and hasattr(self._page, "editor_panel"):
                 return self._page.editor_panel.get_selected_text() or ""
         except Exception as e:
-            print(f"TextCodingScreen: Error getting selected text: {e}")
+            logger.debug("TextCodingScreen: Error getting selected text: %s", e)
         return ""
 
     def _open_auto_code(self, match_type: str) -> None:
@@ -1295,7 +1304,7 @@ class TextCodingScreen(QWidget):
             match_type: The match type preset ("exact" or "contains")
         """
         if not self._active_code.code_id:
-            print("TextCodingScreen: Select a code first for auto-coding")
+            logger.debug("TextCodingScreen: Select a code first for auto-coding")
             return
 
         selection = self._get_selected_text()
@@ -1304,7 +1313,7 @@ class TextCodingScreen(QWidget):
             document_text = self._page.editor_panel.get_text() or ""
 
         if not document_text:
-            print("TextCodingScreen: No document loaded for auto-coding")
+            logger.debug("TextCodingScreen: No document loaded for auto-coding")
             return
 
         self._show_auto_code_dialog(
@@ -1333,7 +1342,7 @@ class TextCodingScreen(QWidget):
             document_text = self._page.editor_panel.get_text() or ""
 
         if not document_text:
-            print("TextCodingScreen: No document loaded for speaker detection")
+            logger.debug("TextCodingScreen: No document loaded for speaker detection")
             return
 
         # Use controller to detect speakers
@@ -1342,7 +1351,7 @@ class TextCodingScreen(QWidget):
         if isinstance(result, Success):
             speakers = result.unwrap()
             if not speakers:
-                print(
+                logger.debug(
                     "TextCodingScreen: No speaker patterns detected. "
                     "Expected patterns like 'INTERVIEWER:' or 'John Smith:'"
                 )
@@ -1379,14 +1388,16 @@ class TextCodingScreen(QWidget):
                             )
                         total_segments += 1
 
-                print(
-                    f"TextCodingScreen: Highlighted '{speaker.name}' "
-                    f"({speaker.count} occurrences) in {color}"
+                logger.debug(
+                    "TextCodingScreen: Highlighted '%s' (%d occurrences) in %s",
+                    speaker.name,
+                    speaker.count,
+                    color,
                 )
 
-            print(f"TextCodingScreen: Marked {total_segments} speaker segments total")
+            logger.debug("TextCodingScreen: Marked %d speaker segments total", total_segments)
         else:
-            print(f"TextCodingScreen: Speaker detection failed: {result.failure()}")
+            logger.debug("TextCodingScreen: Speaker detection failed: %s", result.failure())
 
     def _action_undo_auto(self):
         """
@@ -1395,7 +1406,7 @@ class TextCodingScreen(QWidget):
         Uses the AutoCodingController to undo the last batch.
         """
         if not self._auto_coding_controller.can_undo():
-            print("TextCodingScreen: Nothing to undo")
+            logger.debug("TextCodingScreen: Nothing to undo")
             return
 
         result = self._auto_coding_controller.undo_last_batch()
@@ -1404,12 +1415,14 @@ class TextCodingScreen(QWidget):
             batch = result.unwrap()
             # Remove highlights for undone segments
             # (In full implementation, would refresh highlights from database)
-            print(
-                f"TextCodingScreen: Undone batch '{batch.batch_id}' "
-                f"(pattern: '{batch.pattern}', {batch.segment_count} segments)"
+            logger.debug(
+                "TextCodingScreen: Undone batch '%s' (pattern: '%s', %d segments)",
+                batch.batch_id,
+                batch.pattern,
+                batch.segment_count,
             )
         else:
-            print(f"TextCodingScreen: Undo failed: {result.failure()}")
+            logger.debug("TextCodingScreen: Undo failed: %s", result.failure())
 
     # =========================================================================
     # Auto-Code Dialog (fDDD wiring)
@@ -1535,9 +1548,10 @@ class TextCodingScreen(QWidget):
             self.code_applied.emit(code.get("id", ""), start, end)
 
         # Log success
-        print(
-            f"TextCodingScreen: Applied '{code.get('name', 'code')}' "
-            f"to {len(matches)} matches"
+        logger.debug(
+            "TextCodingScreen: Applied '%s' to %d matches",
+            code.get('name', 'code'),
+            len(matches),
         )
 
     def _action_add_memo(self):
@@ -1545,18 +1559,18 @@ class TextCodingScreen(QWidget):
         selection = self._get_selected_text()
         if selection:
             preview = selection[:50] + "..." if len(selection) > 50 else selection
-            print(f"TODO: Add memo to selection: '{preview}'")
+            logger.debug("TODO: Add memo to selection: '%s'", preview)
         else:
-            print("TODO: Add memo to file")
+            logger.debug("TODO: Add memo to file")
 
     def _action_annotate(self):
         """Add annotation to current selection."""
         selection = self._get_selected_text()
         if selection:
             preview = selection[:50] + "..." if len(selection) > 50 else selection
-            print(f"TODO: Annotate selection: '{preview}'")
+            logger.debug("TODO: Annotate selection: '%s'", preview)
         else:
-            print("Select text first to annotate")
+            logger.debug("Select text first to annotate")
 
     # =========================================================================
     # ScreenProtocol implementation

@@ -7,6 +7,7 @@ Returns OperationResult with error codes and suggestions.
 
 from __future__ import annotations
 
+import logging
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -18,12 +19,16 @@ from src.contexts.projects.core.derivers import derive_create_project
 from src.contexts.projects.core.events import ProjectCreated
 from src.shared.common.operation_result import OperationResult
 from src.shared.infra.lifecycle import ProjectLifecycle
+from src.shared.infra.metrics import metered_command
 from src.shared.infra.state import ProjectState
 
 if TYPE_CHECKING:
     from src.shared.infra.event_bus import EventBus
 
+logger = logging.getLogger("qualcoder.projects.core")
 
+
+@metered_command("create_project")
 def create_project(
     command: CreateProjectCommand,
     lifecycle: ProjectLifecycle,
@@ -49,10 +54,12 @@ def create_project(
     Returns:
         OperationResult with Project entity on success, or error details on failure
     """
+    logger.debug("create_project: name=%s, path=%s", command.name, command.path)
     path = Path(command.path)
 
     # Step 1: Validate
     if not command.name or not command.name.strip():
+        logger.error("create_project: empty project name")
         return OperationResult.fail(
             error="Project name cannot be empty",
             error_code="PROJECT_NOT_CREATED/EMPTY_NAME",
@@ -73,6 +80,7 @@ def create_project(
     )
 
     if isinstance(result, Failure):
+        logger.error("create_project: deriver failed for name=%s, error=%s", command.name, result.failure())
         return OperationResult.fail(
             error=result.failure(),
             error_code="PROJECT_NOT_CREATED/DERIVER_FAILED",
@@ -83,6 +91,7 @@ def create_project(
     # Step 3: Create database file
     create_result = lifecycle.create_database(path, command.name.strip())
     if isinstance(create_result, Failure):
+        logger.error("create_project: DB creation failed for path=%s, error=%s", path, create_result.failure())
         return OperationResult.fail(
             error=create_result.failure(),
             error_code="PROJECT_NOT_CREATED/DB_CREATION_FAILED",
@@ -98,4 +107,5 @@ def create_project(
     # Step 5: Publish event
     event_bus.publish(event)
 
+    logger.info("create_project: created project name=%s, path=%s", command.name.strip(), path)
     return OperationResult.ok(data=project)

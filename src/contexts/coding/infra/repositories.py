@@ -7,6 +7,7 @@ type-safe database access without full ORM overhead.
 
 from __future__ import annotations
 
+import logging
 from datetime import UTC, datetime
 from typing import TYPE_CHECKING
 
@@ -27,6 +28,8 @@ if TYPE_CHECKING:
 
     from src.shared.infra.sync.outbox import OutboxWriter
 
+logger = logging.getLogger("qualcoder.coding.infra")
+
 
 class SQLiteCodeRepository:
     """
@@ -45,10 +48,13 @@ class SQLiteCodeRepository:
         """Get all codes in the project."""
         stmt = select(code_name).order_by(code_name.c.name)
         result = self._conn.execute(stmt)
-        return [self._row_to_code(row) for row in result]
+        codes = [self._row_to_code(row) for row in result]
+        logger.debug("get_all: count=%d", len(codes))
+        return codes
 
     def get_by_id(self, code_id: CodeId) -> Code | None:
         """Get a code by its ID."""
+        logger.debug("get_by_id: %s", code_id.value)
         stmt = select(code_name).where(code_name.c.cid == code_id.value)
         result = self._conn.execute(stmt)
         row = result.fetchone()
@@ -73,6 +79,7 @@ class SQLiteCodeRepository:
 
     def save(self, code: Code) -> None:
         """Save a code (insert or update)."""
+        logger.debug("save: %s (name=%s)", code.id.value, code.name)
         exists = self.exists(code.id)
 
         if exists:
@@ -109,6 +116,7 @@ class SQLiteCodeRepository:
 
     def delete(self, code_id: CodeId) -> None:
         """Delete a code by ID."""
+        logger.debug("delete: %s", code_id.value)
         stmt = delete(code_name).where(code_name.c.cid == code_id.value)
         self._conn.execute(stmt)
         if self._outbox:
@@ -165,10 +173,13 @@ class SQLiteCategoryRepository:
         """Get all categories."""
         stmt = select(code_cat).order_by(code_cat.c.name)
         result = self._conn.execute(stmt)
-        return [self._row_to_category(row) for row in result]
+        categories = [self._row_to_category(row) for row in result]
+        logger.debug("get_all: count=%d", len(categories))
+        return categories
 
     def get_by_id(self, category_id: CategoryId) -> Category | None:
         """Get a category by ID."""
+        logger.debug("get_by_id: %s", category_id.value)
         stmt = select(code_cat).where(code_cat.c.catid == category_id.value)
         result = self._conn.execute(stmt)
         row = result.fetchone()
@@ -193,6 +204,7 @@ class SQLiteCategoryRepository:
 
     def save(self, category: Category) -> None:
         """Save a category."""
+        logger.debug("save: %s (name=%s)", category.id.value, category.name)
         exists_stmt = select(func.count()).where(code_cat.c.catid == category.id.value)
         exists = self._conn.execute(exists_stmt).scalar() > 0
 
@@ -228,6 +240,7 @@ class SQLiteCategoryRepository:
 
     def delete(self, category_id: CategoryId) -> None:
         """Delete a category."""
+        logger.debug("delete: %s", category_id.value)
         stmt = delete(code_cat).where(code_cat.c.catid == category_id.value)
         self._conn.execute(stmt)
         if self._outbox:
@@ -277,10 +290,13 @@ class SQLiteSegmentRepository:
         """Get all text segments."""
         stmt = select(code_text).order_by(code_text.c.fid, code_text.c.pos0)
         result = self._conn.execute(stmt)
-        return [self._row_to_segment(row) for row in result]
+        segments = [self._row_to_segment(row) for row in result]
+        logger.debug("get_all: count=%d", len(segments))
+        return segments
 
     def get_by_id(self, segment_id: SegmentId) -> TextSegment | None:
         """Get a segment by ID."""
+        logger.debug("get_by_id: %s", segment_id.value)
         stmt = select(code_text).where(code_text.c.ctid == segment_id.value)
         result = self._conn.execute(stmt)
         row = result.fetchone()
@@ -321,6 +337,7 @@ class SQLiteSegmentRepository:
 
     def save(self, segment: TextSegment) -> None:
         """Save a segment."""
+        logger.debug("save: %s (code=%s, source=%s)", segment.id.value, segment.code_id.value, segment.source_id.value)
         exists_stmt = select(func.count()).where(code_text.c.ctid == segment.id.value)
         exists = self._conn.execute(exists_stmt).scalar() > 0
 
@@ -373,6 +390,7 @@ class SQLiteSegmentRepository:
 
     def delete(self, segment_id: SegmentId) -> None:
         """Delete a segment by ID."""
+        logger.debug("delete: %s", segment_id.value)
         stmt = delete(code_text).where(code_text.c.ctid == segment_id.value)
         self._conn.execute(stmt)
         if self._outbox:
@@ -382,6 +400,7 @@ class SQLiteSegmentRepository:
     def delete_by_code(self, code_id: CodeId) -> int:
         """Delete all segments with a code, returns count deleted."""
         count = self.count_by_code(code_id)
+        logger.debug("delete_by_code: %s (count=%d)", code_id.value, count)
         stmt = delete(code_text).where(code_text.c.cid == code_id.value)
         self._conn.execute(stmt)
         self._conn.commit()
@@ -390,6 +409,7 @@ class SQLiteSegmentRepository:
     def delete_by_source(self, source_id: SourceId) -> int:
         """Delete all segments for a source, returns count deleted."""
         count = self.count_by_source(source_id)
+        logger.debug("delete_by_source: %s (count=%d)", source_id.value, count)
         stmt = delete(code_text).where(code_text.c.fid == source_id.value)
         self._conn.execute(stmt)
         self._conn.commit()

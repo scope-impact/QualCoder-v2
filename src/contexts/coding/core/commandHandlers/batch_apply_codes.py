@@ -10,6 +10,7 @@ operation in the batch.
 
 from __future__ import annotations
 
+import logging
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Any
 
@@ -27,6 +28,7 @@ from src.contexts.coding.core.events import SegmentCoded
 from src.shared.common.failure_events import FailureEvent
 from src.shared.common.operation_result import OperationResult
 from src.shared.common.types import CodeId, SourceId
+from src.shared.infra.metrics import metered_command
 
 if TYPE_CHECKING:
     from src.shared.infra.event_bus import EventBus
@@ -58,6 +60,10 @@ class BatchApplyCodesResult:
         return self.failed == 0
 
 
+logger = logging.getLogger("qualcoder.coding.core")
+
+
+@metered_command("batch_apply_codes")
 def batch_apply_codes(
     command: BatchApplyCodesCommand,
     code_repo: CodeRepository,
@@ -100,7 +106,10 @@ def batch_apply_codes(
             batch_result = result.data
             print(f"Applied {batch_result.succeeded}/{batch_result.total} codes")
     """
+    logger.debug("batch_apply_codes: operation_count=%d", len(command.operations))
+
     if not command.operations:
+        logger.error("batch_apply_codes failed: empty batch")
         return OperationResult.fail(
             error="No operations provided",
             error_code="BATCH_APPLY_CODES/EMPTY_BATCH",
@@ -139,11 +148,14 @@ def batch_apply_codes(
 
     # Return success even with partial failures (caller can inspect results)
     if succeeded == 0:
+        logger.error("batch_apply_codes failed: all %d operations failed", failed)
         return OperationResult.fail(
             error=f"All {failed} operations failed",
             error_code="BATCH_APPLY_CODES/ALL_FAILED",
             suggestions=("Check individual operation errors in result data",),
         )
+
+    logger.info("Batch apply codes completed: %d/%d succeeded", succeeded, batch_result.total)
 
     return OperationResult.ok(data=batch_result)
 

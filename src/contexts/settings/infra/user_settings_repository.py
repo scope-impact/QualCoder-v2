@@ -8,6 +8,7 @@ config directory.
 from __future__ import annotations
 
 import json
+import logging
 import os
 import sys
 from datetime import datetime
@@ -24,6 +25,8 @@ from src.contexts.settings.core.entities import (
     ThemePreference,
     UserSettings,
 )
+
+logger = logging.getLogger("qualcoder.settings.infra")
 
 
 class UserSettingsRepository:
@@ -75,6 +78,7 @@ class UserSettingsRepository:
         Returns:
             UserSettings with loaded values or defaults if file doesn't exist
         """
+        logger.debug("load: %s", self._config_path)
         if not self._config_path.exists():
             return UserSettings.default()
 
@@ -83,6 +87,7 @@ class UserSettingsRepository:
                 data = json.load(f)
             return self._from_dict(data)
         except (json.JSONDecodeError, KeyError, TypeError):
+            logger.error("load: corrupted settings file %s", self._config_path)
             # Return defaults if file is corrupted
             return UserSettings.default()
 
@@ -97,6 +102,7 @@ class UserSettingsRepository:
             True if save succeeded, False if an error occurred
         """
         try:
+            logger.debug("save: %s", self._config_path)
             data = self._to_dict(settings)
             # Write to temp file first, then rename for atomic write
             temp_path = self._config_path.with_suffix(".tmp")
@@ -105,7 +111,7 @@ class UserSettingsRepository:
             temp_path.replace(self._config_path)
             return True
         except (PermissionError, OSError):
-            # Log would go here in production
+            logger.error("save: failed to write settings to %s", self._config_path, exc_info=True)
             return False
 
     # =========================================================================
@@ -218,6 +224,7 @@ class UserSettingsRepository:
                 data = json.load(f)
             return self._recent_projects_from_list(data.get("recent_projects", []))
         except (json.JSONDecodeError, KeyError, TypeError, OSError):
+            logger.error("get_recent_projects: failed to load from %s", self._config_path)
             return []
 
     def add_recent_project(self, project: RecentProject) -> None:
@@ -279,7 +286,7 @@ class UserSettingsRepository:
                 json.dump(data, f, indent=2)
             temp_path.replace(self._config_path)
         except (PermissionError, OSError):
-            pass  # Silently fail; logging would go here in production
+            logger.error("_save_recent_projects: failed to write to %s", self._config_path)
 
     def _recent_projects_to_list(
         self, projects: list[RecentProject]

@@ -6,6 +6,7 @@ Implements the repository for Source entities using the src_source table.
 
 from __future__ import annotations
 
+import logging
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import TYPE_CHECKING
@@ -20,6 +21,8 @@ if TYPE_CHECKING:
     from sqlalchemy import Connection
 
     from src.shared.infra.sync.outbox import OutboxWriter
+
+logger = logging.getLogger("qualcoder.sources.infra")
 
 
 class SQLiteSourceRepository:
@@ -40,10 +43,13 @@ class SQLiteSourceRepository:
         """Get all sources in the project."""
         stmt = select(src_source).order_by(src_source.c.name)
         result = self._conn.execute(stmt)
-        return [self._row_to_source(row) for row in result]
+        sources = [self._row_to_source(row) for row in result]
+        logger.debug("get_all: count=%d", len(sources))
+        return sources
 
     def get_by_id(self, source_id: SourceId) -> Source | None:
         """Get a source by its ID."""
+        logger.debug("get_by_id: %s", source_id.value)
         stmt = select(src_source).where(src_source.c.id == source_id.value)
         result = self._conn.execute(stmt)
         row = result.fetchone()
@@ -78,6 +84,7 @@ class SQLiteSourceRepository:
 
     def save(self, src: Source) -> None:
         """Save a source (insert or update)."""
+        logger.debug("save: %s (name=%s)", src.id.value, src.name)
         exists = self.exists(src.id)
         folder_id_value = src.folder_id.value if src.folder_id else None
 
@@ -125,6 +132,7 @@ class SQLiteSourceRepository:
 
     def delete(self, source_id: SourceId) -> None:
         """Delete a source by ID."""
+        logger.debug("delete: %s", source_id.value)
         stmt = delete(src_source).where(src_source.c.id == source_id.value)
         self._conn.execute(stmt)
         if self._outbox:

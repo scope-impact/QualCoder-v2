@@ -7,6 +7,7 @@ Returns OperationResult with error codes, suggestions, and rollback support.
 
 from __future__ import annotations
 
+import logging
 from typing import TYPE_CHECKING
 
 from src.contexts.folders.core.commandHandlers._state import (
@@ -20,12 +21,17 @@ from src.contexts.folders.core.events import FolderRenamed
 from src.contexts.folders.core.failure_events import FolderNotRenamed
 from src.shared.common.operation_result import OperationResult
 from src.shared.common.types import FolderId
+from src.shared.infra.metrics import metered_command
 from src.shared.infra.state import ProjectState
 
 if TYPE_CHECKING:
     from src.shared.infra.event_bus import EventBus
 
 
+logger = logging.getLogger("qualcoder.folders.core")
+
+
+@metered_command("rename_folder")
 def rename_folder(
     command: RenameFolderCommand,
     state: ProjectState,
@@ -46,7 +52,10 @@ def rename_folder(
     Returns:
         OperationResult with updated Folder on success, or error details on failure
     """
+    logger.debug("rename_folder: folder_id=%s, new_name=%s", command.folder_id, command.new_name)
+
     if state.project is None:
+        logger.error("rename_folder: no project is currently open")
         return OperationResult.fail(
             error="No project is currently open",
             error_code="FOLDER_NOT_RENAMED/NO_PROJECT",
@@ -65,6 +74,7 @@ def rename_folder(
     )
 
     if isinstance(result, FolderNotRenamed):
+        logger.error("rename_folder: failed — %s", result.reason)
         return OperationResult.fail(
             error=result.reason,
             error_code=f"FOLDER_NOT_RENAMED/{result.event_type.upper()}",
@@ -75,6 +85,7 @@ def rename_folder(
     # Find and update folder
     folder = folder_repo.get_by_id(folder_id) if folder_repo else None
     if folder is None:
+        logger.error("rename_folder: folder %s not found", command.folder_id)
         return OperationResult.fail(
             error=f"Folder {command.folder_id} not found",
             error_code="FOLDER_NOT_RENAMED/NOT_FOUND",
@@ -89,6 +100,7 @@ def rename_folder(
     # Publish event
     event_bus.publish(event)
 
+    logger.info("rename_folder: renamed folder id=%s to %s", command.folder_id, command.new_name)
     return OperationResult.ok(
         data=updated_folder,
         rollback=RenameFolderCommand(

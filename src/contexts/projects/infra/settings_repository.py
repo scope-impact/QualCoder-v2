@@ -6,6 +6,7 @@ Implements the repository for project-level settings using SQLAlchemy Core.
 
 from __future__ import annotations
 
+import logging
 from datetime import UTC, datetime
 from typing import TYPE_CHECKING
 
@@ -15,6 +16,8 @@ from src.contexts.projects.infra.schema import project_settings
 
 if TYPE_CHECKING:
     from sqlalchemy import Connection
+
+logger = logging.getLogger("qualcoder.projects.infra")
 
 
 class SQLiteProjectSettingsRepository:
@@ -29,6 +32,7 @@ class SQLiteProjectSettingsRepository:
 
     def get(self, key: str) -> str | None:
         """Get a setting value by key."""
+        logger.debug("get: %s", key)
         stmt = select(project_settings.c.value).where(project_settings.c.key == key)
         result = self._conn.execute(stmt)
         row = result.fetchone()
@@ -36,6 +40,7 @@ class SQLiteProjectSettingsRepository:
 
     def set(self, key: str, value: str) -> None:
         """Set a setting value."""
+        logger.debug("set: %s", key)
         exists_stmt = select(func.count()).where(project_settings.c.key == key)
         exists = self._conn.execute(exists_stmt).scalar() > 0
 
@@ -57,6 +62,7 @@ class SQLiteProjectSettingsRepository:
 
     def delete(self, key: str) -> None:
         """Delete a setting."""
+        logger.debug("delete: %s", key)
         stmt = delete(project_settings).where(project_settings.c.key == key)
         self._conn.execute(stmt)
         self._conn.commit()
@@ -65,7 +71,9 @@ class SQLiteProjectSettingsRepository:
         """Get all settings as a dictionary."""
         stmt = select(project_settings)
         result = self._conn.execute(stmt)
-        return {row.key: row.value for row in result}
+        settings = {row.key: row.value for row in result}
+        logger.debug("get_all: count=%d", len(settings))
+        return settings
 
     # Convenience methods for common settings
 

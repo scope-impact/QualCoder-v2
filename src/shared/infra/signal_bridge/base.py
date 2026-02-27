@@ -18,6 +18,7 @@ Architecture:
 from __future__ import annotations
 
 import contextlib
+import logging
 import queue
 import warnings
 from abc import ABCMeta, abstractmethod
@@ -40,6 +41,8 @@ from src.shared.infra.signal_bridge.payloads import (
     SignalPayload,
 )
 from src.shared.infra.signal_bridge.thread_utils import is_main_thread
+
+logger = logging.getLogger("qualcoder.shared.signal_bridge")
 
 # Type variables for generic converter
 T = TypeVar("T", bound=SignalPayload)
@@ -249,6 +252,11 @@ class BaseSignalBridge(QObject, metaclass=QObjectABCMeta):
             self._subscriptions.append((event_type, handler))
 
         self._running = True
+        logger.info(
+            "%s started (events=%d)",
+            self.__class__.__name__,
+            len(self._converters),
+        )
 
     def stop(self) -> None:
         """
@@ -263,6 +271,7 @@ class BaseSignalBridge(QObject, metaclass=QObjectABCMeta):
 
         self._subscriptions.clear()
         self._running = False
+        logger.info("%s stopped", self.__class__.__name__)
 
     def is_running(self) -> bool:
         """Check if the bridge is currently listening."""
@@ -284,6 +293,8 @@ class BaseSignalBridge(QObject, metaclass=QObjectABCMeta):
             event_type: The event type string
             event: The domain event instance
         """
+        from src.shared.infra.metrics import signal_dispatch_errors, signals_emitted
+
         if event_type not in self._converters:
             return
 
@@ -300,6 +311,16 @@ class BaseSignalBridge(QObject, metaclass=QObjectABCMeta):
 
             # Emit thread-safely
             self._emit_threadsafe(signal, payload)
+            signals_emitted.add(
+                1,
+                {"context": self._get_context_name(), "event_type": event_type},
+            )
+            logger.debug(
+                "%s dispatched %s → %s",
+                self.__class__.__name__,
+                event_type,
+                signal_name,
+            )
 
             # Also emit to activity feed
             activity = self._create_activity_item(event, payload)
@@ -307,6 +328,17 @@ class BaseSignalBridge(QObject, metaclass=QObjectABCMeta):
                 self._emit_threadsafe(self.activity_logged, activity)
 
         except Exception as e:
+            signal_dispatch_errors.add(
+                1,
+                {"context": self._get_context_name(), "event_type": event_type},
+            )
+            logger.error(
+                "Error dispatching %s in %s: %s",
+                event_type,
+                self.__class__.__name__,
+                e,
+                exc_info=True,
+            )
             warnings.warn(
                 f"Error dispatching {event_type}: {e}", RuntimeWarning, stacklevel=2
             )

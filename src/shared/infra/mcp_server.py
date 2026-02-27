@@ -227,9 +227,12 @@ class MCPServerManager:
 
         @web.middleware
         async def logging_middleware(request, handler):
+            from src.shared.infra.metrics import mcp_requests
+
             request_id = uuid.uuid4().hex[:8]
             request["request_id"] = request_id
             self._stats["requests"] += 1
+            mcp_requests.add(1, {"method": request.method, "path": request.path})
 
             log = MCPLogAdapter(logger, {"request_id": request_id})
             start_time = time.perf_counter()
@@ -589,7 +592,14 @@ class MCPServerManager:
         cloud_sync_tools = self._get_cloud_sync_tool_names()
         vcs_tools = self._get_vcs_tool_names()
 
+        from src.shared.infra.metrics import (
+            mcp_errors,
+            mcp_tool_calls,
+            mcp_tool_duration,
+        )
+
         self._stats["tool_calls"] += 1
+        mcp_tool_calls.add(1, {"tool_name": tool_name})
         start_time = time.perf_counter()
 
         if self._debug:
@@ -649,6 +659,7 @@ class MCPServerManager:
                 return {"success": False, "error": f"Unknown tool: {tool_name}"}
 
             elapsed = (time.perf_counter() - start_time) * 1000
+            mcp_tool_duration.record(elapsed, {"tool_name": tool_name})
             success = result.get("success", True)
             if self._debug:
                 log.debug(
@@ -669,7 +680,9 @@ class MCPServerManager:
 
         except Exception as e:
             elapsed = (time.perf_counter() - start_time) * 1000
+            mcp_tool_duration.record(elapsed, {"tool_name": tool_name})
             self._stats["errors"] += 1
+            mcp_errors.add(1, {"tool_name": tool_name})
             log.exception(
                 "Tool %s raised exception (%.1fms): %s", tool_name, elapsed, e
             )

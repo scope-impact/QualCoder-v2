@@ -7,6 +7,7 @@ Returns OperationResult with error codes, suggestions, and rollback support.
 
 from __future__ import annotations
 
+import logging
 from typing import TYPE_CHECKING, Any
 
 from src.contexts.coding.core.commandHandlers._state import (
@@ -23,11 +24,15 @@ from src.contexts.coding.core.events import SegmentCoded
 from src.shared.common.failure_events import FailureEvent
 from src.shared.common.operation_result import OperationResult
 from src.shared.common.types import CodeId, SourceId
+from src.shared.infra.metrics import metered_command
 
 if TYPE_CHECKING:
     from src.shared.infra.event_bus import EventBus
 
+logger = logging.getLogger("qualcoder.coding.core")
 
+
+@metered_command("apply_code")
 def apply_code(
     command: ApplyCodeCommand,
     code_repo: CodeRepository,
@@ -50,6 +55,8 @@ def apply_code(
     Returns:
         OperationResult with TextSegment on success, or error details on failure
     """
+    logger.debug("apply_code: code_id=%s, source_id=%s", command.code_id, command.source_id)
+
     code_id = CodeId(value=command.code_id)
     source_id = SourceId(value=command.source_id)
 
@@ -85,6 +92,7 @@ def apply_code(
 
     # Handle failure events (now returned as events, not Failure wrapper)
     if isinstance(result, FailureEvent):
+        logger.error("apply_code failed: %s", result.event_type)
         event_bus.publish(result)  # Publish failure for policies
         return OperationResult.from_failure(result)
 
@@ -104,6 +112,8 @@ def apply_code(
     segment_repo.save(segment)
 
     event_bus.publish(event)
+
+    logger.info("Code applied: segment_id=%s, code_id=%s, source_id=%s", segment.id.value, code_id.value, source_id.value)
 
     return OperationResult.ok(
         data=segment,

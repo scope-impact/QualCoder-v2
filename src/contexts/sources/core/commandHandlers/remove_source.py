@@ -7,6 +7,7 @@ Returns OperationResult with error codes and suggestions.
 
 from __future__ import annotations
 
+import logging
 from typing import TYPE_CHECKING
 
 from src.contexts.projects.core.commands import RemoveSourceCommand
@@ -20,12 +21,16 @@ from src.contexts.sources.core.commandHandlers._state import (
 )
 from src.shared.common.operation_result import OperationResult
 from src.shared.common.types import SourceId
+from src.shared.infra.metrics import metered_command
 from src.shared.infra.state import ProjectState
 
 if TYPE_CHECKING:
     from src.shared.infra.event_bus import EventBus
 
+logger = logging.getLogger("qualcoder.sources.core")
 
+
+@metered_command("remove_source")
 def remove_source(
     command: RemoveSourceCommand,
     state: ProjectState,
@@ -53,8 +58,10 @@ def remove_source(
     Returns:
         OperationResult with SourceRemoved event on success, or error details on failure
     """
+    logger.debug("remove_source: source_id=%s", command.source_id)
     # Step 1: Validate
     if state.project is None:
+        logger.error("remove_source: no project is currently open")
         return OperationResult.fail(
             error="No project is currently open",
             error_code="SOURCE_NOT_REMOVED/NO_PROJECT",
@@ -69,6 +76,7 @@ def remove_source(
     result = derive_remove_source(source_id=source_id, state=domain_state)
 
     if isinstance(result, SourceNotRemoved):
+        logger.error("remove_source: derivation failed, reason=%s", result.message)
         return OperationResult.fail(
             error=result.message,
             error_code=result.event_type,
@@ -86,4 +94,5 @@ def remove_source(
         uow.commit()
 
     event_bus.publish(event)
+    logger.info("remove_source: removed source_id=%s", source_id)
     return OperationResult.ok(data=event)

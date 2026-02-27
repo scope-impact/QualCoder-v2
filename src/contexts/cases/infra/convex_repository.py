@@ -6,6 +6,7 @@ Implements the case repository using the Convex cloud database.
 
 from __future__ import annotations
 
+import logging
 from datetime import UTC, datetime
 from typing import TYPE_CHECKING, Any
 
@@ -14,6 +15,8 @@ from src.shared.common.types import CaseId, SourceId
 
 if TYPE_CHECKING:
     from src.shared.infra.convex import ConvexClientWrapper
+
+logger = logging.getLogger("qualcoder.cases.infra")
 
 
 class ConvexCaseRepository:
@@ -29,6 +32,7 @@ class ConvexCaseRepository:
     def get_all(self) -> list[Case]:
         """Get all cases."""
         docs = self._client.get_all_cases()
+        logger.debug("get_all: fetched %d docs", len(docs))
         cases = []
         for doc in docs:
             case = self._doc_to_case(doc)
@@ -49,6 +53,7 @@ class ConvexCaseRepository:
 
     def get_by_id(self, case_id: CaseId) -> Case | None:
         """Get a case by ID."""
+        logger.debug("get_by_id: %s", case_id.value)
         doc = self._client.get_case_by_id(case_id.value)
         if not doc:
             return None
@@ -85,6 +90,7 @@ class ConvexCaseRepository:
 
     def save(self, case: Case) -> None:
         """Save a case (insert or update)."""
+        logger.debug("save: %s (name=%s)", case.id.value, case.name)
         exists = self.get_by_id(case.id) is not None
 
         if exists:
@@ -111,6 +117,7 @@ class ConvexCaseRepository:
 
     def delete(self, case_id: CaseId) -> None:
         """Delete a case by ID."""
+        logger.debug("delete: %s", case_id.value)
         self._client.delete_case(case_id.value)
 
     def get_cases_for_source(self, source_id: SourceId) -> list[Case]:

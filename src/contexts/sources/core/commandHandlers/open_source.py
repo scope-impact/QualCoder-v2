@@ -7,6 +7,7 @@ Returns OperationResult with error codes and suggestions.
 
 from __future__ import annotations
 
+import logging
 from typing import TYPE_CHECKING
 
 from src.contexts.projects.core.commands import OpenSourceCommand
@@ -19,12 +20,16 @@ from src.contexts.sources.core.commandHandlers._state import (
 )
 from src.shared.common.operation_result import OperationResult
 from src.shared.common.types import SourceId
+from src.shared.infra.metrics import metered_command
 from src.shared.infra.state import ProjectState
 
 if TYPE_CHECKING:
     from src.shared.infra.event_bus import EventBus
 
+logger = logging.getLogger("qualcoder.sources.core")
 
+
+@metered_command("open_source")
 def open_source(
     command: OpenSourceCommand,
     state: ProjectState,
@@ -50,8 +55,10 @@ def open_source(
     Returns:
         OperationResult with SourceOpened event on success, or error details on failure
     """
+    logger.debug("open_source: source_id=%s", command.source_id)
     # Step 1: Validate
     if state.project is None:
+        logger.error("open_source: no project is currently open")
         return OperationResult.fail(
             error="No project is currently open",
             error_code="SOURCE_NOT_OPENED/NO_PROJECT",
@@ -66,6 +73,7 @@ def open_source(
     result = derive_open_source(source_id=source_id, state=domain_state)
 
     if isinstance(result, SourceNotOpened):
+        logger.error("open_source: derivation failed, reason=%s", result.reason)
         return OperationResult.fail(
             error=result.reason,
             error_code=f"SOURCE_NOT_OPENED/{result.event_type.upper()}",
@@ -90,4 +98,5 @@ def open_source(
     )
     event_bus.publish(screen_event)
 
+    logger.info("open_source: opened source_id=%s, navigated to coding screen", source_id)
     return OperationResult.ok(data=event)
