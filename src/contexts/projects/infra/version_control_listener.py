@@ -2,9 +2,12 @@
 
 from __future__ import annotations
 
+import logging
 from typing import TYPE_CHECKING, Any
 
 from PySide6.QtCore import QTimer
+
+logger = logging.getLogger(__name__)
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -127,9 +130,13 @@ class VersionControlListener:
             project_path=str(self._project_path),
             events=list(events_to_commit),
         )
-        auto_commit(
+        result = auto_commit(
             command=command,
             diffable_adapter=self._diffable_adapter,
             git_adapter=self._git_adapter,
             event_bus=self._event_bus,
         )
+        if result.is_failure:
+            logger.error(
+                "VCS auto-commit failed: %s [%s]", result.error, result.error_code
+            )
