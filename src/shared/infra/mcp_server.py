@@ -89,6 +89,7 @@ class _MainThreadExecutor(QObject):
     def __init__(self, parent: QObject | None = None) -> None:
         super().__init__(parent)
         self._queue: queue.Queue[_ToolRequest] = queue.Queue()
+        self._log = logging.getLogger("qualcoder.mcp.executor")
 
     def execute(self, fn: Callable[[], dict]) -> dict:
         """Execute *fn* on the Qt main thread, blocking the caller until done.
@@ -96,23 +97,40 @@ class _MainThreadExecutor(QObject):
         If already on the main thread (e.g. in tests), runs directly.
         """
         if is_main_thread():
+            self._log.debug("Already on main thread, executing directly")
             return fn()
 
         request = _ToolRequest(fn=fn)
         self._queue.put(request)
+        queue_size = self._queue.qsize()
+        self._log.debug(
+            "Queued request for main thread (thread=%s, queue_size=%d)",
+            threading.current_thread().name,
+            queue_size,
+        )
         QMetaObject.invokeMethod(self, "_process", Qt.ConnectionType.QueuedConnection)
         if not request.done_event.wait(timeout=self._TIMEOUT_SECONDS):
+            self._log.error(
+                "Main-thread execution timed out after %.1fs (thread=%s)",
+                self._TIMEOUT_SECONDS,
+                threading.current_thread().name,
+            )
             raise TimeoutError(
                 f"Main-thread execution timed out after {self._TIMEOUT_SECONDS}s"
             )
         if request.exception is not None:
+            self._log.error(
+                "Main-thread execution raised: %s", request.exception, exc_info=True
+            )
             raise request.exception
+        self._log.debug("Main-thread execution completed successfully")
         assert request.result is not None  # noqa: S101
         return request.result
 
     @Slot()
     def _process(self) -> None:
         """Drain the queue on the main thread and execute each request."""
+        processed = 0
         while True:
             try:
                 request = self._queue.get_nowait()
@@ -120,10 +138,16 @@ class _MainThreadExecutor(QObject):
                 break
             try:
                 request.result = request.fn()
+                processed += 1
             except Exception as exc:
+                self._log.error(
+                    "Exception during main-thread execution: %s", exc, exc_info=True
+                )
                 request.exception = exc
             finally:
                 request.done_event.set()
+        if processed:
+            self._log.debug("Processed %d queued request(s) on main thread", processed)
 
 
 class MCPServerManager:
@@ -210,6 +234,9 @@ class MCPServerManager:
 
     def _run_server(self):
         """Run async server in background thread."""
+        self._log.debug(
+            "MCP server thread started (thread=%s)", threading.current_thread().name
+        )
         self._loop = asyncio.new_event_loop()
         asyncio.set_event_loop(self._loop)
 
@@ -220,6 +247,7 @@ class MCPServerManager:
             self._stats["errors"] += 1
         finally:
             self._loop.close()
+            self._log.debug("MCP server event loop closed")
 
     def _create_logging_middleware(self):
         """Create request/response logging middleware."""
@@ -475,8 +503,12 @@ class MCPServerManager:
         executor = self._executor
         if executor is None:
             # Fallback: no executor (tests, or server not fully started)
+            log.debug("No executor — running tool %s directly (fallback)", tool_name)
             return self._execute_tool(tool_name, args, log)
 
+        log.debug(
+            "Marshalling tool %s to main thread via run_in_executor", tool_name
+        )
         loop = asyncio.get_event_loop()
         return await loop.run_in_executor(
             None,  # default ThreadPoolExecutor
@@ -487,8 +519,10 @@ class MCPServerManager:
         """Marshal an arbitrary callable to the main thread."""
         executor = self._executor
         if executor is None:
+            self._log.debug("No executor — running callable directly (fallback)")
             return fn()
 
+        self._log.debug("Marshalling callable to main thread via run_in_executor")
         loop = asyncio.get_event_loop()
         return await loop.run_in_executor(
             None,

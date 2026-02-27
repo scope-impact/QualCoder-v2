@@ -85,18 +85,39 @@ def _subscription_worker(
         listeners: Dict of entity_type -> list of callback functions
         state: SyncState object to update on errors
     """
+    thread_name = f"SyncEngine-Sub-{entity_type}"
+    logger.info("[%s] Subscription worker started (query=%s)", thread_name, query)
     try:
         # Create a dedicated client for this thread
         thread_client = convex_client_class(url)
+        logger.debug("[%s] Convex client created, subscribing...", thread_name)
 
         # Subscribe and handle updates
         for data in thread_client.subscribe(query, {}):
+            item_count = len(data) if isinstance(data, list) else 1
+            listener_count = len(listeners.get(entity_type, []))
+            logger.debug(
+                "[%s] Received %d item(s), notifying %d listener(s)",
+                thread_name,
+                item_count,
+                listener_count,
+            )
             # Notify registered listeners
             for callback in listeners.get(entity_type, []):
-                with contextlib.suppress(Exception):
+                try:
                     callback("sync", {"items": data})
+                except Exception as cb_err:
+                    logger.error(
+                        "[%s] Listener callback failed: %s",
+                        thread_name,
+                        cb_err,
+                        exc_info=True,
+                    )
 
     except Exception as e:
+        logger.error(
+            "[%s] Subscription worker crashed: %s", thread_name, e, exc_info=True
+        )
         state.status = SyncStatus.ERROR
         state.error_message = str(e)
 
@@ -369,24 +390,40 @@ class SyncEngine:
         # Setup Convex subscriptions if available and enabled
         if self._convex and self._enable_subscriptions:
             self._state.status = SyncStatus.CONNECTING
+            logger.debug("SyncEngine status -> CONNECTING (subscriptions enabled)")
             self._start_subscriptions()
         elif self._convex:
             # Convex available but subscriptions disabled - mark as synced
             self._state.status = SyncStatus.SYNCED
+            logger.debug("SyncEngine status -> SYNCED (subscriptions disabled, Convex available)")
 
         logger.info("SyncEngine started")
 
     def stop(self) -> None:
         """Stop the sync engine."""
+        logger.info("SyncEngine stopping (threads: outbound=%s, subscriptions=%d)",
+                     self._outbound_thread is not None,
+                     len(self._subscription_threads))
         self._running = False
 
         # Wait for threads to finish
         if self._outbound_thread and self._outbound_thread.is_alive():
+            logger.debug("Joining outbound sync thread...")
             self._outbound_thread.join(timeout=2.0)
+            if self._outbound_thread.is_alive():
+                logger.warning("Outbound sync thread did not stop within 2s timeout")
+            else:
+                logger.debug("Outbound sync thread joined")
 
         for thread in self._subscription_threads:
             if thread.is_alive():
+                logger.debug("Joining subscription thread: %s", thread.name)
                 thread.join(timeout=2.0)
+                if thread.is_alive():
+                    logger.warning(
+                        "Subscription thread %s did not stop within 2s timeout",
+                        thread.name,
+                    )
 
         self._subscription_threads.clear()
         self._state.status = SyncStatus.OFFLINE
@@ -542,13 +579,17 @@ class SyncEngine:
 
     def _outbound_sync_loop(self) -> None:
         """Background thread: drains sync_outbox and pushes each row to Convex."""
-        while self._running:
-            try:
-                self._drain_legacy_queue()
-                self._drain_sync_outbox()
-                time.sleep(5.0)
-            except Exception as e:
-                logger.exception(f"Error in outbound sync loop: {e}")
+        logger.info("[SyncEngine-Outbound] Outbound sync loop started")
+        try:
+            while self._running:
+                try:
+                    self._drain_legacy_queue()
+                    self._drain_sync_outbox()
+                    time.sleep(5.0)
+                except Exception as e:
+                    logger.exception(f"Error in outbound sync loop: {e}")
+        finally:
+            logger.info("[SyncEngine-Outbound] Outbound sync loop exiting")
 
     def _drain_legacy_queue(self) -> None:
         """Drain the legacy in-memory queue (no longer populated after SyncedRepos removal)."""
@@ -832,11 +873,13 @@ class SyncEngine:
         state = self._state  # State object reference
 
         for name, query, entity_type in subscriptions:
+            thread_name = f"SyncEngine-Sub-{name}"
+            logger.debug("Starting subscription thread: %s (query=%s)", thread_name, query)
             thread = threading.Thread(
                 target=_subscription_worker,
                 args=(client_class, url, query, entity_type, listeners, state),
                 daemon=True,
-                name=f"SyncEngine-Sub-{name}",
+                name=thread_name,
             )
             thread.start()
             self._subscription_threads.append(thread)

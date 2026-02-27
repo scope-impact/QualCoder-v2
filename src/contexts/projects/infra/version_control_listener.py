@@ -92,12 +92,22 @@ class VersionControlListener:
         for event_type in MUTATION_EVENTS:
             subscription = self._event_bus.subscribe(event_type, self._on_mutation)
             self._subscriptions.append(subscription)
+        logger.info(
+            "VCS listener enabled: subscribed to %d mutation event types",
+            len(MUTATION_EVENTS),
+        )
 
     def disable(self) -> None:
         """Disable the listener and flush any pending events."""
         if not self._enabled:
             return
         self._enabled = False
+        pending_count = len(self._pending_events)
+        logger.info(
+            "VCS listener disabling (pending_events=%d, flushing=%s)",
+            pending_count,
+            pending_count > 0,
+        )
 
         self._timer.stop()
 
@@ -107,12 +117,20 @@ class VersionControlListener:
         for subscription in self._subscriptions:
             subscription.cancel()
         self._subscriptions.clear()
+        logger.debug("VCS listener disabled, subscriptions cleared")
 
     def _on_mutation(self, event: Any) -> None:
         """Handle a mutation event - add to pending and restart timer."""
         if not self._enabled:
             return
+        event_type = getattr(event, "event_type", type(event).__name__)
         self._pending_events.append(event)
+        logger.debug(
+            "VCS mutation received: %s (pending=%d, debounce=%dms)",
+            event_type,
+            len(self._pending_events),
+            self.DEBOUNCE_MS,
+        )
         self._timer.start()  # (re)starts the single-shot timer
 
     def _flush(self) -> None:
@@ -122,6 +140,11 @@ class VersionControlListener:
         events_to_commit = tuple(self._pending_events)
         self._pending_events.clear()
         self._timer.stop()
+
+        logger.debug(
+            "VCS debounce timer fired — flushing %d event(s) for auto-commit",
+            len(events_to_commit),
+        )
 
         from src.contexts.projects.core.commandHandlers.auto_commit import auto_commit
         from src.contexts.projects.core.vcs_commands import AutoCommitCommand
@@ -139,4 +162,8 @@ class VersionControlListener:
         if result.is_failure:
             logger.error(
                 "VCS auto-commit failed: %s [%s]", result.error, result.error_code
+            )
+        else:
+            logger.info(
+                "VCS auto-commit succeeded (%d events)", len(events_to_commit)
             )

@@ -357,10 +357,23 @@ class BaseSignalBridge(QObject, metaclass=QObjectABCMeta):
         """
         if is_main_thread():
             # Already on main thread - emit directly
+            logger.debug(
+                "%s: emitting signal directly on main thread",
+                self.__class__.__name__,
+            )
             signal.emit(payload)
         else:
             # Add to thread-safe queue and trigger main thread processing
+            import threading as _threading
+
             self._emission_queue.put((signal, payload))
+            queue_size = self._emission_queue.qsize()
+            logger.debug(
+                "%s: queued signal for main thread (from_thread=%s, queue_size=%d)",
+                self.__class__.__name__,
+                _threading.current_thread().name,
+                queue_size,
+            )
             QMetaObject.invokeMethod(
                 self,
                 "_do_emit",
@@ -373,12 +386,27 @@ class BaseSignalBridge(QObject, metaclass=QObjectABCMeta):
 
         Processes all pending emissions from the thread-safe queue.
         """
+        emitted = 0
         while True:
             try:
                 signal, payload = self._emission_queue.get_nowait()
                 signal.emit(payload)
+                emitted += 1
             except queue.Empty:
                 break
+            except Exception as e:
+                logger.error(
+                    "%s: error emitting queued signal: %s",
+                    self.__class__.__name__,
+                    e,
+                    exc_info=True,
+                )
+        if emitted:
+            logger.debug(
+                "%s: emitted %d queued signal(s) on main thread",
+                self.__class__.__name__,
+                emitted,
+            )
 
     def _create_activity_item(
         self, event: Any, payload: SignalPayload

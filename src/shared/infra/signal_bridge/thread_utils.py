@@ -7,12 +7,15 @@ for Qt signal emission.
 
 from __future__ import annotations
 
+import logging
 import threading
 import warnings
 from collections.abc import Callable
 from typing import Any
 
 from PySide6.QtCore import QCoreApplication, QThread
+
+logger = logging.getLogger("qualcoder.shared.signal_bridge.threads")
 
 
 def is_main_thread() -> bool:
@@ -77,13 +80,24 @@ def warn_if_not_main_thread(func: Callable[..., Any]) -> Callable[..., Any]:
         if is_main_thread():
             return func(*args, **kwargs)
 
+        thread_name = get_current_thread_name()
         if QCoreApplication.instance() is not None:
+            logger.warning(
+                "Cross-thread call to %s from thread '%s'",
+                func.__name__,
+                thread_name,
+            )
             warnings.warn(
                 f"Cross-thread call to {func.__name__} - "
                 "use BaseSignalBridge._emit_threadsafe for signals",
                 stacklevel=2,
             )
         else:
+            logger.warning(
+                "No Qt event loop — executing %s synchronously (thread=%s)",
+                func.__name__,
+                thread_name,
+            )
             warnings.warn(
                 f"No Qt event loop - executing {func.__name__} synchronously",
                 stacklevel=2,
@@ -113,6 +127,7 @@ class ThreadChecker:
             msg = f"Expected main thread but on '{thread_name}'"
             if context:
                 msg = f"{context}: {msg}"
+            logger.error("Thread assertion failed: %s", msg)
             raise RuntimeError(msg)
 
     @staticmethod
@@ -127,6 +142,7 @@ class ThreadChecker:
             msg = "Expected background thread but on main thread"
             if context:
                 msg = f"{context}: {msg}"
+            logger.error("Thread assertion failed: %s", msg)
             raise RuntimeError(msg)
 
     @staticmethod
@@ -142,6 +158,7 @@ class ThreadChecker:
             msg = f"Not on main thread (current: '{thread_name}')"
             if context:
                 msg = f"{context}: {msg}"
+            logger.warning("Thread check: %s", msg)
             warnings.warn(msg, stacklevel=2)
             return False
         return True
