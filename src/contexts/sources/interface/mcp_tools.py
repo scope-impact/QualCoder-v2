@@ -77,7 +77,7 @@ read_source_content_tool = ToolDefinition(
     parameters=(
         ToolParameter(
             name="source_id",
-            type="integer",
+            type="string",
             description="The ID of the source document to read.",
             required=True,
         ),
@@ -115,7 +115,7 @@ navigate_to_segment_tool = ToolDefinition(
     parameters=(
         ToolParameter(
             name="source_id",
-            type="integer",
+            type="string",
             description="The ID of the source document to navigate to.",
             required=True,
         ),
@@ -151,7 +151,7 @@ suggest_source_metadata_tool = ToolDefinition(
     parameters=(
         ToolParameter(
             name="source_id",
-            type="integer",
+            type="string",
             description="The ID of the source document.",
             required=True,
         ),
@@ -226,7 +226,7 @@ remove_source_tool = ToolDefinition(
     parameters=(
         ToolParameter(
             name="source_id",
-            type="integer",
+            type="string",
             description="ID of the source to remove.",
             required=True,
         ),
@@ -348,7 +348,9 @@ class SourceTools:
     ) -> Result[dict[str, Any], str]:
         source_type = arguments.get("source_type")
         sources_ctx = self._ctx.sources_context
-        all_sources = sources_ctx.source_repo.get_all() if sources_ctx else []
+        if not sources_ctx:
+            return Failure("No project is currently open")
+        all_sources = sources_ctx.source_repo.get_all()
 
         if source_type:
             sources = [s for s in all_sources if s.source_type.value == source_type]

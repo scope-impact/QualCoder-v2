@@ -12,7 +12,7 @@ SUGGEST_CODE_TOOLS = (
         parameters=(
             ToolParameter(
                 name="source_id",
-                type="integer",
+                type="string",
                 description="ID of the source to analyze.",
                 required=True,
             ),

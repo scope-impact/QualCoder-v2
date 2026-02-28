@@ -12,13 +12,13 @@ CODING_SUGGESTION_TOOLS = (
         parameters=(
             ToolParameter(
                 name="source_id",
-                type="integer",
+                type="string",
                 description="ID of the source document.",
                 required=True,
             ),
             ToolParameter(
                 name="code_id",
-                type="integer",
+                type="string",
                 description="ID of the code to apply.",
                 required=True,
             ),
@@ -63,7 +63,7 @@ CODING_SUGGESTION_TOOLS = (
         parameters=(
             ToolParameter(
                 name="source_id",
-                type="integer",
+                type="string",
                 description="ID of the source (optional, all sources if omitted).",
                 required=False,
             ),

@@ -188,14 +188,14 @@ class TestToolDefinition:
     def test_tool_parameter_stores_metadata(self):
         param = ToolParameter(
             name="case_id",
-            type="integer",
+            type="string",
             description="ID of the case",
             required=True,
             default=None,
         )
 
         assert param.name == "case_id"
-        assert param.type == "integer"
+        assert param.type == "string"
         assert param.description == "ID of the case"
         assert param.required is True
         assert param.default is None
@@ -237,7 +237,7 @@ class TestToolDefinition:
             parameters=(
                 ToolParameter(
                     name="case_id",
-                    type="integer",
+                    type="string",
                     description="ID of the case",
                     required=True,
                 ),
@@ -254,7 +254,7 @@ class TestToolDefinition:
         schema = tool.to_schema()
 
         assert "case_id" in schema["inputSchema"]["properties"]
-        assert schema["inputSchema"]["properties"]["case_id"]["type"] == "integer"
+        assert schema["inputSchema"]["properties"]["case_id"]["type"] == "string"
         assert "case_id" in schema["inputSchema"]["required"]
 
         assert "include_sources" in schema["inputSchema"]["properties"]
@@ -279,7 +279,7 @@ class TestPredefinedToolSchemas:
 
         assert schema["name"] == "get_case"
         assert "case_id" in schema["inputSchema"]["properties"]
-        assert schema["inputSchema"]["properties"]["case_id"]["type"] == "integer"
+        assert schema["inputSchema"]["properties"]["case_id"]["type"] == "string"
         assert "case_id" in schema["inputSchema"]["required"]
 
     @allure.title("suggest_case_groupings tool has correct schema")

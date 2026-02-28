@@ -57,7 +57,7 @@ create_folder_tool = ToolDefinition(
         ),
         ToolParameter(
             name="parent_id",
-            type="integer",
+            type="string",
             description="Parent folder ID for nesting. Omit for root-level folder.",
             required=False,
             default=None,
@@ -71,7 +71,7 @@ rename_folder_tool = ToolDefinition(
     parameters=(
         ToolParameter(
             name="folder_id",
-            type="integer",
+            type="string",
             description="ID of the folder to rename.",
             required=True,
         ),
@@ -90,7 +90,7 @@ delete_folder_tool = ToolDefinition(
     parameters=(
         ToolParameter(
             name="folder_id",
-            type="integer",
+            type="string",
             description="ID of the folder to delete.",
             required=True,
         ),
@@ -103,13 +103,13 @@ move_source_to_folder_tool = ToolDefinition(
     parameters=(
         ToolParameter(
             name="source_id",
-            type="integer",
+            type="string",
             description="ID of the source to move.",
             required=True,
         ),
         ToolParameter(
             name="folder_id",
-            type="integer",
+            type="string",
             description="Target folder ID. Use null or 0 for root.",
             required=False,
             default=None,

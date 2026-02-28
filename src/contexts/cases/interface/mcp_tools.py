@@ -83,7 +83,7 @@ get_case_tool = ToolDefinition(
     parameters=(
         ToolParameter(
             name="case_id",
-            type="integer",
+            type="string",
             description="ID of the case to retrieve.",
             required=True,
         ),

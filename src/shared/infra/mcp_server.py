@@ -41,20 +41,14 @@ logger = logging.getLogger("qualcoder.mcp")
 
 
 def _setup_mcp_logging(debug: bool = False) -> None:
-    """Configure MCP server logging."""
+    """Configure MCP server logging level.
+
+    Output is handled by the root ``qualcoder`` logger (set up by
+    ``configure_logging``), so we only adjust the level here — no extra
+    handler needed.
+    """
     level = logging.DEBUG if debug else logging.INFO
     logger.setLevel(level)
-
-    # Only add handler if none exist (avoid duplicates)
-    if not logger.handlers:
-        handler = logging.StreamHandler()
-        handler.setLevel(level)
-        formatter = logging.Formatter(
-            "[MCP] %(asctime)s.%(msecs)03d %(levelname)s [%(request_id)s] %(message)s",
-            datefmt="%H:%M:%S",
-        )
-        handler.setFormatter(formatter)
-        logger.addHandler(handler)
 
 
 class MCPLogAdapter(logging.LoggerAdapter):
@@ -169,9 +163,11 @@ class MCPServerManager:
         self._coding_tools: Any = None  # Cached CodingTools instance
         self._executor: _MainThreadExecutor | None = None
 
-        # Debug mode: explicit param > env var > default False
+        # Debug mode: explicit param > MCP_DEBUG > QUALCODER_DEV > default False
         if debug is None:
-            debug = os.environ.get("MCP_DEBUG", "").lower() in ("1", "true", "yes")
+            debug = os.environ.get(
+                "MCP_DEBUG", os.environ.get("QUALCODER_DEV", "")
+            ).lower() in ("1", "true", "yes")
         self._debug = debug
         _setup_mcp_logging(debug)
         self._log = MCPLogAdapter(logger, {"request_id": "init"})
@@ -506,9 +502,7 @@ class MCPServerManager:
             log.debug("No executor — running tool %s directly (fallback)", tool_name)
             return self._execute_tool(tool_name, args, log)
 
-        log.debug(
-            "Marshalling tool %s to main thread via run_in_executor", tool_name
-        )
+        log.debug("Marshalling tool %s to main thread via run_in_executor", tool_name)
         loop = asyncio.get_event_loop()
         return await loop.run_in_executor(
             None,  # default ThreadPoolExecutor

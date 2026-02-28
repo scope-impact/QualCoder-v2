@@ -471,6 +471,21 @@ class SegmentNotCoded(FailureEvent):
             source_length=source_length,
         )
 
+    @classmethod
+    def overlapping_segment(
+        cls, code_id: CodeId, source_id: SourceId, start: int, end: int
+    ) -> SegmentNotCoded:
+        """Same code already applied to an overlapping range on this source."""
+        return cls(
+            event_id=cls._generate_id(),
+            occurred_at=cls._now(),
+            event_type="SEGMENT_NOT_CODED/OVERLAPPING_SEGMENT",
+            code_id=code_id,
+            source_id=source_id,
+            start=start,
+            end=end,
+        )
+
     @property
     def message(self) -> str:
         """Human-readable error message."""
@@ -481,6 +496,8 @@ class SegmentNotCoded(FailureEvent):
                 return f"Source with id {self.source_id.value if self.source_id else 'unknown'} not found"
             case "INVALID_POSITION":
                 return f"Position [{self.start}:{self.end}] invalid for source of length {self.source_length}"
+            case "OVERLAPPING_SEGMENT":
+                return f"Code {self.code_id.value if self.code_id else 'unknown'} already applied to an overlapping range [{self.start}:{self.end}] on this source"
             case _:
                 return super().message
 

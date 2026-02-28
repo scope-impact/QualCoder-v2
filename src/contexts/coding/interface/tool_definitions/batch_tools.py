@@ -15,7 +15,7 @@ BATCH_TOOLS = (
             ),
             ToolParameter(
                 name="code_id",
-                type="integer",
+                type="string",
                 description="Optional code ID for context.",
                 required=False,
             ),
@@ -27,7 +27,7 @@ BATCH_TOOLS = (
         parameters=(
             ToolParameter(
                 name="code_id",
-                type="integer",
+                type="string",
                 description="ID of the code to apply.",
                 required=True,
             ),
@@ -39,7 +39,7 @@ BATCH_TOOLS = (
                 items={
                     "type": "object",
                     "properties": {
-                        "source_id": {"type": "integer"},
+                        "source_id": {"type": "string"},
                         "start_pos": {"type": "integer"},
                         "end_pos": {"type": "integer"},
                     },

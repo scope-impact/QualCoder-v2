@@ -592,6 +592,17 @@ def derive_apply_code_to_text(
     ):
         return SegmentNotCoded.invalid_position(start, end, state.source_length)
 
+    # Check for overlapping segments with the same code on the same source
+    for seg in state.existing_segments:
+        if (
+            hasattr(seg, "position")
+            and seg.code_id == code_id
+            and seg.source_id == source_id
+            and seg.position.start < end
+            and start < seg.position.end
+        ):
+            return SegmentNotCoded.overlapping_segment(code_id, source_id, start, end)
+
     # Generate segment ID
     segment_id = SegmentId.new()
 

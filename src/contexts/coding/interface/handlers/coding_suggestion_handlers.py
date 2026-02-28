@@ -125,6 +125,12 @@ def handle_approve_coding_suggestion(
     if suggestion is None:
         return not_found_error("APPROVE_CODING", "Suggestion", suggestion_id)
 
+    if suggestion.status != "pending":
+        return OperationResult.fail(
+            error=f"Suggestion already {suggestion.status}",
+            error_code="APPROVE_CODING/ALREADY_PROCESSED",
+        ).to_dict()
+
     if ctx.segment_repo is None or ctx.code_repo is None:
         return no_context_error("APPROVE_CODING")
 
