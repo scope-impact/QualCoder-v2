@@ -180,6 +180,14 @@ def handle_list_segments(
     if ctx.segment_repo is None:
         return no_context_error("SEGMENTS_NOT_LISTED")
 
+    # Validate source exists
+    if ctx.source_repo is not None:
+        from src.shared.common.types import SourceId
+
+        source = ctx.source_repo.get_by_id(SourceId(value=str(source_id)))
+        if source is None:
+            return not_found_error("SEGMENTS_NOT_LISTED", "Source", str(source_id))
+
     segments = get_segments_for_source(ctx.segment_repo, str(source_id))
     return OperationResult.ok(data=[_serialize_segment(s) for s in segments]).to_dict()
 

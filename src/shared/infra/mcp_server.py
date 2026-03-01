@@ -743,7 +743,11 @@ class MCPServerManager:
             return {"success": False, "error": f"Unknown tool: {tool_name}"}
 
         if isinstance(result, Failure):
-            return {"success": False, "error": result.failure()}
+            failure_val = result.failure()
+            # Support structured error dicts (OperationResult format)
+            if isinstance(failure_val, dict):
+                return failure_val
+            return {"success": False, "error": failure_val}
         return {"success": True, "data": result.unwrap()}
 
 

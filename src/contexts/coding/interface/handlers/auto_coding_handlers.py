@@ -73,6 +73,12 @@ def handle_analyze_uncoded_text(
     if source_id is None:
         return missing_param_error("ANALYZE_UNCODED", "source_id")
 
+    # Validate source exists
+    if ctx.source_repo is not None:
+        source = ctx.source_repo.get_by_id(SourceId(value=str(source_id)))
+        if source is None:
+            return not_found_error("ANALYZE_UNCODED", "Source", str(source_id))
+
     segments = (
         ctx.segment_repo.get_by_source(SourceId(value=str(source_id)))
         if ctx.segment_repo
@@ -179,6 +185,12 @@ def handle_auto_suggest_codes(
 
     if source_id is None:
         return missing_param_error("AUTO_SUGGEST", "source_id")
+
+    # Validate source exists
+    if ctx.source_repo is not None:
+        source = ctx.source_repo.get_by_id(SourceId(value=str(source_id)))
+        if source is None:
+            return not_found_error("AUTO_SUGGEST", "Source", str(source_id))
 
     codes = ctx.code_repo.get_all() if ctx.code_repo else []
     batch_id = CodingSuggestionBatchId.new()

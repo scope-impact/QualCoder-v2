@@ -13,6 +13,7 @@ from typing import TYPE_CHECKING, Any, Protocol, runtime_checkable
 from returns.result import Failure, Result, Success
 
 from src.shared.common.mcp_types import ToolDefinition, ToolParameter
+from src.shared.common.operation_result import OperationResult
 
 if TYPE_CHECKING:
     from src.shared.infra.state import ProjectState
@@ -131,6 +132,27 @@ ALL_FOLDER_TOOLS = {
 # ============================================================
 
 
+_FOLDER_ERROR_MESSAGES = {
+    "NOT_FOUND": "Folder not found",
+    "DUPLICATE_NAME": "A folder with this name already exists",
+    "INVALID_NAME": "Folder name cannot be empty",
+    "HAS_SOURCES": "Folder contains sources and cannot be deleted",
+    "SOURCE_NOT_FOUND": "Source not found",
+    "FOLDER_NOT_FOUND": "Target folder not found",
+}
+
+
+def _folder_failure(error_code: str, prefix: str) -> Failure:
+    """Convert a raw folder error code into a structured Failure with OperationResult."""
+    message = _FOLDER_ERROR_MESSAGES.get(error_code, error_code)
+    return Failure(
+        OperationResult.fail(
+            error=message,
+            error_code=f"{prefix}/{error_code}",
+        ).to_dict()
+    )
+
+
 class FolderTools:
     """MCP-compatible folder tools for AI agent integration."""
 
@@ -184,7 +206,7 @@ class FolderTools:
         result = list_folders(state=self._state, folder_repo=self._folder_repo)
 
         if result.is_failure:
-            return Failure(result.error or "Failed to list folders")
+            return _folder_failure(result.error or "UNKNOWN", "LIST_FOLDERS")
 
         return Success(result.data)
 
@@ -212,7 +234,7 @@ class FolderTools:
         )
 
         if result.is_failure:
-            return Failure(result.error or "Failed to create folder")
+            return _folder_failure(result.error or "UNKNOWN", "CREATE_FOLDER")
 
         folder = result.data
         return Success(
@@ -251,7 +273,7 @@ class FolderTools:
         )
 
         if result.is_failure:
-            return Failure(result.error or "Failed to rename folder")
+            return _folder_failure(result.error or "UNKNOWN", "RENAME_FOLDER")
 
         folder = result.data
         return Success(
@@ -285,7 +307,7 @@ class FolderTools:
         )
 
         if result.is_failure:
-            return Failure(result.error or "Failed to delete folder")
+            return _folder_failure(result.error or "UNKNOWN", "DELETE_FOLDER")
 
         event = result.data
         return Success(
@@ -326,7 +348,7 @@ class FolderTools:
         )
 
         if result.is_failure:
-            return Failure(result.error or "Failed to move source")
+            return _folder_failure(result.error or "UNKNOWN", "MOVE_SOURCE")
 
         event = result.data
         return Success(

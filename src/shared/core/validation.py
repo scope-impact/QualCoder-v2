@@ -172,13 +172,14 @@ def is_in_range(value: int, min_val: int, max_val: int) -> bool:
 
 
 def is_valid_hex_color(color: str) -> bool:
-    """Check that a string is a valid hex color (#RRGGBB)."""
-    if not color or len(color) != 7:
+    """Check that a string is a valid hex color (#RRGGBB or #RGB shorthand)."""
+    if not color or color[0] != "#":
         return False
-    if color[0] != "#":
+    hex_part = color[1:]
+    if len(hex_part) not in (3, 6):
         return False
     try:
-        int(color[1:], 16)
+        int(hex_part, 16)
         return True
     except ValueError:
         return False

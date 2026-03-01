@@ -22,6 +22,7 @@ from .base import (
     missing_param_error,
     missing_params_error,
     no_context_error,
+    not_found_error,
 )
 
 
@@ -108,6 +109,27 @@ def handle_suggest_batch_coding(
 
     if code_id is None or not segments or not rationale:
         return missing_params_error("BATCH_CODING")
+
+    # Validate code exists
+    if ctx.code_repo is not None:
+        from src.contexts.coding.core.commandHandlers import get_code
+
+        code = get_code(ctx.code_repo, str(code_id))
+        if code is None:
+            return not_found_error("BATCH_CODING", "Code", str(code_id))
+
+    # Validate all referenced sources exist
+    if ctx.source_repo is not None:
+        from src.shared.common.types import SourceId as _SourceId
+
+        seen_source_ids: set[str] = set()
+        for seg in segments:
+            sid = str(seg["source_id"])
+            if sid not in seen_source_ids:
+                seen_source_ids.add(sid)
+                source = ctx.source_repo.get_by_id(_SourceId(value=sid))
+                if source is None:
+                    return not_found_error("BATCH_CODING", "Source", sid)
 
     batch_id = CodingSuggestionBatchId.new()
     coding_suggestions = []

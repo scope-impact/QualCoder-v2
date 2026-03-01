@@ -149,6 +149,15 @@ def handle_suggest_merge_codes(
     if not rationale:
         return missing_param_error("SUGGEST_MERGE", "rationale")
 
+    # Validate both codes exist
+    if ctx.code_repo is not None:
+        from src.contexts.coding.core.commandHandlers import get_code
+
+        if get_code(ctx.code_repo, str(source_code_id)) is None:
+            return not_found_error("SUGGEST_MERGE", "Source code", str(source_code_id))
+        if get_code(ctx.code_repo, str(target_code_id)) is None:
+            return not_found_error("SUGGEST_MERGE", "Target code", str(target_code_id))
+
     merge_id = MergeSuggestionId.new()
     suggestion = MergeSuggestion(
         id=merge_id,

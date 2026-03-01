@@ -37,6 +37,16 @@ class CodeNotCreated(FailureEvent):
         )
 
     @classmethod
+    def name_too_long(cls, name: str) -> CodeNotCreated:
+        """Code name exceeds maximum length."""
+        return cls(
+            event_id=cls._generate_id(),
+            occurred_at=cls._now(),
+            event_type="CODE_NOT_CREATED/NAME_TOO_LONG",
+            name=name,
+        )
+
+    @classmethod
     def duplicate_name(cls, name: str) -> CodeNotCreated:
         """A code with this name already exists."""
         return cls(
@@ -62,6 +72,8 @@ class CodeNotCreated(FailureEvent):
         match self.reason:
             case "EMPTY_NAME":
                 return "Code name cannot be empty"
+            case "NAME_TOO_LONG":
+                return f"Code name exceeds maximum length of 100 characters (got {len(self.name) if self.name else 0})"
             case "DUPLICATE_NAME":
                 return f"Code name '{self.name}' already exists"
             case "CATEGORY_NOT_FOUND":
@@ -98,6 +110,17 @@ class CodeNotRenamed(FailureEvent):
         )
 
     @classmethod
+    def name_too_long(cls, code_id: CodeId, new_name: str) -> CodeNotRenamed:
+        """New name exceeds maximum length."""
+        return cls(
+            event_id=cls._generate_id(),
+            occurred_at=cls._now(),
+            event_type="CODE_NOT_RENAMED/NAME_TOO_LONG",
+            code_id=code_id,
+            new_name=new_name,
+        )
+
+    @classmethod
     def duplicate_name(cls, code_id: CodeId, new_name: str) -> CodeNotRenamed:
         """A code with this name already exists."""
         return cls(
@@ -116,6 +139,8 @@ class CodeNotRenamed(FailureEvent):
                 return f"Code with id {self.code_id.value if self.code_id else 'unknown'} not found"
             case "EMPTY_NAME":
                 return "Code name cannot be empty"
+            case "NAME_TOO_LONG":
+                return f"Code name exceeds maximum length of 100 characters (got {len(self.new_name) if self.new_name else 0})"
             case "DUPLICATE_NAME":
                 return f"Code name '{self.new_name}' already exists"
             case _:

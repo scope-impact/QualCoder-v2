@@ -75,6 +75,7 @@ from src.shared.common.types import (
     SegmentId,
     SourceId,
 )
+from src.shared.core.validation import is_non_empty_string
 
 # ============================================================
 # State Containers (Input to Derivers)
@@ -206,9 +207,11 @@ def derive_create_code(
     Returns:
         CodeCreated event or CodeNotCreated failure event
     """
-    # Validate name
-    if not is_valid_code_name(name):
+    # Validate name: distinguish empty from too-long
+    if not is_non_empty_string(name):
         return CodeNotCreated.empty_name()
+    if not is_valid_code_name(name):
+        return CodeNotCreated.name_too_long(name)
 
     # Check uniqueness
     if not is_code_name_unique(name, state.existing_codes):
@@ -254,9 +257,11 @@ def derive_rename_code(
     if code is None:
         return CodeNotRenamed.not_found(code_id)
 
-    # Validate new name
-    if not is_valid_code_name(new_name):
+    # Validate new name: distinguish empty from too-long
+    if not is_non_empty_string(new_name):
         return CodeNotRenamed.empty_name(code_id)
+    if not is_valid_code_name(new_name):
+        return CodeNotRenamed.name_too_long(code_id, new_name)
 
     # Check uniqueness (excluding current code)
     if not is_code_name_unique(new_name, state.existing_codes, exclude_code_id=code_id):

@@ -23,6 +23,30 @@ from .base import (
 )
 
 
+def _validate_source_exists(
+    ctx: HandlerContext, source_id: Any, error_prefix: str
+) -> dict[str, Any] | None:
+    """Validate source exists. Returns error dict if not found, None if OK."""
+    if ctx.source_repo is not None:
+        source = ctx.source_repo.get_by_id(SourceId(value=str(source_id)))
+        if source is None:
+            return not_found_error(error_prefix, "Source", str(source_id))
+    return None
+
+
+def _validate_code_exists(
+    ctx: HandlerContext, code_id: Any, error_prefix: str
+) -> dict[str, Any] | None:
+    """Validate code exists. Returns error dict if not found, None if OK."""
+    if ctx.code_repo is not None:
+        from src.contexts.coding.core.commandHandlers import get_code
+
+        code = get_code(ctx.code_repo, str(code_id))
+        if code is None:
+            return not_found_error(error_prefix, "Code", str(code_id))
+    return None
+
+
 def handle_suggest_code_application(
     ctx: HandlerContext,
     arguments: dict[str, Any],
@@ -35,6 +59,12 @@ def handle_suggest_code_application(
 
     if source_id is None or code_id is None or start_pos is None or end_pos is None:
         return missing_params_error("SUGGEST_APPLICATION")
+
+    # Validate entities exist before creating suggestion
+    if err := _validate_source_exists(ctx, source_id, "SUGGEST_APPLICATION"):
+        return err
+    if err := _validate_code_exists(ctx, code_id, "SUGGEST_APPLICATION"):
+        return err
 
     rationale = arguments.get("rationale", "")
     confidence = min(100, max(0, arguments.get("confidence", 70))) / 100.0
