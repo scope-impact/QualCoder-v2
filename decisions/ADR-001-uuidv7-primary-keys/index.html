@@ -10,7 +10,7 @@
       
       
       
-        <link rel="canonical" href="https://qualcoder.dev/docs/user-manual/settings/">
+        <link rel="canonical" href="https://qualcoder.dev/docs/decisions/ADR-001-uuidv7-primary-keys/">
       
       
       
@@ -23,7 +23,7 @@
     
     
       
-        <title>Settings and Preferences - QualCoder v2 Developer Guide</title>
+        <title>ADR-001: UUIDv7 as Primary Keys for All Entities - QualCoder v2 Developer Guide</title>
       
     
     
@@ -74,7 +74,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#settings-and-preferences" class="md-skip">
+        <a href="#adr-001-uuidv7-as-primary-keys-for-all-entities" class="md-skip">
           Skip to content
         </a>
       
@@ -114,7 +114,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Settings and Preferences
+              ADR-001: UUIDv7 as Primary Keys for All Entities
             
           </span>
         </div>
@@ -242,7 +242,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../" class="md-tabs__link">
+        <a href="../../user-manual/" class="md-tabs__link">
           
   
   
@@ -552,7 +552,7 @@
         
           
           <div class="md-nav__link md-nav__container">
-            <a href="../" class="md-nav__link ">
+            <a href="../../user-manual/" class="md-nav__link ">
               
   
   
@@ -596,7 +596,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../getting-started/" class="md-nav__link">
+      <a href="../../user-manual/getting-started/" class="md-nav__link">
         
   
   
@@ -624,7 +624,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../sources/" class="md-nav__link">
+      <a href="../../user-manual/sources/" class="md-nav__link">
         
   
   
@@ -652,7 +652,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../codes/" class="md-nav__link">
+      <a href="../../user-manual/codes/" class="md-nav__link">
         
   
   
@@ -680,7 +680,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../coding/" class="md-nav__link">
+      <a href="../../user-manual/coding/" class="md-nav__link">
         
   
   
@@ -708,7 +708,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../ai-features/" class="md-nav__link">
+      <a href="../../user-manual/ai-features/" class="md-nav__link">
         
   
   
@@ -4098,33 +4098,22 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#opening-settings" class="md-nav__link">
+  <a href="#context" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Opening Settings
+        Context
       
     </span>
   </a>
   
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#appearance" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Appearance
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Appearance">
+    <nav class="md-nav" aria-label="Context">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#theme" class="md-nav__link">
+  <a href="#the-problem-we-are-solving" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Theme
+        The problem we are solving
       
     </span>
   </a>
@@ -4132,10 +4121,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#font-size" class="md-nav__link">
+  <a href="#the-current-id-generation-is-broken" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Font Size
+        The current ID generation is broken
       
     </span>
   </a>
@@ -4143,10 +4132,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#font-family" class="md-nav__link">
+  <a href="#the-two-id-problem-is-the-root-cause-of-sync-complexity" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Font Family
+        The two-ID problem is the root cause of sync complexity
       
     </span>
   </a>
@@ -4159,33 +4148,22 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#language" class="md-nav__link">
+  <a href="#decision" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Language
+        Decision
       
     </span>
   </a>
   
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#backup-settings" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Backup Settings
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Backup Settings">
+    <nav class="md-nav" aria-label="Decision">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#enable-backups" class="md-nav__link">
+  <a href="#why-uuidv7-specifically" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Enable Backups
+        Why UUIDv7 specifically
       
     </span>
   </a>
@@ -4193,10 +4171,21 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#backup-interval" class="md-nav__link">
+  <a href="#why-not-keep-integers" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Backup Interval
+        Why not keep integers
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#why-not-uuidv4" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Why not UUIDv4
       
     </span>
   </a>
@@ -4209,22 +4198,22 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#av-coding-settings" class="md-nav__link">
+  <a href="#consequences" class="md-nav__link">
     <span class="md-ellipsis">
       
-        AV Coding Settings
+        Consequences
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="AV Coding Settings">
+    <nav class="md-nav" aria-label="Consequences">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#timestamp-format" class="md-nav__link">
+  <a href="#positive" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Timestamp Format
+        Positive
       
     </span>
   </a>
@@ -4232,10 +4221,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#speaker-format" class="md-nav__link">
+  <a href="#negative-trade-offs" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Speaker Format
+        Negative / Trade-offs
       
     </span>
   </a>
@@ -4248,22 +4237,22 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#database-settings" class="md-nav__link">
+  <a href="#alternatives-considered" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Database Settings
+        Alternatives Considered
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Database Settings">
+    <nav class="md-nav" aria-label="Alternatives Considered">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#primary-storage" class="md-nav__link">
+  <a href="#keep-integer-pks-improve-syncidmap" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Primary Storage
+        Keep integer PKs + improve SyncIdMap
       
     </span>
   </a>
@@ -4271,22 +4260,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#cloud-sync-optional" class="md-nav__link">
+  <a href="#uuidv4-instead-of-uuidv7" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Cloud Sync (Optional)
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Cloud Sync (Optional)">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#enabling-cloud-sync" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Enabling Cloud Sync
+        UUIDv4 instead of UUIDv7
       
     </span>
   </a>
@@ -4294,43 +4271,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#configuring-convex" class="md-nav__link">
+  <a href="#convex-issued-ids-as-the-canonical-id" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Configuring Convex
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#how-cloud-sync-works" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        How Cloud Sync Works
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#sync-status-indicator" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Sync Status Indicator
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#offline-mode" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Offline Mode
+        Convex-issued IDs as the canonical ID
       
     </span>
   </a>
@@ -4341,17 +4285,12 @@
     </nav>
   
 </li>
-        
-      </ul>
-    </nav>
-  
-</li>
       
         <li class="md-nav__item">
-  <a href="#saving-settings" class="md-nav__link">
+  <a href="#implementation-plan" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Saving Settings
+        Implementation Plan
       
     </span>
   </a>
@@ -4359,21 +4298,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#keyboard-shortcuts" class="md-nav__link">
+  <a href="#references" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Keyboard Shortcuts
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#next-steps" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Next Steps
+        References
       
     </span>
   </a>
@@ -4400,203 +4328,179 @@
   
 
 
-<h1 id="settings-and-preferences">Settings and Preferences<a class="headerlink" href="#settings-and-preferences" title="Permanent link">&para;</a></h1>
-<p>Configure QualCoder to match your workflow and preferences.</p>
-<h2 id="opening-settings">Opening Settings<a class="headerlink" href="#opening-settings" title="Permanent link">&para;</a></h2>
-<p>Access settings from the menu bar:</p>
+<h1 id="adr-001-uuidv7-as-primary-keys-for-all-entities">ADR-001: UUIDv7 as Primary Keys for All Entities<a class="headerlink" href="#adr-001-uuidv7-as-primary-keys-for-all-entities" title="Permanent link">&para;</a></h1>
+<p><strong>Status:</strong> Accepted
+<strong>Date:</strong> 2026-02-25
+<strong>Deciders:</strong> Sathish Narayanan
+<strong>Scope:</strong> All bounded contexts (<code>coding</code>, <code>sources</code>, <code>cases</code>, <code>folders</code>)</p>
+<hr />
+<h2 id="context">Context<a class="headerlink" href="#context" title="Permanent link">&para;</a></h2>
+<h3 id="the-problem-we-are-solving">The problem we are solving<a class="headerlink" href="#the-problem-we-are-solving" title="Permanent link">&para;</a></h3>
+<p>QualCoder stores data locally in SQLite (offline-first) and optionally syncs to Convex cloud. SQLite uses <strong>auto-increment integer</strong> primary keys. Convex uses <strong>opaque string</strong> document IDs. Keeping these two ID spaces in sync requires a mapping table (<code>sync_id_map</code>) with significant complexity:</p>
 <ol>
-<li>Click <strong>Settings</strong> in the menu bar (or press <code>Cmd+,</code> on macOS)</li>
-<li>The Settings dialog opens with a sidebar for navigation</li>
+<li>Every outbound sync must look up the Convex ID for each entity.</li>
+<li>Every inbound sync must translate Convex IDs back to local integer IDs.</li>
+<li>Foreign key references (e.g., <code>segment.code_id</code>) must also be translated, introducing ordering dependencies that cause "FK not mapped yet — deferring" errors.</li>
+<li>If the mapping table is lost or out of sync, the entire sync state is corrupted.</li>
 </ol>
-<h2 id="appearance">Appearance<a class="headerlink" href="#appearance" title="Permanent link">&para;</a></h2>
-<h3 id="theme">Theme<a class="headerlink" href="#theme" title="Permanent link">&para;</a></h3>
-<p>Choose between light and dark themes:</p>
-<ol>
-<li>Go to <strong>Appearance</strong> in the sidebar</li>
-<li>Click <strong>Light</strong> or <strong>Dark</strong> theme button</li>
-<li>The UI updates immediately</li>
-</ol>
-<blockquote>
-<p><strong>Tip: Eye Strain</strong></p>
-<p>Use dark theme in low-light environments to reduce eye strain during extended coding sessions.</p>
-</blockquote>
-<h3 id="font-size">Font Size<a class="headerlink" href="#font-size" title="Permanent link">&para;</a></h3>
-<p>Adjust the application font size:</p>
-<ol>
-<li>In <strong>Appearance</strong>, find the Font Size slider</li>
-<li>Drag the slider between 10px and 24px</li>
-<li>The preview updates as you adjust</li>
-</ol>
-<h3 id="font-family">Font Family<a class="headerlink" href="#font-family" title="Permanent link">&para;</a></h3>
-<p>Choose your preferred font:</p>
-<ol>
-<li>In <strong>Appearance</strong>, find the Font Family dropdown</li>
-<li>Select from available fonts (Inter, Roboto, System Default)</li>
-<li>The change applies immediately</li>
-</ol>
-<h2 id="language">Language<a class="headerlink" href="#language" title="Permanent link">&para;</a></h2>
-<p>Select your preferred application language:</p>
-<ol>
-<li>Go to <strong>Language</strong> in the sidebar</li>
-<li>Choose from available languages:</li>
-<li>English</li>
-<li>Spanish</li>
-<li>German</li>
-<li>French</li>
-<li>Portuguese</li>
-<li>Some changes may require restart</li>
-</ol>
-<blockquote>
-<p><strong>Note: Translation Coverage</strong></p>
-<p>Not all languages have complete translations. Missing translations fall back to English.</p>
-</blockquote>
-<h2 id="backup-settings">Backup Settings<a class="headerlink" href="#backup-settings" title="Permanent link">&para;</a></h2>
-<p>Configure automatic project backups:</p>
-<h3 id="enable-backups">Enable Backups<a class="headerlink" href="#enable-backups" title="Permanent link">&para;</a></h3>
-<ol>
-<li>Go to <strong>Backup</strong> in the sidebar</li>
-<li>Check <strong>Enable automatic backups</strong></li>
-</ol>
-<h3 id="backup-interval">Backup Interval<a class="headerlink" href="#backup-interval" title="Permanent link">&para;</a></h3>
-<p>Set how often backups are created:</p>
-<ol>
-<li>Enable backups first</li>
-<li>Set the interval (in minutes) using the spinbox</li>
-<li>Default is 30 minutes</li>
-</ol>
-<blockquote>
-<p><strong>Warning: Backup Location</strong></p>
-<p>Backups are stored alongside your project file. Ensure you have sufficient disk space.</p>
-</blockquote>
-<h2 id="av-coding-settings">AV Coding Settings<a class="headerlink" href="#av-coding-settings" title="Permanent link">&para;</a></h2>
-<p>Configure settings for audio/video coding:</p>
-<h3 id="timestamp-format">Timestamp Format<a class="headerlink" href="#timestamp-format" title="Permanent link">&para;</a></h3>
-<p>Choose how timestamps are displayed:</p>
-<ol>
-<li>Go to <strong>AV Coding</strong> in the sidebar</li>
-<li>Select a timestamp format:</li>
-<li><strong>HH:MM:SS</strong> - Hours, minutes, seconds (default)</li>
-<li><strong>MM:SS</strong> - Minutes and seconds only</li>
-<li><strong>SS.ms</strong> - Seconds with milliseconds</li>
-</ol>
-<h3 id="speaker-format">Speaker Format<a class="headerlink" href="#speaker-format" title="Permanent link">&para;</a></h3>
-<p>Customize how speaker names appear in transcripts:</p>
-<ol>
-<li>In <strong>AV Coding</strong>, find Speaker Format</li>
-<li>Enter your preferred format using <code>{n}</code> as a placeholder</li>
-<li>Examples:</li>
-<li><code>Speaker {n}</code> → Speaker 1, Speaker 2</li>
-<li><code>P{n}</code> → P1, P2</li>
-<li><code>Interviewee {n}</code> → Interviewee 1, Interviewee 2</li>
-</ol>
-<p>The preview shows how speaker names will appear.</p>
-<h2 id="database-settings">Database Settings<a class="headerlink" href="#database-settings" title="Permanent link">&para;</a></h2>
-<p>Configure your project's data storage and synchronization options.</p>
-<h3 id="primary-storage">Primary Storage<a class="headerlink" href="#primary-storage" title="Permanent link">&para;</a></h3>
-<p>Your project data is always stored locally in SQLite. This ensures:</p>
+<h3 id="the-current-id-generation-is-broken">The current ID generation is broken<a class="headerlink" href="#the-current-id-generation-is-broken" title="Permanent link">&para;</a></h3>
+<p>The typed identifiers in <code>src/shared/common/types.py</code> use this pattern:</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nd">@classmethod</span>
+</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="k">def</span><span class="w"> </span><span class="nf">new</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">CodeId</span><span class="p">:</span>
+</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>    <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="n">uuid4</span><span class="p">()</span><span class="o">.</span><span class="n">int</span> <span class="o">%</span> <span class="mi">1_000_000</span><span class="p">))</span>
+</span></code></pre></div>
+<p>This generates a random integer in the range <code>[0, 999_999]</code>. By the birthday paradox, a 50% collision probability is reached at approximately <strong>1,183 entities</strong> — well within the scale of a real research project. This is a latent correctness bug.</p>
+<h3 id="the-two-id-problem-is-the-root-cause-of-sync-complexity">The two-ID problem is the root cause of sync complexity<a class="headerlink" href="#the-two-id-problem-is-the-root-cause-of-sync-complexity" title="Permanent link">&para;</a></h3>
+<p>The <code>SyncEngine._translate_fk_ids()</code>, <code>SyncEngine._sync_to_convex()</code>, <code>SyncIdMap</code>, and all deferred-retry logic in the outbound sync loop exist solely to bridge integer local IDs and Convex string IDs. Eliminating the mismatch eliminates this entire layer.</p>
+<hr />
+<h2 id="decision">Decision<a class="headerlink" href="#decision" title="Permanent link">&para;</a></h2>
+<p><strong>Use UUIDv7 string values as primary keys for all entities across SQLite and Convex.</strong></p>
 <ul>
-<li><strong>Offline access</strong> - Work without an internet connection</li>
-<li><strong>Fast performance</strong> - No network latency for read/write operations</li>
-<li><strong>Data ownership</strong> - Your data stays on your machine</li>
+<li>Local SQLite <code>id</code> columns change from <code>Integer</code> to <code>String(36)</code> (storing the UUID as a canonical hyphenated string).</li>
+<li>Typed identifiers (<code>CodeId</code>, <code>SegmentId</code>, <code>SourceId</code>, <code>CategoryId</code>, <code>CaseId</code>, <code>FolderId</code>) change their internal <code>value</code> from <code>int</code> to <code>str</code>.</li>
+<li>The Convex document <code>_id</code> field continues to be Convex's own ID; the UUID is stored as a separate <code>localId</code> field in Convex documents (or the mutation accepts the client UUID as the canonical record ID where Convex supports custom IDs).</li>
+<li>The <code>SyncIdMap</code> table and <code>id_map.py</code> module are <strong>deleted</strong> once migration is complete.</li>
+<li>The <code>FK_DEPENDENCIES</code> translation logic in <code>SyncEngine._translate_fk_ids()</code> is <strong>deleted</strong>.</li>
 </ul>
-<h3 id="cloud-sync-optional">Cloud Sync (Optional)<a class="headerlink" href="#cloud-sync-optional" title="Permanent link">&para;</a></h3>
-<p>Enable cloud synchronization to:</p>
-<ul>
-<li><strong>Collaborate in real-time</strong> with team members</li>
-<li><strong>Back up</strong> your project data to the cloud</li>
-<li><strong>Access</strong> your project from multiple devices</li>
-</ul>
-<h4 id="enabling-cloud-sync">Enabling Cloud Sync<a class="headerlink" href="#enabling-cloud-sync" title="Permanent link">&para;</a></h4>
-<ol>
-<li>Go to <strong>Database</strong> in the sidebar</li>
-<li>Check <strong>Enable cloud sync with Convex</strong></li>
-<li>The Convex configuration panel appears</li>
-</ol>
-<h4 id="configuring-convex">Configuring Convex<a class="headerlink" href="#configuring-convex" title="Permanent link">&para;</a></h4>
-<ol>
-<li>Get your deployment URL from <a href="https://convex.dev">convex.dev</a></li>
-<li>Create a new project or use an existing one</li>
-<li>Copy the deployment URL (looks like <code>https://your-project.convex.cloud</code>)</li>
-<li>Paste it into the <strong>Deployment URL</strong> field</li>
-</ol>
-<blockquote>
-<p><strong>Note: Reopening Required</strong></p>
-<p>After changing database settings, you may need to reopen your project for changes to take effect.</p>
-</blockquote>
-<h4 id="how-cloud-sync-works">How Cloud Sync Works<a class="headerlink" href="#how-cloud-sync-works" title="Permanent link">&para;</a></h4>
-<p>When cloud sync is enabled:</p>
-<ul>
-<li>All changes are <strong>saved locally first</strong> (SQLite remains primary)</li>
-<li>Changes are then <strong>queued for upload</strong> to Convex</li>
-<li>When connected, changes <strong>sync automatically</strong> in real-time</li>
-<li>Changes from other devices <strong>appear automatically</strong></li>
-</ul>
-<h4 id="sync-status-indicator">Sync Status Indicator<a class="headerlink" href="#sync-status-indicator" title="Permanent link">&para;</a></h4>
-<p>When cloud sync is enabled, a sync status indicator appears in the navigation bar:</p>
+<h3 id="why-uuidv7-specifically">Why UUIDv7 specifically<a class="headerlink" href="#why-uuidv7-specifically" title="Permanent link">&para;</a></h3>
 <table>
 <thead>
 <tr>
-<th>Icon</th>
-<th>Status</th>
-<th>Meaning</th>
+<th>Property</th>
+<th>UUIDv4</th>
+<th>UUIDv7</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td>Green check</td>
-<td>Synced</td>
-<td>All changes uploaded</td>
+<td>Globally unique</td>
+<td>Yes</td>
+<td>Yes</td>
 </tr>
 <tr>
-<td>Spinning</td>
-<td>Syncing</td>
-<td>Upload in progress</td>
+<td>Time-ordered</td>
+<td>No</td>
+<td>Yes — first 48 bits = millisecond timestamp</td>
 </tr>
 <tr>
-<td>Red warning</td>
-<td>Error</td>
-<td>Connection issue (hover for details)</td>
+<td>B-tree index friendly</td>
+<td>Poor (random, causes page splits)</td>
+<td>Good (monotonically increasing)</td>
+</tr>
+<tr>
+<td>Sortable by creation time</td>
+<td>No</td>
+<td>Yes</td>
+</tr>
+<tr>
+<td>Available in Python</td>
+<td><code>uuid.uuid4()</code></td>
+<td><code>uuid-utils</code> library (Rust-backed, fast)</td>
 </tr>
 </tbody>
 </table>
-<p>Click the indicator to manually trigger a sync or see pending changes.</p>
-<h4 id="offline-mode">Offline Mode<a class="headerlink" href="#offline-mode" title="Permanent link">&para;</a></h4>
-<p>If you lose internet connection:</p>
-<ol>
-<li>Continue working normally - all changes save locally</li>
-<li>Changes queue for upload automatically</li>
-<li>When reconnected, pending changes sync in the background</li>
-</ol>
-<blockquote>
-<p><strong>Tip: Check Connection Status</strong></p>
-<p>The sync indicator shows the current connection state. If syncing seems stuck, check your internet connection.</p>
-</blockquote>
-<h2 id="saving-settings">Saving Settings<a class="headerlink" href="#saving-settings" title="Permanent link">&para;</a></h2>
-<p>Settings are saved automatically as you change them. There's no need to click Save.</p>
+<p>UUIDv7's time-ordering means SQLite B-tree indexes for the <code>id</code> column remain append-friendly, preserving the locality that makes integer auto-increment performant. Pure random UUIDv4 causes index fragmentation on every insert.</p>
+<h3 id="why-not-keep-integers">Why not keep integers<a class="headerlink" href="#why-not-keep-integers" title="Permanent link">&para;</a></h3>
 <ul>
-<li><strong>OK</strong> - Closes the dialog</li>
-<li><strong>Cancel</strong> - Closes the dialog (changes are already saved)</li>
+<li>Integer PKs require the mapping table, which is the source of the majority of sync complexity.</li>
+<li>The current <code>uuid4() % 1_000_000</code> hack is unsound; moving to UUIDv7 fixes correctness at the same time.</li>
+<li>Integers require server coordination for global uniqueness (e.g., Convex ID must be authoritative). UUIDv7 allows offline-first creation with no coordination.</li>
 </ul>
-<h2 id="keyboard-shortcuts">Keyboard Shortcuts<a class="headerlink" href="#keyboard-shortcuts" title="Permanent link">&para;</a></h2>
+<h3 id="why-not-uuidv4">Why not UUIDv4<a class="headerlink" href="#why-not-uuidv4" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Index fragmentation degrades SQLite read performance on large projects.</li>
+<li>Not sortable by time, which breaks any "show me recently added codes" query that relies on ID ordering.</li>
+</ul>
+<hr />
+<h2 id="consequences">Consequences<a class="headerlink" href="#consequences" title="Permanent link">&para;</a></h2>
+<h3 id="positive">Positive<a class="headerlink" href="#positive" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Sync ID mapping eliminated.</strong> <code>SyncIdMap</code>, <code>FK_DEPENDENCIES</code>, <code>_translate_fk_ids</code>, deferred-retry FK logic — all deleted.</li>
+<li><strong>Offline entity creation is safe.</strong> A new code created offline is given its canonical global ID immediately, without needing a server round-trip.</li>
+<li><strong>Collision probability eliminated.</strong> UUIDv7 collision probability is negligible (2^122 random bits plus time component).</li>
+<li><strong>SQLite index performance preserved.</strong> Monotonically increasing IDs prevent B-tree fragmentation.</li>
+<li><strong>Simpler sync boundary.</strong> The outbound sync sends the entity's own UUID; the server stores it. No translation required.</li>
+</ul>
+<h3 id="negative-trade-offs">Negative / Trade-offs<a class="headerlink" href="#negative-trade-offs" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Migration required for existing <code>.qda</code> files.</strong> Projects created before this change have integer PKs. A one-time migration must convert all IDs and update all FK references. Existing files cannot be opened without running the migration.</li>
+<li><strong>String IDs are larger than integers</strong> — approximately 36 bytes vs 4-8 bytes per PK. At the scale of QualCoder projects (tens of thousands of segments at most), this is negligible.</li>
+<li><strong>Python dependency.</strong> Python's built-in <code>uuid</code> module gains <code>uuid7()</code> only in Python 3.13+. Until then, the <code>uuid-utils</code> library (<code>pip install uuid-utils</code>) provides a fast Rust-backed implementation with an identical API.</li>
+<li><strong>All 313 <code>.value</code> usages must change type</strong> — any code that compares <code>id.value</code> to an integer literal or passes it to a function expecting <code>int</code> will fail at type-check time. This is a one-time cost, caught by <code>mypy</code>.</li>
+<li><strong>Convex schema change.</strong> Convex documents currently use Convex's own <code>_id</code> as the authoritative ID. We add a <code>localId: v.string()</code> field (storing the UUIDv7) and use that for all cross-system references.</li>
+</ul>
+<hr />
+<h2 id="alternatives-considered">Alternatives Considered<a class="headerlink" href="#alternatives-considered" title="Permanent link">&para;</a></h2>
+<h3 id="keep-integer-pks-improve-syncidmap">Keep integer PKs + improve SyncIdMap<a class="headerlink" href="#keep-integer-pks-improve-syncidmap" title="Permanent link">&para;</a></h3>
+<p><strong>Rejected.</strong> The mapping table is inherently stateful and can desync. Adding a <code>localId TEXT UNIQUE</code> column to each table (PowerSync dual-ID pattern) solves offline creation but still requires FK translation. Complexity reduction is partial.</p>
+<h3 id="uuidv4-instead-of-uuidv7">UUIDv4 instead of UUIDv7<a class="headerlink" href="#uuidv4-instead-of-uuidv7" title="Permanent link">&para;</a></h3>
+<p><strong>Rejected.</strong> Same collision safety as UUIDv7 but loses time-ordering, causing SQLite B-tree fragmentation and removing natural sort-by-creation ordering.</p>
+<h3 id="convex-issued-ids-as-the-canonical-id">Convex-issued IDs as the canonical ID<a class="headerlink" href="#convex-issued-ids-as-the-canonical-id" title="Permanent link">&para;</a></h3>
+<p><strong>Rejected.</strong> This requires a network round-trip to create any entity, breaking offline-first operation entirely.</p>
+<hr />
+<h2 id="implementation-plan">Implementation Plan<a class="headerlink" href="#implementation-plan" title="Permanent link">&para;</a></h2>
+<p>See <a href="../../ai/UUIDV7_MIGRATION_PLAN/"><code>docs/ai/UUIDV7_MIGRATION_PLAN.md</code></a> for the full phased implementation plan.</p>
+<p><strong>Summary of phases:</strong></p>
 <table>
 <thead>
 <tr>
-<th>Action</th>
-<th>Shortcut</th>
+<th>Phase</th>
+<th>Scope</th>
+<th>Risk</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td>Open Settings</td>
-<td><code>Cmd+,</code> (macOS) / <code>Ctrl+,</code> (Windows/Linux)</td>
+<td>0 — Dependency</td>
+<td>Add <code>uuid-utils</code> to <code>pyproject.toml</code></td>
+<td>Low</td>
+</tr>
+<tr>
+<td>1 — Typed IDs</td>
+<td>Change <code>value: int → str</code> in <code>types.py</code></td>
+<td>Medium (313 usages)</td>
+</tr>
+<tr>
+<td>2 — SQLite schemas</td>
+<td>Change <code>Integer</code> PKs to <code>String(36)</code></td>
+<td>Medium</td>
+</tr>
+<tr>
+<td>3 — Repositories</td>
+<td>Update all repo <code>save()</code>/<code>get_by_id()</code></td>
+<td>Medium</td>
+</tr>
+<tr>
+<td>4 — Sync layer</td>
+<td>Remove <code>SyncIdMap</code>, <code>_translate_fk_ids</code>, deferred-retry logic</td>
+<td>High</td>
+</tr>
+<tr>
+<td>5 — Convex schema</td>
+<td>Add <code>localId</code> field to all Convex tables</td>
+<td>Medium</td>
+</tr>
+<tr>
+<td>6 — DB migration</td>
+<td>Write SQLite migration for existing <code>.qda</code> files</td>
+<td>High</td>
+</tr>
+<tr>
+<td>7 — Tests</td>
+<td>Update all E2E fixtures and assertions</td>
+<td>Medium</td>
 </tr>
 </tbody>
 </table>
-<h2 id="next-steps">Next Steps<a class="headerlink" href="#next-steps" title="Permanent link">&para;</a></h2>
+<hr />
+<h2 id="references">References<a class="headerlink" href="#references" title="Permanent link">&para;</a></h2>
 <ul>
-<li><a href="../coding/">Start coding your text</a></li>
-<li><a href="../codes/">Manage your codes</a></li>
-<li><a href="../sources/">Import sources</a></li>
+<li><a href="https://www.rfc-editor.org/rfc/rfc9562">UUIDv7 RFC 9562</a></li>
+<li><a href="https://buildkite.com/resources/blog/goodbye-integers-hello-uuids/">Goodbye Sequential Integers, Hello UUIDv7 — Buildkite</a></li>
+<li><a href="https://pypi.org/project/uuid-utils/">uuid-utils Python library</a></li>
+<li><a href="https://docs.powersync.com/tutorials/client/data/sequential-id-mapping">PowerSync Sequential ID Mapping</a> — the problem we are solving by not needing this</li>
+<li><a href="https://blog.danlew.net/2017/03/09/the-two-id-problem/">The Two ID Problem — Dan Lew</a> — the root cause</li>
+<li>Research session that led to this decision: <code>docs/ai/SYNC_ENGINE_RESEARCH.md</code></li>
 </ul>
 
 

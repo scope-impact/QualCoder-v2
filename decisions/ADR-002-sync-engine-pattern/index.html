@@ -10,7 +10,7 @@
       
       
       
-        <link rel="canonical" href="https://qualcoder.dev/docs/user-manual/settings/">
+        <link rel="canonical" href="https://qualcoder.dev/docs/decisions/ADR-002-sync-engine-pattern/">
       
       
       
@@ -23,7 +23,7 @@
     
     
       
-        <title>Settings and Preferences - QualCoder v2 Developer Guide</title>
+        <title>ADR-002: Transactional Outbox + Cursor Pull + LWW as Sync Engine Pattern - QualCoder v2 Developer Guide</title>
       
     
     
@@ -74,7 +74,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#settings-and-preferences" class="md-skip">
+        <a href="#adr-002-transactional-outbox-cursor-pull-lww-as-sync-engine-pattern" class="md-skip">
           Skip to content
         </a>
       
@@ -114,7 +114,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Settings and Preferences
+              ADR-002: Transactional Outbox + Cursor Pull + LWW as Sync Engine Pattern
             
           </span>
         </div>
@@ -242,7 +242,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../" class="md-tabs__link">
+        <a href="../../user-manual/" class="md-tabs__link">
           
   
   
@@ -552,7 +552,7 @@
         
           
           <div class="md-nav__link md-nav__container">
-            <a href="../" class="md-nav__link ">
+            <a href="../../user-manual/" class="md-nav__link ">
               
   
   
@@ -596,7 +596,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../getting-started/" class="md-nav__link">
+      <a href="../../user-manual/getting-started/" class="md-nav__link">
         
   
   
@@ -624,7 +624,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../sources/" class="md-nav__link">
+      <a href="../../user-manual/sources/" class="md-nav__link">
         
   
   
@@ -652,7 +652,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../codes/" class="md-nav__link">
+      <a href="../../user-manual/codes/" class="md-nav__link">
         
   
   
@@ -680,7 +680,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../coding/" class="md-nav__link">
+      <a href="../../user-manual/coding/" class="md-nav__link">
         
   
   
@@ -708,7 +708,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../ai-features/" class="md-nav__link">
+      <a href="../../user-manual/ai-features/" class="md-nav__link">
         
   
   
@@ -4098,55 +4098,22 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#opening-settings" class="md-nav__link">
+  <a href="#context" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Opening Settings
+        Context
       
     </span>
   </a>
   
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#appearance" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Appearance
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Appearance">
+    <nav class="md-nav" aria-label="Context">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#theme" class="md-nav__link">
+  <a href="#problems-with-the-current-syncengine-implementation" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Theme
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#font-size" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Font Size
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#font-family" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Font Family
+        Problems with the current SyncEngine implementation
       
     </span>
   </a>
@@ -4159,33 +4126,22 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#language" class="md-nav__link">
+  <a href="#decision" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Language
+        Decision
       
     </span>
   </a>
   
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#backup-settings" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Backup Settings
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Backup Settings">
+    <nav class="md-nav" aria-label="Decision">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#enable-backups" class="md-nav__link">
+  <a href="#push-path-transactional-outbox" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Enable Backups
+        Push path: Transactional Outbox
       
     </span>
   </a>
@@ -4193,10 +4149,32 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#backup-interval" class="md-nav__link">
+  <a href="#pull-path-cursor-based-incremental-pull" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Backup Interval
+        Pull path: Cursor-based incremental pull
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#conflict-resolution-lww-for-metadata-additive-for-annotations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Conflict resolution: LWW for metadata, Additive for annotations
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pending-outbound-conflict-skip" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Pending outbound conflict skip
       
     </span>
   </a>
@@ -4209,22 +4187,22 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#av-coding-settings" class="md-nav__link">
+  <a href="#consequences" class="md-nav__link">
     <span class="md-ellipsis">
       
-        AV Coding Settings
+        Consequences
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="AV Coding Settings">
+    <nav class="md-nav" aria-label="Consequences">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#timestamp-format" class="md-nav__link">
+  <a href="#positive" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Timestamp Format
+        Positive
       
     </span>
   </a>
@@ -4232,10 +4210,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#speaker-format" class="md-nav__link">
+  <a href="#negative-trade-offs" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Speaker Format
+        Negative / Trade-offs
       
     </span>
   </a>
@@ -4248,22 +4226,22 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#database-settings" class="md-nav__link">
+  <a href="#alternatives-considered" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Database Settings
+        Alternatives Considered
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Database Settings">
+    <nav class="md-nav" aria-label="Alternatives Considered">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#primary-storage" class="md-nav__link">
+  <a href="#keep-the-current-syncenginequeue_change-approach" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Primary Storage
+        Keep the current SyncEngine.queue_change() approach
       
     </span>
   </a>
@@ -4271,22 +4249,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#cloud-sync-optional" class="md-nav__link">
+  <a href="#replicache-style-optimistic-mutations" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Cloud Sync (Optional)
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Cloud Sync (Optional)">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#enabling-cloud-sync" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Enabling Cloud Sync
+        Replicache-style optimistic mutations
       
     </span>
   </a>
@@ -4294,43 +4260,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#configuring-convex" class="md-nav__link">
+  <a href="#real-time-subscriptions-convex-subscribe" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Configuring Convex
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#how-cloud-sync-works" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        How Cloud Sync Works
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#sync-status-indicator" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Sync Status Indicator
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#offline-mode" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Offline Mode
+        Real-time subscriptions (Convex subscribe)
       
     </span>
   </a>
@@ -4341,17 +4274,12 @@
     </nav>
   
 </li>
-        
-      </ul>
-    </nav>
-  
-</li>
       
         <li class="md-nav__item">
-  <a href="#saving-settings" class="md-nav__link">
+  <a href="#implementation-plan" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Saving Settings
+        Implementation Plan
       
     </span>
   </a>
@@ -4359,10 +4287,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#keyboard-shortcuts" class="md-nav__link">
+  <a href="#relationship-to-other-decisions" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Keyboard Shortcuts
+        Relationship to Other Decisions
       
     </span>
   </a>
@@ -4370,10 +4298,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#next-steps" class="md-nav__link">
+  <a href="#references" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Next Steps
+        References
       
     </span>
   </a>
@@ -4400,203 +4328,273 @@
   
 
 
-<h1 id="settings-and-preferences">Settings and Preferences<a class="headerlink" href="#settings-and-preferences" title="Permanent link">&para;</a></h1>
-<p>Configure QualCoder to match your workflow and preferences.</p>
-<h2 id="opening-settings">Opening Settings<a class="headerlink" href="#opening-settings" title="Permanent link">&para;</a></h2>
-<p>Access settings from the menu bar:</p>
-<ol>
-<li>Click <strong>Settings</strong> in the menu bar (or press <code>Cmd+,</code> on macOS)</li>
-<li>The Settings dialog opens with a sidebar for navigation</li>
-</ol>
-<h2 id="appearance">Appearance<a class="headerlink" href="#appearance" title="Permanent link">&para;</a></h2>
-<h3 id="theme">Theme<a class="headerlink" href="#theme" title="Permanent link">&para;</a></h3>
-<p>Choose between light and dark themes:</p>
-<ol>
-<li>Go to <strong>Appearance</strong> in the sidebar</li>
-<li>Click <strong>Light</strong> or <strong>Dark</strong> theme button</li>
-<li>The UI updates immediately</li>
-</ol>
-<blockquote>
-<p><strong>Tip: Eye Strain</strong></p>
-<p>Use dark theme in low-light environments to reduce eye strain during extended coding sessions.</p>
-</blockquote>
-<h3 id="font-size">Font Size<a class="headerlink" href="#font-size" title="Permanent link">&para;</a></h3>
-<p>Adjust the application font size:</p>
-<ol>
-<li>In <strong>Appearance</strong>, find the Font Size slider</li>
-<li>Drag the slider between 10px and 24px</li>
-<li>The preview updates as you adjust</li>
-</ol>
-<h3 id="font-family">Font Family<a class="headerlink" href="#font-family" title="Permanent link">&para;</a></h3>
-<p>Choose your preferred font:</p>
-<ol>
-<li>In <strong>Appearance</strong>, find the Font Family dropdown</li>
-<li>Select from available fonts (Inter, Roboto, System Default)</li>
-<li>The change applies immediately</li>
-</ol>
-<h2 id="language">Language<a class="headerlink" href="#language" title="Permanent link">&para;</a></h2>
-<p>Select your preferred application language:</p>
-<ol>
-<li>Go to <strong>Language</strong> in the sidebar</li>
-<li>Choose from available languages:</li>
-<li>English</li>
-<li>Spanish</li>
-<li>German</li>
-<li>French</li>
-<li>Portuguese</li>
-<li>Some changes may require restart</li>
-</ol>
-<blockquote>
-<p><strong>Note: Translation Coverage</strong></p>
-<p>Not all languages have complete translations. Missing translations fall back to English.</p>
-</blockquote>
-<h2 id="backup-settings">Backup Settings<a class="headerlink" href="#backup-settings" title="Permanent link">&para;</a></h2>
-<p>Configure automatic project backups:</p>
-<h3 id="enable-backups">Enable Backups<a class="headerlink" href="#enable-backups" title="Permanent link">&para;</a></h3>
-<ol>
-<li>Go to <strong>Backup</strong> in the sidebar</li>
-<li>Check <strong>Enable automatic backups</strong></li>
-</ol>
-<h3 id="backup-interval">Backup Interval<a class="headerlink" href="#backup-interval" title="Permanent link">&para;</a></h3>
-<p>Set how often backups are created:</p>
-<ol>
-<li>Enable backups first</li>
-<li>Set the interval (in minutes) using the spinbox</li>
-<li>Default is 30 minutes</li>
-</ol>
-<blockquote>
-<p><strong>Warning: Backup Location</strong></p>
-<p>Backups are stored alongside your project file. Ensure you have sufficient disk space.</p>
-</blockquote>
-<h2 id="av-coding-settings">AV Coding Settings<a class="headerlink" href="#av-coding-settings" title="Permanent link">&para;</a></h2>
-<p>Configure settings for audio/video coding:</p>
-<h3 id="timestamp-format">Timestamp Format<a class="headerlink" href="#timestamp-format" title="Permanent link">&para;</a></h3>
-<p>Choose how timestamps are displayed:</p>
-<ol>
-<li>Go to <strong>AV Coding</strong> in the sidebar</li>
-<li>Select a timestamp format:</li>
-<li><strong>HH:MM:SS</strong> - Hours, minutes, seconds (default)</li>
-<li><strong>MM:SS</strong> - Minutes and seconds only</li>
-<li><strong>SS.ms</strong> - Seconds with milliseconds</li>
-</ol>
-<h3 id="speaker-format">Speaker Format<a class="headerlink" href="#speaker-format" title="Permanent link">&para;</a></h3>
-<p>Customize how speaker names appear in transcripts:</p>
-<ol>
-<li>In <strong>AV Coding</strong>, find Speaker Format</li>
-<li>Enter your preferred format using <code>{n}</code> as a placeholder</li>
-<li>Examples:</li>
-<li><code>Speaker {n}</code> → Speaker 1, Speaker 2</li>
-<li><code>P{n}</code> → P1, P2</li>
-<li><code>Interviewee {n}</code> → Interviewee 1, Interviewee 2</li>
-</ol>
-<p>The preview shows how speaker names will appear.</p>
-<h2 id="database-settings">Database Settings<a class="headerlink" href="#database-settings" title="Permanent link">&para;</a></h2>
-<p>Configure your project's data storage and synchronization options.</p>
-<h3 id="primary-storage">Primary Storage<a class="headerlink" href="#primary-storage" title="Permanent link">&para;</a></h3>
-<p>Your project data is always stored locally in SQLite. This ensures:</p>
-<ul>
-<li><strong>Offline access</strong> - Work without an internet connection</li>
-<li><strong>Fast performance</strong> - No network latency for read/write operations</li>
-<li><strong>Data ownership</strong> - Your data stays on your machine</li>
-</ul>
-<h3 id="cloud-sync-optional">Cloud Sync (Optional)<a class="headerlink" href="#cloud-sync-optional" title="Permanent link">&para;</a></h3>
-<p>Enable cloud synchronization to:</p>
-<ul>
-<li><strong>Collaborate in real-time</strong> with team members</li>
-<li><strong>Back up</strong> your project data to the cloud</li>
-<li><strong>Access</strong> your project from multiple devices</li>
-</ul>
-<h4 id="enabling-cloud-sync">Enabling Cloud Sync<a class="headerlink" href="#enabling-cloud-sync" title="Permanent link">&para;</a></h4>
-<ol>
-<li>Go to <strong>Database</strong> in the sidebar</li>
-<li>Check <strong>Enable cloud sync with Convex</strong></li>
-<li>The Convex configuration panel appears</li>
-</ol>
-<h4 id="configuring-convex">Configuring Convex<a class="headerlink" href="#configuring-convex" title="Permanent link">&para;</a></h4>
-<ol>
-<li>Get your deployment URL from <a href="https://convex.dev">convex.dev</a></li>
-<li>Create a new project or use an existing one</li>
-<li>Copy the deployment URL (looks like <code>https://your-project.convex.cloud</code>)</li>
-<li>Paste it into the <strong>Deployment URL</strong> field</li>
-</ol>
-<blockquote>
-<p><strong>Note: Reopening Required</strong></p>
-<p>After changing database settings, you may need to reopen your project for changes to take effect.</p>
-</blockquote>
-<h4 id="how-cloud-sync-works">How Cloud Sync Works<a class="headerlink" href="#how-cloud-sync-works" title="Permanent link">&para;</a></h4>
-<p>When cloud sync is enabled:</p>
-<ul>
-<li>All changes are <strong>saved locally first</strong> (SQLite remains primary)</li>
-<li>Changes are then <strong>queued for upload</strong> to Convex</li>
-<li>When connected, changes <strong>sync automatically</strong> in real-time</li>
-<li>Changes from other devices <strong>appear automatically</strong></li>
-</ul>
-<h4 id="sync-status-indicator">Sync Status Indicator<a class="headerlink" href="#sync-status-indicator" title="Permanent link">&para;</a></h4>
-<p>When cloud sync is enabled, a sync status indicator appears in the navigation bar:</p>
+<h1 id="adr-002-transactional-outbox-cursor-pull-lww-as-sync-engine-pattern">ADR-002: Transactional Outbox + Cursor Pull + LWW as Sync Engine Pattern<a class="headerlink" href="#adr-002-transactional-outbox-cursor-pull-lww-as-sync-engine-pattern" title="Permanent link">&para;</a></h1>
+<p><strong>Status:</strong> Accepted
+<strong>Date:</strong> 2026-02-25
+<strong>Deciders:</strong> Sathish Narayanan
+<strong>Scope:</strong> <code>shared/infra/sync/</code> — outbound push, inbound pull, conflict resolution</p>
+<hr />
+<h2 id="context">Context<a class="headerlink" href="#context" title="Permanent link">&para;</a></h2>
+<p>QualCoder is an offline-first desktop app. Data is stored locally in SQLite and optionally synced to Convex cloud. Three sync patterns were evaluated:</p>
 <table>
 <thead>
 <tr>
-<th>Icon</th>
-<th>Status</th>
-<th>Meaning</th>
+<th>Pattern</th>
+<th>Fit</th>
+<th>Reason</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td>Green check</td>
-<td>Synced</td>
-<td>All changes uploaded</td>
+<td>Transactional Outbox + Cursor Pull + LWW</td>
+<td>✅ Best</td>
+<td>Single-researcher primary use, existing DDD architecture, no real-time collaboration required</td>
 </tr>
 <tr>
-<td>Spinning</td>
-<td>Syncing</td>
-<td>Upload in progress</td>
+<td>Replicache-style optimistic mutations</td>
+<td>⚠️ Good</td>
+<td>Better multi-user conflict resolution but requires server-side mutators and significantly more server work</td>
 </tr>
 <tr>
-<td>Red warning</td>
-<td>Error</td>
-<td>Connection issue (hover for details)</td>
+<td>CRDTs (Automerge + Convex)</td>
+<td>❌ Overkill</td>
+<td>Designed for collaborative text editing; high storage overhead; poor fit for relational data with business invariants</td>
 </tr>
 </tbody>
 </table>
-<p>Click the indicator to manually trigger a sync or see pending changes.</p>
-<h4 id="offline-mode">Offline Mode<a class="headerlink" href="#offline-mode" title="Permanent link">&para;</a></h4>
-<p>If you lose internet connection:</p>
-<ol>
-<li>Continue working normally - all changes save locally</li>
-<li>Changes queue for upload automatically</li>
-<li>When reconnected, pending changes sync in the background</li>
-</ol>
-<blockquote>
-<p><strong>Tip: Check Connection Status</strong></p>
-<p>The sync indicator shows the current connection state. If syncing seems stuck, check your internet connection.</p>
-</blockquote>
-<h2 id="saving-settings">Saving Settings<a class="headerlink" href="#saving-settings" title="Permanent link">&para;</a></h2>
-<p>Settings are saved automatically as you change them. There's no need to click Save.</p>
-<ul>
-<li><strong>OK</strong> - Closes the dialog</li>
-<li><strong>Cancel</strong> - Closes the dialog (changes are already saved)</li>
-</ul>
-<h2 id="keyboard-shortcuts">Keyboard Shortcuts<a class="headerlink" href="#keyboard-shortcuts" title="Permanent link">&para;</a></h2>
+<h3 id="problems-with-the-current-syncengine-implementation">Problems with the current <code>SyncEngine</code> implementation<a class="headerlink" href="#problems-with-the-current-syncengine-implementation" title="Permanent link">&para;</a></h3>
+<p>The current implementation has multiple correctness issues that the chosen pattern directly resolves:</p>
+<p><strong>1. Outbox write and domain write are not atomic</strong></p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="c1"># Current — two separate operations, not one transaction</span>
+</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="bp">self</span><span class="o">.</span><span class="n">_repo</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">code</span><span class="p">)</span>        <span class="c1"># writes domain table</span>
+</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="bp">self</span><span class="o">.</span><span class="n">_sync</span><span class="o">.</span><span class="n">queue_change</span><span class="p">(</span><span class="o">...</span><span class="p">)</span> <span class="c1"># inserts sync_queue row separately</span>
+</span></code></pre></div>
+<p>If the app crashes between these two lines, the sync queue entry is lost and the change never syncs to Convex. The outbox pattern requires both writes to be in a single SQLite transaction.</p>
+<p><strong>2. Deletion detection is a broken stub</strong></p>
+<p><code>_get_local_ids()</code> in <code>pull_handler.py</code> returns an empty <code>frozenset()</code>, meaning <code>is_deletion_candidate()</code> is never triggered. Remote deletes are silently ignored.</p>
+<p><strong>3. <code>_remove_persisted_change</code> deletes wrong rows</strong></p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="n">DELETE</span> <span class="n">FROM</span> <span class="n">sync_queue</span> <span class="n">WHERE</span> <span class="n">entity_type</span> <span class="o">=</span> <span class="p">:</span><span class="n">entity_type</span> <span class="n">AND</span> <span class="n">entity_id</span> <span class="o">=</span> <span class="p">:</span><span class="n">entity_id</span>
+</span></code></pre></div>
+<p>This deletes <em>all</em> queued changes for an entity (e.g., both a CREATE and a subsequent UPDATE), not just the row that was just confirmed. The delete should use the row's own integer PK.</p>
+<p><strong>4. <code>_pending_outbound</code> sets are not thread-safe</strong></p>
+<p>Each <code>SyncedRepository</code> maintains a <code>set[str]</code> modified from the Qt main thread (on <code>save()</code>/<code>delete()</code>) and read from the sync background thread (via <code>get_pending_ids()</code>). No lock guards these accesses.</p>
+<p><strong>5. No server cursor — pull fetches everything every time</strong></p>
+<p><code>engine.pull()</code> calls <code>get_all_codes()</code>, <code>get_all_sources()</code>, etc. — a full table scan on every pull. At scale this is expensive and produces no information about what actually changed.</p>
+<hr />
+<h2 id="decision">Decision<a class="headerlink" href="#decision" title="Permanent link">&para;</a></h2>
+<p><strong>Adopt the Transactional Outbox + Cursor Pull + LWW pattern.</strong></p>
+<h3 id="push-path-transactional-outbox">Push path: Transactional Outbox<a class="headerlink" href="#push-path-transactional-outbox" title="Permanent link">&para;</a></h3>
+<p>Every command handler that mutates domain data writes both the domain change and an outbox row in a <strong>single SQLite transaction</strong>:</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="c1"># Inside a command handler — one transaction, two tables</span>
+</span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="k">with</span> <span class="n">conn</span><span class="o">.</span><span class="n">begin</span><span class="p">():</span>
+</span><span id="__span-2-3"><a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>    <span class="n">conn</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;INSERT OR REPLACE INTO cod_code ...&quot;</span><span class="p">,</span> <span class="p">{</span><span class="o">...</span><span class="p">})</span>
+</span><span id="__span-2-4"><a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>    <span class="n">conn</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span>
+</span><span id="__span-2-5"><a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>        <span class="s2">&quot;INSERT INTO sync_outbox (entity, entity_id, op, payload, idempotency_key, created_at) &quot;</span>
+</span><span id="__span-2-6"><a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a>        <span class="s2">&quot;VALUES (:entity, :entity_id, :op, :payload, :key, :ts)&quot;</span><span class="p">,</span>
+</span><span id="__span-2-7"><a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a>        <span class="p">{</span>
+</span><span id="__span-2-8"><a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a>            <span class="s2">&quot;entity&quot;</span><span class="p">:</span> <span class="s2">&quot;code&quot;</span><span class="p">,</span>
+</span><span id="__span-2-9"><a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a>            <span class="s2">&quot;entity_id&quot;</span><span class="p">:</span> <span class="n">code</span><span class="o">.</span><span class="n">id</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>   <span class="c1"># UUIDv7 (see ADR-001)</span>
+</span><span id="__span-2-10"><a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a>            <span class="s2">&quot;op&quot;</span><span class="p">:</span> <span class="s2">&quot;upsert&quot;</span><span class="p">,</span>               <span class="c1"># or &quot;delete&quot;</span>
+</span><span id="__span-2-11"><a id="__codelineno-2-11" name="__codelineno-2-11" href="#__codelineno-2-11"></a>            <span class="s2">&quot;payload&quot;</span><span class="p">:</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">code_dict</span><span class="p">),</span>
+</span><span id="__span-2-12"><a id="__codelineno-2-12" name="__codelineno-2-12" href="#__codelineno-2-12"></a>            <span class="s2">&quot;key&quot;</span><span class="p">:</span> <span class="sa">f</span><span class="s2">&quot;code:upsert:</span><span class="si">{</span><span class="n">code</span><span class="o">.</span><span class="n">id</span><span class="o">.</span><span class="n">value</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>   <span class="c1"># stable idempotency key</span>
+</span><span id="__span-2-13"><a id="__codelineno-2-13" name="__codelineno-2-13" href="#__codelineno-2-13"></a>            <span class="s2">&quot;ts&quot;</span><span class="p">:</span> <span class="n">hlc_now</span><span class="p">(),</span>              <span class="c1"># Hybrid Logical Clock timestamp</span>
+</span><span id="__span-2-14"><a id="__codelineno-2-14" name="__codelineno-2-14" href="#__codelineno-2-14"></a>        <span class="p">},</span>
+</span><span id="__span-2-15"><a id="__codelineno-2-15" name="__codelineno-2-15" href="#__codelineno-2-15"></a>    <span class="p">)</span>
+</span></code></pre></div>
+<p>A background <strong>push loop</strong> drains the outbox:
+1. Read a batch of pending rows from <code>sync_outbox</code> (ordered by <code>id</code>)
+2. Call the corresponding Convex mutation with the idempotency key
+3. On success, <code>DELETE FROM sync_outbox WHERE id = :row_id</code> (by row PK, not entity ID)
+4. On transient failure, increment <code>attempts</code>; drop after <code>MAX_ATTEMPTS</code></p>
+<p>The idempotency key on the Convex side deduplicates retries.</p>
+<h3 id="pull-path-cursor-based-incremental-pull">Pull path: Cursor-based incremental pull<a class="headerlink" href="#pull-path-cursor-based-incremental-pull" title="Permanent link">&para;</a></h3>
+<p>Replace full-table pulls with a cursor-based approach:</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="c1"># sync_meta table</span>
+</span><span id="__span-3-2"><a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="c1"># key=&#39;last_pull_cursor&#39;, value=&#39;{timestamp or version token}&#39;</span>
+</span><span id="__span-3-3"><a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>
+</span><span id="__span-3-4"><a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="n">cursor</span> <span class="o">=</span> <span class="n">conn</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span>
+</span><span id="__span-3-5"><a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>    <span class="s2">&quot;SELECT value FROM sync_meta WHERE key = &#39;last_pull_cursor&#39;&quot;</span>
+</span><span id="__span-3-6"><a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a><span class="p">)</span><span class="o">.</span><span class="n">scalar</span><span class="p">()</span> <span class="ow">or</span> <span class="s2">&quot;0&quot;</span>
+</span><span id="__span-3-7"><a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a>
+</span><span id="__span-3-8"><a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a><span class="n">changes</span> <span class="o">=</span> <span class="n">convex</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="s2">&quot;sync:getChangesSince&quot;</span><span class="p">,</span> <span class="p">{</span><span class="s2">&quot;cursor&quot;</span><span class="p">:</span> <span class="n">cursor</span><span class="p">})</span>
+</span><span id="__span-3-9"><a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a>
+</span><span id="__span-3-10"><a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a><span class="k">for</span> <span class="n">change</span> <span class="ow">in</span> <span class="n">changes</span><span class="p">[</span><span class="s2">&quot;items&quot;</span><span class="p">]:</span>
+</span><span id="__span-3-11"><a id="__codelineno-3-11" name="__codelineno-3-11" href="#__codelineno-3-11"></a>    <span class="k">if</span> <span class="n">change</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;_deleted&quot;</span><span class="p">):</span>
+</span><span id="__span-3-12"><a id="__codelineno-3-12" name="__codelineno-3-12" href="#__codelineno-3-12"></a>        <span class="c1"># Explicit tombstone from server — safe to delete locally</span>
+</span><span id="__span-3-13"><a id="__codelineno-3-13" name="__codelineno-3-13" href="#__codelineno-3-13"></a>        <span class="n">_apply_delete</span><span class="p">(</span><span class="n">change</span><span class="p">[</span><span class="s2">&quot;localId&quot;</span><span class="p">],</span> <span class="n">change</span><span class="p">[</span><span class="s2">&quot;entityType&quot;</span><span class="p">])</span>
+</span><span id="__span-3-14"><a id="__codelineno-3-14" name="__codelineno-3-14" href="#__codelineno-3-14"></a>    <span class="k">else</span><span class="p">:</span>
+</span><span id="__span-3-15"><a id="__codelineno-3-15" name="__codelineno-3-15" href="#__codelineno-3-15"></a>        <span class="n">_apply_upsert</span><span class="p">(</span><span class="n">change</span><span class="p">)</span>
+</span><span id="__span-3-16"><a id="__codelineno-3-16" name="__codelineno-3-16" href="#__codelineno-3-16"></a>
+</span><span id="__span-3-17"><a id="__codelineno-3-17" name="__codelineno-3-17" href="#__codelineno-3-17"></a><span class="n">conn</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span>
+</span><span id="__span-3-18"><a id="__codelineno-3-18" name="__codelineno-3-18" href="#__codelineno-3-18"></a>    <span class="s2">&quot;INSERT OR REPLACE INTO sync_meta (key, value) VALUES (&#39;last_pull_cursor&#39;, :cursor)&quot;</span><span class="p">,</span>
+</span><span id="__span-3-19"><a id="__codelineno-3-19" name="__codelineno-3-19" href="#__codelineno-3-19"></a>    <span class="p">{</span><span class="s2">&quot;cursor&quot;</span><span class="p">:</span> <span class="n">changes</span><span class="p">[</span><span class="s2">&quot;nextCursor&quot;</span><span class="p">]},</span>
+</span><span id="__span-3-20"><a id="__codelineno-3-20" name="__codelineno-3-20" href="#__codelineno-3-20"></a><span class="p">)</span>
+</span></code></pre></div>
+<p>Deletions are server-driven via explicit tombstone records (<code>_deleted: true</code>). The client does not need to maintain a full local ID set and diff it against the remote — the broken <code>_get_local_ids()</code> stub is eliminated by design.</p>
+<h3 id="conflict-resolution-lww-for-metadata-additive-for-annotations">Conflict resolution: LWW for metadata, Additive for annotations<a class="headerlink" href="#conflict-resolution-lww-for-metadata-additive-for-annotations" title="Permanent link">&para;</a></h3>
 <table>
 <thead>
 <tr>
-<th>Action</th>
-<th>Shortcut</th>
+<th>Entity field type</th>
+<th>Policy</th>
+<th>Reason</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td>Open Settings</td>
-<td><code>Cmd+,</code> (macOS) / <code>Ctrl+,</code> (Windows/Linux)</td>
+<td>Code name, color, memo</td>
+<td>Last-Write-Wins (LWW)</td>
+<td>Low-stakes metadata; researcher intent is the most recent edit</td>
+</tr>
+<tr>
+<td>Source name, memo, folder</td>
+<td>LWW</td>
+<td>Same rationale</td>
+</tr>
+<tr>
+<td>Coded segments</td>
+<td><strong>Additive</strong> — never delete a remote segment unless an explicit server-side delete tombstone exists</td>
+<td>Silently discarding another researcher's annotation is a data integrity violation in qualitative research</td>
+</tr>
+<tr>
+<td>Case attributes</td>
+<td>LWW per field</td>
+<td>Structured data; last edit wins</td>
 </tr>
 </tbody>
 </table>
-<h2 id="next-steps">Next Steps<a class="headerlink" href="#next-steps" title="Permanent link">&para;</a></h2>
+<p>LWW comparison uses a <strong>Hybrid Logical Clock (HLC)</strong> timestamp, not a wall clock. HLC = <code>max(physical_ms, logical_counter)</code>, ensuring monotonically increasing timestamps that also capture causality regardless of clock skew between devices.</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="c1"># sync_meta key=&#39;hlc_state&#39; — persisted HLC state</span>
+</span><span id="__span-4-2"><a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="k">def</span><span class="w"> </span><span class="nf">hlc_now</span><span class="p">(</span><span class="n">conn</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+</span><span id="__span-4-3"><a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Return current HLC timestamp and advance the clock.&quot;&quot;&quot;</span>
+</span><span id="__span-4-4"><a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a>    <span class="o">...</span>  <span class="c1"># see implementation plan</span>
+</span></code></pre></div>
+<h3 id="pending-outbound-conflict-skip">Pending outbound conflict skip<a class="headerlink" href="#pending-outbound-conflict-skip" title="Permanent link">&para;</a></h3>
+<p>Rather than per-repo <code>set[str]</code> (thread-unsafe), derive pending IDs directly from the <code>sync_outbox</code> table:</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="k">def</span><span class="w"> </span><span class="nf">get_pending_ids</span><span class="p">(</span><span class="n">entity_type</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">frozenset</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+</span><span id="__span-5-2"><a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>    <span class="n">rows</span> <span class="o">=</span> <span class="n">conn</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span>
+</span><span id="__span-5-3"><a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>        <span class="s2">&quot;SELECT DISTINCT entity_id FROM sync_outbox WHERE entity = :e AND attempts &lt; :max&quot;</span><span class="p">,</span>
+</span><span id="__span-5-4"><a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a>        <span class="p">{</span><span class="s2">&quot;e&quot;</span><span class="p">:</span> <span class="n">entity_type</span><span class="p">,</span> <span class="s2">&quot;max&quot;</span><span class="p">:</span> <span class="n">MAX_ATTEMPTS</span><span class="p">},</span>
+</span><span id="__span-5-5"><a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a>    <span class="p">)</span><span class="o">.</span><span class="n">fetchall</span><span class="p">()</span>
+</span><span id="__span-5-6"><a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a>    <span class="k">return</span> <span class="nb">frozenset</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">rows</span><span class="p">)</span>
+</span></code></pre></div>
+<p>This is thread-safe because SQLite WAL mode allows concurrent readers while the push loop writes.</p>
+<hr />
+<h2 id="consequences">Consequences<a class="headerlink" href="#consequences" title="Permanent link">&para;</a></h2>
+<h3 id="positive">Positive<a class="headerlink" href="#positive" title="Permanent link">&para;</a></h3>
 <ul>
-<li><a href="../coding/">Start coding your text</a></li>
-<li><a href="../codes/">Manage your codes</a></li>
-<li><a href="../sources/">Import sources</a></li>
+<li><strong>Atomicity guaranteed.</strong> A crash between the domain write and the outbox insert is impossible — they are one transaction.</li>
+<li><strong>No more lost sync entries.</strong> The outbox persists across restarts; the push loop picks up where it left off.</li>
+<li><strong>Deletion detection works.</strong> Server tombstones replace the broken <code>_get_local_ids()</code> stub.</li>
+<li><strong><code>_remove_persisted_change</code> fixed.</strong> Deletion by row PK, not entity ID.</li>
+<li><strong>Thread-safety.</strong> <code>_pending_outbound</code> sets replaced by a <code>sync_outbox</code> query (WAL-safe).</li>
+<li><strong>Efficient pull.</strong> Cursor-based pull fetches only changes since the last pull, not full tables.</li>
+<li><strong>Research data integrity.</strong> Additive policy for segments means no annotation is silently lost.</li>
+<li><strong>Idempotent push.</strong> The idempotency key on Convex deduplicates retries transparently.</li>
+</ul>
+<h3 id="negative-trade-offs">Negative / Trade-offs<a class="headerlink" href="#negative-trade-offs" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Convex must expose a <code>getChangesSince(cursor)</code> query.</strong> This requires adding a server-side cursor mechanism to all Convex tables. The current <code>getAll</code> queries are replaced by cursor-aware queries.</li>
+<li><strong>HLC state must be persisted.</strong> Adds a <code>sync_meta</code> table row for the HLC state. Requires care on clock initialization (especially on first install or database migration).</li>
+<li><strong>Outbox write inside command handlers couples sync to domain.</strong> Command handlers must know about the outbox table. Mitigation: a thin <code>OutboxWriter</code> helper is injected into handlers, keeping the coupling explicit and testable.</li>
+<li><strong>The <code>SyncedRepository</code> decorator pattern is retired.</strong> The current <code>SyncedCodeRepository</code> (wrapping SQLiteCodeRepository and calling <code>engine.queue_change()</code>) is replaced by direct outbox writes in command handlers. This is a structural change.</li>
+</ul>
+<hr />
+<h2 id="alternatives-considered">Alternatives Considered<a class="headerlink" href="#alternatives-considered" title="Permanent link">&para;</a></h2>
+<h3 id="keep-the-current-syncenginequeue_change-approach">Keep the current <code>SyncEngine.queue_change()</code> approach<a class="headerlink" href="#keep-the-current-syncenginequeue_change-approach" title="Permanent link">&para;</a></h3>
+<p><strong>Rejected.</strong> The non-atomic write is a correctness bug. The approach could be patched but the structural problems (full-table pulls, broken deletion, thread-unsafe pending sets) all require the same changes the outbox pattern already provides.</p>
+<h3 id="replicache-style-optimistic-mutations">Replicache-style optimistic mutations<a class="headerlink" href="#replicache-style-optimistic-mutations" title="Permanent link">&para;</a></h3>
+<p><strong>Rejected</strong> for the initial implementation. Replicache requires writing every mutation twice (client + server mutator) and server-side conflict resolution logic. For QualCoder's primary use case (single researcher, offline-capable), the added complexity is not justified. The pattern can be adopted later if multi-user real-time collaboration becomes a requirement.</p>
+<h3 id="real-time-subscriptions-convex-subscribe">Real-time subscriptions (Convex subscribe)<a class="headerlink" href="#real-time-subscriptions-convex-subscribe" title="Permanent link">&para;</a></h3>
+<p><strong>Rejected</strong> as the primary sync mechanism due to PyO3 GIL threading constraints documented in <code>engine.py:52-57</code>. Subscriptions can remain as an optional add-on once the outbox + cursor pull foundation is solid.</p>
+<hr />
+<h2 id="implementation-plan">Implementation Plan<a class="headerlink" href="#implementation-plan" title="Permanent link">&para;</a></h2>
+<p>See <a href="../../ai/SYNC_ENGINE_REFACTOR_PLAN/"><code>docs/ai/SYNC_ENGINE_REFACTOR_PLAN.md</code></a> for the full phased plan.</p>
+<p><strong>Summary of phases:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Phase</th>
+<th>Scope</th>
+<th>Risk</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1 — Outbox table</td>
+<td>Add <code>sync_outbox</code> + <code>sync_meta</code> tables</td>
+<td>Low</td>
+</tr>
+<tr>
+<td>2 — HLC</td>
+<td>Implement Hybrid Logical Clock utility</td>
+<td>Low</td>
+</tr>
+<tr>
+<td>3 — OutboxWriter</td>
+<td>Thin helper injected into command handlers</td>
+<td>Medium</td>
+</tr>
+<tr>
+<td>4 — Command handlers</td>
+<td>Write outbox entry inside each handler (atomic)</td>
+<td>Medium</td>
+</tr>
+<tr>
+<td>5 — Push loop</td>
+<td>Replace <code>_outbound_sync_loop</code> with outbox drain</td>
+<td>Medium</td>
+</tr>
+<tr>
+<td>6 — Convex cursor API</td>
+<td>Add <code>getChangesSince(cursor)</code> to all Convex tables</td>
+<td>Medium</td>
+</tr>
+<tr>
+<td>7 — Pull loop</td>
+<td>Replace <code>engine.pull()</code> with cursor pull</td>
+<td>Medium</td>
+</tr>
+<tr>
+<td>8 — Delete SyncedRepos</td>
+<td>Remove <code>SyncedRepository</code> wrappers</td>
+<td>High</td>
+</tr>
+<tr>
+<td>9 — Conflict resolution</td>
+<td>Implement LWW + additive policy per entity type</td>
+<td>High</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="relationship-to-other-decisions">Relationship to Other Decisions<a class="headerlink" href="#relationship-to-other-decisions" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>ADR</th>
+<th>Relationship</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="../ADR-001-uuidv7-primary-keys/">ADR-001</a></td>
+<td>UUIDv7 PKs are a prerequisite — the outbox stores entity UUIDs as the canonical ID, eliminating the FK-translation complexity that plagues the current engine</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="references">References<a class="headerlink" href="#references" title="Permanent link">&para;</a></h2>
+<ul>
+<li><a href="https://microservices.io/patterns/data/transactional-outbox.html">Transactional Outbox Pattern — microservices.io</a></li>
+<li><a href="https://www.inkandswitch.com/essay/local-first/">Local-first software — Ink &amp; Switch</a></li>
+<li><a href="https://stack.convex.dev/a-map-of-sync">A Map of Sync — Convex</a></li>
+<li><a href="https://doc.replicache.dev/concepts/how-it-works">How Replicache Works</a></li>
+<li><a href="https://watermelondb.dev/docs/Implementation/SyncImpl">WatermelonDB Sync Implementation</a></li>
+<li><a href="https://martinfowler.com/articles/patterns-of-distributed-systems/hybrid-clock.html">Hybrid Logical Clocks — Martin Fowler</a></li>
+<li><a href="https://sqlite.org/wal.html">SQLite WAL Mode</a></li>
+<li><a href="https://www.sachith.co.uk/offline-sync-conflict-resolution-patterns-architecture-trade%E2%80%91offs-practical-guide-feb-19-2026/">Offline sync &amp; conflict resolution patterns</a></li>
+<li>Research session: <code>docs/ai/SYNC_ENGINE_RESEARCH.md</code></li>
 </ul>
 
 

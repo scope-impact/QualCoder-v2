@@ -10,7 +10,7 @@
       
       
       
-        <link rel="canonical" href="https://qualcoder.dev/docs/user-manual/settings/">
+        <link rel="canonical" href="https://qualcoder.dev/docs/user-manual/version-control/">
       
       
       
@@ -23,7 +23,7 @@
     
     
       
-        <title>Settings and Preferences - QualCoder v2 Developer Guide</title>
+        <title>Version Control - QualCoder v2 Developer Guide</title>
       
     
     
@@ -74,7 +74,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#settings-and-preferences" class="md-skip">
+        <a href="#version-control" class="md-skip">
           Skip to content
         </a>
       
@@ -114,7 +114,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Settings and Preferences
+              Version Control
             
           </span>
         </div>
@@ -4098,10 +4098,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#opening-settings" class="md-nav__link">
+  <a href="#how-it-works" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Opening Settings
+        How It Works
       
     </span>
   </a>
@@ -4109,22 +4109,22 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#appearance" class="md-nav__link">
+  <a href="#viewing-history" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Appearance
+        Viewing History
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Appearance">
+    <nav class="md-nav" aria-label="Viewing History">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#theme" class="md-nav__link">
+  <a href="#open-the-history-screen" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Theme
+        Open the History Screen
       
     </span>
   </a>
@@ -4132,21 +4132,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#font-size" class="md-nav__link">
+  <a href="#understanding-the-timeline" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Font Size
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#font-family" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Font Family
+        Understanding the Timeline
       
     </span>
   </a>
@@ -4159,44 +4148,22 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#language" class="md-nav__link">
+  <a href="#viewing-changes-diff" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Language
+        Viewing Changes (Diff)
       
     </span>
   </a>
   
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#backup-settings" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Backup Settings
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Backup Settings">
+    <nav class="md-nav" aria-label="Viewing Changes (Diff)">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#enable-backups" class="md-nav__link">
+  <a href="#reading-the-diff" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Enable Backups
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#backup-interval" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Backup Interval
+        Reading the Diff
       
     </span>
   </a>
@@ -4209,22 +4176,22 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#av-coding-settings" class="md-nav__link">
+  <a href="#restoring-previous-states" class="md-nav__link">
     <span class="md-ellipsis">
       
-        AV Coding Settings
+        Restoring Previous States
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="AV Coding Settings">
+    <nav class="md-nav" aria-label="Restoring Previous States">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#timestamp-format" class="md-nav__link">
+  <a href="#what-gets-restored" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Timestamp Format
+        What Gets Restored
       
     </span>
   </a>
@@ -4232,10 +4199,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#speaker-format" class="md-nav__link">
+  <a href="#what-stays-the-same" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Speaker Format
+        What Stays the Same
       
     </span>
   </a>
@@ -4248,89 +4215,22 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#database-settings" class="md-nav__link">
+  <a href="#auto-commit-behavior" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Database Settings
+        Auto-Commit Behavior
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Database Settings">
+    <nav class="md-nav" aria-label="Auto-Commit Behavior">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#primary-storage" class="md-nav__link">
+  <a href="#commit-messages" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Primary Storage
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#cloud-sync-optional" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Cloud Sync (Optional)
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Cloud Sync (Optional)">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#enabling-cloud-sync" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Enabling Cloud Sync
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#configuring-convex" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Configuring Convex
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#how-cloud-sync-works" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        How Cloud Sync Works
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#sync-status-indicator" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Sync Status Indicator
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#offline-mode" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Offline Mode
+        Commit Messages
       
     </span>
   </a>
@@ -4341,17 +4241,12 @@
     </nav>
   
 </li>
-        
-      </ul>
-    </nav>
-  
-</li>
       
         <li class="md-nav__item">
-  <a href="#saving-settings" class="md-nav__link">
+  <a href="#initializing-version-control" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Saving Settings
+        Initializing Version Control
       
     </span>
   </a>
@@ -4359,10 +4254,99 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#keyboard-shortcuts" class="md-nav__link">
+  <a href="#technical-details" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Keyboard Shortcuts
+        Technical Details
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Technical Details">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#storage-location" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Storage Location
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#disk-space" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Disk Space
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#troubleshooting" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Troubleshooting
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Troubleshooting">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#version-control-not-initialized" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        "Version control not initialized"
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#cannot-restore-uncommitted-changes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        "Cannot restore: uncommitted changes"
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#history-not-updating" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        History not updating
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#best-practices" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Best Practices
       
     </span>
   </a>
@@ -4400,203 +4384,182 @@
   
 
 
-<h1 id="settings-and-preferences">Settings and Preferences<a class="headerlink" href="#settings-and-preferences" title="Permanent link">&para;</a></h1>
-<p>Configure QualCoder to match your workflow and preferences.</p>
-<h2 id="opening-settings">Opening Settings<a class="headerlink" href="#opening-settings" title="Permanent link">&para;</a></h2>
-<p>Access settings from the menu bar:</p>
-<ol>
-<li>Click <strong>Settings</strong> in the menu bar (or press <code>Cmd+,</code> on macOS)</li>
-<li>The Settings dialog opens with a sidebar for navigation</li>
-</ol>
-<h2 id="appearance">Appearance<a class="headerlink" href="#appearance" title="Permanent link">&para;</a></h2>
-<h3 id="theme">Theme<a class="headerlink" href="#theme" title="Permanent link">&para;</a></h3>
-<p>Choose between light and dark themes:</p>
-<ol>
-<li>Go to <strong>Appearance</strong> in the sidebar</li>
-<li>Click <strong>Light</strong> or <strong>Dark</strong> theme button</li>
-<li>The UI updates immediately</li>
-</ol>
-<blockquote>
-<p><strong>Tip: Eye Strain</strong></p>
-<p>Use dark theme in low-light environments to reduce eye strain during extended coding sessions.</p>
-</blockquote>
-<h3 id="font-size">Font Size<a class="headerlink" href="#font-size" title="Permanent link">&para;</a></h3>
-<p>Adjust the application font size:</p>
-<ol>
-<li>In <strong>Appearance</strong>, find the Font Size slider</li>
-<li>Drag the slider between 10px and 24px</li>
-<li>The preview updates as you adjust</li>
-</ol>
-<h3 id="font-family">Font Family<a class="headerlink" href="#font-family" title="Permanent link">&para;</a></h3>
-<p>Choose your preferred font:</p>
-<ol>
-<li>In <strong>Appearance</strong>, find the Font Family dropdown</li>
-<li>Select from available fonts (Inter, Roboto, System Default)</li>
-<li>The change applies immediately</li>
-</ol>
-<h2 id="language">Language<a class="headerlink" href="#language" title="Permanent link">&para;</a></h2>
-<p>Select your preferred application language:</p>
-<ol>
-<li>Go to <strong>Language</strong> in the sidebar</li>
-<li>Choose from available languages:</li>
-<li>English</li>
-<li>Spanish</li>
-<li>German</li>
-<li>French</li>
-<li>Portuguese</li>
-<li>Some changes may require restart</li>
-</ol>
-<blockquote>
-<p><strong>Note: Translation Coverage</strong></p>
-<p>Not all languages have complete translations. Missing translations fall back to English.</p>
-</blockquote>
-<h2 id="backup-settings">Backup Settings<a class="headerlink" href="#backup-settings" title="Permanent link">&para;</a></h2>
-<p>Configure automatic project backups:</p>
-<h3 id="enable-backups">Enable Backups<a class="headerlink" href="#enable-backups" title="Permanent link">&para;</a></h3>
-<ol>
-<li>Go to <strong>Backup</strong> in the sidebar</li>
-<li>Check <strong>Enable automatic backups</strong></li>
-</ol>
-<h3 id="backup-interval">Backup Interval<a class="headerlink" href="#backup-interval" title="Permanent link">&para;</a></h3>
-<p>Set how often backups are created:</p>
-<ol>
-<li>Enable backups first</li>
-<li>Set the interval (in minutes) using the spinbox</li>
-<li>Default is 30 minutes</li>
-</ol>
-<blockquote>
-<p><strong>Warning: Backup Location</strong></p>
-<p>Backups are stored alongside your project file. Ensure you have sufficient disk space.</p>
-</blockquote>
-<h2 id="av-coding-settings">AV Coding Settings<a class="headerlink" href="#av-coding-settings" title="Permanent link">&para;</a></h2>
-<p>Configure settings for audio/video coding:</p>
-<h3 id="timestamp-format">Timestamp Format<a class="headerlink" href="#timestamp-format" title="Permanent link">&para;</a></h3>
-<p>Choose how timestamps are displayed:</p>
-<ol>
-<li>Go to <strong>AV Coding</strong> in the sidebar</li>
-<li>Select a timestamp format:</li>
-<li><strong>HH:MM:SS</strong> - Hours, minutes, seconds (default)</li>
-<li><strong>MM:SS</strong> - Minutes and seconds only</li>
-<li><strong>SS.ms</strong> - Seconds with milliseconds</li>
-</ol>
-<h3 id="speaker-format">Speaker Format<a class="headerlink" href="#speaker-format" title="Permanent link">&para;</a></h3>
-<p>Customize how speaker names appear in transcripts:</p>
-<ol>
-<li>In <strong>AV Coding</strong>, find Speaker Format</li>
-<li>Enter your preferred format using <code>{n}</code> as a placeholder</li>
-<li>Examples:</li>
-<li><code>Speaker {n}</code> → Speaker 1, Speaker 2</li>
-<li><code>P{n}</code> → P1, P2</li>
-<li><code>Interviewee {n}</code> → Interviewee 1, Interviewee 2</li>
-</ol>
-<p>The preview shows how speaker names will appear.</p>
-<h2 id="database-settings">Database Settings<a class="headerlink" href="#database-settings" title="Permanent link">&para;</a></h2>
-<p>Configure your project's data storage and synchronization options.</p>
-<h3 id="primary-storage">Primary Storage<a class="headerlink" href="#primary-storage" title="Permanent link">&para;</a></h3>
-<p>Your project data is always stored locally in SQLite. This ensures:</p>
+<h1 id="version-control">Version Control<a class="headerlink" href="#version-control" title="Permanent link">&para;</a></h1>
+<p>QualCoder v2 includes built-in version control that automatically tracks changes to your project. You can view history, compare changes, and restore previous states.</p>
+<h2 id="how-it-works">How It Works<a class="headerlink" href="#how-it-works" title="Permanent link">&para;</a></h2>
+<p>Version control uses <strong>sqlite-diffable</strong> to convert your database into human-readable text files, then tracks changes with Git. This means:</p>
 <ul>
-<li><strong>Offline access</strong> - Work without an internet connection</li>
-<li><strong>Fast performance</strong> - No network latency for read/write operations</li>
-<li><strong>Data ownership</strong> - Your data stays on your machine</li>
+<li>Every change is automatically recorded</li>
+<li>You can see exactly what changed between versions</li>
+<li>You can restore to any previous state</li>
+<li>Your data is safe from accidental loss</li>
 </ul>
-<h3 id="cloud-sync-optional">Cloud Sync (Optional)<a class="headerlink" href="#cloud-sync-optional" title="Permanent link">&para;</a></h3>
-<p>Enable cloud synchronization to:</p>
-<ul>
-<li><strong>Collaborate in real-time</strong> with team members</li>
-<li><strong>Back up</strong> your project data to the cloud</li>
-<li><strong>Access</strong> your project from multiple devices</li>
-</ul>
-<h4 id="enabling-cloud-sync">Enabling Cloud Sync<a class="headerlink" href="#enabling-cloud-sync" title="Permanent link">&para;</a></h4>
+<h2 id="viewing-history">Viewing History<a class="headerlink" href="#viewing-history" title="Permanent link">&para;</a></h2>
+<h3 id="open-the-history-screen">Open the History Screen<a class="headerlink" href="#open-the-history-screen" title="Permanent link">&para;</a></h3>
 <ol>
-<li>Go to <strong>Database</strong> in the sidebar</li>
-<li>Check <strong>Enable cloud sync with Convex</strong></li>
-<li>The Convex configuration panel appears</li>
+<li>Click <strong>History</strong> in the sidebar (or press the history icon)</li>
+<li>You'll see a timeline of all snapshots</li>
 </ol>
-<h4 id="configuring-convex">Configuring Convex<a class="headerlink" href="#configuring-convex" title="Permanent link">&para;</a></h4>
-<ol>
-<li>Get your deployment URL from <a href="https://convex.dev">convex.dev</a></li>
-<li>Create a new project or use an existing one</li>
-<li>Copy the deployment URL (looks like <code>https://your-project.convex.cloud</code>)</li>
-<li>Paste it into the <strong>Deployment URL</strong> field</li>
-</ol>
-<blockquote>
-<p><strong>Note: Reopening Required</strong></p>
-<p>After changing database settings, you may need to reopen your project for changes to take effect.</p>
-</blockquote>
-<h4 id="how-cloud-sync-works">How Cloud Sync Works<a class="headerlink" href="#how-cloud-sync-works" title="Permanent link">&para;</a></h4>
-<p>When cloud sync is enabled:</p>
+<p>Each snapshot shows:
+- <strong>Timestamp</strong> - When the change was recorded
+- <strong>Message</strong> - What changed (e.g., "coding: 2 events, sources: 1 event")
+- <strong>SHA</strong> - Unique identifier for the snapshot</p>
+<p><img alt="Version History Screen" src="../images/version-history-screen.png" /></p>
+<h3 id="understanding-the-timeline">Understanding the Timeline<a class="headerlink" href="#understanding-the-timeline" title="Permanent link">&para;</a></h3>
+<p>The timeline shows snapshots from newest to oldest. The top entry (marked <strong>Current</strong>) represents your current state.</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>● Current - coding: 3 events              2 minutes ago
+</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>○ coding: 1 event                        15 minutes ago
+</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>○ sources: 2 events                      1 hour ago
+</span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>○ Initial snapshot                       Yesterday
+</span></code></pre></div>
+<h2 id="viewing-changes-diff">Viewing Changes (Diff)<a class="headerlink" href="#viewing-changes-diff" title="Permanent link">&para;</a></h2>
+<p>The history screen uses a split-panel layout:</p>
 <ul>
-<li>All changes are <strong>saved locally first</strong> (SQLite remains primary)</li>
-<li>Changes are then <strong>queued for upload</strong> to Convex</li>
-<li>When connected, changes <strong>sync automatically</strong> in real-time</li>
-<li>Changes from other devices <strong>appear automatically</strong></li>
+<li><strong>Left panel</strong>: Commit list showing all snapshots</li>
+<li><strong>Right panel</strong>: Inline diff viewer for the selected commit</li>
 </ul>
-<h4 id="sync-status-indicator">Sync Status Indicator<a class="headerlink" href="#sync-status-indicator" title="Permanent link">&para;</a></h4>
-<p>When cloud sync is enabled, a sync status indicator appears in the navigation bar:</p>
+<p>Simply click any commit in the left panel to see its changes in the right panel.</p>
+<h3 id="reading-the-diff">Reading the Diff<a class="headerlink" href="#reading-the-diff" title="Permanent link">&para;</a></h3>
+<p>The diff uses color highlighting:</p>
 <table>
 <thead>
 <tr>
-<th>Icon</th>
-<th>Status</th>
+<th>Color</th>
 <th>Meaning</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td>Green check</td>
-<td>Synced</td>
-<td>All changes uploaded</td>
+<td><strong>Green background</strong></td>
+<td>Lines added</td>
 </tr>
 <tr>
-<td>Spinning</td>
-<td>Syncing</td>
-<td>Upload in progress</td>
+<td><strong>Red background</strong></td>
+<td>Lines removed</td>
 </tr>
 <tr>
-<td>Red warning</td>
-<td>Error</td>
-<td>Connection issue (hover for details)</td>
+<td><strong>Blue text</strong></td>
+<td>File headers</td>
+</tr>
+<tr>
+<td><strong>Purple text</strong></td>
+<td>Section markers (<code>@@</code>)</td>
 </tr>
 </tbody>
 </table>
-<p>Click the indicator to manually trigger a sync or see pending changes.</p>
-<h4 id="offline-mode">Offline Mode<a class="headerlink" href="#offline-mode" title="Permanent link">&para;</a></h4>
-<p>If you lose internet connection:</p>
+<blockquote>
+<p><strong>Tip: Stats Summary</strong></p>
+<p>The stats bar above the diff shows:
+- <code>+15</code> - Lines added
+- <code>-3</code> - Lines removed
+- <code>2 files</code> - Number of affected files</p>
+</blockquote>
+<h2 id="restoring-previous-states">Restoring Previous States<a class="headerlink" href="#restoring-previous-states" title="Permanent link">&para;</a></h2>
+<p>To restore your project to a previous state:</p>
 <ol>
-<li>Continue working normally - all changes save locally</li>
-<li>Changes queue for upload automatically</li>
-<li>When reconnected, pending changes sync in the background</li>
+<li>Find the snapshot you want in the history</li>
+<li>Click <strong>Restore</strong> (or right-click and select "Restore to this snapshot")</li>
+<li>Confirm the restore action</li>
 </ol>
 <blockquote>
-<p><strong>Tip: Check Connection Status</strong></p>
-<p>The sync indicator shows the current connection state. If syncing seems stuck, check your internet connection.</p>
+<p><strong>Warning: Data Loss</strong></p>
+<p>Restoring will replace your current data with the selected snapshot.
+Any changes made after that snapshot will be lost.
+Consider exporting your current state first if unsure.</p>
 </blockquote>
-<h2 id="saving-settings">Saving Settings<a class="headerlink" href="#saving-settings" title="Permanent link">&para;</a></h2>
-<p>Settings are saved automatically as you change them. There's no need to click Save.</p>
+<h3 id="what-gets-restored">What Gets Restored<a class="headerlink" href="#what-gets-restored" title="Permanent link">&para;</a></h3>
+<p>When you restore:
+- All codes, categories, and segments return to that state
+- Sources and their metadata return to that state
+- Cases and attributes return to that state</p>
+<h3 id="what-stays-the-same">What Stays the Same<a class="headerlink" href="#what-stays-the-same" title="Permanent link">&para;</a></h3>
 <ul>
-<li><strong>OK</strong> - Closes the dialog</li>
-<li><strong>Cancel</strong> - Closes the dialog (changes are already saved)</li>
+<li>Project settings (stored separately)</li>
+<li>External source files (only references are tracked)</li>
 </ul>
-<h2 id="keyboard-shortcuts">Keyboard Shortcuts<a class="headerlink" href="#keyboard-shortcuts" title="Permanent link">&para;</a></h2>
+<h2 id="auto-commit-behavior">Auto-Commit Behavior<a class="headerlink" href="#auto-commit-behavior" title="Permanent link">&para;</a></h2>
+<p>QualCoder automatically creates snapshots when you:</p>
+<ul>
+<li>Create, edit, or delete codes</li>
+<li>Code text segments</li>
+<li>Import or remove sources</li>
+<li>Create or modify cases</li>
+</ul>
+<p>Changes are batched for 500ms before committing, so rapid edits become a single snapshot.</p>
+<h3 id="commit-messages">Commit Messages<a class="headerlink" href="#commit-messages" title="Permanent link">&para;</a></h3>
+<p>Auto-generated messages describe what changed:</p>
 <table>
 <thead>
 <tr>
-<th>Action</th>
-<th>Shortcut</th>
+<th>Message</th>
+<th>Meaning</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td>Open Settings</td>
-<td><code>Cmd+,</code> (macOS) / <code>Ctrl+,</code> (Windows/Linux)</td>
+<td><code>coding.code_created</code></td>
+<td>Single code was created</td>
+</tr>
+<tr>
+<td><code>coding: 5 events</code></td>
+<td>Multiple coding operations</td>
+</tr>
+<tr>
+<td><code>coding: 2 events, sources: 1 event</code></td>
+<td>Mixed operations</td>
 </tr>
 </tbody>
 </table>
+<h2 id="initializing-version-control">Initializing Version Control<a class="headerlink" href="#initializing-version-control" title="Permanent link">&para;</a></h2>
+<p>Version control is automatically initialized when you create a new project. For existing projects:</p>
+<ol>
+<li>Open the project</li>
+<li>Go to <strong>History</strong></li>
+<li>Click <strong>Initialize Version Control</strong></li>
+<li>An initial snapshot is created</li>
+</ol>
+<h2 id="technical-details">Technical Details<a class="headerlink" href="#technical-details" title="Permanent link">&para;</a></h2>
+<h3 id="storage-location">Storage Location<a class="headerlink" href="#storage-location" title="Permanent link">&para;</a></h3>
+<p>Version control data is stored in <code>.qualcoder-vcs/</code> inside your project folder:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>MyProject/
+</span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>├── MyProject.qda        # SQLite database
+</span><span id="__span-1-3"><a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>└── .qualcoder-vcs/      # Version control
+</span><span id="__span-1-4"><a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>    ├── .git/            # Git repository
+</span><span id="__span-1-5"><a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>    └── *.sql            # Diffable SQL files
+</span></code></pre></div>
+<h3 id="disk-space">Disk Space<a class="headerlink" href="#disk-space" title="Permanent link">&para;</a></h3>
+<p>Each snapshot stores only changes (diffs), so disk usage grows slowly. A typical project with hundreds of changes uses only a few MB.</p>
+<h2 id="troubleshooting">Troubleshooting<a class="headerlink" href="#troubleshooting" title="Permanent link">&para;</a></h2>
+<h3 id="version-control-not-initialized">"Version control not initialized"<a class="headerlink" href="#version-control-not-initialized" title="Permanent link">&para;</a></h3>
+<p>This means the project was created before VCS was available:
+1. Go to <strong>History</strong>
+2. Click <strong>Initialize Version Control</strong></p>
+<h3 id="cannot-restore-uncommitted-changes">"Cannot restore: uncommitted changes"<a class="headerlink" href="#cannot-restore-uncommitted-changes" title="Permanent link">&para;</a></h3>
+<p>Commit or discard current changes before restoring:
+1. Make a small change to trigger auto-commit
+2. Wait 1 second for the commit
+3. Try restore again</p>
+<h3 id="history-not-updating">History not updating<a class="headerlink" href="#history-not-updating" title="Permanent link">&para;</a></h3>
+<p>If the history doesn't show recent changes:
+1. Click <strong>Refresh</strong> in the history panel
+2. Check that VCS is initialized</p>
+<h2 id="best-practices">Best Practices<a class="headerlink" href="#best-practices" title="Permanent link">&para;</a></h2>
+<blockquote>
+<p><strong>Regular Backups</strong>
+While version control protects against accidental changes,
+also keep external backups of your <code>.qda</code> file.</p>
+<p><strong>Meaningful Milestones</strong>
+For important milestones, manually create a commit with a
+descriptive message by saving and waiting for auto-commit.</p>
+<p><strong>Before Major Changes</strong>
+Note the current snapshot SHA before major reorganization,
+so you can easily restore if needed.</p>
+</blockquote>
 <h2 id="next-steps">Next Steps<a class="headerlink" href="#next-steps" title="Permanent link">&para;</a></h2>
 <ul>
-<li><a href="../coding/">Start coding your text</a></li>
-<li><a href="../codes/">Manage your codes</a></li>
-<li><a href="../sources/">Import sources</a></li>
+<li><a href="../codes/">View and manage codes</a></li>
+<li><a href="../coding/">Start coding text</a></li>
+<li><a href="../settings/">Configure settings</a></li>
 </ul>
 
 

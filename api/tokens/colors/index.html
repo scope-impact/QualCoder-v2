@@ -1756,6 +1756,34 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#diff-viewer-colors" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Diff Viewer Colors
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Diff Viewer Colors">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#usage-example" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Usage Example
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -4456,6 +4484,34 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#diff-viewer-colors" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Diff Viewer Colors
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Diff Viewer Colors">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#usage-example" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Usage Example
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -4821,69 +4877,144 @@
 </tr>
 </tbody>
 </table>
+<h3 id="diff-viewer-colors">Diff Viewer Colors<a class="headerlink" href="#diff-viewer-colors" title="Permanent link">&para;</a></h3>
+<p>Colors for git diff output highlighting, inspired by <a href="https://github.com/git-cola/git-cola">git-cola</a>.</p>
+<table>
+<thead>
+<tr>
+<th>Property</th>
+<th>Light Theme</th>
+<th>Dark Theme</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>diff_add_bg</code></td>
+<td><code>#d2ffe4</code></td>
+<td><code>#1a472a</code></td>
+<td>Background for added lines</td>
+</tr>
+<tr>
+<td><code>diff_add_fg</code></td>
+<td><code>#1a7f37</code></td>
+<td><code>#7ee787</code></td>
+<td>Foreground for added lines</td>
+</tr>
+<tr>
+<td><code>diff_remove_bg</code></td>
+<td><code>#fee0e4</code></td>
+<td><code>#5c2d2d</code></td>
+<td>Background for removed lines</td>
+</tr>
+<tr>
+<td><code>diff_remove_fg</code></td>
+<td><code>#b35900</code></td>
+<td><code>#ff7b72</code></td>
+<td>Foreground for removed lines</td>
+</tr>
+<tr>
+<td><code>diff_header_fg</code></td>
+<td><code>#0550ae</code></td>
+<td><code>#79c0ff</code></td>
+<td>Headers (<code>diff --git</code>, <code>+++</code>, <code>---</code>)</td>
+</tr>
+<tr>
+<td><code>diff_hunk_fg</code></td>
+<td><code>#6639ba</code></td>
+<td><code>#a371f7</code></td>
+<td>Hunk markers (<code>@@</code>)</td>
+</tr>
+</tbody>
+</table>
+<h4 id="usage-example">Usage Example<a class="headerlink" href="#usage-example" title="Permanent link">&para;</a></h4>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">PySide6.QtGui</span><span class="w"> </span><span class="kn">import</span> <span class="n">QColor</span><span class="p">,</span> <span class="n">QSyntaxHighlighter</span><span class="p">,</span> <span class="n">QTextCharFormat</span>
+</span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">design_system</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_colors</span>
+</span><span id="__span-1-3"><a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>
+</span><span id="__span-1-4"><a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="k">class</span><span class="w"> </span><span class="nc">DiffHighlighter</span><span class="p">(</span><span class="n">QSyntaxHighlighter</span><span class="p">):</span>
+</span><span id="__span-1-5"><a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">document</span><span class="p">):</span>
+</span><span id="__span-1-6"><a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">document</span><span class="p">)</span>
+</span><span id="__span-1-7"><a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>        <span class="n">colors</span> <span class="o">=</span> <span class="n">get_colors</span><span class="p">()</span>
+</span><span id="__span-1-8"><a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>
+</span><span id="__span-1-9"><a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>        <span class="c1"># Addition format</span>
+</span><span id="__span-1-10"><a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">_add_format</span> <span class="o">=</span> <span class="n">QTextCharFormat</span><span class="p">()</span>
+</span><span id="__span-1-11"><a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">_add_format</span><span class="o">.</span><span class="n">setBackground</span><span class="p">(</span><span class="n">QColor</span><span class="p">(</span><span class="n">colors</span><span class="o">.</span><span class="n">diff_add_bg</span><span class="p">))</span>
+</span><span id="__span-1-12"><a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">_add_format</span><span class="o">.</span><span class="n">setForeground</span><span class="p">(</span><span class="n">QColor</span><span class="p">(</span><span class="n">colors</span><span class="o">.</span><span class="n">diff_add_fg</span><span class="p">))</span>
+</span><span id="__span-1-13"><a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a>
+</span><span id="__span-1-14"><a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a>        <span class="c1"># Deletion format</span>
+</span><span id="__span-1-15"><a id="__codelineno-1-15" name="__codelineno-1-15" href="#__codelineno-1-15"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">_remove_format</span> <span class="o">=</span> <span class="n">QTextCharFormat</span><span class="p">()</span>
+</span><span id="__span-1-16"><a id="__codelineno-1-16" name="__codelineno-1-16" href="#__codelineno-1-16"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">_remove_format</span><span class="o">.</span><span class="n">setBackground</span><span class="p">(</span><span class="n">QColor</span><span class="p">(</span><span class="n">colors</span><span class="o">.</span><span class="n">diff_remove_bg</span><span class="p">))</span>
+</span><span id="__span-1-17"><a id="__codelineno-1-17" name="__codelineno-1-17" href="#__codelineno-1-17"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">_remove_format</span><span class="o">.</span><span class="n">setForeground</span><span class="p">(</span><span class="n">QColor</span><span class="p">(</span><span class="n">colors</span><span class="o">.</span><span class="n">diff_remove_fg</span><span class="p">))</span>
+</span><span id="__span-1-18"><a id="__codelineno-1-18" name="__codelineno-1-18" href="#__codelineno-1-18"></a>
+</span><span id="__span-1-19"><a id="__codelineno-1-19" name="__codelineno-1-19" href="#__codelineno-1-19"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">highlightBlock</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+</span><span id="__span-1-20"><a id="__codelineno-1-20" name="__codelineno-1-20" href="#__codelineno-1-20"></a>        <span class="k">if</span> <span class="n">text</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;+&quot;</span><span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">text</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;+++&quot;</span><span class="p">):</span>
+</span><span id="__span-1-21"><a id="__codelineno-1-21" name="__codelineno-1-21" href="#__codelineno-1-21"></a>            <span class="bp">self</span><span class="o">.</span><span class="n">setFormat</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">text</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">_add_format</span><span class="p">)</span>
+</span><span id="__span-1-22"><a id="__codelineno-1-22" name="__codelineno-1-22" href="#__codelineno-1-22"></a>        <span class="k">elif</span> <span class="n">text</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;-&quot;</span><span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">text</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;---&quot;</span><span class="p">):</span>
+</span><span id="__span-1-23"><a id="__codelineno-1-23" name="__codelineno-1-23" href="#__codelineno-1-23"></a>            <span class="bp">self</span><span class="o">.</span><span class="n">setFormat</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">text</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">_remove_format</span><span class="p">)</span>
+</span></code></pre></div>
 <h2 id="custom-themes">Custom Themes<a class="headerlink" href="#custom-themes" title="Permanent link">&para;</a></h2>
 <p>Register and use custom color themes:</p>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">design_system</span><span class="w"> </span><span class="kn">import</span> <span class="n">ColorPalette</span><span class="p">,</span> <span class="n">register_theme</span><span class="p">,</span> <span class="n">set_theme</span>
-</span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>
-</span><span id="__span-1-3"><a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="c1"># Create custom palette</span>
-</span><span id="__span-1-4"><a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="n">custom_palette</span> <span class="o">=</span> <span class="n">ColorPalette</span><span class="p">(</span>
-</span><span id="__span-1-5"><a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>    <span class="n">primary</span><span class="o">=</span><span class="s2">&quot;#0066CC&quot;</span><span class="p">,</span>
-</span><span id="__span-1-6"><a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>    <span class="n">primary_light</span><span class="o">=</span><span class="s2">&quot;#3399FF&quot;</span><span class="p">,</span>
-</span><span id="__span-1-7"><a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>    <span class="n">primary_dark</span><span class="o">=</span><span class="s2">&quot;#004499&quot;</span><span class="p">,</span>
-</span><span id="__span-1-8"><a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>    <span class="n">secondary</span><span class="o">=</span><span class="s2">&quot;#FF5722&quot;</span><span class="p">,</span>
-</span><span id="__span-1-9"><a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>    <span class="n">background</span><span class="o">=</span><span class="s2">&quot;#FFFFFF&quot;</span><span class="p">,</span>
-</span><span id="__span-1-10"><a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a>    <span class="n">surface</span><span class="o">=</span><span class="s2">&quot;#F5F5F5&quot;</span><span class="p">,</span>
-</span><span id="__span-1-11"><a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a>    <span class="n">text_primary</span><span class="o">=</span><span class="s2">&quot;#212121&quot;</span><span class="p">,</span>
-</span><span id="__span-1-12"><a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a>    <span class="n">text_secondary</span><span class="o">=</span><span class="s2">&quot;#757575&quot;</span><span class="p">,</span>
-</span><span id="__span-1-13"><a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a>    <span class="n">border</span><span class="o">=</span><span class="s2">&quot;#E0E0E0&quot;</span><span class="p">,</span>
-</span><span id="__span-1-14"><a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a>    <span class="n">success</span><span class="o">=</span><span class="s2">&quot;#4CAF50&quot;</span><span class="p">,</span>
-</span><span id="__span-1-15"><a id="__codelineno-1-15" name="__codelineno-1-15" href="#__codelineno-1-15"></a>    <span class="n">warning</span><span class="o">=</span><span class="s2">&quot;#FF9800&quot;</span><span class="p">,</span>
-</span><span id="__span-1-16"><a id="__codelineno-1-16" name="__codelineno-1-16" href="#__codelineno-1-16"></a>    <span class="n">error</span><span class="o">=</span><span class="s2">&quot;#F44336&quot;</span><span class="p">,</span>
-</span><span id="__span-1-17"><a id="__codelineno-1-17" name="__codelineno-1-17" href="#__codelineno-1-17"></a>    <span class="n">info</span><span class="o">=</span><span class="s2">&quot;#2196F3&quot;</span><span class="p">,</span>
-</span><span id="__span-1-18"><a id="__codelineno-1-18" name="__codelineno-1-18" href="#__codelineno-1-18"></a>    <span class="c1"># ... other properties</span>
-</span><span id="__span-1-19"><a id="__codelineno-1-19" name="__codelineno-1-19" href="#__codelineno-1-19"></a><span class="p">)</span>
-</span><span id="__span-1-20"><a id="__codelineno-1-20" name="__codelineno-1-20" href="#__codelineno-1-20"></a>
-</span><span id="__span-1-21"><a id="__codelineno-1-21" name="__codelineno-1-21" href="#__codelineno-1-21"></a><span class="c1"># Register theme</span>
-</span><span id="__span-1-22"><a id="__codelineno-1-22" name="__codelineno-1-22" href="#__codelineno-1-22"></a><span class="n">register_theme</span><span class="p">(</span><span class="s2">&quot;corporate&quot;</span><span class="p">,</span> <span class="n">custom_palette</span><span class="p">)</span>
-</span><span id="__span-1-23"><a id="__codelineno-1-23" name="__codelineno-1-23" href="#__codelineno-1-23"></a>
-</span><span id="__span-1-24"><a id="__codelineno-1-24" name="__codelineno-1-24" href="#__codelineno-1-24"></a><span class="c1"># Activate theme</span>
-</span><span id="__span-1-25"><a id="__codelineno-1-25" name="__codelineno-1-25" href="#__codelineno-1-25"></a><span class="n">set_theme</span><span class="p">(</span><span class="s2">&quot;corporate&quot;</span><span class="p">)</span>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">design_system</span><span class="w"> </span><span class="kn">import</span> <span class="n">ColorPalette</span><span class="p">,</span> <span class="n">register_theme</span><span class="p">,</span> <span class="n">set_theme</span>
+</span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>
+</span><span id="__span-2-3"><a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="c1"># Create custom palette</span>
+</span><span id="__span-2-4"><a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="n">custom_palette</span> <span class="o">=</span> <span class="n">ColorPalette</span><span class="p">(</span>
+</span><span id="__span-2-5"><a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>    <span class="n">primary</span><span class="o">=</span><span class="s2">&quot;#0066CC&quot;</span><span class="p">,</span>
+</span><span id="__span-2-6"><a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a>    <span class="n">primary_light</span><span class="o">=</span><span class="s2">&quot;#3399FF&quot;</span><span class="p">,</span>
+</span><span id="__span-2-7"><a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a>    <span class="n">primary_dark</span><span class="o">=</span><span class="s2">&quot;#004499&quot;</span><span class="p">,</span>
+</span><span id="__span-2-8"><a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a>    <span class="n">secondary</span><span class="o">=</span><span class="s2">&quot;#FF5722&quot;</span><span class="p">,</span>
+</span><span id="__span-2-9"><a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a>    <span class="n">background</span><span class="o">=</span><span class="s2">&quot;#FFFFFF&quot;</span><span class="p">,</span>
+</span><span id="__span-2-10"><a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a>    <span class="n">surface</span><span class="o">=</span><span class="s2">&quot;#F5F5F5&quot;</span><span class="p">,</span>
+</span><span id="__span-2-11"><a id="__codelineno-2-11" name="__codelineno-2-11" href="#__codelineno-2-11"></a>    <span class="n">text_primary</span><span class="o">=</span><span class="s2">&quot;#212121&quot;</span><span class="p">,</span>
+</span><span id="__span-2-12"><a id="__codelineno-2-12" name="__codelineno-2-12" href="#__codelineno-2-12"></a>    <span class="n">text_secondary</span><span class="o">=</span><span class="s2">&quot;#757575&quot;</span><span class="p">,</span>
+</span><span id="__span-2-13"><a id="__codelineno-2-13" name="__codelineno-2-13" href="#__codelineno-2-13"></a>    <span class="n">border</span><span class="o">=</span><span class="s2">&quot;#E0E0E0&quot;</span><span class="p">,</span>
+</span><span id="__span-2-14"><a id="__codelineno-2-14" name="__codelineno-2-14" href="#__codelineno-2-14"></a>    <span class="n">success</span><span class="o">=</span><span class="s2">&quot;#4CAF50&quot;</span><span class="p">,</span>
+</span><span id="__span-2-15"><a id="__codelineno-2-15" name="__codelineno-2-15" href="#__codelineno-2-15"></a>    <span class="n">warning</span><span class="o">=</span><span class="s2">&quot;#FF9800&quot;</span><span class="p">,</span>
+</span><span id="__span-2-16"><a id="__codelineno-2-16" name="__codelineno-2-16" href="#__codelineno-2-16"></a>    <span class="n">error</span><span class="o">=</span><span class="s2">&quot;#F44336&quot;</span><span class="p">,</span>
+</span><span id="__span-2-17"><a id="__codelineno-2-17" name="__codelineno-2-17" href="#__codelineno-2-17"></a>    <span class="n">info</span><span class="o">=</span><span class="s2">&quot;#2196F3&quot;</span><span class="p">,</span>
+</span><span id="__span-2-18"><a id="__codelineno-2-18" name="__codelineno-2-18" href="#__codelineno-2-18"></a>    <span class="c1"># ... other properties</span>
+</span><span id="__span-2-19"><a id="__codelineno-2-19" name="__codelineno-2-19" href="#__codelineno-2-19"></a><span class="p">)</span>
+</span><span id="__span-2-20"><a id="__codelineno-2-20" name="__codelineno-2-20" href="#__codelineno-2-20"></a>
+</span><span id="__span-2-21"><a id="__codelineno-2-21" name="__codelineno-2-21" href="#__codelineno-2-21"></a><span class="c1"># Register theme</span>
+</span><span id="__span-2-22"><a id="__codelineno-2-22" name="__codelineno-2-22" href="#__codelineno-2-22"></a><span class="n">register_theme</span><span class="p">(</span><span class="s2">&quot;corporate&quot;</span><span class="p">,</span> <span class="n">custom_palette</span><span class="p">)</span>
+</span><span id="__span-2-23"><a id="__codelineno-2-23" name="__codelineno-2-23" href="#__codelineno-2-23"></a>
+</span><span id="__span-2-24"><a id="__codelineno-2-24" name="__codelineno-2-24" href="#__codelineno-2-24"></a><span class="c1"># Activate theme</span>
+</span><span id="__span-2-25"><a id="__codelineno-2-25" name="__codelineno-2-25" href="#__codelineno-2-25"></a><span class="n">set_theme</span><span class="p">(</span><span class="s2">&quot;corporate&quot;</span><span class="p">)</span>
 </span></code></pre></div>
 <h2 id="usage-examples">Usage Examples<a class="headerlink" href="#usage-examples" title="Permanent link">&para;</a></h2>
 <h3 id="component-with-colors">Component with Colors<a class="headerlink" href="#component-with-colors" title="Permanent link">&para;</a></h3>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">design_system</span><span class="w"> </span><span class="kn">import</span> <span class="n">Button</span><span class="p">,</span> <span class="n">COLORS</span>
-</span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>
-</span><span id="__span-2-3"><a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="c1"># Components automatically use current theme</span>
-</span><span id="__span-2-4"><a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="n">button</span> <span class="o">=</span> <span class="n">Button</span><span class="p">(</span><span class="s2">&quot;Save&quot;</span><span class="p">,</span> <span class="n">variant</span><span class="o">=</span><span class="s2">&quot;primary&quot;</span><span class="p">)</span>
-</span><span id="__span-2-5"><a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>
-</span><span id="__span-2-6"><a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a><span class="c1"># Or pass colors explicitly</span>
-</span><span id="__span-2-7"><a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a><span class="n">button</span> <span class="o">=</span> <span class="n">Button</span><span class="p">(</span><span class="s2">&quot;Save&quot;</span><span class="p">,</span> <span class="n">variant</span><span class="o">=</span><span class="s2">&quot;primary&quot;</span><span class="p">,</span> <span class="n">colors</span><span class="o">=</span><span class="n">COLORS</span><span class="p">)</span>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">design_system</span><span class="w"> </span><span class="kn">import</span> <span class="n">Button</span><span class="p">,</span> <span class="n">COLORS</span>
+</span><span id="__span-3-2"><a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>
+</span><span id="__span-3-3"><a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="c1"># Components automatically use current theme</span>
+</span><span id="__span-3-4"><a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="n">button</span> <span class="o">=</span> <span class="n">Button</span><span class="p">(</span><span class="s2">&quot;Save&quot;</span><span class="p">,</span> <span class="n">variant</span><span class="o">=</span><span class="s2">&quot;primary&quot;</span><span class="p">)</span>
+</span><span id="__span-3-5"><a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>
+</span><span id="__span-3-6"><a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a><span class="c1"># Or pass colors explicitly</span>
+</span><span id="__span-3-7"><a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a><span class="n">button</span> <span class="o">=</span> <span class="n">Button</span><span class="p">(</span><span class="s2">&quot;Save&quot;</span><span class="p">,</span> <span class="n">variant</span><span class="o">=</span><span class="s2">&quot;primary&quot;</span><span class="p">,</span> <span class="n">colors</span><span class="o">=</span><span class="n">COLORS</span><span class="p">)</span>
 </span></code></pre></div>
 <h3 id="manual-color-access">Manual Color Access<a class="headerlink" href="#manual-color-access" title="Permanent link">&para;</a></h3>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">design_system</span><span class="w"> </span><span class="kn">import</span> <span class="n">COLORS</span>
-</span><span id="__span-3-2"><a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>
-</span><span id="__span-3-3"><a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="c1"># Use in stylesheets</span>
-</span><span id="__span-3-4"><a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="n">stylesheet</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;&quot;&quot;</span>
-</span><span id="__span-3-5"><a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a><span class="s2">    QWidget </span><span class="se">{{</span>
-</span><span id="__span-3-6"><a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a><span class="s2">        background-color: </span><span class="si">{</span><span class="n">COLORS</span><span class="o">.</span><span class="n">background</span><span class="si">}</span><span class="s2">;</span>
-</span><span id="__span-3-7"><a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a><span class="s2">        color: </span><span class="si">{</span><span class="n">COLORS</span><span class="o">.</span><span class="n">text_primary</span><span class="si">}</span><span class="s2">;</span>
-</span><span id="__span-3-8"><a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a><span class="s2">    </span><span class="se">}}</span>
-</span><span id="__span-3-9"><a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a><span class="s2">    QPushButton </span><span class="se">{{</span>
-</span><span id="__span-3-10"><a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a><span class="s2">        background-color: </span><span class="si">{</span><span class="n">COLORS</span><span class="o">.</span><span class="n">primary</span><span class="si">}</span><span class="s2">;</span>
-</span><span id="__span-3-11"><a id="__codelineno-3-11" name="__codelineno-3-11" href="#__codelineno-3-11"></a><span class="s2">        border-radius: 4px;</span>
-</span><span id="__span-3-12"><a id="__codelineno-3-12" name="__codelineno-3-12" href="#__codelineno-3-12"></a><span class="s2">    </span><span class="se">}}</span>
-</span><span id="__span-3-13"><a id="__codelineno-3-13" name="__codelineno-3-13" href="#__codelineno-3-13"></a><span class="s2">&quot;&quot;&quot;</span>
-</span></code></pre></div>
-<h3 id="conditional-styling">Conditional Styling<a class="headerlink" href="#conditional-styling" title="Permanent link">&para;</a></h3>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">design_system</span><span class="w"> </span><span class="kn">import</span> <span class="n">COLORS</span>
 </span><span id="__span-4-2"><a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>
-</span><span id="__span-4-3"><a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="k">def</span><span class="w"> </span><span class="nf">get_status_color</span><span class="p">(</span><span class="n">status</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-</span><span id="__span-4-4"><a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a>    <span class="k">return</span> <span class="p">{</span>
-</span><span id="__span-4-5"><a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a>        <span class="s2">&quot;success&quot;</span><span class="p">:</span> <span class="n">COLORS</span><span class="o">.</span><span class="n">success</span><span class="p">,</span>
-</span><span id="__span-4-6"><a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a>        <span class="s2">&quot;warning&quot;</span><span class="p">:</span> <span class="n">COLORS</span><span class="o">.</span><span class="n">warning</span><span class="p">,</span>
-</span><span id="__span-4-7"><a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a>        <span class="s2">&quot;error&quot;</span><span class="p">:</span> <span class="n">COLORS</span><span class="o">.</span><span class="n">error</span><span class="p">,</span>
-</span><span id="__span-4-8"><a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a>        <span class="s2">&quot;info&quot;</span><span class="p">:</span> <span class="n">COLORS</span><span class="o">.</span><span class="n">info</span><span class="p">,</span>
-</span><span id="__span-4-9"><a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a>    <span class="p">}</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">status</span><span class="p">,</span> <span class="n">COLORS</span><span class="o">.</span><span class="n">text_secondary</span><span class="p">)</span>
+</span><span id="__span-4-3"><a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="c1"># Use in stylesheets</span>
+</span><span id="__span-4-4"><a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="n">stylesheet</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;&quot;&quot;</span>
+</span><span id="__span-4-5"><a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a><span class="s2">    QWidget </span><span class="se">{{</span>
+</span><span id="__span-4-6"><a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a><span class="s2">        background-color: </span><span class="si">{</span><span class="n">COLORS</span><span class="o">.</span><span class="n">background</span><span class="si">}</span><span class="s2">;</span>
+</span><span id="__span-4-7"><a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a><span class="s2">        color: </span><span class="si">{</span><span class="n">COLORS</span><span class="o">.</span><span class="n">text_primary</span><span class="si">}</span><span class="s2">;</span>
+</span><span id="__span-4-8"><a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a><span class="s2">    </span><span class="se">}}</span>
+</span><span id="__span-4-9"><a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a><span class="s2">    QPushButton </span><span class="se">{{</span>
+</span><span id="__span-4-10"><a id="__codelineno-4-10" name="__codelineno-4-10" href="#__codelineno-4-10"></a><span class="s2">        background-color: </span><span class="si">{</span><span class="n">COLORS</span><span class="o">.</span><span class="n">primary</span><span class="si">}</span><span class="s2">;</span>
+</span><span id="__span-4-11"><a id="__codelineno-4-11" name="__codelineno-4-11" href="#__codelineno-4-11"></a><span class="s2">        border-radius: 4px;</span>
+</span><span id="__span-4-12"><a id="__codelineno-4-12" name="__codelineno-4-12" href="#__codelineno-4-12"></a><span class="s2">    </span><span class="se">}}</span>
+</span><span id="__span-4-13"><a id="__codelineno-4-13" name="__codelineno-4-13" href="#__codelineno-4-13"></a><span class="s2">&quot;&quot;&quot;</span>
+</span></code></pre></div>
+<h3 id="conditional-styling">Conditional Styling<a class="headerlink" href="#conditional-styling" title="Permanent link">&para;</a></h3>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">design_system</span><span class="w"> </span><span class="kn">import</span> <span class="n">COLORS</span>
+</span><span id="__span-5-2"><a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>
+</span><span id="__span-5-3"><a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="k">def</span><span class="w"> </span><span class="nf">get_status_color</span><span class="p">(</span><span class="n">status</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+</span><span id="__span-5-4"><a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a>    <span class="k">return</span> <span class="p">{</span>
+</span><span id="__span-5-5"><a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a>        <span class="s2">&quot;success&quot;</span><span class="p">:</span> <span class="n">COLORS</span><span class="o">.</span><span class="n">success</span><span class="p">,</span>
+</span><span id="__span-5-6"><a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a>        <span class="s2">&quot;warning&quot;</span><span class="p">:</span> <span class="n">COLORS</span><span class="o">.</span><span class="n">warning</span><span class="p">,</span>
+</span><span id="__span-5-7"><a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a>        <span class="s2">&quot;error&quot;</span><span class="p">:</span> <span class="n">COLORS</span><span class="o">.</span><span class="n">error</span><span class="p">,</span>
+</span><span id="__span-5-8"><a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a>        <span class="s2">&quot;info&quot;</span><span class="p">:</span> <span class="n">COLORS</span><span class="o">.</span><span class="n">info</span><span class="p">,</span>
+</span><span id="__span-5-9"><a id="__codelineno-5-9" name="__codelineno-5-9" href="#__codelineno-5-9"></a>    <span class="p">}</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">status</span><span class="p">,</span> <span class="n">COLORS</span><span class="o">.</span><span class="n">text_secondary</span><span class="p">)</span>
 </span></code></pre></div>
 
 

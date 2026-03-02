@@ -10,7 +10,7 @@
       
       
       
-        <link rel="canonical" href="https://qualcoder.dev/docs/user-manual/settings/">
+        <link rel="canonical" href="https://qualcoder.dev/docs/user-manual/observability/">
       
       
       
@@ -23,7 +23,7 @@
     
     
       
-        <title>Settings and Preferences - QualCoder v2 Developer Guide</title>
+        <title>Observability — Logging & Telemetry - QualCoder v2 Developer Guide</title>
       
     
     
@@ -74,7 +74,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#settings-and-preferences" class="md-skip">
+        <a href="#observability-logging-telemetry" class="md-skip">
           Skip to content
         </a>
       
@@ -114,7 +114,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Settings and Preferences
+              Observability — Logging &amp; Telemetry
             
           </span>
         </div>
@@ -4098,10 +4098,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#opening-settings" class="md-nav__link">
+  <a href="#overview" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Opening Settings
+        Overview
       
     </span>
   </a>
@@ -4109,22 +4109,22 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#appearance" class="md-nav__link">
+  <a href="#configuring-log-levels" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Appearance
+        Configuring Log Levels
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Appearance">
+    <nav class="md-nav" aria-label="Configuring Log Levels">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#theme" class="md-nav__link">
+  <a href="#via-settings-ui" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Theme
+        Via Settings UI
       
     </span>
   </a>
@@ -4132,21 +4132,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#font-size" class="md-nav__link">
+  <a href="#via-environment-variable" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Font Size
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#font-family" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Font Family
+        Via Environment Variable
       
     </span>
   </a>
@@ -4159,10 +4148,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#language" class="md-nav__link">
+  <a href="#file-logging" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Language
+        File Logging
       
     </span>
   </a>
@@ -4170,22 +4159,33 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#backup-settings" class="md-nav__link">
+  <a href="#telemetry-metrics" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Backup Settings
+        Telemetry / Metrics
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Backup Settings">
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#troubleshooting" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Troubleshooting
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Troubleshooting">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#enable-backups" class="md-nav__link">
+  <a href="#logs-are-too-noisy" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Enable Backups
+        Logs are too noisy
       
     </span>
   </a>
@@ -4193,10 +4193,21 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#backup-interval" class="md-nav__link">
+  <a href="#need-detailed-logs-for-a-bug-report" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Backup Interval
+        Need detailed logs for a bug report
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#log-level-setting-is-ignored" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Log level setting is ignored
       
     </span>
   </a>
@@ -4205,178 +4216,6 @@
         
       </ul>
     </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#av-coding-settings" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        AV Coding Settings
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="AV Coding Settings">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#timestamp-format" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Timestamp Format
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#speaker-format" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Speaker Format
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#database-settings" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Database Settings
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Database Settings">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#primary-storage" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Primary Storage
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#cloud-sync-optional" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Cloud Sync (Optional)
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Cloud Sync (Optional)">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#enabling-cloud-sync" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Enabling Cloud Sync
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#configuring-convex" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Configuring Convex
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#how-cloud-sync-works" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        How Cloud Sync Works
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#sync-status-indicator" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Sync Status Indicator
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#offline-mode" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Offline Mode
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#saving-settings" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Saving Settings
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#keyboard-shortcuts" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Keyboard Shortcuts
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#next-steps" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Next Steps
-      
-    </span>
-  </a>
   
 </li>
       
@@ -4400,204 +4239,113 @@
   
 
 
-<h1 id="settings-and-preferences">Settings and Preferences<a class="headerlink" href="#settings-and-preferences" title="Permanent link">&para;</a></h1>
-<p>Configure QualCoder to match your workflow and preferences.</p>
-<h2 id="opening-settings">Opening Settings<a class="headerlink" href="#opening-settings" title="Permanent link">&para;</a></h2>
-<p>Access settings from the menu bar:</p>
-<ol>
-<li>Click <strong>Settings</strong> in the menu bar (or press <code>Cmd+,</code> on macOS)</li>
-<li>The Settings dialog opens with a sidebar for navigation</li>
-</ol>
-<h2 id="appearance">Appearance<a class="headerlink" href="#appearance" title="Permanent link">&para;</a></h2>
-<h3 id="theme">Theme<a class="headerlink" href="#theme" title="Permanent link">&para;</a></h3>
-<p>Choose between light and dark themes:</p>
-<ol>
-<li>Go to <strong>Appearance</strong> in the sidebar</li>
-<li>Click <strong>Light</strong> or <strong>Dark</strong> theme button</li>
-<li>The UI updates immediately</li>
-</ol>
-<blockquote>
-<p><strong>Tip: Eye Strain</strong></p>
-<p>Use dark theme in low-light environments to reduce eye strain during extended coding sessions.</p>
-</blockquote>
-<h3 id="font-size">Font Size<a class="headerlink" href="#font-size" title="Permanent link">&para;</a></h3>
-<p>Adjust the application font size:</p>
-<ol>
-<li>In <strong>Appearance</strong>, find the Font Size slider</li>
-<li>Drag the slider between 10px and 24px</li>
-<li>The preview updates as you adjust</li>
-</ol>
-<h3 id="font-family">Font Family<a class="headerlink" href="#font-family" title="Permanent link">&para;</a></h3>
-<p>Choose your preferred font:</p>
-<ol>
-<li>In <strong>Appearance</strong>, find the Font Family dropdown</li>
-<li>Select from available fonts (Inter, Roboto, System Default)</li>
-<li>The change applies immediately</li>
-</ol>
-<h2 id="language">Language<a class="headerlink" href="#language" title="Permanent link">&para;</a></h2>
-<p>Select your preferred application language:</p>
-<ol>
-<li>Go to <strong>Language</strong> in the sidebar</li>
-<li>Choose from available languages:</li>
-<li>English</li>
-<li>Spanish</li>
-<li>German</li>
-<li>French</li>
-<li>Portuguese</li>
-<li>Some changes may require restart</li>
-</ol>
-<blockquote>
-<p><strong>Note: Translation Coverage</strong></p>
-<p>Not all languages have complete translations. Missing translations fall back to English.</p>
-</blockquote>
-<h2 id="backup-settings">Backup Settings<a class="headerlink" href="#backup-settings" title="Permanent link">&para;</a></h2>
-<p>Configure automatic project backups:</p>
-<h3 id="enable-backups">Enable Backups<a class="headerlink" href="#enable-backups" title="Permanent link">&para;</a></h3>
-<ol>
-<li>Go to <strong>Backup</strong> in the sidebar</li>
-<li>Check <strong>Enable automatic backups</strong></li>
-</ol>
-<h3 id="backup-interval">Backup Interval<a class="headerlink" href="#backup-interval" title="Permanent link">&para;</a></h3>
-<p>Set how often backups are created:</p>
-<ol>
-<li>Enable backups first</li>
-<li>Set the interval (in minutes) using the spinbox</li>
-<li>Default is 30 minutes</li>
-</ol>
-<blockquote>
-<p><strong>Warning: Backup Location</strong></p>
-<p>Backups are stored alongside your project file. Ensure you have sufficient disk space.</p>
-</blockquote>
-<h2 id="av-coding-settings">AV Coding Settings<a class="headerlink" href="#av-coding-settings" title="Permanent link">&para;</a></h2>
-<p>Configure settings for audio/video coding:</p>
-<h3 id="timestamp-format">Timestamp Format<a class="headerlink" href="#timestamp-format" title="Permanent link">&para;</a></h3>
-<p>Choose how timestamps are displayed:</p>
-<ol>
-<li>Go to <strong>AV Coding</strong> in the sidebar</li>
-<li>Select a timestamp format:</li>
-<li><strong>HH:MM:SS</strong> - Hours, minutes, seconds (default)</li>
-<li><strong>MM:SS</strong> - Minutes and seconds only</li>
-<li><strong>SS.ms</strong> - Seconds with milliseconds</li>
-</ol>
-<h3 id="speaker-format">Speaker Format<a class="headerlink" href="#speaker-format" title="Permanent link">&para;</a></h3>
-<p>Customize how speaker names appear in transcripts:</p>
-<ol>
-<li>In <strong>AV Coding</strong>, find Speaker Format</li>
-<li>Enter your preferred format using <code>{n}</code> as a placeholder</li>
-<li>Examples:</li>
-<li><code>Speaker {n}</code> → Speaker 1, Speaker 2</li>
-<li><code>P{n}</code> → P1, P2</li>
-<li><code>Interviewee {n}</code> → Interviewee 1, Interviewee 2</li>
-</ol>
-<p>The preview shows how speaker names will appear.</p>
-<h2 id="database-settings">Database Settings<a class="headerlink" href="#database-settings" title="Permanent link">&para;</a></h2>
-<p>Configure your project's data storage and synchronization options.</p>
-<h3 id="primary-storage">Primary Storage<a class="headerlink" href="#primary-storage" title="Permanent link">&para;</a></h3>
-<p>Your project data is always stored locally in SQLite. This ensures:</p>
-<ul>
-<li><strong>Offline access</strong> - Work without an internet connection</li>
-<li><strong>Fast performance</strong> - No network latency for read/write operations</li>
-<li><strong>Data ownership</strong> - Your data stays on your machine</li>
-</ul>
-<h3 id="cloud-sync-optional">Cloud Sync (Optional)<a class="headerlink" href="#cloud-sync-optional" title="Permanent link">&para;</a></h3>
-<p>Enable cloud synchronization to:</p>
-<ul>
-<li><strong>Collaborate in real-time</strong> with team members</li>
-<li><strong>Back up</strong> your project data to the cloud</li>
-<li><strong>Access</strong> your project from multiple devices</li>
-</ul>
-<h4 id="enabling-cloud-sync">Enabling Cloud Sync<a class="headerlink" href="#enabling-cloud-sync" title="Permanent link">&para;</a></h4>
-<ol>
-<li>Go to <strong>Database</strong> in the sidebar</li>
-<li>Check <strong>Enable cloud sync with Convex</strong></li>
-<li>The Convex configuration panel appears</li>
-</ol>
-<h4 id="configuring-convex">Configuring Convex<a class="headerlink" href="#configuring-convex" title="Permanent link">&para;</a></h4>
-<ol>
-<li>Get your deployment URL from <a href="https://convex.dev">convex.dev</a></li>
-<li>Create a new project or use an existing one</li>
-<li>Copy the deployment URL (looks like <code>https://your-project.convex.cloud</code>)</li>
-<li>Paste it into the <strong>Deployment URL</strong> field</li>
-</ol>
-<blockquote>
-<p><strong>Note: Reopening Required</strong></p>
-<p>After changing database settings, you may need to reopen your project for changes to take effect.</p>
-</blockquote>
-<h4 id="how-cloud-sync-works">How Cloud Sync Works<a class="headerlink" href="#how-cloud-sync-works" title="Permanent link">&para;</a></h4>
-<p>When cloud sync is enabled:</p>
-<ul>
-<li>All changes are <strong>saved locally first</strong> (SQLite remains primary)</li>
-<li>Changes are then <strong>queued for upload</strong> to Convex</li>
-<li>When connected, changes <strong>sync automatically</strong> in real-time</li>
-<li>Changes from other devices <strong>appear automatically</strong></li>
-</ul>
-<h4 id="sync-status-indicator">Sync Status Indicator<a class="headerlink" href="#sync-status-indicator" title="Permanent link">&para;</a></h4>
-<p>When cloud sync is enabled, a sync status indicator appears in the navigation bar:</p>
+<h1 id="observability-logging-telemetry">Observability — Logging &amp; Telemetry<a class="headerlink" href="#observability-logging-telemetry" title="Permanent link">&para;</a></h1>
+<p>QualCoder v2 includes structured logging and OpenTelemetry (OTEL) metrics to help you diagnose issues, monitor performance, and understand application behaviour.</p>
+<h2 id="overview">Overview<a class="headerlink" href="#overview" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
 <tr>
-<th>Icon</th>
-<th>Status</th>
-<th>Meaning</th>
+<th>Feature</th>
+<th>What it provides</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td>Green check</td>
-<td>Synced</td>
-<td>All changes uploaded</td>
+<td>Structured logging</td>
+<td>Timestamped, levelled log messages for every bounded context</td>
 </tr>
 <tr>
-<td>Spinning</td>
-<td>Syncing</td>
-<td>Upload in progress</td>
+<td>File logging</td>
+<td>Persistent log output saved to disk</td>
 </tr>
 <tr>
-<td>Red warning</td>
-<td>Error</td>
-<td>Connection issue (hover for details)</td>
+<td>OTEL metrics</td>
+<td>Operation latency, event counts, and resource usage metrics</td>
 </tr>
 </tbody>
 </table>
-<p>Click the indicator to manually trigger a sync or see pending changes.</p>
-<h4 id="offline-mode">Offline Mode<a class="headerlink" href="#offline-mode" title="Permanent link">&para;</a></h4>
-<p>If you lose internet connection:</p>
+<p>All logging follows the naming hierarchy <code>qualcoder.&lt;context&gt;.&lt;layer&gt;</code>, for example <code>qualcoder.coding.core</code> or <code>qualcoder.sources.infra</code>.</p>
+<h2 id="configuring-log-levels">Configuring Log Levels<a class="headerlink" href="#configuring-log-levels" title="Permanent link">&para;</a></h2>
+<h3 id="via-settings-ui">Via Settings UI<a class="headerlink" href="#via-settings-ui" title="Permanent link">&para;</a></h3>
 <ol>
-<li>Continue working normally - all changes save locally</li>
-<li>Changes queue for upload automatically</li>
-<li>When reconnected, pending changes sync in the background</li>
+<li>Open <strong>Settings</strong> (gear icon in the sidebar).</li>
+<li>Select <strong>Observability</strong> in the left navigation.</li>
+<li>Choose a log level from the dropdown:</li>
 </ol>
-<blockquote>
-<p><strong>Tip: Check Connection Status</strong></p>
-<p>The sync indicator shows the current connection state. If syncing seems stuck, check your internet connection.</p>
-</blockquote>
-<h2 id="saving-settings">Saving Settings<a class="headerlink" href="#saving-settings" title="Permanent link">&para;</a></h2>
-<p>Settings are saved automatically as you change them. There's no need to click Save.</p>
-<ul>
-<li><strong>OK</strong> - Closes the dialog</li>
-<li><strong>Cancel</strong> - Closes the dialog (changes are already saved)</li>
-</ul>
-<h2 id="keyboard-shortcuts">Keyboard Shortcuts<a class="headerlink" href="#keyboard-shortcuts" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
 <tr>
-<th>Action</th>
-<th>Shortcut</th>
+<th>Level</th>
+<th>When to use</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td>Open Settings</td>
-<td><code>Cmd+,</code> (macOS) / <code>Ctrl+,</code> (Windows/Linux)</td>
+<td><strong>DEBUG</strong></td>
+<td>Troubleshooting — shows detailed internal operations</td>
+</tr>
+<tr>
+<td><strong>INFO</strong></td>
+<td>Normal usage (default) — shows key actions and results</td>
+</tr>
+<tr>
+<td><strong>WARNING</strong></td>
+<td>Quiet mode — only unexpected situations</td>
+</tr>
+<tr>
+<td><strong>ERROR</strong></td>
+<td>Minimal — only failures</td>
 </tr>
 </tbody>
 </table>
-<h2 id="next-steps">Next Steps<a class="headerlink" href="#next-steps" title="Permanent link">&para;</a></h2>
-<ul>
-<li><a href="../coding/">Start coding your text</a></li>
-<li><a href="../codes/">Manage your codes</a></li>
-<li><a href="../sources/">Import sources</a></li>
-</ul>
+<p>Changes to the log level take effect immediately.</p>
+<h3 id="via-environment-variable">Via Environment Variable<a class="headerlink" href="#via-environment-variable" title="Permanent link">&para;</a></h3>
+<p>Set the <code>QUALCODER_LOG_LEVEL</code> environment variable to override the UI setting. This is useful for debugging without changing saved preferences.</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="c1"># macOS / Linux</span>
+</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="nb">export</span><span class="w"> </span><span class="nv">QUALCODER_LOG_LEVEL</span><span class="o">=</span>DEBUG
+</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>uv<span class="w"> </span>run<span class="w"> </span>python<span class="w"> </span>-m<span class="w"> </span>src.main
+</span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>
+</span><span id="__span-0-5"><a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="c1"># Windows PowerShell</span>
+</span><span id="__span-0-6"><a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="nv">$env</span>:QUALCODER_LOG_LEVEL<span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;DEBUG&quot;</span>
+</span><span id="__span-0-7"><a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>uv<span class="w"> </span>run<span class="w"> </span>python<span class="w"> </span>-m<span class="w"> </span>src.main
+</span></code></pre></div>
+<p>The environment variable takes highest priority — it overrides both the saved setting and the <code>QUALCODER_DEV</code> flag.</p>
+<h2 id="file-logging">File Logging<a class="headerlink" href="#file-logging" title="Permanent link">&para;</a></h2>
+<p>When <strong>Enable file logging</strong> is checked in Settings &gt; Observability, log output is also written to:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>~/.qualcoder/qualcoder.log
+</span></code></pre></div>
+<p>The file uses the same structured format as console output:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>14:32:05.123 INFO  [qualcoder.coding.core] Code created: id=abc123
+</span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>14:32:05.456 DEBUG [qualcoder.sources.infra] Source loaded: name=interview_01.txt
+</span></code></pre></div>
+<p>File logging changes require an application restart to take effect.</p>
+<h2 id="telemetry-metrics">Telemetry / Metrics<a class="headerlink" href="#telemetry-metrics" title="Permanent link">&para;</a></h2>
+<p>When <strong>Enable telemetry metrics</strong> is checked (enabled by default), QualCoder collects OTEL metrics locally:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>~/.qualcoder/telemetry.jsonl
+</span></code></pre></div>
+<p>Metrics include:
+- Operation latency (how long commands take)
+- Event throughput (events published per interval)
+- Error rates by bounded context</p>
+<p>All telemetry data stays on your machine. No data is sent to external services.</p>
+<p>Telemetry changes require an application restart to take effect.</p>
+<h2 id="troubleshooting">Troubleshooting<a class="headerlink" href="#troubleshooting" title="Permanent link">&para;</a></h2>
+<h3 id="logs-are-too-noisy">Logs are too noisy<a class="headerlink" href="#logs-are-too-noisy" title="Permanent link">&para;</a></h3>
+<p>Set the log level to <strong>WARNING</strong> or <strong>ERROR</strong> to reduce output. Only unexpected situations and failures will be logged.</p>
+<h3 id="need-detailed-logs-for-a-bug-report">Need detailed logs for a bug report<a class="headerlink" href="#need-detailed-logs-for-a-bug-report" title="Permanent link">&para;</a></h3>
+<ol>
+<li>Set <code>QUALCODER_LOG_LEVEL=DEBUG</code> in your environment.</li>
+<li>Enable file logging in Settings &gt; Observability.</li>
+<li>Reproduce the issue.</li>
+<li>Attach <code>~/.qualcoder/qualcoder.log</code> to your bug report.</li>
+</ol>
+<h3 id="log-level-setting-is-ignored">Log level setting is ignored<a class="headerlink" href="#log-level-setting-is-ignored" title="Permanent link">&para;</a></h3>
+<p>The <code>QUALCODER_LOG_LEVEL</code> environment variable overrides the UI setting. Check if it is set:</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="nb">echo</span><span class="w"> </span><span class="nv">$QUALCODER_LOG_LEVEL</span>
+</span></code></pre></div>
+<p>Unset it to use the UI-configured value:</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="nb">unset</span><span class="w"> </span>QUALCODER_LOG_LEVEL
+</span></code></pre></div>
 
 
 
