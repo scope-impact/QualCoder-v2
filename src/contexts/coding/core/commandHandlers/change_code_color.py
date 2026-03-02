@@ -7,6 +7,7 @@ Returns OperationResult with error codes, suggestions, and rollback support.
 
 from __future__ import annotations
 
+import logging
 from typing import TYPE_CHECKING
 
 from src.contexts.coding.core.commandHandlers._state import (
@@ -22,11 +23,15 @@ from src.contexts.coding.core.events import CodeColorChanged
 from src.shared.common.failure_events import FailureEvent
 from src.shared.common.operation_result import OperationResult
 from src.shared.common.types import CodeId
+from src.shared.infra.metrics import metered_command
 
 if TYPE_CHECKING:
     from src.shared.infra.event_bus import EventBus
 
+logger = logging.getLogger("qualcoder.coding.core")
 
+
+@metered_command("change_code_color")
 def change_code_color(
     command: ChangeCodeColorCommand,
     code_repo: CodeRepository,
@@ -47,12 +52,19 @@ def change_code_color(
     Returns:
         OperationResult with CodeColorChanged event on success, or error details on failure
     """
+    logger.debug(
+        "change_code_color: code_id=%s, new_color=%s",
+        command.code_id,
+        command.new_color,
+    )
+
     state = build_coding_state(code_repo, category_repo, segment_repo)
     code_id = CodeId(value=command.code_id)
 
     try:
         new_color = Color.from_hex(command.new_color)
     except ValueError as e:
+        logger.error("change_code_color failed: invalid color %s", command.new_color)
         return OperationResult.fail(
             error=str(e),
             error_code="CODE_COLOR_NOT_CHANGED/INVALID_COLOR",
@@ -67,6 +79,7 @@ def change_code_color(
 
     # Handle failure events
     if isinstance(result, FailureEvent):
+        logger.error("change_code_color failed: %s", result.event_type)
         event_bus.publish(result)
         return OperationResult.from_failure(result)
 
@@ -79,6 +92,12 @@ def change_code_color(
         code_repo.save(updated_code)
 
     event_bus.publish(event)
+
+    logger.info(
+        "Code color changed: code_id=%s, new_color=%s",
+        command.code_id,
+        event.new_color.to_hex(),
+    )
 
     return OperationResult.ok(
         data=event,

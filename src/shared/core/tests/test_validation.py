@@ -303,8 +303,8 @@ class TestIsValidHexColor:
     def test_missing_hash(self):
         assert is_valid_hex_color("FF0000") is False
 
-    def test_wrong_length_short(self):
-        assert is_valid_hex_color("#F00") is False
+    def test_three_digit_shorthand(self):
+        assert is_valid_hex_color("#F00") is True
 
     def test_wrong_length_long(self):
         assert is_valid_hex_color("#FF00000") is False

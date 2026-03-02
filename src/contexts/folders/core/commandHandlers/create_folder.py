@@ -7,6 +7,7 @@ Returns OperationResult with error codes, suggestions, and rollback support.
 
 from __future__ import annotations
 
+import logging
 from typing import TYPE_CHECKING
 
 from src.contexts.folders.core.commandHandlers._state import (
@@ -21,12 +22,17 @@ from src.contexts.folders.core.events import FolderCreated
 from src.contexts.folders.core.failure_events import FolderNotCreated
 from src.shared.common.operation_result import OperationResult
 from src.shared.common.types import FolderId
+from src.shared.infra.metrics import metered_command
 from src.shared.infra.state import ProjectState
 
 if TYPE_CHECKING:
     from src.shared.infra.event_bus import EventBus
 
 
+logger = logging.getLogger("qualcoder.folders.core")
+
+
+@metered_command("create_folder")
 def create_folder(
     command: CreateFolderCommand,
     state: ProjectState,
@@ -47,7 +53,12 @@ def create_folder(
     Returns:
         OperationResult with Folder on success, or error details on failure
     """
+    logger.debug(
+        "create_folder: name=%s, parent_id=%s", command.name, command.parent_id
+    )
+
     if state.project is None:
+        logger.error("create_folder: no project is currently open")
         return OperationResult.fail(
             error="No project is currently open",
             error_code="FOLDER_NOT_CREATED/NO_PROJECT",
@@ -66,6 +77,7 @@ def create_folder(
     )
 
     if isinstance(result, FolderNotCreated):
+        logger.error("create_folder: failed — %s", result.reason)
         return OperationResult.fail(
             error=result.reason,
             error_code=f"FOLDER_NOT_CREATED/{result.event_type.upper()}",
@@ -88,6 +100,9 @@ def create_folder(
     # Publish event
     event_bus.publish(event)
 
+    logger.info(
+        "create_folder: created folder id=%s name=%s", folder.id.value, folder.name
+    )
     return OperationResult.ok(
         data=folder,
         rollback=DeleteFolderCommand(folder_id=folder.id.value),

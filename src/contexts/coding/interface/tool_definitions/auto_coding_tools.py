@@ -9,7 +9,7 @@ AUTO_CODING_TOOLS = (
         parameters=(
             ToolParameter(
                 name="source_id",
-                type="integer",
+                type="string",
                 description="ID of the source to analyze.",
                 required=True,
             ),
@@ -24,7 +24,7 @@ AUTO_CODING_TOOLS = (
         parameters=(
             ToolParameter(
                 name="source_id",
-                type="integer",
+                type="string",
                 description="ID of the source document.",
                 required=True,
             ),
@@ -51,7 +51,7 @@ AUTO_CODING_TOOLS = (
         parameters=(
             ToolParameter(
                 name="source_id",
-                type="integer",
+                type="string",
                 description="ID of the source to analyze.",
                 required=True,
             ),
@@ -97,7 +97,7 @@ AUTO_CODING_TOOLS = (
                 type="array",
                 description="Code IDs to accept (for accept response).",
                 required=False,
-                items={"type": "integer"},
+                items={"type": "string"},
             ),
             ToolParameter(
                 name="reason",

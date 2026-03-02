@@ -16,7 +16,7 @@ CORE_TOOLS = (
                 type="array",
                 description=(
                     "Array of code applications. Each operation requires: "
-                    "code_id (int), source_id (int), start_position (int), end_position (int). "
+                    "code_id (string), source_id (string), start_position (int), end_position (int). "
                     "Optional: memo (string), importance (int 0-3)."
                 ),
                 required=True,
@@ -24,11 +24,11 @@ CORE_TOOLS = (
                     "type": "object",
                     "properties": {
                         "code_id": {
-                            "type": "integer",
+                            "type": "string",
                             "description": "ID of the code to apply",
                         },
                         "source_id": {
-                            "type": "integer",
+                            "type": "string",
                             "description": "ID of the source document",
                         },
                         "start_position": {
@@ -75,7 +75,7 @@ CORE_TOOLS = (
         parameters=(
             ToolParameter(
                 name="code_id",
-                type="integer",
+                type="string",
                 description="ID of the code to retrieve.",
                 required=True,
             ),
@@ -90,7 +90,7 @@ CORE_TOOLS = (
         parameters=(
             ToolParameter(
                 name="source_id",
-                type="integer",
+                type="string",
                 description="ID of the source to get segments for.",
                 required=True,
             ),
@@ -105,7 +105,7 @@ CORE_TOOLS = (
         parameters=(
             ToolParameter(
                 name="segment_id",
-                type="integer",
+                type="string",
                 description="ID of the segment to delete.",
                 required=True,
             ),
@@ -139,7 +139,7 @@ CORE_TOOLS = (
             ),
             ToolParameter(
                 name="category_id",
-                type="integer",
+                type="string",
                 description="Optional category ID to place the code in.",
                 required=False,
             ),

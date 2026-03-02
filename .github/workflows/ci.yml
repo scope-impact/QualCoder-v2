@@ -75,7 +75,7 @@ jobs:
         env:
           QT_QPA_PLATFORM: offscreen
         run: |
-          uv run --with pytest-cov pytest \
+          uv run pytest \
             --cov=src \
             --cov=design_system \
             --cov-report=term-missing \

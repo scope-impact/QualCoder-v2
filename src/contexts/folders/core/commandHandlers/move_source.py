@@ -7,6 +7,7 @@ Returns OperationResult with error codes, suggestions, and rollback support.
 
 from __future__ import annotations
 
+import logging
 from typing import TYPE_CHECKING
 
 from src.contexts.folders.core.commandHandlers._state import (
@@ -20,12 +21,17 @@ from src.contexts.folders.core.events import SourceMovedToFolder
 from src.contexts.folders.core.failure_events import SourceNotMoved
 from src.shared.common.operation_result import OperationResult
 from src.shared.common.types import FolderId, SourceId
+from src.shared.infra.metrics import metered_command
 from src.shared.infra.state import ProjectState
 
 if TYPE_CHECKING:
     from src.shared.infra.event_bus import EventBus
 
 
+logger = logging.getLogger("qualcoder.folders.core")
+
+
+@metered_command("move_source_to_folder")
 def move_source_to_folder(
     command: MoveSourceToFolderCommand,
     state: ProjectState,
@@ -46,7 +52,14 @@ def move_source_to_folder(
     Returns:
         OperationResult with SourceMovedToFolder event on success, or error details on failure
     """
+    logger.debug(
+        "move_source_to_folder: source_id=%s, folder_id=%s",
+        command.source_id,
+        command.folder_id,
+    )
+
     if state.project is None:
+        logger.error("move_source_to_folder: no project is currently open")
         return OperationResult.fail(
             error="No project is currently open",
             error_code="SOURCE_NOT_MOVED/NO_PROJECT",
@@ -68,6 +81,7 @@ def move_source_to_folder(
     )
 
     if isinstance(result, SourceNotMoved):
+        logger.error("move_source_to_folder: failed — %s", result.reason)
         return OperationResult.fail(
             error=result.reason,
             error_code=f"SOURCE_NOT_MOVED/{result.event_type.upper()}",
@@ -87,6 +101,11 @@ def move_source_to_folder(
 
     # Get old folder ID for rollback
     old_folder_id = event.old_folder_id.value if event.old_folder_id else None
+    logger.info(
+        "move_source_to_folder: moved source_id=%s to folder_id=%s",
+        command.source_id,
+        command.folder_id,
+    )
     return OperationResult.ok(
         data=event,
         rollback=MoveSourceToFolderCommand(

@@ -52,22 +52,22 @@ class TestTypedIdentifiers:
         assert id1.value != id2.value
 
     def test_typed_ids_are_frozen(self):
-        code_id = CodeId(value=1)
+        code_id = CodeId(value="1")
 
         with pytest.raises(AttributeError):
             code_id.value = 2
 
     def test_typed_ids_are_hashable(self):
-        code_id = CodeId(value=1)
+        code_id = CodeId(value="1")
 
         # Should be usable as dict key
         d = {code_id: "test"}
         assert d[code_id] == "test"
 
     def test_typed_ids_equality(self):
-        id1 = CodeId(value=42)
-        id2 = CodeId(value=42)
-        id3 = CodeId(value=99)
+        id1 = CodeId(value="42")
+        id2 = CodeId(value="42")
+        id3 = CodeId(value="99")
 
         assert id1 == id2
         assert id1 != id3
@@ -91,12 +91,12 @@ class TestCodeNotFound:
     """Test CodeNotFound failure reason."""
 
     def test_auto_generates_message(self):
-        failure = CodeNotFound(code_id=CodeId(value=42))
+        failure = CodeNotFound(code_id=CodeId(value="42"))
 
         assert failure.message == "Code with id 42 not found"
 
     def test_message_includes_id(self):
-        failure = CodeNotFound(code_id=CodeId(value=12345))
+        failure = CodeNotFound(code_id=CodeId(value="12345"))
 
         assert "12345" in failure.message
 
@@ -105,7 +105,7 @@ class TestSourceNotFound:
     """Test SourceNotFound failure reason."""
 
     def test_auto_generates_message(self):
-        failure = SourceNotFound(source_id=SourceId(value=99))
+        failure = SourceNotFound(source_id=SourceId(value="99"))
 
         assert failure.message == "Source with id 99 not found"
 
@@ -140,7 +140,7 @@ class TestFolderNotFound:
     """Test FolderNotFound failure reason."""
 
     def test_auto_generates_message(self):
-        failure = FolderNotFound(folder_id=FolderId(value=7))
+        failure = FolderNotFound(folder_id=FolderId(value="7"))
 
         assert failure.message == "Folder with id 7 not found"
 
@@ -155,10 +155,10 @@ class TestFailureReasonsAreFrozen:
             failure.name = "Other"
 
     def test_code_not_found_frozen(self):
-        failure = CodeNotFound(code_id=CodeId(value=1))
+        failure = CodeNotFound(code_id=CodeId(value="1"))
 
         with pytest.raises(AttributeError):
-            failure.code_id = CodeId(value=2)
+            failure.code_id = CodeId(value="2")
 
 
 class TestDomainEvent:

@@ -109,6 +109,47 @@ dark_colors = COLORS_DARK
 | `code_orange` | Decorators |
 | `code_cyan` | Built-ins |
 
+### Diff Viewer Colors
+
+Colors for git diff output highlighting, inspired by [git-cola](https://github.com/git-cola/git-cola).
+
+| Property | Light Theme | Dark Theme | Description |
+|----------|-------------|------------|-------------|
+| `diff_add_bg` | `#d2ffe4` | `#1a472a` | Background for added lines |
+| `diff_add_fg` | `#1a7f37` | `#7ee787` | Foreground for added lines |
+| `diff_remove_bg` | `#fee0e4` | `#5c2d2d` | Background for removed lines |
+| `diff_remove_fg` | `#b35900` | `#ff7b72` | Foreground for removed lines |
+| `diff_header_fg` | `#0550ae` | `#79c0ff` | Headers (`diff --git`, `+++`, `---`) |
+| `diff_hunk_fg` | `#6639ba` | `#a371f7` | Hunk markers (`@@`) |
+
+#### Usage Example
+
+```python
+from PySide6.QtGui import QColor, QSyntaxHighlighter, QTextCharFormat
+from design_system import get_colors
+
+class DiffHighlighter(QSyntaxHighlighter):
+    def __init__(self, document):
+        super().__init__(document)
+        colors = get_colors()
+
+        # Addition format
+        self._add_format = QTextCharFormat()
+        self._add_format.setBackground(QColor(colors.diff_add_bg))
+        self._add_format.setForeground(QColor(colors.diff_add_fg))
+
+        # Deletion format
+        self._remove_format = QTextCharFormat()
+        self._remove_format.setBackground(QColor(colors.diff_remove_bg))
+        self._remove_format.setForeground(QColor(colors.diff_remove_fg))
+
+    def highlightBlock(self, text: str):
+        if text.startswith("+") and not text.startswith("+++"):
+            self.setFormat(0, len(text), self._add_format)
+        elif text.startswith("-") and not text.startswith("---"):
+            self.setFormat(0, len(text), self._remove_format)
+```
+
 ## Custom Themes
 
 Register and use custom color themes:

@@ -7,6 +7,7 @@ Returns OperationResult with error codes, suggestions, and rollback support.
 
 from __future__ import annotations
 
+import logging
 from typing import TYPE_CHECKING
 
 from src.contexts.coding.core.commandHandlers._state import (
@@ -21,11 +22,15 @@ from src.contexts.coding.core.events import CodeMemoUpdated
 from src.shared.common.failure_events import FailureEvent
 from src.shared.common.operation_result import OperationResult
 from src.shared.common.types import CodeId
+from src.shared.infra.metrics import metered_command
 
 if TYPE_CHECKING:
     from src.shared.infra.event_bus import EventBus
 
+logger = logging.getLogger("qualcoder.coding.core")
 
+
+@metered_command("update_code_memo")
 def update_code_memo(
     command: UpdateCodeMemoCommand,
     code_repo: CodeRepository,
@@ -46,6 +51,8 @@ def update_code_memo(
     Returns:
         OperationResult with CodeMemoUpdated event on success, or error details on failure
     """
+    logger.debug("update_code_memo: code_id=%s", command.code_id)
+
     state = build_coding_state(code_repo, category_repo, segment_repo)
     code_id = CodeId(value=command.code_id)
 
@@ -57,6 +64,7 @@ def update_code_memo(
 
     # Handle failure events
     if isinstance(result, FailureEvent):
+        logger.error("update_code_memo failed: %s", result.event_type)
         event_bus.publish(result)
         return OperationResult.from_failure(result)
 
@@ -69,6 +77,8 @@ def update_code_memo(
         code_repo.save(updated_code)
 
     event_bus.publish(event)
+
+    logger.info("Code memo updated: code_id=%s", command.code_id)
 
     return OperationResult.ok(
         data=event,

@@ -7,7 +7,7 @@ and inherit from DomainEvent base class.
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import ClassVar
 
 from src.shared.common.types import DomainEvent
@@ -183,4 +183,111 @@ class AVCodingConfigChanged(DomainEvent):
             old_speaker_format=old_speaker_format,
             timestamp_format=timestamp_format,
             speaker_format=speaker_format,
+        )
+
+
+# =============================================================================
+# Observability Events
+# =============================================================================
+
+
+@dataclass(frozen=True)
+class ObservabilityConfigChanged(DomainEvent):
+    """Emitted when the user changes observability configuration."""
+
+    event_type: ClassVar[str] = "settings.observability_config_changed"
+
+    old_log_level: str = "INFO"
+    old_enable_file_logging: bool = False
+    old_enable_telemetry: bool = True
+    log_level: str = "INFO"
+    enable_file_logging: bool = False
+    enable_telemetry: bool = True
+
+    @classmethod
+    def create(
+        cls,
+        old_log_level: str,
+        old_enable_file_logging: bool,
+        old_enable_telemetry: bool,
+        log_level: str,
+        enable_file_logging: bool,
+        enable_telemetry: bool,
+    ) -> ObservabilityConfigChanged:
+        """Factory method to create event with auto-generated metadata."""
+        return cls(
+            event_id=cls._generate_id(),
+            occurred_at=cls._now(),
+            old_log_level=old_log_level,
+            old_enable_file_logging=old_enable_file_logging,
+            old_enable_telemetry=old_enable_telemetry,
+            log_level=log_level,
+            enable_file_logging=enable_file_logging,
+            enable_telemetry=enable_telemetry,
+        )
+
+
+# =============================================================================
+# Cloud Sync Events
+# =============================================================================
+
+
+@dataclass(frozen=True)
+class CloudSyncConfigChanged(DomainEvent):
+    """Emitted when cloud sync configuration is changed."""
+
+    event_type: str = field(default="settings.cloud_sync_config_changed", init=False)
+    old_enabled: bool = False
+    old_convex_url: str | None = None
+    enabled: bool = False
+    convex_url: str | None = None
+
+    @classmethod
+    def create(
+        cls,
+        old_enabled: bool,
+        old_convex_url: str | None,
+        enabled: bool,
+        convex_url: str | None,
+    ) -> CloudSyncConfigChanged:
+        """Factory method to create event with auto-generated metadata."""
+        return cls(
+            event_id=cls._generate_id(),
+            occurred_at=cls._now(),
+            old_enabled=old_enabled,
+            old_convex_url=old_convex_url,
+            enabled=enabled,
+            convex_url=convex_url,
+        )
+
+
+@dataclass(frozen=True)
+class CloudSyncEnabled(DomainEvent):
+    """Emitted when cloud sync is enabled."""
+
+    event_type: str = field(default="settings.cloud_sync_enabled", init=False)
+    convex_url: str = ""
+
+    @classmethod
+    def create(cls, convex_url: str) -> CloudSyncEnabled:
+        """Factory method to create event with auto-generated metadata."""
+        return cls(
+            event_id=cls._generate_id(),
+            occurred_at=cls._now(),
+            convex_url=convex_url,
+        )
+
+
+@dataclass(frozen=True)
+class CloudSyncDisabled(DomainEvent):
+    """Emitted when cloud sync is disabled."""
+
+    event_type: str = field(default="settings.cloud_sync_disabled", init=False)
+
+    @classmethod
+    def create(cls) -> CloudSyncDisabled:
+        """Factory method to create event with auto-generated metadata."""
+        return cls(
+            event_id=cls._generate_id(),
+            occurred_at=cls._now(),
         )

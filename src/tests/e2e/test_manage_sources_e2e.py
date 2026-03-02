@@ -588,7 +588,7 @@ class TestOrganizeSources:
 
         with allure.step("Create folder entity"):
             folder = Folder(
-                id=FolderId(1),
+                id=FolderId("1"),
                 name="Test Folder",
                 parent_id=None,
             )
@@ -599,7 +599,7 @@ class TestOrganizeSources:
             assert renamed.id == folder.id
 
         with allure.step("Test move (change parent) operation"):
-            new_parent = FolderId(2)
+            new_parent = FolderId("2")
             moved = folder.with_parent(new_parent)
             assert moved.parent_id == new_parent
 
@@ -643,7 +643,7 @@ class TestOrganizeSources:
 
             # Create source in that folder
             source = Source(
-                id=SourceId(1),
+                id=SourceId("1"),
                 name="interview_01.txt",
                 source_type=SourceType.TEXT,
                 fulltext="Interview content",
@@ -734,7 +734,7 @@ class TestViewSourceMetadata:
 
         with allure.step("Create source entity"):
             source = Source(
-                id=SourceId(1),
+                id=SourceId("1"),
                 name="test.txt",
                 source_type=SourceType.TEXT,
                 fulltext="Content here",
@@ -753,7 +753,7 @@ class TestViewSourceMetadata:
 
         with allure.step("Create source with original name"):
             source = Source(
-                id=SourceId(1),
+                id=SourceId("1"),
                 name="old_name.txt",
                 source_type=SourceType.TEXT,
                 fulltext="Content",
@@ -798,7 +798,7 @@ class TestDeleteSource:
 
         with allure.step("Create source entity"):
             source = Source(
-                id=SourceId(1),
+                id=SourceId("1"),
                 name="test.txt",
                 source_type=SourceType.TEXT,
                 fulltext="Content",
@@ -814,14 +814,14 @@ class TestDeleteSource:
 
         with allure.step("Create source entity"):
             source = Source(
-                id=SourceId(1),
+                id=SourceId("1"),
                 name="test.txt",
                 source_type=SourceType.TEXT,
                 fulltext="Content",
             )
 
         with allure.step("Verify source is immutable and safe for deletion"):
-            assert source.id.value == 1
+            assert source.id.value == "1"
 
 
 # =============================================================================
@@ -935,7 +935,7 @@ class TestSourceManagementIntegration:
             ctx.open_project(str(project_path))
 
             source = Source(
-                id=SourceId(1),
+                id=SourceId("1"),
                 name="persisted_doc.txt",
                 source_type=SourceType.TEXT,
                 fulltext="This is the document content that should persist.",
@@ -998,7 +998,7 @@ class TestSourceManagementIntegration:
 
             # Create image source with file_path
             image_source = Source(
-                id=SourceId(1),
+                id=SourceId("1"),
                 name="photo.png",
                 source_type=SourceType.IMAGE,
                 file_path=sample_files.png_file,
@@ -1009,7 +1009,7 @@ class TestSourceManagementIntegration:
 
             # Create audio source with file_path
             audio_source = Source(
-                id=SourceId(2),
+                id=SourceId("2"),
                 name="interview.wav",
                 source_type=SourceType.AUDIO,
                 file_path=sample_files.wav_file,
@@ -1399,20 +1399,20 @@ class TestAgentListSources:
         # Add sources of different types
         sources = [
             Source(
-                id=SourceId(1),
+                id=SourceId("1"),
                 name="document.txt",
                 source_type=SourceType.TEXT,
                 fulltext="Text content",
                 code_count=5,
             ),
             Source(
-                id=SourceId(2),
+                id=SourceId("2"),
                 name="image.png",
                 source_type=SourceType.IMAGE,
                 code_count=2,
             ),
             Source(
-                id=SourceId(3),
+                id=SourceId("3"),
                 name="audio.mp3",
                 source_type=SourceType.AUDIO,
                 code_count=0,
@@ -1441,7 +1441,7 @@ class TestAgentListSources:
             assert data["count"] == 3
             assert all("id" in s for s in data["sources"])
             ids = [s["id"] for s in data["sources"]]
-            assert 1 in ids and 2 in ids and 3 in ids
+            assert "1" in ids and "2" in ids and "3" in ids
 
     @allure.title("AC #2: Agent can filter by source type")
     def test_ac2_filter_by_source_type(self, app_context, project_with_sources):
@@ -1550,7 +1550,7 @@ class TestAgentReadSourceContent:
         # Add a source with content
         long_content = "A" * 100000 + "B" * 100000  # 200k chars for pagination test
         source = Source(
-            id=SourceId(1),
+            id=SourceId("1"),
             name="long_document.txt",
             source_type=SourceType.TEXT,
             fulltext=long_content,
@@ -1684,7 +1684,7 @@ class TestAgentExtractMetadata:
         app_context.open_project(str(project_path))
 
         source = Source(
-            id=SourceId(1),
+            id=SourceId("1"),
             name="spanish_interview.txt",
             source_type=SourceType.TEXT,
             fulltext="Entrevista sobre temas de educación en español.",

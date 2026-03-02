@@ -42,6 +42,17 @@ class FolderNotCreated(FailureEvent):
             parent_id=parent_id,
         )
 
+    @classmethod
+    def parent_not_found(cls, name: str, parent_id: FolderId) -> FolderNotCreated:
+        """Parent folder does not exist."""
+        return cls(
+            event_id=cls._generate_id(),
+            occurred_at=cls._now(),
+            event_type="FOLDER_NOT_CREATED/PARENT_NOT_FOUND",
+            name=name,
+            parent_id=parent_id,
+        )
+
     @property
     def message(self) -> str:
         """Human-readable error message."""
@@ -50,6 +61,8 @@ class FolderNotCreated(FailureEvent):
                 return f"Invalid folder name: '{self.name}'"
             case "DUPLICATE_NAME":
                 return f"Folder with name '{self.name}' already exists at this level"
+            case "PARENT_NOT_FOUND":
+                return f"Parent folder not found: {self.parent_id.value if self.parent_id else 'unknown'}"
             case _:
                 return super().message
 

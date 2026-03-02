@@ -60,7 +60,7 @@ class TestIsValidSourceName:
 class TestIsSourceNameUnique:
     """Tests for is_source_name_unique invariant."""
 
-    def _make_source(self, source_id: int, name: str) -> Source:
+    def _make_source(self, source_id: str, name: str) -> Source:
         """Create a source for testing."""
         return Source(
             id=SourceId(value=source_id),
@@ -80,26 +80,26 @@ class TestIsSourceNameUnique:
     def test_unique_name_among_existing(self) -> None:
         """Different name should be unique."""
         existing = [
-            self._make_source(1, "file1.txt"),
-            self._make_source(2, "file2.txt"),
+            self._make_source("1", "file1.txt"),
+            self._make_source("2", "file2.txt"),
         ]
         assert is_source_name_unique("file3.txt", existing) is True
 
     def test_duplicate_name_exact_match(self) -> None:
         """Exact duplicate should fail."""
-        existing = [self._make_source(1, "interview.txt")]
+        existing = [self._make_source("1", "interview.txt")]
         assert is_source_name_unique("interview.txt", existing) is False
 
     def test_duplicate_name_case_insensitive(self) -> None:
         """Duplicate with different case should fail (case-insensitive)."""
-        existing = [self._make_source(1, "Interview.txt")]
+        existing = [self._make_source("1", "Interview.txt")]
         assert is_source_name_unique("interview.txt", existing) is False
         assert is_source_name_unique("INTERVIEW.TXT", existing) is False
 
     def test_unique_with_exclude_id(self) -> None:
         """Excluding source's own ID should allow same name (for rename)."""
-        source_id = SourceId(value=1)
-        existing = [self._make_source(1, "interview.txt")]
+        source_id = SourceId(value="1")
+        existing = [self._make_source("1", "interview.txt")]
         # When renaming to same name (excluding self), should pass
         assert (
             is_source_name_unique(
@@ -110,10 +110,10 @@ class TestIsSourceNameUnique:
 
     def test_duplicate_with_exclude_id(self) -> None:
         """Excluding source ID should still fail if another source has the name."""
-        source_id_to_rename = SourceId(value=1)
+        source_id_to_rename = SourceId(value="1")
         existing = [
-            self._make_source(1, "file1.txt"),
-            self._make_source(2, "target_name.txt"),  # Another source has this name
+            self._make_source("1", "file1.txt"),
+            self._make_source("2", "target_name.txt"),  # Another source has this name
         ]
         # Renaming file1.txt to target_name.txt should fail
         assert (
@@ -127,31 +127,31 @@ class TestIsSourceNameUnique:
 class TestDetectSourceType:
     """Tests for detect_source_type invariant."""
 
-    @pytest.mark.parametrize("ext", TEXT_EXTENSIONS)
+    @pytest.mark.parametrize("ext", sorted(TEXT_EXTENSIONS))
     def test_text_extensions(self, ext: str) -> None:
         """Text file extensions should return TEXT type."""
         path = Path(f"document{ext}")
         assert detect_source_type(path) == SourceType.TEXT
 
-    @pytest.mark.parametrize("ext", AUDIO_EXTENSIONS)
+    @pytest.mark.parametrize("ext", sorted(AUDIO_EXTENSIONS))
     def test_audio_extensions(self, ext: str) -> None:
         """Audio file extensions should return AUDIO type."""
         path = Path(f"recording{ext}")
         assert detect_source_type(path) == SourceType.AUDIO
 
-    @pytest.mark.parametrize("ext", VIDEO_EXTENSIONS)
+    @pytest.mark.parametrize("ext", sorted(VIDEO_EXTENSIONS))
     def test_video_extensions(self, ext: str) -> None:
         """Video file extensions should return VIDEO type."""
         path = Path(f"video{ext}")
         assert detect_source_type(path) == SourceType.VIDEO
 
-    @pytest.mark.parametrize("ext", IMAGE_EXTENSIONS)
+    @pytest.mark.parametrize("ext", sorted(IMAGE_EXTENSIONS))
     def test_image_extensions(self, ext: str) -> None:
         """Image file extensions should return IMAGE type."""
         path = Path(f"photo{ext}")
         assert detect_source_type(path) == SourceType.IMAGE
 
-    @pytest.mark.parametrize("ext", PDF_EXTENSIONS)
+    @pytest.mark.parametrize("ext", sorted(PDF_EXTENSIONS))
     def test_pdf_extensions(self, ext: str) -> None:
         """PDF file extensions should return PDF type."""
         path = Path(f"document{ext}")
@@ -202,7 +202,7 @@ class TestIsSupportedSourceType:
 class TestCanImportSource:
     """Tests for can_import_source invariant."""
 
-    def _make_source(self, source_id: int, name: str) -> Source:
+    def _make_source(self, source_id: str, name: str) -> Source:
         """Create a source for testing."""
         return Source(
             id=SourceId(value=source_id),
@@ -230,5 +230,5 @@ class TestCanImportSource:
     def test_cannot_import_duplicate_name(self) -> None:
         """Cannot import when name already exists."""
         path = Path("/data/interview.txt")
-        existing = [self._make_source(1, "interview.txt")]
+        existing = [self._make_source("1", "interview.txt")]
         assert can_import_source(path, lambda _: True, existing) is False

@@ -8,6 +8,7 @@ config directory.
 from __future__ import annotations
 
 import json
+import logging
 import os
 import sys
 from datetime import datetime
@@ -17,12 +18,16 @@ from typing import Any
 from src.contexts.projects.core import RecentProject
 from src.contexts.settings.core.entities import (
     AVCodingConfig,
+    BackendConfig,
     BackupConfig,
     FontPreference,
     LanguagePreference,
+    ObservabilityConfig,
     ThemePreference,
     UserSettings,
 )
+
+logger = logging.getLogger("qualcoder.settings.infra")
 
 
 class UserSettingsRepository:
@@ -74,6 +79,7 @@ class UserSettingsRepository:
         Returns:
             UserSettings with loaded values or defaults if file doesn't exist
         """
+        logger.debug("load: %s", self._config_path)
         if not self._config_path.exists():
             return UserSettings.default()
 
@@ -82,6 +88,7 @@ class UserSettingsRepository:
                 data = json.load(f)
             return self._from_dict(data)
         except (json.JSONDecodeError, KeyError, TypeError):
+            logger.error("load: corrupted settings file %s", self._config_path)
             # Return defaults if file is corrupted
             return UserSettings.default()
 
@@ -96,6 +103,7 @@ class UserSettingsRepository:
             True if save succeeded, False if an error occurred
         """
         try:
+            logger.debug("save: %s", self._config_path)
             data = self._to_dict(settings)
             # Write to temp file first, then rename for atomic write
             temp_path = self._config_path.with_suffix(".tmp")
@@ -104,7 +112,9 @@ class UserSettingsRepository:
             temp_path.replace(self._config_path)
             return True
         except (PermissionError, OSError):
-            # Log would go here in production
+            logger.error(
+                "save: failed to write settings to %s", self._config_path, exc_info=True
+            )
             return False
 
     # =========================================================================
@@ -173,6 +183,42 @@ class UserSettingsRepository:
         self.save(settings.with_av_coding(av_coding))
 
     # =========================================================================
+    # Backend Operations
+    # =========================================================================
+
+    def get_backend_config(self) -> BackendConfig:
+        """Get current backend configuration."""
+        return self.load().backend
+
+    def set_backend_config(self, backend: BackendConfig) -> None:
+        """Set backend configuration."""
+        settings = self.load()
+        self.save(settings.with_backend(backend))
+
+    def set_cloud_sync_enabled(self, enabled: bool) -> None:
+        """Enable or disable cloud sync with Convex."""
+        config = self.get_backend_config()
+        self.set_backend_config(config.with_cloud_sync_enabled(enabled))
+
+    def set_convex_url(self, convex_url: str | None) -> None:
+        """Set the Convex deployment URL."""
+        config = self.get_backend_config()
+        self.set_backend_config(config.with_convex_url(convex_url))
+
+    # =========================================================================
+    # Observability Operations
+    # =========================================================================
+
+    def get_observability_config(self) -> ObservabilityConfig:
+        """Get current observability configuration."""
+        return self.load().observability
+
+    def set_observability_config(self, observability: ObservabilityConfig) -> None:
+        """Set observability configuration."""
+        settings = self.load()
+        self.save(settings.with_observability(observability))
+
+    # =========================================================================
     # Recent Projects Operations
     # =========================================================================
 
@@ -194,6 +240,9 @@ class UserSettingsRepository:
                 data = json.load(f)
             return self._recent_projects_from_list(data.get("recent_projects", []))
         except (json.JSONDecodeError, KeyError, TypeError, OSError):
+            logger.error(
+                "get_recent_projects: failed to load from %s", self._config_path
+            )
             return []
 
     def add_recent_project(self, project: RecentProject) -> None:
@@ -255,7 +304,9 @@ class UserSettingsRepository:
                 json.dump(data, f, indent=2)
             temp_path.replace(self._config_path)
         except (PermissionError, OSError):
-            pass  # Silently fail; logging would go here in production
+            logger.error(
+                "_save_recent_projects: failed to write to %s", self._config_path
+            )
 
     def _recent_projects_to_list(
         self, projects: list[RecentProject]
@@ -320,6 +371,16 @@ class UserSettingsRepository:
                 "timestamp_format": settings.av_coding.timestamp_format,
                 "speaker_format": settings.av_coding.speaker_format,
             },
+            "backend": {
+                "cloud_sync_enabled": settings.backend.cloud_sync_enabled,
+                "convex_url": settings.backend.convex_url,
+                "convex_project_id": settings.backend.convex_project_id,
+            },
+            "observability": {
+                "log_level": settings.observability.log_level,
+                "enable_file_logging": settings.observability.enable_file_logging,
+                "enable_telemetry": settings.observability.enable_telemetry,
+            },
         }
 
     def _from_dict(self, data: dict[str, Any]) -> UserSettings:
@@ -329,6 +390,8 @@ class UserSettingsRepository:
         language_data = data.get("language", {})
         backup_data = data.get("backup", {})
         av_coding_data = data.get("av_coding", {})
+        backend_data = data.get("backend", {})
+        observability_data = data.get("observability", {})
 
         return UserSettings(
             theme=ThemePreference(
@@ -351,5 +414,17 @@ class UserSettingsRepository:
             av_coding=AVCodingConfig(
                 timestamp_format=av_coding_data.get("timestamp_format", "HH:MM:SS"),
                 speaker_format=av_coding_data.get("speaker_format", "Speaker {n}"),
+            ),
+            backend=BackendConfig(
+                cloud_sync_enabled=backend_data.get("cloud_sync_enabled", False),
+                convex_url=backend_data.get("convex_url"),
+                convex_project_id=backend_data.get("convex_project_id"),
+            ),
+            observability=ObservabilityConfig(
+                log_level=observability_data.get("log_level", "INFO"),
+                enable_file_logging=observability_data.get(
+                    "enable_file_logging", False
+                ),
+                enable_telemetry=observability_data.get("enable_telemetry", True),
             ),
         )

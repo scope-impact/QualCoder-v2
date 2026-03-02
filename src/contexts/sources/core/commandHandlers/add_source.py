@@ -7,6 +7,7 @@ Returns OperationResult with error codes, suggestions, and rollback support.
 
 from __future__ import annotations
 
+import logging
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -21,12 +22,16 @@ from src.contexts.sources.core.commandHandlers._state import (
 )
 from src.contexts.sources.core.commandHandlers.import_file_source import _extract_text
 from src.shared.common.operation_result import OperationResult
+from src.shared.infra.metrics import metered_command
 from src.shared.infra.state import ProjectState
 
 if TYPE_CHECKING:
     from src.shared.infra.event_bus import EventBus
 
+logger = logging.getLogger("qualcoder.sources.core")
 
+
+@metered_command("add_source")
 def add_source(
     command: AddSourceCommand,
     state: ProjectState,
@@ -52,8 +57,12 @@ def add_source(
     Returns:
         OperationResult with Source entity on success, or error details on failure
     """
+    logger.debug(
+        "add_source: source_path=%s, origin=%s", command.source_path, command.origin
+    )
     # Step 1: Validate
     if state.project is None:
+        logger.error("add_source: no project is currently open")
         return OperationResult.fail(
             error="No project is currently open",
             error_code="SOURCE_NOT_ADDED/NO_PROJECT",
@@ -74,6 +83,7 @@ def add_source(
     )
 
     if isinstance(result, SourceNotAdded):
+        logger.error("add_source: derivation failed, reason=%s", result.reason)
         return OperationResult.fail(
             error=result.reason,
             error_code=f"SOURCE_NOT_ADDED/{result.event_type.upper()}",
@@ -105,6 +115,7 @@ def add_source(
     # Step 5: Publish event
     event_bus.publish(event)
 
+    logger.info("add_source: added source name=%s, id=%s", source.name, source.id)
     return OperationResult.ok(
         data=source,
         rollback=RemoveSourceCommand(source_id=source.id.value),

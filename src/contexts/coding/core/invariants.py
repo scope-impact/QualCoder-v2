@@ -37,15 +37,18 @@ from src.shared.core.validation import (
 # ============================================================
 
 
+MAX_CODE_NAME_LENGTH = 100
+
+
 def is_valid_code_name(name: str) -> bool:
     """
     Check that a code name is valid.
 
     Rules:
     - Not empty or whitespace-only
-    - Between 1 and 100 characters
+    - Between 1 and MAX_CODE_NAME_LENGTH characters
     """
-    return is_non_empty_string(name) and is_within_length(name, 1, 100)
+    return is_non_empty_string(name) and is_within_length(name, 1, MAX_CODE_NAME_LENGTH)
 
 
 def is_code_name_unique(

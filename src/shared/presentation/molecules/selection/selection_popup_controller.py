@@ -9,9 +9,12 @@ This is a reusable controller that can work with any popup widget
 that has show_near_selection(pos) and hide() methods.
 """
 
+import logging
 from typing import Protocol
 
 from PySide6.QtCore import QObject, QPoint, QTimer, Signal
+
+logger = logging.getLogger("qualcoder.shared.presentation.selection_popup")
 
 
 class PopupWidget(Protocol):
@@ -101,8 +104,18 @@ class SelectionPopupController(QObject):
         """
         if has_selection and self._enabled and len(selection_text.strip()) > 0:
             self._get_position = get_position
+            logger.debug(
+                "Selection changed: starting debounce timer (%dms, text_len=%d)",
+                self._timer.interval(),
+                len(selection_text),
+            )
             self._timer.start()  # Restart timer on each change
         else:
+            logger.debug(
+                "Selection cleared or disabled (has_selection=%s, enabled=%s)",
+                has_selection,
+                self._enabled,
+            )
             self._cancel()
 
     def set_enabled(self, enabled: bool):
@@ -112,6 +125,7 @@ class SelectionPopupController(QObject):
         Args:
             enabled: Whether popup should be shown on selection
         """
+        logger.debug("SelectionPopupController enabled=%s", enabled)
         self._enabled = enabled
         if not enabled:
             self._cancel()
@@ -150,13 +164,18 @@ class SelectionPopupController(QObject):
         if self._enabled and self._get_position is not None:
             pos = self._get_position()
             if pos is not None:
+                logger.debug(
+                    "Debounce timer fired — showing popup at (%d, %d)", pos.x(), pos.y()
+                )
                 self._popup.show_near_selection(pos)
                 self.popup_shown.emit()
 
     def _cancel(self):
         """Cancel timer and hide popup."""
+        was_visible = self._popup.isVisible()
         self._timer.stop()
-        if self._popup.isVisible():
+        if was_visible:
+            logger.debug("Cancelling popup — hiding visible popup")
             self._popup.hide()
             self.popup_hidden.emit()
         self._get_position = None

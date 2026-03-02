@@ -26,9 +26,9 @@ metadata = MetaData()
 src_folder = Table(
     "src_folder",
     metadata,
-    Column("id", Integer, primary_key=True),
+    Column("id", String(36), primary_key=True),
     Column("name", String(255), nullable=False),
-    Column("parent_id", Integer),  # Self-referential for hierarchy
+    Column("parent_id", String(36)),  # Self-referential for hierarchy
     Column("created_at", DateTime),
     Index("idx_src_folder_parent", "parent_id"),
 )
@@ -37,20 +37,20 @@ src_folder = Table(
 src_source = Table(
     "src_source",
     metadata,
-    Column("id", Integer, primary_key=True),
+    Column("id", String(36), primary_key=True),
     Column("name", String(255), nullable=False),
     Column("fulltext", Text),  # Content for text sources
     Column("mediapath", String(500)),  # Path to media file
     Column("memo", Text),
     Column("owner", String(100)),
     Column("date", String(50)),
-    Column("av_text_id", Integer),  # For A/V transcripts
-    Column("risession", Integer),  # For external links
+    Column("av_text_id", String(36)),  # For A/V transcripts
+    Column("risession", Integer),  # For external links (non-ID integer, kept)
     Column("source_type", String(20)),  # text, audio, video, image, pdf
     Column("status", String(20), default="imported"),
-    Column("file_size", Integer, default=0),
+    Column("file_size", Integer, default=0),  # Non-ID integer, kept
     Column("origin", String(255)),  # Where the source came from
-    Column("folder_id", Integer),  # Reference to src_folder
+    Column("folder_id", String(36)),  # Reference to src_folder
     # Indexes
     Index("idx_src_source_name", "name"),
     Index("idx_src_source_type", "source_type"),

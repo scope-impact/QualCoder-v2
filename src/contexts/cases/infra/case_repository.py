@@ -6,6 +6,7 @@ Implements the repository for Case entities using the cas_* tables.
 
 from __future__ import annotations
 
+import logging
 from datetime import UTC, datetime
 from typing import TYPE_CHECKING
 
@@ -14,9 +15,14 @@ from sqlalchemy import delete, func, select, update
 from src.contexts.cases.core.entities import AttributeType, Case, CaseAttribute
 from src.contexts.cases.infra.schema import cas_attribute, cas_case, cas_source_link
 from src.shared import CaseId, SourceId
+from src.shared.common.uuid7 import new_uuid7
 
 if TYPE_CHECKING:
     from sqlalchemy import Connection
+
+    from src.shared.infra.sync.outbox import OutboxWriter
+
+logger = logging.getLogger("qualcoder.cases.infra")
 
 
 class SQLiteCaseRepository:
@@ -27,17 +33,23 @@ class SQLiteCaseRepository:
     Uses prefixed tables from the Cases bounded context.
     """
 
-    def __init__(self, connection: Connection) -> None:
+    def __init__(
+        self, connection: Connection, outbox: OutboxWriter | None = None
+    ) -> None:
         self._conn = connection
+        self._outbox = outbox
 
     def get_all(self) -> list[Case]:
         """Get all cases in the project."""
         stmt = select(cas_case).order_by(cas_case.c.name)
         result = self._conn.execute(stmt)
-        return [self._row_to_case(row) for row in result]
+        cases = [self._row_to_case(row) for row in result]
+        logger.debug("get_all: count=%d", len(cases))
+        return cases
 
     def get_by_id(self, case_id: CaseId) -> Case | None:
         """Get a case by its ID."""
+        logger.debug("get_by_id: %s", case_id.value)
         stmt = select(cas_case).where(cas_case.c.id == case_id.value)
         result = self._conn.execute(stmt)
         row = result.fetchone()
@@ -52,6 +64,7 @@ class SQLiteCaseRepository:
 
     def save(self, case: Case) -> None:
         """Save a case (insert or update)."""
+        logger.debug("save: %s (name=%s)", case.id.value, case.name)
         exists = self.exists(case.id)
 
         if exists:
@@ -84,10 +97,15 @@ class SQLiteCaseRepository:
         # Save source links
         self._save_source_links(case.id, case.source_ids)
 
+        if self._outbox:
+            self._outbox.write_upsert(
+                "case", case.id.value, {"name": case.name, "memo": case.memo}
+            )
         self._conn.commit()
 
     def delete(self, case_id: CaseId) -> None:
         """Delete a case and its attributes/links."""
+        logger.debug("delete: %s", case_id.value)
         # Delete attributes first
         self._conn.execute(
             delete(cas_attribute).where(cas_attribute.c.case_id == case_id.value)
@@ -98,6 +116,8 @@ class SQLiteCaseRepository:
         )
         # Delete case
         self._conn.execute(delete(cas_case).where(cas_case.c.id == case_id.value))
+        if self._outbox:
+            self._outbox.write_delete("case", case_id.value)
         self._conn.commit()
 
     def exists(self, case_id: CaseId) -> bool:
@@ -145,6 +165,7 @@ class SQLiteCaseRepository:
 
         self._conn.execute(
             cas_source_link.insert().values(
+                id=new_uuid7(),
                 case_id=case_id.value,
                 source_id=source_id.value,
                 source_name=source_name,
@@ -190,13 +211,13 @@ class SQLiteCaseRepository:
         )
         self._conn.commit()
 
-    def get_source_ids(self, case_id: CaseId) -> list[int]:
+    def get_source_ids(self, case_id: CaseId) -> list[str]:
         """Get list of source IDs linked to a case."""
         stmt = select(cas_source_link.c.source_id).where(
             cas_source_link.c.case_id == case_id.value
         )
         result = self._conn.execute(stmt)
-        return [row[0] for row in result]
+        return [str(row[0]) for row in result]
 
     def is_source_linked(self, case_id: CaseId, source_id: SourceId) -> bool:
         """Check if a source is linked to a case."""
@@ -246,7 +267,7 @@ class SQLiteCaseRepository:
             values = self._attribute_to_values(case_id, attr)
             self._conn.execute(cas_attribute.insert().values(**values))
 
-    def _save_source_links(self, case_id: CaseId, source_ids: tuple[int, ...]) -> None:
+    def _save_source_links(self, case_id: CaseId, source_ids: tuple[str, ...]) -> None:
         """Save source links for a case."""
         # Get existing links
         existing = {
@@ -275,6 +296,7 @@ class SQLiteCaseRepository:
         for source_id in to_add:
             self._conn.execute(
                 cas_source_link.insert().values(
+                    id=new_uuid7(),
                     case_id=case_id.value,
                     source_id=source_id,
                     source_name=None,  # Will be populated by sync
@@ -315,14 +337,15 @@ class SQLiteCaseRepository:
         """Convert a database row to a CaseAttribute."""
         attr_type = AttributeType(row.attr_type)
 
-        if attr_type == AttributeType.NUMBER:
-            value = row.value_number
-        elif attr_type == AttributeType.DATE:
-            value = row.value_date
-        elif attr_type == AttributeType.BOOLEAN:
-            value = row.value_text.lower() == "true" if row.value_text else False
-        else:
-            value = row.value_text
+        match attr_type:
+            case AttributeType.NUMBER:
+                value = row.value_number
+            case AttributeType.DATE:
+                value = row.value_date
+            case AttributeType.BOOLEAN:
+                value = row.value_text.lower() == "true" if row.value_text else False
+            case _:
+                value = row.value_text
 
         return CaseAttribute(
             name=row.name,
@@ -336,16 +359,18 @@ class SQLiteCaseRepository:
         value_number = None
         value_date = None
 
-        if attr.attr_type == AttributeType.TEXT:
-            value_text = str(attr.value) if attr.value else None
-        elif attr.attr_type == AttributeType.NUMBER:
-            value_number = int(attr.value) if attr.value else None
-        elif attr.attr_type == AttributeType.DATE:
-            value_date = attr.value
-        elif attr.attr_type == AttributeType.BOOLEAN:
-            value_text = str(attr.value).lower() if attr.value is not None else None
+        match attr.attr_type:
+            case AttributeType.TEXT:
+                value_text = str(attr.value) if attr.value else None
+            case AttributeType.NUMBER:
+                value_number = int(attr.value) if attr.value else None
+            case AttributeType.DATE:
+                value_date = attr.value
+            case AttributeType.BOOLEAN:
+                value_text = str(attr.value).lower() if attr.value is not None else None
 
         return {
+            "id": new_uuid7(),
             "case_id": case_id.value,
             "name": attr.name,
             "attr_type": attr.attr_type.value,

@@ -8,6 +8,7 @@ Returns OperationResult with error codes, suggestions, and rollback support.
 
 from __future__ import annotations
 
+import logging
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -21,12 +22,16 @@ from src.contexts.projects.core.invariants import is_source_name_unique
 from src.contexts.sources.core.commandHandlers._state import SourceRepository
 from src.shared.common.operation_result import OperationResult
 from src.shared.common.types import SourceId
+from src.shared.infra.metrics import metered_command
 from src.shared.infra.state import ProjectState
 
 if TYPE_CHECKING:
     from src.shared.infra.event_bus import EventBus
 
+logger = logging.getLogger("qualcoder.sources.core")
 
+
+@metered_command("add_text_source")
 def add_text_source(
     command: AddTextSourceCommand,
     state: ProjectState,
@@ -52,8 +57,10 @@ def add_text_source(
     Returns:
         OperationResult with Source entity on success, or error details on failure
     """
+    logger.debug("add_text_source: name=%s, origin=%s", command.name, command.origin)
     # Step 1: Validate project is open
     if state.project is None:
+        logger.error("add_text_source: no project is currently open")
         return OperationResult.fail(
             error="No project is currently open",
             error_code="SOURCE_NOT_ADDED/NO_PROJECT",
@@ -63,6 +70,7 @@ def add_text_source(
     # Validate name
     name = command.name.strip() if command.name else ""
     if not name:
+        logger.error("add_text_source: source name is empty")
         return OperationResult.fail(
             error="Source name cannot be empty",
             error_code="SOURCE_NOT_ADDED/EMPTY_NAME",
@@ -71,6 +79,7 @@ def add_text_source(
 
     # Validate content
     if not command.content:
+        logger.error("add_text_source: source content is empty")
         return OperationResult.fail(
             error="Source content cannot be empty",
             error_code="SOURCE_NOT_ADDED/EMPTY_CONTENT",
@@ -80,6 +89,7 @@ def add_text_source(
     # Step 2: Check name uniqueness (invariant)
     existing_sources = tuple(source_repo.get_all()) if source_repo else ()
     if not is_source_name_unique(name, existing_sources):
+        logger.error("add_text_source: duplicate source name=%s", name)
         return OperationResult.fail(
             error=f"Source with name '{name}' already exists",
             error_code="SOURCE_NOT_ADDED/DUPLICATE_NAME",
@@ -124,6 +134,9 @@ def add_text_source(
     # Step 5: Publish event
     event_bus.publish(event)
 
+    logger.info(
+        "add_text_source: added text source name=%s, id=%s", source.name, source.id
+    )
     return OperationResult.ok(
         data=source,
         rollback=RemoveSourceCommand(source_id=source.id.value),

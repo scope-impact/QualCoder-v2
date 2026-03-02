@@ -70,9 +70,9 @@ def _create_folder_ok(
 
 def _seed_source(
     source_repo: SQLiteSourceRepository,
-    source_id: int,
+    source_id: str,
     name: str,
-    folder_id: int | None = None,
+    folder_id: str | None = None,
 ) -> Source:
     """Create and save a source, returning the entity."""
     fid = FolderId(value=folder_id) if folder_id else None
@@ -331,7 +331,7 @@ class TestDeleteFolder:
             fid = _create_folder_ok(
                 "Non-Empty", folder_repo, source_repo, event_bus, project_state
             )
-            _seed_source(source_repo, source_id=500, name="inside.txt", folder_id=fid)
+            _seed_source(source_repo, source_id="500", name="inside.txt", folder_id=fid)
 
         with allure.step("Try to delete"):
             cmd = DeleteFolderCommand(folder_id=fid)
@@ -388,7 +388,7 @@ class TestMoveSourceToFolder:
             fid = _create_folder_ok(
                 "Target", folder_repo, source_repo, event_bus, project_state
             )
-            source = _seed_source(source_repo, source_id=600, name="movable.txt")
+            source = _seed_source(source_repo, source_id="600", name="movable.txt")
 
         with allure.step("Move source to folder"):
             cmd = MoveSourceToFolderCommand(source_id=source.id.value, folder_id=fid)
@@ -412,10 +412,10 @@ class TestMoveSourceToFolder:
         self, folder_repo, source_repo, event_bus, project_state
     ):
         with allure.step("Create source"):
-            _seed_source(source_repo, source_id=601, name="orphan.txt")
+            _seed_source(source_repo, source_id="601", name="orphan.txt")
 
         with allure.step("Move to non-existent folder"):
-            cmd = MoveSourceToFolderCommand(source_id=601, folder_id=9999)
+            cmd = MoveSourceToFolderCommand(source_id="601", folder_id="9999")
             result = move_source_to_folder(
                 command=cmd,
                 state=project_state,
@@ -441,8 +441,8 @@ class TestMoveSourceToFolder:
             fid = _create_folder_ok(
                 "Evt Folder", folder_repo, source_repo, event_bus, project_state
             )
-            _seed_source(source_repo, source_id=602, name="evt_source.txt")
-            cmd = MoveSourceToFolderCommand(source_id=602, folder_id=fid)
+            _seed_source(source_repo, source_id="602", name="evt_source.txt")
+            cmd = MoveSourceToFolderCommand(source_id="602", folder_id=fid)
             move_source_to_folder(
                 command=cmd,
                 state=project_state,
@@ -453,7 +453,7 @@ class TestMoveSourceToFolder:
 
         with allure.step("Verify event"):
             assert len(events) == 1
-            assert events[0].source_id == SourceId(value=602)
+            assert events[0].source_id == SourceId(value="602")
             assert events[0].new_folder_id == FolderId(value=fid)
 
     @allure.title("AC #4: Move source back to root (no folder)")
@@ -464,10 +464,10 @@ class TestMoveSourceToFolder:
             fid = _create_folder_ok(
                 "Temp", folder_repo, source_repo, event_bus, project_state
             )
-            _seed_source(source_repo, source_id=603, name="rooted.txt", folder_id=fid)
+            _seed_source(source_repo, source_id="603", name="rooted.txt", folder_id=fid)
 
         with allure.step("Move source to root (folder_id=None)"):
-            cmd = MoveSourceToFolderCommand(source_id=603, folder_id=None)
+            cmd = MoveSourceToFolderCommand(source_id="603", folder_id=None)
             result = move_source_to_folder(
                 command=cmd,
                 state=project_state,
@@ -478,7 +478,7 @@ class TestMoveSourceToFolder:
 
         with allure.step("Verify success and source at root"):
             assert result.is_success
-            updated = source_repo.get_by_id(SourceId(value=603))
+            updated = source_repo.get_by_id(SourceId(value="603"))
             assert updated.folder_id is None
 
 
@@ -505,10 +505,10 @@ class TestFolderPolicies:
                 "Will Delete", folder_repo, source_repo, event_bus, project_state
             )
             _seed_source(
-                source_repo, source_id=700, name="will_orphan_1.txt", folder_id=fid
+                source_repo, source_id="700", name="will_orphan_1.txt", folder_id=fid
             )
             _seed_source(
-                source_repo, source_id=701, name="will_orphan_2.txt", folder_id=fid
+                source_repo, source_id="701", name="will_orphan_2.txt", folder_id=fid
             )
 
         with allure.step("Manually remove sources from folder to allow deletion"):
@@ -528,8 +528,8 @@ class TestFolderPolicies:
             assert result.is_success
 
         with allure.step("Verify sources are at root"):
-            s1 = source_repo.get_by_id(SourceId(value=700))
-            s2 = source_repo.get_by_id(SourceId(value=701))
+            s1 = source_repo.get_by_id(SourceId(value="700"))
+            s2 = source_repo.get_by_id(SourceId(value="701"))
             assert s1.folder_id is None
             assert s2.folder_id is None
 
@@ -548,7 +548,7 @@ class TestFolderPolicies:
 
         with allure.step("Publish a source_removed event"):
             event = SourceRemoved.create(
-                source_id=SourceId(value=800),
+                source_id=SourceId(value="800"),
                 name="removed_source.txt",
                 segments_removed=5,
             )
@@ -564,9 +564,15 @@ class TestFolderPolicies:
             fid = _create_folder_ok(
                 "Batch", folder_repo, source_repo, event_bus, project_state
             )
-            _seed_source(source_repo, source_id=900, name="batch_1.txt", folder_id=fid)
-            _seed_source(source_repo, source_id=901, name="batch_2.txt", folder_id=fid)
-            _seed_source(source_repo, source_id=902, name="batch_3.txt", folder_id=fid)
+            _seed_source(
+                source_repo, source_id="900", name="batch_1.txt", folder_id=fid
+            )
+            _seed_source(
+                source_repo, source_id="901", name="batch_2.txt", folder_id=fid
+            )
+            _seed_source(
+                source_repo, source_id="902", name="batch_3.txt", folder_id=fid
+            )
 
         with allure.step("Clear folder assignment"):
             count = source_repo.clear_folder_assignment(FolderId(value=fid))

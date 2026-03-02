@@ -77,6 +77,12 @@ def derive_create_folder(
     if not is_valid_folder_name(name):
         return FolderNotCreated.invalid_name(name)
 
+    # Validate parent folder exists if specified
+    if parent_id is not None:
+        parent_exists = any(f.id == parent_id for f in state.existing_folders)
+        if not parent_exists:
+            return FolderNotCreated.parent_not_found(name, parent_id)
+
     if not is_folder_name_unique(name, parent_id, state.existing_folders):
         return FolderNotCreated.duplicate_name(name, parent_id)
 

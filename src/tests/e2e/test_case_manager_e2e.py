@@ -74,7 +74,7 @@ def seeded_cases(case_repo):
 
     # Case 1: Participant with attributes and sources
     case1 = Case(
-        id=CaseId(value=1),
+        id=CaseId(value="1"),
         name="Participant Alpha",
         description="First study participant",
         memo="Urban location, employed",
@@ -83,20 +83,20 @@ def seeded_cases(case_repo):
     )
     case_repo.save(case1)
     case_repo.save_attribute(
-        CaseId(value=1),
+        CaseId(value="1"),
         CaseAttribute(name="age", attr_type=AttributeType.NUMBER, value=28),
     )
     case_repo.save_attribute(
-        CaseId(value=1),
+        CaseId(value="1"),
         CaseAttribute(name="gender", attr_type=AttributeType.TEXT, value="female"),
     )
-    case_repo.link_source(CaseId(value=1), SourceId(value=100))
-    case_repo.link_source(CaseId(value=1), SourceId(value=101))
+    case_repo.link_source(CaseId(value="1"), SourceId(value="100"))
+    case_repo.link_source(CaseId(value="1"), SourceId(value="101"))
     cases["alpha"] = case1
 
     # Case 2: Participant with attributes, no sources
     case2 = Case(
-        id=CaseId(value=2),
+        id=CaseId(value="2"),
         name="Participant Beta",
         description="Second study participant",
         created_at=datetime.now(UTC),
@@ -104,21 +104,21 @@ def seeded_cases(case_repo):
     )
     case_repo.save(case2)
     case_repo.save_attribute(
-        CaseId(value=2),
+        CaseId(value="2"),
         CaseAttribute(name="age", attr_type=AttributeType.NUMBER, value=35),
     )
     cases["beta"] = case2
 
     # Case 3: Site location, no attributes
     case3 = Case(
-        id=CaseId(value=3),
+        id=CaseId(value="3"),
         name="Site Gamma",
         description="Research site location",
         created_at=datetime.now(UTC),
         updated_at=datetime.now(UTC),
     )
     case_repo.save(case3)
-    case_repo.link_source(CaseId(value=3), SourceId(value=200))
+    case_repo.link_source(CaseId(value="3"), SourceId(value="200"))
     cases["gamma"] = case3
 
     return cases
@@ -371,14 +371,14 @@ class TestDeleteCaseFlow:
         viewmodel = case_manager_window["viewmodel"]
 
         # Verify case exists
-        assert case_repo.get_by_id(CaseId(value=2)) is not None
+        assert case_repo.get_by_id(CaseId(value="2")) is not None
 
         # Delete via viewmodel
-        result = viewmodel.delete_case(case_id=2)
+        result = viewmodel.delete_case(case_id="2")
         assert result is True
 
         # Verify removed from database
-        assert case_repo.get_by_id(CaseId(value=2)) is None
+        assert case_repo.get_by_id(CaseId(value="2")) is None
 
     def test_delete_case_removes_source_links(self, case_manager_window, case_repo):
         """
@@ -387,13 +387,13 @@ class TestDeleteCaseFlow:
         viewmodel = case_manager_window["viewmodel"]
 
         # Case 1 has source links
-        assert len(case_repo.get_source_ids(CaseId(value=1))) == 2
+        assert len(case_repo.get_source_ids(CaseId(value="1"))) == 2
 
         # Delete case
-        viewmodel.delete_case(case_id=1)
+        viewmodel.delete_case(case_id="1")
 
         # Source links should be gone
-        assert len(case_repo.get_source_ids(CaseId(value=1))) == 0
+        assert len(case_repo.get_source_ids(CaseId(value="1"))) == 0
 
     def test_delete_case_removes_attributes(self, case_manager_window, case_repo):
         """
@@ -402,14 +402,14 @@ class TestDeleteCaseFlow:
         viewmodel = case_manager_window["viewmodel"]
 
         # Case 1 has attributes
-        attrs = case_repo.get_attributes(CaseId(value=1))
+        attrs = case_repo.get_attributes(CaseId(value="1"))
         assert len(attrs) == 2
 
         # Delete case
-        viewmodel.delete_case(case_id=1)
+        viewmodel.delete_case(case_id="1")
 
         # Attributes should be gone
-        attrs = case_repo.get_attributes(CaseId(value=1))
+        attrs = case_repo.get_attributes(CaseId(value="1"))
         assert len(attrs) == 0
 
     def test_delete_case_updates_ui_on_refresh(self, case_manager_window, qapp):
@@ -423,7 +423,7 @@ class TestDeleteCaseFlow:
         assert screen.page._case_table._table.rowCount() == 3
 
         # Delete case
-        viewmodel.delete_case(case_id=1)
+        viewmodel.delete_case(case_id="1")
 
         # Refresh screen
         screen.refresh()
@@ -451,12 +451,12 @@ class TestLinkSourceFlow:
         viewmodel = case_manager_window["viewmodel"]
 
         # Link source 300 to case 2 (repo handles persistence)
-        result = viewmodel.link_source(case_id=2, source_id=300)
+        result = viewmodel.link_source(case_id="2", source_id="300")
         assert result is True
 
         # Verify link persisted in database
-        source_ids = case_repo.get_source_ids(CaseId(value=2))
-        assert 300 in source_ids
+        source_ids = case_repo.get_source_ids(CaseId(value="2"))
+        assert "300" in source_ids
 
     def test_unlink_source_via_viewmodel_removes_from_db(
         self, case_manager_window, case_repo
@@ -467,14 +467,14 @@ class TestLinkSourceFlow:
         viewmodel = case_manager_window["viewmodel"]
 
         # Case 1 has source 100
-        assert case_repo.is_source_linked(CaseId(value=1), SourceId(value=100))
+        assert case_repo.is_source_linked(CaseId(value="1"), SourceId(value="100"))
 
         # Unlink source
-        result = viewmodel.unlink_source(case_id=1, source_id=100)
+        result = viewmodel.unlink_source(case_id="1", source_id="100")
         assert result is True
 
         # Verify removed from database
-        assert not case_repo.is_source_linked(CaseId(value=1), SourceId(value=100))
+        assert not case_repo.is_source_linked(CaseId(value="1"), SourceId(value="100"))
 
     def test_summary_shows_cases_with_sources(self, case_manager_window, case_repo):
         """
@@ -507,7 +507,7 @@ class TestAddAttributeFlow:
 
         # Add new attribute
         result = viewmodel.add_attribute(
-            case_id=1,
+            case_id="1",
             name="occupation",
             attr_type="text",
             value="engineer",
@@ -515,7 +515,7 @@ class TestAddAttributeFlow:
         assert result is True
 
         # Verify in database
-        attr = case_repo.get_attribute(CaseId(value=1), "occupation")
+        attr = case_repo.get_attribute(CaseId(value="1"), "occupation")
         assert attr is not None
         assert attr.value == "engineer"
 
@@ -526,14 +526,14 @@ class TestAddAttributeFlow:
         viewmodel = case_manager_window["viewmodel"]
 
         result = viewmodel.add_attribute(
-            case_id=1,
+            case_id="1",
             name="income",
             attr_type="number",
             value=75000,
         )
         assert result is True
 
-        attr = case_repo.get_attribute(CaseId(value=1), "income")
+        attr = case_repo.get_attribute(CaseId(value="1"), "income")
         assert attr is not None
         assert attr.attr_type == AttributeType.NUMBER
         assert attr.value == 75000
@@ -545,14 +545,14 @@ class TestAddAttributeFlow:
         viewmodel = case_manager_window["viewmodel"]
 
         result = viewmodel.add_attribute(
-            case_id=1,
+            case_id="1",
             name="employed",
             attr_type="boolean",
             value=True,
         )
         assert result is True
 
-        attr = case_repo.get_attribute(CaseId(value=1), "employed")
+        attr = case_repo.get_attribute(CaseId(value="1"), "employed")
         assert attr is not None
         assert attr.attr_type == AttributeType.BOOLEAN
         assert attr.value is True
@@ -564,19 +564,19 @@ class TestAddAttributeFlow:
         viewmodel = case_manager_window["viewmodel"]
 
         # Initial age is 28
-        attr = case_repo.get_attribute(CaseId(value=1), "age")
+        attr = case_repo.get_attribute(CaseId(value="1"), "age")
         assert attr.value == 28
 
         # Update age
         viewmodel.add_attribute(
-            case_id=1,
+            case_id="1",
             name="age",
             attr_type="number",
             value=29,
         )
 
         # Verify updated
-        attr = case_repo.get_attribute(CaseId(value=1), "age")
+        attr = case_repo.get_attribute(CaseId(value="1"), "age")
         assert attr.value == 29
 
     def test_remove_attribute_via_viewmodel(self, case_manager_window, case_repo):
@@ -586,14 +586,14 @@ class TestAddAttributeFlow:
         viewmodel = case_manager_window["viewmodel"]
 
         # Verify attribute exists
-        assert case_repo.get_attribute(CaseId(value=1), "gender") is not None
+        assert case_repo.get_attribute(CaseId(value="1"), "gender") is not None
 
         # Remove attribute
-        result = viewmodel.remove_attribute(case_id=1, name="gender")
+        result = viewmodel.remove_attribute(case_id="1", name="gender")
         assert result is True
 
         # Verify removed
-        assert case_repo.get_attribute(CaseId(value=1), "gender") is None
+        assert case_repo.get_attribute(CaseId(value="1"), "gender") is None
 
     def test_add_attribute_updates_summary(self, case_manager_window):
         """
@@ -607,7 +607,7 @@ class TestAddAttributeFlow:
 
         # Add new attribute
         viewmodel.add_attribute(
-            case_id=3,
+            case_id="3",
             name="location_type",
             attr_type="text",
             value="urban",
@@ -630,7 +630,7 @@ class TestViewCaseDataFlow:
         """
         viewmodel = case_manager_window["viewmodel"]
 
-        case_dto = viewmodel.get_case(case_id=1)
+        case_dto = viewmodel.get_case(case_id="1")
 
         assert case_dto is not None
         assert case_dto.name == "Participant Alpha"
@@ -755,7 +755,7 @@ class TestTableSelection:
         screen._on_case_clicked("1")
         QApplication.processEvents()
 
-        assert viewmodel.get_selected_case_id() == 1
+        assert viewmodel.get_selected_case_id() == "1"
 
         attach_screenshot(screen, "table_row_selected")
 
@@ -786,7 +786,7 @@ class TestDataRefresh:
 
         # Modify database directly
         new_case = Case(
-            id=CaseId(value=99),
+            id=CaseId(value="99"),
             name="Direct DB Insert",
             created_at=datetime.now(UTC),
             updated_at=datetime.now(UTC),
@@ -868,8 +868,8 @@ class TestSelectionManagement:
         viewmodel = case_manager_window["viewmodel"]
 
         # Select a case
-        viewmodel.select_case(1)
-        assert viewmodel.get_selected_case_id() == 1
+        viewmodel.select_case("1")
+        assert viewmodel.get_selected_case_id() == "1"
 
         # Clear selection
         screen.clear_selection()
@@ -886,8 +886,8 @@ class TestSelectionManagement:
         viewmodel = case_manager_window["viewmodel"]
 
         # Select and delete
-        viewmodel.select_case(2)
-        viewmodel.delete_case(2)
+        viewmodel.select_case("2")
+        viewmodel.delete_case("2")
 
         assert viewmodel.get_selected_case_id() is None
 
@@ -946,7 +946,7 @@ class TestReactiveSignalBridgeFlow:
         QApplication.processEvents()
 
         cases = viewmodel.load_cases()
-        case_id = int(cases[0].id)
+        case_id = cases[0].id
 
         # Set up spy after creation
         spy = QSignalSpy(viewmodel.cases_changed)
@@ -969,7 +969,7 @@ class TestReactiveSignalBridgeFlow:
         QApplication.processEvents()
 
         cases = viewmodel.load_cases()
-        case_id = int(cases[0].id)
+        case_id = cases[0].id
 
         # Set up spy after creation
         spy = QSignalSpy(viewmodel.case_updated)
@@ -995,7 +995,7 @@ class TestReactiveSignalBridgeFlow:
         QApplication.processEvents()
 
         cases = viewmodel.load_cases()
-        case_id = int(cases[0].id)
+        case_id = cases[0].id
 
         # Set up spy after creation
         spy = QSignalSpy(viewmodel.case_updated)

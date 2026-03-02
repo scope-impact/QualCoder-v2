@@ -13,6 +13,7 @@ from typing import TYPE_CHECKING, Any, Protocol, runtime_checkable
 from returns.result import Failure, Result, Success
 
 from src.shared.common.mcp_types import ToolDefinition, ToolParameter
+from src.shared.common.operation_result import OperationResult
 
 if TYPE_CHECKING:
     from src.shared.infra.state import ProjectState
@@ -57,7 +58,7 @@ create_folder_tool = ToolDefinition(
         ),
         ToolParameter(
             name="parent_id",
-            type="integer",
+            type="string",
             description="Parent folder ID for nesting. Omit for root-level folder.",
             required=False,
             default=None,
@@ -71,7 +72,7 @@ rename_folder_tool = ToolDefinition(
     parameters=(
         ToolParameter(
             name="folder_id",
-            type="integer",
+            type="string",
             description="ID of the folder to rename.",
             required=True,
         ),
@@ -90,7 +91,7 @@ delete_folder_tool = ToolDefinition(
     parameters=(
         ToolParameter(
             name="folder_id",
-            type="integer",
+            type="string",
             description="ID of the folder to delete.",
             required=True,
         ),
@@ -103,13 +104,13 @@ move_source_to_folder_tool = ToolDefinition(
     parameters=(
         ToolParameter(
             name="source_id",
-            type="integer",
+            type="string",
             description="ID of the source to move.",
             required=True,
         ),
         ToolParameter(
             name="folder_id",
-            type="integer",
+            type="string",
             description="Target folder ID. Use null or 0 for root.",
             required=False,
             default=None,
@@ -129,6 +130,27 @@ ALL_FOLDER_TOOLS = {
 # ============================================================
 # Tool Implementation
 # ============================================================
+
+
+_FOLDER_ERROR_MESSAGES = {
+    "NOT_FOUND": "Folder not found",
+    "DUPLICATE_NAME": "A folder with this name already exists",
+    "INVALID_NAME": "Folder name cannot be empty",
+    "HAS_SOURCES": "Folder contains sources and cannot be deleted",
+    "SOURCE_NOT_FOUND": "Source not found",
+    "FOLDER_NOT_FOUND": "Target folder not found",
+}
+
+
+def _folder_failure(error_code: str, prefix: str) -> Failure:
+    """Convert a raw folder error code into a structured Failure with OperationResult."""
+    message = _FOLDER_ERROR_MESSAGES.get(error_code, error_code)
+    return Failure(
+        OperationResult.fail(
+            error=message,
+            error_code=f"{prefix}/{error_code}",
+        ).to_dict()
+    )
 
 
 class FolderTools:
@@ -184,7 +206,7 @@ class FolderTools:
         result = list_folders(state=self._state, folder_repo=self._folder_repo)
 
         if result.is_failure:
-            return Failure(result.error or "Failed to list folders")
+            return _folder_failure(result.error or "UNKNOWN", "LIST_FOLDERS")
 
         return Success(result.data)
 
@@ -212,7 +234,7 @@ class FolderTools:
         )
 
         if result.is_failure:
-            return Failure(result.error or "Failed to create folder")
+            return _folder_failure(result.error or "UNKNOWN", "CREATE_FOLDER")
 
         folder = result.data
         return Success(
@@ -240,7 +262,7 @@ class FolderTools:
         if new_name is None:
             return Failure("Missing required parameter: new_name")
 
-        command = RenameFolderCommand(folder_id=int(folder_id), new_name=new_name)
+        command = RenameFolderCommand(folder_id=str(folder_id), new_name=new_name)
 
         result = rename_folder(
             command=command,
@@ -251,7 +273,7 @@ class FolderTools:
         )
 
         if result.is_failure:
-            return Failure(result.error or "Failed to rename folder")
+            return _folder_failure(result.error or "UNKNOWN", "RENAME_FOLDER")
 
         folder = result.data
         return Success(
@@ -274,7 +296,7 @@ class FolderTools:
         if folder_id is None:
             return Failure("Missing required parameter: folder_id")
 
-        command = DeleteFolderCommand(folder_id=int(folder_id))
+        command = DeleteFolderCommand(folder_id=str(folder_id))
 
         result = delete_folder(
             command=command,
@@ -285,7 +307,7 @@ class FolderTools:
         )
 
         if result.is_failure:
-            return Failure(result.error or "Failed to delete folder")
+            return _folder_failure(result.error or "UNKNOWN", "DELETE_FOLDER")
 
         event = result.data
         return Success(
@@ -313,7 +335,8 @@ class FolderTools:
             folder_id = None
 
         command = MoveSourceToFolderCommand(
-            source_id=int(source_id), folder_id=folder_id
+            source_id=str(source_id),
+            folder_id=str(folder_id) if folder_id is not None else None,
         )
 
         result = move_source_to_folder(
@@ -325,7 +348,7 @@ class FolderTools:
         )
 
         if result.is_failure:
-            return Failure(result.error or "Failed to move source")
+            return _folder_failure(result.error or "UNKNOWN", "MOVE_SOURCE")
 
         event = result.data
         return Success(

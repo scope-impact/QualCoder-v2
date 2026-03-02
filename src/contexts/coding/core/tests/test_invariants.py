@@ -70,7 +70,7 @@ class TestIsCodeNameUnique:
         from src.contexts.coding.core.invariants import is_code_name_unique
         from src.shared import CodeId
 
-        existing = [Code(id=CodeId(value=1), name="Theme", color=Color(255, 0, 0))]
+        existing = [Code(id=CodeId(value="1"), name="Theme", color=Color(255, 0, 0))]
 
         assert is_code_name_unique("Theme", existing) is False
         assert is_code_name_unique("theme", existing) is False
@@ -84,18 +84,18 @@ class TestIsCodeNameUnique:
         from src.shared import CodeId
 
         existing = [
-            Code(id=CodeId(value=1), name="Theme", color=Color(255, 0, 0)),
-            Code(id=CodeId(value=2), name="Pattern", color=Color(0, 255, 0)),
+            Code(id=CodeId(value="1"), name="Theme", color=Color(255, 0, 0)),
+            Code(id=CodeId(value="2"), name="Pattern", color=Color(0, 255, 0)),
         ]
 
         # Same name is allowed when it's the same code (rename to same name)
         assert (
-            is_code_name_unique("Theme", existing, exclude_code_id=CodeId(value=1))
+            is_code_name_unique("Theme", existing, exclude_code_id=CodeId(value="1"))
             is True
         )
         # But not if another code has that name
         assert (
-            is_code_name_unique("Pattern", existing, exclude_code_id=CodeId(value=1))
+            is_code_name_unique("Pattern", existing, exclude_code_id=CodeId(value="1"))
             is False
         )
 
@@ -108,7 +108,7 @@ class TestCanCodeBeDeleted:
         from src.contexts.coding.core.invariants import can_code_be_deleted
         from src.shared import CodeId
 
-        assert can_code_be_deleted(CodeId(value=1), []) is True
+        assert can_code_be_deleted(CodeId(value="1"), []) is True
 
     def test_prevents_deletion_with_segments(self):
         """Code with segments cannot be deleted by default."""
@@ -118,15 +118,15 @@ class TestCanCodeBeDeleted:
 
         segments = [
             TextSegment(
-                id=SegmentId(value=1),
-                source_id=SourceId(value=1),
-                code_id=CodeId(value=1),
+                id=SegmentId(value="1"),
+                source_id=SourceId(value="1"),
+                code_id=CodeId(value="1"),
                 position=TextPosition(start=0, end=10),
                 selected_text="test text",
             )
         ]
 
-        assert can_code_be_deleted(CodeId(value=1), segments) is False
+        assert can_code_be_deleted(CodeId(value="1"), segments) is False
 
     def test_allows_deletion_with_segments_when_forced(self):
         """Code with segments can be deleted when allow_with_segments=True."""
@@ -136,16 +136,16 @@ class TestCanCodeBeDeleted:
 
         segments = [
             TextSegment(
-                id=SegmentId(value=1),
-                source_id=SourceId(value=1),
-                code_id=CodeId(value=1),
+                id=SegmentId(value="1"),
+                source_id=SourceId(value="1"),
+                code_id=CodeId(value="1"),
                 position=TextPosition(start=0, end=10),
                 selected_text="test text",
             )
         ]
 
         assert (
-            can_code_be_deleted(CodeId(value=1), segments, allow_with_segments=True)
+            can_code_be_deleted(CodeId(value="1"), segments, allow_with_segments=True)
             is True
         )
 
@@ -159,10 +159,11 @@ class TestAreCodesMergeable:
         from src.shared import CodeId
 
         def code_exists(code_id: CodeId) -> bool:
-            return code_id.value in (1, 2)
+            return code_id.value in ("1", "2")
 
         assert (
-            are_codes_mergeable(CodeId(value=1), CodeId(value=2), code_exists) is True
+            are_codes_mergeable(CodeId(value="1"), CodeId(value="2"), code_exists)
+            is True
         )
 
     def test_prevents_merge_with_self(self):
@@ -171,10 +172,11 @@ class TestAreCodesMergeable:
         from src.shared import CodeId
 
         def code_exists(code_id: CodeId) -> bool:
-            return code_id.value == 1
+            return code_id.value == "1"
 
         assert (
-            are_codes_mergeable(CodeId(value=1), CodeId(value=1), code_exists) is False
+            are_codes_mergeable(CodeId(value="1"), CodeId(value="1"), code_exists)
+            is False
         )
 
     def test_prevents_merge_when_source_not_found(self):
@@ -183,10 +185,11 @@ class TestAreCodesMergeable:
         from src.shared import CodeId
 
         def code_exists(code_id: CodeId) -> bool:
-            return code_id.value == 2
+            return code_id.value == "2"
 
         assert (
-            are_codes_mergeable(CodeId(value=1), CodeId(value=2), code_exists) is False
+            are_codes_mergeable(CodeId(value="1"), CodeId(value="2"), code_exists)
+            is False
         )
 
     def test_prevents_merge_when_target_not_found(self):
@@ -195,10 +198,11 @@ class TestAreCodesMergeable:
         from src.shared import CodeId
 
         def code_exists(code_id: CodeId) -> bool:
-            return code_id.value == 1
+            return code_id.value == "1"
 
         assert (
-            are_codes_mergeable(CodeId(value=1), CodeId(value=2), code_exists) is False
+            are_codes_mergeable(CodeId(value="1"), CodeId(value="2"), code_exists)
+            is False
         )
 
 
@@ -257,7 +261,7 @@ class TestIsCategoryNameUnique:
         from src.contexts.coding.core.invariants import is_category_name_unique
         from src.shared import CategoryId
 
-        existing = [Category(id=CategoryId(value=1), name="Themes")]
+        existing = [Category(id=CategoryId(value="1"), name="Themes")]
 
         assert is_category_name_unique("Themes", existing) is False
         assert is_category_name_unique("themes", existing) is False
@@ -274,14 +278,14 @@ class TestIsCategoryHierarchyValid:
         from src.shared import CategoryId
 
         categories = [
-            Category(id=CategoryId(value=1), name="Parent"),
+            Category(id=CategoryId(value="1"), name="Parent"),
             Category(
-                id=CategoryId(value=2), name="Child", parent_id=CategoryId(value=1)
+                id=CategoryId(value="2"), name="Child", parent_id=CategoryId(value="1")
             ),
         ]
 
         assert (
-            is_category_hierarchy_valid(CategoryId(value=2), None, categories) is True
+            is_category_hierarchy_valid(CategoryId(value="2"), None, categories) is True
         )
 
     def test_prevents_self_parent(self):
@@ -290,11 +294,11 @@ class TestIsCategoryHierarchyValid:
         from src.contexts.coding.core.invariants import is_category_hierarchy_valid
         from src.shared import CategoryId
 
-        categories = [Category(id=CategoryId(value=1), name="Category")]
+        categories = [Category(id=CategoryId(value="1"), name="Category")]
 
         assert (
             is_category_hierarchy_valid(
-                CategoryId(value=1), CategoryId(value=1), categories
+                CategoryId(value="1"), CategoryId(value="1"), categories
             )
             is False
         )
@@ -306,13 +310,13 @@ class TestIsCategoryHierarchyValid:
         from src.shared import CategoryId
 
         categories = [
-            Category(id=CategoryId(value=1), name="Parent"),
-            Category(id=CategoryId(value=2), name="Child"),
+            Category(id=CategoryId(value="1"), name="Parent"),
+            Category(id=CategoryId(value="2"), name="Child"),
         ]
 
         assert (
             is_category_hierarchy_valid(
-                CategoryId(value=2), CategoryId(value=1), categories
+                CategoryId(value="2"), CategoryId(value="1"), categories
             )
             is True
         )
@@ -326,7 +330,7 @@ class TestCanCategoryBeDeleted:
         from src.contexts.coding.core.invariants import can_category_be_deleted
         from src.shared import CategoryId
 
-        assert can_category_be_deleted(CategoryId(value=1), [], []) is True
+        assert can_category_be_deleted(CategoryId(value="1"), [], []) is True
 
     def test_prevents_deletion_with_codes(self):
         """Category with codes cannot be deleted by default."""
@@ -336,14 +340,14 @@ class TestCanCategoryBeDeleted:
 
         codes = [
             Code(
-                id=CodeId(value=1),
+                id=CodeId(value="1"),
                 name="Theme",
                 color=Color(255, 0, 0),
-                category_id=CategoryId(value=1),
+                category_id=CategoryId(value="1"),
             )
         ]
 
-        assert can_category_be_deleted(CategoryId(value=1), codes, []) is False
+        assert can_category_be_deleted(CategoryId(value="1"), codes, []) is False
 
     def test_prevents_deletion_with_children(self):
         """Category with child categories cannot be deleted by default."""
@@ -353,11 +357,11 @@ class TestCanCategoryBeDeleted:
 
         categories = [
             Category(
-                id=CategoryId(value=2), name="Child", parent_id=CategoryId(value=1)
+                id=CategoryId(value="2"), name="Child", parent_id=CategoryId(value="1")
             )
         ]
 
-        assert can_category_be_deleted(CategoryId(value=1), [], categories) is False
+        assert can_category_be_deleted(CategoryId(value="1"), [], categories) is False
 
     def test_allows_deletion_with_children_when_forced(self):
         """Category with children can be deleted when allow_with_children=True."""
@@ -367,13 +371,13 @@ class TestCanCategoryBeDeleted:
 
         categories = [
             Category(
-                id=CategoryId(value=2), name="Child", parent_id=CategoryId(value=1)
+                id=CategoryId(value="2"), name="Child", parent_id=CategoryId(value="1")
             )
         ]
 
         assert (
             can_category_be_deleted(
-                CategoryId(value=1), [], categories, allow_with_children=True
+                CategoryId(value="1"), [], categories, allow_with_children=True
             )
             is True
         )
@@ -507,16 +511,16 @@ class TestDoesSegmentOverlap:
 
         existing = [
             TextSegment(
-                id=SegmentId(value=1),
-                source_id=SourceId(value=1),
-                code_id=CodeId(value=1),
+                id=SegmentId(value="1"),
+                source_id=SourceId(value="1"),
+                code_id=CodeId(value="1"),
                 position=TextPosition(start=10, end=20),
                 selected_text="test",
             )
         ]
 
         new_position = TextPosition(start=15, end=25)
-        assert does_segment_overlap(new_position, existing, CodeId(value=1)) is True
+        assert does_segment_overlap(new_position, existing, CodeId(value="1")) is True
 
     def test_no_overlap_with_different_code(self):
         """Should not detect overlap with different code."""
@@ -526,9 +530,9 @@ class TestDoesSegmentOverlap:
 
         existing = [
             TextSegment(
-                id=SegmentId(value=1),
-                source_id=SourceId(value=1),
-                code_id=CodeId(value=1),
+                id=SegmentId(value="1"),
+                source_id=SourceId(value="1"),
+                code_id=CodeId(value="1"),
                 position=TextPosition(start=10, end=20),
                 selected_text="test",
             )
@@ -536,7 +540,7 @@ class TestDoesSegmentOverlap:
 
         new_position = TextPosition(start=15, end=25)
         # Different code ID
-        assert does_segment_overlap(new_position, existing, CodeId(value=2)) is False
+        assert does_segment_overlap(new_position, existing, CodeId(value="2")) is False
 
     def test_no_overlap_when_adjacent(self):
         """Adjacent segments should not overlap."""
@@ -546,16 +550,16 @@ class TestDoesSegmentOverlap:
 
         existing = [
             TextSegment(
-                id=SegmentId(value=1),
-                source_id=SourceId(value=1),
-                code_id=CodeId(value=1),
+                id=SegmentId(value="1"),
+                source_id=SourceId(value="1"),
+                code_id=CodeId(value="1"),
                 position=TextPosition(start=10, end=20),
                 selected_text="test",
             )
         ]
 
         new_position = TextPosition(start=20, end=30)
-        assert does_segment_overlap(new_position, existing, CodeId(value=1)) is False
+        assert does_segment_overlap(new_position, existing, CodeId(value="1")) is False
 
 
 # ============================================================
@@ -572,16 +576,16 @@ class TestDoesCodeExist:
         from src.contexts.coding.core.invariants import does_code_exist
         from src.shared import CodeId
 
-        codes = [Code(id=CodeId(value=1), name="Theme", color=Color(255, 0, 0))]
+        codes = [Code(id=CodeId(value="1"), name="Theme", color=Color(255, 0, 0))]
 
-        assert does_code_exist(CodeId(value=1), codes) is True
+        assert does_code_exist(CodeId(value="1"), codes) is True
 
     def test_returns_false_for_missing_code(self):
         """Should return False for non-existent code."""
         from src.contexts.coding.core.invariants import does_code_exist
         from src.shared import CodeId
 
-        assert does_code_exist(CodeId(value=999), []) is False
+        assert does_code_exist(CodeId(value="999"), []) is False
 
 
 class TestDoesCategoryExist:
@@ -593,16 +597,16 @@ class TestDoesCategoryExist:
         from src.contexts.coding.core.invariants import does_category_exist
         from src.shared import CategoryId
 
-        categories = [Category(id=CategoryId(value=1), name="Themes")]
+        categories = [Category(id=CategoryId(value="1"), name="Themes")]
 
-        assert does_category_exist(CategoryId(value=1), categories) is True
+        assert does_category_exist(CategoryId(value="1"), categories) is True
 
     def test_returns_false_for_missing_category(self):
         """Should return False for non-existent category."""
         from src.contexts.coding.core.invariants import does_category_exist
         from src.shared import CategoryId
 
-        assert does_category_exist(CategoryId(value=999), []) is False
+        assert does_category_exist(CategoryId(value="999"), []) is False
 
 
 class TestCountSegmentsForCode:
@@ -616,31 +620,31 @@ class TestCountSegmentsForCode:
 
         segments = [
             TextSegment(
-                id=SegmentId(value=1),
-                source_id=SourceId(value=1),
-                code_id=CodeId(value=1),
+                id=SegmentId(value="1"),
+                source_id=SourceId(value="1"),
+                code_id=CodeId(value="1"),
                 position=TextPosition(start=0, end=10),
                 selected_text="test",
             ),
             TextSegment(
-                id=SegmentId(value=2),
-                source_id=SourceId(value=1),
-                code_id=CodeId(value=1),
+                id=SegmentId(value="2"),
+                source_id=SourceId(value="1"),
+                code_id=CodeId(value="1"),
                 position=TextPosition(start=20, end=30),
                 selected_text="test2",
             ),
             TextSegment(
-                id=SegmentId(value=3),
-                source_id=SourceId(value=1),
-                code_id=CodeId(value=2),
+                id=SegmentId(value="3"),
+                source_id=SourceId(value="1"),
+                code_id=CodeId(value="2"),
                 position=TextPosition(start=40, end=50),
                 selected_text="test3",
             ),
         ]
 
-        assert count_segments_for_code(CodeId(value=1), segments) == 2
-        assert count_segments_for_code(CodeId(value=2), segments) == 1
-        assert count_segments_for_code(CodeId(value=3), segments) == 0
+        assert count_segments_for_code(CodeId(value="1"), segments) == 2
+        assert count_segments_for_code(CodeId(value="2"), segments) == 1
+        assert count_segments_for_code(CodeId(value="3"), segments) == 0
 
 
 class TestCountCodesInCategory:
@@ -654,25 +658,25 @@ class TestCountCodesInCategory:
 
         codes = [
             Code(
-                id=CodeId(value=1),
+                id=CodeId(value="1"),
                 name="Theme1",
                 color=Color(255, 0, 0),
-                category_id=CategoryId(value=1),
+                category_id=CategoryId(value="1"),
             ),
             Code(
-                id=CodeId(value=2),
+                id=CodeId(value="2"),
                 name="Theme2",
                 color=Color(0, 255, 0),
-                category_id=CategoryId(value=1),
+                category_id=CategoryId(value="1"),
             ),
             Code(
-                id=CodeId(value=3),
+                id=CodeId(value="3"),
                 name="Pattern",
                 color=Color(0, 0, 255),
-                category_id=CategoryId(value=2),
+                category_id=CategoryId(value="2"),
             ),
         ]
 
-        assert count_codes_in_category(CategoryId(value=1), codes) == 2
-        assert count_codes_in_category(CategoryId(value=2), codes) == 1
-        assert count_codes_in_category(CategoryId(value=3), codes) == 0
+        assert count_codes_in_category(CategoryId(value="1"), codes) == 2
+        assert count_codes_in_category(CategoryId(value="2"), codes) == 1
+        assert count_codes_in_category(CategoryId(value="3"), codes) == 0

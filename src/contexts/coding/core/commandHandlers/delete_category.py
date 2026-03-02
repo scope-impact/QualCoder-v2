@@ -7,6 +7,7 @@ Returns OperationResult with error codes and suggestions.
 
 from __future__ import annotations
 
+import logging
 from typing import TYPE_CHECKING
 
 from src.contexts.coding.core.commandHandlers._state import (
@@ -21,11 +22,15 @@ from src.contexts.coding.core.events import CategoryDeleted
 from src.shared.common.failure_events import FailureEvent
 from src.shared.common.operation_result import OperationResult
 from src.shared.common.types import CategoryId
+from src.shared.infra.metrics import metered_command
 
 if TYPE_CHECKING:
     from src.shared.infra.event_bus import EventBus
 
+logger = logging.getLogger("qualcoder.coding.core")
 
+
+@metered_command("delete_category")
 def delete_category(
     command: DeleteCategoryCommand,
     code_repo: CodeRepository,
@@ -46,6 +51,8 @@ def delete_category(
     Returns:
         OperationResult with CategoryDeleted event on success, or error details on failure
     """
+    logger.debug("delete_category: category_id=%s", command.category_id)
+
     state = build_coding_state(code_repo, category_repo, segment_repo)
     category_id = CategoryId(value=command.category_id)
 
@@ -57,6 +64,7 @@ def delete_category(
 
     # Handle failure events
     if isinstance(result, FailureEvent):
+        logger.error("delete_category failed: %s", result.event_type)
         event_bus.publish(result)
         return OperationResult.from_failure(result)
 
@@ -76,4 +84,7 @@ def delete_category(
         uow.commit()
 
     event_bus.publish(event)
+
+    logger.info("Category deleted: category_id=%s", command.category_id)
+
     return OperationResult.ok(data=event)

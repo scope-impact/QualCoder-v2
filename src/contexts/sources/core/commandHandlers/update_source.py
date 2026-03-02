@@ -7,6 +7,7 @@ Returns OperationResult with error codes and suggestions.
 
 from __future__ import annotations
 
+import logging
 from typing import TYPE_CHECKING
 
 from src.contexts.projects.core.commands import UpdateSourceCommand
@@ -20,12 +21,16 @@ from src.contexts.sources.core.commandHandlers._state import (
 )
 from src.shared.common.operation_result import OperationResult
 from src.shared.common.types import SourceId
+from src.shared.infra.metrics import metered_command
 from src.shared.infra.state import ProjectState
 
 if TYPE_CHECKING:
     from src.shared.infra.event_bus import EventBus
 
+logger = logging.getLogger("qualcoder.sources.core")
 
+
+@metered_command("update_source")
 def update_source(
     command: UpdateSourceCommand,
     state: ProjectState,
@@ -51,8 +56,12 @@ def update_source(
     Returns:
         OperationResult with updated Source on success, or error details on failure
     """
+    logger.debug(
+        "update_source: source_id=%s, memo=%s", command.source_id, command.memo
+    )
     # Step 1: Validate
     if state.project is None:
+        logger.error("update_source: no project is currently open")
         return OperationResult.fail(
             error="No project is currently open",
             error_code="SOURCE_NOT_UPDATED/NO_PROJECT",
@@ -73,6 +82,7 @@ def update_source(
     )
 
     if isinstance(result, SourceNotUpdated):
+        logger.error("update_source: derivation failed, reason=%s", result.reason)
         return OperationResult.fail(
             error=result.reason,
             error_code=f"SOURCE_NOT_UPDATED/{result.event_type.upper()}",
@@ -83,6 +93,7 @@ def update_source(
     # Step 3: Find and update the source entity
     source = source_repo.get_by_id(source_id) if source_repo else None
     if source is None:
+        logger.error("update_source: source not found, source_id=%s", command.source_id)
         return OperationResult.fail(
             error=f"Source {command.source_id} not found",
             error_code="SOURCE_NOT_UPDATED/NOT_FOUND",
@@ -103,4 +114,5 @@ def update_source(
     # Step 5: Publish event
     event_bus.publish(event)
 
+    logger.info("update_source: updated source_id=%s", source_id)
     return OperationResult.ok(data=updated_source)

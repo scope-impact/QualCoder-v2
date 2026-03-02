@@ -51,7 +51,7 @@ def project_with_text_and_codes(app_context: AppContext, tmp_path: Path) -> Path
 
     # Add a source with rich content for coding
     source = Source(
-        id=SourceId(1),
+        id=SourceId("1"),
         name="interview_transcript.txt",
         source_type=SourceType.TEXT,
         fulltext="""Interview Transcript - Participant P001
@@ -89,19 +89,25 @@ Interviewer: Thank you for your valuable insights.
 
     # Add codes for coding the text
     codes = [
-        Code(id=CodeId(1), name="Initial Skepticism", color=Color.from_hex("#FF5722")),
-        Code(id=CodeId(2), name="Positive Experience", color=Color.from_hex("#4CAF50")),
         Code(
-            id=CodeId(3),
+            id=CodeId("1"), name="Initial Skepticism", color=Color.from_hex("#FF5722")
+        ),
+        Code(
+            id=CodeId("2"), name="Positive Experience", color=Color.from_hex("#4CAF50")
+        ),
+        Code(
+            id=CodeId("3"),
             name="Time Management Challenge",
             color=Color.from_hex("#F44336"),
         ),
-        Code(id=CodeId(4), name="Adaptive Learning", color=Color.from_hex("#2196F3")),
-        Code(id=CodeId(5), name="Motivation", color=Color.from_hex("#9C27B0")),
-        Code(id=CodeId(6), name="Support System", color=Color.from_hex("#FF9800")),
-        Code(id=CodeId(7), name="Feedback Value", color=Color.from_hex("#00BCD4")),
+        Code(id=CodeId("4"), name="Adaptive Learning", color=Color.from_hex("#2196F3")),
+        Code(id=CodeId("5"), name="Motivation", color=Color.from_hex("#9C27B0")),
+        Code(id=CodeId("6"), name="Support System", color=Color.from_hex("#FF9800")),
+        Code(id=CodeId("7"), name="Feedback Value", color=Color.from_hex("#00BCD4")),
         Code(
-            id=CodeId(8), name="Improvement Suggestion", color=Color.from_hex("#795548")
+            id=CodeId("8"),
+            name="Improvement Suggestion",
+            color=Color.from_hex("#795548"),
         ),
     ]
     for code in codes:
@@ -127,19 +133,19 @@ def project_with_multiple_sources(app_context: AppContext, tmp_path: Path) -> Pa
     # Add multiple sources
     sources = [
         Source(
-            id=SourceId(1),
+            id=SourceId("1"),
             name="interview_01.txt",
             source_type=SourceType.TEXT,
             fulltext="The time management aspect was very challenging for me. I struggled to balance work and study.",
         ),
         Source(
-            id=SourceId(2),
+            id=SourceId("2"),
             name="interview_02.txt",
             source_type=SourceType.TEXT,
             fulltext="I found time management difficult because of my busy schedule. Work-life balance suffered.",
         ),
         Source(
-            id=SourceId(3),
+            id=SourceId("3"),
             name="interview_03.txt",
             source_type=SourceType.TEXT,
             fulltext="Time management was the biggest hurdle for me. I had to reorganize my daily routine.",
@@ -150,8 +156,8 @@ def project_with_multiple_sources(app_context: AppContext, tmp_path: Path) -> Pa
 
     # Add codes
     codes = [
-        Code(id=CodeId(1), name="Time Management", color=Color.from_hex("#F44336")),
-        Code(id=CodeId(2), name="Work-Life Balance", color=Color.from_hex("#FF9800")),
+        Code(id=CodeId("1"), name="Time Management", color=Color.from_hex("#F44336")),
+        Code(id=CodeId("2"), name="Work-Life Balance", color=Color.from_hex("#FF9800")),
     ]
     for code in codes:
         app_context.coding_context.code_repo.save(code)
@@ -241,7 +247,7 @@ class TestAgentApplyCodeToTextRange:
             matching = [
                 s
                 for s in segments
-                if s.source_id.value == 1 and s.position.start == 400
+                if s.source_id.value == "1" and s.position.start == 400
             ]
             assert len(matching) == 0
 
@@ -384,7 +390,9 @@ class TestAgentApplyCodeToTextRange:
         with allure.step("Verify segment exists in repository"):
             segments = app_context.coding_context.segment_repo.get_all()
             matching = [
-                s for s in segments if s.source_id.value == 1 and s.code_id.value == 7
+                s
+                for s in segments
+                if s.source_id.value == "1" and s.code_id.value == "7"
             ]
             assert len(matching) == 1
 
@@ -623,9 +631,9 @@ class TestBatchCodingOperations:
             assert "matches" in data
             # Should find matches in all 3 sources
             source_ids = {m["source_id"] for m in data["matches"]}
-            assert 1 in source_ids
-            assert 2 in source_ids
-            assert 3 in source_ids
+            assert "1" in source_ids
+            assert "2" in source_ids
+            assert "3" in source_ids
 
     @allure.title("Agent can batch apply code to similar segments")
     def test_batch_apply_to_similar(
@@ -703,7 +711,7 @@ class TestBatchCodingOperations:
 
         with allure.step("Verify segments in repository"):
             segments = app_context.coding_context.segment_repo.get_all()
-            code_1_segments = [s for s in segments if s.code_id.value == 1]
+            code_1_segments = [s for s in segments if s.code_id.value == "1"]
             assert len(code_1_segments) == 3
 
 

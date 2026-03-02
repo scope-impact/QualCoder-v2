@@ -78,7 +78,7 @@ class TestDeriveCreateCase:
 
         existing = (
             Case(
-                id=CaseId(value=1),
+                id=CaseId(value="1"),
                 name="Participant A",
             ),
         )
@@ -126,14 +126,14 @@ class TestDeriveUpdateCase:
 
         existing = (
             Case(
-                id=CaseId(value=1),
+                id=CaseId(value="1"),
                 name="Participant A",
             ),
         )
         state = CaseState(existing_cases=existing)
 
         result = derive_update_case(
-            case_id=CaseId(value=1),
+            case_id=CaseId(value="1"),
             name="Participant A - Updated",
             description="Updated description",
             memo="New memo",
@@ -141,7 +141,7 @@ class TestDeriveUpdateCase:
         )
 
         assert isinstance(result, CaseUpdated)
-        assert result.case_id == CaseId(value=1)
+        assert result.case_id == CaseId(value="1")
         assert result.name == "Participant A - Updated"
         assert result.description == "Updated description"
 
@@ -154,7 +154,7 @@ class TestDeriveUpdateCase:
         state = CaseState(existing_cases=())
 
         result = derive_update_case(
-            case_id=CaseId(value=999),
+            case_id=CaseId(value="999"),
             name="New Name",
             description=None,
             memo=None,
@@ -172,13 +172,13 @@ class TestDeriveUpdateCase:
         from src.shared import CaseId
 
         existing = (
-            Case(id=CaseId(value=1), name="Participant A"),
-            Case(id=CaseId(value=2), name="Participant B"),
+            Case(id=CaseId(value="1"), name="Participant A"),
+            Case(id=CaseId(value="2"), name="Participant B"),
         )
         state = CaseState(existing_cases=existing)
 
         result = derive_update_case(
-            case_id=CaseId(value=1),
+            case_id=CaseId(value="1"),
             name="Participant B",  # Conflicts with case 2
             description=None,
             memo=None,
@@ -195,11 +195,11 @@ class TestDeriveUpdateCase:
         from src.contexts.cases.core.events import CaseUpdated
         from src.shared import CaseId
 
-        existing = (Case(id=CaseId(value=1), name="Participant A"),)
+        existing = (Case(id=CaseId(value="1"), name="Participant A"),)
         state = CaseState(existing_cases=existing)
 
         result = derive_update_case(
-            case_id=CaseId(value=1),
+            case_id=CaseId(value="1"),
             name="Participant A",  # Same name is OK
             description="New description",
             memo=None,
@@ -219,16 +219,16 @@ class TestDeriveRemoveCase:
         from src.contexts.cases.core.events import CaseRemoved
         from src.shared import CaseId
 
-        existing = (Case(id=CaseId(value=1), name="Participant A"),)
+        existing = (Case(id=CaseId(value="1"), name="Participant A"),)
         state = CaseState(existing_cases=existing)
 
         result = derive_remove_case(
-            case_id=CaseId(value=1),
+            case_id=CaseId(value="1"),
             state=state,
         )
 
         assert isinstance(result, CaseRemoved)
-        assert result.case_id == CaseId(value=1)
+        assert result.case_id == CaseId(value="1")
 
     def test_fails_when_case_not_found(self):
         """Should fail with CaseDeletionFailed for non-existent case."""
@@ -239,7 +239,7 @@ class TestDeriveRemoveCase:
         state = CaseState(existing_cases=())
 
         result = derive_remove_case(
-            case_id=CaseId(value=999),
+            case_id=CaseId(value="999"),
             state=state,
         )
 
@@ -260,11 +260,11 @@ class TestDeriveSetCaseAttribute:
         from src.contexts.cases.core.events import CaseAttributeSet
         from src.shared import CaseId
 
-        existing = (Case(id=CaseId(value=1), name="Participant A"),)
+        existing = (Case(id=CaseId(value="1"), name="Participant A"),)
         state = CaseState(existing_cases=existing)
 
         result = derive_set_case_attribute(
-            case_id=CaseId(value=1),
+            case_id=CaseId(value="1"),
             attr_name="age",
             attr_type="number",
             attr_value=25,
@@ -272,7 +272,7 @@ class TestDeriveSetCaseAttribute:
         )
 
         assert isinstance(result, CaseAttributeSet)
-        assert result.case_id == CaseId(value=1)
+        assert result.case_id == CaseId(value="1")
         assert result.attr_name == "age"
         assert result.attr_type == "number"
         assert result.attr_value == 25
@@ -289,7 +289,7 @@ class TestDeriveSetCaseAttribute:
         state = CaseState(existing_cases=())
 
         result = derive_set_case_attribute(
-            case_id=CaseId(value=999),
+            case_id=CaseId(value="999"),
             attr_name="age",
             attr_type="number",
             attr_value=25,
@@ -309,11 +309,11 @@ class TestDeriveSetCaseAttribute:
         from src.contexts.cases.core.failure_events import AttributeSetFailed
         from src.shared import CaseId
 
-        existing = (Case(id=CaseId(value=1), name="Participant A"),)
+        existing = (Case(id=CaseId(value="1"), name="Participant A"),)
         state = CaseState(existing_cases=existing)
 
         result = derive_set_case_attribute(
-            case_id=CaseId(value=1),
+            case_id=CaseId(value="1"),
             attr_name="age",
             attr_type="unknown_type",
             attr_value=25,
@@ -333,11 +333,11 @@ class TestDeriveSetCaseAttribute:
         from src.contexts.cases.core.failure_events import AttributeSetFailed
         from src.shared import CaseId
 
-        existing = (Case(id=CaseId(value=1), name="Participant A"),)
+        existing = (Case(id=CaseId(value="1"), name="Participant A"),)
         state = CaseState(existing_cases=existing)
 
         result = derive_set_case_attribute(
-            case_id=CaseId(value=1),
+            case_id=CaseId(value="1"),
             attr_name="age",
             attr_type="number",
             attr_value="not-a-number",
@@ -357,11 +357,11 @@ class TestDeriveSetCaseAttribute:
         from src.contexts.cases.core.failure_events import AttributeSetFailed
         from src.shared import CaseId
 
-        existing = (Case(id=CaseId(value=1), name="Participant A"),)
+        existing = (Case(id=CaseId(value="1"), name="Participant A"),)
         state = CaseState(existing_cases=existing)
 
         result = derive_set_case_attribute(
-            case_id=CaseId(value=1),
+            case_id=CaseId(value="1"),
             attr_name="",
             attr_type="text",
             attr_value="value",
@@ -385,18 +385,18 @@ class TestDeriveLinkSourceToCase:
         from src.contexts.cases.core.events import SourceLinkedToCase
         from src.shared import CaseId, SourceId
 
-        existing = (Case(id=CaseId(value=1), name="Participant A"),)
+        existing = (Case(id=CaseId(value="1"), name="Participant A"),)
         state = CaseState(existing_cases=existing)
 
         result = derive_link_source_to_case(
-            case_id=CaseId(value=1),
-            source_id=SourceId(value=10),
+            case_id=CaseId(value="1"),
+            source_id=SourceId(value="10"),
             state=state,
         )
 
         assert isinstance(result, SourceLinkedToCase)
-        assert result.case_id == CaseId(value=1)
-        assert result.source_id == 10
+        assert result.case_id == CaseId(value="1")
+        assert result.source_id == "10"
 
     def test_fails_when_case_not_found(self):
         """Should fail with SourceLinkFailed for non-existent case."""
@@ -410,8 +410,8 @@ class TestDeriveLinkSourceToCase:
         state = CaseState(existing_cases=())
 
         result = derive_link_source_to_case(
-            case_id=CaseId(value=999),
-            source_id=SourceId(value=10),
+            case_id=CaseId(value="999"),
+            source_id=SourceId(value="10"),
             state=state,
         )
 
@@ -429,12 +429,14 @@ class TestDeriveLinkSourceToCase:
         from src.shared import CaseId, SourceId
 
         # Case with source already linked
-        existing = (Case(id=CaseId(value=1), name="Participant A", source_ids=(10,)),)
+        existing = (
+            Case(id=CaseId(value="1"), name="Participant A", source_ids=("10",)),
+        )
         state = CaseState(existing_cases=existing)
 
         result = derive_link_source_to_case(
-            case_id=CaseId(value=1),
-            source_id=SourceId(value=10),
+            case_id=CaseId(value="1"),
+            source_id=SourceId(value="10"),
             state=state,
         )
 
@@ -456,18 +458,20 @@ class TestDeriveUnlinkSourceFromCase:
         from src.shared import CaseId, SourceId
 
         # Case with source linked
-        existing = (Case(id=CaseId(value=1), name="Participant A", source_ids=(10,)),)
+        existing = (
+            Case(id=CaseId(value="1"), name="Participant A", source_ids=("10",)),
+        )
         state = CaseState(existing_cases=existing)
 
         result = derive_unlink_source_from_case(
-            case_id=CaseId(value=1),
-            source_id=SourceId(value=10),
+            case_id=CaseId(value="1"),
+            source_id=SourceId(value="10"),
             state=state,
         )
 
         assert isinstance(result, SourceUnlinkedFromCase)
-        assert result.case_id == CaseId(value=1)
-        assert result.source_id == 10
+        assert result.case_id == CaseId(value="1")
+        assert result.source_id == "10"
 
     def test_fails_when_case_not_found(self):
         """Should fail with SourceUnlinkFailed for non-existent case."""
@@ -481,8 +485,8 @@ class TestDeriveUnlinkSourceFromCase:
         state = CaseState(existing_cases=())
 
         result = derive_unlink_source_from_case(
-            case_id=CaseId(value=999),
-            source_id=SourceId(value=10),
+            case_id=CaseId(value="999"),
+            source_id=SourceId(value="10"),
             state=state,
         )
 
@@ -500,12 +504,12 @@ class TestDeriveUnlinkSourceFromCase:
         from src.shared import CaseId, SourceId
 
         # Case without source linked
-        existing = (Case(id=CaseId(value=1), name="Participant A"),)
+        existing = (Case(id=CaseId(value="1"), name="Participant A"),)
         state = CaseState(existing_cases=existing)
 
         result = derive_unlink_source_from_case(
-            case_id=CaseId(value=1),
-            source_id=SourceId(value=10),
+            case_id=CaseId(value="1"),
+            source_id=SourceId(value="10"),
             state=state,
         )
 

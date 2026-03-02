@@ -7,6 +7,7 @@ Implements the repository for Project entities and .qda database operations.
 from __future__ import annotations
 
 import contextlib
+import logging
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import TYPE_CHECKING
@@ -21,6 +22,8 @@ from src.contexts.projects.infra.schema import (
 
 if TYPE_CHECKING:
     from sqlalchemy import Connection, Engine
+
+logger = logging.getLogger("qualcoder.projects.infra")
 
 
 class SQLiteProjectRepository:
@@ -83,6 +86,7 @@ class SQLiteProjectRepository:
             PermissionError: If the path is not writable
             ValueError: If path is not a valid file path
         """
+        logger.debug("create_database: %s (name=%s)", path, name)
         # Step 1: Validate path doesn't already exist
         path = Path(path).resolve()
         if path.exists():
@@ -124,6 +128,7 @@ class SQLiteProjectRepository:
             )
 
         except Exception:
+            logger.error("create_database failed: %s", path)
             # Clean up partial database on failure
             if path.exists():
                 with contextlib.suppress(OSError):
@@ -162,6 +167,7 @@ class SQLiteProjectRepository:
                 if not header.startswith(b"SQLite format 3"):
                     return False
         except OSError:
+            logger.error("validate_database: cannot read file %s", path)
             return False
 
         # Check required tables exist (supports both V1 and V2 schemas)
@@ -177,6 +183,9 @@ class SQLiteProjectRepository:
             finally:
                 engine.dispose()
         except Exception:
+            logger.error(
+                "validate_database: inspection failed for %s", path, exc_info=True
+            )
             return False
 
     def load(self, path: Path) -> Project | None:
@@ -190,6 +199,7 @@ class SQLiteProjectRepository:
             Project entity if database is valid, None otherwise
         """
         path = Path(path).resolve()
+        logger.debug("load: %s", path)
 
         if not self.validate_database(path):
             return None
@@ -235,6 +245,7 @@ class SQLiteProjectRepository:
                 engine.dispose()
 
         except Exception:
+            logger.error("load failed: %s", path, exc_info=True)
             return None
 
     def _create_engine(self, path: Path) -> Engine:

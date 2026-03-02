@@ -182,23 +182,23 @@ def sample_codes() -> list[Code]:
     """Create sample codes for testing."""
     return [
         Code(
-            id=CodeId(value=1),
+            id=CodeId(value="1"),
             name="Theme",
             color=Color(255, 0, 0),
             memo="Main themes",
         ),
         Code(
-            id=CodeId(value=2),
+            id=CodeId(value="2"),
             name="Challenge",
             color=Color(0, 255, 0),
             memo=None,
         ),
         Code(
-            id=CodeId(value=3),
+            id=CodeId(value="3"),
             name="Positive",
             color=Color(0, 0, 255),
             memo="Positive experiences",
-            category_id=CategoryId(value=1),
+            category_id=CategoryId(value="1"),
         ),
     ]
 
@@ -207,8 +207,8 @@ def sample_codes() -> list[Code]:
 def sample_categories() -> list[Category]:
     """Create sample categories for testing."""
     return [
-        Category(id=CategoryId(value=1), name="Emotions"),
-        Category(id=CategoryId(value=2), name="Topics"),
+        Category(id=CategoryId(value="1"), name="Emotions"),
+        Category(id=CategoryId(value="2"), name="Topics"),
     ]
 
 
@@ -217,27 +217,27 @@ def sample_segments() -> list[TextSegment]:
     """Create sample segments for testing."""
     return [
         TextSegment(
-            id=SegmentId(value=101),
-            source_id=SourceId(value=1),
-            code_id=CodeId(value=1),
+            id=SegmentId(value="101"),
+            source_id=SourceId(value="1"),
+            code_id=CodeId(value="1"),
             position=TextPosition(start=0, end=50),
             selected_text="This is a sample text segment",
             memo="Important finding",
             importance=2,
         ),
         TextSegment(
-            id=SegmentId(value=102),
-            source_id=SourceId(value=1),
-            code_id=CodeId(value=2),
+            id=SegmentId(value="102"),
+            source_id=SourceId(value="1"),
+            code_id=CodeId(value="2"),
             position=TextPosition(start=100, end=150),
             selected_text="Another segment",
             memo=None,
             importance=0,
         ),
         TextSegment(
-            id=SegmentId(value=103),
-            source_id=SourceId(value=2),
-            code_id=CodeId(value=1),
+            id=SegmentId(value="103"),
+            source_id=SourceId(value="2"),
+            code_id=CodeId(value="1"),
             position=TextPosition(start=0, end=30),
             selected_text="Segment in another source",
             memo=None,
@@ -541,7 +541,7 @@ class TestListCodesTool:
         # Find the Theme code (now serialized as dict)
         theme_code = next((c for c in codes if c["name"] == "Theme"), None)
         assert theme_code is not None
-        assert theme_code["id"] == 1
+        assert theme_code["id"] == "1"
         assert theme_code["color"] == "#ff0000"  # Serialized as hex
 
 
@@ -561,7 +561,7 @@ class TestGetCodeTool:
         assert result["success"] is True
         code = result["data"]
         # Data is serialized to JSON-compatible dict
-        assert code["id"] == 1
+        assert code["id"] == "1"
         assert code["name"] == "Theme"
 
     def test_returns_failure_for_missing_code_id(
@@ -589,7 +589,7 @@ class TestGetCodeTool:
         assert result["success"] is True
         code = result["data"]
         # Data is serialized to JSON-compatible dict
-        assert code["category_id"] == 1
+        assert code["category_id"] == "1"
 
 
 # ============================================================

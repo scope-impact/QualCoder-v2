@@ -37,6 +37,9 @@ class Color:
     @classmethod
     def from_hex(cls, hex_color: str) -> Color:
         hex_color = hex_color.lstrip("#")
+        # Expand 3-digit shorthand (#RGB → #RRGGBB)
+        if len(hex_color) == 3:
+            hex_color = hex_color[0] * 2 + hex_color[1] * 2 + hex_color[2] * 2
         if len(hex_color) != 6:
             raise ValueError(f"Invalid hex color: {hex_color}")
         return cls(

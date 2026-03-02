@@ -7,21 +7,31 @@ No I/O, no side effects - returns events or SettingsNotChanged failure events.
 
 from __future__ import annotations
 
+from returns.result import Failure
+
 from src.contexts.settings.core.entities import UserSettings
 from src.contexts.settings.core.events import (
     AVCodingConfigChanged,
     BackupConfigChanged,
+    CloudSyncConfigChanged,
     FontChanged,
     LanguageChanged,
+    ObservabilityConfigChanged,
     ThemeChanged,
 )
-from src.contexts.settings.core.failure_events import SettingsNotChanged
+from src.contexts.settings.core.failure_events import (
+    CloudSyncSettingsFailed,
+    SettingsNotChanged,
+)
 from src.contexts.settings.core.invariants import (
     VALID_LANGUAGES,
+    can_enable_cloud_sync,
     is_valid_backup_interval,
+    is_valid_convex_url,
     is_valid_font_family,
     is_valid_font_size,
     is_valid_language_code,
+    is_valid_log_level,
     is_valid_max_backups,
     is_valid_speaker_format,
     is_valid_theme,
@@ -187,4 +197,71 @@ def derive_av_coding_config_change(
         old_speaker_format=current_settings.av_coding.speaker_format,
         timestamp_format=timestamp_format,
         speaker_format=speaker_format,
+    )
+
+
+def derive_observability_config_change(
+    log_level: str,
+    enable_file_logging: bool,
+    enable_telemetry: bool,
+    current_settings: UserSettings,
+) -> ObservabilityConfigChanged | SettingsNotChanged:
+    """
+    Derive an observability config change event from inputs.
+
+    Pure function - no I/O, no side effects.
+
+    Args:
+        log_level: Log level (DEBUG, INFO, WARNING, ERROR)
+        enable_file_logging: Whether to write logs to file
+        enable_telemetry: Whether to collect OTEL metrics
+        current_settings: Current user settings for old observability values
+
+    Returns:
+        ObservabilityConfigChanged event on success, SettingsNotChanged on error
+    """
+    if not is_valid_log_level(log_level):
+        return SettingsNotChanged.invalid_log_level(log_level)
+
+    return ObservabilityConfigChanged.create(
+        old_log_level=current_settings.observability.log_level,
+        old_enable_file_logging=current_settings.observability.enable_file_logging,
+        old_enable_telemetry=current_settings.observability.enable_telemetry,
+        log_level=log_level.upper(),
+        enable_file_logging=enable_file_logging,
+        enable_telemetry=enable_telemetry,
+    )
+
+
+def derive_cloud_sync_config_change(
+    enabled: bool,
+    convex_url: str | None,
+    current_settings: UserSettings,
+) -> CloudSyncConfigChanged | Failure:
+    """
+    Derive a cloud sync config change event from inputs.
+
+    Pure function - no I/O, no side effects.
+
+    Args:
+        enabled: Whether cloud sync is enabled
+        convex_url: Convex deployment URL (required if enabled)
+        current_settings: Current user settings for old cloud sync values
+
+    Returns:
+        CloudSyncConfigChanged event on success, Failure with reason on error
+    """
+    # Validate URL format if provided
+    if convex_url and not is_valid_convex_url(convex_url):
+        return Failure(CloudSyncSettingsFailed.invalid_url(convex_url))
+
+    # Cannot enable without valid URL
+    if enabled and not can_enable_cloud_sync(convex_url):
+        return Failure(CloudSyncSettingsFailed.url_required())
+
+    return CloudSyncConfigChanged.create(
+        old_enabled=current_settings.backend.cloud_sync_enabled,
+        old_convex_url=current_settings.backend.convex_url,
+        enabled=enabled,
+        convex_url=convex_url,
     )

@@ -6,6 +6,7 @@ Implements the repository for Folder entities using the src_folder table.
 
 from __future__ import annotations
 
+import logging
 from datetime import UTC, datetime
 from typing import TYPE_CHECKING
 
@@ -18,6 +19,10 @@ from src.shared.common.types import FolderId
 if TYPE_CHECKING:
     from sqlalchemy import Connection
 
+    from src.shared.infra.sync.outbox import OutboxWriter
+
+logger = logging.getLogger("qualcoder.folders.infra")
+
 
 class SQLiteFolderRepository:
     """
@@ -26,17 +31,23 @@ class SQLiteFolderRepository:
     Maps between domain Folder entities and the src_folder table.
     """
 
-    def __init__(self, connection: Connection) -> None:
+    def __init__(
+        self, connection: Connection, outbox: OutboxWriter | None = None
+    ) -> None:
         self._conn = connection
+        self._outbox = outbox
 
     def get_all(self) -> list[Folder]:
         """Get all folders in the project."""
         stmt = select(src_folder).order_by(src_folder.c.name)
         result = self._conn.execute(stmt)
-        return [self._row_to_folder(row) for row in result]
+        folders = [self._row_to_folder(row) for row in result]
+        logger.debug("get_all: count=%d", len(folders))
+        return folders
 
     def get_by_id(self, folder_id: FolderId) -> Folder | None:
         """Get a folder by its ID."""
+        logger.debug("get_by_id: %s", folder_id.value)
         stmt = select(src_folder).where(src_folder.c.id == folder_id.value)
         result = self._conn.execute(stmt)
         row = result.fetchone()
@@ -72,6 +83,7 @@ class SQLiteFolderRepository:
 
     def save(self, folder: Folder) -> None:
         """Save a folder (insert or update)."""
+        logger.debug("save: %s (name=%s)", folder.id.value, folder.name)
         exists = self.exists(folder.id)
         parent_id_value = folder.parent_id.value if folder.parent_id else None
 
@@ -93,12 +105,24 @@ class SQLiteFolderRepository:
             )
 
         self._conn.execute(stmt)
+        if self._outbox:
+            self._outbox.write_upsert(
+                "folder",
+                folder.id.value,
+                {
+                    "name": folder.name,
+                    "parent_id": folder.parent_id.value if folder.parent_id else None,
+                },
+            )
         self._conn.commit()
 
     def delete(self, folder_id: FolderId) -> None:
         """Delete a folder by ID."""
+        logger.debug("delete: %s", folder_id.value)
         stmt = delete(src_folder).where(src_folder.c.id == folder_id.value)
         self._conn.execute(stmt)
+        if self._outbox:
+            self._outbox.write_delete("folder", folder_id.value)
         self._conn.commit()
 
     def exists(self, folder_id: FolderId) -> bool:

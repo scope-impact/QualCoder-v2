@@ -17,7 +17,7 @@ from src.shared.infra.state import ProjectState
 
 
 def get_folder(
-    folder_id: int,
+    folder_id: str,
     state: ProjectState,
     folder_repo: FolderRepository | None = None,
     source_repo: SourceRepository | None = None,
@@ -42,7 +42,7 @@ def get_folder(
         )
 
     # Get folder from repo (source of truth)
-    fid = FolderId(value=folder_id)
+    fid = FolderId(value=str(folder_id))
     folder = folder_repo.get_by_id(fid) if folder_repo else None
 
     if folder is None:

@@ -34,6 +34,7 @@ Structure:
 
 from __future__ import annotations
 
+import logging
 from typing import TYPE_CHECKING
 
 from PySide6.QtCore import Signal
@@ -52,6 +53,8 @@ from design_system import ColorPalette, get_colors
 from src.shared.presentation.dto import CaseDTO, CaseSummaryDTO
 
 from ..pages import CaseManagerPage
+
+logger = logging.getLogger("qualcoder.cases.presentation")
 
 if TYPE_CHECKING:
     from ..viewmodels import CaseManagerViewModel
@@ -213,6 +216,7 @@ class CaseManagerScreen(QWidget):
         """
         # Disconnect previous viewmodel signals if any
         if self._viewmodel is not None:
+            self._viewmodel.teardown()
             self._disconnect_viewmodel_signals()
 
         self._viewmodel = viewmodel
@@ -284,14 +288,14 @@ class CaseManagerScreen(QWidget):
     def _on_import_clicked(self):
         """Handle import cases button click."""
         # TODO: Show import dialog
-        print("CaseManagerScreen: Import cases")
+        logger.debug("CaseManagerScreen: Import cases")
 
     def _on_export_clicked(self):
         """Handle export button click."""
         selected_ids = self._page.get_selected_ids()
         if selected_ids:
             # TODO: Export selected cases
-            print(f"CaseManagerScreen: Export {len(selected_ids)} cases")
+            logger.debug("CaseManagerScreen: Export %d cases", len(selected_ids))
         else:
             QMessageBox.information(
                 self,
@@ -306,7 +310,7 @@ class CaseManagerScreen(QWidget):
     def _on_case_clicked(self, case_id: str):
         """Handle single click on a case."""
         if self._viewmodel:
-            self._viewmodel.select_case(int(case_id))
+            self._viewmodel.select_case(case_id)
 
     def _on_case_double_clicked(self, case_id: str):
         """Handle double-click on a case - open for details."""
@@ -345,7 +349,7 @@ class CaseManagerScreen(QWidget):
         if self._viewmodel:
             deleted = []
             for case_id in case_ids:
-                if self._viewmodel.delete_case(int(case_id)):
+                if self._viewmodel.delete_case(case_id):
                     deleted.append(case_id)
 
             if deleted:
@@ -362,12 +366,12 @@ class CaseManagerScreen(QWidget):
     def _on_link_source(self, case_id: str):
         """Handle link source to case request."""
         # TODO: Show source selection dialog
-        print(f"CaseManagerScreen: Link source to case {case_id}")
+        logger.debug("CaseManagerScreen: Link source to case %s", case_id)
 
     def _on_edit_case(self, case_id: str):
         """Handle edit case request."""
         # TODO: Show edit case dialog
-        print(f"CaseManagerScreen: Edit case {case_id}")
+        logger.debug("CaseManagerScreen: Edit case %s", case_id)
 
     # =========================================================================
     # Filter Handlers

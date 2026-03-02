@@ -170,7 +170,7 @@ def event_bus() -> MockEventBus:
 def sample_code() -> Code:
     """Create a sample code for testing."""
     return Code(
-        id=CodeId(value=1),
+        id=CodeId(value="1"),
         name="Test Code",
         color=Color(255, 0, 0),
         memo="Test memo",
@@ -181,7 +181,7 @@ def sample_code() -> Code:
 def sample_category() -> Category:
     """Create a sample category for testing."""
     return Category(
-        id=CategoryId(value=1),
+        id=CategoryId(value="1"),
         name="Test Category",
         memo="Test category memo",
     )
@@ -191,9 +191,9 @@ def sample_category() -> Category:
 def sample_segment() -> TextSegment:
     """Create a sample segment for testing."""
     return TextSegment(
-        id=SegmentId(value=1),
-        source_id=SourceId(value=1),
-        code_id=CodeId(value=1),
+        id=SegmentId(value="1"),
+        source_id=SourceId(value="1"),
+        code_id=CodeId(value="1"),
         position=TextPosition(start=0, end=10),
         selected_text="Test text",
     )
@@ -272,11 +272,11 @@ class TestDeleteCategoryHandler:
 
         # Setup: create parent and child categories
         parent_category = Category(
-            id=CategoryId(value=1),
+            id=CategoryId(value="1"),
             name="Parent Category",
         )
         child_category = Category(
-            id=CategoryId(value=2),
+            id=CategoryId(value="2"),
             name="Child Category",
             parent_id=parent_category.id,
         )
@@ -285,7 +285,7 @@ class TestDeleteCategoryHandler:
 
         # Add a code in the child category
         code_in_child = Code(
-            id=CodeId(value=1),
+            id=CodeId(value="1"),
             name="Code in Child",
             color=Color(128, 128, 128),
             category_id=child_category.id,
@@ -313,7 +313,7 @@ class TestDeleteCategoryHandler:
         assert result.data.codes_orphaned == 1
 
         # Verify code was moved to parent
-        updated_code = code_repo.get_by_id(CodeId(value=1))
+        updated_code = code_repo.get_by_id(CodeId(value="1"))
         assert updated_code is not None
         assert updated_code.category_id == parent_category.id
 
@@ -332,7 +332,7 @@ class TestDeleteCategoryHandler:
 
         # Create command for non-existent category
         command = DeleteCategoryCommand(
-            category_id=999,
+            category_id="999",
             orphan_strategy="move_to_parent",
         )
 
@@ -365,7 +365,7 @@ class TestDeleteCategoryHandler:
             delete_category,
         )
 
-        command = DeleteCategoryCommand(category_id=999)
+        command = DeleteCategoryCommand(category_id="999")
 
         result = delete_category(
             command=command,
@@ -490,7 +490,7 @@ class TestChangeCodeColorHandler:
         )
 
         command = ChangeCodeColorCommand(
-            code_id=999,
+            code_id="999",
             new_color="#00FF00",
         )
 
@@ -605,7 +605,7 @@ class TestApplyCodeHandler:
         # Create command
         command = ApplyCodeCommand(
             code_id=sample_code.id.value,
-            source_id=1,
+            source_id="1",
             start_position=0,
             end_position=10,
             memo="Test segment",
@@ -627,7 +627,7 @@ class TestApplyCodeHandler:
         # Verify segment was created
         segment = result.data
         assert segment.code_id == sample_code.id
-        assert segment.source_id == SourceId(value=1)
+        assert segment.source_id == SourceId(value="1")
 
         # Verify event was published
         assert len(event_bus.published_events) == 1
@@ -650,7 +650,7 @@ class TestApplyCodeHandler:
 
         command = ApplyCodeCommand(
             code_id=sample_code.id.value,
-            source_id=1,
+            source_id="1",
             start_position=0,
             end_position=10,
         )
@@ -680,8 +680,8 @@ class TestApplyCodeHandler:
         from src.contexts.coding.core.commandHandlers.apply_code import apply_code
 
         command = ApplyCodeCommand(
-            code_id=999,
-            source_id=1,
+            code_id="999",
+            source_id="1",
             start_position=0,
             end_position=10,
         )
@@ -721,7 +721,7 @@ class TestApplyCodeHandler:
 
         command = ApplyCodeCommand(
             code_id=sample_code.id.value,
-            source_id=1,
+            source_id="1",
             start_position=0,
             end_position=12,
         )
@@ -754,7 +754,7 @@ class TestApplyCodeHandler:
 
         command = ApplyCodeCommand(
             code_id=sample_code.id.value,
-            source_id=1,
+            source_id="1",
             start_position=5,
             end_position=15,
             memo="Important segment",
@@ -792,7 +792,7 @@ class TestApplyCodeHandler:
 
         command = ApplyCodeCommand(
             code_id=sample_code.id.value,
-            source_id=1,
+            source_id="1",
             start_position=0,
             end_position=10,
             memo="Event test",
@@ -811,7 +811,7 @@ class TestApplyCodeHandler:
         assert isinstance(event, SegmentCoded)
         assert event.code_id == sample_code.id
         assert event.code_name == sample_code.name
-        assert event.source_id == SourceId(value=1)
+        assert event.source_id == SourceId(value="1")
         assert event.memo == "Event test"
 
 
@@ -885,9 +885,9 @@ class TestHandlerIntegration:
         )
 
         # Setup hierarchy: root -> parent -> child
-        root = Category(id=CategoryId(value=1), name="Root")
-        parent = Category(id=CategoryId(value=2), name="Parent", parent_id=root.id)
-        child = Category(id=CategoryId(value=3), name="Child", parent_id=parent.id)
+        root = Category(id=CategoryId(value="1"), name="Root")
+        parent = Category(id=CategoryId(value="2"), name="Parent", parent_id=root.id)
+        child = Category(id=CategoryId(value="3"), name="Child", parent_id=parent.id)
 
         category_repo.save(root)
         category_repo.save(parent)
@@ -895,13 +895,13 @@ class TestHandlerIntegration:
 
         # Add codes at each level
         code1 = Code(
-            id=CodeId(value=1),
+            id=CodeId(value="1"),
             name="Code1",
             color=Color(255, 0, 0),
             category_id=child.id,
         )
         code2 = Code(
-            id=CodeId(value=2),
+            id=CodeId(value="2"),
             name="Code2",
             color=Color(0, 255, 0),
             category_id=child.id,
@@ -925,7 +925,7 @@ class TestHandlerIntegration:
         assert result.is_success
 
         # Verify codes moved to parent
-        updated_code1 = code_repo.get_by_id(CodeId(value=1))
-        updated_code2 = code_repo.get_by_id(CodeId(value=2))
+        updated_code1 = code_repo.get_by_id(CodeId(value="1"))
+        updated_code2 = code_repo.get_by_id(CodeId(value="2"))
         assert updated_code1.category_id == parent.id
         assert updated_code2.category_id == parent.id

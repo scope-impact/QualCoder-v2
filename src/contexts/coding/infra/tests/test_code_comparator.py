@@ -30,31 +30,31 @@ def sample_codes() -> tuple[Code, ...]:
     """Create sample codes for testing."""
     return (
         Code(
-            id=CodeId(value=1),
+            id=CodeId(value="1"),
             name="anxiety",
             color=Color.from_hex("#FF0000"),
             memo="Feelings of worry",
         ),
         Code(
-            id=CodeId(value=2),
+            id=CodeId(value="2"),
             name="stress",
             color=Color.from_hex("#00FF00"),
             memo="Tension and pressure",
         ),
         Code(
-            id=CodeId(value=3),
+            id=CodeId(value="3"),
             name="anxious feelings",
             color=Color.from_hex("#0000FF"),
             memo="Worry and nervousness",
         ),
         Code(
-            id=CodeId(value=4),
+            id=CodeId(value="4"),
             name="happiness",
             color=Color.from_hex("#FFFF00"),
             memo="Positive emotions",
         ),
         Code(
-            id=CodeId(value=5),
+            id=CodeId(value="5"),
             name="work pressure",
             color=Color.from_hex("#FF00FF"),
             memo="Job-related stress",
@@ -164,7 +164,7 @@ class TestVectorCodeComparator:
             embedding_provider=mock_embedding_provider,
         )
         single_code = (
-            Code(id=CodeId(value=1), name="test", color=Color.from_hex("#FF0000")),
+            Code(id=CodeId(value="1"), name="test", color=Color.from_hex("#FF0000")),
         )
 
         result = comparator.find_duplicates(single_code)
@@ -267,9 +267,9 @@ class TestMockCodeComparator:
         """Returns predefined duplicate candidates."""
         duplicates = [
             DuplicateCandidate(
-                code_a_id=CodeId(value=1),
+                code_a_id=CodeId(value="1"),
                 code_a_name="anxiety",
-                code_b_id=CodeId(value=3),
+                code_b_id=CodeId(value="3"),
                 code_b_name="anxious feelings",
                 similarity=SimilarityScore(0.85),
                 rationale="Both refer to anxiety",
@@ -287,18 +287,18 @@ class TestMockCodeComparator:
         """Filters duplicates by threshold."""
         duplicates = [
             DuplicateCandidate(
-                code_a_id=CodeId(value=1),
+                code_a_id=CodeId(value="1"),
                 code_a_name="a",
-                code_b_id=CodeId(value=2),
+                code_b_id=CodeId(value="2"),
                 code_b_name="b",
                 similarity=SimilarityScore(0.9),
                 rationale="High",
                 status="pending",
             ),
             DuplicateCandidate(
-                code_a_id=CodeId(value=3),
+                code_a_id=CodeId(value="3"),
                 code_a_name="c",
-                code_b_id=CodeId(value=4),
+                code_b_id=CodeId(value="4"),
                 code_b_name="d",
                 similarity=SimilarityScore(0.6),
                 rationale="Low",

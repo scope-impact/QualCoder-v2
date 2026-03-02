@@ -319,12 +319,12 @@ class AttributeRemovalFailed(FailureEvent):
 class SourceLinkFailed(FailureEvent):
     """Failure event when linking source to case fails."""
 
-    case_id: int = 0
-    source_id: int = 0
+    case_id: str = ""
+    source_id: str = ""
     suggestions: tuple[str, ...] = ()
 
     @classmethod
-    def case_not_found(cls, case_id: int, source_id: int) -> SourceLinkFailed:
+    def case_not_found(cls, case_id: str, source_id: str) -> SourceLinkFailed:
         """Case with given ID not found."""
         return cls(
             event_id=cls._generate_id(),
@@ -336,7 +336,7 @@ class SourceLinkFailed(FailureEvent):
         )
 
     @classmethod
-    def already_linked(cls, case_id: int, source_id: int) -> SourceLinkFailed:
+    def already_linked(cls, case_id: str, source_id: str) -> SourceLinkFailed:
         """Source is already linked to case."""
         return cls(
             event_id=cls._generate_id(),
@@ -362,12 +362,12 @@ class SourceLinkFailed(FailureEvent):
 class SourceUnlinkFailed(FailureEvent):
     """Failure event when unlinking source from case fails."""
 
-    case_id: int = 0
-    source_id: int = 0
+    case_id: str = ""
+    source_id: str = ""
     suggestions: tuple[str, ...] = ()
 
     @classmethod
-    def case_not_found(cls, case_id: int, source_id: int) -> SourceUnlinkFailed:
+    def case_not_found(cls, case_id: str, source_id: str) -> SourceUnlinkFailed:
         """Case with given ID not found."""
         return cls(
             event_id=cls._generate_id(),
@@ -379,7 +379,7 @@ class SourceUnlinkFailed(FailureEvent):
         )
 
     @classmethod
-    def not_linked(cls, case_id: int, source_id: int) -> SourceUnlinkFailed:
+    def not_linked(cls, case_id: str, source_id: str) -> SourceUnlinkFailed:
         """Source is not linked to case."""
         return cls(
             event_id=cls._generate_id(),

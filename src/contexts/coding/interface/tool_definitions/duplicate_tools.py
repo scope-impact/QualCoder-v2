@@ -32,13 +32,13 @@ DUPLICATE_TOOLS = (
         parameters=(
             ToolParameter(
                 name="source_code_id",
-                type="integer",
+                type="string",
                 description="ID of the code to merge FROM (will be deleted).",
                 required=True,
             ),
             ToolParameter(
                 name="target_code_id",
-                type="integer",
+                type="string",
                 description="ID of the code to merge INTO (will be kept).",
                 required=True,
             ),

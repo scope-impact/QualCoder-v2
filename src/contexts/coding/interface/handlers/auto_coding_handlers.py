@@ -73,13 +73,19 @@ def handle_analyze_uncoded_text(
     if source_id is None:
         return missing_param_error("ANALYZE_UNCODED", "source_id")
 
+    # Validate source exists
+    if ctx.source_repo is not None:
+        source = ctx.source_repo.get_by_id(SourceId(value=str(source_id)))
+        if source is None:
+            return not_found_error("ANALYZE_UNCODED", "Source", str(source_id))
+
     segments = (
-        ctx.segment_repo.get_by_source(SourceId(int(source_id)))
+        ctx.segment_repo.get_by_source(SourceId(value=str(source_id)))
         if ctx.segment_repo
         else []
     )
 
-    source_text = ctx.get_source_text(int(source_id))
+    source_text = ctx.get_source_text(source_id)
     total_length = len(source_text)
 
     uncoded_ranges = compute_uncoded_ranges(segments, total_length)
@@ -111,7 +117,7 @@ def handle_suggest_codes_for_range(
         return missing_params_error("SUGGEST_CODES_RANGE")
 
     codes = ctx.code_repo.get_all() if ctx.code_repo else []
-    source_text = ctx.get_source_text(int(source_id))
+    source_text = ctx.get_source_text(source_id)
     text_excerpt = source_text[int(start_pos) : int(end_pos)]
     text_lower = text_excerpt.lower()
 
@@ -133,7 +139,7 @@ def handle_suggest_codes_for_range(
         csug_id = CodingSuggestionId.new()
         csug = CodingSuggestion(
             id=csug_id,
-            source_id=SourceId(int(source_id)),
+            source_id=SourceId(value=str(source_id)),
             code_id=code.id,
             start_pos=int(start_pos),
             end_pos=int(end_pos),
@@ -153,7 +159,7 @@ def handle_suggest_codes_for_range(
 
     batch = CodingSuggestionBatch(
         id=batch_id,
-        source_id=SourceId(int(source_id)),
+        source_id=SourceId(value=str(source_id)),
         suggestions=tuple(coding_suggestions),
     )
     ctx.suggestion_cache.coding_suggestions.add_batch(batch)
@@ -180,6 +186,12 @@ def handle_auto_suggest_codes(
     if source_id is None:
         return missing_param_error("AUTO_SUGGEST", "source_id")
 
+    # Validate source exists
+    if ctx.source_repo is not None:
+        source = ctx.source_repo.get_by_id(SourceId(value=str(source_id)))
+        if source is None:
+            return not_found_error("AUTO_SUGGEST", "Source", str(source_id))
+
     codes = ctx.code_repo.get_all() if ctx.code_repo else []
     batch_id = CodingSuggestionBatchId.new()
 
@@ -193,9 +205,9 @@ def handle_auto_suggest_codes(
             }
         ).to_dict()
 
-    source_text = ctx.get_source_text(int(source_id))
+    source_text = ctx.get_source_text(source_id)
     segments = (
-        ctx.segment_repo.get_by_source(SourceId(int(source_id)))
+        ctx.segment_repo.get_by_source(SourceId(value=str(source_id)))
         if ctx.segment_repo
         else []
     )
@@ -224,7 +236,7 @@ def handle_auto_suggest_codes(
         csug_id = CodingSuggestionId.new()
         csug = CodingSuggestion(
             id=csug_id,
-            source_id=SourceId(int(source_id)),
+            source_id=SourceId(value=str(source_id)),
             code_id=best_code.id,
             start_pos=uncoded["start_pos"],
             end_pos=uncoded["end_pos"],
@@ -246,7 +258,7 @@ def handle_auto_suggest_codes(
 
     batch = CodingSuggestionBatch(
         id=batch_id,
-        source_id=SourceId(int(source_id)),
+        source_id=SourceId(value=str(source_id)),
         suggestions=tuple(coding_suggestions),
     )
     ctx.suggestion_cache.coding_suggestions.add_batch(batch)
@@ -323,7 +335,7 @@ def handle_respond_to_code_suggestion(
     if ctx.segment_repo is None or ctx.code_repo is None:
         return no_context_error("RESPOND_SUGGESTION")
 
-    selected_ids = set(arguments.get("selected_code_ids", []))
+    selected_ids = {str(c) for c in arguments.get("selected_code_ids", [])}
     if selected_ids:
         eligible = [s for s in batch.suggestions if s.code_id.value in selected_ids]
     else:

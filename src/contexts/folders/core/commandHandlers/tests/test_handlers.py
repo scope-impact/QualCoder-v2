@@ -183,7 +183,7 @@ def event_bus() -> MockEventBus:
 def sample_folder() -> Folder:
     """Create a sample folder for testing."""
     return Folder(
-        id=FolderId(value=1),
+        id=FolderId(value="1"),
         name="Test Folder",
         parent_id=None,
         created_at=datetime.now(UTC),
@@ -194,7 +194,7 @@ def sample_folder() -> Folder:
 def sample_source() -> Source:
     """Create a sample source for testing."""
     return Source(
-        id=SourceId(value=100),
+        id=SourceId(value="100"),
         name="test_document.txt",
         source_type=SourceType.TEXT,
         status=SourceStatus.IMPORTED,
@@ -206,7 +206,7 @@ def sample_source() -> Source:
 def source_in_folder(sample_folder) -> Source:
     """Create a source that is in a folder."""
     return Source(
-        id=SourceId(value=101),
+        id=SourceId(value="101"),
         name="document_in_folder.txt",
         source_type=SourceType.TEXT,
         status=SourceStatus.IMPORTED,
@@ -273,7 +273,7 @@ class TestDeleteFolder:
         folder_repo = MockFolderRepository()
         source_repo = MockSourceRepository()
 
-        command = DeleteFolderCommand(folder_id=999)
+        command = DeleteFolderCommand(folder_id="999")
 
         result = delete_folder(
             command=command,
@@ -398,7 +398,7 @@ class TestGetFolder:
         source_repo = MockSourceRepository()
 
         result = get_folder(
-            folder_id=999,
+            folder_id="999",
             state=project_state,
             folder_repo=folder_repo,
             source_repo=source_repo,
@@ -413,7 +413,7 @@ class TestGetFolder:
         """Should return parent_id for nested folders."""
         parent_folder = sample_folder
         child_folder = Folder(
-            id=FolderId(value=2),
+            id=FolderId(value="2"),
             name="Child Folder",
             parent_id=parent_folder.id,
             created_at=datetime.now(UTC),
@@ -445,7 +445,7 @@ class TestListFolders:
     def test_returns_all_folders(self, project_state, sample_folder):
         """Should return list of all folders with total count."""
         folder2 = Folder(
-            id=FolderId(value=2),
+            id=FolderId(value="2"),
             name="Second Folder",
             parent_id=None,
             created_at=datetime.now(UTC),
@@ -628,7 +628,7 @@ class TestMoveSourceToFolder:
         source_repo = MockSourceRepository()
 
         command = MoveSourceToFolderCommand(
-            source_id=999,
+            source_id="999",
             folder_id=sample_folder.id.value,
         )
 
@@ -652,7 +652,7 @@ class TestMoveSourceToFolder:
 
         command = MoveSourceToFolderCommand(
             source_id=sample_source.id.value,
-            folder_id=999,
+            folder_id="999",
         )
 
         result = move_source_to_folder(
@@ -782,7 +782,7 @@ class TestRenameFolder:
         source_repo = MockSourceRepository()
 
         command = RenameFolderCommand(
-            folder_id=999,
+            folder_id="999",
             new_name="New Name",
         )
 
@@ -847,7 +847,7 @@ class TestRenameFolder:
     def test_fails_with_duplicate_name(self, project_state, sample_folder, event_bus):
         """Should fail with DUPLICATE_NAME error when name exists at same level."""
         other_folder = Folder(
-            id=FolderId(value=2),
+            id=FolderId(value="2"),
             name="Existing Folder",
             parent_id=None,
             created_at=datetime.now(UTC),
@@ -963,7 +963,7 @@ class TestEdgeCases:
         """Should count multiple sources in folder correctly."""
         sources = [
             Source(
-                id=SourceId(value=i),
+                id=SourceId(value=str(i)),
                 name=f"source_{i}.txt",
                 source_type=SourceType.TEXT,
                 status=SourceStatus.IMPORTED,

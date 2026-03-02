@@ -7,17 +7,22 @@ Returns OperationResult with error codes and suggestions.
 
 from __future__ import annotations
 
+import logging
 from typing import TYPE_CHECKING
 
 from src.contexts.projects.core.events import ProjectClosed
 from src.shared.common.operation_result import OperationResult
 from src.shared.infra.lifecycle import ProjectLifecycle
+from src.shared.infra.metrics import metered_command
 from src.shared.infra.state import ProjectState
 
 if TYPE_CHECKING:
     from src.shared.infra.event_bus import EventBus
 
+logger = logging.getLogger("qualcoder.projects.core")
 
+
+@metered_command("close_project")
 def close_project(
     lifecycle: ProjectLifecycle,
     state: ProjectState,
@@ -41,8 +46,10 @@ def close_project(
     Returns:
         OperationResult with None on success, or error details on failure
     """
+    logger.debug("close_project: current_project=%s", state.project)
     # Step 1: Validate
     if state.project is None:
+        logger.error("close_project: no project is currently open")
         return OperationResult.fail(
             error="No project is currently open",
             error_code="PROJECT_NOT_CLOSED/NO_PROJECT",
@@ -61,4 +68,5 @@ def close_project(
     event = ProjectClosed.create(path=path)
     event_bus.publish(event)
 
+    logger.info("close_project: closed project path=%s", path)
     return OperationResult.ok()

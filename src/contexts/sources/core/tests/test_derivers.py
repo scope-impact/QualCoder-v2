@@ -74,7 +74,7 @@ class TestDeriveAddSource:
     def test_add_source_duplicate_name(self) -> None:
         """Fail to add source when name already exists."""
         existing_source = Source(
-            id=SourceId(value=1),
+            id=SourceId(value="1"),
             name="interview.txt",
             source_type=SourceType.TEXT,
             status=SourceStatus.IMPORTED,
@@ -140,7 +140,7 @@ class TestDeriveAddSource:
 class TestDeriveRemoveSource:
     """Tests for derive_remove_source deriver."""
 
-    def _make_source(self, source_id: int, name: str, code_count: int = 0) -> Source:
+    def _make_source(self, source_id: str, name: str, code_count: int = 0) -> Source:
         """Create a source for testing."""
         return Source(
             id=SourceId(value=source_id),
@@ -155,17 +155,17 @@ class TestDeriveRemoveSource:
 
     def test_remove_source_success(self) -> None:
         """Successfully remove an existing source."""
-        source = self._make_source(1, "interview.txt", code_count=5)
+        source = self._make_source("1", "interview.txt", code_count=5)
         state = ProjectState(
             path_exists=lambda _: True,
             existing_sources=(source,),
         )
         result = derive_remove_source(
-            source_id=SourceId(value=1),
+            source_id=SourceId(value="1"),
             state=state,
         )
         assert isinstance(result, SourceRemoved)
-        assert result.source_id == SourceId(value=1)
+        assert result.source_id == SourceId(value="1")
         assert result.name == "interview.txt"
         assert result.segments_removed == 5
 
@@ -176,12 +176,12 @@ class TestDeriveRemoveSource:
             existing_sources=(),
         )
         result = derive_remove_source(
-            source_id=SourceId(value=999),
+            source_id=SourceId(value="999"),
             state=state,
         )
         assert isinstance(result, SourceNotRemoved)
         assert result.reason == "NOT_FOUND"
-        assert result.source_id == SourceId(value=999)
+        assert result.source_id == SourceId(value="999")
 
 
 class TestDeriveOpenSource:
@@ -204,17 +204,17 @@ class TestDeriveOpenSource:
 
     def test_open_source_success(self) -> None:
         """Successfully open an existing source."""
-        source = self._make_source(1, "interview.txt", SourceType.TEXT)
+        source = self._make_source("1", "interview.txt", SourceType.TEXT)
         state = ProjectState(
             path_exists=lambda _: True,
             existing_sources=(source,),
         )
         result = derive_open_source(
-            source_id=SourceId(value=1),
+            source_id=SourceId(value="1"),
             state=state,
         )
         assert isinstance(result, SourceOpened)
-        assert result.source_id == SourceId(value=1)
+        assert result.source_id == SourceId(value="1")
         assert result.name == "interview.txt"
         assert result.source_type == SourceType.TEXT
 
@@ -225,18 +225,18 @@ class TestDeriveOpenSource:
             existing_sources=(),
         )
         result = derive_open_source(
-            source_id=SourceId(value=999),
+            source_id=SourceId(value="999"),
             state=state,
         )
         assert isinstance(result, SourceNotOpened)
         assert result.reason == "NOT_FOUND"
-        assert result.source_id == SourceId(value=999)
+        assert result.source_id == SourceId(value="999")
 
 
 class TestDeriveUpdateSource:
     """Tests for derive_update_source deriver."""
 
-    def _make_source(self, source_id: int, name: str) -> Source:
+    def _make_source(self, source_id: str, name: str) -> Source:
         """Create a source for testing."""
         return Source(
             id=SourceId(value=source_id),
@@ -251,39 +251,39 @@ class TestDeriveUpdateSource:
 
     def test_update_source_memo(self) -> None:
         """Successfully update source memo."""
-        source = self._make_source(1, "interview.txt")
+        source = self._make_source("1", "interview.txt")
         state = ProjectState(
             path_exists=lambda _: True,
             existing_sources=(source,),
         )
         result = derive_update_source(
-            source_id=SourceId(value=1),
+            source_id=SourceId(value="1"),
             memo="New memo",
             origin=None,
             status=None,
             state=state,
         )
         assert isinstance(result, SourceUpdated)
-        assert result.source_id == SourceId(value=1)
+        assert result.source_id == SourceId(value="1")
         assert result.memo == "New memo"
         assert result.origin is None  # Not updated
 
     def test_update_source_status(self) -> None:
         """Successfully update source status."""
-        source = self._make_source(1, "interview.txt")
+        source = self._make_source("1", "interview.txt")
         state = ProjectState(
             path_exists=lambda _: True,
             existing_sources=(source,),
         )
         result = derive_update_source(
-            source_id=SourceId(value=1),
+            source_id=SourceId(value="1"),
             memo=None,
             origin=None,
             status="coded",
             state=state,
         )
         assert isinstance(result, SourceUpdated)
-        assert result.source_id == SourceId(value=1)
+        assert result.source_id == SourceId(value="1")
         assert result.status == "coded"
 
     def test_update_source_not_found(self) -> None:
@@ -293,7 +293,7 @@ class TestDeriveUpdateSource:
             existing_sources=(),
         )
         result = derive_update_source(
-            source_id=SourceId(value=999),
+            source_id=SourceId(value="999"),
             memo="New memo",
             origin=None,
             status=None,
@@ -301,17 +301,17 @@ class TestDeriveUpdateSource:
         )
         assert isinstance(result, SourceNotUpdated)
         assert result.reason == "NOT_FOUND"
-        assert result.source_id == SourceId(value=999)
+        assert result.source_id == SourceId(value="999")
 
     def test_update_source_invalid_status(self) -> None:
         """Fail to update source with invalid status."""
-        source = self._make_source(1, "interview.txt")
+        source = self._make_source("1", "interview.txt")
         state = ProjectState(
             path_exists=lambda _: True,
             existing_sources=(source,),
         )
         result = derive_update_source(
-            source_id=SourceId(value=1),
+            source_id=SourceId(value="1"),
             memo=None,
             origin=None,
             status="invalid_status",

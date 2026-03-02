@@ -21,14 +21,14 @@ class CreateCodeCommand:
     name: str
     color: str  # hex color
     memo: str | None = None
-    category_id: int | None = None
+    category_id: str | None = None
 
 
 @dataclass(frozen=True)
 class RenameCodeCommand:
     """Command to rename an existing code."""
 
-    code_id: int
+    code_id: str
     new_name: str
 
 
@@ -36,7 +36,7 @@ class RenameCodeCommand:
 class ChangeCodeColorCommand:
     """Command to change a code's color."""
 
-    code_id: int
+    code_id: str
     new_color: str  # hex color
 
 
@@ -44,7 +44,7 @@ class ChangeCodeColorCommand:
 class DeleteCodeCommand:
     """Command to delete a code."""
 
-    code_id: int
+    code_id: str
     delete_segments: bool = (
         False  # If true, delete segments; if false, fail if segments exist
     )
@@ -54,7 +54,7 @@ class DeleteCodeCommand:
 class UpdateCodeMemoCommand:
     """Command to update a code's memo."""
 
-    code_id: int
+    code_id: str
     new_memo: str | None
 
 
@@ -62,16 +62,16 @@ class UpdateCodeMemoCommand:
 class MoveCodeToCategoryCommand:
     """Command to move a code to a different category."""
 
-    code_id: int
-    category_id: int | None  # None = uncategorized
+    code_id: str
+    category_id: str | None  # None = uncategorized
 
 
 @dataclass(frozen=True)
 class MergeCodesCommand:
     """Command to merge one code into another."""
 
-    source_code_id: int
-    target_code_id: int
+    source_code_id: str
+    target_code_id: str
 
 
 # ============================================================
@@ -83,8 +83,8 @@ class MergeCodesCommand:
 class ApplyCodeCommand:
     """Command to apply a code to a segment of text."""
 
-    code_id: int
-    source_id: int
+    code_id: str
+    source_id: str
     start_position: int
     end_position: int
     memo: str | None = None
@@ -95,7 +95,7 @@ class ApplyCodeCommand:
 class RemoveCodeCommand:
     """Command to remove a code from a segment."""
 
-    segment_id: int
+    segment_id: str
 
 
 @dataclass(frozen=True)
@@ -122,7 +122,7 @@ class CreateCategoryCommand:
     """Command to create a new category."""
 
     name: str
-    parent_id: int | None = None
+    parent_id: str | None = None
     memo: str | None = None
 
 
@@ -130,5 +130,5 @@ class CreateCategoryCommand:
 class DeleteCategoryCommand:
     """Command to delete a category."""
 
-    category_id: int
+    category_id: str
     orphan_strategy: str = "move_to_parent"  # "move_to_parent" | "delete_codes"

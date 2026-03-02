@@ -50,16 +50,16 @@ test: ## Run all project-related tests (domain, application, infrastructure, vie
 		-v
 
 test-unit: ## Run unit tests only (fast, no Qt required)
-	uv run pytest -m unit -v -p no:pytest-qt
+	uv run pytest -m unit -p no:pytest-qt
 
-test-all: ## Run entire test suite
-	uv run pytest -v
+test-all: ## Run entire test suite (~1 min, parallel via pyproject.toml)
+	uv run pytest
 
 test-coverage: ## Run tests with coverage report
-	uv run pytest --cov=src --cov-report=term-missing -v
+	uv run pytest --cov=src --cov-report=term-missing
 
 test-allure: ## Run tests with Allure results
-	uv run pytest -v --alluredir=allure-results
+	uv run pytest --alluredir=allure-results
 
 allure-serve: ## Serve Allure report locally (requires allure CLI)
 	allure serve allure-results

@@ -103,6 +103,15 @@ class ColorPalette:
     overlay_light: str = "rgba(255, 255, 255, 0.8)"
     overlay_dark: str = "rgba(0, 0, 0, 0.5)"
 
+    # Diff viewer colors (git-cola inspired)
+    # Light theme uses soft pastels, dark theme uses GitHub-style colors
+    diff_add_bg: str = "#d2ffe4"  # Light green background for additions
+    diff_add_fg: str = "#1a7f37"  # Dark green text for additions
+    diff_remove_bg: str = "#fee0e4"  # Light red background for deletions
+    diff_remove_fg: str = "#b35900"  # Dark red text for deletions
+    diff_header_fg: str = "#0550ae"  # Blue for diff headers (diff --git, +++, ---)
+    diff_hunk_fg: str = "#6639ba"  # Purple for @@ hunk markers
+
     # Utility colors (for consistent usage outside design system)
     fallback_code_color: str = "#888888"  # Default when code color is missing
     text_on_dark: str = "#FFFFFF"  # White text on dark backgrounds
@@ -307,6 +316,13 @@ COLORS_DARK = ColorPalette(
     input="#262322",
     ring="#6B8CAE",
     ring_glow="rgba(107, 140, 174, 0.3)",
+    # Diff colors - GitHub dark theme style
+    diff_add_bg="#1a472a",  # Dark green background
+    diff_add_fg="#7ee787",  # Light green text
+    diff_remove_bg="#5c2d2d",  # Dark red background
+    diff_remove_fg="#ff7b72",  # Light red text
+    diff_header_fg="#79c0ff",  # Light blue for headers
+    diff_hunk_fg="#a371f7",  # Light purple for @@ markers
 )
 
 # Default to light theme

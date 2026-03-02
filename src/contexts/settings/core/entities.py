@@ -114,6 +114,74 @@ class AVCodingConfig:
         return replace(self, speaker_format=speaker_format)
 
 
+@dataclass(frozen=True)
+class ObservabilityConfig:
+    """
+    Observability configuration value object.
+
+    Controls logging levels, file logging, and telemetry settings.
+    """
+
+    log_level: str = "INFO"  # DEBUG, INFO, WARNING, ERROR
+    enable_file_logging: bool = False
+    enable_telemetry: bool = True
+
+    def with_log_level(self, level: str) -> ObservabilityConfig:
+        """Return new ObservabilityConfig with updated log level."""
+        return replace(self, log_level=level)
+
+    def with_file_logging(self, enabled: bool) -> ObservabilityConfig:
+        """Return new ObservabilityConfig with updated file logging state."""
+        return replace(self, enable_file_logging=enabled)
+
+    def with_telemetry(self, enabled: bool) -> ObservabilityConfig:
+        """Return new ObservabilityConfig with updated telemetry state."""
+        return replace(self, enable_telemetry=enabled)
+
+
+@dataclass(frozen=True)
+class BackendConfig:
+    """
+    Database backend configuration value object.
+
+    SQLite is always the primary database. Convex cloud sync is optional.
+    When cloud_sync_enabled is True, changes are synced to Convex in real-time.
+    """
+
+    cloud_sync_enabled: bool = False  # Enable Convex cloud sync
+    convex_url: str | None = None  # Convex deployment URL
+    convex_project_id: str | None = None  # Convex project ID for the current project
+
+    @property
+    def uses_convex(self) -> bool:
+        """Check if Convex cloud sync is enabled."""
+        return self.cloud_sync_enabled and self.convex_url is not None
+
+    def with_cloud_sync_enabled(self, enabled: bool) -> BackendConfig:
+        """Return new BackendConfig with updated cloud sync state."""
+        return BackendConfig(
+            cloud_sync_enabled=enabled,
+            convex_url=self.convex_url,
+            convex_project_id=self.convex_project_id,
+        )
+
+    def with_convex_url(self, convex_url: str | None) -> BackendConfig:
+        """Return new BackendConfig with updated Convex URL."""
+        return BackendConfig(
+            cloud_sync_enabled=self.cloud_sync_enabled,
+            convex_url=convex_url,
+            convex_project_id=self.convex_project_id,
+        )
+
+    def with_convex_project_id(self, project_id: str | None) -> BackendConfig:
+        """Return new BackendConfig with updated Convex project ID."""
+        return BackendConfig(
+            cloud_sync_enabled=self.cloud_sync_enabled,
+            convex_url=self.convex_url,
+            convex_project_id=project_id,
+        )
+
+
 # =============================================================================
 # Aggregate Root
 # =============================================================================
@@ -132,6 +200,8 @@ class UserSettings:
     language: LanguagePreference = field(default_factory=LanguagePreference)
     backup: BackupConfig = field(default_factory=BackupConfig)
     av_coding: AVCodingConfig = field(default_factory=AVCodingConfig)
+    backend: BackendConfig = field(default_factory=BackendConfig)
+    observability: ObservabilityConfig = field(default_factory=ObservabilityConfig)
 
     @classmethod
     def default(cls) -> UserSettings:
@@ -157,3 +227,11 @@ class UserSettings:
     def with_av_coding(self, av_coding: AVCodingConfig) -> UserSettings:
         """Return new UserSettings with updated AV coding config."""
         return replace(self, av_coding=av_coding)
+
+    def with_backend(self, backend: BackendConfig) -> UserSettings:
+        """Return new UserSettings with updated backend config."""
+        return replace(self, backend=backend)
+
+    def with_observability(self, observability: ObservabilityConfig) -> UserSettings:
+        """Return new UserSettings with updated observability config."""
+        return replace(self, observability=observability)

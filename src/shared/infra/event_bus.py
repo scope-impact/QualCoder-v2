@@ -25,6 +25,8 @@ Usage:
 from __future__ import annotations
 
 import contextlib
+import logging
+import time
 import warnings
 from collections.abc import Callable
 from dataclasses import dataclass
@@ -35,6 +37,8 @@ from typing import (
     TypeVar,
 )
 from weakref import ReferenceType, ref
+
+logger = logging.getLogger("qualcoder.shared.event_bus")
 
 E = TypeVar("E")
 Handler = Callable[[Any], None]
@@ -144,6 +148,11 @@ class EventBus:
             if handler not in self._handlers[event_type]:
                 self._handlers[event_type].append(handler)
 
+        logger.debug(
+            "Subscribed to %s (%s)",
+            event_type,
+            handler.__qualname__ if hasattr(handler, "__qualname__") else handler,
+        )
         return Subscription(
             _event_bus=ref(self),
             _event_type=event_type,
@@ -217,6 +226,12 @@ class EventBus:
         Args:
             event: The domain event to publish
         """
+        from src.shared.infra.metrics import (
+            event_handler_duration,
+            event_handler_errors,
+            events_published,
+        )
+
         event_type = self._get_event_type(event)
 
         with self._lock:
@@ -225,16 +240,22 @@ class EventBus:
             all_handlers = list(self._all_handlers)
 
         handler_count = len(type_handlers) + len(all_handlers)
+        logger.debug("Publishing %s (handlers=%d)", event_type, handler_count)
+        events_published.add(1, {"event_type": event_type})
 
         # Record in history if enabled
         if self._history_size > 0:
             self._record_event(event, event_type, handler_count)
+
+        start = time.perf_counter()
 
         # Invoke type-specific handlers
         for handler in type_handlers:
             try:
                 handler(event)
             except Exception as e:
+                event_handler_errors.add(1, {"event_type": event_type})
+                logger.error("Handler error for %s: %s", event_type, e, exc_info=True)
                 warnings.warn(
                     f"Handler error for {event_type}: {e}",
                     RuntimeWarning,
@@ -246,14 +267,22 @@ class EventBus:
             try:
                 handler(event)
             except Exception as e:
+                event_handler_errors.add(1, {"event_type": event_type})
+                logger.error(
+                    "All-handler error for %s: %s", event_type, e, exc_info=True
+                )
                 warnings.warn(
                     f"All-handler error for {event_type}: {e}",
                     RuntimeWarning,
                     stacklevel=2,
                 )
 
+        elapsed_ms = (time.perf_counter() - start) * 1000
+        event_handler_duration.record(elapsed_ms, {"event_type": event_type})
+
     def clear(self) -> None:
         """Remove all subscriptions."""
+        logger.debug("Clearing all subscriptions")
         with self._lock:
             self._handlers.clear()
             self._all_handlers.clear()

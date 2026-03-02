@@ -21,6 +21,15 @@ from sqlalchemy import create_engine
 from src.contexts.projects.infra.schema import create_all_contexts, drop_all_contexts
 from src.shared.infra.event_bus import EventBus
 
+
+def pytest_configure(config):
+    """Disable allure plugin when not generating a report (avoids memory overhead)."""
+    if not getattr(config.option, "allure_report_dir", None):
+        plugin = config.pluginmanager.get_plugin("allure_pytest")
+        if plugin:
+            config.pluginmanager.unregister(plugin)
+
+
 # =============================================================================
 # Pytest Hooks for Allure Screenshots
 # =============================================================================
@@ -52,11 +61,10 @@ def _capture_all_visible_widgets() -> list[bytes]:
 
 @pytest.hookimpl(tryfirst=True, hookwrapper=True)
 def pytest_runtest_makereport(item, call):
-    """Capture screenshot for all E2E tests in Allure report."""
+    """Capture screenshot after every E2E test call for Allure reports."""
     outcome = yield
     report = outcome.get_result()
 
-    # Only capture after test execution (not setup/teardown)
     if report.when == "call":
         screenshots = _capture_all_visible_widgets()
         for name, data in screenshots:
@@ -290,12 +298,14 @@ def wired_app(qapp, colors, tmp_path):
     from src.main import QualCoderApp
     from src.shared.infra.app_context import create_app_context
     from src.shared.infra.signal_bridge.projects import ProjectSignalBridge
+    from src.shared.infra.signal_bridge.sync import SyncSignalBridge
     from src.shared.presentation.services import DialogService
 
     # Clear singletons for test isolation
     CodingSignalBridge.clear_instance()
     CasesSignalBridge.clear_instance()
     ProjectSignalBridge.clear_instance()
+    SyncSignalBridge.clear_instance()
 
     # Create app instance without calling __init__ (to avoid QApplication conflict)
     # Then set up attributes the same way __init__ does
@@ -310,6 +320,8 @@ def wired_app(qapp, colors, tmp_path):
     app._project_signal_bridge.start()
     app._coding_signal_bridge = CodingSignalBridge.instance(app._ctx.event_bus)
     app._coding_signal_bridge.start()
+    app._sync_signal_bridge = SyncSignalBridge.instance(app._ctx.event_bus)
+    app._sync_signal_bridge.start()
     app._shell = None
     app._screens = {}
     app._current_project_path = None
@@ -350,6 +362,7 @@ def wired_app(qapp, colors, tmp_path):
     CodingSignalBridge.clear_instance()
     CasesSignalBridge.clear_instance()
     ProjectSignalBridge.clear_instance()
+    SyncSignalBridge.clear_instance()
 
 
 @pytest.fixture
@@ -373,13 +386,13 @@ def seeded_app(wired_app):
 
     # Seed sources
     source1 = Source(
-        id=SourceId(value=1),
+        id=SourceId.new(),
         name="interview_01.txt",
         fulltext="This is a positive experience. The learning was great. I enjoyed the process.",
         source_type=SourceType.TEXT,
     )
     source2 = Source(
-        id=SourceId(value=2),
+        id=SourceId.new(),
         name="interview_02.txt",
         fulltext="This was challenging. I struggled with some topics. But I persevered.",
         source_type=SourceType.TEXT,
@@ -388,9 +401,9 @@ def seeded_app(wired_app):
     ctx.sources_context.source_repo.save(source2)
 
     # Seed codes
-    code1 = Code(id=CodeId(value=1), name="Positive", color=Color.from_hex("#00FF00"))
-    code2 = Code(id=CodeId(value=2), name="Challenge", color=Color.from_hex("#FF0000"))
-    code3 = Code(id=CodeId(value=3), name="Learning", color=Color.from_hex("#0000FF"))
+    code1 = Code(id=CodeId.new(), name="Positive", color=Color.from_hex("#00FF00"))
+    code2 = Code(id=CodeId.new(), name="Challenge", color=Color.from_hex("#FF0000"))
+    code3 = Code(id=CodeId.new(), name="Learning", color=Color.from_hex("#0000FF"))
     ctx.coding_context.code_repo.save(code1)
     ctx.coding_context.code_repo.save(code2)
     ctx.coding_context.code_repo.save(code3)

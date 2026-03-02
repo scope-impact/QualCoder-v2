@@ -7,6 +7,7 @@ Returns OperationResult with error codes, suggestions, and rollback support.
 
 from __future__ import annotations
 
+import logging
 from typing import TYPE_CHECKING
 
 from src.contexts.coding.core.commandHandlers._state import (
@@ -22,11 +23,15 @@ from src.contexts.coding.core.events import CodeCreated
 from src.shared.common.failure_events import FailureEvent
 from src.shared.common.operation_result import OperationResult
 from src.shared.common.types import CategoryId
+from src.shared.infra.metrics import metered_command
 
 if TYPE_CHECKING:
     from src.shared.infra.event_bus import EventBus
 
+logger = logging.getLogger("qualcoder.coding.core")
 
+
+@metered_command("create_code")
 def create_code(
     command: CreateCodeCommand,
     code_repo: CodeRepository,
@@ -47,10 +52,13 @@ def create_code(
     Returns:
         OperationResult with Code on success, or error details on failure
     """
+    logger.debug("create_code: name=%s, color=%s", command.name, command.color)
+
     # Parse color
     try:
         color = Color.from_hex(command.color)
     except ValueError as e:
+        logger.error("create_code failed: invalid color %s", command.color)
         return OperationResult.fail(
             error=str(e),
             error_code="CODE_NOT_CREATED/INVALID_COLOR",
@@ -75,6 +83,7 @@ def create_code(
 
     # Handle failure events
     if isinstance(result, FailureEvent):
+        logger.error("create_code failed: %s", result.event_type)
         event_bus.publish(result)
         return OperationResult.from_failure(result)
 
@@ -93,6 +102,8 @@ def create_code(
 
     # Publish event
     event_bus.publish(event)
+
+    logger.info("Code created: id=%s, name=%s", code.id.value, code.name)
 
     return OperationResult.ok(
         data=code,

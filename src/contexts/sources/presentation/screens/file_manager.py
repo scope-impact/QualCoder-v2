@@ -39,6 +39,7 @@ Structure:
 
 from __future__ import annotations
 
+import logging
 from typing import TYPE_CHECKING
 
 from PySide6.QtCore import Signal
@@ -48,6 +49,8 @@ from design_system import ColorPalette, get_colors
 from src.shared.presentation.dto import ProjectSummaryDTO, SourceDTO
 
 from ..pages import FileManagerPage
+
+logger = logging.getLogger("qualcoder.sources.presentation")
 
 if TYPE_CHECKING:
     from ..viewmodels import FileManagerViewModel
@@ -175,6 +178,7 @@ class FileManagerScreen(QWidget):
         """
         # Disconnect previous viewmodel signals if any
         if self._viewmodel is not None:
+            self._viewmodel.teardown()
             self._disconnect_viewmodel_signals()
 
         self._viewmodel = viewmodel
@@ -263,7 +267,7 @@ class FileManagerScreen(QWidget):
     def _on_create_text_clicked(self):
         """Handle create new text button click."""
         # For now, just print - would show a dialog in full implementation
-        print("FileManagerScreen: Create new text document")
+        logger.debug("FileManagerScreen: Create new text document")
         # TODO: Show dialog to create new text document
 
     def _on_export_clicked(self):
@@ -286,7 +290,7 @@ class FileManagerScreen(QWidget):
         """Handle single click on a source."""
         # Update selection in viewmodel
         if self._viewmodel:
-            self._viewmodel.toggle_source_selection(int(source_id))
+            self._viewmodel.toggle_source_selection(source_id)
 
     def _on_source_double_clicked(self, source_id: str):
         """Handle double-click on a source - open for coding."""
@@ -295,7 +299,7 @@ class FileManagerScreen(QWidget):
     def _on_selection_changed(self, selected_ids: list[str]):
         """Handle selection change in table."""
         if self._viewmodel:
-            self._viewmodel.select_sources([int(id) for id in selected_ids])
+            self._viewmodel.select_sources(selected_ids)
 
     # =========================================================================
     # Bulk Action Handlers
@@ -325,7 +329,7 @@ class FileManagerScreen(QWidget):
 
         # Delete via viewmodel
         if self._viewmodel:
-            if self._viewmodel.remove_sources([int(id) for id in source_ids]):
+            if self._viewmodel.remove_sources(source_ids):
                 self.sources_deleted.emit(source_ids)
                 self._load_data()  # Refresh display
             else:
@@ -348,7 +352,7 @@ class FileManagerScreen(QWidget):
 
         # Get source info from viewmodel
         if self._viewmodel:
-            source = self._viewmodel.get_source(int(source_id))
+            source = self._viewmodel.get_source(source_id)
             if source:
                 metadata = SourceMetadata(
                     id=source.id,
@@ -370,7 +374,7 @@ class FileManagerScreen(QWidget):
         """Save updated source metadata."""
         if self._viewmodel:
             self._viewmodel.update_source(
-                int(source_id),
+                source_id,
                 memo=metadata.memo,
                 origin=metadata.origin,
             )
@@ -432,10 +436,8 @@ class FileManagerScreen(QWidget):
             "Folder name:",
         )
 
-        if ok and name:
-            parent_id_int = int(parent_id) if parent_id else None
-            if self._viewmodel.create_folder(name, parent_id_int):
-                self._load_folders()
+        if ok and name and self._viewmodel.create_folder(name, parent_id or None):
+            self._load_folders()
 
     def _on_rename_folder(self, folder_id: str):
         """Handle rename folder request."""
@@ -450,7 +452,7 @@ class FileManagerScreen(QWidget):
             "New folder name:",
         )
 
-        if ok and new_name and self._viewmodel.rename_folder(int(folder_id), new_name):
+        if ok and new_name and self._viewmodel.rename_folder(folder_id, new_name):
             self._load_folders()
 
     def _on_delete_folder(self, folder_id: str):
@@ -467,7 +469,7 @@ class FileManagerScreen(QWidget):
         )
 
         if reply == QMessageBox.StandardButton.Yes:
-            if self._viewmodel.delete_folder(int(folder_id)):
+            if self._viewmodel.delete_folder(folder_id):
                 self._load_folders()
             else:
                 QMessageBox.warning(
@@ -476,15 +478,15 @@ class FileManagerScreen(QWidget):
                     "Could not delete folder. Make sure it is empty.",
                 )
 
-    def _on_move_sources_to_folder(self, source_ids: list[int], folder_id):
+    def _on_move_sources_to_folder(self, source_ids: list[str], folder_id):
         """Handle moving sources to a folder."""
         if not self._viewmodel:
             return
 
-        folder_id_int = int(folder_id) if folder_id is not None else None
+        folder_id_str = str(folder_id) if folder_id is not None else None
         success = True
         for source_id in source_ids:
-            if not self._viewmodel.move_source_to_folder(source_id, folder_id_int):
+            if not self._viewmodel.move_source_to_folder(source_id, folder_id_str):
                 success = False
 
         if success:
@@ -508,7 +510,7 @@ class FileManagerScreen(QWidget):
 
     def _open_source(self, source_id: str):
         """Open a source for coding."""
-        if self._viewmodel and self._viewmodel.open_source(int(source_id)):
+        if self._viewmodel and self._viewmodel.open_source(source_id):
             self.source_opened.emit(source_id)
             self.navigate_to_coding.emit(source_id)
 
@@ -528,7 +530,9 @@ class FileManagerScreen(QWidget):
             return
 
         # Export logic would go here
-        print(f"FileManagerScreen: Exporting {len(source_ids)} files to {export_dir}")
+        logger.debug(
+            "FileManagerScreen: Exporting %d files to %s", len(source_ids), export_dir
+        )
         # TODO: Implement actual export via viewmodel/controller
 
         QMessageBox.information(

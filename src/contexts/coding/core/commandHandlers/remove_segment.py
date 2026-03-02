@@ -7,6 +7,7 @@ Returns OperationResult with error codes and suggestions.
 
 from __future__ import annotations
 
+import logging
 from typing import TYPE_CHECKING
 
 from src.contexts.coding.core.commandHandlers._state import (
@@ -21,11 +22,15 @@ from src.contexts.coding.core.events import SegmentUncoded
 from src.shared.common.failure_events import FailureEvent
 from src.shared.common.operation_result import OperationResult
 from src.shared.common.types import SegmentId
+from src.shared.infra.metrics import metered_command
 
 if TYPE_CHECKING:
     from src.shared.infra.event_bus import EventBus
 
+logger = logging.getLogger("qualcoder.coding.core")
 
+
+@metered_command("remove_segment")
 def remove_segment(
     command: RemoveCodeCommand,
     code_repo: CodeRepository,
@@ -46,6 +51,8 @@ def remove_segment(
     Returns:
         OperationResult with SegmentUncoded event on success, or error details on failure
     """
+    logger.debug("remove_segment: segment_id=%s", command.segment_id)
+
     segment_id = SegmentId(value=command.segment_id)
     state = build_coding_state(code_repo, category_repo, segment_repo)
 
@@ -56,6 +63,7 @@ def remove_segment(
 
     # Handle failure events
     if isinstance(result, FailureEvent):
+        logger.error("remove_segment failed: %s", result.event_type)
         event_bus.publish(result)
         return OperationResult.from_failure(result)
 
@@ -65,6 +73,8 @@ def remove_segment(
     segment_repo.delete(segment_id)
 
     event_bus.publish(event)
+
+    logger.info("Segment removed: segment_id=%s", command.segment_id)
 
     # No rollback for remove - would need to recreate segment with all data
     return OperationResult.ok(data=event)

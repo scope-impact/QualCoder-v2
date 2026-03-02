@@ -23,6 +23,30 @@ from .base import (
 )
 
 
+def _validate_source_exists(
+    ctx: HandlerContext, source_id: Any, error_prefix: str
+) -> dict[str, Any] | None:
+    """Validate source exists. Returns error dict if not found, None if OK."""
+    if ctx.source_repo is not None:
+        source = ctx.source_repo.get_by_id(SourceId(value=str(source_id)))
+        if source is None:
+            return not_found_error(error_prefix, "Source", str(source_id))
+    return None
+
+
+def _validate_code_exists(
+    ctx: HandlerContext, code_id: Any, error_prefix: str
+) -> dict[str, Any] | None:
+    """Validate code exists. Returns error dict if not found, None if OK."""
+    if ctx.code_repo is not None:
+        from src.contexts.coding.core.commandHandlers import get_code
+
+        code = get_code(ctx.code_repo, str(code_id))
+        if code is None:
+            return not_found_error(error_prefix, "Code", str(code_id))
+    return None
+
+
 def handle_suggest_code_application(
     ctx: HandlerContext,
     arguments: dict[str, Any],
@@ -36,6 +60,12 @@ def handle_suggest_code_application(
     if source_id is None or code_id is None or start_pos is None or end_pos is None:
         return missing_params_error("SUGGEST_APPLICATION")
 
+    # Validate entities exist before creating suggestion
+    if err := _validate_source_exists(ctx, source_id, "SUGGEST_APPLICATION"):
+        return err
+    if err := _validate_code_exists(ctx, code_id, "SUGGEST_APPLICATION"):
+        return err
+
     rationale = arguments.get("rationale", "")
     confidence = min(100, max(0, arguments.get("confidence", 70))) / 100.0
     include_text = arguments.get("include_text", False)
@@ -43,8 +73,8 @@ def handle_suggest_code_application(
     suggestion_id = CodingSuggestionId.new()
     suggestion = CodingSuggestion(
         id=suggestion_id,
-        source_id=SourceId(int(source_id)),
-        code_id=CodeId(int(code_id)),
+        source_id=SourceId(value=str(source_id)),
+        code_id=CodeId(value=str(code_id)),
         start_pos=int(start_pos),
         end_pos=int(end_pos),
         rationale=rationale,
@@ -66,7 +96,7 @@ def handle_suggest_code_application(
     }
 
     if include_text:
-        source_text = ctx.get_source_text(int(source_id))
+        source_text = ctx.get_source_text(source_id)
         data["text_excerpt"] = source_text[int(start_pos) : int(end_pos)]
 
     return OperationResult.ok(data=data).to_dict()
@@ -81,7 +111,7 @@ def handle_list_pending_coding_suggestions(
 
     if source_id:
         suggestions = ctx.suggestion_cache.coding_suggestions.get_by_source(
-            SourceId(int(source_id))
+            SourceId(value=str(source_id))
         )
     else:
         suggestions = ctx.suggestion_cache.coding_suggestions.get_all_pending()
@@ -124,6 +154,12 @@ def handle_approve_coding_suggestion(
     )
     if suggestion is None:
         return not_found_error("APPROVE_CODING", "Suggestion", suggestion_id)
+
+    if suggestion.status != "pending":
+        return OperationResult.fail(
+            error=f"Suggestion already {suggestion.status}",
+            error_code="APPROVE_CODING/ALREADY_PROCESSED",
+        ).to_dict()
 
     if ctx.segment_repo is None or ctx.code_repo is None:
         return no_context_error("APPROVE_CODING")
