@@ -1,0 +1,1 @@
+ERROR    qualcoder.coding.core:batch_apply_codes.py:151 batch_apply_codes failed: all 1 operations failed

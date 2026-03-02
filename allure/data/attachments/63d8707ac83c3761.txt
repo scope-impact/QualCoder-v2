@@ -1,0 +1,1 @@
+ERROR    qualcoder.coding.core:apply_code.py:97 apply_code failed: SEGMENT_NOT_CODED/CODE_NOT_FOUND

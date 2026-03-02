@@ -1,0 +1,1 @@
+ERROR    qualcoder.folders.core:delete_folder.py:73 delete_folder: failed — NOT_EMPTY

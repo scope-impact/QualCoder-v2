@@ -1,0 +1,1 @@
+ERROR    qualcoder.sources.core:add_text_source.py:82 add_text_source: source content is empty
