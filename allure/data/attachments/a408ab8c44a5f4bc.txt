@@ -1,0 +1,4 @@
+INFO     qualcoder.mcp:mcp_server.py:215 Server starting on port 19966 (debug=False)
+INFO     qualcoder.mcp:mcp_server.py:320 Server ready at http://localhost:19966
+INFO     qualcoder.mcp:mcp_server.py:222 Server stopping...
+INFO     qualcoder.mcp:mcp_server.py:229 Server stopped

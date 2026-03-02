@@ -1,0 +1,1 @@
+ERROR    qualcoder.folders.core:rename_folder.py:79 rename_folder: failed — NOT_FOUND

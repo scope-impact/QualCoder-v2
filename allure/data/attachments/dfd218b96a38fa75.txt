@@ -1,0 +1,1 @@
+ERROR    qualcoder.coding.core:delete_category.py:67 delete_category failed: CATEGORY_NOT_DELETED/NOT_FOUND

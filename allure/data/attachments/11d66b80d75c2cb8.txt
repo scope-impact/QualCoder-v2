@@ -1,0 +1,1 @@
+ERROR    qualcoder.shared.lifecycle:lifecycle.py:78 Database file not found: /nonexistent/path/to/database.qda
