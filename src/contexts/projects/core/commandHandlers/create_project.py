@@ -80,7 +80,11 @@ def create_project(
     )
 
     if isinstance(result, Failure):
-        logger.error("create_project: deriver failed for name=%s, error=%s", command.name, result.failure())
+        logger.error(
+            "create_project: deriver failed for name=%s, error=%s",
+            command.name,
+            result.failure(),
+        )
         return OperationResult.fail(
             error=result.failure(),
             error_code="PROJECT_NOT_CREATED/DERIVER_FAILED",
@@ -91,7 +95,11 @@ def create_project(
     # Step 3: Create database file
     create_result = lifecycle.create_database(path, command.name.strip())
     if isinstance(create_result, Failure):
-        logger.error("create_project: DB creation failed for path=%s, error=%s", path, create_result.failure())
+        logger.error(
+            "create_project: DB creation failed for path=%s, error=%s",
+            path,
+            create_result.failure(),
+        )
         return OperationResult.fail(
             error=create_result.failure(),
             error_code="PROJECT_NOT_CREATED/DB_CREATION_FAILED",
@@ -107,5 +115,7 @@ def create_project(
     # Step 5: Publish event
     event_bus.publish(event)
 
-    logger.info("create_project: created project name=%s, path=%s", command.name.strip(), path)
+    logger.info(
+        "create_project: created project name=%s, path=%s", command.name.strip(), path
+    )
     return OperationResult.ok(data=project)

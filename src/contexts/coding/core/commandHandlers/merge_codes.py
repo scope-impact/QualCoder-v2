@@ -51,7 +51,11 @@ def merge_codes(
     Returns:
         OperationResult with CodesMerged event on success, or error details on failure
     """
-    logger.debug("merge_codes: source_code_id=%s, target_code_id=%s", command.source_code_id, command.target_code_id)
+    logger.debug(
+        "merge_codes: source_code_id=%s, target_code_id=%s",
+        command.source_code_id,
+        command.target_code_id,
+    )
 
     state = build_coding_state(code_repo, category_repo, segment_repo)
     source_code_id = CodeId(value=command.source_code_id)
@@ -81,6 +85,10 @@ def merge_codes(
 
     event_bus.publish(event)
 
-    logger.info("Codes merged: source_code_id=%s, target_code_id=%s", command.source_code_id, command.target_code_id)
+    logger.info(
+        "Codes merged: source_code_id=%s, target_code_id=%s",
+        command.source_code_id,
+        command.target_code_id,
+    )
 
     return OperationResult.ok(data=event)

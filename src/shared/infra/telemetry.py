@@ -130,9 +130,7 @@ class FileMetricExporter(MetricExporter):
                                     "name": metric.name,
                                     "description": metric.description,
                                     "unit": metric.unit,
-                                    "value": getattr(
-                                        data_point, "value", None
-                                    )
+                                    "value": getattr(data_point, "value", None)
                                     or getattr(data_point, "sum", None),
                                     "attributes": dict(data_point.attributes)
                                     if data_point.attributes

@@ -97,7 +97,9 @@ def import_file_source(
     Returns:
         OperationResult with Source entity on success, or error details on failure
     """
-    logger.debug("import_file_source: file_path=%s, name=%s", command.file_path, command.name)
+    logger.debug(
+        "import_file_source: file_path=%s, name=%s", command.file_path, command.name
+    )
     # Step 1: Validate project is open
     if state.project is None:
         logger.error("import_file_source: no project is currently open")
@@ -110,7 +112,10 @@ def import_file_source(
     # Validate file path is absolute
     file_path = Path(command.file_path)
     if not file_path.is_absolute():
-        logger.error("import_file_source: relative path provided, file_path=%s", command.file_path)
+        logger.error(
+            "import_file_source: relative path provided, file_path=%s",
+            command.file_path,
+        )
         return OperationResult.fail(
             error=f"File path must be absolute: {command.file_path}",
             error_code="SOURCE_NOT_IMPORTED/RELATIVE_PATH",
@@ -119,7 +124,9 @@ def import_file_source(
 
     # Validate file exists and is accessible
     if not file_path.exists():
-        logger.error("import_file_source: file not found, file_path=%s", command.file_path)
+        logger.error(
+            "import_file_source: file not found, file_path=%s", command.file_path
+        )
         return OperationResult.fail(
             error=f"File not found: {command.file_path}",
             error_code="SOURCE_NOT_IMPORTED/FILE_NOT_FOUND",
@@ -127,7 +134,9 @@ def import_file_source(
         )
 
     if not file_path.is_file():
-        logger.error("import_file_source: path is not a file, file_path=%s", command.file_path)
+        logger.error(
+            "import_file_source: path is not a file, file_path=%s", command.file_path
+        )
         return OperationResult.fail(
             error=f"Path is not a file: {command.file_path}",
             error_code="SOURCE_NOT_IMPORTED/NOT_A_FILE",
@@ -217,7 +226,12 @@ def import_file_source(
     )
     event_bus.publish(event)
 
-    logger.info("import_file_source: imported source name=%s, id=%s, type=%s", source.name, source.id, source_type)
+    logger.info(
+        "import_file_source: imported source name=%s, id=%s, type=%s",
+        source.name,
+        source.id,
+        source_type,
+    )
     return OperationResult.ok(
         data=source,
         rollback=RemoveSourceCommand(source_id=source.id.value),

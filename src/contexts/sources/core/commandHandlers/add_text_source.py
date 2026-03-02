@@ -134,7 +134,9 @@ def add_text_source(
     # Step 5: Publish event
     event_bus.publish(event)
 
-    logger.info("add_text_source: added text source name=%s, id=%s", source.name, source.id)
+    logger.info(
+        "add_text_source: added text source name=%s, id=%s", source.name, source.id
+    )
     return OperationResult.ok(
         data=source,
         rollback=RemoveSourceCommand(source_id=source.id.value),

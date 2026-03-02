@@ -55,7 +55,9 @@ def apply_code(
     Returns:
         OperationResult with TextSegment on success, or error details on failure
     """
-    logger.debug("apply_code: code_id=%s, source_id=%s", command.code_id, command.source_id)
+    logger.debug(
+        "apply_code: code_id=%s, source_id=%s", command.code_id, command.source_id
+    )
 
     code_id = CodeId(value=command.code_id)
     source_id = SourceId(value=command.source_id)
@@ -113,7 +115,12 @@ def apply_code(
 
     event_bus.publish(event)
 
-    logger.info("Code applied: segment_id=%s, code_id=%s, source_id=%s", segment.id.value, code_id.value, source_id.value)
+    logger.info(
+        "Code applied: segment_id=%s, code_id=%s, source_id=%s",
+        segment.id.value,
+        code_id.value,
+        source_id.value,
+    )
 
     return OperationResult.ok(
         data=segment,

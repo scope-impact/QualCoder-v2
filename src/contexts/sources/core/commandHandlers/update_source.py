@@ -56,7 +56,9 @@ def update_source(
     Returns:
         OperationResult with updated Source on success, or error details on failure
     """
-    logger.debug("update_source: source_id=%s, memo=%s", command.source_id, command.memo)
+    logger.debug(
+        "update_source: source_id=%s, memo=%s", command.source_id, command.memo
+    )
     # Step 1: Validate
     if state.project is None:
         logger.error("update_source: no project is currently open")

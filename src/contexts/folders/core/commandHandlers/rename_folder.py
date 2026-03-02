@@ -52,7 +52,9 @@ def rename_folder(
     Returns:
         OperationResult with updated Folder on success, or error details on failure
     """
-    logger.debug("rename_folder: folder_id=%s, new_name=%s", command.folder_id, command.new_name)
+    logger.debug(
+        "rename_folder: folder_id=%s, new_name=%s", command.folder_id, command.new_name
+    )
 
     if state.project is None:
         logger.error("rename_folder: no project is currently open")
@@ -100,7 +102,9 @@ def rename_folder(
     # Publish event
     event_bus.publish(event)
 
-    logger.info("rename_folder: renamed folder id=%s to %s", command.folder_id, command.new_name)
+    logger.info(
+        "rename_folder: renamed folder id=%s to %s", command.folder_id, command.new_name
+    )
     return OperationResult.ok(
         data=updated_folder,
         rollback=RenameFolderCommand(

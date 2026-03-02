@@ -42,7 +42,9 @@ def restore_snapshot(
     4. Execute I/O (checkout, load)
     5. Publish domain event
     """
-    logger.debug("restore_snapshot: project_path=%s, ref=%s", command.project_path, command.ref)
+    logger.debug(
+        "restore_snapshot: project_path=%s, ref=%s", command.project_path, command.ref
+    )
     project_path = Path(command.project_path)
     ref = command.ref
 
@@ -81,12 +83,20 @@ def restore_snapshot(
     vcs_dir = diffable_adapter.get_vcs_dir(project_path)
     load_result = diffable_adapter.load(db_path, vcs_dir)
     if load_result.is_failure:
-        logger.error("restore_snapshot: load failed for ref=%s, project_path=%s", target_ref, project_path)
+        logger.error(
+            "restore_snapshot: load failed for ref=%s, project_path=%s",
+            target_ref,
+            project_path,
+        )
         return load_result
 
     # 5. Create and publish domain event
     final_event = SnapshotRestored.create(ref=target_ref, git_sha=target_ref)
     event_bus.publish(final_event)
 
-    logger.info("restore_snapshot: restored to ref=%s, project_path=%s", target_ref, project_path)
+    logger.info(
+        "restore_snapshot: restored to ref=%s, project_path=%s",
+        target_ref,
+        project_path,
+    )
     return OperationResult.ok(data=final_event)

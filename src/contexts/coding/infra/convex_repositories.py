@@ -244,7 +244,12 @@ class ConvexSegmentRepository:
 
     def save(self, segment: TextSegment) -> None:
         """Save a segment."""
-        logger.debug("save: %s (code=%s, source=%s)", segment.id.value, segment.code_id.value, segment.source_id.value)
+        logger.debug(
+            "save: %s (code=%s, source=%s)",
+            segment.id.value,
+            segment.code_id.value,
+            segment.source_id.value,
+        )
         exists = self.get_by_id(segment.id) is not None
 
         if exists:

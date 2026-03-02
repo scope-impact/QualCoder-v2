@@ -38,7 +38,11 @@ def remove_case_attribute(
     event_bus: EventBus,
 ) -> OperationResult:
     """Remove an attribute from a case."""
-    logger.debug("remove_case_attribute: case_id=%s, attribute_name=%s", command.case_id, command.attr_name)
+    logger.debug(
+        "remove_case_attribute: case_id=%s, attribute_name=%s",
+        command.case_id,
+        command.attr_name,
+    )
     if failure := require_project(state, "ATTRIBUTE_NOT_REMOVED/NO_PROJECT"):
         return failure
 
@@ -62,5 +66,9 @@ def remove_case_attribute(
 
     event_bus.publish(event)
 
-    logger.info("Attribute removed: case_id=%s, attribute_name=%s", command.case_id, command.attr_name)
+    logger.info(
+        "Attribute removed: case_id=%s, attribute_name=%s",
+        command.case_id,
+        command.attr_name,
+    )
     return OperationResult.ok(data=event)

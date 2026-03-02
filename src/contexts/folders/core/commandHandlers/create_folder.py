@@ -53,7 +53,9 @@ def create_folder(
     Returns:
         OperationResult with Folder on success, or error details on failure
     """
-    logger.debug("create_folder: name=%s, parent_id=%s", command.name, command.parent_id)
+    logger.debug(
+        "create_folder: name=%s, parent_id=%s", command.name, command.parent_id
+    )
 
     if state.project is None:
         logger.error("create_folder: no project is currently open")
@@ -98,7 +100,9 @@ def create_folder(
     # Publish event
     event_bus.publish(event)
 
-    logger.info("create_folder: created folder id=%s name=%s", folder.id.value, folder.name)
+    logger.info(
+        "create_folder: created folder id=%s name=%s", folder.id.value, folder.name
+    )
     return OperationResult.ok(
         data=folder,
         rollback=DeleteFolderCommand(folder_id=folder.id.value),

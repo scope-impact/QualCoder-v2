@@ -967,7 +967,9 @@ class TextCodingScreen(QWidget):
         Implements QC-007.10 AC #8: I key toggles importance.
         """
         if self._text_selection.start == self._text_selection.end:
-            logger.debug("TextCodingScreen: I key - no segment selected to mark important")
+            logger.debug(
+                "TextCodingScreen: I key - no segment selected to mark important"
+            )
             return
 
         # Find segment at selection and toggle its importance
@@ -1012,7 +1014,9 @@ class TextCodingScreen(QWidget):
             not self._text_selection.text
             and self._text_selection.start == self._text_selection.end
         ):
-            logger.debug("TextCodingScreen: O key - no position selected to check overlaps")
+            logger.debug(
+                "TextCodingScreen: O key - no position selected to check overlaps"
+            )
             return
 
         # Get overlapping regions from editor
@@ -1268,7 +1272,9 @@ class TextCodingScreen(QWidget):
 
         # Bounds check
         if not (0 <= index < total_files):
-            logger.debug("TextCodingScreen: Invalid file index %d, total=%d", index, total_files)
+            logger.debug(
+                "TextCodingScreen: Invalid file index %d, total=%d", index, total_files
+            )
             return
 
         # Update selection in files panel
@@ -1286,7 +1292,7 @@ class TextCodingScreen(QWidget):
             f"File {index + 1}",
             f"Content of {file_data.get('name', '')}...\n\n(Load actual content here)",
         )
-        logger.debug("Navigated to file: %s", file_data.get('name'))
+        logger.debug("Navigated to file: %s", file_data.get("name"))
 
     def _get_selected_text(self) -> str:
         """Safely get selected text from editor panel."""
@@ -1395,9 +1401,13 @@ class TextCodingScreen(QWidget):
                     color,
                 )
 
-            logger.debug("TextCodingScreen: Marked %d speaker segments total", total_segments)
+            logger.debug(
+                "TextCodingScreen: Marked %d speaker segments total", total_segments
+            )
         else:
-            logger.debug("TextCodingScreen: Speaker detection failed: %s", result.failure())
+            logger.debug(
+                "TextCodingScreen: Speaker detection failed: %s", result.failure()
+            )
 
     def _action_undo_auto(self):
         """
@@ -1550,7 +1560,7 @@ class TextCodingScreen(QWidget):
         # Log success
         logger.debug(
             "TextCodingScreen: Applied '%s' to %d matches",
-            code.get('name', 'code'),
+            code.get("name", "code"),
             len(matches),
         )
 

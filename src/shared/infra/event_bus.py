@@ -148,7 +148,11 @@ class EventBus:
             if handler not in self._handlers[event_type]:
                 self._handlers[event_type].append(handler)
 
-        logger.debug("Subscribed to %s (%s)", event_type, handler.__qualname__ if hasattr(handler, "__qualname__") else handler)
+        logger.debug(
+            "Subscribed to %s (%s)",
+            event_type,
+            handler.__qualname__ if hasattr(handler, "__qualname__") else handler,
+        )
         return Subscription(
             _event_bus=ref(self),
             _event_type=event_type,
@@ -236,9 +240,7 @@ class EventBus:
             all_handlers = list(self._all_handlers)
 
         handler_count = len(type_handlers) + len(all_handlers)
-        logger.debug(
-            "Publishing %s (handlers=%d)", event_type, handler_count
-        )
+        logger.debug("Publishing %s (handlers=%d)", event_type, handler_count)
         events_published.add(1, {"event_type": event_type})
 
         # Record in history if enabled
@@ -253,9 +255,7 @@ class EventBus:
                 handler(event)
             except Exception as e:
                 event_handler_errors.add(1, {"event_type": event_type})
-                logger.error(
-                    "Handler error for %s: %s", event_type, e, exc_info=True
-                )
+                logger.error("Handler error for %s: %s", event_type, e, exc_info=True)
                 warnings.warn(
                     f"Handler error for {event_type}: {e}",
                     RuntimeWarning,

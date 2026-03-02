@@ -395,15 +395,19 @@ class SyncEngine:
         elif self._convex:
             # Convex available but subscriptions disabled - mark as synced
             self._state.status = SyncStatus.SYNCED
-            logger.debug("SyncEngine status -> SYNCED (subscriptions disabled, Convex available)")
+            logger.debug(
+                "SyncEngine status -> SYNCED (subscriptions disabled, Convex available)"
+            )
 
         logger.info("SyncEngine started")
 
     def stop(self) -> None:
         """Stop the sync engine."""
-        logger.info("SyncEngine stopping (threads: outbound=%s, subscriptions=%d)",
-                     self._outbound_thread is not None,
-                     len(self._subscription_threads))
+        logger.info(
+            "SyncEngine stopping (threads: outbound=%s, subscriptions=%d)",
+            self._outbound_thread is not None,
+            len(self._subscription_threads),
+        )
         self._running = False
 
         # Wait for threads to finish
@@ -874,7 +878,9 @@ class SyncEngine:
 
         for name, query, entity_type in subscriptions:
             thread_name = f"SyncEngine-Sub-{name}"
-            logger.debug("Starting subscription thread: %s (query=%s)", thread_name, query)
+            logger.debug(
+                "Starting subscription thread: %s (query=%s)", thread_name, query
+            )
             thread = threading.Thread(
                 target=_subscription_worker,
                 args=(client_class, url, query, entity_type, listeners, state),

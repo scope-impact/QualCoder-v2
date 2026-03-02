@@ -51,7 +51,9 @@ def rename_code(
     Returns:
         OperationResult with CodeRenamed event on success, or error details on failure
     """
-    logger.debug("rename_code: code_id=%s, new_name=%s", command.code_id, command.new_name)
+    logger.debug(
+        "rename_code: code_id=%s, new_name=%s", command.code_id, command.new_name
+    )
 
     state = build_coding_state(code_repo, category_repo, segment_repo)
     code_id = CodeId(value=command.code_id)
@@ -78,7 +80,9 @@ def rename_code(
 
     event_bus.publish(event)
 
-    logger.info("Code renamed: code_id=%s, new_name=%s", command.code_id, command.new_name)
+    logger.info(
+        "Code renamed: code_id=%s, new_name=%s", command.code_id, command.new_name
+    )
 
     return OperationResult.ok(
         data=event,

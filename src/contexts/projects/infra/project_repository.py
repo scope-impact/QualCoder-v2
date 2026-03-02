@@ -183,7 +183,9 @@ class SQLiteProjectRepository:
             finally:
                 engine.dispose()
         except Exception:
-            logger.error("validate_database: inspection failed for %s", path, exc_info=True)
+            logger.error(
+                "validate_database: inspection failed for %s", path, exc_info=True
+            )
             return False
 
     def load(self, path: Path) -> Project | None:

@@ -530,7 +530,9 @@ class FileManagerScreen(QWidget):
             return
 
         # Export logic would go here
-        logger.debug("FileManagerScreen: Exporting %d files to %s", len(source_ids), export_dir)
+        logger.debug(
+            "FileManagerScreen: Exporting %d files to %s", len(source_ids), export_dir
+        )
         # TODO: Implement actual export via viewmodel/controller
 
         QMessageBox.information(

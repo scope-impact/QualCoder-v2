@@ -164,7 +164,9 @@ class SelectionPopupController(QObject):
         if self._enabled and self._get_position is not None:
             pos = self._get_position()
             if pos is not None:
-                logger.debug("Debounce timer fired — showing popup at (%d, %d)", pos.x(), pos.y())
+                logger.debug(
+                    "Debounce timer fired — showing popup at (%d, %d)", pos.x(), pos.y()
+                )
                 self._popup.show_near_selection(pos)
                 self.popup_shown.emit()
 

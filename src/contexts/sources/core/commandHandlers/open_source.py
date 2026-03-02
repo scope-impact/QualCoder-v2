@@ -98,5 +98,7 @@ def open_source(
     )
     event_bus.publish(screen_event)
 
-    logger.info("open_source: opened source_id=%s, navigated to coding screen", source_id)
+    logger.info(
+        "open_source: opened source_id=%s, navigated to coding screen", source_id
+    )
     return OperationResult.ok(data=event)

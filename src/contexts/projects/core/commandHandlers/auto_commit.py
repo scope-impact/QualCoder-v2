@@ -42,7 +42,11 @@ def auto_commit(
     4. Execute I/O (dump, stage, commit)
     5. Publish domain event
     """
-    logger.debug("auto_commit: project_path=%s, event_count=%s", command.project_path, len(command.events))
+    logger.debug(
+        "auto_commit: project_path=%s, event_count=%s",
+        command.project_path,
+        len(command.events),
+    )
     project_path = Path(command.project_path)
     events = tuple(command.events)
 
@@ -94,5 +98,7 @@ def auto_commit(
     )
     event_bus.publish(final_event)
 
-    logger.info("auto_commit: committed sha=%s, event_count=%s", commit_result.data, event_count)
+    logger.info(
+        "auto_commit: committed sha=%s, event_count=%s", commit_result.data, event_count
+    )
     return OperationResult.ok(data=final_event)

@@ -52,7 +52,11 @@ def move_source_to_folder(
     Returns:
         OperationResult with SourceMovedToFolder event on success, or error details on failure
     """
-    logger.debug("move_source_to_folder: source_id=%s, folder_id=%s", command.source_id, command.folder_id)
+    logger.debug(
+        "move_source_to_folder: source_id=%s, folder_id=%s",
+        command.source_id,
+        command.folder_id,
+    )
 
     if state.project is None:
         logger.error("move_source_to_folder: no project is currently open")
@@ -97,7 +101,11 @@ def move_source_to_folder(
 
     # Get old folder ID for rollback
     old_folder_id = event.old_folder_id.value if event.old_folder_id else None
-    logger.info("move_source_to_folder: moved source_id=%s to folder_id=%s", command.source_id, command.folder_id)
+    logger.info(
+        "move_source_to_folder: moved source_id=%s to folder_id=%s",
+        command.source_id,
+        command.folder_id,
+    )
     return OperationResult.ok(
         data=event,
         rollback=MoveSourceToFolderCommand(

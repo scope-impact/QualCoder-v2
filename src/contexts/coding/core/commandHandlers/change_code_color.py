@@ -52,7 +52,11 @@ def change_code_color(
     Returns:
         OperationResult with CodeColorChanged event on success, or error details on failure
     """
-    logger.debug("change_code_color: code_id=%s, new_color=%s", command.code_id, command.new_color)
+    logger.debug(
+        "change_code_color: code_id=%s, new_color=%s",
+        command.code_id,
+        command.new_color,
+    )
 
     state = build_coding_state(code_repo, category_repo, segment_repo)
     code_id = CodeId(value=command.code_id)
@@ -89,7 +93,11 @@ def change_code_color(
 
     event_bus.publish(event)
 
-    logger.info("Code color changed: code_id=%s, new_color=%s", command.code_id, event.new_color.to_hex())
+    logger.info(
+        "Code color changed: code_id=%s, new_color=%s",
+        command.code_id,
+        event.new_color.to_hex(),
+    )
 
     return OperationResult.ok(
         data=event,

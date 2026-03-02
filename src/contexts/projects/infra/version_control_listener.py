@@ -164,6 +164,4 @@ class VersionControlListener:
                 "VCS auto-commit failed: %s [%s]", result.error, result.error_code
             )
         else:
-            logger.info(
-                "VCS auto-commit succeeded (%d events)", len(events_to_commit)
-            )
+            logger.info("VCS auto-commit succeeded (%d events)", len(events_to_commit))

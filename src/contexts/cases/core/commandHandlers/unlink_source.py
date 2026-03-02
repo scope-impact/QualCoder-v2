@@ -38,7 +38,11 @@ def unlink_source_from_case(
     event_bus: EventBus,
 ) -> OperationResult:
     """Unlink a source from a case."""
-    logger.debug("unlink_source_from_case: case_id=%s, source_id=%s", command.case_id, command.source_id)
+    logger.debug(
+        "unlink_source_from_case: case_id=%s, source_id=%s",
+        command.case_id,
+        command.source_id,
+    )
     if failure := require_project(state, "SOURCE_NOT_UNLINKED/NO_PROJECT"):
         return failure
 
@@ -63,5 +67,7 @@ def unlink_source_from_case(
 
     event_bus.publish(event)
 
-    logger.info("Source unlinked: case_id=%s, source_id=%s", command.case_id, command.source_id)
+    logger.info(
+        "Source unlinked: case_id=%s, source_id=%s", command.case_id, command.source_id
+    )
     return OperationResult.ok(data=event)

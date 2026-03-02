@@ -57,7 +57,9 @@ def add_source(
     Returns:
         OperationResult with Source entity on success, or error details on failure
     """
-    logger.debug("add_source: source_path=%s, origin=%s", command.source_path, command.origin)
+    logger.debug(
+        "add_source: source_path=%s, origin=%s", command.source_path, command.origin
+    )
     # Step 1: Validate
     if state.project is None:
         logger.error("add_source: no project is currently open")

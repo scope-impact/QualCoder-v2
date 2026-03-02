@@ -155,7 +155,9 @@ def batch_apply_codes(
             suggestions=("Check individual operation errors in result data",),
         )
 
-    logger.info("Batch apply codes completed: %d/%d succeeded", succeeded, batch_result.total)
+    logger.info(
+        "Batch apply codes completed: %d/%d succeeded", succeeded, batch_result.total
+    )
 
     return OperationResult.ok(data=batch_result)
 

@@ -51,7 +51,11 @@ def move_code_to_category(
     Returns:
         OperationResult with CodeMovedToCategory event on success, or error details on failure
     """
-    logger.debug("move_code_to_category: code_id=%s, category_id=%s", command.code_id, command.category_id)
+    logger.debug(
+        "move_code_to_category: code_id=%s, category_id=%s",
+        command.code_id,
+        command.category_id,
+    )
 
     state = build_coding_state(code_repo, category_repo, segment_repo)
     code_id = CodeId(value=command.code_id)
@@ -81,7 +85,11 @@ def move_code_to_category(
 
     event_bus.publish(event)
 
-    logger.info("Code moved to category: code_id=%s, category_id=%s", command.code_id, command.category_id)
+    logger.info(
+        "Code moved to category: code_id=%s, category_id=%s",
+        command.code_id,
+        command.category_id,
+    )
 
     # Get old category ID for rollback
     old_category_id = event.old_category_id.value if event.old_category_id else None

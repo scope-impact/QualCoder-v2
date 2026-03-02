@@ -41,7 +41,11 @@ def link_source_to_case(
     event_bus: EventBus,
 ) -> OperationResult:
     """Link a source to a case."""
-    logger.debug("link_source_to_case: case_id=%s, source_id=%s", command.case_id, command.source_id)
+    logger.debug(
+        "link_source_to_case: case_id=%s, source_id=%s",
+        command.case_id,
+        command.source_id,
+    )
     if failure := require_project(state, "SOURCE_NOT_LINKED/NO_PROJECT"):
         return failure
 
@@ -66,7 +70,9 @@ def link_source_to_case(
 
     event_bus.publish(event)
 
-    logger.info("Source linked: case_id=%s, source_id=%s", command.case_id, command.source_id)
+    logger.info(
+        "Source linked: case_id=%s, source_id=%s", command.case_id, command.source_id
+    )
     return OperationResult.ok(
         data=event,
         rollback=UnlinkSourceFromCaseCommand(

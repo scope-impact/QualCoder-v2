@@ -69,7 +69,9 @@ def open_project(
     result = derive_open_project(path=path, state=domain_state)
 
     if isinstance(result, Failure):
-        logger.error("open_project: deriver failed for path=%s, error=%s", path, result.failure())
+        logger.error(
+            "open_project: deriver failed for path=%s, error=%s", path, result.failure()
+        )
         return OperationResult.fail(
             error=result.failure(),
             error_code="PROJECT_NOT_OPENED/DERIVER_FAILED",
@@ -80,7 +82,11 @@ def open_project(
     # Step 3: Open database
     open_result = lifecycle.open_database(path)
     if isinstance(open_result, Failure):
-        logger.error("open_project: DB open failed for path=%s, error=%s", path, open_result.failure())
+        logger.error(
+            "open_project: DB open failed for path=%s, error=%s",
+            path,
+            open_result.failure(),
+        )
         return OperationResult.fail(
             error=open_result.failure(),
             error_code="PROJECT_NOT_OPENED/DB_OPEN_FAILED",

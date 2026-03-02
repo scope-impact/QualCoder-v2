@@ -24,9 +24,7 @@ init_telemetry(service_name="qualcoder-test")
 log_stream = io.StringIO()
 handler = logging.StreamHandler(log_stream)
 handler.setLevel(logging.DEBUG)
-handler.setFormatter(
-    logging.Formatter("%(levelname)s [%(name)s] %(message)s")
-)
+handler.setFormatter(logging.Formatter("%(levelname)s [%(name)s] %(message)s"))
 logging.getLogger("qualcoder").addHandler(handler)
 
 # ── 2. Now import app modules ───────────────────────────────────────────
@@ -412,9 +410,7 @@ print("\n=== 9. SignalBridge instrumentation (static check) ===")
 # ═════════════════════════════════════════════════════════════════════════
 
 # Read signal bridge base and check for metrics imports
-bridge_source = Path(
-    "src/shared/infra/signal_bridge/base.py"
-).read_text()
+bridge_source = Path("src/shared/infra/signal_bridge/base.py").read_text()
 check(
     "SignalBridge imports logging",
     "import logging" in bridge_source,
@@ -486,9 +482,9 @@ conn.close()
 engine.dispose()
 
 # ═════════════════════════════════════════════════════════════════════════
-print(f"\n{'='*60}")
-print(f"Results: {PASS} passed, {FAIL} failed out of {PASS+FAIL} checks")
-print(f"{'='*60}")
+print(f"\n{'=' * 60}")
+print(f"Results: {PASS} passed, {FAIL} failed out of {PASS + FAIL} checks")
+print(f"{'=' * 60}")
 
 if FAIL > 0:
     sys.exit(1)

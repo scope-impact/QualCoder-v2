@@ -39,7 +39,11 @@ def set_case_attribute(
     event_bus: EventBus,
 ) -> OperationResult:
     """Set an attribute on a case."""
-    logger.debug("set_case_attribute: case_id=%s, attribute_name=%s", command.case_id, command.attr_name)
+    logger.debug(
+        "set_case_attribute: case_id=%s, attribute_name=%s",
+        command.case_id,
+        command.attr_name,
+    )
     if failure := require_project(state, "ATTRIBUTE_NOT_SET/NO_PROJECT"):
         return failure
 
@@ -70,5 +74,9 @@ def set_case_attribute(
 
     event_bus.publish(event)
 
-    logger.info("Attribute set: case_id=%s, attribute_name=%s", command.case_id, command.attr_name)
+    logger.info(
+        "Attribute set: case_id=%s, attribute_name=%s",
+        command.case_id,
+        command.attr_name,
+    )
     return OperationResult.ok(data=event)

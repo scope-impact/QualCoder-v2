@@ -337,7 +337,12 @@ class SQLiteSegmentRepository:
 
     def save(self, segment: TextSegment) -> None:
         """Save a segment."""
-        logger.debug("save: %s (code=%s, source=%s)", segment.id.value, segment.code_id.value, segment.source_id.value)
+        logger.debug(
+            "save: %s (code=%s, source=%s)",
+            segment.id.value,
+            segment.code_id.value,
+            segment.source_id.value,
+        )
         exists_stmt = select(func.count()).where(code_text.c.ctid == segment.id.value)
         exists = self._conn.execute(exists_stmt).scalar() > 0
 

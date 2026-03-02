@@ -96,6 +96,7 @@ known-first-party = ["design_system", "src"]
 [tool.ruff.lint.per-file-ignores]
 "__init__.py" = ["F401"]  # unused imports ok for re-exports
 "**/tests/**" = ["ARG001", "ARG002"]  # pytest fixtures like qapp are used implicitly
+"src/tests/exploratory_*.py" = ["E402", "ARG005"]  # script-style exploratory tests with inline imports
 
 # ============================================================================
 # Pytest Configuration
