@@ -16,6 +16,7 @@ from src.contexts.settings.core.commandHandlers import (
     configure_av_coding,
     configure_backup,
     configure_cloud_sync,
+    configure_observability,
 )
 from src.contexts.settings.core.commands import (
     ChangeFontCommand,
@@ -24,6 +25,7 @@ from src.contexts.settings.core.commands import (
     ConfigureAVCodingCommand,
     ConfigureBackupCommand,
     ConfigureCloudSyncCommand,
+    ConfigureObservabilityCommand,
 )
 from src.shared.common.operation_result import OperationResult
 
@@ -118,6 +120,24 @@ class SettingsService:
             speaker_format=speaker_format,
         )
         return configure_av_coding(
+            command=command,
+            settings_repo=self._settings_repo,
+            event_bus=self._event_bus,
+        )
+
+    def configure_observability(
+        self,
+        log_level: str,
+        enable_file_logging: bool,
+        enable_telemetry: bool,
+    ) -> OperationResult:
+        """Configure observability settings."""
+        command = ConfigureObservabilityCommand(
+            log_level=log_level,
+            enable_file_logging=enable_file_logging,
+            enable_telemetry=enable_telemetry,
+        )
+        return configure_observability(
             command=command,
             settings_repo=self._settings_repo,
             event_bus=self._event_bus,

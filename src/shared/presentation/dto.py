@@ -212,6 +212,10 @@ class SettingsDTO:
     # Cloud sync settings (SQLite is always primary)
     cloud_sync_enabled: bool = False
     convex_url: str | None = None
+    # Observability settings
+    log_level: str = "INFO"
+    enable_file_logging: bool = False
+    enable_telemetry: bool = True
 
 
 @dataclass(frozen=True)

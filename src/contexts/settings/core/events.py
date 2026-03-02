@@ -187,6 +187,47 @@ class AVCodingConfigChanged(DomainEvent):
 
 
 # =============================================================================
+# Observability Events
+# =============================================================================
+
+
+@dataclass(frozen=True)
+class ObservabilityConfigChanged(DomainEvent):
+    """Emitted when the user changes observability configuration."""
+
+    event_type: ClassVar[str] = "settings.observability_config_changed"
+
+    old_log_level: str = "INFO"
+    old_enable_file_logging: bool = False
+    old_enable_telemetry: bool = True
+    log_level: str = "INFO"
+    enable_file_logging: bool = False
+    enable_telemetry: bool = True
+
+    @classmethod
+    def create(
+        cls,
+        old_log_level: str,
+        old_enable_file_logging: bool,
+        old_enable_telemetry: bool,
+        log_level: str,
+        enable_file_logging: bool,
+        enable_telemetry: bool,
+    ) -> ObservabilityConfigChanged:
+        """Factory method to create event with auto-generated metadata."""
+        return cls(
+            event_id=cls._generate_id(),
+            occurred_at=cls._now(),
+            old_log_level=old_log_level,
+            old_enable_file_logging=old_enable_file_logging,
+            old_enable_telemetry=old_enable_telemetry,
+            log_level=log_level,
+            enable_file_logging=enable_file_logging,
+            enable_telemetry=enable_telemetry,
+        )
+
+
+# =============================================================================
 # Cloud Sync Events
 # =============================================================================
 

@@ -134,6 +134,7 @@ class SettingsDialog(QDialog):
         self._content_stack.addWidget(self._create_backup_section())
         self._content_stack.addWidget(self._create_av_coding_section())
         self._content_stack.addWidget(self._create_database_section())
+        self._content_stack.addWidget(self._create_observability_section())
 
         # Sidebar navigation (created after content stack)
         self._sidebar = self._create_sidebar()
@@ -208,6 +209,7 @@ class SettingsDialog(QDialog):
             ("Backup", "mdi6.backup-restore"),
             ("AV Coding", "mdi6.video"),
             ("Database", "mdi6.database"),
+            ("Observability", "mdi6.chart-line"),
         ]
 
         for name, icon_name in sections:
@@ -675,6 +677,100 @@ class SettingsDialog(QDialog):
 
         return widget
 
+    def _create_observability_section(self) -> QWidget:
+        """Create the Observability settings section."""
+        widget = QWidget()
+        layout = QVBoxLayout(widget)
+        layout.setContentsMargins(SPACING.lg, SPACING.lg, SPACING.lg, SPACING.lg)
+        layout.setSpacing(SPACING.lg)
+
+        # Log level
+        level_label = QLabel("Log Level")
+        level_label.setStyleSheet(f"""
+            color: {self._colors.text_primary};
+            font-size: {TYPOGRAPHY.text_sm}px;
+            font-weight: {TYPOGRAPHY.weight_semibold};
+        """)
+        layout.addWidget(level_label)
+
+        self._log_level_combo = QComboBox()
+        self._log_level_combo.setStyleSheet(self._get_combo_style())
+        self._log_level_combo.setMinimumWidth(200)
+        for level in self._viewmodel.get_available_log_levels():
+            self._log_level_combo.addItem(level, level)
+        self._log_level_combo.currentIndexChanged.connect(
+            self._on_observability_changed
+        )
+        layout.addWidget(self._log_level_combo)
+
+        env_note = QLabel(
+            "Tip: Set QUALCODER_LOG_LEVEL environment variable to override this."
+        )
+        env_note.setStyleSheet(f"""
+            color: {self._colors.text_secondary};
+            font-size: {TYPOGRAPHY.text_xs}px;
+            font-style: italic;
+        """)
+        layout.addWidget(env_note)
+
+        # File logging
+        self._file_logging_cb = QCheckBox("Enable file logging")
+        self._file_logging_cb.setStyleSheet(f"""
+            QCheckBox {{
+                color: {self._colors.text_primary};
+                font-size: {TYPOGRAPHY.text_sm}px;
+                spacing: {SPACING.sm}px;
+            }}
+        """)
+        self._file_logging_cb.stateChanged.connect(self._on_observability_changed)
+        layout.addWidget(self._file_logging_cb)
+
+        file_note = QLabel("Logs are written to ~/.qualcoder/qualcoder.log")
+        file_note.setStyleSheet(f"""
+            color: {self._colors.text_secondary};
+            font-size: {TYPOGRAPHY.text_xs}px;
+        """)
+        layout.addWidget(file_note)
+
+        # Telemetry
+        self._telemetry_cb = QCheckBox("Enable telemetry metrics")
+        self._telemetry_cb.setStyleSheet(f"""
+            QCheckBox {{
+                color: {self._colors.text_primary};
+                font-size: {TYPOGRAPHY.text_sm}px;
+                spacing: {SPACING.sm}px;
+            }}
+        """)
+        self._telemetry_cb.stateChanged.connect(self._on_observability_changed)
+        layout.addWidget(self._telemetry_cb)
+
+        telemetry_note = QLabel(
+            "OTEL metrics are stored in ~/.qualcoder/telemetry.jsonl"
+        )
+        telemetry_note.setStyleSheet(f"""
+            color: {self._colors.text_secondary};
+            font-size: {TYPOGRAPHY.text_xs}px;
+        """)
+        layout.addWidget(telemetry_note)
+
+        # Restart note
+        restart_label = QLabel(
+            "Note: Log level changes take effect immediately. "
+            "File logging and telemetry changes require a restart."
+        )
+        restart_label.setWordWrap(True)
+        restart_label.setStyleSheet(f"""
+            color: {self._colors.warning};
+            font-size: {TYPOGRAPHY.text_xs}px;
+            font-style: italic;
+            margin-top: {SPACING.md}px;
+        """)
+        layout.addWidget(restart_label)
+
+        layout.addStretch()
+
+        return widget
+
     def _setup_footer(self, layout: QVBoxLayout) -> None:
         """Setup the dialog footer with buttons."""
         footer = QFrame()
@@ -743,6 +839,21 @@ class SettingsDialog(QDialog):
             self._timestamp_combo.setCurrentIndex(ts_index)
         self._speaker_format.setText(settings.speaker_format)
         self._update_speaker_preview()
+
+        # Observability (block signals to prevent saves during load)
+        self._log_level_combo.blockSignals(True)
+        self._file_logging_cb.blockSignals(True)
+        self._telemetry_cb.blockSignals(True)
+
+        level_index = self._log_level_combo.findData(settings.log_level)
+        if level_index >= 0:
+            self._log_level_combo.setCurrentIndex(level_index)
+        self._file_logging_cb.setChecked(settings.enable_file_logging)
+        self._telemetry_cb.setChecked(settings.enable_telemetry)
+
+        self._log_level_combo.blockSignals(False)
+        self._file_logging_cb.blockSignals(False)
+        self._telemetry_cb.blockSignals(False)
 
         # Cloud sync
         cloud_sync_enabled = getattr(settings, "cloud_sync_enabled", False)
@@ -853,6 +964,16 @@ class SettingsDialog(QDialog):
     def _on_convex_url_changed(self, url: str) -> None:
         """Handle Convex URL change."""
         self._viewmodel.set_convex_url(url if url else None)
+        self.settings_changed.emit()
+
+    def _on_observability_changed(self, _value: int = 0) -> None:
+        """Handle observability settings change."""
+        log_level = self._log_level_combo.currentData() or "INFO"
+        enable_file_logging = self._file_logging_cb.isChecked()
+        enable_telemetry = self._telemetry_cb.isChecked()
+        self._viewmodel.configure_observability(
+            log_level, enable_file_logging, enable_telemetry
+        )
         self.settings_changed.emit()
 
     def _on_ok(self) -> None:

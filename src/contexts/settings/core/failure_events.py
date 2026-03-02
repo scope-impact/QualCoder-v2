@@ -121,6 +121,20 @@ class SettingsNotChanged(FailureEvent):
         )
 
     # =========================================================================
+    # Observability Failures
+    # =========================================================================
+
+    @classmethod
+    def invalid_log_level(cls, level: str) -> SettingsNotChanged:
+        """Log level is not valid."""
+        return cls(
+            event_id=cls._generate_id(),
+            occurred_at=cls._now(),
+            event_type="SETTINGS_NOT_CHANGED/INVALID_LOG_LEVEL",
+            value=level,
+        )
+
+    # =========================================================================
     # Message
     # =========================================================================
 
@@ -144,6 +158,8 @@ class SettingsNotChanged(FailureEvent):
                 return f"Timestamp format '{self.value}' is invalid. Use HH:MM:SS, HH:MM:SS.mmm, or MM:SS"
             case "INVALID_SPEAKER_FORMAT":
                 return f"Speaker format '{self.value}' must contain {{n}} placeholder"
+            case "INVALID_LOG_LEVEL":
+                return f"Log level '{self.value}' is invalid. Must be: DEBUG, INFO, WARNING, or ERROR"
             case _:
                 return super().message
 

@@ -11,6 +11,8 @@ from __future__ import annotations
 # Valid Values
 # =============================================================================
 
+VALID_LOG_LEVELS = ("DEBUG", "INFO", "WARNING", "ERROR")
+
 VALID_THEMES = ("light", "dark", "system")
 
 VALID_TIMESTAMP_FORMATS = ("HH:MM:SS", "HH:MM:SS.mmm", "MM:SS")
@@ -49,6 +51,11 @@ MAX_MAX_BACKUPS = 20
 # =============================================================================
 # Validation Functions
 # =============================================================================
+
+
+def is_valid_log_level(level: str) -> bool:
+    """Check if log level is valid."""
+    return level.upper() in VALID_LOG_LEVELS
 
 
 def is_valid_theme(theme: str) -> bool:

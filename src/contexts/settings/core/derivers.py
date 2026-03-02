@@ -16,6 +16,7 @@ from src.contexts.settings.core.events import (
     CloudSyncConfigChanged,
     FontChanged,
     LanguageChanged,
+    ObservabilityConfigChanged,
     ThemeChanged,
 )
 from src.contexts.settings.core.failure_events import (
@@ -30,6 +31,7 @@ from src.contexts.settings.core.invariants import (
     is_valid_font_family,
     is_valid_font_size,
     is_valid_language_code,
+    is_valid_log_level,
     is_valid_max_backups,
     is_valid_speaker_format,
     is_valid_theme,
@@ -195,6 +197,39 @@ def derive_av_coding_config_change(
         old_speaker_format=current_settings.av_coding.speaker_format,
         timestamp_format=timestamp_format,
         speaker_format=speaker_format,
+    )
+
+
+def derive_observability_config_change(
+    log_level: str,
+    enable_file_logging: bool,
+    enable_telemetry: bool,
+    current_settings: UserSettings,
+) -> ObservabilityConfigChanged | SettingsNotChanged:
+    """
+    Derive an observability config change event from inputs.
+
+    Pure function - no I/O, no side effects.
+
+    Args:
+        log_level: Log level (DEBUG, INFO, WARNING, ERROR)
+        enable_file_logging: Whether to write logs to file
+        enable_telemetry: Whether to collect OTEL metrics
+        current_settings: Current user settings for old observability values
+
+    Returns:
+        ObservabilityConfigChanged event on success, SettingsNotChanged on error
+    """
+    if not is_valid_log_level(log_level):
+        return SettingsNotChanged.invalid_log_level(log_level)
+
+    return ObservabilityConfigChanged.create(
+        old_log_level=current_settings.observability.log_level,
+        old_enable_file_logging=current_settings.observability.enable_file_logging,
+        old_enable_telemetry=current_settings.observability.enable_telemetry,
+        log_level=log_level.upper(),
+        enable_file_logging=enable_file_logging,
+        enable_telemetry=enable_telemetry,
     )
 
 

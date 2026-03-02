@@ -75,15 +75,22 @@ class TestColor:
         assert Color.from_hex("#0000ff") == Color(0, 0, 255)
         assert Color.from_hex("ffffff") == Color(255, 255, 255)  # Without #
 
+    def test_from_hex_expands_shorthand(self):
+        """Should expand 3-digit shorthand (#RGB → #RRGGBB)."""
+        from src.contexts.coding.core.entities import Color
+
+        assert Color.from_hex("#fff") == Color(255, 255, 255)
+        assert Color.from_hex("#f00") == Color(255, 0, 0)
+
     def test_from_hex_rejects_invalid(self):
         """Should reject invalid hex strings."""
         from src.contexts.coding.core.entities import Color
 
         with pytest.raises(ValueError, match="Invalid hex color"):
-            Color.from_hex("#fff")  # Too short
+            Color.from_hex("#fffffff")  # Too long
 
         with pytest.raises(ValueError, match="Invalid hex color"):
-            Color.from_hex("#fffffff")  # Too long
+            Color.from_hex("#ff")  # Too short (not 3 or 6)
 
     def test_contrast_color(self):
         """Should return appropriate contrast color."""

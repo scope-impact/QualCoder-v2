@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import os
 import sys
+from pathlib import Path
 
 from PySide6.QtWidgets import QApplication, QMessageBox
 
@@ -53,16 +54,29 @@ class QualCoderApp:
     """
 
     def __init__(self):
-        # Configure structured logging before anything else
-        _log_level = "DEBUG" if os.environ.get("QUALCODER_DEV") else "INFO"
-        configure_logging(level=_log_level)
+        # Load saved observability settings for logging configuration
+        from src.contexts.settings.infra.user_settings_repository import (
+            UserSettingsRepository,
+        )
+
+        _boot_repo = UserSettingsRepository()
+        _obs = _boot_repo.load().observability
+
+        # Dev mode overrides saved level; env var overrides everything (inside configure_logging)
+        _log_level = "DEBUG" if os.environ.get("QUALCODER_DEV") else _obs.log_level
+        _log_file = (
+            Path.home() / ".qualcoder" / "qualcoder.log"
+            if _obs.enable_file_logging
+            else None
+        )
+        configure_logging(level=_log_level, log_file=_log_file)
 
         # Initialize telemetry for performance monitoring (logs to file in dev mode)
         init_telemetry(service_name="qualcoder")
 
         self._app = QApplication(sys.argv)
         self._colors = get_colors()
-        self._ctx = create_app_context()
+        self._ctx = create_app_context(settings_repo=_boot_repo)
         self._dialog_service = DialogService(self._ctx)
         # Create signal bridges for reactive UI updates
         self._project_signal_bridge = ProjectSignalBridge.instance(self._ctx.event_bus)
@@ -242,8 +256,6 @@ class QualCoderApp:
 
         # Create VersionControlViewModel for history screen
         if self._ctx.projects_context and self._ctx.state.project:
-            from pathlib import Path
-
             projects_ctx = self._ctx.projects_context
             if projects_ctx.git_adapter and projects_ctx.diffable_adapter:
                 vcs_viewmodel = VersionControlViewModel(
@@ -257,8 +269,6 @@ class QualCoderApp:
 
     def _auto_init_vcs(self):
         """Auto-initialize VCS for newly created projects."""
-        from pathlib import Path
-
         from src.contexts.projects.core.commandHandlers import (
             initialize_version_control,
         )

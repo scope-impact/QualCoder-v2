@@ -121,6 +121,13 @@ This file tracks which features have documentation and screenshots.
 | QC-047.06 | Offline Mode | [settings.md](user-manual/settings.md) | - | :construction: |
 | QC-047.07 | Agent API | - | - | :x: |
 
+### QC-049 Observability
+
+| ID | Story | Doc Page | Screenshots | Status |
+|----|-------|----------|-------------|--------|
+| QC-049.03 | Configurable Logging Levels | [observability.md](user-manual/observability.md) | - | :construction: |
+| QC-049.05 | User Documentation | [observability.md](user-manual/observability.md) | - | :white_check_mark: |
+
 ### QC-048 Version Control
 
 | ID | Story | Doc Page | Screenshots | Status |

@@ -115,6 +115,31 @@ class AVCodingConfig:
 
 
 @dataclass(frozen=True)
+class ObservabilityConfig:
+    """
+    Observability configuration value object.
+
+    Controls logging levels, file logging, and telemetry settings.
+    """
+
+    log_level: str = "INFO"  # DEBUG, INFO, WARNING, ERROR
+    enable_file_logging: bool = False
+    enable_telemetry: bool = True
+
+    def with_log_level(self, level: str) -> ObservabilityConfig:
+        """Return new ObservabilityConfig with updated log level."""
+        return replace(self, log_level=level)
+
+    def with_file_logging(self, enabled: bool) -> ObservabilityConfig:
+        """Return new ObservabilityConfig with updated file logging state."""
+        return replace(self, enable_file_logging=enabled)
+
+    def with_telemetry(self, enabled: bool) -> ObservabilityConfig:
+        """Return new ObservabilityConfig with updated telemetry state."""
+        return replace(self, enable_telemetry=enabled)
+
+
+@dataclass(frozen=True)
 class BackendConfig:
     """
     Database backend configuration value object.
@@ -176,6 +201,7 @@ class UserSettings:
     backup: BackupConfig = field(default_factory=BackupConfig)
     av_coding: AVCodingConfig = field(default_factory=AVCodingConfig)
     backend: BackendConfig = field(default_factory=BackendConfig)
+    observability: ObservabilityConfig = field(default_factory=ObservabilityConfig)
 
     @classmethod
     def default(cls) -> UserSettings:
@@ -205,3 +231,7 @@ class UserSettings:
     def with_backend(self, backend: BackendConfig) -> UserSettings:
         """Return new UserSettings with updated backend config."""
         return replace(self, backend=backend)
+
+    def with_observability(self, observability: ObservabilityConfig) -> UserSettings:
+        """Return new UserSettings with updated observability config."""
+        return replace(self, observability=observability)

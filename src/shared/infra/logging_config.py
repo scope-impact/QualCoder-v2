@@ -26,6 +26,7 @@ Usage:
 from __future__ import annotations
 
 import logging
+import os
 import sys
 from pathlib import Path
 
@@ -38,13 +39,21 @@ def configure_logging(
     """
     Configure the ``qualcoder`` logger hierarchy.
 
+    Priority for log level (highest wins):
+        1. ``QUALCODER_LOG_LEVEL`` environment variable
+        2. ``level`` parameter (from settings or caller)
+        3. Default ``"INFO"``
+
     Args:
         level: Root log level (DEBUG, INFO, WARNING, ERROR).
         log_file: Optional file path for persistent log output.
         enable_console: Whether to emit to stderr (default True).
     """
+    # Environment variable takes highest priority
+    effective_level = os.environ.get("QUALCODER_LOG_LEVEL", level).upper()
+
     root = logging.getLogger("qualcoder")
-    root.setLevel(getattr(logging, level.upper(), logging.INFO))
+    root.setLevel(getattr(logging, effective_level, logging.INFO))
 
     # Prevent duplicate handlers on repeated calls
     if root.handlers:

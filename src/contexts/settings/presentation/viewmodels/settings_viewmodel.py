@@ -20,6 +20,7 @@ from typing import TYPE_CHECKING, Protocol
 from src.contexts.settings.core.invariants import (
     VALID_FONT_FAMILIES,
     VALID_LANGUAGES,
+    VALID_LOG_LEVELS,
     VALID_THEMES,
     VALID_TIMESTAMP_FORMATS,
 )
@@ -52,6 +53,12 @@ class SettingsProvider(Protocol):
         self,
         timestamp_format: str,
         speaker_format: str,
+    ) -> OperationResult: ...
+    def configure_observability(
+        self,
+        log_level: str,
+        enable_file_logging: bool,
+        enable_telemetry: bool,
     ) -> OperationResult: ...
     def set_cloud_sync_enabled(self, enabled: bool) -> OperationResult: ...
     def set_convex_url(self, url: str | None) -> OperationResult: ...
@@ -109,6 +116,9 @@ class SettingsViewModel:
             speaker_format=settings.av_coding.speaker_format,
             cloud_sync_enabled=settings.backend.cloud_sync_enabled,
             convex_url=settings.backend.convex_url,
+            log_level=settings.observability.log_level,
+            enable_file_logging=settings.observability.enable_file_logging,
+            enable_telemetry=settings.observability.enable_telemetry,
         )
 
     # =========================================================================
@@ -145,6 +155,10 @@ class SettingsViewModel:
             )
             for family in VALID_FONT_FAMILIES
         ]
+
+    def get_available_log_levels(self) -> list[str]:
+        """Get list of available log levels."""
+        return list(VALID_LOG_LEVELS)
 
     def get_available_timestamp_formats(self) -> list[str]:
         """Get list of available timestamp formats."""
@@ -255,6 +269,34 @@ class SettingsViewModel:
         result = self._provider.configure_av_coding(
             timestamp_format=timestamp_format,
             speaker_format=speaker_format,
+        )
+        return result.is_success
+
+    # =========================================================================
+    # Observability Actions
+    # =========================================================================
+
+    def configure_observability(
+        self,
+        log_level: str,
+        enable_file_logging: bool,
+        enable_telemetry: bool,
+    ) -> bool:
+        """
+        Configure observability settings.
+
+        Args:
+            log_level: Log level (DEBUG, INFO, WARNING, ERROR)
+            enable_file_logging: Whether to write logs to file
+            enable_telemetry: Whether to collect OTEL metrics
+
+        Returns:
+            True if successful, False otherwise
+        """
+        result = self._provider.configure_observability(
+            log_level=log_level,
+            enable_file_logging=enable_file_logging,
+            enable_telemetry=enable_telemetry,
         )
         return result.is_success
 

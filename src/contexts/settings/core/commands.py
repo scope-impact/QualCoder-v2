@@ -74,6 +74,20 @@ class ConfigureAVCodingCommand:
 
 
 # =============================================================================
+# Observability Commands
+# =============================================================================
+
+
+@dataclass(frozen=True)
+class ConfigureObservabilityCommand:
+    """Command to configure observability settings."""
+
+    log_level: str
+    enable_file_logging: bool
+    enable_telemetry: bool
+
+
+# =============================================================================
 # Cloud Sync Commands
 # =============================================================================
 

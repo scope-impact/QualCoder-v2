@@ -27,6 +27,8 @@ QualCoder is a free, open-source qualitative data analysis tool that helps resea
 
 5. **[Version Control](version-control.md)** — View history, compare changes, and restore previous states.
 
+6. **[Observability](observability.md)** — Configure logging levels, file logging, and telemetry metrics.
+
 ## Features Overview
 
 | Feature | Human | AI Agent |
