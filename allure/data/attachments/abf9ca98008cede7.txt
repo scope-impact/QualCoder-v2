@@ -1,0 +1,1 @@
+ERROR    qualcoder.projects.core:close_project.py:52 close_project: no project is currently open

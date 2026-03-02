@@ -1,0 +1,2 @@
+ERROR    qualcoder.projects.core:create_project.py:98 create_project: DB creation failed for path=/tmp/pytest-of-runner/pytest-0/popen-gw0/test_create_project_existing_f0/existing_project.qda, error=Database file already exists: /tmp/pytest-of-runner/pytest-0/popen-gw0/test_create_project_existing_f0/existing_project.qda
+ERROR    qualcoder.projects.core:close_project.py:52 close_project: no project is currently open
