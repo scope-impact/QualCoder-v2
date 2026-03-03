@@ -120,3 +120,69 @@ class CodedHTMLExported(DomainEvent):
             source_count=source_count,
             segment_count=segment_count,
         )
+
+
+@dataclass(frozen=True)
+class RefiQdaExported(DomainEvent):
+    """Project exported in REFI-QDA format."""
+
+    event_type: ClassVar[str] = "exchange.refi_qda_exported"
+
+    output_path: str
+    code_count: int
+    source_count: int
+    segment_count: int
+
+    @classmethod
+    def create(
+        cls, output_path: str, code_count: int, source_count: int, segment_count: int,
+    ) -> RefiQdaExported:
+        return cls(
+            event_id=cls._generate_id(), occurred_at=cls._now(),
+            output_path=output_path, code_count=code_count,
+            source_count=source_count, segment_count=segment_count,
+        )
+
+
+@dataclass(frozen=True)
+class RefiQdaImported(DomainEvent):
+    """Project imported from REFI-QDA format."""
+
+    event_type: ClassVar[str] = "exchange.refi_qda_imported"
+
+    source_path: str
+    codes_created: int
+    sources_created: int
+    segments_created: int
+
+    @classmethod
+    def create(
+        cls, source_path: str, codes_created: int, sources_created: int, segments_created: int,
+    ) -> RefiQdaImported:
+        return cls(
+            event_id=cls._generate_id(), occurred_at=cls._now(),
+            source_path=source_path, codes_created=codes_created,
+            sources_created=sources_created, segments_created=segments_created,
+        )
+
+
+@dataclass(frozen=True)
+class RqdaImported(DomainEvent):
+    """Project imported from RQDA format."""
+
+    event_type: ClassVar[str] = "exchange.rqda_imported"
+
+    source_path: str
+    codes_created: int
+    sources_created: int
+    segments_created: int
+
+    @classmethod
+    def create(
+        cls, source_path: str, codes_created: int, sources_created: int, segments_created: int,
+    ) -> RqdaImported:
+        return cls(
+            event_id=cls._generate_id(), occurred_at=cls._now(),
+            source_path=source_path, codes_created=codes_created,
+            sources_created=sources_created, segments_created=segments_created,
+        )

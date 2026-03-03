@@ -38,3 +38,25 @@ class ExportCodedHTMLCommand:
 
     output_path: str
     source_id: str | None = None  # None = all sources
+
+
+@dataclass(frozen=True)
+class ExportRefiQdaCommand:
+    """Command to export project in REFI-QDA format (.qdpx)."""
+
+    output_path: str
+    project_name: str = "QualCoder Project"
+
+
+@dataclass(frozen=True)
+class ImportRefiQdaCommand:
+    """Command to import a REFI-QDA project (.qdpx)."""
+
+    source_path: str
+
+
+@dataclass(frozen=True)
+class ImportRqdaCommand:
+    """Command to import an RQDA project (.rqda SQLite database)."""
+
+    source_path: str
