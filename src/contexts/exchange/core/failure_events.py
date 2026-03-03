@@ -69,10 +69,30 @@ class ImportFailed(FailureEvent):
             suggestions=(f"Check that the file exists: {path}",),
         )
 
+    @classmethod
+    def empty_csv(cls) -> ImportFailed:
+        return cls(
+            event_id=cls._generate_id(),
+            occurred_at=cls._now(),
+            event_type="CSV_NOT_IMPORTED/EMPTY",
+            suggestions=("Provide a CSV file with a header row and data rows",),
+        )
+
+    @classmethod
+    def csv_file_not_found(cls, path: str) -> ImportFailed:
+        return cls(
+            event_id=cls._generate_id(),
+            occurred_at=cls._now(),
+            event_type="CSV_NOT_IMPORTED/FILE_NOT_FOUND",
+            suggestions=(f"Check that the file exists: {path}",),
+        )
+
     @property
     def message(self) -> str:
         if "EMPTY_LIST" in self.event_type:
             return "Cannot import code list: file contains no code names"
+        if "EMPTY" in self.event_type and "CSV" in self.event_type:
+            return "Cannot import CSV: file is empty or has no data rows"
         if "FILE_NOT_FOUND" in self.event_type:
-            return "Cannot import code list: file not found"
+            return "Cannot import: file not found"
         return super().message

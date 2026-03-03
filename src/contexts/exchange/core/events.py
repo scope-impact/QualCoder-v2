@@ -68,3 +68,55 @@ class CodeListImported(DomainEvent):
             codes_skipped=codes_skipped,
             categories_created=categories_created,
         )
+
+
+@dataclass(frozen=True)
+class SurveyCSVImported(DomainEvent):
+    """Survey CSV data was imported successfully."""
+
+    event_type: ClassVar[str] = "exchange.survey_csv_imported"
+
+    source_path: str
+    cases_created: int
+    attributes_per_case: int
+
+    @classmethod
+    def create(
+        cls,
+        source_path: str,
+        cases_created: int,
+        attributes_per_case: int,
+    ) -> SurveyCSVImported:
+        return cls(
+            event_id=cls._generate_id(),
+            occurred_at=cls._now(),
+            source_path=source_path,
+            cases_created=cases_created,
+            attributes_per_case=attributes_per_case,
+        )
+
+
+@dataclass(frozen=True)
+class CodedHTMLExported(DomainEvent):
+    """Coded text was exported as HTML."""
+
+    event_type: ClassVar[str] = "exchange.coded_html_exported"
+
+    output_path: str
+    source_count: int
+    segment_count: int
+
+    @classmethod
+    def create(
+        cls,
+        output_path: str,
+        source_count: int,
+        segment_count: int,
+    ) -> CodedHTMLExported:
+        return cls(
+            event_id=cls._generate_id(),
+            occurred_at=cls._now(),
+            output_path=output_path,
+            source_count=source_count,
+            segment_count=segment_count,
+        )
