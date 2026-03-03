@@ -35,6 +35,15 @@ class ExportFailed(FailureEvent):
             suggestions=("Provide a valid file path", "Ensure the directory exists"),
         )
 
+    @classmethod
+    def no_sources(cls) -> ExportFailed:
+        return cls(
+            event_id=cls._generate_id(),
+            occurred_at=cls._now(),
+            event_type="HTML_NOT_EXPORTED/NO_SOURCES",
+            suggestions=("Import text sources before exporting",),
+        )
+
     @property
     def message(self) -> str:
         """Human-readable error message."""
@@ -42,6 +51,8 @@ class ExportFailed(FailureEvent):
             return "Cannot export codebook: no codes exist in the project"
         if "INVALID_PATH" in self.event_type:
             return "Cannot export codebook: invalid output path"
+        if "NO_SOURCES" in self.event_type:
+            return "Cannot export HTML: no text sources in the project"
         return super().message
 
 
