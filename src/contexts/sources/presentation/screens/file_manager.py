@@ -527,107 +527,50 @@ class FileManagerScreen(QWidget):
         self._exchange_vm = exchange_vm
 
     # =========================================================================
-    # Exchange Import Handlers
+    # Exchange Import/Export Handlers
     # =========================================================================
+
+    def _do_exchange_import(self, title: str, file_filter: str, vm_method: str, success_msg: str) -> None:
+        """Shared logic for all exchange import operations."""
+        path, _ = QFileDialog.getOpenFileName(self, title, "", file_filter)
+        if not path or not self._exchange_vm:
+            return
+        if getattr(self._exchange_vm, vm_method)(path):
+            QMessageBox.information(self, "Import", success_msg)
+            self._load_data()
+        else:
+            QMessageBox.warning(self, "Import Failed", self._exchange_vm.last_error or "Unknown error.")
+
+    def _do_exchange_export(self, title: str, default_name: str, file_filter: str, vm_method: str) -> None:
+        """Shared logic for all exchange export operations."""
+        path, _ = QFileDialog.getSaveFileName(self, title, default_name, file_filter)
+        if not path or not self._exchange_vm:
+            return
+        if getattr(self._exchange_vm, vm_method)(path):
+            QMessageBox.information(self, "Export", f"Exported to:\n{path}")
+        else:
+            QMessageBox.warning(self, "Export Failed", self._exchange_vm.last_error or "Unknown error.")
 
     def _on_import_code_list(self) -> None:
-        """Import a code list from a text file."""
-        path, _ = QFileDialog.getOpenFileName(
-            self, "Import Code List", "", "Text Files (*.txt);;All Files (*)"
-        )
-        if not path or not self._exchange_vm:
-            return
-
-        if self._exchange_vm.import_code_list(path):
-            QMessageBox.information(self, "Import", "Code list imported successfully.")
-            self._load_data()
-        else:
-            QMessageBox.warning(self, "Import Failed", self._exchange_vm.last_error or "Unknown error.")
+        self._do_exchange_import("Import Code List", "Text Files (*.txt);;All Files (*)", "import_code_list", "Code list imported successfully.")
 
     def _on_import_csv(self) -> None:
-        """Import survey data from a CSV file."""
-        path, _ = QFileDialog.getOpenFileName(
-            self, "Import Survey CSV", "", "CSV Files (*.csv);;All Files (*)"
-        )
-        if not path or not self._exchange_vm:
-            return
-
-        if self._exchange_vm.import_survey_csv(path):
-            QMessageBox.information(self, "Import", "Survey data imported successfully.")
-            self._load_data()
-        else:
-            QMessageBox.warning(self, "Import Failed", self._exchange_vm.last_error or "Unknown error.")
+        self._do_exchange_import("Import Survey CSV", "CSV Files (*.csv);;All Files (*)", "import_survey_csv", "Survey data imported successfully.")
 
     def _on_import_refi_qda(self) -> None:
-        """Import a REFI-QDA project."""
-        path, _ = QFileDialog.getOpenFileName(
-            self, "Import REFI-QDA Project", "", "REFI-QDA Files (*.qdpx);;All Files (*)"
-        )
-        if not path or not self._exchange_vm:
-            return
-
-        if self._exchange_vm.import_refi_qda(path):
-            QMessageBox.information(self, "Import", "REFI-QDA project imported successfully.")
-            self._load_data()
-        else:
-            QMessageBox.warning(self, "Import Failed", self._exchange_vm.last_error or "Unknown error.")
+        self._do_exchange_import("Import REFI-QDA Project", "REFI-QDA Files (*.qdpx);;All Files (*)", "import_refi_qda", "REFI-QDA project imported successfully.")
 
     def _on_import_rqda(self) -> None:
-        """Import an RQDA project."""
-        path, _ = QFileDialog.getOpenFileName(
-            self, "Import RQDA Project", "", "RQDA Files (*.rqda);;All Files (*)"
-        )
-        if not path or not self._exchange_vm:
-            return
-
-        if self._exchange_vm.import_rqda(path):
-            QMessageBox.information(self, "Import", "RQDA project imported successfully.")
-            self._load_data()
-        else:
-            QMessageBox.warning(self, "Import Failed", self._exchange_vm.last_error or "Unknown error.")
-
-    # =========================================================================
-    # Exchange Export Handlers
-    # =========================================================================
+        self._do_exchange_import("Import RQDA Project", "RQDA Files (*.rqda);;All Files (*)", "import_rqda", "RQDA project imported successfully.")
 
     def _on_export_codebook(self) -> None:
-        """Export codebook as a text file."""
-        path, _ = QFileDialog.getSaveFileName(
-            self, "Export Codebook", "codebook.txt", "Text Files (*.txt)"
-        )
-        if not path or not self._exchange_vm:
-            return
-
-        if self._exchange_vm.export_codebook(path):
-            QMessageBox.information(self, "Export", f"Codebook exported to:\n{path}")
-        else:
-            QMessageBox.warning(self, "Export Failed", self._exchange_vm.last_error or "Unknown error.")
+        self._do_exchange_export("Export Codebook", "codebook.txt", "Text Files (*.txt)", "export_codebook")
 
     def _on_export_html(self) -> None:
-        """Export coded text as HTML."""
-        path, _ = QFileDialog.getSaveFileName(
-            self, "Export Coded HTML", "coded_text.html", "HTML Files (*.html)"
-        )
-        if not path or not self._exchange_vm:
-            return
-
-        if self._exchange_vm.export_coded_html(path):
-            QMessageBox.information(self, "Export", f"Coded HTML exported to:\n{path}")
-        else:
-            QMessageBox.warning(self, "Export Failed", self._exchange_vm.last_error or "Unknown error.")
+        self._do_exchange_export("Export Coded HTML", "coded_text.html", "HTML Files (*.html)", "export_coded_html")
 
     def _on_export_refi_qda(self) -> None:
-        """Export as a REFI-QDA project."""
-        path, _ = QFileDialog.getSaveFileName(
-            self, "Export REFI-QDA Project", "project.qdpx", "REFI-QDA Files (*.qdpx)"
-        )
-        if not path or not self._exchange_vm:
-            return
-
-        if self._exchange_vm.export_refi_qda(path):
-            QMessageBox.information(self, "Export", f"REFI-QDA project exported to:\n{path}")
-        else:
-            QMessageBox.warning(self, "Export Failed", self._exchange_vm.last_error or "Unknown error.")
+        self._do_exchange_export("Export REFI-QDA Project", "project.qdpx", "REFI-QDA Files (*.qdpx)", "export_refi_qda")
 
     # =========================================================================
     # Helper Methods

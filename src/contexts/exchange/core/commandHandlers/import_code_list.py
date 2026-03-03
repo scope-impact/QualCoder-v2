@@ -12,7 +12,7 @@ from typing import TYPE_CHECKING
 
 from src.contexts.coding.core.commands import CreateCodeCommand
 from src.contexts.coding.core.commandHandlers.create_code import create_code
-from src.contexts.exchange.core.commands import ImportCodeListCommand
+from src.contexts.exchange.core.commands import DEFAULT_IMPORT_COLOR, ImportCodeListCommand
 from src.contexts.exchange.core.events import CodeListImported
 from src.contexts.exchange.core.failure_events import ImportFailed
 from src.contexts.exchange.infra.code_list_parser import parse_code_list
@@ -48,12 +48,12 @@ def import_code_list(
 
     # 1. Read file
     source_path = Path(command.source_path)
-    if not source_path.exists():
+    try:
+        text = source_path.read_text(encoding="utf-8")
+    except FileNotFoundError:
         failure = ImportFailed.file_not_found(command.source_path)
         event_bus.publish(failure)
         return OperationResult.from_failure(failure)
-
-    text = source_path.read_text(encoding="utf-8")
     parsed = parse_code_list(text)
 
     if not parsed.codes and not parsed.categories:
@@ -94,7 +94,7 @@ def import_code_list(
         result = create_code(
             command=CreateCodeCommand(
                 name=parsed_code.name,
-                color="#808080",  # Default grey for imported codes
+                color=DEFAULT_IMPORT_COLOR,
                 category_id=category_id,
             ),
             code_repo=code_repo,

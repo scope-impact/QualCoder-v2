@@ -72,11 +72,11 @@ class ImportFailed(FailureEvent):
         )
 
     @classmethod
-    def file_not_found(cls, path: str) -> ImportFailed:
+    def file_not_found(cls, path: str, format_label: str = "CODE_LIST") -> ImportFailed:
         return cls(
             event_id=cls._generate_id(),
             occurred_at=cls._now(),
-            event_type="CODE_LIST_NOT_IMPORTED/FILE_NOT_FOUND",
+            event_type=f"{format_label}_NOT_IMPORTED/FILE_NOT_FOUND",
             suggestions=(f"Check that the file exists: {path}",),
         )
 

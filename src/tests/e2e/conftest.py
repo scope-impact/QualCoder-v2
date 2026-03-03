@@ -443,3 +443,60 @@ def coding_screen_ready(seeded_app):
     QApplication.processEvents()
 
     return seeded_app
+
+
+# =============================================================================
+# Exchange Test Helpers (shared across import/export E2E tests)
+# =============================================================================
+
+
+@pytest.fixture
+def make_qdpx():
+    """Factory fixture for creating QDPX test archives."""
+    import zipfile
+
+    def _make(tmp_path, xml_content, source_files=None, filename="test.qdpx"):
+        qdpx_path = tmp_path / filename
+        with zipfile.ZipFile(qdpx_path, "w") as zf:
+            zf.writestr("project.qde", xml_content)
+            if source_files:
+                for name, content in source_files.items():
+                    zf.writestr(name, content)
+        return qdpx_path
+
+    return _make
+
+
+@pytest.fixture
+def create_rqda_db():
+    """Factory fixture for creating RQDA test databases with standard schema."""
+    import sqlite3
+
+    def _create(path):
+        conn = sqlite3.connect(str(path))
+        c = conn.cursor()
+        c.execute("""CREATE TABLE source (
+            name TEXT, id INTEGER PRIMARY KEY, file TEXT,
+            memo TEXT, owner TEXT, date TEXT, status INTEGER DEFAULT 1
+        )""")
+        c.execute("""CREATE TABLE freecode (
+            name TEXT, memo TEXT, owner TEXT, date TEXT,
+            id INTEGER PRIMARY KEY, status INTEGER DEFAULT 1, color TEXT
+        )""")
+        c.execute("""CREATE TABLE coding (
+            cid INTEGER, fid INTEGER, seltext TEXT,
+            selfirst INTEGER, selend INTEGER,
+            status INTEGER DEFAULT 1, owner TEXT, date TEXT, memo TEXT
+        )""")
+        c.execute("""CREATE TABLE codecat (
+            name TEXT, cid INTEGER, catid INTEGER,
+            owner TEXT, date TEXT, memo TEXT, status INTEGER DEFAULT 1
+        )""")
+        c.execute("""CREATE TABLE cases (
+            name TEXT, memo TEXT, owner TEXT, date TEXT,
+            id INTEGER PRIMARY KEY, status INTEGER DEFAULT 1
+        )""")
+        conn.commit()
+        return conn, path
+
+    return _create

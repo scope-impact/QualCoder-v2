@@ -8,6 +8,9 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
+#: Default color for imported codes when the source format has no color info.
+DEFAULT_IMPORT_COLOR = "#808080"
+
 
 @dataclass(frozen=True)
 class ExportCodebookCommand:

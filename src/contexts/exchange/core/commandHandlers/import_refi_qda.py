@@ -12,7 +12,7 @@ from typing import TYPE_CHECKING
 
 from src.contexts.coding.core.commands import CreateCodeCommand
 from src.contexts.coding.core.commandHandlers.create_code import create_code
-from src.contexts.coding.core.entities import Code, Color, TextPosition, TextSegment
+from src.contexts.coding.core.entities import Code, TextPosition, TextSegment
 from src.contexts.exchange.core.commands import ImportRefiQdaCommand
 from src.contexts.exchange.core.events import RefiQdaImported
 from src.contexts.exchange.core.failure_events import ImportFailed
@@ -53,13 +53,12 @@ def import_refi_qda(
     logger.debug("import_refi_qda: path=%s", command.source_path)
 
     source_path = Path(command.source_path)
-    if not source_path.exists():
-        failure = ImportFailed.file_not_found(command.source_path)
-        event_bus.publish(failure)
-        return OperationResult.from_failure(failure)
-
     try:
         parsed = read_refi_qda(source_path)
+    except FileNotFoundError:
+        failure = ImportFailed.file_not_found(command.source_path, format_label="REFI_QDA")
+        event_bus.publish(failure)
+        return OperationResult.from_failure(failure)
     except Exception as e:
         logger.error("Failed to parse QDPX: %s", e)
         return OperationResult.fail(
@@ -107,6 +106,7 @@ def import_refi_qda(
 
     # 3. Create sources
     guid_to_source_id: dict[str, SourceId] = {}
+    guid_to_fulltext: dict[str, str] = {}
     sources_created = 0
 
     for parsed_source in parsed.sources:
@@ -119,6 +119,7 @@ def import_refi_qda(
         )
         source_repo.save(source)
         guid_to_source_id[parsed_source.guid] = source_id
+        guid_to_fulltext[parsed_source.guid] = parsed_source.fulltext
         sources_created += 1
 
     # 4. Create segments (codings)
@@ -129,11 +130,8 @@ def import_refi_qda(
         if not code_id or not source_id:
             continue
 
-        # Get selected text from source
-        source = source_repo.get_by_id(source_id)
-        selected_text = ""
-        if source and source.fulltext:
-            selected_text = source.fulltext[coding.start:coding.end]
+        fulltext = guid_to_fulltext.get(coding.source_guid, "")
+        selected_text = fulltext[coding.start:coding.end] if fulltext else ""
 
         segment = TextSegment(
             id=SegmentId.new(),

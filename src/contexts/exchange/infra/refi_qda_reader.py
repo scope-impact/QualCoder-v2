@@ -12,6 +12,8 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 
+from src.contexts.exchange.core.commands import DEFAULT_IMPORT_COLOR
+
 REFI_NS = "urn:QDA-XML:project:1.0"
 
 
@@ -20,7 +22,7 @@ class ParsedCode:
     """A code parsed from REFI-QDA XML."""
     guid: str
     name: str
-    color: str = "#808080"
+    color: str = DEFAULT_IMPORT_COLOR
     category_guid: str | None = None
     memo: str | None = None
 
@@ -146,7 +148,7 @@ def _parse_codes(
         guid = code_el.get("guid", "")
         name = code_el.get("name", "")
         is_codable = code_el.get("isCodable", "true").lower() == "true"
-        color = code_el.get("color", "#808080")
+        color = code_el.get("color", DEFAULT_IMPORT_COLOR)
 
         memo = None
         desc_el = code_el.find(f"{ns}Description")

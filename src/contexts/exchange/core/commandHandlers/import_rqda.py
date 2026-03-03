@@ -53,7 +53,7 @@ def import_rqda(
 
     source_path = Path(command.source_path)
     if not source_path.exists():
-        failure = ImportFailed.file_not_found(command.source_path)
+        failure = ImportFailed.file_not_found(command.source_path, format_label="RQDA")
         event_bus.publish(failure)
         return OperationResult.from_failure(failure)
 

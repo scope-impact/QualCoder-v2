@@ -10,13 +10,15 @@ import sqlite3
 from dataclasses import dataclass, field
 from pathlib import Path
 
+from src.contexts.exchange.core.commands import DEFAULT_IMPORT_COLOR
+
 
 @dataclass(frozen=True)
 class RqdaCode:
     """A code from RQDA database."""
     id: int
     name: str
-    color: str = "#808080"
+    color: str = DEFAULT_IMPORT_COLOR
     memo: str | None = None
 
 
@@ -69,7 +71,7 @@ def read_rqda(db_path: Path | str) -> RqdaParseResult:
             result.codes.append(RqdaCode(
                 id=row["id"],
                 name=row["name"],
-                color=row["color"] or "#808080",
+                color=row["color"] or DEFAULT_IMPORT_COLOR,
                 memo=row["memo"],
             ))
 

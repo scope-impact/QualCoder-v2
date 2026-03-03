@@ -19,6 +19,7 @@ from src.shared import CaseId
 from src.shared.common.operation_result import OperationResult
 
 if TYPE_CHECKING:
+    from src.contexts.cases.core.commandHandlers._state import CaseRepository
     from src.shared.infra.event_bus import EventBus
 
 logger = logging.getLogger("qualcoder.exchange.core")
@@ -26,7 +27,7 @@ logger = logging.getLogger("qualcoder.exchange.core")
 
 def import_survey_csv(
     command: ImportSurveyCSVCommand,
-    case_repo,
+    case_repo: CaseRepository,
     event_bus: EventBus,
 ) -> OperationResult:
     """
@@ -40,12 +41,12 @@ def import_survey_csv(
     logger.debug("import_survey_csv: path=%s", command.source_path)
 
     source_path = Path(command.source_path)
-    if not source_path.exists():
+    try:
+        text = source_path.read_text(encoding="utf-8")
+    except FileNotFoundError:
         failure = ImportFailed.csv_file_not_found(command.source_path)
         event_bus.publish(failure)
         return OperationResult.from_failure(failure)
-
-    text = source_path.read_text(encoding="utf-8")
     parsed = parse_survey_csv(text, name_column=command.name_column)
 
     if not parsed.rows:
