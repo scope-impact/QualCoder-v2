@@ -39,3 +39,32 @@ class CodebookExported(DomainEvent):
             category_count=category_count,
             include_memos=include_memos,
         )
+
+
+@dataclass(frozen=True)
+class CodeListImported(DomainEvent):
+    """A code list was imported successfully."""
+
+    event_type: ClassVar[str] = "exchange.code_list_imported"
+
+    source_path: str
+    codes_created: int
+    codes_skipped: int
+    categories_created: int
+
+    @classmethod
+    def create(
+        cls,
+        source_path: str,
+        codes_created: int,
+        codes_skipped: int,
+        categories_created: int,
+    ) -> CodeListImported:
+        return cls(
+            event_id=cls._generate_id(),
+            occurred_at=cls._now(),
+            source_path=source_path,
+            codes_created=codes_created,
+            codes_skipped=codes_skipped,
+            categories_created=categories_created,
+        )

@@ -43,3 +43,36 @@ class ExportFailed(FailureEvent):
         if "INVALID_PATH" in self.event_type:
             return "Cannot export codebook: invalid output path"
         return super().message
+
+
+@dataclass(frozen=True)
+class ImportFailed(FailureEvent):
+    """An import operation failed."""
+
+    suggestions: tuple[str, ...] = ()
+
+    @classmethod
+    def empty_list(cls) -> ImportFailed:
+        return cls(
+            event_id=cls._generate_id(),
+            occurred_at=cls._now(),
+            event_type="CODE_LIST_NOT_IMPORTED/EMPTY_LIST",
+            suggestions=("Provide a file with at least one code name",),
+        )
+
+    @classmethod
+    def file_not_found(cls, path: str) -> ImportFailed:
+        return cls(
+            event_id=cls._generate_id(),
+            occurred_at=cls._now(),
+            event_type="CODE_LIST_NOT_IMPORTED/FILE_NOT_FOUND",
+            suggestions=(f"Check that the file exists: {path}",),
+        )
+
+    @property
+    def message(self) -> str:
+        if "EMPTY_LIST" in self.event_type:
+            return "Cannot import code list: file contains no code names"
+        if "FILE_NOT_FOUND" in self.event_type:
+            return "Cannot import code list: file not found"
+        return super().message

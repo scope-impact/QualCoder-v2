@@ -15,3 +15,10 @@ class ExportCodebookCommand:
 
     output_path: str
     include_memos: bool = True
+
+
+@dataclass(frozen=True)
+class ImportCodeListCommand:
+    """Command to import codes from a plain-text code list."""
+
+    source_path: str
