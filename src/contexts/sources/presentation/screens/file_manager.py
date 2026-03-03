@@ -53,6 +53,10 @@ from ..pages import FileManagerPage
 logger = logging.getLogger("qualcoder.sources.presentation")
 
 if TYPE_CHECKING:
+    from src.contexts.exchange.presentation.viewmodels.exchange_viewmodel import (
+        ExchangeViewModel,
+    )
+
     from ..viewmodels import FileManagerViewModel
 
 
@@ -96,6 +100,7 @@ class FileManagerScreen(QWidget):
         super().__init__(parent)
         self._colors = colors or get_colors()
         self._viewmodel = viewmodel
+        self._exchange_vm: ExchangeViewModel | None = None
 
         self._setup_ui()
         self._connect_signals()
@@ -143,6 +148,15 @@ class FileManagerScreen(QWidget):
         self._page.rename_folder_requested.connect(self._on_rename_folder)
         self._page.delete_folder_requested.connect(self._on_delete_folder)
         self._page.move_sources_to_folder.connect(self._on_move_sources_to_folder)
+
+        # Exchange actions
+        self._page.import_code_list.connect(self._on_import_code_list)
+        self._page.import_csv.connect(self._on_import_csv)
+        self._page.import_refi_qda.connect(self._on_import_refi_qda)
+        self._page.import_rqda.connect(self._on_import_rqda)
+        self._page.export_codebook.connect(self._on_export_codebook)
+        self._page.export_html.connect(self._on_export_html)
+        self._page.export_refi_qda.connect(self._on_export_refi_qda)
 
     # =========================================================================
     # Data Loading
@@ -503,6 +517,117 @@ class FileManagerScreen(QWidget):
         if self._viewmodel:
             folders = self._viewmodel.get_folders()
             self._page.set_folders(folders)
+
+    # =========================================================================
+    # Exchange ViewModel
+    # =========================================================================
+
+    def set_exchange_viewmodel(self, exchange_vm: ExchangeViewModel) -> None:
+        """Set the exchange viewmodel for import/export operations."""
+        self._exchange_vm = exchange_vm
+
+    # =========================================================================
+    # Exchange Import Handlers
+    # =========================================================================
+
+    def _on_import_code_list(self) -> None:
+        """Import a code list from a text file."""
+        path, _ = QFileDialog.getOpenFileName(
+            self, "Import Code List", "", "Text Files (*.txt);;All Files (*)"
+        )
+        if not path or not self._exchange_vm:
+            return
+
+        if self._exchange_vm.import_code_list(path):
+            QMessageBox.information(self, "Import", "Code list imported successfully.")
+            self._load_data()
+        else:
+            QMessageBox.warning(self, "Import Failed", self._exchange_vm.last_error or "Unknown error.")
+
+    def _on_import_csv(self) -> None:
+        """Import survey data from a CSV file."""
+        path, _ = QFileDialog.getOpenFileName(
+            self, "Import Survey CSV", "", "CSV Files (*.csv);;All Files (*)"
+        )
+        if not path or not self._exchange_vm:
+            return
+
+        if self._exchange_vm.import_survey_csv(path):
+            QMessageBox.information(self, "Import", "Survey data imported successfully.")
+            self._load_data()
+        else:
+            QMessageBox.warning(self, "Import Failed", self._exchange_vm.last_error or "Unknown error.")
+
+    def _on_import_refi_qda(self) -> None:
+        """Import a REFI-QDA project."""
+        path, _ = QFileDialog.getOpenFileName(
+            self, "Import REFI-QDA Project", "", "REFI-QDA Files (*.qdpx);;All Files (*)"
+        )
+        if not path or not self._exchange_vm:
+            return
+
+        if self._exchange_vm.import_refi_qda(path):
+            QMessageBox.information(self, "Import", "REFI-QDA project imported successfully.")
+            self._load_data()
+        else:
+            QMessageBox.warning(self, "Import Failed", self._exchange_vm.last_error or "Unknown error.")
+
+    def _on_import_rqda(self) -> None:
+        """Import an RQDA project."""
+        path, _ = QFileDialog.getOpenFileName(
+            self, "Import RQDA Project", "", "RQDA Files (*.rqda);;All Files (*)"
+        )
+        if not path or not self._exchange_vm:
+            return
+
+        if self._exchange_vm.import_rqda(path):
+            QMessageBox.information(self, "Import", "RQDA project imported successfully.")
+            self._load_data()
+        else:
+            QMessageBox.warning(self, "Import Failed", self._exchange_vm.last_error or "Unknown error.")
+
+    # =========================================================================
+    # Exchange Export Handlers
+    # =========================================================================
+
+    def _on_export_codebook(self) -> None:
+        """Export codebook as a text file."""
+        path, _ = QFileDialog.getSaveFileName(
+            self, "Export Codebook", "codebook.txt", "Text Files (*.txt)"
+        )
+        if not path or not self._exchange_vm:
+            return
+
+        if self._exchange_vm.export_codebook(path):
+            QMessageBox.information(self, "Export", f"Codebook exported to:\n{path}")
+        else:
+            QMessageBox.warning(self, "Export Failed", self._exchange_vm.last_error or "Unknown error.")
+
+    def _on_export_html(self) -> None:
+        """Export coded text as HTML."""
+        path, _ = QFileDialog.getSaveFileName(
+            self, "Export Coded HTML", "coded_text.html", "HTML Files (*.html)"
+        )
+        if not path or not self._exchange_vm:
+            return
+
+        if self._exchange_vm.export_coded_html(path):
+            QMessageBox.information(self, "Export", f"Coded HTML exported to:\n{path}")
+        else:
+            QMessageBox.warning(self, "Export Failed", self._exchange_vm.last_error or "Unknown error.")
+
+    def _on_export_refi_qda(self) -> None:
+        """Export as a REFI-QDA project."""
+        path, _ = QFileDialog.getSaveFileName(
+            self, "Export REFI-QDA Project", "project.qdpx", "REFI-QDA Files (*.qdpx)"
+        )
+        if not path or not self._exchange_vm:
+            return
+
+        if self._exchange_vm.export_refi_qda(path):
+            QMessageBox.information(self, "Export", f"REFI-QDA project exported to:\n{path}")
+        else:
+            QMessageBox.warning(self, "Export Failed", self._exchange_vm.last_error or "Unknown error.")
 
     # =========================================================================
     # Helper Methods

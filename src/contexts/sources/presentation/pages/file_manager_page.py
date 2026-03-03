@@ -89,6 +89,15 @@ class FileManagerPage(QWidget):
     create_text_clicked = Signal()
     export_clicked = Signal()
 
+    # Exchange actions
+    import_code_list = Signal()
+    import_csv = Signal()
+    import_refi_qda = Signal()
+    import_rqda = Signal()
+    export_codebook = Signal()
+    export_html = Signal()
+    export_refi_qda = Signal()
+
     # Table interactions
     source_clicked = Signal(str)
     source_double_clicked = Signal(str)
@@ -196,6 +205,15 @@ class FileManagerPage(QWidget):
         self._toolbar.create_text_clicked.connect(self.create_text_clicked.emit)
         self._toolbar.export_clicked.connect(self.export_clicked.emit)
         self._toolbar.search_changed.connect(self._on_search_changed)
+
+        # Exchange signals
+        self._toolbar.import_code_list.connect(self.import_code_list.emit)
+        self._toolbar.import_csv.connect(self.import_csv.emit)
+        self._toolbar.import_refi_qda.connect(self.import_refi_qda.emit)
+        self._toolbar.import_rqda.connect(self.import_rqda.emit)
+        self._toolbar.export_codebook.connect(self.export_codebook.emit)
+        self._toolbar.export_html.connect(self.export_html.emit)
+        self._toolbar.export_refi_qda.connect(self.export_refi_qda.emit)
 
         # Stats row signals
         self._stats_row.filter_changed.connect(self._on_filter_changed)

@@ -1,7 +1,8 @@
 """
 Exchange ViewModel - E2E Tests
 
-Tests for the ExchangeViewModel which coordinates all import/export operations.
+Tests for the ExchangeViewModel which coordinates all import/export operations,
+and for the FileManagerScreen integration with exchange actions.
 """
 from __future__ import annotations
 
@@ -33,6 +34,16 @@ def exchange_vm(code_repo, category_repo, segment_repo, source_repo, case_repo, 
         case_repo=case_repo,
         event_bus=event_bus,
     )
+
+
+@pytest.fixture
+def file_manager_screen(qapp, exchange_vm):
+    """FileManagerScreen with exchange viewmodel wired."""
+    from src.contexts.sources.presentation import FileManagerScreen
+
+    screen = FileManagerScreen()
+    screen.set_exchange_viewmodel(exchange_vm)
+    return screen
 
 
 @allure.story("QC-039 Exchange ViewModel")
@@ -96,3 +107,34 @@ class TestExchangeViewModel:
         code_repo.save(code)
         exchange_vm.export_codebook(str(tmp_path / "ok.txt"))
         assert exchange_vm.last_error is None
+
+
+@allure.story("QC-039 FileManager Exchange Integration")
+class TestFileManagerExchangeIntegration:
+
+    @allure.title("FileManagerScreen accepts exchange viewmodel")
+    def test_screen_has_exchange_vm(self, file_manager_screen, exchange_vm):
+        assert file_manager_screen._exchange_vm is exchange_vm
+
+    @allure.title("Toolbar has import dropdown menu")
+    def test_toolbar_import_menu(self, file_manager_screen):
+        toolbar = file_manager_screen._page.toolbar
+        menu = toolbar._import_btn.menu()
+        assert menu is not None
+        actions = [a.text() for a in menu.actions() if not a.isSeparator()]
+        assert "Source Files..." in actions
+        assert "Code List (.txt)..." in actions
+        assert "Survey CSV (.csv)..." in actions
+        assert "REFI-QDA Project (.qdpx)..." in actions
+        assert "RQDA Project (.rqda)..." in actions
+
+    @allure.title("Toolbar has export dropdown menu")
+    def test_toolbar_export_menu(self, file_manager_screen):
+        toolbar = file_manager_screen._page.toolbar
+        menu = toolbar._export_btn.menu()
+        assert menu is not None
+        actions = [a.text() for a in menu.actions() if not a.isSeparator()]
+        assert "Selected Sources..." in actions
+        assert "Codebook (.txt)..." in actions
+        assert "Coded HTML (.html)..." in actions
+        assert "REFI-QDA Project (.qdpx)..." in actions

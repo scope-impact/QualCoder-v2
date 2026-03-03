@@ -16,7 +16,7 @@ Addresses UX-004 from UX_TECH_DEBT.md:
 """
 
 from PySide6.QtCore import Qt, Signal
-from PySide6.QtWidgets import QFrame, QHBoxLayout
+from PySide6.QtWidgets import QFrame, QHBoxLayout, QMenu
 
 from design_system import ColorPalette, get_colors
 from design_system.components import Button
@@ -29,11 +29,18 @@ class FileManagerToolbar(QFrame):
     Toolbar for File Manager screen with actions and search.
 
     Signals:
-        import_clicked: User wants to import files
+        import_clicked: User wants to import source files
         link_clicked: User wants to link external files
         create_text_clicked: User wants to create a new text document
-        export_clicked: User wants to export files
+        export_clicked: User wants to export selected source files
         search_changed(str): Search text changed
+        import_code_list: Import code list from text file
+        import_csv: Import survey data from CSV
+        import_refi_qda: Import REFI-QDA project
+        import_rqda: Import RQDA project
+        export_codebook: Export codebook as text
+        export_html: Export coded text as HTML
+        export_refi_qda: Export as REFI-QDA project
     """
 
     import_clicked = Signal()
@@ -41,6 +48,15 @@ class FileManagerToolbar(QFrame):
     create_text_clicked = Signal()
     export_clicked = Signal()
     search_changed = Signal(str)
+
+    # Exchange signals
+    import_code_list = Signal()
+    import_csv = Signal()
+    import_refi_qda = Signal()
+    import_rqda = Signal()
+    export_codebook = Signal()
+    export_html = Signal()
+    export_refi_qda = Signal()
 
     def __init__(self, colors: ColorPalette = None, parent=None):
         super().__init__(parent)
@@ -62,12 +78,21 @@ class FileManagerToolbar(QFrame):
         layout.setSpacing(SPACING.md)
 
         # Left side: Action buttons
+
+        # Import button with dropdown menu
         self._import_btn = self._create_button(
-            "Import Files",
+            "Import",
             "mdi6.file-import-outline",
             variant="primary",
         )
-        self._import_btn.clicked.connect(self.import_clicked.emit)
+        self._import_menu = QMenu(self._import_btn)
+        self._import_menu.addAction("Source Files...", self.import_clicked.emit)
+        self._import_menu.addSeparator()
+        self._import_menu.addAction("Code List (.txt)...", self.import_code_list.emit)
+        self._import_menu.addAction("Survey CSV (.csv)...", self.import_csv.emit)
+        self._import_menu.addAction("REFI-QDA Project (.qdpx)...", self.import_refi_qda.emit)
+        self._import_menu.addAction("RQDA Project (.rqda)...", self.import_rqda.emit)
+        self._import_btn.setMenu(self._import_menu)
         layout.addWidget(self._import_btn)
 
         self._link_btn = self._create_button(
@@ -86,12 +111,19 @@ class FileManagerToolbar(QFrame):
         self._create_text_btn.clicked.connect(self.create_text_clicked.emit)
         layout.addWidget(self._create_text_btn)
 
+        # Export button with dropdown menu
         self._export_btn = self._create_button(
             "Export",
             "mdi6.export-variant",
             variant="secondary",
         )
-        self._export_btn.clicked.connect(self.export_clicked.emit)
+        self._export_menu = QMenu(self._export_btn)
+        self._export_menu.addAction("Selected Sources...", self.export_clicked.emit)
+        self._export_menu.addSeparator()
+        self._export_menu.addAction("Codebook (.txt)...", self.export_codebook.emit)
+        self._export_menu.addAction("Coded HTML (.html)...", self.export_html.emit)
+        self._export_menu.addAction("REFI-QDA Project (.qdpx)...", self.export_refi_qda.emit)
+        self._export_btn.setMenu(self._export_menu)
         layout.addWidget(self._export_btn)
 
         # Spacer
