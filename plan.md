@@ -1,336 +1,358 @@
-# Plan: Structured Logging + OpenTelemetry Metrics
+# QC-039: Import/Export Formats — Implementation Plan
 
 ## Overview
 
-Two complementary initiatives:
-1. **Structured Logging** — Add thorough `debug`, `info`, and `error` logs across the codebase using Python's `logging` module with a centralized configuration
-2. **OTEL Metrics** — Instrument with OpenTelemetry counters, histograms, and gauges for observability
+Enable researchers to exchange projects and data with other QDA tools and formats.
+This epic covers 7 subtasks (039.01–039.07) plus 3 agent-facing ACs (#8–#10).
 
-The codebase already has OTEL tracing (spans + SQLAlchemy instrumentation) in `src/shared/infra/telemetry.py`. This plan extends it with **metrics** and adds **comprehensive logging**.
-
----
-
-## Part 1: Centralized Logging Setup
-
-### Step 1.1 — Create `src/shared/infra/logging_config.py`
-
-Centralized logging configuration module:
-
-```python
-"""Centralized logging configuration for QualCoder v2."""
-import logging
-import sys
-from pathlib import Path
-
-def configure_logging(
-    level: str = "INFO",
-    log_file: Path | None = None,
-    enable_console: bool = True,
-) -> None:
-    """Configure root logger with consistent formatting."""
-    root = logging.getLogger("qualcoder")
-    root.setLevel(getattr(logging, level.upper(), logging.INFO))
-
-    formatter = logging.Formatter(
-        "%(asctime)s.%(msecs)03d %(levelname)-5s [%(name)s] %(message)s",
-        datefmt="%H:%M:%S",
-    )
-
-    if enable_console:
-        console = logging.StreamHandler(sys.stderr)
-        console.setFormatter(formatter)
-        root.addHandler(console)
-
-    if log_file:
-        log_file.parent.mkdir(parents=True, exist_ok=True)
-        file_handler = logging.FileHandler(log_file)
-        file_handler.setFormatter(formatter)
-        root.addHandler(file_handler)
-```
-
-All module loggers will use `logging.getLogger("qualcoder.<context>.<layer>")` naming:
-- `qualcoder.coding.core` — coding domain logic
-- `qualcoder.coding.infra` — coding repositories
-- `qualcoder.sources.presentation` — sources UI
-- `qualcoder.shared.event_bus` — event bus
-- `qualcoder.shared.signal_bridge` — signal bridges
-- `qualcoder.mcp` — MCP server (already exists)
-
-### Step 1.2 — Call `configure_logging()` in `src/main.py`
-
-Add before `init_telemetry()`:
-```python
-from src.shared.infra.logging_config import configure_logging
-configure_logging(level="DEBUG" if os.environ.get("QUALCODER_DEV") else "INFO")
-```
-
-### Step 1.3 — Add logging to each layer
-
-#### A. Core Layer (Command Handlers) — 14 files in coding + others
-
-Each command handler gets `logger = logging.getLogger("qualcoder.<context>.core")` with:
-- **DEBUG**: Input parameters, state snapshot size, derived event type
-- **INFO**: Successful operation with entity ID
-- **ERROR**: Failure events with error code
-
-Example for `create_code.py`:
-```python
-logger = logging.getLogger("qualcoder.coding.core")
-
-def create_code(...) -> OperationResult:
-    logger.debug("create_code called: name=%s, color=%s", command.name, command.color)
-    ...
-    if isinstance(result, FailureEvent):
-        logger.error("create_code failed: %s", result.error_code)
-        ...
-    logger.info("Code created: id=%s, name=%s", code.id.value, code.name)
-    ...
-```
-
-Files to instrument:
-- `src/contexts/coding/core/commandHandlers/` — all 13 handler files
-- `src/contexts/cases/core/commandHandlers/` — all handler files
-- `src/contexts/sources/core/commandHandlers/` — all handler files
-- `src/contexts/projects/core/commandHandlers/` — all handler files
-- `src/contexts/folders/core/commandHandlers/` — all handler files
-
-#### B. Infrastructure Layer (Repositories)
-
-Each repository gets `logger = logging.getLogger("qualcoder.<context>.infra")` with:
-- **DEBUG**: SQL operation type, entity ID, row counts
-- **ERROR**: Database exceptions
-
-Files to instrument:
-- `src/contexts/coding/infra/repositories.py`
-- `src/contexts/sources/infra/repositories.py`
-- `src/contexts/cases/infra/repositories.py`
-- `src/contexts/folders/infra/repositories.py`
-- `src/contexts/projects/infra/project_repository.py`
-- `src/contexts/settings/infra/` repositories
-
-#### C. Shared Infrastructure
-
-- **EventBus** (`event_bus.py`): DEBUG on publish (event type, handler count), ERROR on handler exceptions (replace `warnings.warn` with `logger.error`)
-- **SignalBridge** (`signal_bridge/base.py`): DEBUG on dispatch, WARN on conversion errors (replace `warnings.warn`)
-- **Lifecycle** (`lifecycle.py`): INFO on open/close, ERROR on failures
-- **MCP Server** (`mcp_server.py`): Already has logging — enhance with DEBUG for tool schema loading
-- **Sync Engine** (`sync/engine.py`): Already has logging — verify coverage
-- **Cascade Registry** (`cascade_registry.py`): Already has logging — verify coverage
-
-#### D. Presentation Layer
-
-- **ViewModels**: DEBUG on user actions (load, create, delete), INFO on state changes
-- **Screens**: Replace `print()` statements (~30 occurrences) with proper logger calls
-
-Files with `print()` to replace:
-- `src/contexts/sources/presentation/screens/file_manager.py` (6 prints)
-- `src/contexts/cases/presentation/screens/case_manager.py` (7 prints)
-- `src/contexts/sources/presentation/pages/file_manager_page.py` (10 prints — demo `__main__` block, OK to keep)
-- `src/contexts/coding/presentation/screens/text_coding.py` (6 prints)
-
-#### E. Interface Layer (MCP Handlers)
-
-- DEBUG on tool input args
-- INFO on tool result (success/fail)
-- ERROR on exceptions
+**Architecture decision**: Create a new **`exchange`** bounded context (vertical slice)
+under `src/contexts/exchange/` rather than scattering import/export logic across
+existing contexts. Exchange operations are a distinct concern — they read from
+multiple contexts to export, and write to multiple contexts to import.
 
 ---
 
-## Part 2: OpenTelemetry Metrics Instrumentation
+## New Bounded Context: `exchange`
 
-### Step 2.1 — Extend `src/shared/infra/telemetry.py`
-
-Add `MeterProvider` initialization alongside existing `TracerProvider`:
-
-```python
-from opentelemetry import metrics
-from opentelemetry.sdk.metrics import MeterProvider
-from opentelemetry.sdk.metrics.export import (
-    ConsoleMetricExporter,
-    PeriodicExportingMetricReader,
-)
-
-def init_telemetry(...):
-    # ... existing tracing setup ...
-
-    # Metrics setup
-    metric_readers = []
-    if _is_dev_mode():
-        # Export metrics to console every 30s in dev mode
-        console_reader = PeriodicExportingMetricReader(
-            ConsoleMetricExporter(),
-            export_interval_millis=30_000,
-        )
-        metric_readers.append(console_reader)
-
-    if log_file:
-        file_reader = PeriodicExportingMetricReader(
-            FileMetricExporter(log_file.with_suffix(".metrics.jsonl")),
-            export_interval_millis=30_000,
-        )
-        metric_readers.append(file_reader)
-
-    meter_provider = MeterProvider(
-        resource=resource,
-        metric_readers=metric_readers,
-    )
-    metrics.set_meter_provider(meter_provider)
 ```
-
-Add `FileMetricExporter` class (similar pattern to existing `FileSpanExporter`).
-
-Add helper function:
-```python
-def get_meter(name: str) -> metrics.Meter:
-    """Get a meter for the given component name."""
-    return metrics.get_meter(name)
+src/contexts/exchange/
+├── core/
+│   ├── __init__.py
+│   ├── entities.py            # ExchangeFormat enum, ImportManifest, ExportManifest
+│   ├── events.py              # ProjectExported, ProjectImported, CodebookExported, etc.
+│   ├── failure_events.py      # ImportFailed, ExportFailed (with error_code + suggestions)
+│   ├── invariants.py          # is_valid_qdpx(), is_valid_rqda_db(), is_valid_csv()
+│   ├── derivers.py            # derive_import_result(), derive_export_format()
+│   └── commandHandlers/
+│       ├── __init__.py
+│       ├── export_refi_qda.py       # QC-039.01
+│       ├── import_refi_qda.py       # QC-039.02
+│       ├── import_rqda.py           # QC-039.03
+│       ├── export_codebook.py       # QC-039.04
+│       ├── export_coded_html.py     # QC-039.05
+│       ├── import_survey_csv.py     # QC-039.06
+│       └── import_code_list.py      # QC-039.07
+├── infra/
+│   ├── __init__.py
+│   ├── refi_qda_writer.py    # XML generation + ZIP packaging (.qdpx)
+│   ├── refi_qda_reader.py    # XML parsing + ZIP extraction
+│   ├── rqda_reader.py        # SQLite reader for RQDA databases
+│   ├── codebook_writer.py    # ODT/text codebook generator
+│   ├── html_writer.py        # HTML export with code highlighting
+│   ├── csv_reader.py         # CSV survey data parser
+│   └── code_list_reader.py   # Plain text code list parser (indentation → hierarchy)
+├── interface/
+│   ├── __init__.py
+│   ├── mcp_tools.py          # MCP tool definitions for agent access (AC #8–#10)
+│   └── signal_bridge.py      # ExchangeSignalBridge (optional progress signals)
+└── presentation/
+    ├── __init__.py
+    ├── viewmodels/
+    │   └── exchange_viewmodel.py  # UI state for import/export operations
+    ├── dialogs/
+    │   ├── export_dialog.py       # Format selection + options
+    │   └── import_dialog.py       # File selection + preview + mapping
+    └── screens/                   # (Optional, may not need a dedicated screen)
 ```
-
-### Step 2.2 — Command Handler Metrics
-
-New file: `src/shared/infra/metrics.py` (shared metric instruments)
-
-```python
-"""Application-wide OTEL metric instruments."""
-from opentelemetry import metrics
-
-meter = metrics.get_meter("qualcoder")
-
-# Command execution metrics
-command_counter = meter.create_counter(
-    "qualcoder.commands.total",
-    description="Total command handler invocations",
-)
-
-command_duration = meter.create_histogram(
-    "qualcoder.commands.duration_ms",
-    unit="ms",
-    description="Command handler execution duration",
-)
-
-command_failures = meter.create_counter(
-    "qualcoder.commands.failures",
-    description="Failed command handler invocations",
-)
-```
-
-Add a `@metered_command` decorator:
-```python
-def metered_command(command_name: str):
-    """Decorator to add metrics to command handlers."""
-    def decorator(func):
-        @functools.wraps(func)
-        def wrapper(*args, **kwargs):
-            start = time.perf_counter()
-            try:
-                result = func(*args, **kwargs)
-                attrs = {"command": command_name}
-                if hasattr(result, "is_success"):
-                    attrs["success"] = str(result.is_success)
-                    if not result.is_success:
-                        command_failures.add(1, attrs)
-                command_counter.add(1, attrs)
-                return result
-            except Exception:
-                command_failures.add(1, {"command": command_name})
-                command_counter.add(1, {"command": command_name, "success": "False"})
-                raise
-            finally:
-                elapsed = (time.perf_counter() - start) * 1000
-                command_duration.record(elapsed, {"command": command_name})
-        return wrapper
-    return decorator
-```
-
-Apply to all command handler functions.
-
-### Step 2.3 — Event Bus Metrics
-
-In `event_bus.py`, add:
-
-```python
-from src.shared.infra.metrics import (
-    events_published,
-    event_handler_duration,
-    event_handler_errors,
-)
-```
-
-Metric instruments:
-- `qualcoder.events.published` — Counter (attrs: event_type)
-- `qualcoder.events.handler_duration_ms` — Histogram (attrs: event_type)
-- `qualcoder.events.handler_errors` — Counter (attrs: event_type)
-
-### Step 2.4 — Repository Metrics
-
-Metric instruments:
-- `qualcoder.db.operations` — Counter (attrs: operation=[get, save, delete, list], context, entity)
-- `qualcoder.db.operation_duration_ms` — Histogram (attrs: same)
-
-Add a `@metered_repo` decorator or instrument in the repository base pattern.
-
-### Step 2.5 — MCP Server Metrics
-
-Metric instruments (alongside existing `_stats` dict):
-- `qualcoder.mcp.requests` — Counter (attrs: method, path)
-- `qualcoder.mcp.tool_calls` — Counter (attrs: tool_name, success)
-- `qualcoder.mcp.tool_duration_ms` — Histogram (attrs: tool_name)
-- `qualcoder.mcp.errors` — Counter (attrs: tool_name)
-
-### Step 2.6 — Signal Bridge Metrics
-
-Metric instruments:
-- `qualcoder.signals.emitted` — Counter (attrs: context, event_type)
-- `qualcoder.signals.queue_depth` — Histogram (attrs: context)
-- `qualcoder.signals.dispatch_errors` — Counter (attrs: context, event_type)
-
-### Step 2.7 — Application Lifecycle Gauges
-
-- `qualcoder.project.open` — UpDownCounter (1 on open, -1 on close)
-- `qualcoder.contexts.active` — Gauge (number of active bounded contexts)
-- `qualcoder.sync.pending_changes` — Gauge (pending sync changes)
 
 ---
 
-## Part 3: Dependencies
+## Implementation Phases
 
-### Add to `pyproject.toml`:
-```toml
-"opentelemetry-exporter-otlp-proto-grpc>=1.39.1",  # For production OTLP export
+### Phase 1: Foundation (Core + Infra scaffolding)
+
+**Goal**: Set up the exchange context, entities, events, and wire into AppContext.
+
+#### Step 1.1: Domain entities and types
+- `ExchangeFormat` enum: `REFI_QDA`, `RQDA`, `CODEBOOK_ODT`, `CODED_HTML`, `SURVEY_CSV`, `CODE_LIST_TXT`
+- `ImportManifest` frozen dataclass: summary of what will be imported (codes, sources, cases counts)
+- `ExportManifest` frozen dataclass: summary of what was exported
+- Commands: `ExportRefiQdaCommand`, `ImportRefiQdaCommand`, etc.
+
+#### Step 1.2: Domain events
+- Success events: `ProjectExported`, `ProjectImported`, `CodebookExported`, `CodedHtmlExported`, `SurveyDataImported`, `CodeListImported`
+- Failure events: `ExportFailed`, `ImportFailed` with `error_code` + `suggestions`
+- All events follow existing `DomainEvent` base class pattern with `ClassVar[str]` event_type
+
+#### Step 1.3: Wire into AppContext
+- Add `ExchangeContext` to `bounded_contexts.py` — holds refs to all context repos (read-only for export, write-through command handlers for import)
+- Register in `AppContext` as `exchange_context`
+- No new DB tables needed (exchange reads/writes existing tables via existing repos)
+
+---
+
+### Phase 2: Simplest Export First — QC-039.04 Export Codebook
+
+**Rationale**: Codebook export is read-only and the simplest format. Proves the
+architecture without touching any import (write) path.
+
+#### Step 2.1: `codebook_writer.py` (infra)
+- Read all codes + categories from `CodeRepository` and `CategoryRepository`
+- Generate ODT using `python-docx` or plain text/markdown
+- Include: code name, color swatch, description/memo, category hierarchy
+- Optionally include: memo text
+
+#### Step 2.2: `export_codebook.py` command handler
+- Command: `ExportCodebookCommand(output_path: str, include_memos: bool)`
+- Load state from repos (codes, categories)
+- Call deriver to validate (at least 1 code exists)
+- Write via `codebook_writer`
+- Publish `CodebookExported` event
+- Return `OperationResult` with export manifest
+
+#### Step 2.3: E2E test `test_export_codebook_e2e.py`
+- Create codes + categories in test DB
+- Export codebook
+- Verify file exists and contains expected code names
+
+---
+
+### Phase 3: QC-039.07 Import Code List
+
+**Rationale**: Second simplest — text parsing + writing codes via existing
+`create_code` command handler. Validates the import path.
+
+#### Step 3.1: `code_list_reader.py` (infra)
+- Parse plain text where each line is a code name
+- Indentation (2 or 4 spaces, or tab) creates parent category
+- Optional: lines starting with `#` are comments
+- Return: list of `(name, parent_category_name, depth)` tuples
+
+#### Step 3.2: `import_code_list.py` command handler
+- Command: `ImportCodeListCommand(file_path: str, auto_color: bool)`
+- Parse file via reader
+- For each category level: call `create_category` command handler
+- For each code: call `create_code` command handler
+- Auto-assign colors from a palette if `auto_color=True`
+- Publish `CodeListImported` event with count
+- Return `OperationResult`
+
+#### Step 3.3: E2E test
+
+---
+
+### Phase 4: QC-039.06 Import Survey CSV
+
+#### Step 4.1: `csv_reader.py` (infra)
+- Read CSV with headers
+- First column = case identifier (maps to Case.name)
+- Other columns = attributes (auto-detect type: text/number/date/boolean)
+- Return: list of `(case_name, attributes_dict)` tuples
+
+#### Step 4.2: `import_survey_csv.py` command handler
+- Command: `ImportSurveyCommand(file_path: str, case_column: str)`
+- Parse CSV
+- For each row: create/update case via `create_case` + `set_attribute` command handlers
+- Publish `SurveyDataImported` event
+- Return `OperationResult` with import manifest
+
+#### Step 4.3: E2E test
+
+---
+
+### Phase 5: QC-039.05 Export Coded Text as HTML
+
+#### Step 5.1: `html_writer.py` (infra)
+- Read source text + segments + codes
+- Generate HTML with:
+  - Inline `<span>` tags with code color as background
+  - CSS for code legend
+  - Tooltip showing code name on hover
+  - Media links as `<a>` tags
+- Self-contained HTML file (embedded CSS, no external deps)
+
+#### Step 5.2: `export_coded_html.py` command handler
+- Command: `ExportCodedHtmlCommand(source_ids: list[str], output_path: str)`
+- Load sources, segments, codes
+- Generate HTML via writer
+- Publish `CodedHtmlExported` event
+- Return `OperationResult`
+
+#### Step 5.3: E2E test
+
+---
+
+### Phase 6: QC-039.01 Export REFI-QDA Project
+
+**REFI-QDA format summary**:
+- `.qdpx` file = ZIP archive containing:
+  - `project.qde` — XML file following REFI-QDA 1.0 schema
+  - `sources/` — source files (text, media)
+- XML structure:
+  - `<Project>` root element
+  - `<Users>` / `<User>`
+  - `<CodeBook>` / `<Codes>` / `<Code>` (nested for hierarchy)
+  - `<Sources>` / `<TextSource>` / `<PDFSource>` / etc.
+  - `<Cases>` / `<Case>` with variable refs
+  - `<Sets>` for groupings
+  - `<Coding>` elements linking codes to source positions
+
+#### Step 6.1: `refi_qda_writer.py` (infra)
+- Build XML tree using `xml.etree.ElementTree` (stdlib)
+- Map QualCoder entities → REFI-QDA XML elements:
+  - `Code` → `<Code>` with `guid`, `name`, `color` (as `isCodable="true"`)
+  - `Category` → nested `<Code isCodable="false">` (REFI-QDA uses Code for both)
+  - `TextSegment` → `<Coding>` with `<CodeRef>` and text range
+  - `Source` → `<TextSource>` with `<PlainTextContent>` or file reference
+  - `Case` → `<Case>` with `<VariableRef>` for attributes
+- Package into ZIP as `.qdpx`
+
+#### Step 6.2: `export_refi_qda.py` command handler
+- Command: `ExportRefiQdaCommand(output_path: str, include_sources: bool)`
+- Load ALL project data from all repos
+- Generate via writer
+- Publish `ProjectExported` event
+- Return `OperationResult`
+
+#### Step 6.3: E2E test — round-trip validation
+
+---
+
+### Phase 7: QC-039.02 Import REFI-QDA Project
+
+#### Step 7.1: `refi_qda_reader.py` (infra)
+- Extract ZIP
+- Parse `project.qde` XML
+- Map REFI-QDA elements → QualCoder domain commands:
+  - `<Code isCodable="true">` → `CreateCodeCommand`
+  - `<Code isCodable="false">` → `CreateCategoryCommand`
+  - `<TextSource>` → `ImportFileSourceCommand` or `AddTextSourceCommand`
+  - `<Coding>` → `ApplyCodeCommand`
+  - `<Case>` → `CreateCaseCommand` + `SetAttributeCommand`
+- Return: list of commands to execute (preview/dry-run capability)
+
+#### Step 7.2: `import_refi_qda.py` command handler
+- Command: `ImportRefiQdaCommand(file_path: str, merge_strategy: str)`
+  - `merge_strategy`: "replace" | "merge" | "skip_duplicates"
+- Parse QDPX via reader
+- Execute commands in dependency order:
+  1. Categories (parent-first)
+  2. Codes (with category refs)
+  3. Sources (extract files)
+  4. Segments/Codings
+  5. Cases + attributes
+- All via existing command handlers (ensures events are published → UI updates)
+- Publish `ProjectImported` event
+- Return `OperationResult` with import manifest
+
+#### Step 7.3: E2E test — import a test .qdpx fixture, verify data
+
+---
+
+### Phase 8: QC-039.03 Import RQDA Project
+
+#### Step 8.1: `rqda_reader.py` (infra)
+- RQDA uses SQLite database with tables:
+  - `source` — text documents
+  - `coding` — code applications (start/end positions)
+  - `freecode` — code definitions
+  - `codecat` — code categories
+  - `caselinkage` — case-source links
+  - `cases` — case definitions
+  - `attributes` — case attributes
+- Read via `sqlite3` module (stdlib)
+- Map to QualCoder domain commands (same pattern as REFI-QDA)
+
+#### Step 8.2: `import_rqda.py` command handler
+- Command: `ImportRqdaCommand(file_path: str)`
+- Parse RQDA DB via reader
+- Execute domain commands in order
+- Publish `ProjectImported` event
+- Return `OperationResult`
+
+#### Step 8.3: E2E test
+
+---
+
+### Phase 9: MCP Tools for Agent Access (AC #8–#10)
+
+#### Step 9.1: MCP tool definitions (`mcp_tools.py`)
+- `suggest_export_format` — AC #8: given use case description, recommend format
+- `export_data` — AC #9: export in requested format
+- `import_from_text` — AC #10: import code list or data from text
+
+#### Step 9.2: MCP handlers
+- All handlers delegate to command handlers (standard pattern)
+- `suggest_export_format` is a query (pure logic, no side effects)
+- `export_data` calls appropriate export command handler
+- `import_from_text` creates temp file, calls appropriate import command handler
+
+#### Step 9.3: Register in `MCPServerManager`
+
+---
+
+### Phase 10: Presentation Layer (UI)
+
+#### Step 10.1: Import/Export dialogs
+- `ExportDialog`: format dropdown, options checkboxes, output path picker
+- `ImportDialog`: file picker, format auto-detection, preview panel, merge strategy
+
+#### Step 10.2: Wire into AppShell
+- Add "Import/Export" to menu or as toolbar actions
+- Wire to `ExchangeViewModel`
+- Connect to existing signal bridges for progress updates
+
+#### Step 10.3: ViewModel
+- `ExchangeViewModel` with methods:
+  - `export(format, options)` → delegates to command handler
+  - `import_file(path)` → auto-detect format, show preview, delegate
+  - `get_supported_formats()` → read-only query
+
+---
+
+## Dependency Order (Build Sequence)
+
+```
+Phase 1 (Foundation)
+  └─> Phase 2 (Export Codebook) — simplest, proves read path
+  └─> Phase 3 (Import Code List) — simplest import, proves write path
+  └─> Phase 4 (Import Survey CSV) — validates case import path
+  └─> Phase 5 (Export Coded HTML) — richer export with segments
+  └─> Phase 6 (Export REFI-QDA) — complex export, full project
+  └─> Phase 7 (Import REFI-QDA) — complex import, full project
+  └─> Phase 8 (Import RQDA) — variant of Phase 7
+  └─> Phase 9 (MCP Tools) — wraps all above for agents
+  └─> Phase 10 (UI) — presentation layer, can parallelize with 6-9
 ```
 
-No other new dependencies needed — `opentelemetry-sdk` already includes `MeterProvider` and console exporters.
+## Cross-Cutting Concerns
 
----
+### Import Strategy: Reuse Existing Command Handlers
+**Critical**: Import operations MUST go through existing command handlers
+(`create_code`, `create_category`, `apply_code`, etc.) rather than writing
+directly to repos. This ensures:
+1. Domain validation (invariants) is applied
+2. Events are published → UI updates via SignalBridge
+3. Undo/rollback support via `OperationResult.rollback_command`
+4. Consistent behavior between human UI, AI agent, and import
 
-## Implementation Order
+### Error Handling
+- Partial import failures return `OperationResult` with:
+  - `data`: successfully imported items
+  - `error`: description of failures
+  - `suggestions`: recovery actions
+- File format validation in invariants (pure functions)
+- I/O errors caught in command handlers, wrapped in `OperationResult`
 
-| Step | What | Files | Est. Lines |
-|------|------|-------|-----------|
-| 1 | `logging_config.py` + wire in `main.py` | 2 new/modified | ~40 |
-| 2 | Extend `telemetry.py` with MeterProvider + FileMetricExporter | 1 modified | ~80 |
-| 3 | Create `metrics.py` with shared instruments + decorators | 1 new | ~100 |
-| 4 | Add logging to EventBus + metrics | 1 modified | ~30 |
-| 5 | Add logging to SignalBridge base + metrics | 1 modified | ~25 |
-| 6 | Add logging to Lifecycle | 1 modified | ~15 |
-| 7 | Add logging + metrics to all command handlers (coding) | 13 modified | ~80 |
-| 8 | Add logging + metrics to all command handlers (other contexts) | ~15 modified | ~80 |
-| 9 | Add logging to repositories | ~8 modified | ~60 |
-| 10 | Replace `print()` with logger in presentation layer | ~3 modified | ~30 |
-| 11 | Add logging + metrics to MCP server | 1 modified | ~30 |
-| 12 | Add OTEL metrics to `pyproject.toml` | 1 modified | ~2 |
-| 13 | Run tests, fix any issues | — | — |
-| 14 | Commit and push | — | — |
+### Testing
+- Each phase includes E2E tests with Allure stories
+- Test fixtures: sample QDPX, RQDA, CSV, and text files in `src/tests/e2e/fixtures/`
+- Round-trip test: export → import → verify identical data
 
-Total: ~35 files, ~570 lines of logging/metrics additions.
+### Dependencies (Python packages)
+- `xml.etree.ElementTree` (stdlib) for XML
+- `python-docx` for ODT codebook export (optional, could use plain text first)
+- `zipfile` (stdlib) for QDPX packaging
+- `csv` (stdlib) for survey data
+- `sqlite3` (stdlib) for RQDA import
 
----
+## Files to Modify (Existing)
 
-## Conventions
-
-- Logger naming: `logging.getLogger("qualcoder.<context>.<layer>")`
-- Metric naming: `qualcoder.<subsystem>.<metric_name>`
-- Metric attributes: `command`, `event_type`, `context`, `entity`, `operation`, `success`
-- No logging in hot loops (iteration over items) — only at operation boundaries
-- No sensitive data in logs (no file contents, user text, SQL parameters with PII)
-- Logging levels: DEBUG for developer trace, INFO for operations, WARNING for recoverable issues, ERROR for failures
+| File | Change |
+|------|--------|
+| `src/shared/infra/app_context/bounded_contexts.py` | Add `ExchangeContext` |
+| `src/shared/infra/app_context/context.py` | Add `exchange_context` attribute |
+| `src/shared/infra/app_context/factory.py` | Create `ExchangeContext` |
+| `src/shared/infra/mcp_server.py` | Register exchange MCP tools |
+| `src/main.py` | Add import/export menu items, wire viewmodel |
+| `pyproject.toml` | Add `python-docx` dependency (if ODT) |
