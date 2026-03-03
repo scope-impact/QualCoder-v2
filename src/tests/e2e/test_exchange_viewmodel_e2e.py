@@ -138,3 +138,39 @@ class TestFileManagerExchangeIntegration:
         assert "Codebook (.txt)..." in actions
         assert "Coded HTML (.html)..." in actions
         assert "REFI-QDA Project (.qdpx)..." in actions
+
+    @allure.title("Screenshot: Import dropdown menu")
+    def test_screenshot_import_menu(self, file_manager_screen):
+        from src.tests.e2e.utils.doc_screenshot import DocScreenshot
+
+        file_manager_screen.resize(1200, 800)
+        file_manager_screen.show()
+
+        toolbar = file_manager_screen._page.toolbar
+        menu = toolbar._import_btn.menu()
+        menu.popup(toolbar._import_btn.mapToGlobal(toolbar._import_btn.rect().bottomLeft()))
+
+        from PySide6.QtWidgets import QApplication
+
+        QApplication.processEvents()
+
+        DocScreenshot.capture(file_manager_screen, "exchange-import-menu", attach_to_allure=True)
+        menu.close()
+
+    @allure.title("Screenshot: Export dropdown menu")
+    def test_screenshot_export_menu(self, file_manager_screen):
+        from src.tests.e2e.utils.doc_screenshot import DocScreenshot
+
+        file_manager_screen.resize(1200, 800)
+        file_manager_screen.show()
+
+        toolbar = file_manager_screen._page.toolbar
+        menu = toolbar._export_btn.menu()
+        menu.popup(toolbar._export_btn.mapToGlobal(toolbar._export_btn.rect().bottomLeft()))
+
+        from PySide6.QtWidgets import QApplication
+
+        QApplication.processEvents()
+
+        DocScreenshot.capture(file_manager_screen, "exchange-export-menu", attach_to_allure=True)
+        menu.close()

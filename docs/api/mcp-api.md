@@ -91,6 +91,20 @@ All suggestions require researcher approval.
 | `find_similar_content` | Find similar text | `search_text` |
 | `suggest_batch_coding` | Suggest code for multiple segments | `code_id`, `segments[]`, `rationale` |
 
+### Exchange / Import-Export (QC-039)
+
+| Tool | Description | Required Params | Optional Params |
+|------|-------------|-----------------|-----------------|
+| `suggest_export_format` | Recommend export format for a use case | `use_case` | - |
+| `export_data` | Export project data in a given format | `format`, `output_path` | `include_memos` (codebook only, default true) |
+| `import_data` | Import data from a file | `format`, `source_path` | `name_column` (CSV only) |
+
+**Export formats:** `codebook` (plain text), `html` (coded text with highlights), `refi_qda` (REFI-QDA .qdpx)
+
+**Import formats:** `code_list` (text file), `csv` (survey data), `refi_qda` (.qdpx), `rqda` (.rqda)
+
+**Format suggestion keywords:** `share codebook`, `interop`, `nvivo`, `atlas`, `review`, `presentation`, `backup`
+
 ---
 
 ## Tool Schemas
@@ -482,6 +496,80 @@ Initialize version control for the project.
 
 ---
 
+### Exchange Tools
+
+#### suggest_export_format
+
+Recommend the best export format for a research use case.
+
+```json
+{
+  "name": "suggest_export_format",
+  "inputSchema": {
+    "type": "object",
+    "properties": {
+      "use_case": {
+        "type": "string",
+        "description": "What the researcher wants to do (e.g., 'share codebook', 'interop with NVivo')"
+      }
+    },
+    "required": ["use_case"]
+  }
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "format": "refi_qda",
+    "rationale": "NVivo supports REFI-QDA import. Export as .qdpx.",
+    "formats": ["share codebook", "interop", "nvivo", "atlas", "review", "presentation", "backup"]
+  }
+}
+```
+
+#### export_data
+
+Export project data in the specified format.
+
+```json
+{
+  "name": "export_data",
+  "inputSchema": {
+    "type": "object",
+    "properties": {
+      "format": {"type": "string", "description": "codebook, html, or refi_qda"},
+      "output_path": {"type": "string", "description": "Path to write the exported file"},
+      "include_memos": {"type": "boolean", "default": true, "description": "Include memos (codebook only)"}
+    },
+    "required": ["format", "output_path"]
+  }
+}
+```
+
+#### import_data
+
+Import data from a file in the specified format.
+
+```json
+{
+  "name": "import_data",
+  "inputSchema": {
+    "type": "object",
+    "properties": {
+      "format": {"type": "string", "description": "code_list, csv, refi_qda, or rqda"},
+      "source_path": {"type": "string", "description": "Path to the file to import"},
+      "name_column": {"type": "string", "description": "Column for case name (CSV only)"}
+    },
+    "required": ["format", "source_path"]
+  }
+}
+```
+
+---
+
 ## Usage
 
 ```bash
@@ -515,3 +603,8 @@ curl -X POST http://localhost:8765/tools/list_codes \
 | `SOURCE_IMPORT_FAILED` | File import failed (unsupported type or file not found) |
 | `SOURCE_DUPLICATE_NAME` | Source name already exists in project |
 | `TOOL_NOT_FOUND` | Unknown tool |
+| `UNKNOWN_FORMAT` | Unrecognized import/export format |
+| `EXPORT_FAILED` | Export operation failed (no codes, invalid path, etc.) |
+| `IMPORT_FAILED` | Import operation failed (empty file, parse error, etc.) |
+| `HANDLER_NOT_FOUND` | No handler registered for tool |
+| `TOOL_EXECUTION_ERROR` | Unexpected error during tool execution |
