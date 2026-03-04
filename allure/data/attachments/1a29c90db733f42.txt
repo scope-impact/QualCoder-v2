@@ -1,0 +1,1 @@
+ERROR    qualcoder.sources.core:add_text_source.py:73 add_text_source: source name is empty

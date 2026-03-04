@@ -1,0 +1,1 @@
+ERROR    qualcoder.shared.signal_bridge.threads:thread_utils.py:145 Thread assertion failed: Expected background thread but on main thread

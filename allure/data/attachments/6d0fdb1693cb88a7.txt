@@ -1,0 +1,1 @@
+ERROR    qualcoder.shared.signal_bridge.threads:thread_utils.py:130 Thread assertion failed: UI operation: Expected main thread but on 'Thread-3 (check_in_thread)'

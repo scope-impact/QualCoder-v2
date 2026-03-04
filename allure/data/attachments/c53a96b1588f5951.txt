@@ -1,0 +1,2 @@
+ERROR    qualcoder.projects.core:create_project.py:98 create_project: DB creation failed for path=/tmp/tmpg37xzjs2/test_project.qda, error=Database file already exists: /tmp/tmpg37xzjs2/test_project.qda
+WARNING  src.shared.infra.app_context.context:context.py:141 AppContext.stop() called but not started
