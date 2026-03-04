@@ -12,6 +12,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 from src.contexts.cases.core.entities import AttributeType, Case, CaseAttribute
+from src.contexts.cases.core.events import CaseCreated
 from src.contexts.exchange.core.commands import ImportSurveyCSVCommand
 from src.contexts.exchange.core.events import SurveyCSVImported
 from src.contexts.exchange.core.failure_events import ImportFailed
@@ -83,6 +84,9 @@ def import_survey_csv(
             attributes=tuple(attributes),
         )
         case_repo.save(case)
+        event_bus.publish(
+            CaseCreated.create(name=case_name, case_id=case.id)
+        )
         cases_created += 1
 
     event = SurveyCSVImported.create(

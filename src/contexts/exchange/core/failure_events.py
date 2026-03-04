@@ -28,12 +28,12 @@ class ExportFailed(FailureEvent):
         )
 
     @classmethod
-    def invalid_path(cls, path: str) -> ExportFailed:  # noqa: ARG003
+    def invalid_path(cls, path: str) -> ExportFailed:
         return cls(
             event_id=cls._generate_id(),
             occurred_at=cls._now(),
             event_type="CODEBOOK_NOT_EXPORTED/INVALID_PATH",
-            suggestions=("Provide a valid file path", "Ensure the directory exists"),
+            suggestions=(f"Check the output path: {path}", "Ensure the directory exists"),
         )
 
     @classmethod
@@ -51,7 +51,7 @@ class ExportFailed(FailureEvent):
         if "NO_CODES" in self.event_type:
             return "Cannot export codebook: no codes exist in the project"
         if "INVALID_PATH" in self.event_type:
-            return "Cannot export codebook: invalid output path"
+            return f"Cannot export codebook: invalid output path ({self.suggestions[0] if self.suggestions else ''})"
         if "NO_SOURCES" in self.event_type:
             return "Cannot export HTML: no text sources in the project"
         return super().message

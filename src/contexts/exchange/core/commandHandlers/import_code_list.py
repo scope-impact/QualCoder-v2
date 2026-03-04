@@ -11,8 +11,9 @@ import logging
 from pathlib import Path
 from typing import TYPE_CHECKING
 
+from src.contexts.coding.core.commandHandlers.create_category import create_category
 from src.contexts.coding.core.commandHandlers.create_code import create_code
-from src.contexts.coding.core.commands import CreateCodeCommand
+from src.contexts.coding.core.commands import CreateCategoryCommand, CreateCodeCommand
 from src.contexts.exchange.core.commands import (
     DEFAULT_IMPORT_COLOR,
     ImportCodeListCommand,
@@ -79,14 +80,16 @@ def import_code_list(
                 lower_name
             ].id.value
         else:
-            from src.contexts.coding.core.entities import Category
-            from src.shared.common.types import CategoryId
-
-            cat_id = CategoryId.new()
-            cat = Category(id=cat_id, name=parsed_cat.name)
-            category_repo.save(cat)
-            category_name_to_id[parsed_cat.name] = cat_id.value
-            categories_created += 1
+            cat_result = create_category(
+                command=CreateCategoryCommand(name=parsed_cat.name),
+                code_repo=code_repo,
+                category_repo=category_repo,
+                segment_repo=segment_repo,
+                event_bus=event_bus,
+            )
+            if cat_result.is_success:
+                category_name_to_id[parsed_cat.name] = cat_result.data.id.value
+                categories_created += 1
 
     # 3. Create codes (reuse existing create_code handler)
     codes_created = 0
