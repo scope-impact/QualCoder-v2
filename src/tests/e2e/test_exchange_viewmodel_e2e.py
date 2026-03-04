@@ -22,11 +22,12 @@ pytestmark = [
 
 @pytest.fixture
 def exchange_vm(code_repo, category_repo, segment_repo, source_repo, case_repo, event_bus):
+    from src.contexts.exchange.presentation.coordinator import ExchangeCoordinator
     from src.contexts.exchange.presentation.viewmodels.exchange_viewmodel import (
         ExchangeViewModel,
     )
 
-    return ExchangeViewModel(
+    coordinator = ExchangeCoordinator(
         code_repo=code_repo,
         category_repo=category_repo,
         segment_repo=segment_repo,
@@ -34,6 +35,7 @@ def exchange_vm(code_repo, category_repo, segment_repo, source_repo, case_repo, 
         case_repo=case_repo,
         event_bus=event_bus,
     )
+    return ExchangeViewModel(coordinator=coordinator)
 
 
 @pytest.fixture

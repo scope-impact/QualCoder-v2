@@ -18,6 +18,22 @@ pytestmark = [
 from src.shared.common.types import CodeId
 
 
+def _make_tools(code_repo, category_repo, segment_repo, source_repo, case_repo, event_bus):
+    """Create ExchangeTools wired through ExchangeCoordinator."""
+    from src.contexts.exchange.interface.mcp_tools import ExchangeTools
+    from src.contexts.exchange.presentation.coordinator import ExchangeCoordinator
+
+    coordinator = ExchangeCoordinator(
+        code_repo=code_repo,
+        category_repo=category_repo,
+        segment_repo=segment_repo,
+        source_repo=source_repo,
+        case_repo=case_repo,
+        event_bus=event_bus,
+    )
+    return ExchangeTools(coordinator=coordinator)
+
+
 class TestExchangeTools:
     """Tests for exchange MCP tools."""
 
@@ -37,20 +53,11 @@ class TestExchangeTools:
     def test_suggest_export_format(
         self, code_repo, category_repo, segment_repo, source_repo, event_bus,
     ):
-        from src.contexts.exchange.interface.mcp_tools import ExchangeTools
-
         # Seed a code so export is possible
         code = Code(id=CodeId.new(), name="Joy", color=Color.from_hex("#00FF00"))
         code_repo.save(code)
 
-        tools = ExchangeTools(
-            code_repo=code_repo,
-            category_repo=category_repo,
-            segment_repo=segment_repo,
-            source_repo=source_repo,
-            case_repo=None,
-            event_bus=event_bus,
-        )
+        tools = _make_tools(code_repo, category_repo, segment_repo, source_repo, None, event_bus)
 
         result = tools.execute("suggest_export_format", {"use_case": "share codebook"})
 
@@ -60,19 +67,10 @@ class TestExchangeTools:
     def test_export_codebook_via_mcp(
         self, code_repo, category_repo, segment_repo, source_repo, event_bus, tmp_path,
     ):
-        from src.contexts.exchange.interface.mcp_tools import ExchangeTools
-
         code = Code(id=CodeId.new(), name="Joy", color=Color.from_hex("#00FF00"))
         code_repo.save(code)
 
-        tools = ExchangeTools(
-            code_repo=code_repo,
-            category_repo=category_repo,
-            segment_repo=segment_repo,
-            source_repo=source_repo,
-            case_repo=None,
-            event_bus=event_bus,
-        )
+        tools = _make_tools(code_repo, category_repo, segment_repo, source_repo, None, event_bus)
 
         result = tools.execute("export_data", {
             "format": "codebook",
@@ -84,16 +82,7 @@ class TestExchangeTools:
     def test_unknown_tool_returns_error(
         self, code_repo, category_repo, segment_repo, source_repo, event_bus,
     ):
-        from src.contexts.exchange.interface.mcp_tools import ExchangeTools
-
-        tools = ExchangeTools(
-            code_repo=code_repo,
-            category_repo=category_repo,
-            segment_repo=segment_repo,
-            source_repo=source_repo,
-            case_repo=None,
-            event_bus=event_bus,
-        )
+        tools = _make_tools(code_repo, category_repo, segment_repo, source_repo, None, event_bus)
 
         result = tools.execute("nonexistent_tool", {})
         assert result["success"] is False

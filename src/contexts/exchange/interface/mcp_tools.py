@@ -8,10 +8,22 @@ Provides tools for:
 """
 from __future__ import annotations
 
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
+from src.contexts.exchange.core.commands import (
+    ExportCodebookCommand,
+    ExportCodedHTMLCommand,
+    ExportRefiQdaCommand,
+    ImportCodeListCommand,
+    ImportRefiQdaCommand,
+    ImportRqdaCommand,
+    ImportSurveyCSVCommand,
+)
 from src.shared.common.mcp_types import ToolDefinition, ToolParameter
 from src.shared.common.operation_result import OperationResult
+
+if TYPE_CHECKING:
+    from src.contexts.exchange.presentation.coordinator import ExchangeCoordinator
 
 
 EXCHANGE_TOOLS = {
@@ -111,21 +123,8 @@ FORMAT_SUGGESTIONS = {
 class ExchangeTools:
     """MCP-compatible exchange tools for AI agent integration."""
 
-    def __init__(
-        self,
-        code_repo,
-        category_repo,
-        segment_repo,
-        source_repo,
-        case_repo,
-        event_bus,
-    ):
-        self._code_repo = code_repo
-        self._category_repo = category_repo
-        self._segment_repo = segment_repo
-        self._source_repo = source_repo
-        self._case_repo = case_repo
-        self._event_bus = event_bus
+    def __init__(self, coordinator: ExchangeCoordinator) -> None:
+        self._coordinator = coordinator
         self._init_tool_defs()
 
     def _init_tool_defs(self):
@@ -189,44 +188,23 @@ class ExchangeTools:
         output_path = args.get("output_path", "")
 
         if fmt == "codebook":
-            from src.contexts.exchange.core.commandHandlers.export_codebook import export_codebook
-            from src.contexts.exchange.core.commands import ExportCodebookCommand
-
-            result = export_codebook(
-                command=ExportCodebookCommand(
+            result = self._coordinator.export_codebook(
+                ExportCodebookCommand(
                     output_path=output_path,
                     include_memos=args.get("include_memos", True),
                 ),
-                code_repo=self._code_repo,
-                category_repo=self._category_repo,
-                event_bus=self._event_bus,
             )
             return result.to_dict()
 
         elif fmt == "html":
-            from src.contexts.exchange.core.commandHandlers.export_coded_html import export_coded_html
-            from src.contexts.exchange.core.commands import ExportCodedHTMLCommand
-
-            result = export_coded_html(
-                command=ExportCodedHTMLCommand(output_path=output_path),
-                source_repo=self._source_repo,
-                code_repo=self._code_repo,
-                segment_repo=self._segment_repo,
-                event_bus=self._event_bus,
+            result = self._coordinator.export_coded_html(
+                ExportCodedHTMLCommand(output_path=output_path),
             )
             return result.to_dict()
 
         elif fmt == "refi_qda":
-            from src.contexts.exchange.core.commandHandlers.export_refi_qda import export_refi_qda
-            from src.contexts.exchange.core.commands import ExportRefiQdaCommand
-
-            result = export_refi_qda(
-                command=ExportRefiQdaCommand(output_path=output_path),
-                source_repo=self._source_repo,
-                code_repo=self._code_repo,
-                category_repo=self._category_repo,
-                segment_repo=self._segment_repo,
-                event_bus=self._event_bus,
+            result = self._coordinator.export_refi_qda(
+                ExportRefiQdaCommand(output_path=output_path),
             )
             return result.to_dict()
 
@@ -241,57 +219,29 @@ class ExchangeTools:
         source_path = args.get("source_path", "")
 
         if fmt == "code_list":
-            from src.contexts.exchange.core.commandHandlers.import_code_list import import_code_list
-            from src.contexts.exchange.core.commands import ImportCodeListCommand
-
-            result = import_code_list(
-                command=ImportCodeListCommand(source_path=source_path),
-                code_repo=self._code_repo,
-                category_repo=self._category_repo,
-                segment_repo=self._segment_repo,
-                event_bus=self._event_bus,
+            result = self._coordinator.import_code_list(
+                ImportCodeListCommand(source_path=source_path),
             )
             return result.to_dict()
 
         elif fmt == "csv":
-            from src.contexts.exchange.core.commandHandlers.import_survey_csv import import_survey_csv
-            from src.contexts.exchange.core.commands import ImportSurveyCSVCommand
-
-            result = import_survey_csv(
-                command=ImportSurveyCSVCommand(
+            result = self._coordinator.import_survey_csv(
+                ImportSurveyCSVCommand(
                     source_path=source_path,
                     name_column=args.get("name_column"),
                 ),
-                case_repo=self._case_repo,
-                event_bus=self._event_bus,
             )
             return result.to_dict()
 
         elif fmt == "refi_qda":
-            from src.contexts.exchange.core.commandHandlers.import_refi_qda import import_refi_qda
-            from src.contexts.exchange.core.commands import ImportRefiQdaCommand
-
-            result = import_refi_qda(
-                command=ImportRefiQdaCommand(source_path=source_path),
-                source_repo=self._source_repo,
-                code_repo=self._code_repo,
-                category_repo=self._category_repo,
-                segment_repo=self._segment_repo,
-                event_bus=self._event_bus,
+            result = self._coordinator.import_refi_qda(
+                ImportRefiQdaCommand(source_path=source_path),
             )
             return result.to_dict()
 
         elif fmt == "rqda":
-            from src.contexts.exchange.core.commandHandlers.import_rqda import import_rqda
-            from src.contexts.exchange.core.commands import ImportRqdaCommand
-
-            result = import_rqda(
-                command=ImportRqdaCommand(source_path=source_path),
-                source_repo=self._source_repo,
-                code_repo=self._code_repo,
-                category_repo=self._category_repo,
-                segment_repo=self._segment_repo,
-                event_bus=self._event_bus,
+            result = self._coordinator.import_rqda(
+                ImportRqdaCommand(source_path=source_path),
             )
             return result.to_dict()
 
