@@ -84,9 +84,7 @@ def import_survey_csv(
             attributes=tuple(attributes),
         )
         case_repo.save(case)
-        event_bus.publish(
-            CaseCreated.create(name=case_name, case_id=case.id)
-        )
+        event_bus.publish(CaseCreated.create(name=case_name, case_id=case.id))
         cases_created += 1
 
     event = SurveyCSVImported.create(

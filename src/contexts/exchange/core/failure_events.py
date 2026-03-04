@@ -33,7 +33,10 @@ class ExportFailed(FailureEvent):
             event_id=cls._generate_id(),
             occurred_at=cls._now(),
             event_type="CODEBOOK_NOT_EXPORTED/INVALID_PATH",
-            suggestions=(f"Check the output path: {path}", "Ensure the directory exists"),
+            suggestions=(
+                f"Check the output path: {path}",
+                "Ensure the directory exists",
+            ),
         )
 
     @classmethod
