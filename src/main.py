@@ -235,6 +235,29 @@ class QualCoderApp:
         )
         self._screens["files"].set_viewmodel(file_manager_viewmodel)
 
+        # Create ExchangeCoordinator + ViewModel for import/export in FileManager
+        from src.contexts.exchange.presentation.coordinator import ExchangeCoordinator
+        from src.contexts.exchange.presentation.viewmodels.exchange_viewmodel import (
+            ExchangeViewModel,
+        )
+
+        exchange_coordinator = ExchangeCoordinator(
+            code_repo=self._ctx.coding_context.code_repo
+            if self._ctx.coding_context
+            else None,
+            category_repo=self._ctx.coding_context.category_repo
+            if self._ctx.coding_context
+            else None,
+            segment_repo=self._ctx.coding_context.segment_repo
+            if self._ctx.coding_context
+            else None,
+            source_repo=self._ctx.sources_context.source_repo,
+            case_repo=self._ctx.cases_context.case_repo,
+            event_bus=self._ctx.event_bus,
+        )
+        exchange_viewmodel = ExchangeViewModel(coordinator=exchange_coordinator)
+        self._screens["files"].set_exchange_viewmodel(exchange_viewmodel)
+
         # Create TextCodingViewModel with CodingCoordinator
         if self._ctx.coding_context:
             coding_coordinator = CodingCoordinator(

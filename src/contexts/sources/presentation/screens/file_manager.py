@@ -53,6 +53,10 @@ from ..pages import FileManagerPage
 logger = logging.getLogger("qualcoder.sources.presentation")
 
 if TYPE_CHECKING:
+    from src.contexts.exchange.presentation.viewmodels.exchange_viewmodel import (
+        ExchangeViewModel,
+    )
+
     from ..viewmodels import FileManagerViewModel
 
 
@@ -96,6 +100,7 @@ class FileManagerScreen(QWidget):
         super().__init__(parent)
         self._colors = colors or get_colors()
         self._viewmodel = viewmodel
+        self._exchange_vm: ExchangeViewModel | None = None
 
         self._setup_ui()
         self._connect_signals()
@@ -143,6 +148,15 @@ class FileManagerScreen(QWidget):
         self._page.rename_folder_requested.connect(self._on_rename_folder)
         self._page.delete_folder_requested.connect(self._on_delete_folder)
         self._page.move_sources_to_folder.connect(self._on_move_sources_to_folder)
+
+        # Exchange actions
+        self._page.import_code_list.connect(self._on_import_code_list)
+        self._page.import_csv.connect(self._on_import_csv)
+        self._page.import_refi_qda.connect(self._on_import_refi_qda)
+        self._page.import_rqda.connect(self._on_import_rqda)
+        self._page.export_codebook.connect(self._on_export_codebook)
+        self._page.export_html.connect(self._on_export_html)
+        self._page.export_refi_qda.connect(self._on_export_refi_qda)
 
     # =========================================================================
     # Data Loading
@@ -503,6 +517,100 @@ class FileManagerScreen(QWidget):
         if self._viewmodel:
             folders = self._viewmodel.get_folders()
             self._page.set_folders(folders)
+
+    # =========================================================================
+    # Exchange ViewModel
+    # =========================================================================
+
+    def set_exchange_viewmodel(self, exchange_vm: ExchangeViewModel) -> None:
+        """Set the exchange viewmodel for import/export operations."""
+        self._exchange_vm = exchange_vm
+
+    # =========================================================================
+    # Exchange Import/Export Handlers
+    # =========================================================================
+
+    def _do_exchange_import(
+        self, title: str, file_filter: str, vm_method: str, success_msg: str
+    ) -> None:
+        """Shared logic for all exchange import operations."""
+        path, _ = QFileDialog.getOpenFileName(self, title, "", file_filter)
+        if not path or not self._exchange_vm:
+            return
+        if getattr(self._exchange_vm, vm_method)(path):
+            QMessageBox.information(self, "Import", success_msg)
+            self._load_data()
+        else:
+            QMessageBox.warning(
+                self, "Import Failed", self._exchange_vm.last_error or "Unknown error."
+            )
+
+    def _do_exchange_export(
+        self, title: str, default_name: str, file_filter: str, vm_method: str
+    ) -> None:
+        """Shared logic for all exchange export operations."""
+        path, _ = QFileDialog.getSaveFileName(self, title, default_name, file_filter)
+        if not path or not self._exchange_vm:
+            return
+        if getattr(self._exchange_vm, vm_method)(path):
+            QMessageBox.information(self, "Export", f"Exported to:\n{path}")
+        else:
+            QMessageBox.warning(
+                self, "Export Failed", self._exchange_vm.last_error or "Unknown error."
+            )
+
+    def _on_import_code_list(self) -> None:
+        self._do_exchange_import(
+            "Import Code List",
+            "Text Files (*.txt);;All Files (*)",
+            "import_code_list",
+            "Code list imported successfully.",
+        )
+
+    def _on_import_csv(self) -> None:
+        self._do_exchange_import(
+            "Import Survey CSV",
+            "CSV Files (*.csv);;All Files (*)",
+            "import_survey_csv",
+            "Survey data imported successfully.",
+        )
+
+    def _on_import_refi_qda(self) -> None:
+        self._do_exchange_import(
+            "Import REFI-QDA Project",
+            "REFI-QDA Files (*.qdpx);;All Files (*)",
+            "import_refi_qda",
+            "REFI-QDA project imported successfully.",
+        )
+
+    def _on_import_rqda(self) -> None:
+        self._do_exchange_import(
+            "Import RQDA Project",
+            "RQDA Files (*.rqda);;All Files (*)",
+            "import_rqda",
+            "RQDA project imported successfully.",
+        )
+
+    def _on_export_codebook(self) -> None:
+        self._do_exchange_export(
+            "Export Codebook", "codebook.txt", "Text Files (*.txt)", "export_codebook"
+        )
+
+    def _on_export_html(self) -> None:
+        self._do_exchange_export(
+            "Export Coded HTML",
+            "coded_text.html",
+            "HTML Files (*.html)",
+            "export_coded_html",
+        )
+
+    def _on_export_refi_qda(self) -> None:
+        self._do_exchange_export(
+            "Export REFI-QDA Project",
+            "project.qdpx",
+            "REFI-QDA Files (*.qdpx)",
+            "export_refi_qda",
+        )
 
     # =========================================================================
     # Helper Methods

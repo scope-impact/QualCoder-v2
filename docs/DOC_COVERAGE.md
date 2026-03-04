@@ -100,6 +100,18 @@ This file tracks which features have documentation and screenshots.
 | QC-034.02 | Create Case | [cases.md](user-manual/cases.md) | - | :construction: |
 | QC-034.03 | Case Attributes | [cases.md](user-manual/cases.md) | - | :construction: |
 
+### QC-039 Import Export Formats
+
+| ID | Story | Doc Page | Screenshots | Status |
+|----|-------|----------|-------------|--------|
+| QC-039.01 | Export REFI-QDA Project | [exchange.md](user-manual/exchange.md), [mcp-api.md](api/mcp-api.md) | exchange-export-menu.png | :white_check_mark: |
+| QC-039.02 | Import REFI-QDA Project | [exchange.md](user-manual/exchange.md), [mcp-api.md](api/mcp-api.md) | exchange-import-menu.png | :white_check_mark: |
+| QC-039.03 | Import RQDA Project | [exchange.md](user-manual/exchange.md), [mcp-api.md](api/mcp-api.md) | exchange-import-menu.png | :white_check_mark: |
+| QC-039.04 | Export Codebook | [exchange.md](user-manual/exchange.md), [mcp-api.md](api/mcp-api.md) | exchange-export-menu.png | :white_check_mark: |
+| QC-039.05 | Export Coded Text as HTML | [exchange.md](user-manual/exchange.md), [mcp-api.md](api/mcp-api.md) | exchange-export-menu.png | :white_check_mark: |
+| QC-039.06 | Import Survey CSV | [exchange.md](user-manual/exchange.md), [mcp-api.md](api/mcp-api.md) | exchange-import-menu.png | :white_check_mark: |
+| QC-039.07 | Import Code List | [exchange.md](user-manual/exchange.md), [mcp-api.md](api/mcp-api.md) | exchange-import-menu.png | :white_check_mark: |
+
 ### QC-038 Settings
 
 | ID | Story | Doc Page | Screenshots | Status |
@@ -210,6 +222,10 @@ All images in `docs/user-manual/images/`:
 
 ### Version Control
 - [x] `version-history-screen.png` (includes inline diff viewer)
+
+### Exchange (Import/Export)
+- [x] `exchange-import-menu.png`
+- [x] `exchange-export-menu.png`
 
 ---
 
