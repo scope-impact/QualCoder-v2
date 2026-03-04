@@ -28,6 +28,7 @@ from src.contexts.cases.core.commandHandlers import (
     create_case,
     link_source_to_case,
     remove_case,
+    remove_case_attribute,
     set_case_attribute,
     unlink_source_from_case,
     update_case,
@@ -41,6 +42,7 @@ from src.contexts.cases.interface.signal_bridge import (
 from src.contexts.projects.core.commands import (
     CreateCaseCommand,
     LinkSourceToCaseCommand,
+    RemoveCaseAttributeCommand,
     RemoveCaseCommand,
     SetCaseAttributeCommand,
     UnlinkSourceFromCaseCommand,
@@ -340,14 +342,13 @@ class CaseManagerViewModel(QObject):
 
     def remove_attribute(self, case_id: str, name: str) -> bool:
         """Remove an attribute from a case. Returns True if successful."""
-        if self._case_repo is None:
-            return False
-
-        case = self._case_repo.get_by_id(CaseId(value=case_id))
-        if case is None:
-            return False
-
-        return self._case_repo.delete_attribute(CaseId(value=case_id), name)
+        result = remove_case_attribute(
+            command=RemoveCaseAttributeCommand(case_id=case_id, attr_name=name),
+            state=self._state,
+            case_repo=self._case_repo,
+            event_bus=self._event_bus,
+        )
+        return result.is_success
 
     # =========================================================================
     # Selection
