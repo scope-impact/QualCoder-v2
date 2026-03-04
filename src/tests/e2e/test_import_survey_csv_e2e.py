@@ -5,6 +5,7 @@ TDD: Tests written FIRST, before implementation.
 
 Tests verify importing a CSV file creates cases with attributes.
 """
+
 from __future__ import annotations
 
 import allure
@@ -19,11 +20,8 @@ pytestmark = [
 
 @allure.story("QC-039.06 Import Survey CSV")
 class TestImportSurveyCSV:
-
     @allure.title("AC #1: I can import CSV creating cases with attributes")
-    def test_ac1_import_csv_creates_cases(
-        self, case_repo, event_bus, tmp_path
-    ):
+    def test_ac1_import_csv_creates_cases(self, case_repo, event_bus, tmp_path):
         from src.contexts.exchange.core.commandHandlers.import_survey_csv import (
             import_survey_csv,
         )
@@ -49,9 +47,7 @@ class TestImportSurveyCSV:
             assert "Bob" in case_names
 
     @allure.title("AC #2: Cases have attributes from CSV columns")
-    def test_ac2_cases_have_attributes(
-        self, case_repo, event_bus, tmp_path
-    ):
+    def test_ac2_cases_have_attributes(self, case_repo, event_bus, tmp_path):
         from src.contexts.exchange.core.commandHandlers.import_survey_csv import (
             import_survey_csv,
         )
@@ -77,9 +73,7 @@ class TestImportSurveyCSV:
             assert gender_attr.value == "F"
 
     @allure.title("AC #3: Import uses custom name column")
-    def test_ac3_custom_name_column(
-        self, case_repo, event_bus, tmp_path
-    ):
+    def test_ac3_custom_name_column(self, case_repo, event_bus, tmp_path):
         from src.contexts.exchange.core.commandHandlers.import_survey_csv import (
             import_survey_csv,
         )
@@ -88,7 +82,7 @@ class TestImportSurveyCSV:
         csv_file = tmp_path / "survey.csv"
         csv_file.write_text("ID,Participant,Score\n1,Alice,85\n2,Bob,92\n")
 
-        result = import_survey_csv(
+        import_survey_csv(
             command=ImportSurveyCSVCommand(
                 source_path=str(csv_file),
                 name_column="Participant",
@@ -104,9 +98,7 @@ class TestImportSurveyCSV:
             assert "Bob" in case_names
 
     @allure.title("Import publishes SurveyCSVImported event")
-    def test_publishes_event(
-        self, case_repo, event_bus, tmp_path
-    ):
+    def test_publishes_event(self, case_repo, event_bus, tmp_path):
         from src.contexts.exchange.core.commandHandlers.import_survey_csv import (
             import_survey_csv,
         )

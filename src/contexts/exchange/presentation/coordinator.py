@@ -6,6 +6,7 @@ Holds references to repositories and event bus so callers don't need to.
 
 Used by both ExchangeViewModel (UI) and ExchangeTools (MCP).
 """
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING

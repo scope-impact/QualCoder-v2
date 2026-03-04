@@ -4,11 +4,10 @@ Exchange Infra: RQDA Reader Tests (TDD - RED phase)
 Tests for reading RQDA SQLite databases.
 RQDA is an R package for qualitative data analysis that stores data in SQLite.
 """
+
 from __future__ import annotations
 
 import sqlite3
-
-import pytest
 
 
 def _create_rqda_db(path):
@@ -45,15 +44,20 @@ def _create_rqda_db(path):
 
 
 class TestRqdaReader:
-
     def test_read_codes(self, tmp_path):
         from src.contexts.exchange.infra.rqda_reader import read_rqda
 
         db_path = tmp_path / "project.rqda"
         conn = _create_rqda_db(db_path)
-        conn.execute("INSERT INTO freecode (name, id, color, status) VALUES ('Joy', 1, '#00ff00', 1)")
-        conn.execute("INSERT INTO freecode (name, id, color, status) VALUES ('Anger', 2, '#ff0000', 1)")
-        conn.execute("INSERT INTO freecode (name, id, status) VALUES ('Deleted', 3, 0)")  # deleted
+        conn.execute(
+            "INSERT INTO freecode (name, id, color, status) VALUES ('Joy', 1, '#00ff00', 1)"
+        )
+        conn.execute(
+            "INSERT INTO freecode (name, id, color, status) VALUES ('Anger', 2, '#ff0000', 1)"
+        )
+        conn.execute(
+            "INSERT INTO freecode (name, id, status) VALUES ('Deleted', 3, 0)"
+        )  # deleted
         conn.commit()
         conn.close()
 
@@ -69,7 +73,9 @@ class TestRqdaReader:
 
         db_path = tmp_path / "project.rqda"
         conn = _create_rqda_db(db_path)
-        conn.execute("INSERT INTO source (name, id, file, status) VALUES ('interview.txt', 1, 'Hello world.', 1)")
+        conn.execute(
+            "INSERT INTO source (name, id, file, status) VALUES ('interview.txt', 1, 'Hello world.', 1)"
+        )
         conn.commit()
         conn.close()
 
@@ -84,9 +90,15 @@ class TestRqdaReader:
 
         db_path = tmp_path / "project.rqda"
         conn = _create_rqda_db(db_path)
-        conn.execute("INSERT INTO source (name, id, file, status) VALUES ('doc.txt', 1, 'I felt happy.', 1)")
-        conn.execute("INSERT INTO freecode (name, id, color, status) VALUES ('Joy', 1, '#00ff00', 1)")
-        conn.execute("INSERT INTO coding (cid, fid, seltext, selfirst, selend, status) VALUES (1, 1, 'happy', 7, 12, 1)")
+        conn.execute(
+            "INSERT INTO source (name, id, file, status) VALUES ('doc.txt', 1, 'I felt happy.', 1)"
+        )
+        conn.execute(
+            "INSERT INTO freecode (name, id, color, status) VALUES ('Joy', 1, '#00ff00', 1)"
+        )
+        conn.execute(
+            "INSERT INTO coding (cid, fid, seltext, selfirst, selend, status) VALUES (1, 1, 'happy', 7, 12, 1)"
+        )
         conn.commit()
         conn.close()
 
@@ -104,8 +116,12 @@ class TestRqdaReader:
 
         db_path = tmp_path / "project.rqda"
         conn = _create_rqda_db(db_path)
-        conn.execute("INSERT INTO source (name, id, file, status) VALUES ('active.txt', 1, 'Active.', 1)")
-        conn.execute("INSERT INTO source (name, id, file, status) VALUES ('deleted.txt', 2, 'Deleted.', 0)")
+        conn.execute(
+            "INSERT INTO source (name, id, file, status) VALUES ('active.txt', 1, 'Active.', 1)"
+        )
+        conn.execute(
+            "INSERT INTO source (name, id, file, status) VALUES ('deleted.txt', 2, 'Deleted.', 0)"
+        )
         conn.commit()
         conn.close()
 

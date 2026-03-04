@@ -3,9 +3,8 @@ Exchange Infra: Code List Parser Tests (TDD - RED phase)
 
 Tests for parsing plain-text code lists into code/category structures.
 """
-from __future__ import annotations
 
-import pytest
+from __future__ import annotations
 
 
 class TestCodeListParser:

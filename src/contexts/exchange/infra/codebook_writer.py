@@ -4,6 +4,7 @@ Exchange Infra: Codebook Writer
 Generates a plain-text codebook document from codes and categories.
 Codes are grouped under their categories with color references.
 """
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -11,7 +12,6 @@ from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from src.contexts.coding.core.entities import Category, Code
-    from src.shared.common.types import CategoryId
 
 
 def write_codebook(

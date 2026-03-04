@@ -6,6 +6,7 @@ TDD: Tests written FIRST, before implementation.
 Tests verify importing a plain-text code list creates codes and
 categories in the repository.
 """
+
 from __future__ import annotations
 
 import allure
@@ -20,7 +21,6 @@ pytestmark = [
 
 @allure.story("QC-039.07 Import Code List")
 class TestImportCodeList:
-
     @allure.title("AC #1: I can import a flat code list from text")
     def test_ac1_import_flat_code_list(
         self, code_repo, category_repo, segment_repo, event_bus, tmp_path
@@ -64,7 +64,7 @@ class TestImportCodeList:
         code_list_file = tmp_path / "codes.txt"
         code_list_file.write_text("Emotions\n  Joy\n  Anger\nActions\n  Helping\n")
 
-        result = import_code_list(
+        import_code_list(
             command=ImportCodeListCommand(source_path=str(code_list_file)),
             code_repo=code_repo,
             category_repo=category_repo,

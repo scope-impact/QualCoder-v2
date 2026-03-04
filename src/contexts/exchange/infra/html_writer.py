@@ -4,6 +4,7 @@ Exchange Infra: HTML Writer
 Generates an HTML document with coded text highlighted using
 inline background colors and code name tooltips.
 """
+
 from __future__ import annotations
 
 from html import escape

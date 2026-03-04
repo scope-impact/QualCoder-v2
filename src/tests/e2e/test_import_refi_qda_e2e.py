@@ -3,6 +3,7 @@ QC-039.02: Import REFI-QDA Project - E2E Tests
 
 TDD: Tests written FIRST, before implementation.
 """
+
 from __future__ import annotations
 
 import allure
@@ -39,17 +40,25 @@ IMPORT_XML = """\
 
 @allure.story("QC-039.02 Import REFI-QDA Project")
 class TestImportRefiQDA:
-
     @allure.title("AC #1: I can import a .qdpx file")
     def test_ac1_import_qdpx(
-        self, source_repo, code_repo, category_repo, segment_repo, event_bus, tmp_path, make_qdpx,
+        self,
+        source_repo,
+        code_repo,
+        category_repo,
+        segment_repo,
+        event_bus,
+        tmp_path,
+        make_qdpx,
     ):
         from src.contexts.exchange.core.commandHandlers.import_refi_qda import (
             import_refi_qda,
         )
         from src.contexts.exchange.core.commands import ImportRefiQdaCommand
 
-        qdpx = make_qdpx(tmp_path, IMPORT_XML, {"Sources/doc.txt": "I felt happy today."})
+        qdpx = make_qdpx(
+            tmp_path, IMPORT_XML, {"Sources/doc.txt": "I felt happy today."}
+        )
 
         with allure.step("Import QDPX"):
             result = import_refi_qda(
@@ -66,14 +75,23 @@ class TestImportRefiQDA:
 
     @allure.title("AC #2: Import creates codes from QDPX")
     def test_ac2_creates_codes(
-        self, source_repo, code_repo, category_repo, segment_repo, event_bus, tmp_path, make_qdpx,
+        self,
+        source_repo,
+        code_repo,
+        category_repo,
+        segment_repo,
+        event_bus,
+        tmp_path,
+        make_qdpx,
     ):
         from src.contexts.exchange.core.commandHandlers.import_refi_qda import (
             import_refi_qda,
         )
         from src.contexts.exchange.core.commands import ImportRefiQdaCommand
 
-        qdpx = make_qdpx(tmp_path, IMPORT_XML, {"Sources/doc.txt": "I felt happy today."})
+        qdpx = make_qdpx(
+            tmp_path, IMPORT_XML, {"Sources/doc.txt": "I felt happy today."}
+        )
 
         import_refi_qda(
             command=ImportRefiQdaCommand(source_path=str(qdpx)),
@@ -92,14 +110,23 @@ class TestImportRefiQDA:
 
     @allure.title("AC #3: Import creates sources from QDPX")
     def test_ac3_creates_sources(
-        self, source_repo, code_repo, category_repo, segment_repo, event_bus, tmp_path, make_qdpx,
+        self,
+        source_repo,
+        code_repo,
+        category_repo,
+        segment_repo,
+        event_bus,
+        tmp_path,
+        make_qdpx,
     ):
         from src.contexts.exchange.core.commandHandlers.import_refi_qda import (
             import_refi_qda,
         )
         from src.contexts.exchange.core.commands import ImportRefiQdaCommand
 
-        qdpx = make_qdpx(tmp_path, IMPORT_XML, {"Sources/doc.txt": "I felt happy today."})
+        qdpx = make_qdpx(
+            tmp_path, IMPORT_XML, {"Sources/doc.txt": "I felt happy today."}
+        )
 
         import_refi_qda(
             command=ImportRefiQdaCommand(source_path=str(qdpx)),
@@ -117,7 +144,14 @@ class TestImportRefiQDA:
 
     @allure.title("Import publishes RefiQdaImported event")
     def test_publishes_event(
-        self, source_repo, code_repo, category_repo, segment_repo, event_bus, tmp_path, make_qdpx,
+        self,
+        source_repo,
+        code_repo,
+        category_repo,
+        segment_repo,
+        event_bus,
+        tmp_path,
+        make_qdpx,
     ):
         from src.contexts.exchange.core.commandHandlers.import_refi_qda import (
             import_refi_qda,
@@ -128,7 +162,9 @@ class TestImportRefiQDA:
         published = []
         event_bus.subscribe("exchange.refi_qda_imported", published.append)
 
-        qdpx = make_qdpx(tmp_path, IMPORT_XML, {"Sources/doc.txt": "I felt happy today."})
+        qdpx = make_qdpx(
+            tmp_path, IMPORT_XML, {"Sources/doc.txt": "I felt happy today."}
+        )
 
         import_refi_qda(
             command=ImportRefiQdaCommand(source_path=str(qdpx)),
@@ -148,7 +184,13 @@ class TestImportRefiQDA:
 
     @allure.title("Import fails with nonexistent file")
     def test_fails_nonexistent(
-        self, source_repo, code_repo, category_repo, segment_repo, event_bus, tmp_path,
+        self,
+        source_repo,
+        code_repo,
+        category_repo,
+        segment_repo,
+        event_bus,
+        tmp_path,
     ):
         from src.contexts.exchange.core.commandHandlers.import_refi_qda import (
             import_refi_qda,

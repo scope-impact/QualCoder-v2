@@ -242,9 +242,15 @@ class QualCoderApp:
         )
 
         exchange_coordinator = ExchangeCoordinator(
-            code_repo=self._ctx.coding_context.code_repo if self._ctx.coding_context else None,
-            category_repo=self._ctx.coding_context.category_repo if self._ctx.coding_context else None,
-            segment_repo=self._ctx.coding_context.segment_repo if self._ctx.coding_context else None,
+            code_repo=self._ctx.coding_context.code_repo
+            if self._ctx.coding_context
+            else None,
+            category_repo=self._ctx.coding_context.category_repo
+            if self._ctx.coding_context
+            else None,
+            segment_repo=self._ctx.coding_context.segment_repo
+            if self._ctx.coding_context
+            else None,
             source_repo=self._ctx.sources_context.source_repo,
             case_repo=self._ctx.cases_context.case_repo,
             event_bus=self._ctx.event_bus,

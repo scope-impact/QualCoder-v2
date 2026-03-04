@@ -4,15 +4,19 @@ Import Code List Use Case.
 Parses a plain-text code list and creates codes/categories
 by delegating to the coding context's create_code handler.
 """
+
 from __future__ import annotations
 
 import logging
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-from src.contexts.coding.core.commands import CreateCodeCommand
 from src.contexts.coding.core.commandHandlers.create_code import create_code
-from src.contexts.exchange.core.commands import DEFAULT_IMPORT_COLOR, ImportCodeListCommand
+from src.contexts.coding.core.commands import CreateCodeCommand
+from src.contexts.exchange.core.commands import (
+    DEFAULT_IMPORT_COLOR,
+    ImportCodeListCommand,
+)
 from src.contexts.exchange.core.events import CodeListImported
 from src.contexts.exchange.core.failure_events import ImportFailed
 from src.contexts.exchange.infra.code_list_parser import parse_code_list
@@ -71,7 +75,9 @@ def import_code_list(
     for parsed_cat in parsed.categories:
         lower_name = parsed_cat.name.lower()
         if lower_name in existing_cat_names:
-            category_name_to_id[parsed_cat.name] = existing_cat_names[lower_name].id.value
+            category_name_to_id[parsed_cat.name] = existing_cat_names[
+                lower_name
+            ].id.value
         else:
             from src.contexts.coding.core.entities import Category
             from src.shared.common.types import CategoryId
@@ -88,7 +94,10 @@ def import_code_list(
 
     for parsed_code in parsed.codes:
         category_id = None
-        if parsed_code.category_name and parsed_code.category_name in category_name_to_id:
+        if (
+            parsed_code.category_name
+            and parsed_code.category_name in category_name_to_id
+        ):
             category_id = category_name_to_id[parsed_code.category_name]
 
         result = create_code(

@@ -3,9 +3,8 @@ Exchange Infra: HTML Writer Tests (TDD - RED phase)
 
 Tests for generating coded HTML from sources and segments.
 """
-from __future__ import annotations
 
-import pytest
+from __future__ import annotations
 
 from src.contexts.coding.core.entities import Code, Color, TextPosition, TextSegment
 from src.shared.common.types import CodeId, SegmentId, SourceId

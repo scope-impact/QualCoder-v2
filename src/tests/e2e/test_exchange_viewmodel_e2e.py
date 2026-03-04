@@ -4,14 +4,14 @@ Exchange ViewModel - E2E Tests
 Tests for the ExchangeViewModel which coordinates all import/export operations,
 and for the FileManagerScreen integration with exchange actions.
 """
+
 from __future__ import annotations
 
 import allure
 import pytest
 
 from src.contexts.coding.core.entities import Code, Color
-from src.contexts.sources.core.entities import Source, SourceType
-from src.shared.common.types import CodeId, SourceId
+from src.shared.common.types import CodeId
 
 pytestmark = [
     pytest.mark.e2e,
@@ -21,7 +21,9 @@ pytestmark = [
 
 
 @pytest.fixture
-def exchange_vm(code_repo, category_repo, segment_repo, source_repo, case_repo, event_bus):
+def exchange_vm(
+    code_repo, category_repo, segment_repo, source_repo, case_repo, event_bus
+):
     from src.contexts.exchange.presentation.coordinator import ExchangeCoordinator
     from src.contexts.exchange.presentation.viewmodels.exchange_viewmodel import (
         ExchangeViewModel,
@@ -50,7 +52,6 @@ def file_manager_screen(qapp, exchange_vm):
 
 @allure.story("QC-039 Exchange ViewModel")
 class TestExchangeViewModel:
-
     @allure.title("Export codebook via ViewModel")
     def test_export_codebook(self, exchange_vm, code_repo, tmp_path):
         code = Code(id=CodeId.new(), name="Joy", color=Color.from_hex("#00FF00"))
@@ -113,7 +114,6 @@ class TestExchangeViewModel:
 
 @allure.story("QC-039 FileManager Exchange Integration")
 class TestFileManagerExchangeIntegration:
-
     @allure.title("FileManagerScreen accepts exchange viewmodel")
     def test_screen_has_exchange_vm(self, file_manager_screen, exchange_vm):
         assert file_manager_screen._exchange_vm is exchange_vm
@@ -150,13 +150,17 @@ class TestFileManagerExchangeIntegration:
 
         toolbar = file_manager_screen._page.toolbar
         menu = toolbar._import_btn.menu()
-        menu.popup(toolbar._import_btn.mapToGlobal(toolbar._import_btn.rect().bottomLeft()))
+        menu.popup(
+            toolbar._import_btn.mapToGlobal(toolbar._import_btn.rect().bottomLeft())
+        )
 
         from PySide6.QtWidgets import QApplication
 
         QApplication.processEvents()
 
-        DocScreenshot.capture(file_manager_screen, "exchange-import-menu", attach_to_allure=True)
+        DocScreenshot.capture(
+            file_manager_screen, "exchange-import-menu", attach_to_allure=True
+        )
         menu.close()
 
     @allure.title("Screenshot: Export dropdown menu")
@@ -168,11 +172,15 @@ class TestFileManagerExchangeIntegration:
 
         toolbar = file_manager_screen._page.toolbar
         menu = toolbar._export_btn.menu()
-        menu.popup(toolbar._export_btn.mapToGlobal(toolbar._export_btn.rect().bottomLeft()))
+        menu.popup(
+            toolbar._export_btn.mapToGlobal(toolbar._export_btn.rect().bottomLeft())
+        )
 
         from PySide6.QtWidgets import QApplication
 
         QApplication.processEvents()
 
-        DocScreenshot.capture(file_manager_screen, "exchange-export-menu", attach_to_allure=True)
+        DocScreenshot.capture(
+            file_manager_screen, "exchange-export-menu", attach_to_allure=True
+        )
         menu.close()

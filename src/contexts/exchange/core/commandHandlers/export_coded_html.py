@@ -3,6 +3,7 @@ Export Coded HTML Use Case.
 
 Exports text sources with coded segments highlighted as an HTML document.
 """
+
 from __future__ import annotations
 
 import logging
@@ -47,12 +48,12 @@ def export_coded_html(
 
     all_sources = source_repo.get_all()
     text_sources = [
-        s for s in all_sources
-        if s.source_type == SourceType.TEXT and s.fulltext
+        s for s in all_sources if s.source_type == SourceType.TEXT and s.fulltext
     ]
 
     if command.source_id:
         from src.shared.common.types import SourceId
+
         target_id = SourceId(value=command.source_id)
         text_sources = [s for s in text_sources if s.id == target_id]
 
@@ -72,15 +73,19 @@ def export_coded_html(
 
         # Filter codes to only those used in this source's segments
         source_code_ids = {seg.code_id.value for seg in segments}
-        source_codes = {cid: all_codes[cid] for cid in source_code_ids if cid in all_codes}
+        source_codes = {
+            cid: all_codes[cid] for cid in source_code_ids if cid in all_codes
+        }
 
-        sources_data.append({
-            "name": source.name,
-            "fulltext": source.fulltext,
-            "source_id": source.id,
-            "segments": segments,
-            "codes": source_codes,
-        })
+        sources_data.append(
+            {
+                "name": source.name,
+                "fulltext": source.fulltext,
+                "source_id": source.id,
+                "segments": segments,
+                "codes": source_codes,
+            }
+        )
 
     # 3. Write HTML
     try:

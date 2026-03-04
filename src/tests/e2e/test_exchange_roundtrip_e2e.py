@@ -6,6 +6,7 @@ Tests that actually prove import/export works end-to-end:
 2. Import -> verify ALL fields (segments, colors, attributes, text)
 3. Import -> verify data visible via ViewModel/screen queries
 """
+
 from __future__ import annotations
 
 import sqlite3
@@ -15,14 +16,13 @@ import allure
 import pytest
 
 from src.contexts.coding.core.entities import (
-    Category,
     Code,
     Color,
     TextPosition,
     TextSegment,
 )
 from src.contexts.sources.core.entities import Source, SourceType
-from src.shared.common.types import CategoryId, CodeId, SegmentId, SourceId
+from src.shared.common.types import CodeId, SegmentId, SourceId
 
 pytestmark = [
     pytest.mark.e2e,
@@ -146,10 +146,15 @@ REFI_QDA_XML = """\
 
 @allure.story("QC-039 Round-Trip Verification")
 class TestRefiQdaRoundTrip:
-
     @allure.title("Export REFI-QDA then re-import: codes survive round-trip")
     def test_refi_qda_round_trip_codes(
-        self, source_repo, code_repo, category_repo, segment_repo, event_bus, tmp_path,
+        self,
+        source_repo,
+        code_repo,
+        category_repo,
+        segment_repo,
+        event_bus,
+        tmp_path,
         db_engine,
     ):
         from src.contexts.exchange.core.commandHandlers.export_refi_qda import (
@@ -172,8 +177,12 @@ class TestRefiQdaRoundTrip:
             )
             source_repo.save(source)
 
-            code_pos = Code(id=CodeId.new(), name="Positive", color=Color.from_hex("#00FF00"))
-            code_learn = Code(id=CodeId.new(), name="Learning", color=Color.from_hex("#0000FF"))
+            code_pos = Code(
+                id=CodeId.new(), name="Positive", color=Color.from_hex("#00FF00")
+            )
+            code_learn = Code(
+                id=CodeId.new(), name="Learning", color=Color.from_hex("#0000FF")
+            )
             code_repo.save(code_pos)
             code_repo.save(code_learn)
 
@@ -212,10 +221,10 @@ class TestRefiQdaRoundTrip:
             SQLiteCodeRepository,
             SQLiteSegmentRepository,
         )
+        from src.contexts.projects.infra.schema import create_all_contexts
         from src.contexts.sources.infra.source_repository import (
             SQLiteSourceRepository,
         )
-        from src.contexts.projects.infra.schema import create_all_contexts
 
         engine2 = create_engine("sqlite:///:memory:", echo=False)
         create_all_contexts(engine2)
@@ -260,10 +269,15 @@ class TestRefiQdaRoundTrip:
 
 @allure.story("QC-039.02 Import REFI-QDA Project")
 class TestRefiQdaDeepImport:
-
     @allure.title("Import creates segments with correct positions")
     def test_import_creates_segments(
-        self, source_repo, code_repo, category_repo, segment_repo, event_bus, tmp_path,
+        self,
+        source_repo,
+        code_repo,
+        category_repo,
+        segment_repo,
+        event_bus,
+        tmp_path,
     ):
         from src.contexts.exchange.core.commandHandlers.import_refi_qda import (
             import_refi_qda,
@@ -271,7 +285,8 @@ class TestRefiQdaDeepImport:
         from src.contexts.exchange.core.commands import ImportRefiQdaCommand
 
         qdpx = _make_qdpx(
-            tmp_path, REFI_QDA_XML,
+            tmp_path,
+            REFI_QDA_XML,
             {"Sources/interview.txt": "I felt happy and sad today."},
         )
 
@@ -286,7 +301,9 @@ class TestRefiQdaDeepImport:
 
         with allure.step("Verify segments exist"):
             all_segments = segment_repo.get_all()
-            assert len(all_segments) >= 2, f"Expected 2+ segments, got {len(all_segments)}"
+            assert len(all_segments) >= 2, (
+                f"Expected 2+ segments, got {len(all_segments)}"
+            )
 
         with allure.step("Verify segment positions"):
             positions = [(s.position.start, s.position.end) for s in all_segments]
@@ -295,7 +312,13 @@ class TestRefiQdaDeepImport:
 
     @allure.title("Import creates codes with correct colors")
     def test_import_preserves_colors(
-        self, source_repo, code_repo, category_repo, segment_repo, event_bus, tmp_path,
+        self,
+        source_repo,
+        code_repo,
+        category_repo,
+        segment_repo,
+        event_bus,
+        tmp_path,
     ):
         from src.contexts.exchange.core.commandHandlers.import_refi_qda import (
             import_refi_qda,
@@ -303,7 +326,8 @@ class TestRefiQdaDeepImport:
         from src.contexts.exchange.core.commands import ImportRefiQdaCommand
 
         qdpx = _make_qdpx(
-            tmp_path, REFI_QDA_XML,
+            tmp_path,
+            REFI_QDA_XML,
             {"Sources/interview.txt": "I felt happy and sad today."},
         )
 
@@ -331,7 +355,13 @@ class TestRefiQdaDeepImport:
 
     @allure.title("Import creates categories from non-codable Code elements")
     def test_import_creates_categories(
-        self, source_repo, code_repo, category_repo, segment_repo, event_bus, tmp_path,
+        self,
+        source_repo,
+        code_repo,
+        category_repo,
+        segment_repo,
+        event_bus,
+        tmp_path,
     ):
         from src.contexts.exchange.core.commandHandlers.import_refi_qda import (
             import_refi_qda,
@@ -339,7 +369,8 @@ class TestRefiQdaDeepImport:
         from src.contexts.exchange.core.commands import ImportRefiQdaCommand
 
         qdpx = _make_qdpx(
-            tmp_path, REFI_QDA_XML,
+            tmp_path,
+            REFI_QDA_XML,
             {"Sources/interview.txt": "I felt happy and sad today."},
         )
 
@@ -366,7 +397,13 @@ class TestRefiQdaDeepImport:
 
     @allure.title("Import preserves source text content")
     def test_import_preserves_source_text(
-        self, source_repo, code_repo, category_repo, segment_repo, event_bus, tmp_path,
+        self,
+        source_repo,
+        code_repo,
+        category_repo,
+        segment_repo,
+        event_bus,
+        tmp_path,
     ):
         from src.contexts.exchange.core.commandHandlers.import_refi_qda import (
             import_refi_qda,
@@ -374,7 +411,8 @@ class TestRefiQdaDeepImport:
         from src.contexts.exchange.core.commands import ImportRefiQdaCommand
 
         qdpx = _make_qdpx(
-            tmp_path, REFI_QDA_XML,
+            tmp_path,
+            REFI_QDA_XML,
             {"Sources/interview.txt": "I felt happy and sad today."},
         )
 
@@ -401,10 +439,15 @@ class TestRefiQdaDeepImport:
 
 @allure.story("QC-039.03 Import RQDA Project")
 class TestRqdaDeepImport:
-
     @allure.title("Import creates segments with correct text and positions")
     def test_import_creates_segments(
-        self, source_repo, code_repo, category_repo, segment_repo, event_bus, tmp_path,
+        self,
+        source_repo,
+        code_repo,
+        category_repo,
+        segment_repo,
+        event_bus,
+        tmp_path,
     ):
         from src.contexts.exchange.core.commandHandlers.import_rqda import import_rqda
         from src.contexts.exchange.core.commands import ImportRqdaCommand
@@ -431,7 +474,13 @@ class TestRqdaDeepImport:
 
     @allure.title("Import skips deleted sources, codes, and segments")
     def test_import_skips_deleted_items(
-        self, source_repo, code_repo, category_repo, segment_repo, event_bus, tmp_path,
+        self,
+        source_repo,
+        code_repo,
+        category_repo,
+        segment_repo,
+        event_bus,
+        tmp_path,
     ):
         from src.contexts.exchange.core.commandHandlers.import_rqda import import_rqda
         from src.contexts.exchange.core.commands import ImportRqdaCommand
@@ -464,7 +513,13 @@ class TestRqdaDeepImport:
 
     @allure.title("Import preserves code colors from RQDA")
     def test_import_preserves_colors(
-        self, source_repo, code_repo, category_repo, segment_repo, event_bus, tmp_path,
+        self,
+        source_repo,
+        code_repo,
+        category_repo,
+        segment_repo,
+        event_bus,
+        tmp_path,
     ):
         from src.contexts.exchange.core.commandHandlers.import_rqda import import_rqda
         from src.contexts.exchange.core.commands import ImportRqdaCommand
@@ -494,7 +549,6 @@ class TestRqdaDeepImport:
 
 @allure.story("QC-039.06 Import Survey CSV")
 class TestCsvDeepImport:
-
     @allure.title("Import preserves ALL attribute columns for every case")
     def test_import_all_attributes(self, case_repo, event_bus, tmp_path):
         from src.contexts.exchange.core.commandHandlers.import_survey_csv import (
@@ -549,18 +603,19 @@ class TestCsvDeepImport:
 
 @allure.story("QC-039 Import to Screen Verification")
 class TestImportVisibleOnScreen:
-
     @allure.title("Imported codes visible via ViewModel after import")
     def test_imported_codes_visible_via_viewmodel(
-        self, code_repo, category_repo, segment_repo, event_bus, tmp_path,
+        self,
+        code_repo,
+        category_repo,
+        segment_repo,
+        event_bus,
+        tmp_path,
     ):
         from src.contexts.exchange.core.commandHandlers.import_code_list import (
             import_code_list,
         )
         from src.contexts.exchange.core.commands import ImportCodeListCommand
-        from src.contexts.exchange.presentation.viewmodels.exchange_viewmodel import (
-            ExchangeViewModel,
-        )
 
         code_file = tmp_path / "codes.txt"
         code_file.write_text("Emotions\n  Joy\n  Anger\n  Sadness\nThemes\n  Growth\n")
@@ -575,7 +630,9 @@ class TestImportVisibleOnScreen:
             )
             assert result.is_success
 
-        with allure.step("Verify codes available via repository (as ViewModel would query)"):
+        with allure.step(
+            "Verify codes available via repository (as ViewModel would query)"
+        ):
             codes = code_repo.get_all()
             code_names = {c.name for c in codes}
             assert code_names == {"Joy", "Anger", "Sadness", "Growth"}
@@ -597,7 +654,13 @@ class TestImportVisibleOnScreen:
 
     @allure.title("Imported REFI-QDA data visible via source repository")
     def test_refi_qda_data_visible_via_repos(
-        self, source_repo, code_repo, category_repo, segment_repo, event_bus, tmp_path,
+        self,
+        source_repo,
+        code_repo,
+        category_repo,
+        segment_repo,
+        event_bus,
+        tmp_path,
     ):
         from src.contexts.exchange.core.commandHandlers.import_refi_qda import (
             import_refi_qda,
@@ -605,7 +668,8 @@ class TestImportVisibleOnScreen:
         from src.contexts.exchange.core.commands import ImportRefiQdaCommand
 
         qdpx = _make_qdpx(
-            tmp_path, REFI_QDA_XML,
+            tmp_path,
+            REFI_QDA_XML,
             {"Sources/interview.txt": "I felt happy and sad today."},
         )
 
@@ -637,7 +701,10 @@ class TestImportVisibleOnScreen:
 
     @allure.title("Imported CSV cases with attributes visible for case manager")
     def test_csv_cases_visible_for_case_manager(
-        self, case_repo, event_bus, tmp_path,
+        self,
+        case_repo,
+        event_bus,
+        tmp_path,
     ):
         from src.contexts.exchange.core.commandHandlers.import_survey_csv import (
             import_survey_csv,
@@ -646,9 +713,7 @@ class TestImportVisibleOnScreen:
 
         csv_file = tmp_path / "participants.csv"
         csv_file.write_text(
-            "Name,Role,Experience\n"
-            "Dr. Smith,Researcher,15\n"
-            "Jane Doe,Student,2\n"
+            "Name,Role,Experience\nDr. Smith,Researcher,15\nJane Doe,Student,2\n"
         )
 
         import_survey_csv(
@@ -679,10 +744,15 @@ class TestImportVisibleOnScreen:
 
 @allure.story("QC-039.01 Export REFI-QDA Project")
 class TestRefiQdaExportContent:
-
     @allure.title("Exported QDPX contains segments with correct positions")
     def test_export_contains_segments(
-        self, source_repo, code_repo, category_repo, segment_repo, event_bus, tmp_path,
+        self,
+        source_repo,
+        code_repo,
+        category_repo,
+        segment_repo,
+        event_bus,
+        tmp_path,
     ):
         import xml.etree.ElementTree as ET
 
@@ -729,10 +799,10 @@ class TestRefiQdaExportContent:
             root = ET.fromstring(xml_str)
 
             codings = root.findall(".//qda:Coding", ns)
-            assert len(codings) >= 1, f"No Coding elements found in XML"
+            assert len(codings) >= 1, "No Coding elements found in XML"
 
             ranges = root.findall(".//qda:TextRange", ns)
-            assert len(ranges) >= 1, f"No TextRange elements found"
+            assert len(ranges) >= 1, "No TextRange elements found"
 
             range_elem = ranges[0]
             assert range_elem.get("start") == "12"
@@ -740,7 +810,13 @@ class TestRefiQdaExportContent:
 
     @allure.title("Exported QDPX includes source file in ZIP")
     def test_export_includes_source_file(
-        self, source_repo, code_repo, category_repo, segment_repo, event_bus, tmp_path,
+        self,
+        source_repo,
+        code_repo,
+        category_repo,
+        segment_repo,
+        event_bus,
+        tmp_path,
     ):
         source = Source(
             id=SourceId.new(),
@@ -765,8 +841,10 @@ class TestRefiQdaExportContent:
             event_bus=event_bus,
         )
 
-        with allure.step("Verify source file in ZIP"):
-            with zipfile.ZipFile(output_path) as zf:
-                names = zf.namelist()
-                source_files = [n for n in names if n.startswith("Sources/")]
-                assert len(source_files) >= 1, f"No source files in ZIP: {names}"
+        with (
+            allure.step("Verify source file in ZIP"),
+            zipfile.ZipFile(output_path) as zf,
+        ):
+            names = zf.namelist()
+            source_files = [n for n in names if n.startswith("Sources/")]
+            assert len(source_files) >= 1, f"No source files in ZIP: {names}"

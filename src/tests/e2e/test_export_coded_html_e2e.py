@@ -6,6 +6,7 @@ TDD: Tests written FIRST, before implementation.
 Tests verify exporting coded text produces an HTML file with
 code highlights and source grouping.
 """
+
 from __future__ import annotations
 
 import allure
@@ -64,7 +65,6 @@ def coded_sources(source_repo, code_repo, segment_repo):
 
 @allure.story("QC-039.05 Export Coded Text as HTML")
 class TestExportCodedHTML:
-
     @allure.title("AC #1: I can export coded text as HTML file")
     def test_ac1_export_creates_html(
         self, source_repo, code_repo, segment_repo, event_bus, coded_sources, tmp_path

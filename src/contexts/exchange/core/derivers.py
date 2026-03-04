@@ -4,6 +4,7 @@ Exchange Context: Derivers (Pure Event Derivation)
 Compose invariants to derive success or failure events.
 Pure functions: no I/O, no side effects.
 """
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING

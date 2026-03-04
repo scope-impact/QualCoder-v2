@@ -4,13 +4,13 @@ Exchange Infra: REFI-QDA Reader
 Parses REFI-QDA .qdpx archives (ZIP with project.qde XML)
 into structured data for import.
 """
+
 from __future__ import annotations
 
 import xml.etree.ElementTree as ET
 import zipfile
 from dataclasses import dataclass, field
 from pathlib import Path
-
 
 from src.contexts.exchange.core.commands import DEFAULT_IMPORT_COLOR
 
@@ -20,6 +20,7 @@ REFI_NS = "urn:QDA-XML:project:1.0"
 @dataclass(frozen=True)
 class ParsedCode:
     """A code parsed from REFI-QDA XML."""
+
     guid: str
     name: str
     color: str = DEFAULT_IMPORT_COLOR
@@ -30,6 +31,7 @@ class ParsedCode:
 @dataclass(frozen=True)
 class ParsedCategory:
     """A category (non-codable Code) from REFI-QDA XML."""
+
     guid: str
     name: str
     memo: str | None = None
@@ -38,6 +40,7 @@ class ParsedCategory:
 @dataclass(frozen=True)
 class ParsedSource:
     """A text source from REFI-QDA XML."""
+
     guid: str
     name: str
     fulltext: str = ""
@@ -46,6 +49,7 @@ class ParsedSource:
 @dataclass(frozen=True)
 class ParsedCoding:
     """A coding (segment) from REFI-QDA XML."""
+
     code_guid: str
     source_guid: str
     start: int
@@ -55,6 +59,7 @@ class ParsedCoding:
 @dataclass
 class RefiQdaParseResult:
     """Result of parsing a REFI-QDA archive."""
+
     project_name: str = ""
     codes: list[ParsedCode] = field(default_factory=list)
     categories: list[ParsedCategory] = field(default_factory=list)
@@ -77,8 +82,11 @@ def read_refi_qda(qdpx_path: Path | str) -> RefiQdaParseResult:
 
     with zipfile.ZipFile(qdpx_path) as zf:
         xml_content = zf.read("project.qde")
-        source_files = {n: zf.read(n).decode("utf-8", errors="replace")
-                        for n in zf.namelist() if n.startswith("Sources/")}
+        source_files = {
+            n: zf.read(n).decode("utf-8", errors="replace")
+            for n in zf.namelist()
+            if n.startswith("Sources/")
+        }
 
     root = ET.fromstring(xml_content)
 
@@ -117,9 +125,13 @@ def read_refi_qda(qdpx_path: Path | str) -> RefiQdaParseResult:
                     if plain_path and plain_path in source_files:
                         fulltext = source_files[plain_path]
 
-                result.sources.append(ParsedSource(
-                    guid=guid, name=name, fulltext=fulltext,
-                ))
+                result.sources.append(
+                    ParsedSource(
+                        guid=guid,
+                        name=name,
+                        fulltext=fulltext,
+                    )
+                )
 
     # Parse codings
     for coding_el in root.findall(f"{ns}Coding"):
@@ -127,12 +139,14 @@ def read_refi_qda(qdpx_path: Path | str) -> RefiQdaParseResult:
         text_range = coding_el.find(f"{ns}TextRange")
 
         if code_ref is not None and text_range is not None:
-            result.codings.append(ParsedCoding(
-                code_guid=code_ref.get("targetGUID", ""),
-                source_guid=text_range.get("sourceGUID", ""),
-                start=int(text_range.get("start", "0")),
-                end=int(text_range.get("end", "0")),
-            ))
+            result.codings.append(
+                ParsedCoding(
+                    code_guid=code_ref.get("targetGUID", ""),
+                    source_guid=text_range.get("sourceGUID", ""),
+                    start=int(text_range.get("start", "0")),
+                    end=int(text_range.get("end", "0")),
+                )
+            )
 
     return result
 
@@ -156,14 +170,23 @@ def _parse_codes(
             memo = desc_el.text
 
         if is_codable:
-            result.codes.append(ParsedCode(
-                guid=guid, name=name, color=color,
-                category_guid=parent_guid, memo=memo,
-            ))
+            result.codes.append(
+                ParsedCode(
+                    guid=guid,
+                    name=name,
+                    color=color,
+                    category_guid=parent_guid,
+                    memo=memo,
+                )
+            )
         else:
             # Non-codable = category
-            result.categories.append(ParsedCategory(
-                guid=guid, name=name, memo=memo,
-            ))
+            result.categories.append(
+                ParsedCategory(
+                    guid=guid,
+                    name=name,
+                    memo=memo,
+                )
+            )
             # Recurse into nested codes
             _parse_codes(code_el, ns, result, parent_guid=guid)

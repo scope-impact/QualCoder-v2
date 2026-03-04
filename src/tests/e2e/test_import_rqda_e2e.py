@@ -3,6 +3,7 @@ QC-039.03: Import RQDA Project - E2E Tests
 
 TDD: Tests written FIRST, before implementation.
 """
+
 from __future__ import annotations
 
 import allure
@@ -18,20 +19,34 @@ pytestmark = [
 def _seed_rqda_data(conn):
     """Seed standard RQDA test data into an already-created schema."""
     c = conn.cursor()
-    c.execute("INSERT INTO source (name, id, file, status) VALUES ('interview.txt', 1, 'I felt very happy about learning.', 1)")
-    c.execute("INSERT INTO freecode (name, id, color, status) VALUES ('Positive', 1, '#00ff00', 1)")
-    c.execute("INSERT INTO freecode (name, id, color, status) VALUES ('Learning', 2, '#0000ff', 1)")
-    c.execute("INSERT INTO coding (cid, fid, seltext, selfirst, selend, status) VALUES (1, 1, 'happy', 12, 17, 1)")
+    c.execute(
+        "INSERT INTO source (name, id, file, status) VALUES ('interview.txt', 1, 'I felt very happy about learning.', 1)"
+    )
+    c.execute(
+        "INSERT INTO freecode (name, id, color, status) VALUES ('Positive', 1, '#00ff00', 1)"
+    )
+    c.execute(
+        "INSERT INTO freecode (name, id, color, status) VALUES ('Learning', 2, '#0000ff', 1)"
+    )
+    c.execute(
+        "INSERT INTO coding (cid, fid, seltext, selfirst, selend, status) VALUES (1, 1, 'happy', 12, 17, 1)"
+    )
     conn.commit()
     conn.close()
 
 
 @allure.story("QC-039.03 Import RQDA Project")
 class TestImportRQDA:
-
     @allure.title("AC #1: I can import an RQDA database")
     def test_ac1_import_rqda(
-        self, source_repo, code_repo, category_repo, segment_repo, event_bus, tmp_path, create_rqda_db,
+        self,
+        source_repo,
+        code_repo,
+        category_repo,
+        segment_repo,
+        event_bus,
+        tmp_path,
+        create_rqda_db,
     ):
         from src.contexts.exchange.core.commandHandlers.import_rqda import import_rqda
         from src.contexts.exchange.core.commands import ImportRqdaCommand
@@ -54,7 +69,14 @@ class TestImportRQDA:
 
     @allure.title("AC #2: Import creates codes from RQDA")
     def test_ac2_creates_codes(
-        self, source_repo, code_repo, category_repo, segment_repo, event_bus, tmp_path, create_rqda_db,
+        self,
+        source_repo,
+        code_repo,
+        category_repo,
+        segment_repo,
+        event_bus,
+        tmp_path,
+        create_rqda_db,
     ):
         from src.contexts.exchange.core.commandHandlers.import_rqda import import_rqda
         from src.contexts.exchange.core.commands import ImportRqdaCommand
@@ -79,7 +101,14 @@ class TestImportRQDA:
 
     @allure.title("AC #3: Import creates sources from RQDA")
     def test_ac3_creates_sources(
-        self, source_repo, code_repo, category_repo, segment_repo, event_bus, tmp_path, create_rqda_db,
+        self,
+        source_repo,
+        code_repo,
+        category_repo,
+        segment_repo,
+        event_bus,
+        tmp_path,
+        create_rqda_db,
     ):
         from src.contexts.exchange.core.commandHandlers.import_rqda import import_rqda
         from src.contexts.exchange.core.commands import ImportRqdaCommand
@@ -102,7 +131,14 @@ class TestImportRQDA:
 
     @allure.title("Import publishes RqdaImported event")
     def test_publishes_event(
-        self, source_repo, code_repo, category_repo, segment_repo, event_bus, tmp_path, create_rqda_db,
+        self,
+        source_repo,
+        code_repo,
+        category_repo,
+        segment_repo,
+        event_bus,
+        tmp_path,
+        create_rqda_db,
     ):
         from src.contexts.exchange.core.commandHandlers.import_rqda import import_rqda
         from src.contexts.exchange.core.commands import ImportRqdaCommand
@@ -131,7 +167,13 @@ class TestImportRQDA:
 
     @allure.title("Import fails with nonexistent file")
     def test_fails_nonexistent(
-        self, source_repo, code_repo, category_repo, segment_repo, event_bus, tmp_path,
+        self,
+        source_repo,
+        code_repo,
+        category_repo,
+        segment_repo,
+        event_bus,
+        tmp_path,
     ):
         from src.contexts.exchange.core.commandHandlers.import_rqda import import_rqda
         from src.contexts.exchange.core.commands import ImportRqdaCommand

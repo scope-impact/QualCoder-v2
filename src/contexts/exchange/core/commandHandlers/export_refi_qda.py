@@ -3,6 +3,7 @@ Export REFI-QDA Use Case.
 
 Exports the full project as a REFI-QDA 1.0 .qdpx archive.
 """
+
 from __future__ import annotations
 
 import logging
@@ -77,7 +78,10 @@ def export_refi_qda(
 
     logger.info(
         "REFI-QDA exported: %d codes, %d sources, %d segments to %s",
-        len(codes), len(sources), len(all_segments), command.output_path,
+        len(codes),
+        len(sources),
+        len(all_segments),
+        command.output_path,
     )
 
     return OperationResult.ok(data=event)

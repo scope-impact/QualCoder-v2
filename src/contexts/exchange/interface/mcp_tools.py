@@ -6,6 +6,7 @@ Provides tools for:
 - export_data: Export data in a given format
 - import_data: Import data from a file
 """
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
@@ -170,18 +171,22 @@ class ExchangeTools:
         # Find best match
         for keyword, suggestion in FORMAT_SUGGESTIONS.items():
             if keyword in use_case:
-                return OperationResult.ok(data={
-                    "format": suggestion["format"],
-                    "rationale": suggestion["rationale"],
-                    "formats": list(FORMAT_SUGGESTIONS.keys()),
-                }).to_dict()
+                return OperationResult.ok(
+                    data={
+                        "format": suggestion["format"],
+                        "rationale": suggestion["rationale"],
+                        "formats": list(FORMAT_SUGGESTIONS.keys()),
+                    }
+                ).to_dict()
 
         # Default suggestion
-        return OperationResult.ok(data={
-            "format": "refi_qda",
-            "rationale": "REFI-QDA is the most comprehensive format for project exchange.",
-            "formats": list(FORMAT_SUGGESTIONS.keys()),
-        }).to_dict()
+        return OperationResult.ok(
+            data={
+                "format": "refi_qda",
+                "rationale": "REFI-QDA is the most comprehensive format for project exchange.",
+                "formats": list(FORMAT_SUGGESTIONS.keys()),
+            }
+        ).to_dict()
 
     def _handle_export(self, args: dict) -> dict:
         fmt = args.get("format", "")

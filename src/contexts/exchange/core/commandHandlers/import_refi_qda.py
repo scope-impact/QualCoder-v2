@@ -4,14 +4,15 @@ Import REFI-QDA Use Case.
 Imports codes, sources, and codings from a REFI-QDA .qdpx archive
 by delegating to existing command handlers.
 """
+
 from __future__ import annotations
 
 import logging
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-from src.contexts.coding.core.commands import CreateCodeCommand
 from src.contexts.coding.core.commandHandlers.create_code import create_code
+from src.contexts.coding.core.commands import CreateCodeCommand
 from src.contexts.coding.core.entities import Code, TextPosition, TextSegment
 from src.contexts.exchange.core.commands import ImportRefiQdaCommand
 from src.contexts.exchange.core.events import RefiQdaImported
@@ -56,7 +57,9 @@ def import_refi_qda(
     try:
         parsed = read_refi_qda(source_path)
     except FileNotFoundError:
-        failure = ImportFailed.file_not_found(command.source_path, format_label="REFI_QDA")
+        failure = ImportFailed.file_not_found(
+            command.source_path, format_label="REFI_QDA"
+        )
         event_bus.publish(failure)
         return OperationResult.from_failure(failure)
     except Exception as e:
@@ -83,7 +86,10 @@ def import_refi_qda(
 
     for parsed_code in parsed.codes:
         category_id = None
-        if parsed_code.category_guid and parsed_code.category_guid in guid_to_category_id:
+        if (
+            parsed_code.category_guid
+            and parsed_code.category_guid in guid_to_category_id
+        ):
             category_id = guid_to_category_id[parsed_code.category_guid]
 
         result = create_code(
@@ -131,7 +137,7 @@ def import_refi_qda(
             continue
 
         fulltext = guid_to_fulltext.get(coding.source_guid, "")
-        selected_text = fulltext[coding.start:coding.end] if fulltext else ""
+        selected_text = fulltext[coding.start : coding.end] if fulltext else ""
 
         segment = TextSegment(
             id=SegmentId.new(),
@@ -154,7 +160,10 @@ def import_refi_qda(
 
     logger.info(
         "REFI-QDA imported: %d codes, %d sources, %d segments from %s",
-        codes_created, sources_created, segments_created, command.source_path,
+        codes_created,
+        sources_created,
+        segments_created,
+        command.source_path,
     )
 
     return OperationResult.ok(data=event)

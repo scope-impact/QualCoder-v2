@@ -3,9 +3,8 @@ Exchange Infra: Codebook Writer Tests (TDD - RED phase)
 
 Tests for the plain-text codebook writer.
 """
-from __future__ import annotations
 
-import pytest
+from __future__ import annotations
 
 from src.contexts.coding.core.entities import Category, Code, Color
 from src.shared.common.types import CategoryId, CodeId

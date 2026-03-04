@@ -4,6 +4,7 @@ Exchange ViewModel
 Manages UI state for import/export operations.
 Delegates to ExchangeCoordinator for command dispatch.
 """
+
 from __future__ import annotations
 
 import logging
@@ -51,7 +52,9 @@ class ExchangeViewModel:
         )
         return self._handle_result(result)
 
-    def export_refi_qda(self, output_path: str, project_name: str = "QualCoder Project") -> bool:
+    def export_refi_qda(
+        self, output_path: str, project_name: str = "QualCoder Project"
+    ) -> bool:
         result = self._coordinator.export_refi_qda(
             ExportRefiQdaCommand(output_path=output_path, project_name=project_name),
         )
@@ -65,7 +68,9 @@ class ExchangeViewModel:
         )
         return self._handle_result(result)
 
-    def import_survey_csv(self, source_path: str, name_column: str | None = None) -> bool:
+    def import_survey_csv(
+        self, source_path: str, name_column: str | None = None
+    ) -> bool:
         result = self._coordinator.import_survey_csv(
             ImportSurveyCSVCommand(source_path=source_path, name_column=name_column),
         )

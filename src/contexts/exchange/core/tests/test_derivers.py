@@ -3,9 +3,8 @@ Exchange Context: Deriver Tests (TDD - RED phase)
 
 Tests for pure event derivation in the exchange domain.
 """
-from __future__ import annotations
 
-import pytest
+from __future__ import annotations
 
 from src.contexts.coding.core.entities import Category, Code, Color
 from src.shared.common.types import CategoryId, CodeId
@@ -14,7 +13,13 @@ from src.shared.common.types import CategoryId, CodeId
 class TestDeriveExportCodebook:
     """Tests for the codebook export deriver."""
 
-    def _make_code(self, name: str, color: str = "#FF0000", memo: str | None = None, category_id=None):
+    def _make_code(
+        self,
+        name: str,
+        color: str = "#FF0000",
+        memo: str | None = None,
+        category_id=None,
+    ):
         return Code(
             id=CodeId.new(),
             name=name,

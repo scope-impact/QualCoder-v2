@@ -90,7 +90,9 @@ class FileManagerToolbar(QFrame):
         self._import_menu.addSeparator()
         self._import_menu.addAction("Code List (.txt)...", self.import_code_list.emit)
         self._import_menu.addAction("Survey CSV (.csv)...", self.import_csv.emit)
-        self._import_menu.addAction("REFI-QDA Project (.qdpx)...", self.import_refi_qda.emit)
+        self._import_menu.addAction(
+            "REFI-QDA Project (.qdpx)...", self.import_refi_qda.emit
+        )
         self._import_menu.addAction("RQDA Project (.rqda)...", self.import_rqda.emit)
         self._import_btn.setMenu(self._import_menu)
         layout.addWidget(self._import_btn)
@@ -122,7 +124,9 @@ class FileManagerToolbar(QFrame):
         self._export_menu.addSeparator()
         self._export_menu.addAction("Codebook (.txt)...", self.export_codebook.emit)
         self._export_menu.addAction("Coded HTML (.html)...", self.export_html.emit)
-        self._export_menu.addAction("REFI-QDA Project (.qdpx)...", self.export_refi_qda.emit)
+        self._export_menu.addAction(
+            "REFI-QDA Project (.qdpx)...", self.export_refi_qda.emit
+        )
         self._export_btn.setMenu(self._export_menu)
         layout.addWidget(self._export_btn)
 

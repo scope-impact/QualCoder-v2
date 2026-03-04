@@ -4,6 +4,7 @@ Export Codebook Use Case.
 Exports all codes and categories as a plain-text codebook document.
 Returns OperationResult with ExportManifest on success.
 """
+
 from __future__ import annotations
 
 import logging

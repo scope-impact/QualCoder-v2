@@ -3,10 +3,10 @@ QC-039.01: Export REFI-QDA Project - E2E Tests
 
 TDD: Tests written FIRST, before implementation.
 """
+
 from __future__ import annotations
 
 import zipfile
-import xml.etree.ElementTree as ET
 
 import allure
 import pytest
@@ -52,11 +52,16 @@ def project_data(source_repo, code_repo, segment_repo):
 
 @allure.story("QC-039.01 Export REFI-QDA Project")
 class TestExportRefiQDA:
-
     @allure.title("AC #1: I can export project as .qdpx file")
     def test_ac1_export_creates_qdpx(
-        self, source_repo, code_repo, category_repo, segment_repo,
-        event_bus, project_data, tmp_path,
+        self,
+        source_repo,
+        code_repo,
+        category_repo,
+        segment_repo,
+        event_bus,
+        project_data,
+        tmp_path,
     ):
         from src.contexts.exchange.core.commandHandlers.export_refi_qda import (
             export_refi_qda,
@@ -87,8 +92,14 @@ class TestExportRefiQDA:
 
     @allure.title("AC #2: QDPX contains project.qde with codes and sources")
     def test_ac2_qdpx_contains_project_data(
-        self, source_repo, code_repo, category_repo, segment_repo,
-        event_bus, project_data, tmp_path,
+        self,
+        source_repo,
+        code_repo,
+        category_repo,
+        segment_repo,
+        event_bus,
+        project_data,
+        tmp_path,
     ):
         from src.contexts.exchange.core.commandHandlers.export_refi_qda import (
             export_refi_qda,
@@ -119,8 +130,14 @@ class TestExportRefiQDA:
 
     @allure.title("Export publishes RefiQdaExported event")
     def test_publishes_event(
-        self, source_repo, code_repo, category_repo, segment_repo,
-        event_bus, project_data, tmp_path,
+        self,
+        source_repo,
+        code_repo,
+        category_repo,
+        segment_repo,
+        event_bus,
+        project_data,
+        tmp_path,
     ):
         from src.contexts.exchange.core.commandHandlers.export_refi_qda import (
             export_refi_qda,

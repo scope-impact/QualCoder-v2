@@ -3,9 +3,8 @@ Exchange Infra: CSV Parser Tests (TDD - RED phase)
 
 Tests for parsing survey CSV files into case data.
 """
-from __future__ import annotations
 
-import pytest
+from __future__ import annotations
 
 
 class TestCsvParser:

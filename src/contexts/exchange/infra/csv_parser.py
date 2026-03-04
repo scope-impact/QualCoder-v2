@@ -4,11 +4,12 @@ Exchange Infra: CSV Parser
 Parses survey CSV files into structured row data.
 Uses stdlib csv module for robust parsing.
 """
+
 from __future__ import annotations
 
 import csv
 import io
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 
 
 @dataclass(frozen=True)
@@ -44,7 +45,9 @@ def parse_survey_csv(
 
     headers = [h.strip() for h in reader.fieldnames]
 
-    resolved_name_column = name_column if name_column else (headers[0] if headers else None)
+    resolved_name_column = (
+        name_column if name_column else (headers[0] if headers else None)
+    )
 
     rows = []
     for row in reader:

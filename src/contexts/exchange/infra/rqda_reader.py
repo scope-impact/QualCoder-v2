@@ -4,6 +4,7 @@ Exchange Infra: RQDA Reader
 Reads RQDA SQLite databases (.rqda files) used by the R-based RQDA package.
 RQDA uses status=1 for active records and status=0 for deleted.
 """
+
 from __future__ import annotations
 
 import sqlite3
@@ -16,6 +17,7 @@ from src.contexts.exchange.core.commands import DEFAULT_IMPORT_COLOR
 @dataclass(frozen=True)
 class RqdaCode:
     """A code from RQDA database."""
+
     id: int
     name: str
     color: str = DEFAULT_IMPORT_COLOR
@@ -25,6 +27,7 @@ class RqdaCode:
 @dataclass(frozen=True)
 class RqdaSource:
     """A source from RQDA database."""
+
     id: int
     name: str
     fulltext: str = ""
@@ -34,6 +37,7 @@ class RqdaSource:
 @dataclass(frozen=True)
 class RqdaCoding:
     """A coding (segment) from RQDA database."""
+
     code_id: int
     source_id: int
     selected_text: str
@@ -44,6 +48,7 @@ class RqdaCoding:
 @dataclass
 class RqdaParseResult:
     """Result of reading an RQDA database."""
+
     codes: list[RqdaCode] = field(default_factory=list)
     sources: list[RqdaSource] = field(default_factory=list)
     codings: list[RqdaCoding] = field(default_factory=list)
@@ -67,34 +72,44 @@ def read_rqda(db_path: Path | str) -> RqdaParseResult:
 
     try:
         # Read codes (freecode table, status=1 means active)
-        for row in conn.execute("SELECT id, name, color, memo FROM freecode WHERE status=1"):
-            result.codes.append(RqdaCode(
-                id=row["id"],
-                name=row["name"],
-                color=row["color"] or DEFAULT_IMPORT_COLOR,
-                memo=row["memo"],
-            ))
+        for row in conn.execute(
+            "SELECT id, name, color, memo FROM freecode WHERE status=1"
+        ):
+            result.codes.append(
+                RqdaCode(
+                    id=row["id"],
+                    name=row["name"],
+                    color=row["color"] or DEFAULT_IMPORT_COLOR,
+                    memo=row["memo"],
+                )
+            )
 
         # Read sources (source table)
-        for row in conn.execute("SELECT id, name, file, memo FROM source WHERE status=1"):
-            result.sources.append(RqdaSource(
-                id=row["id"],
-                name=row["name"],
-                fulltext=row["file"] or "",
-                memo=row["memo"],
-            ))
+        for row in conn.execute(
+            "SELECT id, name, file, memo FROM source WHERE status=1"
+        ):
+            result.sources.append(
+                RqdaSource(
+                    id=row["id"],
+                    name=row["name"],
+                    fulltext=row["file"] or "",
+                    memo=row["memo"],
+                )
+            )
 
         # Read codings
         for row in conn.execute(
             "SELECT cid, fid, seltext, selfirst, selend FROM coding WHERE status=1"
         ):
-            result.codings.append(RqdaCoding(
-                code_id=row["cid"],
-                source_id=row["fid"],
-                selected_text=row["seltext"] or "",
-                start=row["selfirst"],
-                end=row["selend"],
-            ))
+            result.codings.append(
+                RqdaCoding(
+                    code_id=row["cid"],
+                    source_id=row["fid"],
+                    selected_text=row["seltext"] or "",
+                    start=row["selfirst"],
+                    end=row["selend"],
+                )
+            )
     finally:
         conn.close()
 

@@ -3,14 +3,15 @@ Import RQDA Use Case.
 
 Imports codes, sources, and codings from an RQDA SQLite database.
 """
+
 from __future__ import annotations
 
 import logging
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-from src.contexts.coding.core.commands import CreateCodeCommand
 from src.contexts.coding.core.commandHandlers.create_code import create_code
+from src.contexts.coding.core.commands import CreateCodeCommand
 from src.contexts.coding.core.entities import Code, TextPosition, TextSegment
 from src.contexts.exchange.core.commands import ImportRqdaCommand
 from src.contexts.exchange.core.events import RqdaImported
@@ -133,7 +134,10 @@ def import_rqda(
 
     logger.info(
         "RQDA imported: %d codes, %d sources, %d segments from %s",
-        codes_created, sources_created, segments_created, command.source_path,
+        codes_created,
+        sources_created,
+        segments_created,
+        command.source_path,
     )
 
     return OperationResult.ok(data=event)

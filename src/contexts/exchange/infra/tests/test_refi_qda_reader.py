@@ -3,12 +3,10 @@ Exchange Infra: REFI-QDA Reader Tests (TDD - RED phase)
 
 Tests for parsing REFI-QDA .qdpx archives.
 """
+
 from __future__ import annotations
 
-import xml.etree.ElementTree as ET
 import zipfile
-
-import pytest
 
 
 def _make_qdpx(tmp_path, xml_content: str, source_files: dict[str, str] | None = None):
@@ -45,11 +43,12 @@ BASIC_XML = """\
 
 
 class TestRefiQdaReader:
-
     def test_parse_project_name(self, tmp_path):
         from src.contexts.exchange.infra.refi_qda_reader import read_refi_qda
 
-        qdpx = _make_qdpx(tmp_path, BASIC_XML, {"Sources/interview.txt": "I felt happy today."})
+        qdpx = _make_qdpx(
+            tmp_path, BASIC_XML, {"Sources/interview.txt": "I felt happy today."}
+        )
         result = read_refi_qda(qdpx)
 
         assert result.project_name == "TestProject"
@@ -57,7 +56,9 @@ class TestRefiQdaReader:
     def test_parse_codes(self, tmp_path):
         from src.contexts.exchange.infra.refi_qda_reader import read_refi_qda
 
-        qdpx = _make_qdpx(tmp_path, BASIC_XML, {"Sources/interview.txt": "I felt happy today."})
+        qdpx = _make_qdpx(
+            tmp_path, BASIC_XML, {"Sources/interview.txt": "I felt happy today."}
+        )
         result = read_refi_qda(qdpx)
 
         assert len(result.codes) == 2
@@ -68,7 +69,9 @@ class TestRefiQdaReader:
     def test_parse_sources(self, tmp_path):
         from src.contexts.exchange.infra.refi_qda_reader import read_refi_qda
 
-        qdpx = _make_qdpx(tmp_path, BASIC_XML, {"Sources/interview.txt": "I felt happy today."})
+        qdpx = _make_qdpx(
+            tmp_path, BASIC_XML, {"Sources/interview.txt": "I felt happy today."}
+        )
         result = read_refi_qda(qdpx)
 
         assert len(result.sources) == 1
@@ -78,7 +81,9 @@ class TestRefiQdaReader:
     def test_parse_codings(self, tmp_path):
         from src.contexts.exchange.infra.refi_qda_reader import read_refi_qda
 
-        qdpx = _make_qdpx(tmp_path, BASIC_XML, {"Sources/interview.txt": "I felt happy today."})
+        qdpx = _make_qdpx(
+            tmp_path, BASIC_XML, {"Sources/interview.txt": "I felt happy today."}
+        )
         result = read_refi_qda(qdpx)
 
         assert len(result.codings) == 1
@@ -91,7 +96,9 @@ class TestRefiQdaReader:
     def test_parse_code_colors(self, tmp_path):
         from src.contexts.exchange.infra.refi_qda_reader import read_refi_qda
 
-        qdpx = _make_qdpx(tmp_path, BASIC_XML, {"Sources/interview.txt": "I felt happy today."})
+        qdpx = _make_qdpx(
+            tmp_path, BASIC_XML, {"Sources/interview.txt": "I felt happy today."}
+        )
         result = read_refi_qda(qdpx)
 
         joy = next(c for c in result.codes if c.name == "Joy")

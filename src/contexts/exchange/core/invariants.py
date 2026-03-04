@@ -4,6 +4,7 @@ Exchange Context: Invariants (Pure Validation)
 Pure predicate functions for validating import/export operations.
 No I/O, no side effects.
 """
+
 from __future__ import annotations
 
 from pathlib import Path

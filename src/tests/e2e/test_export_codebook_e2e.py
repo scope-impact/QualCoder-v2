@@ -6,16 +6,14 @@ TDD: Tests written FIRST, before implementation.
 Tests verify codebook export produces a document containing
 all codes, categories, and optionally memos.
 """
-from __future__ import annotations
 
-from pathlib import Path
+from __future__ import annotations
 
 import allure
 import pytest
 
 from src.contexts.coding.core.entities import Category, Code, Color
 from src.shared.common.types import CategoryId, CodeId
-from src.shared.infra.event_bus import EventBus
 
 pytestmark = [
     pytest.mark.e2e,
@@ -90,7 +88,6 @@ def codes_and_categories(code_repo, category_repo):
 
 @allure.story("QC-039.04 Export Codebook")
 class TestExportCodebook:
-
     @allure.title("AC #1: I can export codebook as document (ODT)")
     def test_ac1_export_codebook_creates_file(
         self, code_repo, category_repo, event_bus, codes_and_categories, tmp_path
@@ -134,7 +131,7 @@ class TestExportCodebook:
 
         output_path = tmp_path / "codebook.txt"
 
-        result = export_codebook(
+        export_codebook(
             command=ExportCodebookCommand(
                 output_path=str(output_path),
                 include_memos=False,

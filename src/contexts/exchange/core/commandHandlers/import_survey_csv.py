@@ -4,6 +4,7 @@ Import Survey CSV Use Case.
 Parses a CSV file and creates cases with attributes
 from each row. First column (or specified column) becomes the case name.
 """
+
 from __future__ import annotations
 
 import logging

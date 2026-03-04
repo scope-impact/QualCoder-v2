@@ -3,9 +3,8 @@ Exchange Context: Invariant Tests (TDD - RED phase)
 
 Tests for pure validation functions in the exchange domain.
 """
-from __future__ import annotations
 
-import pytest
+from __future__ import annotations
 
 
 class TestCodebookExportInvariants:

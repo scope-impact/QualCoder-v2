@@ -3,12 +3,11 @@ Exchange Infra: REFI-QDA Writer Tests (TDD - RED phase)
 
 Tests for generating REFI-QDA (.qdpx) ZIP archives with project.qde XML.
 """
+
 from __future__ import annotations
 
-import zipfile
 import xml.etree.ElementTree as ET
-
-import pytest
+import zipfile
 
 from src.contexts.coding.core.entities import Code, Color, TextPosition, TextSegment
 from src.contexts.sources.core.entities import Source, SourceType
@@ -43,8 +42,12 @@ class TestRefiQdaWriter:
 
         output = tmp_path / "project.qdpx"
         write_refi_qda(
-            codes=[], categories=[], sources=[], segments=[],
-            output_path=output, project_name="Test",
+            codes=[],
+            categories=[],
+            sources=[],
+            segments=[],
+            output_path=output,
+            project_name="Test",
         )
 
         assert output.exists()
@@ -55,8 +58,12 @@ class TestRefiQdaWriter:
 
         output = tmp_path / "project.qdpx"
         write_refi_qda(
-            codes=[], categories=[], sources=[], segments=[],
-            output_path=output, project_name="Test",
+            codes=[],
+            categories=[],
+            sources=[],
+            segments=[],
+            output_path=output,
+            project_name="Test",
         )
 
         with zipfile.ZipFile(output) as zf:
@@ -67,8 +74,12 @@ class TestRefiQdaWriter:
 
         output = tmp_path / "project.qdpx"
         write_refi_qda(
-            codes=[], categories=[], sources=[], segments=[],
-            output_path=output, project_name="MyProject",
+            codes=[],
+            categories=[],
+            sources=[],
+            segments=[],
+            output_path=output,
+            project_name="MyProject",
         )
 
         with zipfile.ZipFile(output) as zf:
@@ -84,8 +95,12 @@ class TestRefiQdaWriter:
         output = tmp_path / "project.qdpx"
 
         write_refi_qda(
-            codes=[code], categories=[], sources=[], segments=[],
-            output_path=output, project_name="Test",
+            codes=[code],
+            categories=[],
+            sources=[],
+            segments=[],
+            output_path=output,
+            project_name="Test",
         )
 
         with zipfile.ZipFile(output) as zf:
@@ -100,8 +115,12 @@ class TestRefiQdaWriter:
         output = tmp_path / "project.qdpx"
 
         write_refi_qda(
-            codes=[], categories=[], sources=[source], segments=[],
-            output_path=output, project_name="Test",
+            codes=[],
+            categories=[],
+            sources=[source],
+            segments=[],
+            output_path=output,
+            project_name="Test",
         )
 
         with zipfile.ZipFile(output) as zf:
@@ -118,8 +137,12 @@ class TestRefiQdaWriter:
 
         output = tmp_path / "project.qdpx"
         write_refi_qda(
-            codes=[code], categories=[], sources=[source], segments=[seg],
-            output_path=output, project_name="Test",
+            codes=[code],
+            categories=[],
+            sources=[source],
+            segments=[seg],
+            output_path=output,
+            project_name="Test",
         )
 
         with zipfile.ZipFile(output) as zf:
@@ -135,8 +158,12 @@ class TestRefiQdaWriter:
         output = tmp_path / "project.qdpx"
 
         write_refi_qda(
-            codes=[], categories=[], sources=[source], segments=[],
-            output_path=output, project_name="Test",
+            codes=[],
+            categories=[],
+            sources=[source],
+            segments=[],
+            output_path=output,
+            project_name="Test",
         )
 
         with zipfile.ZipFile(output) as zf:

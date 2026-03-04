@@ -4,6 +4,7 @@ Exchange Context: Failure Events
 Publishable failure events for import/export operations.
 Event naming: {ENTITY}_NOT_{OPERATION}/{REASON}
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -27,7 +28,7 @@ class ExportFailed(FailureEvent):
         )
 
     @classmethod
-    def invalid_path(cls, path: str) -> ExportFailed:
+    def invalid_path(cls, path: str) -> ExportFailed:  # noqa: ARG003
         return cls(
             event_id=cls._generate_id(),
             occurred_at=cls._now(),

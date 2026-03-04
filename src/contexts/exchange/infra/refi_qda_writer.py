@@ -5,6 +5,7 @@ Generates REFI-QDA 1.0 compatible .qdpx archives (ZIP with project.qde XML).
 
 REFI-QDA spec: https://www.qdasoftware.org/
 """
+
 from __future__ import annotations
 
 import xml.etree.ElementTree as ET

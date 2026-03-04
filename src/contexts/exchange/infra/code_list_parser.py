@@ -10,6 +10,7 @@ Format:
   - Lines starting with # are comments
   - Empty lines are skipped
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -71,10 +72,8 @@ def parse_code_list(text: str) -> ParseResult:
     # (i.e., have at least one indented entry following them)
     category_indices: set[int] = set()
     for i, (_, is_indented) in enumerate(entries):
-        if not is_indented:
-            # Check if next entry is indented
-            if i + 1 < len(entries) and entries[i + 1][1]:
-                category_indices.add(i)
+        if not is_indented and i + 1 < len(entries) and entries[i + 1][1]:
+            category_indices.add(i)
 
     # Build result
     codes: list[ParsedCode] = []

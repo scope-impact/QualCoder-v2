@@ -3,22 +3,25 @@ Exchange MCP Tools - E2E Tests
 
 Tests for AI agent-facing exchange tools: suggest format, export, import.
 """
+
 from __future__ import annotations
 
 import allure
 import pytest
 
 from src.contexts.coding.core.entities import Code, Color
+from src.shared.common.types import CodeId
 
 pytestmark = [
     pytest.mark.e2e,
     allure.epic("QualCoder v2"),
     allure.feature("QC-039 Import Export Formats"),
 ]
-from src.shared.common.types import CodeId
 
 
-def _make_tools(code_repo, category_repo, segment_repo, source_repo, case_repo, event_bus):
+def _make_tools(
+    code_repo, category_repo, segment_repo, source_repo, case_repo, event_bus
+):
     """Create ExchangeTools wired through ExchangeCoordinator."""
     from src.contexts.exchange.interface.mcp_tools import ExchangeTools
     from src.contexts.exchange.presentation.coordinator import ExchangeCoordinator
@@ -51,13 +54,20 @@ class TestExchangeTools:
         assert "import_data" in names
 
     def test_suggest_export_format(
-        self, code_repo, category_repo, segment_repo, source_repo, event_bus,
+        self,
+        code_repo,
+        category_repo,
+        segment_repo,
+        source_repo,
+        event_bus,
     ):
         # Seed a code so export is possible
         code = Code(id=CodeId.new(), name="Joy", color=Color.from_hex("#00FF00"))
         code_repo.save(code)
 
-        tools = _make_tools(code_repo, category_repo, segment_repo, source_repo, None, event_bus)
+        tools = _make_tools(
+            code_repo, category_repo, segment_repo, source_repo, None, event_bus
+        )
 
         result = tools.execute("suggest_export_format", {"use_case": "share codebook"})
 
@@ -65,24 +75,42 @@ class TestExchangeTools:
         assert "format" in result["data"] or "formats" in result["data"]
 
     def test_export_codebook_via_mcp(
-        self, code_repo, category_repo, segment_repo, source_repo, event_bus, tmp_path,
+        self,
+        code_repo,
+        category_repo,
+        segment_repo,
+        source_repo,
+        event_bus,
+        tmp_path,
     ):
         code = Code(id=CodeId.new(), name="Joy", color=Color.from_hex("#00FF00"))
         code_repo.save(code)
 
-        tools = _make_tools(code_repo, category_repo, segment_repo, source_repo, None, event_bus)
+        tools = _make_tools(
+            code_repo, category_repo, segment_repo, source_repo, None, event_bus
+        )
 
-        result = tools.execute("export_data", {
-            "format": "codebook",
-            "output_path": str(tmp_path / "codebook.txt"),
-        })
+        result = tools.execute(
+            "export_data",
+            {
+                "format": "codebook",
+                "output_path": str(tmp_path / "codebook.txt"),
+            },
+        )
 
         assert result["success"] is True
 
     def test_unknown_tool_returns_error(
-        self, code_repo, category_repo, segment_repo, source_repo, event_bus,
+        self,
+        code_repo,
+        category_repo,
+        segment_repo,
+        source_repo,
+        event_bus,
     ):
-        tools = _make_tools(code_repo, category_repo, segment_repo, source_repo, None, event_bus)
+        tools = _make_tools(
+            code_repo, category_repo, segment_repo, source_repo, None, event_bus
+        )
 
         result = tools.execute("nonexistent_tool", {})
         assert result["success"] is False

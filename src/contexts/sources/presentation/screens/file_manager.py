@@ -530,7 +530,9 @@ class FileManagerScreen(QWidget):
     # Exchange Import/Export Handlers
     # =========================================================================
 
-    def _do_exchange_import(self, title: str, file_filter: str, vm_method: str, success_msg: str) -> None:
+    def _do_exchange_import(
+        self, title: str, file_filter: str, vm_method: str, success_msg: str
+    ) -> None:
         """Shared logic for all exchange import operations."""
         path, _ = QFileDialog.getOpenFileName(self, title, "", file_filter)
         if not path or not self._exchange_vm:
@@ -539,9 +541,13 @@ class FileManagerScreen(QWidget):
             QMessageBox.information(self, "Import", success_msg)
             self._load_data()
         else:
-            QMessageBox.warning(self, "Import Failed", self._exchange_vm.last_error or "Unknown error.")
+            QMessageBox.warning(
+                self, "Import Failed", self._exchange_vm.last_error or "Unknown error."
+            )
 
-    def _do_exchange_export(self, title: str, default_name: str, file_filter: str, vm_method: str) -> None:
+    def _do_exchange_export(
+        self, title: str, default_name: str, file_filter: str, vm_method: str
+    ) -> None:
         """Shared logic for all exchange export operations."""
         path, _ = QFileDialog.getSaveFileName(self, title, default_name, file_filter)
         if not path or not self._exchange_vm:
@@ -549,28 +555,62 @@ class FileManagerScreen(QWidget):
         if getattr(self._exchange_vm, vm_method)(path):
             QMessageBox.information(self, "Export", f"Exported to:\n{path}")
         else:
-            QMessageBox.warning(self, "Export Failed", self._exchange_vm.last_error or "Unknown error.")
+            QMessageBox.warning(
+                self, "Export Failed", self._exchange_vm.last_error or "Unknown error."
+            )
 
     def _on_import_code_list(self) -> None:
-        self._do_exchange_import("Import Code List", "Text Files (*.txt);;All Files (*)", "import_code_list", "Code list imported successfully.")
+        self._do_exchange_import(
+            "Import Code List",
+            "Text Files (*.txt);;All Files (*)",
+            "import_code_list",
+            "Code list imported successfully.",
+        )
 
     def _on_import_csv(self) -> None:
-        self._do_exchange_import("Import Survey CSV", "CSV Files (*.csv);;All Files (*)", "import_survey_csv", "Survey data imported successfully.")
+        self._do_exchange_import(
+            "Import Survey CSV",
+            "CSV Files (*.csv);;All Files (*)",
+            "import_survey_csv",
+            "Survey data imported successfully.",
+        )
 
     def _on_import_refi_qda(self) -> None:
-        self._do_exchange_import("Import REFI-QDA Project", "REFI-QDA Files (*.qdpx);;All Files (*)", "import_refi_qda", "REFI-QDA project imported successfully.")
+        self._do_exchange_import(
+            "Import REFI-QDA Project",
+            "REFI-QDA Files (*.qdpx);;All Files (*)",
+            "import_refi_qda",
+            "REFI-QDA project imported successfully.",
+        )
 
     def _on_import_rqda(self) -> None:
-        self._do_exchange_import("Import RQDA Project", "RQDA Files (*.rqda);;All Files (*)", "import_rqda", "RQDA project imported successfully.")
+        self._do_exchange_import(
+            "Import RQDA Project",
+            "RQDA Files (*.rqda);;All Files (*)",
+            "import_rqda",
+            "RQDA project imported successfully.",
+        )
 
     def _on_export_codebook(self) -> None:
-        self._do_exchange_export("Export Codebook", "codebook.txt", "Text Files (*.txt)", "export_codebook")
+        self._do_exchange_export(
+            "Export Codebook", "codebook.txt", "Text Files (*.txt)", "export_codebook"
+        )
 
     def _on_export_html(self) -> None:
-        self._do_exchange_export("Export Coded HTML", "coded_text.html", "HTML Files (*.html)", "export_coded_html")
+        self._do_exchange_export(
+            "Export Coded HTML",
+            "coded_text.html",
+            "HTML Files (*.html)",
+            "export_coded_html",
+        )
 
     def _on_export_refi_qda(self) -> None:
-        self._do_exchange_export("Export REFI-QDA Project", "project.qdpx", "REFI-QDA Files (*.qdpx)", "export_refi_qda")
+        self._do_exchange_export(
+            "Export REFI-QDA Project",
+            "project.qdpx",
+            "REFI-QDA Files (*.qdpx)",
+            "export_refi_qda",
+        )
 
     # =========================================================================
     # Helper Methods

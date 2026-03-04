@@ -4,6 +4,7 @@ Exchange Context: Domain Events
 Immutable records of import/export operations that happened.
 Event type convention: exchange.{entity}_{action}
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -135,12 +136,19 @@ class RefiQdaExported(DomainEvent):
 
     @classmethod
     def create(
-        cls, output_path: str, code_count: int, source_count: int, segment_count: int,
+        cls,
+        output_path: str,
+        code_count: int,
+        source_count: int,
+        segment_count: int,
     ) -> RefiQdaExported:
         return cls(
-            event_id=cls._generate_id(), occurred_at=cls._now(),
-            output_path=output_path, code_count=code_count,
-            source_count=source_count, segment_count=segment_count,
+            event_id=cls._generate_id(),
+            occurred_at=cls._now(),
+            output_path=output_path,
+            code_count=code_count,
+            source_count=source_count,
+            segment_count=segment_count,
         )
 
 
@@ -157,12 +165,19 @@ class RefiQdaImported(DomainEvent):
 
     @classmethod
     def create(
-        cls, source_path: str, codes_created: int, sources_created: int, segments_created: int,
+        cls,
+        source_path: str,
+        codes_created: int,
+        sources_created: int,
+        segments_created: int,
     ) -> RefiQdaImported:
         return cls(
-            event_id=cls._generate_id(), occurred_at=cls._now(),
-            source_path=source_path, codes_created=codes_created,
-            sources_created=sources_created, segments_created=segments_created,
+            event_id=cls._generate_id(),
+            occurred_at=cls._now(),
+            source_path=source_path,
+            codes_created=codes_created,
+            sources_created=sources_created,
+            segments_created=segments_created,
         )
 
 
@@ -179,10 +194,17 @@ class RqdaImported(DomainEvent):
 
     @classmethod
     def create(
-        cls, source_path: str, codes_created: int, sources_created: int, segments_created: int,
+        cls,
+        source_path: str,
+        codes_created: int,
+        sources_created: int,
+        segments_created: int,
     ) -> RqdaImported:
         return cls(
-            event_id=cls._generate_id(), occurred_at=cls._now(),
-            source_path=source_path, codes_created=codes_created,
-            sources_created=sources_created, segments_created=segments_created,
+            event_id=cls._generate_id(),
+            occurred_at=cls._now(),
+            source_path=source_path,
+            codes_created=codes_created,
+            sources_created=sources_created,
+            segments_created=segments_created,
         )
