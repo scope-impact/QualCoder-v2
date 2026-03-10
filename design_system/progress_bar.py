@@ -229,6 +229,10 @@ class ProgressBarLabeled(QWidget):
         )
         layout.addWidget(self._bar)
 
+    def setLabel(self, text: str):
+        """Update the label text."""
+        self._label.setText(text)
+
     def setValue(self, value: int):
         self._value = value
         self._bar.setValue(value)

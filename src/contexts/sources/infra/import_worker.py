@@ -26,7 +26,7 @@ from PySide6.QtCore import QThread, Signal
 
 from src.contexts.projects.core.entities import Source, SourceStatus, SourceType
 from src.contexts.projects.core.invariants import detect_source_type
-from src.contexts.sources.core.commandHandlers.import_file_source import _extract_text
+from src.contexts.sources.core.commandHandlers.import_file_source import extract_text
 from src.shared.common.types import SourceId
 
 logger = logging.getLogger("qualcoder.sources.import_worker")
@@ -141,7 +141,7 @@ class ImportWorker(QThread):
                     file_size,
                 )
                 extract_start = time.perf_counter()
-                fulltext = _extract_text(source_type, file_path)
+                fulltext = extract_text(source_type, file_path)
                 extract_ms = (time.perf_counter() - extract_start) * 1000
                 logger.debug(
                     "import_worker: [%d/%d] extraction took %.1fms",
@@ -164,7 +164,7 @@ class ImportWorker(QThread):
                 )
 
                 elapsed_ms = (time.perf_counter() - file_start) * 1000
-                seen_names.add(name)
+                seen_names.add(name.lower())
                 imported += 1
 
                 logger.info(

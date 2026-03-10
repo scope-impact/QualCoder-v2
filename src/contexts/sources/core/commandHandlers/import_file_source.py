@@ -57,7 +57,7 @@ _TEXT_EXTRACTORS = {
 }
 
 
-def _extract_text(source_type: SourceType, file_path: Path) -> str | None:
+def extract_text(source_type: SourceType, file_path: Path) -> str | None:
     """Extract text content from a file if the source type supports it."""
     extractor_cls = _TEXT_EXTRACTORS.get(source_type)
     if extractor_cls is None:
@@ -192,7 +192,7 @@ def import_file_source(
         )
 
     # Step 4: Extract text content for text/PDF sources
-    fulltext = _extract_text(source_type, file_path)
+    fulltext = extract_text(source_type, file_path)
 
     # Create Source entity
     source_id = SourceId.new()

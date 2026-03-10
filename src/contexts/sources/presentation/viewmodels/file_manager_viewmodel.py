@@ -126,7 +126,7 @@ class FileManagerViewModel(QObject):
 
     # Batch import signals
     batch_import_progress = Signal(int, int, str)  # (current, total, filename)
-    batch_import_finished = Signal(int, int)  # (imported_count, failed_count)
+    batch_import_finished = Signal(int, int, list)  # (imported_count, failed_count, imported_paths)
 
     def __init__(
         self,
@@ -175,6 +175,7 @@ class FileManagerViewModel(QObject):
         self._batch_total: int = 0
         self._batch_imported: int = 0
         self._batch_failed: int = 0
+        self._batch_imported_paths: list[str] = []
 
         # Connect to signal bridge if provided
         if self._signal_bridge is not None:
@@ -307,7 +308,13 @@ class FileManagerViewModel(QObject):
         self.folders_changed.emit()
 
     def _on_source_moved(self, payload: SourceMovedPayload) -> None:
-        """Handle source moved to folder event."""
+        """Handle source moved to folder event.
+
+        Suppressed during batch operations to avoid O(n) reloads.
+        """
+        if self._suppress_reloads:
+            logger.debug("_on_source_moved: suppressed (batch in progress)")
+            return
         self.source_moved.emit(payload)
         self.folders_changed.emit()  # Folder source counts changed
 
@@ -319,11 +326,14 @@ class FileManagerViewModel(QObject):
         """
         Load all sources and return as DTOs.
 
+        Fetches cases once to avoid N+1 queries during DTO conversion.
+
         Returns:
             List of SourceDTO objects for UI display
         """
         sources = self._source_repo.get_all()
-        return [self._source_to_dto(s) for s in sources]
+        cases = self._case_repo.get_all() if self._case_repo else []
+        return [self._source_to_dto(s, cases=cases) for s in sources]
 
     def get_summary(self) -> ProjectSummaryDTO:
         """
@@ -337,26 +347,22 @@ class FileManagerViewModel(QObject):
         if not sources:
             return ProjectSummaryDTO()
 
-        # Count by type
-        text_count = sum(1 for s in sources if s.source_type.value == "text")
-        audio_count = sum(1 for s in sources if s.source_type.value == "audio")
-        video_count = sum(1 for s in sources if s.source_type.value == "video")
-        image_count = sum(1 for s in sources if s.source_type.value == "image")
-        pdf_count = sum(1 for s in sources if s.source_type.value == "pdf")
+        # Single pass over sources
+        type_counts: dict[str, int] = {}
+        total_segments = 0
+        for s in sources:
+            type_counts[s.source_type.value] = type_counts.get(s.source_type.value, 0) + 1
+            total_segments += s.code_count
 
-        # Get total codes from case repo (source of truth)
         total_codes = len(self._case_repo.get_all()) if self._case_repo else 0
-
-        # Count total segments (coded items)
-        total_segments = sum(s.code_count for s in sources)
 
         return ProjectSummaryDTO(
             total_sources=len(sources),
-            text_count=text_count,
-            audio_count=audio_count,
-            video_count=video_count,
-            image_count=image_count,
-            pdf_count=pdf_count,
+            text_count=type_counts.get("text", 0),
+            audio_count=type_counts.get("audio", 0),
+            video_count=type_counts.get("video", 0),
+            image_count=type_counts.get("image", 0),
+            pdf_count=type_counts.get("pdf", 0),
             total_codes=total_codes,
             total_segments=total_segments,
         )
@@ -461,6 +467,7 @@ class FileManagerViewModel(QObject):
 
         self._batch_total = len(file_paths)
         self._batch_imported = 0
+        self._batch_imported_paths = []
         self._batch_failed = 0
         self._suppress_reloads += 1
 
@@ -521,6 +528,7 @@ class FileManagerViewModel(QObject):
 
             persist_ms = (time.perf_counter() - persist_start) * 1000
             self._batch_imported += 1
+            self._batch_imported_paths.append(res.file_path)
 
             logger.info(
                 "batch_import: [%d/%d] persisted %s (extract=%.1fms, persist=%.1fms)",
@@ -582,12 +590,11 @@ class FileManagerViewModel(QObject):
             failed,
             elapsed_ms,
         )
-        self.batch_import_finished.emit(self._batch_imported, self._batch_failed)
+        self.batch_import_finished.emit(self._batch_imported, self._batch_failed, self._batch_imported_paths)
 
-        # Single reload for the entire batch
-        if self._batch_imported > 0:
-            self.sources_changed.emit()
-            self.summary_changed.emit()
+        # Always emit so UI exits suppressed state, even if all files failed
+        self.sources_changed.emit()
+        self.summary_changed.emit()
 
     def _on_worker_finished(self) -> None:
         """Clean up worker reference after thread exits."""
@@ -917,21 +924,35 @@ class FileManagerViewModel(QObject):
         """
         Get all folders as DTOs.
 
+        Fetches sources once to avoid N+1 queries during folder count.
+
         Returns:
             List of FolderDTO objects for UI display
         """
         folders = self._folder_repo.get_all()
-        return [self._folder_to_dto(f) for f in folders]
+        sources = self._source_repo.get_all()
+        # Pre-compute folder → source count map
+        folder_counts: dict[str, int] = {}
+        for s in sources:
+            if s.folder_id:
+                fid = s.folder_id.value
+                folder_counts[fid] = folder_counts.get(fid, 0) + 1
+        return [self._folder_to_dto(f, folder_source_count=folder_counts.get(f.id.value, 0)) for f in folders]
 
     # =========================================================================
     # Private Helpers
     # =========================================================================
 
-    def _source_to_dto(self, source: Source) -> SourceDTO:
-        """Convert a Source entity to DTO."""
-        # Find all cases that contain this source
+    def _source_to_dto(self, source: Source, cases: list | None = None) -> SourceDTO:
+        """Convert a Source entity to DTO.
+
+        Args:
+            source: The source entity to convert.
+            cases: Pre-fetched case list to avoid N+1 queries. If None, fetches from repo.
+        """
         source_id_value = source.id.value
-        cases = self._case_repo.get_all()
+        if cases is None:
+            cases = self._case_repo.get_all() if self._case_repo else []
         case_names = [case.name for case in cases if source_id_value in case.source_ids]
 
         return SourceDTO(
@@ -947,17 +968,22 @@ class FileManagerViewModel(QObject):
             modified_at=source.modified_at.isoformat() if source.modified_at else None,
         )
 
-    def _folder_to_dto(self, folder: Folder) -> FolderDTO:
-        """Convert a Folder entity to DTO."""
-        # Count sources in this folder
-        sources = self._source_repo.get_all()
-        source_count = sum(
-            1 for s in sources if s.folder_id and s.folder_id.value == folder.id.value
-        )
+    def _folder_to_dto(self, folder: Folder, folder_source_count: int | None = None) -> FolderDTO:
+        """Convert a Folder entity to DTO.
+
+        Args:
+            folder: The folder entity to convert.
+            folder_source_count: Pre-computed source count. If None, fetches from repo.
+        """
+        if folder_source_count is None:
+            sources = self._source_repo.get_all()
+            folder_source_count = sum(
+                1 for s in sources if s.folder_id and s.folder_id.value == folder.id.value
+            )
 
         return FolderDTO(
             id=str(folder.id.value),
             name=folder.name,
             parent_id=str(folder.parent_id.value) if folder.parent_id else None,
-            source_count=source_count,
+            source_count=folder_source_count,
         )

@@ -42,16 +42,17 @@ from __future__ import annotations
 import logging
 from typing import TYPE_CHECKING
 
-from PySide6.QtCore import Qt, Signal
+from PySide6.QtCore import Signal
 from PySide6.QtWidgets import (
     QFileDialog,
     QMessageBox,
-    QProgressDialog,
     QVBoxLayout,
     QWidget,
 )
 
 from design_system import ColorPalette, get_colors
+from design_system.modal import Modal
+from design_system.progress_bar import ProgressBarLabeled
 from src.shared.presentation.dto import ProjectSummaryDTO, SourceDTO
 
 from ..pages import FileManagerPage
@@ -107,6 +108,7 @@ class FileManagerScreen(QWidget):
         self._colors = colors or get_colors()
         self._viewmodel = viewmodel
         self._import_progress = None
+        self._import_progress_bar = None
         self._exchange_vm: ExchangeViewModel | None = None
 
         self._setup_ui()
@@ -266,18 +268,24 @@ class FileManagerScreen(QWidget):
         total = len(file_paths)
         logger.info("_on_import_clicked: user selected %d file(s)", total)
 
-        # --- Set up progress dialog ---
-        self._import_progress = QProgressDialog(
-            f"Importing 0/{total} files...",
-            "Cancel",
-            0,
-            total,
-            self,
+        # --- Set up design-system progress modal ---
+        self._import_progress = Modal(
+            title="Importing Files",
+            size="sm",
+            colors=self._colors,
+            parent=self,
         )
-        self._import_progress.setWindowTitle("Importing Files")
-        self._import_progress.setWindowModality(Qt.WindowModality.WindowModal)
-        self._import_progress.setMinimumDuration(0)  # show immediately
-        self._import_progress.canceled.connect(self._on_import_canceled)
+        self._import_progress_bar = ProgressBarLabeled(
+            value=0,
+            max_value=total,
+            label=f"Importing 0/{total} files...",
+            colors=self._colors,
+        )
+        self._import_progress.body.addWidget(self._import_progress_bar)
+        self._import_progress.add_button(
+            "Cancel", variant="secondary", on_click=self._on_import_canceled
+        )
+        self._import_progress.show()
 
         # --- Connect batch signals ---
         self._viewmodel.batch_import_progress.connect(self._on_batch_progress)
@@ -287,29 +295,32 @@ class FileManagerScreen(QWidget):
         self._viewmodel.import_sources_batch(file_paths)
 
     def _on_import_canceled(self):
-        """User clicked Cancel on the progress dialog."""
+        """User clicked Cancel on the progress modal."""
         logger.info("_on_import_canceled: user requested cancel")
         if self._viewmodel:
             self._viewmodel.cancel_import()
+        if self._import_progress:
+            self._import_progress.close()
 
     def _on_batch_progress(self, current: int, total: int, filename: str):
-        """Update progress dialog as files are processed."""
-        if self._import_progress:
-            self._import_progress.setLabelText(
+        """Update progress modal as files are processed."""
+        if self._import_progress_bar:
+            self._import_progress_bar.setLabel(
                 f"Importing {current}/{total} — {filename}"
             )
-            self._import_progress.setValue(current)
+            self._import_progress_bar.setValue(current)
 
-    def _on_batch_finished(self, imported: int, failed: int):
+    def _on_batch_finished(self, imported: int, failed: int, imported_paths: list):
         """Handle batch import completion."""
         logger.info(
             "_on_batch_finished: %d imported, %d failed", imported, failed
         )
 
-        # Clean up progress dialog
+        # Clean up progress modal
         if self._import_progress:
             self._import_progress.close()
             self._import_progress = None
+            self._import_progress_bar = None
 
         # Disconnect batch signals
         if self._viewmodel:
@@ -320,7 +331,7 @@ class FileManagerScreen(QWidget):
         # sources_changed which triggers _load_data via signal connection.
 
         if imported:
-            self.sources_imported.emit([])  # exact paths not tracked; signal observers
+            self.sources_imported.emit(imported_paths)
 
         if failed > 0:
             QMessageBox.warning(
