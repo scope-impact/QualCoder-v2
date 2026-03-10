@@ -136,6 +136,7 @@ class _MainThreadExecutor(QObject):
         except queue.Empty:
             return
 
+        start = time.perf_counter()
         try:
             request.result = request.fn()
         except Exception as exc:
@@ -144,11 +145,19 @@ class _MainThreadExecutor(QObject):
             )
             request.exception = exc
         finally:
+            elapsed_ms = (time.perf_counter() - start) * 1000
+            self._log.debug(
+                "Main-thread request completed in %.1fms", elapsed_ms
+            )
             request.done_event.set()
 
         # If more requests are pending, schedule another round after the
         # event loop processes other events (redraws, signals, etc.).
-        if not self._queue.empty():
+        remaining = self._queue.qsize()
+        if remaining > 0:
+            self._log.debug(
+                "Re-scheduling _process for %d remaining request(s)", remaining
+            )
             QMetaObject.invokeMethod(
                 self, "_process", Qt.ConnectionType.QueuedConnection
             )

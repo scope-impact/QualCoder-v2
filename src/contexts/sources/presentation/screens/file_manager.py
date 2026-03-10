@@ -42,8 +42,15 @@ from __future__ import annotations
 import logging
 from typing import TYPE_CHECKING
 
-from PySide6.QtCore import Signal
-from PySide6.QtWidgets import QApplication, QFileDialog, QMessageBox, QVBoxLayout, QWidget
+from PySide6.QtCore import Qt, Signal
+from PySide6.QtWidgets import (
+    QApplication,
+    QFileDialog,
+    QMessageBox,
+    QProgressDialog,
+    QVBoxLayout,
+    QWidget,
+)
 
 from design_system import ColorPalette, get_colors
 from src.shared.presentation.dto import ProjectSummaryDTO, SourceDTO
@@ -228,7 +235,11 @@ class FileManagerScreen(QWidget):
     # =========================================================================
 
     def _on_import_clicked(self):
-        """Handle import files button click."""
+        """Handle import files button click.
+
+        Uses a background worker for extraction so the UI stays responsive.
+        A modal QProgressDialog shows per-file progress and supports cancel.
+        """
         # Show file dialog
         file_paths, _ = QFileDialog.getOpenFileNames(
             self,
@@ -240,27 +251,74 @@ class FileManagerScreen(QWidget):
         if not file_paths:
             return
 
-        # Import via viewmodel
+        if not self._viewmodel:
+            return
+
+        total = len(file_paths)
+        logger.info("_on_import_clicked: user selected %d file(s)", total)
+
+        # --- Set up progress dialog ---
+        self._import_progress = QProgressDialog(
+            f"Importing 0/{total} files...",
+            "Cancel",
+            0,
+            total,
+            self,
+        )
+        self._import_progress.setWindowTitle("Importing Files")
+        self._import_progress.setWindowModality(Qt.WindowModality.WindowModal)
+        self._import_progress.setMinimumDuration(0)  # show immediately
+        self._import_progress.canceled.connect(self._on_import_canceled)
+
+        # --- Connect batch signals ---
+        self._viewmodel.batch_import_progress.connect(self._on_batch_progress)
+        self._viewmodel.batch_import_finished.connect(self._on_batch_finished)
+
+        # --- Start background import ---
+        self._viewmodel.import_sources_batch(file_paths)
+
+    def _on_import_canceled(self):
+        """User clicked Cancel on the progress dialog."""
+        logger.info("_on_import_canceled: user requested cancel")
         if self._viewmodel:
-            imported = []
-            for path in file_paths:
-                if self._viewmodel.add_source(path):
-                    imported.append(path)
-                # Let the Qt event loop process pending events (redraws,
-                # user input) between imports so the UI stays responsive.
-                QApplication.processEvents()
+            self._viewmodel.cancel_import()
 
-            if imported:
-                self.sources_imported.emit(imported)
-                self._load_data()  # Refresh display
+    def _on_batch_progress(self, current: int, total: int, filename: str):
+        """Update progress dialog as files are processed."""
+        if hasattr(self, "_import_progress") and self._import_progress:
+            self._import_progress.setLabelText(
+                f"Importing {current}/{total} — {filename}"
+            )
+            self._import_progress.setValue(current)
 
-            if len(imported) < len(file_paths):
-                failed = len(file_paths) - len(imported)
-                QMessageBox.warning(
-                    self,
-                    "Import Warning",
-                    f"{failed} file(s) could not be imported.",
-                )
+    def _on_batch_finished(self, imported: int, failed: int):
+        """Handle batch import completion."""
+        logger.info(
+            "_on_batch_finished: %d imported, %d failed", imported, failed
+        )
+
+        # Clean up progress dialog
+        if hasattr(self, "_import_progress") and self._import_progress:
+            self._import_progress.close()
+            self._import_progress = None
+
+        # Disconnect batch signals
+        if self._viewmodel:
+            self._viewmodel.batch_import_progress.disconnect(self._on_batch_progress)
+            self._viewmodel.batch_import_finished.disconnect(self._on_batch_finished)
+
+        # Refresh display
+        self._load_data()
+
+        if imported:
+            self.sources_imported.emit([])  # exact paths not tracked; signal observers
+
+        if failed > 0:
+            QMessageBox.warning(
+                self,
+                "Import Warning",
+                f"{failed} file(s) could not be imported.\nSee log for details.",
+            )
 
     def _on_link_clicked(self):
         """Handle link external files button click."""
@@ -277,7 +335,11 @@ class FileManagerScreen(QWidget):
 
         # Link via viewmodel (same as import but with external flag)
         if self._viewmodel:
-            for path in file_paths:
+            logger.info("_on_link_clicked: linking %d file(s)", len(file_paths))
+            for i, path in enumerate(file_paths):
+                logger.debug(
+                    "_on_link_clicked: [%d/%d] %s", i + 1, len(file_paths), path
+                )
                 self._viewmodel.add_source(path, origin="external")
                 QApplication.processEvents()
             self._load_data()

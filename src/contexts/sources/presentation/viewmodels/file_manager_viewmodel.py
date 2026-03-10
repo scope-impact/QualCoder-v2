@@ -14,6 +14,9 @@ Architecture (per SKILL.md - calls use cases directly):
 
 from __future__ import annotations
 
+import logging
+import time
+from pathlib import Path
 from typing import TYPE_CHECKING, Protocol
 
 from PySide6.QtCore import QObject, Signal
@@ -52,8 +55,11 @@ from src.shared.presentation.dto import FolderDTO, ProjectSummaryDTO, SourceDTO
 
 if TYPE_CHECKING:
     from src.contexts.cases.core.entities import Case
+    from src.contexts.sources.infra.import_worker import ImportWorker
     from src.shared.infra.event_bus import EventBus
     from src.shared.infra.state import ProjectState
+
+logger = logging.getLogger("qualcoder.sources.viewmodel")
 
 
 class SourceRepository(Protocol):
@@ -116,6 +122,10 @@ class FileManagerViewModel(QObject):
     summary_changed = Signal()  # Emitted when summary changes
     error_occurred = Signal(str)  # Error message
 
+    # Batch import signals
+    batch_import_progress = Signal(int, int, str)  # (current, total, filename)
+    batch_import_finished = Signal(int, int)  # (imported_count, failed_count)
+
     def __init__(
         self,
         source_repo: SourceRepository,
@@ -152,6 +162,12 @@ class FileManagerViewModel(QObject):
         # Selection state
         self._selected_source_ids: set[str] = set()
         self._current_source_id: str | None = None
+
+        # Batch import state
+        self._import_worker: ImportWorker | None = None
+        self._batch_total: int = 0
+        self._batch_imported: int = 0
+        self._batch_failed: int = 0
 
         # Connect to signal bridge if provided
         if self._signal_bridge is not None:
@@ -361,6 +377,166 @@ class FileManagerViewModel(QObject):
 
         return result.is_success
 
+    # =========================================================================
+    # Batch Import — background extraction, main-thread persistence
+    # =========================================================================
+
+    @property
+    def is_importing(self) -> bool:
+        """True while a batch import is running."""
+        return self._import_worker is not None and self._import_worker.isRunning()
+
+    def import_sources_batch(
+        self,
+        file_paths: list[str],
+        origin: str | None = None,
+        memo: str | None = None,
+    ) -> None:
+        """Start a background batch import.
+
+        Extraction runs in a worker thread; persistence and event
+        publishing happen on the main thread via signal callbacks.
+
+        Args:
+            file_paths: Absolute paths to import.
+            origin: Optional origin tag for all imported sources.
+            memo: Optional memo for all imported sources.
+        """
+        from src.contexts.sources.infra.import_worker import ImportWorker
+
+        if self.is_importing:
+            logger.warning("import_sources_batch: import already in progress, ignoring")
+            return
+
+        # Snapshot existing names for the worker's uniqueness check.
+        existing_names = frozenset(
+            s.name.lower() for s in self._source_repo.get_all()
+        )
+
+        self._batch_total = len(file_paths)
+        self._batch_imported = 0
+        self._batch_failed = 0
+
+        logger.info(
+            "import_sources_batch: starting batch of %d files (origin=%s)",
+            self._batch_total,
+            origin,
+        )
+
+        self._import_worker = ImportWorker(
+            file_paths=file_paths,
+            existing_names=existing_names,
+            origin=origin,
+            memo=memo,
+            parent=self,
+        )
+        self._import_worker.file_extracted.connect(self._on_file_extracted)
+        self._import_worker.file_failed.connect(self._on_file_failed)
+        self._import_worker.all_done.connect(self._on_batch_done)
+        self._import_worker.finished.connect(self._on_worker_finished)
+        self._import_worker.start()
+
+    def cancel_import(self) -> None:
+        """Request cancellation of the running batch import."""
+        if self._import_worker and self._import_worker.isRunning():
+            logger.info("cancel_import: requesting interruption")
+            self._import_worker.requestInterruption()
+
+    def _on_file_extracted(self, result: object) -> None:
+        """Main-thread slot: persist extracted source and publish event.
+
+        Called for each file that was successfully extracted by the worker.
+        """
+        from src.contexts.projects.core.events import SourceAdded
+        from src.contexts.sources.infra.import_worker import ExtractionResult
+
+        res: ExtractionResult = result  # type: ignore[assignment]
+        source = res.source
+        persist_start = time.perf_counter()
+
+        try:
+            # Persist (must be on main thread for SQLite safety)
+            if self._source_repo:
+                self._source_repo.save(source)
+
+            # Publish domain event
+            event = SourceAdded.create(
+                source_id=source.id,
+                name=source.name,
+                source_type=source.source_type,
+                file_path=source.file_path,
+                file_size=source.file_size,
+                origin=source.origin,
+                memo=source.memo,
+                owner=None,
+            )
+            self._event_bus.publish(event)
+
+            persist_ms = (time.perf_counter() - persist_start) * 1000
+            self._batch_imported += 1
+
+            logger.info(
+                "batch_import: [%d/%d] persisted %s (extract=%.1fms, persist=%.1fms)",
+                res.index + 1,
+                self._batch_total,
+                source.name,
+                res.elapsed_ms,
+                persist_ms,
+            )
+        except Exception:
+            self._batch_failed += 1
+            logger.exception(
+                "batch_import: [%d/%d] persist failed for %s",
+                res.index + 1,
+                self._batch_total,
+                source.name,
+            )
+
+        self.batch_import_progress.emit(
+            self._batch_imported + self._batch_failed,
+            self._batch_total,
+            source.name,
+        )
+
+    def _on_file_failed(self, failure: object) -> None:
+        """Main-thread slot: handle a file that failed extraction."""
+        from src.contexts.sources.infra.import_worker import ExtractionFailure
+
+        fail: ExtractionFailure = failure  # type: ignore[assignment]
+        self._batch_failed += 1
+
+        logger.warning(
+            "batch_import: [%d/%d] extraction failed %s: %s (%.1fms)",
+            fail.index + 1,
+            self._batch_total,
+            fail.file_path,
+            fail.error,
+            fail.elapsed_ms,
+        )
+
+        self.batch_import_progress.emit(
+            self._batch_imported + self._batch_failed,
+            self._batch_total,
+            Path(fail.file_path).name if fail.file_path else "?",
+        )
+
+    def _on_batch_done(self, imported: int, failed: int, elapsed_ms: float) -> None:
+        """Main-thread slot: batch extraction finished."""
+        logger.info(
+            "batch_import: done — %d imported, %d failed (worker elapsed %.1fms)",
+            imported,
+            failed,
+            elapsed_ms,
+        )
+        self.batch_import_finished.emit(self._batch_imported, self._batch_failed)
+
+    def _on_worker_finished(self) -> None:
+        """Clean up worker reference after thread exits."""
+        logger.debug("batch_import: worker thread finished, cleaning up")
+        if self._import_worker:
+            self._import_worker.deleteLater()
+            self._import_worker = None
+
     def remove_source(self, source_id: str) -> bool:
         """
         Remove a source from the project.
@@ -399,11 +575,21 @@ class FileManagerViewModel(QObject):
         Returns:
             True if all successful, False if any failed
         """
-        all_success = True
-        for source_id in source_ids:
-            if not self.remove_source(source_id):
-                all_success = False
+        from PySide6.QtWidgets import QApplication
 
+        total = len(source_ids)
+        logger.info("remove_sources: removing %d source(s)", total)
+        all_success = True
+        for i, source_id in enumerate(source_ids):
+            logger.debug("remove_sources: [%d/%d] %s", i + 1, total, source_id)
+            if not self.remove_source(source_id):
+                logger.warning("remove_sources: failed to remove %s", source_id)
+                all_success = False
+            # Yield to the event loop between removals so the UI stays
+            # responsive during bulk deletes.
+            QApplication.processEvents()
+
+        logger.info("remove_sources: done, all_success=%s", all_success)
         return all_success
 
     def get_segment_count_for_source(self, source_id: str) -> int:
