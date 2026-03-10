@@ -50,9 +50,9 @@ MUTATION_EVENTS: tuple[str, ...] = (
 class VersionControlListener:
     """Batches mutation events with debouncing and triggers auto-commit.
 
-    All mutation events now arrive on the Qt main thread (marshalled by the
-    MCP server's _MainThreadExecutor), so we can use a simple QTimer for
-    debouncing without any threading concerns.
+    All mutation events arrive on the Qt main thread (the unified qasync
+    event loop), so we can use a simple QTimer for debouncing without any
+    threading concerns.
     """
 
     DEBOUNCE_MS = 500

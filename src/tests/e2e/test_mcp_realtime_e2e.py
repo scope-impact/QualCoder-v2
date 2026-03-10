@@ -1,8 +1,8 @@
 """
 E2E test: MCP Server Real-time UI Updates
 
-Verifies that when MCP tools are called from a background thread,
-the UI updates in real-time via SignalBridge.
+Verifies that MCP tool calls trigger domain events and UI signals
+via the SignalBridge.
 """
 
 import concurrent.futures
@@ -21,9 +21,8 @@ from src.shared.infra.mcp_server import MCPServerManager
 def _post_pumping_events(qapp, url: str, *, json: dict, timeout: float = 5.0):
     """POST to MCP server while pumping the Qt event loop.
 
-    MCP tool execution is now marshalled to the main thread via
-    QMetaObject.invokeMethod(QueuedConnection). In tests the main
-    thread must keep processing events while the HTTP response is pending.
+    The HTTP request runs on a pool thread while we keep processing
+    Qt events on the main thread so that signals are delivered.
     """
     with concurrent.futures.ThreadPoolExecutor(max_workers=1) as pool:
         future = pool.submit(httpx.post, url, json=json, timeout=timeout)

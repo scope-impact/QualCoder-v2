@@ -36,6 +36,7 @@ dependencies = [
     "opentelemetry-sdk>=1.39.1",
     "opentelemetry-instrumentation-sqlalchemy>=0.60b1",
     "uuid-utils>=0.14.1",
+    "qasync>=0.28.0",
 ]
 
 [tool.uv.workspace]
