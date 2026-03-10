@@ -71,7 +71,6 @@ class MCPServerManager:
         self._ctx = ctx
         self._port = port
         self._running = False
-        self._thread = None  # Used only by start() for test mode
         self._coding_tools: Any = None  # Cached CodingTools instance
         self._runner: Any = None  # aiohttp AppRunner for cleanup
 
@@ -138,45 +137,12 @@ class MCPServerManager:
         finally:
             self._running = False
 
-    def start(self):
-        """Start MCP server in a background thread (for tests without qasync).
-
-        In production, use ``serve_async()`` on the qasync event loop instead.
-        """
-        import asyncio
-        import threading
-
-        if self._running:
-            self._log.warning("Server already running")
-            return
-
-        self._running = True
-        self._stats["start_time"] = time.time()
-
-        def _run():
-            loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(loop)
-            try:
-                loop.run_until_complete(self._serve())
-            except Exception as e:
-                self._log.exception("Server error: %s", e)
-            finally:
-                loop.close()
-
-        self._thread = threading.Thread(target=_run, daemon=True)
-        self._thread.start()
-        self._log.info("Server starting on port %d (thread mode)", self._port)
-
     def stop(self):
         """Signal the server to stop."""
         if not self._running:
             return
         self._log.info("Server stopping...")
         self._running = False
-        thread = getattr(self, "_thread", None)
-        if thread:
-            thread.join(timeout=2.0)
-            self._thread = None
 
     def _create_logging_middleware(self):
         """Create request/response logging middleware."""
