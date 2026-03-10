@@ -43,7 +43,7 @@ import logging
 from typing import TYPE_CHECKING
 
 from PySide6.QtCore import Signal
-from PySide6.QtWidgets import QFileDialog, QMessageBox, QVBoxLayout, QWidget
+from PySide6.QtWidgets import QApplication, QFileDialog, QMessageBox, QVBoxLayout, QWidget
 
 from design_system import ColorPalette, get_colors
 from src.shared.presentation.dto import ProjectSummaryDTO, SourceDTO
@@ -246,6 +246,9 @@ class FileManagerScreen(QWidget):
             for path in file_paths:
                 if self._viewmodel.add_source(path):
                     imported.append(path)
+                # Let the Qt event loop process pending events (redraws,
+                # user input) between imports so the UI stays responsive.
+                QApplication.processEvents()
 
             if imported:
                 self.sources_imported.emit(imported)
@@ -276,6 +279,7 @@ class FileManagerScreen(QWidget):
         if self._viewmodel:
             for path in file_paths:
                 self._viewmodel.add_source(path, origin="external")
+                QApplication.processEvents()
             self._load_data()
 
     def _on_create_text_clicked(self):

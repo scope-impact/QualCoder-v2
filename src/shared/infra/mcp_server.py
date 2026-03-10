@@ -123,25 +123,35 @@ class _MainThreadExecutor(QObject):
 
     @Slot()
     def _process(self) -> None:
-        """Drain the queue on the main thread and execute each request."""
-        processed = 0
-        while True:
-            try:
-                request = self._queue.get_nowait()
-            except queue.Empty:
-                break
-            try:
-                request.result = request.fn()
-                processed += 1
-            except Exception as exc:
-                self._log.error(
-                    "Exception during main-thread execution: %s", exc, exc_info=True
-                )
-                request.exception = exc
-            finally:
-                request.done_event.set()
-        if processed:
-            self._log.debug("Processed %d queued request(s) on main thread", processed)
+        """Process one queued request on the main thread.
+
+        Only one request is executed per invocation so the Qt event loop
+        can process pending events (redraws, user input) between
+        back-to-back MCP calls.  If more requests remain in the queue,
+        we re-schedule ourselves via QueuedConnection so they run after
+        the event loop has had a chance to breathe.
+        """
+        try:
+            request = self._queue.get_nowait()
+        except queue.Empty:
+            return
+
+        try:
+            request.result = request.fn()
+        except Exception as exc:
+            self._log.error(
+                "Exception during main-thread execution: %s", exc, exc_info=True
+            )
+            request.exception = exc
+        finally:
+            request.done_event.set()
+
+        # If more requests are pending, schedule another round after the
+        # event loop processes other events (redraws, signals, etc.).
+        if not self._queue.empty():
+            QMetaObject.invokeMethod(
+                self, "_process", Qt.ConnectionType.QueuedConnection
+            )
 
 
 class MCPServerManager:
