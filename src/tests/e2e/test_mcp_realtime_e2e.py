@@ -78,11 +78,6 @@ async def _wait_for_server(mcp: MCPServerManager, port: int):
     raise RuntimeError(f"MCP server did not start on port {port}")
 
 
-def _run(loop, coro):
-    """Run a coroutine on the qasync loop."""
-    return loop.run_until_complete(coro)
-
-
 @pytest.mark.e2e
 def test_mcp_server_responds(mcp_test_env):
     """Test MCP server info endpoint."""
@@ -95,7 +90,7 @@ def test_mcp_server_responds(mcp_test_env):
         assert response.status_code == 200
         assert response.json()["name"] == "qualcoder-v2"
 
-    _run(loop, _test())
+    loop.run_until_complete(_test())
 
 
 @pytest.mark.e2e
@@ -113,7 +108,7 @@ def test_mcp_lists_tools(mcp_test_env):
         assert "list_codes" in tool_names
         assert "batch_apply_codes" in tool_names
 
-    _run(loop, _test())
+    loop.run_until_complete(_test())
 
 
 @pytest.mark.e2e
@@ -133,7 +128,7 @@ def test_mcp_get_project_context(mcp_test_env):
         assert data["success"] is True
         assert data["data"]["project_open"] is True
 
-    _run(loop, _test())
+    loop.run_until_complete(_test())
 
 
 @pytest.mark.e2e
@@ -209,7 +204,7 @@ def test_mcp_segment_coded_emits_signal(mcp_test_env, qapp):
             qapp.processEvents()
             await asyncio.sleep(0.02)
 
-    _run(loop, _test())
+    loop.run_until_complete(_test())
 
     assert len(received) > 0, "No segment_coded signal received!"
     payload = received[0]

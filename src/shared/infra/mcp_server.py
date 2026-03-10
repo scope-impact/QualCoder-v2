@@ -71,6 +71,7 @@ class MCPServerManager:
         self._ctx = ctx
         self._port = port
         self._running = False
+        self._stop_event: Any = None  # asyncio.Event, created in serve_async
         self._coding_tools: Any = None  # Cached CodingTools instance
         self._runner: Any = None  # aiohttp AppRunner for cleanup
 
@@ -121,7 +122,10 @@ class MCPServerManager:
             self._log.warning("Server already running")
             return
 
+        import asyncio
+
         self._running = True
+        self._stop_event = asyncio.Event()
         self._stats["start_time"] = time.time()
         self._log.info(
             "Server starting on port %d (debug=%s, unified loop)",
@@ -136,6 +140,7 @@ class MCPServerManager:
             self._stats["errors"] += 1
         finally:
             self._running = False
+            self._stop_event = None
 
     def stop(self):
         """Signal the server to stop."""
@@ -143,6 +148,8 @@ class MCPServerManager:
             return
         self._log.info("Server stopping...")
         self._running = False
+        if self._stop_event:
+            self._stop_event.set()
 
     def _create_logging_middleware(self):
         """Create request/response logging middleware."""
@@ -192,8 +199,6 @@ class MCPServerManager:
 
     async def _serve(self):
         """Main server coroutine."""
-        import asyncio
-
         try:
             from aiohttp import web
         except ImportError:
@@ -220,8 +225,7 @@ class MCPServerManager:
 
         self._log.info("Server ready at http://localhost:%d", self._port)
 
-        while self._running:
-            await asyncio.sleep(0.1)
+        await self._stop_event.wait()
 
         await self._runner.cleanup()
         self._runner = None

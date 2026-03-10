@@ -240,8 +240,9 @@ class FileManagerViewModel(QObject):
             yield
         finally:
             self._suppress_reloads = max(0, self._suppress_reloads - 1)
-            logger.debug("suppress_reloads: exited (depth=%d), emitting sources_changed", self._suppress_reloads)
+            logger.debug("suppress_reloads: exited (depth=%d), emitting sources_changed + summary_changed", self._suppress_reloads)
             self.sources_changed.emit()
+            self.summary_changed.emit()
 
     # =========================================================================
     # Signal Bridge Handlers - React to domain events
@@ -256,6 +257,7 @@ class FileManagerViewModel(QObject):
             logger.debug("_on_source_added: suppressed (batch in progress)")
             return
         self.sources_changed.emit()
+        self.summary_changed.emit()
 
     def _on_source_removed(self, payload: SourcePayload) -> None:
         """Handle source removed event.
@@ -270,6 +272,7 @@ class FileManagerViewModel(QObject):
             logger.debug("_on_source_removed: suppressed (batch in progress)")
             return
         self.sources_changed.emit()
+        self.summary_changed.emit()
 
     def _on_source_renamed(self, payload: SourcePayload) -> None:
         """Handle source renamed event."""
@@ -584,6 +587,7 @@ class FileManagerViewModel(QObject):
         # Single reload for the entire batch
         if self._batch_imported > 0:
             self.sources_changed.emit()
+            self.summary_changed.emit()
 
     def _on_worker_finished(self) -> None:
         """Clean up worker reference after thread exits."""

@@ -21,7 +21,6 @@ import logging
 import time
 from dataclasses import dataclass
 from pathlib import Path
-from typing import TYPE_CHECKING
 
 from PySide6.QtCore import QThread, Signal
 
@@ -122,11 +121,6 @@ class ImportWorker(QThread):
 
             try:
                 # --- Validate ------------------------------------------------
-                if not file_path.exists():
-                    raise FileNotFoundError(f"File not found: {raw_path}")
-                if not file_path.is_file():
-                    raise ValueError(f"Not a file: {raw_path}")
-
                 source_type = detect_source_type(file_path)
                 if source_type == SourceType.UNKNOWN:
                     raise ValueError(f"Unsupported file type: {file_path.suffix}")

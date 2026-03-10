@@ -44,7 +44,6 @@ from typing import TYPE_CHECKING
 
 from PySide6.QtCore import Qt, Signal
 from PySide6.QtWidgets import (
-    QApplication,
     QFileDialog,
     QMessageBox,
     QProgressDialog,
@@ -107,6 +106,7 @@ class FileManagerScreen(QWidget):
         super().__init__(parent)
         self._colors = colors or get_colors()
         self._viewmodel = viewmodel
+        self._import_progress = None
         self._exchange_vm: ExchangeViewModel | None = None
 
         self._setup_ui()
@@ -294,7 +294,7 @@ class FileManagerScreen(QWidget):
 
     def _on_batch_progress(self, current: int, total: int, filename: str):
         """Update progress dialog as files are processed."""
-        if hasattr(self, "_import_progress") and self._import_progress:
+        if self._import_progress:
             self._import_progress.setLabelText(
                 f"Importing {current}/{total} — {filename}"
             )
@@ -307,7 +307,7 @@ class FileManagerScreen(QWidget):
         )
 
         # Clean up progress dialog
-        if hasattr(self, "_import_progress") and self._import_progress:
+        if self._import_progress:
             self._import_progress.close()
             self._import_progress = None
 
