@@ -241,9 +241,11 @@ class FileManagerViewModel(QObject):
             yield
         finally:
             self._suppress_reloads = max(0, self._suppress_reloads - 1)
-            logger.debug("suppress_reloads: exited (depth=%d), emitting sources_changed + summary_changed", self._suppress_reloads)
-            self.sources_changed.emit()
-            self.summary_changed.emit()
+            logger.debug("suppress_reloads: exited (depth=%d)", self._suppress_reloads)
+            # Only emit when outermost suppression exits
+            if self._suppress_reloads == 0:
+                self.sources_changed.emit()
+                self.summary_changed.emit()
 
     # =========================================================================
     # Signal Bridge Handlers - React to domain events
@@ -510,8 +512,7 @@ class FileManagerViewModel(QObject):
 
         try:
             # Persist (must be on main thread for SQLite safety)
-            if self._source_repo:
-                self._source_repo.save(source)
+            self._source_repo.save(source)
 
             # Publish domain event
             event = SourceAdded.create(
