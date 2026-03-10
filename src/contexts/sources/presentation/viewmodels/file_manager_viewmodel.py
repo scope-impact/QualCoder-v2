@@ -14,8 +14,10 @@ Architecture (per SKILL.md - calls use cases directly):
 
 from __future__ import annotations
 
+import contextlib
 import logging
 import time
+from collections.abc import Generator
 from pathlib import Path
 from typing import TYPE_CHECKING, Protocol
 
@@ -163,6 +165,11 @@ class FileManagerViewModel(QObject):
         self._selected_source_ids: set[str] = set()
         self._current_source_id: str | None = None
 
+        # Batch operation state — when > 0, signal bridge handlers are
+        # suppressed to avoid O(n²) reloads.  A single reload is done
+        # when the batch completes.
+        self._suppress_reloads: int = 0
+
         # Batch import state
         self._import_worker: ImportWorker | None = None
         self._batch_total: int = 0
@@ -211,22 +218,58 @@ class FileManagerViewModel(QObject):
         self._signal_bridge.source_moved.disconnect(self._on_source_moved)
 
     # =========================================================================
+    # Batch suppression
+    # =========================================================================
+
+    @contextlib.contextmanager
+    def suppress_reloads(self) -> Generator[None, None, None]:
+        """Context manager that suppresses per-item UI reloads.
+
+        On exit, emits a single ``sources_changed`` so the UI rebuilds once.
+
+        Usage::
+
+            with viewmodel.suppress_reloads():
+                for path in paths:
+                    viewmodel.add_source(path)
+            # single reload happens here
+        """
+        self._suppress_reloads += 1
+        logger.debug("suppress_reloads: entered (depth=%d)", self._suppress_reloads)
+        try:
+            yield
+        finally:
+            self._suppress_reloads = max(0, self._suppress_reloads - 1)
+            logger.debug("suppress_reloads: exited (depth=%d), emitting sources_changed", self._suppress_reloads)
+            self.sources_changed.emit()
+
+    # =========================================================================
     # Signal Bridge Handlers - React to domain events
     # =========================================================================
 
     def _on_source_added(self, _payload: SourcePayload) -> None:
-        """Handle source added event."""
+        """Handle source added event.
+
+        Suppressed during batch operations to avoid O(n²) reloads.
+        """
+        if self._suppress_reloads:
+            logger.debug("_on_source_added: suppressed (batch in progress)")
+            return
         self.sources_changed.emit()
-        self.summary_changed.emit()
 
     def _on_source_removed(self, payload: SourcePayload) -> None:
-        """Handle source removed event."""
+        """Handle source removed event.
+
+        Selection cleanup always runs; UI reload is suppressed during batches.
+        """
         # Clear selection if deleted source was selected
         self._selected_source_ids.discard(payload.source_id)
         if self._current_source_id == payload.source_id:
             self._current_source_id = None
+        if self._suppress_reloads:
+            logger.debug("_on_source_removed: suppressed (batch in progress)")
+            return
         self.sources_changed.emit()
-        self.summary_changed.emit()
 
     def _on_source_renamed(self, payload: SourcePayload) -> None:
         """Handle source renamed event."""
@@ -416,9 +459,10 @@ class FileManagerViewModel(QObject):
         self._batch_total = len(file_paths)
         self._batch_imported = 0
         self._batch_failed = 0
+        self._suppress_reloads += 1
 
         logger.info(
-            "import_sources_batch: starting batch of %d files (origin=%s)",
+            "import_sources_batch: starting batch of %d files (origin=%s), reloads suppressed",
             self._batch_total,
             origin,
         )
@@ -521,14 +565,25 @@ class FileManagerViewModel(QObject):
         )
 
     def _on_batch_done(self, imported: int, failed: int, elapsed_ms: float) -> None:
-        """Main-thread slot: batch extraction finished."""
+        """Main-thread slot: batch extraction finished.
+
+        Re-enables reload suppression and emits a single sources_changed
+        so the UI rebuilds the table exactly once.
+        """
+        self._suppress_reloads = max(0, self._suppress_reloads - 1)
+
         logger.info(
-            "batch_import: done — %d imported, %d failed (worker elapsed %.1fms)",
+            "batch_import: done — %d imported, %d failed (worker elapsed %.1fms), "
+            "emitting single sources_changed",
             imported,
             failed,
             elapsed_ms,
         )
         self.batch_import_finished.emit(self._batch_imported, self._batch_failed)
+
+        # Single reload for the entire batch
+        if self._batch_imported > 0:
+            self.sources_changed.emit()
 
     def _on_worker_finished(self) -> None:
         """Clean up worker reference after thread exits."""
@@ -569,26 +624,24 @@ class FileManagerViewModel(QObject):
         """
         Remove multiple sources from the project.
 
+        Suppresses per-item UI reloads and does a single reload at the end.
+
         Args:
             source_ids: List of source IDs to remove
 
         Returns:
             True if all successful, False if any failed
         """
-        from PySide6.QtWidgets import QApplication
-
         total = len(source_ids)
         logger.info("remove_sources: removing %d source(s)", total)
         all_success = True
-        for i, source_id in enumerate(source_ids):
-            logger.debug("remove_sources: [%d/%d] %s", i + 1, total, source_id)
-            if not self.remove_source(source_id):
-                logger.warning("remove_sources: failed to remove %s", source_id)
-                all_success = False
-            # Yield to the event loop between removals so the UI stays
-            # responsive during bulk deletes.
-            QApplication.processEvents()
-
+        with self.suppress_reloads():
+            for i, source_id in enumerate(source_ids):
+                logger.debug("remove_sources: [%d/%d] %s", i + 1, total, source_id)
+                if not self.remove_source(source_id):
+                    logger.warning("remove_sources: failed to remove %s", source_id)
+                    all_success = False
+        # suppress_reloads emits sources_changed on exit
         logger.info("remove_sources: done, all_success=%s", all_success)
         return all_success
 

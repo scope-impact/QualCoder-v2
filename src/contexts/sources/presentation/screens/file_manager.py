@@ -114,7 +114,7 @@ class FileManagerScreen(QWidget):
 
         # Load initial data if viewmodel provided
         if self._viewmodel:
-            self._load_data()
+            self._load_all()
 
     def _setup_ui(self):
         """Build the screen UI."""
@@ -170,7 +170,12 @@ class FileManagerScreen(QWidget):
     # =========================================================================
 
     def _load_data(self):
-        """Load data from viewmodel."""
+        """Reload sources and summary from viewmodel.
+
+        Folders are loaded separately via ``_load_folders`` (triggered by
+        ``folders_changed`` signal).  Keeping them separate avoids
+        redundant DB queries — source add/remove doesn't change folders.
+        """
         if not self._viewmodel:
             return
 
@@ -182,13 +187,17 @@ class FileManagerScreen(QWidget):
         sources = self._viewmodel.load_sources()
         self._page.set_sources(sources)
 
-        # Load folders
-        folders = self._viewmodel.get_folders()
-        self._page.set_folders(folders)
+    def _load_all(self):
+        """Full reload of sources, summary, and folders.
+
+        Used on initial load and viewmodel replacement.
+        """
+        self._load_data()
+        self._load_folders()
 
     def refresh(self):
         """Refresh data from viewmodel."""
-        self._load_data()
+        self._load_all()
 
     def set_viewmodel(self, viewmodel: FileManagerViewModel):
         """
@@ -204,7 +213,7 @@ class FileManagerScreen(QWidget):
 
         self._viewmodel = viewmodel
         self._connect_viewmodel_signals()
-        self._load_data()
+        self._load_all()
 
     def _connect_viewmodel_signals(self) -> None:
         """Connect to viewmodel signals for reactive UI updates (e.g. MCP-triggered changes)."""
@@ -307,8 +316,8 @@ class FileManagerScreen(QWidget):
             self._viewmodel.batch_import_progress.disconnect(self._on_batch_progress)
             self._viewmodel.batch_import_finished.disconnect(self._on_batch_finished)
 
-        # Refresh display
-        self._load_data()
+        # No explicit _load_data() — _on_batch_done already emits
+        # sources_changed which triggers _load_data via signal connection.
 
         if imported:
             self.sources_imported.emit([])  # exact paths not tracked; signal observers
@@ -333,16 +342,21 @@ class FileManagerScreen(QWidget):
         if not file_paths:
             return
 
-        # Link via viewmodel (same as import but with external flag)
+        # Link via viewmodel (same as import but with external flag).
+        # Suppress per-file reloads; context manager emits single
+        # sources_changed on exit → screen._load_data runs once.
         if self._viewmodel:
-            logger.info("_on_link_clicked: linking %d file(s)", len(file_paths))
-            for i, path in enumerate(file_paths):
-                logger.debug(
-                    "_on_link_clicked: [%d/%d] %s", i + 1, len(file_paths), path
-                )
-                self._viewmodel.add_source(path, origin="external")
-                QApplication.processEvents()
-            self._load_data()
+            total = len(file_paths)
+            logger.info("_on_link_clicked: linking %d file(s)", total)
+            linked = 0
+            with self._viewmodel.suppress_reloads():
+                for i, path in enumerate(file_paths):
+                    logger.debug(
+                        "_on_link_clicked: [%d/%d] %s", i + 1, total, path
+                    )
+                    if self._viewmodel.add_source(path, origin="external"):
+                        linked += 1
+            logger.info("_on_link_clicked: linked %d/%d", linked, total)
 
     def _on_create_text_clicked(self):
         """Handle create new text button click."""
@@ -407,11 +421,11 @@ class FileManagerScreen(QWidget):
         if reply != QMessageBox.StandardButton.Yes:
             return
 
-        # Delete via viewmodel
+        # Delete via viewmodel — suppress_reloads inside remove_sources
+        # emits sources_changed once → _load_data runs via signal connection
         if self._viewmodel:
             if self._viewmodel.remove_sources(source_ids):
                 self.sources_deleted.emit(source_ids)
-                self._load_data()  # Refresh display
             else:
                 QMessageBox.warning(
                     self,
@@ -565,13 +579,12 @@ class FileManagerScreen(QWidget):
 
         folder_id_str = str(folder_id) if folder_id is not None else None
         success = True
-        for source_id in source_ids:
-            if not self._viewmodel.move_source_to_folder(source_id, folder_id_str):
-                success = False
-
-        if success:
-            self._load_data()
-        else:
+        with self._viewmodel.suppress_reloads():
+            for source_id in source_ids:
+                if not self._viewmodel.move_source_to_folder(source_id, folder_id_str):
+                    success = False
+        # suppress_reloads emits sources_changed on exit → _load_data
+        if not success:
             QMessageBox.warning(
                 self,
                 "Move Failed",
