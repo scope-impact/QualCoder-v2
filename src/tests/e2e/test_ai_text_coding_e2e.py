@@ -613,14 +613,14 @@ class TestBatchCodingOperations:
 class TestAITextCodingIntegration:
     """Integration tests for AI-assisted text coding workflows."""
 
-    @allure.title("Complete workflow: Analyze -> Suggest -> Review -> Apply")
-    def test_full_ai_coding_workflow(
+    @allure.title("Complete workflow: Analyze -> Suggest -> Review -> Apply, and Reject -> Modify -> Approve")
+    def test_full_ai_coding_and_reject_modify_workflow(
         self,
         coding_tools: CodingTools,
         app_context: AppContext,
         project_with_text_and_codes: Path,
     ):
-        """Test complete AI-assisted coding workflow."""
+        """Test complete AI-assisted coding workflow including reject and modify."""
 
         with allure.step("Step 1: Analyze uncoded text"):
             analysis = coding_tools.execute("analyze_uncoded_text", {"source_id": 1})
@@ -657,19 +657,9 @@ class TestAITextCodingIntegration:
         with allure.step("Step 5: Verify coding completed"):
             analysis2 = coding_tools.execute("analyze_uncoded_text", {"source_id": 1})
             uncoded_pct2 = analysis2["data"]["uncoded_percentage"]
-            # Should have less uncoded text now
             assert uncoded_pct2 < uncoded_pct
 
-    @allure.title("Reject and modify workflow")
-    def test_reject_modify_workflow(
-        self,
-        coding_tools: CodingTools,
-        app_context: AppContext,
-        project_with_text_and_codes: Path,
-    ):
-        """Test workflow for rejecting and modifying AI suggestions."""
-
-        with allure.step("Get AI suggestion"):
+        with allure.step("Step 6: Reject suggestion with feedback"):
             suggestion = coding_tools.execute(
                 "suggest_code_application",
                 {
@@ -682,7 +672,6 @@ class TestAITextCodingIntegration:
             )
             suggestion_id = suggestion["data"]["suggestion_id"]
 
-        with allure.step("Reject with feedback"):
             rejection = coding_tools.execute(
                 "reject_coding_suggestion",
                 {
@@ -693,20 +682,19 @@ class TestAITextCodingIntegration:
             )
             assert rejection.get("success") is True
 
-        with allure.step("Submit modified suggestion"):
+        with allure.step("Step 7: Submit modified suggestion and approve"):
             modified = coding_tools.execute(
                 "suggest_code_application",
                 {
                     "source_id": 1,
                     "code_id": 1,
-                    "start_pos": 50,  # Expanded range
+                    "start_pos": 50,
                     "end_pos": 250,
                     "rationale": "Expanded range based on feedback",
                 },
             )
             new_suggestion_id = modified["data"]["suggestion_id"]
 
-        with allure.step("Approve modified suggestion"):
             approval = coding_tools.execute(
                 "approve_coding_suggestion",
                 {"suggestion_id": new_suggestion_id},

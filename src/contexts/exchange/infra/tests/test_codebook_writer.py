@@ -1,15 +1,23 @@
 """
-Exchange Infra: Codebook Writer Tests (TDD - RED phase)
+Exchange Infra: Codebook Writer Tests
 
 Tests for the plain-text codebook writer.
 """
 
 from __future__ import annotations
 
+import allure
+import pytest
+
 from src.contexts.coding.core.entities import Category, Code, Color
 from src.shared.common.types import CategoryId, CodeId
 
+pytestmark = [pytest.mark.unit]
 
+
+@allure.epic("QC-036 Exchange")
+@allure.feature("QC-036 Exchange")
+@allure.story("QC-036.06 Export Codebook")
 class TestCodebookWriter:
     """Tests for the codebook text file writer."""
 
@@ -33,28 +41,8 @@ class TestCodebookWriter:
     ):
         return Category(id=CategoryId.new(), name=name, memo=memo, parent_id=parent_id)
 
-    def test_write_basic_codebook(self, tmp_path):
-        from src.contexts.exchange.infra.codebook_writer import write_codebook
-
-        codes = [
-            self._make_code("Joy", "#00FF00"),
-            self._make_code("Anger", "#FF0000"),
-        ]
-        output_path = tmp_path / "codebook.txt"
-
-        write_codebook(
-            codes=codes,
-            categories=[],
-            output_path=output_path,
-            include_memos=False,
-        )
-
-        content = output_path.read_text()
-        assert "Joy" in content
-        assert "Anger" in content
-        assert "#00ff00" in content.lower() or "#00FF00" in content
-
-    def test_write_codebook_with_categories(self, tmp_path):
+    @allure.title("Writes basic codebook with codes, categories, and uncategorized section")
+    def test_write_codebook_with_categories_and_uncategorized(self, tmp_path):
         from src.contexts.exchange.infra.codebook_writer import write_codebook
 
         cat = self._make_category("Emotions", memo="Emotion codes")
@@ -73,67 +61,41 @@ class TestCodebookWriter:
         )
 
         content = output_path.read_text()
-        # Category should appear as a heading before its codes
+        assert "Joy" in content
+        assert "Anger" in content
+        assert "#00ff00" in content.lower() or "#00FF00" in content
+        # Category appears before its codes
         assert content.index("Emotions") < content.index("Joy")
         assert content.index("Emotions") < content.index("Anger")
+        # Uncategorized section
+        assert "Uncategorized" in content
+        assert "Misc" in content
 
-    def test_write_codebook_with_memos(self, tmp_path):
+    @allure.title("Writes codebook with memos when included; excludes when not")
+    def test_write_codebook_memo_inclusion(self, tmp_path):
         from src.contexts.exchange.infra.codebook_writer import write_codebook
 
         cat = self._make_category("Emotions", memo="Emotion codes")
         codes = [
             self._make_code("Joy", "#00FF00", memo="Happy feeling", category_id=cat.id),
         ]
-        output_path = tmp_path / "codebook.txt"
 
+        # With memos
+        with_memos_path = tmp_path / "with_memos.txt"
         write_codebook(
-            codes=codes,
-            categories=[cat],
-            output_path=output_path,
-            include_memos=True,
+            codes=codes, categories=[cat],
+            output_path=with_memos_path, include_memos=True,
         )
+        content_with = with_memos_path.read_text()
+        assert "Happy feeling" in content_with
+        assert "Emotion codes" in content_with
 
-        content = output_path.read_text()
-        assert "Happy feeling" in content
-        assert "Emotion codes" in content
-
-    def test_write_codebook_without_memos_excludes_them(self, tmp_path):
-        from src.contexts.exchange.infra.codebook_writer import write_codebook
-
-        codes = [
-            self._make_code("Joy", "#00FF00", memo="Happy feeling"),
-        ]
-        output_path = tmp_path / "codebook.txt"
-
+        # Without memos
+        without_memos_path = tmp_path / "without_memos.txt"
         write_codebook(
-            codes=codes,
-            categories=[],
-            output_path=output_path,
-            include_memos=False,
+            codes=codes, categories=[],
+            output_path=without_memos_path, include_memos=False,
         )
-
-        content = output_path.read_text()
-        assert "Joy" in content
-        assert "Happy feeling" not in content
-
-    def test_write_codebook_uncategorized_section(self, tmp_path):
-        from src.contexts.exchange.infra.codebook_writer import write_codebook
-
-        cat = self._make_category("Emotions")
-        codes = [
-            self._make_code("Joy", category_id=cat.id),
-            self._make_code("Misc"),  # no category
-        ]
-        output_path = tmp_path / "codebook.txt"
-
-        write_codebook(
-            codes=codes,
-            categories=[cat],
-            output_path=output_path,
-            include_memos=False,
-        )
-
-        content = output_path.read_text()
-        # Uncategorized codes should appear in their own section
-        assert "Uncategorized" in content
-        assert "Misc" in content
+        content_without = without_memos_path.read_text()
+        assert "Joy" in content_without
+        assert "Happy feeling" not in content_without
