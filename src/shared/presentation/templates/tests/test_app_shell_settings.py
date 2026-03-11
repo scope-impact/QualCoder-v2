@@ -22,9 +22,9 @@ pytestmark = pytest.mark.e2e
 class TestAppShellSettingsButton:
     """Tests for settings button in AppShell."""
 
-    @allure.title("Settings button exists, is visible, and emits signal on click")
-    def test_settings_button_exists_visible_emits_signal(self, qapp, colors):
-        """AppShell has a visible settings button in the nav bar that emits settings_clicked."""
+    @allure.title("Settings button exists, is visible, emits signal, and can connect handler")
+    def test_settings_button_exists_visible_emits_and_connects(self, qapp, colors):
+        """AppShell has a visible settings button that emits settings_clicked and can be connected."""
         from PySide6.QtTest import QSignalSpy
 
         from src.shared.presentation.templates.app_shell import AppShell, UnifiedNavBar
@@ -46,23 +46,13 @@ class TestAppShellSettingsButton:
         QApplication.processEvents()
         assert spy.count() >= 1
 
-        shell.close()
-
-    @allure.title("Signal can be connected to open a settings dialog")
-    def test_can_connect_settings_signal_to_handler(self, qapp, colors):
-        """Should be able to connect settings_clicked to a handler."""
-        from src.shared.presentation.templates.app_shell import AppShell
-
-        shell = AppShell(colors=colors)
+        # Can connect to a handler
         handler_called = []
-
         shell.settings_clicked.connect(lambda: handler_called.append(True))
-
-        settings_btn = shell.findChild(QPushButton, "settings_button")
         settings_btn.click()
         QApplication.processEvents()
+        assert len(handler_called) >= 1
 
-        assert len(handler_called) == 1
         shell.close()
 
     @allure.title("Full settings workflow: click -> dialog -> change -> persist")

@@ -142,110 +142,68 @@ class TestColorPickerDialog:
     Test the ColorPickerDialog using black-box patterns.
     """
 
-    @allure.title("AC #3.1: Dialog shows preset color grid")
-    @allure.severity(allure.severity_level.NORMAL)
-    def test_dialog_shows_preset_colors(self, color_picker_dialog):
-        """Dialog should display a grid of preset colors."""
+    @allure.title("AC #3.1+3.2+3.7: Preset grid, select preset, visual state updates")
+    @allure.severity(allure.severity_level.CRITICAL)
+    def test_preset_colors_and_selection(self, color_picker_dialog):
+        """Dialog shows preset colors and user can select them with visual feedback."""
         color_picker_dialog.show()
         QApplication.processEvents()
 
-        attach_screenshot(color_picker_dialog, "ColorPickerDialog - Preset Colors")
-
-        # BLACK-BOX: Get count via public API
+        # Verify preset count
         preset_count = color_picker_dialog.get_preset_count()
         assert preset_count == 20  # 4 rows x 5 columns
 
-    @allure.title("AC #3.2: User can select preset color")
-    @allure.severity(allure.severity_level.CRITICAL)
-    def test_select_preset_color(self, color_picker_dialog):
-        """User can click a preset color swatch to select it."""
-        color_picker_dialog.show()
-        QApplication.processEvents()
-
-        # BLACK-BOX: Find color swatches and click one
+        # Find and click a swatch
         swatches = find_color_swatch_buttons(color_picker_dialog)
         assert len(swatches) > 5, f"Expected at least 6 swatches, found {len(swatches)}"
         expected_color = get_swatch_color(swatches[5])
         swatches[5].clicked.emit(expected_color)
         QApplication.processEvents()
 
-        attach_screenshot(color_picker_dialog, "ColorPickerDialog - Color Selected")
-
-        # Verify via public getter
         assert color_picker_dialog.get_selected_color() == expected_color
 
-    @allure.title("AC #3.3: User can enter custom hex color")
-    @allure.severity(allure.severity_level.NORMAL)
-    def test_enter_custom_hex_color(self, color_picker_dialog):
-        """User can enter a custom hex color value and it updates selection."""
+        # Select a different swatch and verify selection moved
+        assert len(swatches) >= 2
+        color1 = get_swatch_color(swatches[0])
+        swatches[0].clicked.emit(color1)
+        QApplication.processEvents()
+        assert color_picker_dialog.get_selected_color() == color1
+
+        color2 = get_swatch_color(swatches[1])
+        swatches[1].clicked.emit(color2)
+        QApplication.processEvents()
+        assert color_picker_dialog.get_selected_color() == color2
+
+        attach_screenshot(color_picker_dialog, "ColorPickerDialog - Swatch Selection")
+
+    @allure.title("AC #3.3+3.5: Custom hex color and Select button signal")
+    @allure.severity(allure.severity_level.CRITICAL)
+    def test_custom_hex_and_select_signal(self, color_picker_dialog):
+        """User can enter custom hex and clicking Select emits signal."""
         color_picker_dialog.show()
         QApplication.processEvents()
 
+        # Enter custom hex values
         color_picker_dialog.select_color("#123ABC")
         QApplication.processEvents()
         assert color_picker_dialog.get_selected_color() == "#123ABC"
 
-        # Verify a different hex also works
         color_picker_dialog.select_color("#ABCDEF")
         QApplication.processEvents()
         assert color_picker_dialog.get_selected_color() == "#ABCDEF"
 
-        attach_screenshot(color_picker_dialog, "ColorPickerDialog - Custom Hex")
-
-    @allure.title("AC #3.5: Select button emits color_selected signal")
-    @allure.severity(allure.severity_level.CRITICAL)
-    def test_select_emits_signal(self, color_picker_dialog):
-        """Clicking Select emits color_selected signal with chosen color."""
-        color_picker_dialog.show()
-        QApplication.processEvents()
-
-        # BLACK-BOX: Use signal spy
+        # Set up signal spy and click Select
         spy = QSignalSpy(color_picker_dialog.color_selected)
-
         color_picker_dialog.select_color("#AABBCC")
         QApplication.processEvents()
 
-        attach_screenshot(color_picker_dialog, "ColorPickerDialog - Before Select")
-
-        # BLACK-BOX: Click button by text
         click_dialog_button(color_picker_dialog, "Select")
         QApplication.processEvents()
 
-        # Signal should have been emitted at least once with correct color
         assert spy.count() >= 1
-        # Last emission should have our color
         assert spy.at(spy.count() - 1)[0] == "#AABBCC"
 
-    @allure.title("AC #3.7: Swatch selection state updates visually")
-    @allure.severity(allure.severity_level.NORMAL)
-    def test_swatch_selection_visual_state(self, color_picker_dialog):
-        """Selected swatch shows visual indication."""
-        color_picker_dialog.show()
-        QApplication.processEvents()
-
-        # BLACK-BOX: Click swatches and verify selection state
-        swatches = find_color_swatch_buttons(color_picker_dialog)
-        assert len(swatches) >= 2, (
-            f"Expected at least 2 swatches, found {len(swatches)}"
-        )
-
-        # Select first swatch
-        color1 = get_swatch_color(swatches[0])
-        swatches[0].clicked.emit(color1)
-        QApplication.processEvents()
-
-        # Verify via public API
-        assert color_picker_dialog.get_selected_color() == color1
-
-        # Select second swatch
-        color2 = get_swatch_color(swatches[1])
-        swatches[1].clicked.emit(color2)
-        QApplication.processEvents()
-
-        attach_screenshot(color_picker_dialog, "ColorPickerDialog - Swatch Selection")
-
-        # Verify selection moved
-        assert color_picker_dialog.get_selected_color() == color2
+        attach_screenshot(color_picker_dialog, "ColorPickerDialog - Custom Hex and Select")
 
 
 # =============================================================================
@@ -260,105 +218,71 @@ class TestDuplicateCodesDialog:
     Test the DuplicateCodesDialog using black-box patterns.
     """
 
-    @allure.title("AC #5.1: Dialog displays duplicate candidates")
+    @allure.title("AC #5.1+5.6: Display candidates and empty state")
     @allure.severity(allure.severity_level.CRITICAL)
-    def test_displays_duplicate_candidates(
+    def test_display_candidates_and_empty_state(
         self, duplicate_dialog, sample_duplicate_candidates
     ):
-        """Dialog should display detected duplicate code pairs."""
+        """Dialog displays candidates and shows empty state when none found."""
         duplicate_dialog.show()
         QApplication.processEvents()
 
+        # Load candidates
         duplicate_dialog.on_duplicates_detected(sample_duplicate_candidates)
         QApplication.processEvents()
 
         attach_screenshot(duplicate_dialog, "DuplicateCodesDialog - Candidates")
-
-        # BLACK-BOX: Verify via public API
         assert duplicate_dialog.get_candidate_count() == 2
 
-    @allure.title("AC #5.3: User can merge code A into code B")
+        # Show empty state
+        duplicate_dialog.on_duplicates_detected([])
+        QApplication.processEvents()
+
+        attach_screenshot(duplicate_dialog, "DuplicateCodesDialog - Empty State")
+        assert duplicate_dialog.is_empty_state_visible()
+
+    @allure.title("AC #5.3: Merge code A into code B")
     @allure.severity(allure.severity_level.CRITICAL)
     def test_merge_a_into_b(self, duplicate_dialog, sample_duplicate_candidates):
         """User can click to merge code A into code B."""
         duplicate_dialog.show()
         QApplication.processEvents()
 
-        # BLACK-BOX: Use signal spy
         spy = QSignalSpy(duplicate_dialog.merge_requested)
-
         duplicate_dialog.on_duplicates_detected(sample_duplicate_candidates)
         QApplication.processEvents()
 
-        attach_screenshot(duplicate_dialog, "DuplicateCodesDialog - Before Merge")
-
-        # Trigger merge via public API
-        duplicate_dialog.request_merge(1, 2)  # Merge code 1 into code 2
+        duplicate_dialog.request_merge(1, 2)
         QApplication.processEvents()
 
         assert spy.count() == 1
         assert spy.at(0) == [1, 2]
 
-    @allure.title("AC #5.4: User can dismiss pair as not duplicates")
+    @allure.title("AC #5.4+5.5: Dismiss pair and scan for duplicates")
     @allure.severity(allure.severity_level.NORMAL)
-    def test_dismiss_pair(self, duplicate_dialog, sample_duplicate_candidates):
-        """User can dismiss a pair as not duplicates."""
+    def test_dismiss_pair_and_scan(self, duplicate_dialog, sample_duplicate_candidates):
+        """User can dismiss pairs and request new scan."""
         duplicate_dialog.show()
         QApplication.processEvents()
 
-        # BLACK-BOX: Use signal spy
-        spy = QSignalSpy(duplicate_dialog.dismiss_requested)
-
+        dismiss_spy = QSignalSpy(duplicate_dialog.dismiss_requested)
         duplicate_dialog.on_duplicates_detected(sample_duplicate_candidates)
         QApplication.processEvents()
 
         initial_count = duplicate_dialog.get_candidate_count()
 
-        attach_screenshot(duplicate_dialog, "DuplicateCodesDialog - Before Dismiss")
-
-        # Trigger dismiss via public API
+        # Dismiss a pair
         duplicate_dialog.request_dismiss(1, 2)
         QApplication.processEvents()
-
-        # Verify signal emitted
-        assert spy.count() == 1
-
-        # Verify count decreased
+        assert dismiss_spy.count() == 1
         assert duplicate_dialog.get_candidate_count() == initial_count - 1
 
-    @allure.title("AC #5.5: Scan button requests duplicate detection")
-    @allure.severity(allure.severity_level.NORMAL)
-    def test_scan_requests_detection(self, duplicate_dialog):
-        """Scan button emits detect_duplicates_requested signal."""
-        duplicate_dialog.show()
-        QApplication.processEvents()
-
-        attach_screenshot(duplicate_dialog, "DuplicateCodesDialog - Initial")
-
-        # BLACK-BOX: Use signal spy
-        spy = QSignalSpy(duplicate_dialog.detect_duplicates_requested)
-
-        # BLACK-BOX: Click scan button via public method
+        # Scan for duplicates
+        scan_spy = QSignalSpy(duplicate_dialog.detect_duplicates_requested)
         duplicate_dialog.request_scan()
         QApplication.processEvents()
-
-        assert spy.count() == 1
-        assert spy.at(0)[0] == 0.8  # Default threshold
-
-    @allure.title("AC #5.6: Empty state shown when no duplicates")
-    @allure.severity(allure.severity_level.NORMAL)
-    def test_empty_state_no_duplicates(self, duplicate_dialog):
-        """Empty state is shown when no duplicates are found."""
-        duplicate_dialog.show()
-        QApplication.processEvents()
-
-        duplicate_dialog.on_duplicates_detected([])
-        QApplication.processEvents()
-
-        attach_screenshot(duplicate_dialog, "DuplicateCodesDialog - Empty State")
-
-        # BLACK-BOX: Verify via public API
-        assert duplicate_dialog.is_empty_state_visible()
+        assert scan_spy.count() == 1
+        assert scan_spy.at(0)[0] == 0.8  # Default threshold
 
 
 # =============================================================================
@@ -373,10 +297,10 @@ class TestCodeSuggestionDialog:
     Test the CodeSuggestionDialog using black-box patterns.
     """
 
-    @allure.title("AC #8.1: Dialog displays AI suggestions")
+    @allure.title("AC #8.1+8.3: Display suggestions and edit name")
     @allure.severity(allure.severity_level.CRITICAL)
-    def test_displays_suggestions(self, suggestion_dialog, sample_suggestions):
-        """Dialog should display AI-generated code suggestions."""
+    def test_display_and_edit_suggestions(self, suggestion_dialog, sample_suggestions):
+        """Dialog displays suggestions and allows name editing."""
         suggestion_dialog.show()
         QApplication.processEvents()
 
@@ -384,111 +308,59 @@ class TestCodeSuggestionDialog:
         QApplication.processEvents()
 
         attach_screenshot(suggestion_dialog, "CodeSuggestionDialog - Suggestions")
-
         assert suggestion_dialog.get_suggestion_count() == 2
 
-    @allure.title("AC #8.3: User can edit suggested name before approval")
-    @allure.severity(allure.severity_level.NORMAL)
-    def test_edit_suggestion_name(self, suggestion_dialog, sample_suggestions):
-        """User can modify the suggested code name before approving."""
-        suggestion_dialog.show()
-        QApplication.processEvents()
-
-        suggestion_dialog.on_suggestions_received(sample_suggestions)
-        QApplication.processEvents()
-
-        # BLACK-BOX: Edit via public API
+        # Edit suggestion name
         suggestion_dialog.set_suggestion_name("sug-1", "Modified Name")
         QApplication.processEvents()
-
-        attach_screenshot(suggestion_dialog, "CodeSuggestionDialog - Name Edited")
-
         assert suggestion_dialog.get_suggestion_name("sug-1") == "Modified Name"
 
-    @allure.title("AC #8.4: User can approve suggestion")
+    @allure.title("AC #8.4+8.6: Approve suggestion and verify removal")
     @allure.severity(allure.severity_level.CRITICAL)
-    def test_approve_suggestion(self, suggestion_dialog, sample_suggestions):
-        """User can approve a code suggestion."""
+    def test_approve_and_remove_suggestion(self, suggestion_dialog, sample_suggestions):
+        """User can approve a suggestion and it gets removed from list."""
         suggestion_dialog.show()
         QApplication.processEvents()
 
-        # BLACK-BOX: Use signal spy
         spy = QSignalSpy(suggestion_dialog.approve_suggestion_requested)
-
         suggestion_dialog.on_suggestions_received(sample_suggestions)
         QApplication.processEvents()
+        initial_count = suggestion_dialog.get_suggestion_count()
 
-        attach_screenshot(suggestion_dialog, "CodeSuggestionDialog - Before Approve")
-
-        # Approve via public API
+        # Approve
         suggestion_dialog.approve_suggestion("sug-1")
         QApplication.processEvents()
-
         assert spy.count() == 1
         assert spy.at(0)[0] == "sug-1"
 
-    @allure.title("AC #8.5: User can reject suggestion")
-    @allure.severity(allure.severity_level.NORMAL)
-    def test_reject_suggestion(self, suggestion_dialog, sample_suggestions):
-        """User can reject a code suggestion."""
-        suggestion_dialog.show()
-        QApplication.processEvents()
-
-        # BLACK-BOX: Use signal spy
-        spy = QSignalSpy(suggestion_dialog.reject_suggestion_requested)
-
-        suggestion_dialog.on_suggestions_received(sample_suggestions)
-        QApplication.processEvents()
-
-        attach_screenshot(suggestion_dialog, "CodeSuggestionDialog - Before Reject")
-
-        # Reject via public API
-        suggestion_dialog.reject_suggestion("sug-2")
-        QApplication.processEvents()
-
-        assert spy.count() == 1
-        assert spy.at(0)[0] == "sug-2"
-
-    @allure.title("AC #8.6: Approved suggestion removed from list")
-    @allure.severity(allure.severity_level.NORMAL)
-    def test_approved_removed(self, suggestion_dialog, sample_suggestions):
-        """Approved suggestions are removed from the dialog."""
-        suggestion_dialog.show()
-        QApplication.processEvents()
-
-        suggestion_dialog.on_suggestions_received(sample_suggestions)
-        initial_count = suggestion_dialog.get_suggestion_count()
-
-        attach_screenshot(suggestion_dialog, "CodeSuggestionDialog - Before Remove")
-
+        # Simulate approval callback - suggestion removed
         suggestion_dialog.on_suggestion_approved("sug-1")
         QApplication.processEvents()
-
-        attach_screenshot(suggestion_dialog, "CodeSuggestionDialog - After Remove")
-
-        # BLACK-BOX: Verify count decreased
         assert suggestion_dialog.get_suggestion_count() == initial_count - 1
 
-    @allure.title("AC #8.7: Approve All emits signal")
+    @allure.title("AC #8.5+8.7: Reject suggestion and approve all")
     @allure.severity(allure.severity_level.NORMAL)
-    def test_approve_all(self, suggestion_dialog, sample_suggestions):
-        """Approve All button emits approve_all_requested signal."""
+    def test_reject_and_approve_all(self, suggestion_dialog, sample_suggestions):
+        """User can reject individual suggestions or approve all at once."""
         suggestion_dialog.show()
         QApplication.processEvents()
 
-        # BLACK-BOX: Use signal spy
-        spy = QSignalSpy(suggestion_dialog.approve_all_requested)
+        reject_spy = QSignalSpy(suggestion_dialog.reject_suggestion_requested)
+        approve_all_spy = QSignalSpy(suggestion_dialog.approve_all_requested)
 
         suggestion_dialog.on_suggestions_received(sample_suggestions)
         QApplication.processEvents()
 
-        attach_screenshot(suggestion_dialog, "CodeSuggestionDialog - Approve All")
+        # Reject one
+        suggestion_dialog.reject_suggestion("sug-2")
+        QApplication.processEvents()
+        assert reject_spy.count() == 1
+        assert reject_spy.at(0)[0] == "sug-2"
 
-        # Approve all via public API
+        # Approve all
         suggestion_dialog.approve_all()
         QApplication.processEvents()
-
-        assert spy.count() == 1
+        assert approve_all_spy.count() == 1
 
     @allure.title("AC #8.8: Empty state when no suggestions")
     @allure.severity(allure.severity_level.NORMAL)
@@ -501,8 +373,6 @@ class TestCodeSuggestionDialog:
         QApplication.processEvents()
 
         attach_screenshot(suggestion_dialog, "CodeSuggestionDialog - Empty State")
-
-        # BLACK-BOX: Verify via public API
         assert suggestion_dialog.is_empty_state_visible()
 
 
@@ -520,10 +390,10 @@ class TestCodeSuggestionDialog:
 class TestDuplicatePairCard:
     """Unit tests for DuplicatePairCard widget using black-box patterns."""
 
-    @allure.title("Card emits merge_requested with correct IDs")
+    @allure.title("Card emits merge_requested and dismiss_requested with correct IDs")
     @allure.severity(allure.severity_level.CRITICAL)
-    def test_merge_signal_ids(self, qapp, colors):
-        """Merge signal includes correct source and target IDs."""
+    def test_merge_and_dismiss_signals(self, qapp, colors):
+        """Merge and dismiss signals include correct source and target IDs."""
         from src.contexts.coding.presentation.dialogs.duplicate_codes_dialog import (
             DuplicatePairCard,
         )
@@ -544,51 +414,20 @@ class TestDuplicatePairCard:
         card.show()
         QApplication.processEvents()
 
-        attach_screenshot(card, "DuplicatePairCard - Merge Test")
+        attach_screenshot(card, "DuplicatePairCard - Signal Test")
 
-        # BLACK-BOX: Use signal spy
-        spy = QSignalSpy(card.merge_requested)
-
-        # Simulate merge via signal (would be triggered by button click)
+        # Test merge signal
+        merge_spy = QSignalSpy(card.merge_requested)
         card.merge_requested.emit(10, 20)
+        assert merge_spy.count() == 1
+        assert merge_spy.at(0) == [10, 20]
 
-        assert spy.count() == 1
-        assert spy.at(0) == [10, 20]
-        card.deleteLater()
-
-    @allure.title("Card emits dismiss_requested with both IDs")
-    @allure.severity(allure.severity_level.NORMAL)
-    def test_dismiss_signal(self, qapp, colors):
-        """Dismiss signal includes both code IDs."""
-        from src.contexts.coding.presentation.dialogs.duplicate_codes_dialog import (
-            DuplicatePairCard,
-        )
-
-        card = DuplicatePairCard(
-            code_a_id=10,
-            code_a_name="Code A",
-            code_a_color="#FF0000",
-            code_a_segments=5,
-            code_b_id=20,
-            code_b_name="Code B",
-            code_b_color="#00FF00",
-            code_b_segments=3,
-            similarity=90,
-            rationale="Test rationale",
-            colors=colors,
-        )
-        card.show()
-        QApplication.processEvents()
-
-        attach_screenshot(card, "DuplicatePairCard - Dismiss Test")
-
-        # BLACK-BOX: Use signal spy
-        spy = QSignalSpy(card.dismiss_requested)
-
+        # Test dismiss signal
+        dismiss_spy = QSignalSpy(card.dismiss_requested)
         card.dismiss_requested.emit(10, 20)
+        assert dismiss_spy.count() == 1
+        assert dismiss_spy.at(0) == [10, 20]
 
-        assert spy.count() == 1
-        assert spy.at(0) == [10, 20]
         card.deleteLater()
 
 
@@ -620,123 +459,72 @@ class TestCreateCategoryDialog:
     Test the CreateCategoryDialog using black-box patterns.
     """
 
-    @allure.title("AC #2.1: Dialog shows name input field")
+    @allure.title("AC #2.1+2.2: Dialog has name input and user can enter name")
     @allure.severity(allure.severity_level.CRITICAL)
-    def test_dialog_has_name_input(self, create_category_dialog):
-        """Dialog should have a name input field."""
+    def test_name_input_and_entry(self, create_category_dialog):
+        """Dialog has name input field and user can type a category name."""
         create_category_dialog.show()
         QApplication.processEvents()
 
-        attach_screenshot(create_category_dialog, "CreateCategoryDialog - Initial")
-
-        # BLACK-BOX: Find input by placeholder
+        # Verify input field exists
         name_input = find_input_by_placeholder(
             create_category_dialog, "Enter category name"
         )
         assert name_input is not None, "Name input field should be visible"
 
-    @allure.title("AC #2.2: User can enter category name")
-    @allure.severity(allure.severity_level.CRITICAL)
-    def test_enter_category_name(self, create_category_dialog):
-        """User can type a category name in the input."""
-        create_category_dialog.show()
-        QApplication.processEvents()
-
-        # BLACK-BOX: Use public API
+        # Enter a name
         create_category_dialog.set_category_name("New Category")
         QApplication.processEvents()
+        assert create_category_dialog.get_category_name() == "New Category"
 
         attach_screenshot(create_category_dialog, "CreateCategoryDialog - Name Entered")
 
-        assert create_category_dialog.get_category_name() == "New Category"
-
-    @allure.title("AC #2.3: Dialog shows parent category options")
+    @allure.title("AC #2.3+2.4+2.5: Parent category options, selection, and memo")
     @allure.severity(allure.severity_level.NORMAL)
-    def test_dialog_has_parent_options(self, create_category_dialog):
-        """Dialog should show parent category selection."""
+    def test_parent_options_and_memo(self, create_category_dialog):
+        """Dialog shows parent options, allows selection and optional memo."""
         create_category_dialog.show()
         QApplication.processEvents()
 
-        attach_screenshot(
-            create_category_dialog, "CreateCategoryDialog - Parent Options"
-        )
-
-        # BLACK-BOX: Verify via public API
-        # 1 for "None" + 2 existing categories
+        # Verify parent options (1 for "None" + 2 existing)
         assert create_category_dialog.get_parent_options_count() == 3
 
-    @allure.title("AC #2.4: User can select parent category")
-    @allure.severity(allure.severity_level.NORMAL)
-    def test_select_parent_category(self, create_category_dialog):
-        """User can select a parent category."""
-        create_category_dialog.show()
-        QApplication.processEvents()
-
-        # BLACK-BOX: Use public API
+        # Select parent
         create_category_dialog.set_parent_id(1)
         QApplication.processEvents()
-
-        attach_screenshot(
-            create_category_dialog, "CreateCategoryDialog - Parent Selected"
-        )
-
         assert create_category_dialog.get_parent_id() == 1
 
-    @allure.title("AC #2.5: User can add optional memo")
-    @allure.severity(allure.severity_level.NORMAL)
-    def test_add_memo(self, create_category_dialog):
-        """User can add an optional description/memo."""
-        create_category_dialog.show()
-        QApplication.processEvents()
-
-        # BLACK-BOX: Use public API
+        # Add memo
         create_category_dialog.set_category_memo("Category for interview themes")
         QApplication.processEvents()
-
-        attach_screenshot(create_category_dialog, "CreateCategoryDialog - Memo Added")
-
         assert (
             create_category_dialog.get_category_memo()
             == "Category for interview themes"
         )
 
-    @allure.title("AC #2.6: Create button toggles based on name input")
-    @allure.severity(allure.severity_level.NORMAL)
-    def test_create_button_toggles_with_name(self, create_category_dialog):
-        """Create button disabled when empty, enabled when name entered."""
+        attach_screenshot(create_category_dialog, "CreateCategoryDialog - Parent and Memo")
+
+    @allure.title("AC #2.6+2.8: Create button toggles and emits signal")
+    @allure.severity(allure.severity_level.CRITICAL)
+    def test_create_button_toggle_and_signal(self, create_category_dialog):
+        """Create button disabled when empty, enabled when name entered, emits signal."""
         create_category_dialog.show()
         QApplication.processEvents()
 
+        # Initially disabled
         assert not is_button_enabled(create_category_dialog, "Create")
 
-        create_category_dialog.set_category_name("New Category")
-        QApplication.processEvents()
-
-        attach_screenshot(
-            create_category_dialog, "CreateCategoryDialog - Button Enabled"
-        )
-
-        assert is_button_enabled(create_category_dialog, "Create")
-
-    @allure.title("AC #2.8: Clicking create emits category_created signal")
-    @allure.severity(allure.severity_level.CRITICAL)
-    def test_create_emits_signal(self, create_category_dialog):
-        """Clicking Create Category should emit the category_created signal."""
-        create_category_dialog.show()
-        QApplication.processEvents()
-
-        # BLACK-BOX: Setup signal spy
+        # Fill form
         spy = QSignalSpy(create_category_dialog.category_created)
-
-        # Fill form using public API
         create_category_dialog.set_category_name("Test Category")
         create_category_dialog.set_parent_id(1)
         create_category_dialog.set_category_memo("Test memo")
         QApplication.processEvents()
 
-        attach_screenshot(create_category_dialog, "CreateCategoryDialog - Filled Form")
+        # Now enabled
+        assert is_button_enabled(create_category_dialog, "Create")
 
-        # BLACK-BOX: Click button by text
+        # Click create
         click_dialog_button(create_category_dialog, "Create")
         QApplication.processEvents()
 
@@ -753,11 +541,6 @@ class TestCreateCategoryDialog:
         create_category_dialog.show()
         QApplication.processEvents()
 
-        attach_screenshot(
-            create_category_dialog, "CreateCategoryDialog - Before Cancel"
-        )
-
-        # BLACK-BOX: Click button by text
         click_dialog_button(create_category_dialog, "Cancel")
         QApplication.processEvents()
 
@@ -808,35 +591,30 @@ class TestDeleteCodeDialog:
     Test the DeleteCodeDialog using black-box patterns.
     """
 
-    @allure.title("AC #6.1: Dialog shows code details")
+    @allure.title("AC #6.1+6.2+6.4: Code details, segment warning, and delete option")
     @allure.severity(allure.severity_level.CRITICAL)
-    def test_dialog_shows_code_details(self, delete_code_dialog_with_segments):
-        """Dialog should display the code being deleted."""
+    def test_code_details_warning_and_option(self, delete_code_dialog_with_segments):
+        """Dialog shows code details, segment warning, and delete segments option."""
         delete_code_dialog_with_segments.show()
         QApplication.processEvents()
 
-        attach_screenshot(
-            delete_code_dialog_with_segments, "DeleteCodeDialog - With Segments"
-        )
-
-        # BLACK-BOX: Verify via public API
+        # Verify code details
         assert delete_code_dialog_with_segments.get_code_name() == "Test Code"
         assert delete_code_dialog_with_segments.get_code_id() == 1
 
-    @allure.title("AC #6.2: Dialog shows segment count warning")
-    @allure.severity(allure.severity_level.NORMAL)
-    def test_dialog_shows_segment_warning(self, delete_code_dialog_with_segments):
-        """Dialog should warn about attached segments."""
-        delete_code_dialog_with_segments.show()
-        QApplication.processEvents()
-
-        attach_screenshot(
-            delete_code_dialog_with_segments, "DeleteCodeDialog - Segment Warning"
-        )
-
-        # BLACK-BOX: Verify via public API
+        # Verify segment warning
         assert delete_code_dialog_with_segments.get_segment_count() == 5
         assert delete_code_dialog_with_segments.has_segment_warning()
+
+        # Verify delete segments option
+        assert not delete_code_dialog_with_segments.is_delete_segments_checked()
+        delete_code_dialog_with_segments.set_delete_segments(True)
+        QApplication.processEvents()
+        assert delete_code_dialog_with_segments.is_delete_segments_checked()
+
+        attach_screenshot(
+            delete_code_dialog_with_segments, "DeleteCodeDialog - Details and Warning"
+        )
 
     @allure.title("AC #6.3: No segment warning when no segments")
     @allure.severity(allure.severity_level.NORMAL)
@@ -845,104 +623,52 @@ class TestDeleteCodeDialog:
         delete_code_dialog_no_segments.show()
         QApplication.processEvents()
 
+        assert delete_code_dialog_no_segments.get_segment_count() == 0
+        assert not delete_code_dialog_no_segments.has_segment_warning()
+
         attach_screenshot(
             delete_code_dialog_no_segments, "DeleteCodeDialog - No Segments"
         )
 
-        # BLACK-BOX: Verify via public API
-        assert delete_code_dialog_no_segments.get_segment_count() == 0
-        assert not delete_code_dialog_no_segments.has_segment_warning()
-
-    @allure.title("AC #6.4: User can choose to delete segments")
-    @allure.severity(allure.severity_level.NORMAL)
-    def test_can_choose_delete_segments(self, delete_code_dialog_with_segments):
-        """User can check option to delete associated segments."""
-        delete_code_dialog_with_segments.show()
-        QApplication.processEvents()
-
-        # Initially unchecked
-        assert not delete_code_dialog_with_segments.is_delete_segments_checked()
-
-        # BLACK-BOX: Use public API to check
-        delete_code_dialog_with_segments.set_delete_segments(True)
-        QApplication.processEvents()
-
-        attach_screenshot(
-            delete_code_dialog_with_segments, "DeleteCodeDialog - Segments Checked"
-        )
-
-        assert delete_code_dialog_with_segments.is_delete_segments_checked()
-
-    @allure.title("AC #6.5: Delete button emits delete_confirmed signal")
+    @allure.title("AC #6.5+6.6+6.7: Delete signal, flag, and cancel")
     @allure.severity(allure.severity_level.CRITICAL)
-    def test_delete_emits_signal(self, delete_code_dialog_with_segments):
-        """Clicking Delete should emit delete_confirmed signal."""
+    def test_delete_signal_flag_and_cancel(self, delete_code_dialog_with_segments):
+        """Delete emits signal with correct flag; cancel closes without signal."""
         delete_code_dialog_with_segments.show()
         QApplication.processEvents()
 
-        attach_screenshot(
-            delete_code_dialog_with_segments, "DeleteCodeDialog - Before Delete"
-        )
-
-        # BLACK-BOX: Setup signal spy
+        # Test delete without segments checked
         spy = QSignalSpy(delete_code_dialog_with_segments.delete_confirmed)
-
-        # BLACK-BOX: Click button by text
         click_dialog_button(delete_code_dialog_with_segments, "Delete")
         QApplication.processEvents()
 
         assert spy.count() == 1
         code_id, delete_segments = spy.at(0)
         assert code_id == 1
-        assert delete_segments is False  # Default unchecked
+        assert delete_segments is False
 
-    @allure.title("AC #6.6: Delete with segments checked emits correct flag")
-    @allure.severity(allure.severity_level.CRITICAL)
-    def test_delete_with_segments_flag(self, delete_code_dialog_with_segments):
-        """Delete with checkbox checked should emit delete_segments=True."""
+        # Re-show for delete with segments flag test
         delete_code_dialog_with_segments.show()
         QApplication.processEvents()
 
-        # BLACK-BOX: Setup signal spy
-        spy = QSignalSpy(delete_code_dialog_with_segments.delete_confirmed)
-
-        # Check the delete segments option
+        spy2 = QSignalSpy(delete_code_dialog_with_segments.delete_confirmed)
         delete_code_dialog_with_segments.set_delete_segments(True)
         QApplication.processEvents()
-
-        attach_screenshot(
-            delete_code_dialog_with_segments, "DeleteCodeDialog - Delete With Segments"
-        )
-
-        # BLACK-BOX: Confirm via public API
         delete_code_dialog_with_segments.confirm_delete()
         QApplication.processEvents()
 
-        assert spy.count() == 1
-        code_id, delete_segments = spy.at(0)
+        assert spy2.count() == 1
+        code_id, delete_segments = spy2.at(0)
         assert code_id == 1
         assert delete_segments is True
 
-    @allure.title("AC #6.7: Cancel button closes dialog")
-    @allure.severity(allure.severity_level.NORMAL)
-    def test_cancel_closes_dialog(self, delete_code_dialog_with_segments):
-        """Clicking Cancel should close the dialog without deleting."""
+        # Test cancel
         delete_code_dialog_with_segments.show()
         QApplication.processEvents()
-
-        attach_screenshot(
-            delete_code_dialog_with_segments, "DeleteCodeDialog - Before Cancel"
-        )
-
-        # BLACK-BOX: Setup signal spy
-        spy = QSignalSpy(delete_code_dialog_with_segments.delete_confirmed)
-
-        # BLACK-BOX: Click button by text
+        spy3 = QSignalSpy(delete_code_dialog_with_segments.delete_confirmed)
         click_dialog_button(delete_code_dialog_with_segments, "Cancel")
         QApplication.processEvents()
-
-        # Signal should NOT be emitted
-        assert spy.count() == 0
+        assert spy3.count() == 0
         assert delete_code_dialog_with_segments.result() == 0
 
 
@@ -988,70 +714,59 @@ class TestCodeMemoDialog:
     Tests for code-level memo functionality.
     """
 
-    @allure.title("AC #4.1: Dialog shows code name and color")
+    @allure.title("AC #4.1+4.2: Dialog shows code info and existing content")
     @allure.severity(allure.severity_level.NORMAL)
-    def test_dialog_shows_code_info(self, code_memo_dialog):
-        """Dialog header shows code name and color indicator."""
+    def test_shows_code_info_and_existing_content(
+        self, code_memo_dialog, code_memo_dialog_with_content
+    ):
+        """Dialog header shows code name and displays existing memo content."""
+        # Empty dialog shows code info
         code_memo_dialog.show()
         QApplication.processEvents()
-
         title = code_memo_dialog.get_title()
         assert "Test Code" in title
-
         attach_screenshot(code_memo_dialog, "CodeMemoDialog - Code Info Header")
 
-    @allure.title("AC #4.2: Dialog displays existing memo content")
-    @allure.severity(allure.severity_level.NORMAL)
-    def test_dialog_displays_existing_content(self, code_memo_dialog_with_content):
-        """Dialog shows existing memo content when editing."""
+        # Dialog with content shows it
         code_memo_dialog_with_content.show()
         QApplication.processEvents()
-
         content = code_memo_dialog_with_content.get_content()
         assert "Existing memo content" in content
-
         attach_screenshot(
             code_memo_dialog_with_content, "CodeMemoDialog - Existing Content"
         )
 
-    @allure.title("AC #4.3: User can enter memo text")
+    @allure.title("AC #4.3+4.4: Enter memo text and save emits signal")
     @allure.severity(allure.severity_level.CRITICAL)
-    def test_enter_memo_text(self, code_memo_dialog):
-        """User can type memo content for the code."""
+    def test_enter_text_and_save(self, code_memo_dialog):
+        """User can type memo content and save emits signal."""
         code_memo_dialog.show()
         QApplication.processEvents()
 
+        # Enter text
         code_memo_dialog.set_content(
             "This code captures positive experiences mentioned."
         )
-
         assert (
             code_memo_dialog.get_content()
             == "This code captures positive experiences mentioned."
         )
 
-        attach_screenshot(code_memo_dialog, "CodeMemoDialog - Memo Text Entered")
-
-    @allure.title("AC #4.4: Save button emits save_clicked signal")
-    @allure.severity(allure.severity_level.CRITICAL)
-    def test_save_emits_signal(self, code_memo_dialog):
-        """Save button emits save_clicked signal."""
-        code_memo_dialog.show()
-        QApplication.processEvents()
-
+        # Save emits signal
         signals = []
         code_memo_dialog.save_clicked.connect(lambda: signals.append(True))
-
         code_memo_dialog.set_content("Test memo content")
         code_memo_dialog._on_save()
         QApplication.processEvents()
-
         assert len(signals) == 1
 
-    @allure.title("AC #4.5: Cancel closes dialog without saving")
+    @allure.title("AC #4.5+4.6+4.7: Cancel, metadata display, and content changed signal")
     @allure.severity(allure.severity_level.NORMAL)
-    def test_cancel_closes_dialog(self, code_memo_dialog):
-        """Clicking cancel closes the dialog without emitting save."""
+    def test_cancel_metadata_and_content_changed(
+        self, code_memo_dialog, code_memo_dialog_with_content
+    ):
+        """Cancel closes without saving; metadata shown; content changes emit signal."""
+        # Test cancel
         code_memo_dialog.show()
         QApplication.processEvents()
 
@@ -1063,37 +778,26 @@ class TestCodeMemoDialog:
         code_memo_dialog.set_content("Some unsaved content")
         code_memo_dialog._on_cancel()
         QApplication.processEvents()
-
-        # Cancel should emit, save should NOT
         assert len(cancel_signals) == 1
         assert len(save_signals) == 0
 
-    @allure.title("AC #4.6: Dialog shows author and timestamp metadata")
-    @allure.severity(allure.severity_level.NORMAL)
-    def test_shows_metadata(self, code_memo_dialog_with_content):
-        """Dialog displays author and timestamp for existing memo."""
+        # Test metadata display
         code_memo_dialog_with_content.show()
         QApplication.processEvents()
 
         metadata_text = code_memo_dialog_with_content.get_metadata_text()
         assert "researcher" in metadata_text
         assert "2024-01-15" in metadata_text
-
         attach_screenshot(
             code_memo_dialog_with_content, "CodeMemoDialog - Metadata Display"
         )
 
-    @allure.title("AC #4.7: Content changed signal emitted on edit")
-    @allure.severity(allure.severity_level.NORMAL)
-    def test_content_changed_signal(self, code_memo_dialog):
-        """content_changed signal emitted when memo text changes."""
+        # Test content changed signal
         code_memo_dialog.show()
         QApplication.processEvents()
 
         changes = []
         code_memo_dialog.content_changed.connect(lambda text: changes.append(text))
-
         code_memo_dialog._editor.setPlainText("New content for the code memo")
         QApplication.processEvents()
-
         assert len(changes) >= 1

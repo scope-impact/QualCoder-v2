@@ -6,6 +6,7 @@ TDD: verifies that command handlers accept and use session.commit().
 
 from __future__ import annotations
 
+import allure
 import pytest
 from sqlalchemy import create_engine, text
 from sqlalchemy.pool import SingletonThreadPool
@@ -20,6 +21,8 @@ from src.contexts.coding.infra.repositories import (
 from src.contexts.projects.infra.schema import create_all_contexts
 from src.shared.infra.event_bus import EventBus
 from src.shared.infra.session import Session
+
+pytestmark = [pytest.mark.unit]
 
 
 @pytest.fixture
@@ -46,13 +49,18 @@ def repos(session):
     }
 
 
+@allure.epic("Shared Infrastructure")
+@allure.feature("Shared Infrastructure")
+@allure.story("QC-000.09 Session Management")
 class TestCommandHandlerWithSession:
     """Command handlers should accept optional session and call session.commit()."""
 
-    def test_create_code_accepts_session_param(self, session, repos):
+    @allure.title("create_code accepts session, persists data, and works without session")
+    def test_create_code_with_and_without_session(self, session, repos):
         event_bus = EventBus(history_size=10)
-        command = CreateCodeCommand(name="Test Code", color="#FF0000")
 
+        # With session
+        command = CreateCodeCommand(name="Test Code", color="#FF0000")
         result = create_code(
             command=command,
             code_repo=repos["code_repo"],
@@ -61,39 +69,29 @@ class TestCommandHandlerWithSession:
             event_bus=event_bus,
             session=session,
         )
-
         assert result.is_success
         assert result.data.name == "Test Code"
 
-    def test_create_code_data_persisted_via_session(self, session, repos):
-        event_bus = EventBus(history_size=10)
-        command = CreateCodeCommand(name="Persisted", color="#00FF00")
-
+        # Verify data is persisted
+        command2 = CreateCodeCommand(name="Persisted", color="#00FF00")
         create_code(
-            command=command,
+            command=command2,
             code_repo=repos["code_repo"],
             category_repo=repos["category_repo"],
             segment_repo=repos["segment_repo"],
             event_bus=event_bus,
             session=session,
         )
-
-        # Verify data is actually in DB
         codes = repos["code_repo"].get_all()
-        assert len(codes) == 1
-        assert codes[0].name == "Persisted"
+        assert any(c.name == "Persisted" for c in codes)
 
-    def test_create_code_still_works_without_session(self, session, repos):
-        """Backward compatibility: handlers work without session param."""
-        event_bus = EventBus(history_size=10)
-        command = CreateCodeCommand(name="No Session", color="#0000FF")
-
-        result = create_code(
-            command=command,
+        # Without session (backward compatibility)
+        command3 = CreateCodeCommand(name="No Session", color="#0000FF")
+        result3 = create_code(
+            command=command3,
             code_repo=repos["code_repo"],
             category_repo=repos["category_repo"],
             segment_repo=repos["segment_repo"],
             event_bus=event_bus,
         )
-
-        assert result.is_success
+        assert result3.is_success

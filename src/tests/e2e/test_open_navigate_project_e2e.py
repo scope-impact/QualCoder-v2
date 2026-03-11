@@ -55,8 +55,8 @@ def project_with_data(app_context: AppContext, tmp_path: Path) -> Path:
 @allure.story("QC-026.01 Open Existing Project")
 @allure.severity(allure.severity_level.CRITICAL)
 class TestOpenExistingProject:
-    @allure.title("AC #1: Researcher can open an existing project file")
-    def test_open_existing_project_success(
+    @allure.title("AC #1-2: Open existing project, verify contexts initialized")
+    def test_open_project_and_contexts(
         self, app_context: AppContext, existing_project: Path
     ):
         with allure.step("Open existing project file"):
@@ -72,52 +72,38 @@ class TestOpenExistingProject:
             assert app_context.has_project
             assert app_context.state.project is not None
 
-    @allure.title("AC #1: Open project fails for non-existent file")
-    @allure.severity(allure.severity_level.NORMAL)
-    def test_open_nonexistent_project_fails(
-        self, app_context: AppContext, tmp_path: Path
-    ):
-        nonexistent = tmp_path / "does_not_exist.qda"
-
-        with allure.step("Attempt to open non-existent project"):
-            result = app_context.open_project(str(nonexistent))
-
-        with allure.step("Verify failure returned"):
-            assert not result.is_success
-
-    @allure.title("AC #1: Open project validates database before opening")
-    @allure.severity(allure.severity_level.NORMAL)
-    def test_open_validates_database(self, app_context: AppContext, tmp_path: Path):
-        from src.contexts.projects.infra.project_repository import (
-            SQLiteProjectRepository,
-        )
-
-        invalid_file = tmp_path / "invalid.qda"
-        invalid_file.write_text("not a valid sqlite database")
-
-        with allure.step("Verify file is not valid database"):
-            repo = SQLiteProjectRepository()
-            is_valid = repo.validate_database(invalid_file)
-            assert not is_valid
-
-    @allure.title("AC #2: Project opens and shows main workspace")
-    @allure.severity(allure.severity_level.CRITICAL)
-    def test_contexts_initialized_after_open(
-        self, app_context: AppContext, existing_project: Path
-    ):
-        with allure.step("Open project"):
-            result = app_context.open_project(str(existing_project))
-            assert result.is_success
-
         with allure.step("Verify bounded contexts are available"):
             assert app_context.sources_context is not None
             assert app_context.coding_context is not None
             assert app_context.cases_context is not None
             assert app_context.projects_context is not None
 
-    @allure.title("AC #3: Previously saved sources are loaded on open")
+    @allure.title("AC #1: Open fails for non-existent file and invalid database")
+    @allure.severity(allure.severity_level.NORMAL)
+    def test_open_fails_for_invalid(
+        self, app_context: AppContext, tmp_path: Path
+    ):
+        with allure.step("Attempt to open non-existent project"):
+            nonexistent = tmp_path / "does_not_exist.qda"
+            result = app_context.open_project(str(nonexistent))
+
+        with allure.step("Verify failure returned"):
+            assert not result.is_success
+
+        with allure.step("Verify invalid database is detected"):
+            from src.contexts.projects.infra.project_repository import (
+                SQLiteProjectRepository,
+            )
+
+            invalid_file = tmp_path / "invalid.qda"
+            invalid_file.write_text("not a valid sqlite database")
+            repo = SQLiteProjectRepository()
+            is_valid = repo.validate_database(invalid_file)
+            assert not is_valid
+
+    @allure.title("AC #3-4: Previously saved sources loaded and recent projects tracked")
     @allure.severity(allure.severity_level.CRITICAL)
-    def test_previously_saved_sources_loaded(
+    def test_sources_loaded_and_recent_tracked(
         self, app_context: AppContext, project_with_data: Path
     ):
         with allure.step("Open project with existing data"):
@@ -129,15 +115,6 @@ class TestOpenExistingProject:
             assert len(sources) == 1
             assert sources[0].name == "saved_document.txt"
 
-    @allure.title("AC #4: Recent projects are tracked")
-    @allure.severity(allure.severity_level.NORMAL)
-    def test_recent_projects_tracked(
-        self, app_context: AppContext, existing_project: Path
-    ):
-        with allure.step("Open project"):
-            result = app_context.open_project(str(existing_project))
-            assert result.is_success
-
         with allure.step("Add to recent projects"):
             project = result.data
             app_context.state.add_to_recent(project)
@@ -145,16 +122,20 @@ class TestOpenExistingProject:
         with allure.step("Verify project in recent list"):
             recent = app_context.state.recent_projects
             assert len(recent) >= 1
-            assert recent[0].name == "Existing Project"
+            assert recent[0].name == "Data Project"
 
 
 @allure.story("QC-026.02 Create New Project")
 @allure.severity(allure.severity_level.CRITICAL)
 class TestCreateNewProject:
-    @allure.title("AC #1: Researcher can specify project name and location")
-    def test_create_new_project_success(
+    @allure.title("AC #1-3: Create project with name/location, valid schema, and openable")
+    def test_create_project_full(
         self, app_context: AppContext, temp_project_path: Path
     ):
+        from src.contexts.projects.infra.project_repository import (
+            SQLiteProjectRepository,
+        )
+
         with allure.step("Create new project with name and path"):
             result = app_context.create_project(
                 name="My Research Project", path=str(temp_project_path)
@@ -170,69 +151,10 @@ class TestCreateNewProject:
             assert temp_project_path.exists()
             assert temp_project_path.stat().st_size > 0
 
-    @allure.title("AC #1: Create project fails if file already exists")
-    @allure.severity(allure.severity_level.NORMAL)
-    def test_create_project_existing_file_fails(
-        self, app_context: AppContext, existing_project: Path
-    ):
-        with allure.step("Attempt to create project at existing path"):
-            result = app_context.create_project(
-                name="Duplicate Project", path=str(existing_project)
-            )
-
-        with allure.step("Verify failure returned"):
-            assert not result.is_success
-
-    @allure.title("AC #2: New empty project is created with valid schema")
-    @allure.severity(allure.severity_level.CRITICAL)
-    def test_created_project_has_valid_schema(
-        self, app_context: AppContext, temp_project_path: Path
-    ):
-        from src.contexts.projects.infra.project_repository import (
-            SQLiteProjectRepository,
-        )
-
-        with allure.step("Create new project"):
-            result = app_context.create_project(
-                name="Schema Test", path=str(temp_project_path)
-            )
-            assert result.is_success
-
         with allure.step("Validate database schema"):
             repo = SQLiteProjectRepository()
             is_valid = repo.validate_database(temp_project_path)
             assert is_valid
-
-    @allure.title("AC #2: New project starts empty")
-    @allure.severity(allure.severity_level.NORMAL)
-    def test_new_project_is_empty(
-        self, app_context: AppContext, temp_project_path: Path
-    ):
-        with allure.step("Create and open new project"):
-            app_context.create_project(
-                name="Empty Project", path=str(temp_project_path)
-            )
-            app_context.close_project()
-            app_context.open_project(str(temp_project_path))
-
-        with allure.step("Verify no sources"):
-            sources = app_context.sources_context.source_repo.get_all()
-            assert len(sources) == 0
-
-        with allure.step("Verify no cases"):
-            cases = app_context.cases_context.case_repo.get_all()
-            assert len(cases) == 0
-
-    @allure.title("AC #3: Project can be opened after creation (workspace ready)")
-    @allure.severity(allure.severity_level.CRITICAL)
-    def test_project_openable_after_creation(
-        self, app_context: AppContext, temp_project_path: Path
-    ):
-        with allure.step("Create new project"):
-            create_result = app_context.create_project(
-                name="Open After Create", path=str(temp_project_path)
-            )
-            assert create_result.is_success
 
         with allure.step("Close and reopen project"):
             app_context.close_project()
@@ -243,27 +165,41 @@ class TestCreateNewProject:
             assert app_context.has_project
             assert app_context.sources_context is not None
 
+    @allure.title("AC #1-2: Create fails if exists, and new project starts empty")
+    @allure.severity(allure.severity_level.NORMAL)
+    def test_create_fails_and_empty(
+        self, app_context: AppContext, existing_project: Path, tmp_path: Path
+    ):
+        with allure.step("Attempt to create project at existing path"):
+            result = app_context.create_project(
+                name="Duplicate Project", path=str(existing_project)
+            )
+
+        with allure.step("Verify failure returned"):
+            assert not result.is_success
+
+        with allure.step("Create and open new project to verify it starts empty"):
+            empty_path = tmp_path / "empty_project.qda"
+            app_context.create_project(
+                name="Empty Project", path=str(empty_path)
+            )
+            app_context.close_project()
+            app_context.open_project(str(empty_path))
+
+        with allure.step("Verify no sources"):
+            sources = app_context.sources_context.source_repo.get_all()
+            assert len(sources) == 0
+
+        with allure.step("Verify no cases"):
+            cases = app_context.cases_context.case_repo.get_all()
+            assert len(cases) == 0
+
 
 @allure.story("QC-026.03 View Sources List")
 @allure.severity(allure.severity_level.CRITICAL)
 class TestViewSourcesList:
-    @allure.title("AC #1: Researcher can see list of all imported sources")
-    def test_view_empty_sources_list(
-        self, app_context: AppContext, existing_project: Path
-    ):
-        with allure.step("Open project"):
-            result = app_context.open_project(str(existing_project))
-            assert result.is_success
-
-        with allure.step("Get sources from repo"):
-            sources = app_context.sources_context.source_repo.get_all()
-
-        with allure.step("Verify empty list for new project"):
-            assert sources == []
-
-    @allure.title("AC #1: Sources list updates after adding source")
-    @allure.severity(allure.severity_level.CRITICAL)
-    def test_sources_list_reflects_added_sources(
+    @allure.title("AC #1: Empty and populated sources list")
+    def test_sources_list_empty_and_populated(
         self, app_context: AppContext, existing_project: Path, tmp_path: Path
     ):
         from src.contexts.projects.core.entities import Source, SourceType
@@ -272,6 +208,10 @@ class TestViewSourcesList:
         with allure.step("Open project"):
             result = app_context.open_project(str(existing_project))
             assert result.is_success
+
+        with allure.step("Get sources from repo - verify empty"):
+            sources = app_context.sources_context.source_repo.get_all()
+            assert sources == []
 
         with allure.step("Add source via repository"):
             source = Source(
@@ -287,9 +227,9 @@ class TestViewSourcesList:
             assert len(sources) == 1
             assert sources[0].name == "test_document.txt"
 
-    @allure.title("AC #2: Each source shows name, type, and status")
+    @allure.title("AC #2: Sources show name, type, status, and multiple types")
     @allure.severity(allure.severity_level.CRITICAL)
-    def test_sources_list_shows_name_type_status(
+    def test_sources_attributes_and_types(
         self, app_context: AppContext, existing_project: Path
     ):
         from src.contexts.projects.core.entities import Source, SourceStatus, SourceType
@@ -299,41 +239,13 @@ class TestViewSourcesList:
             result = app_context.open_project(str(existing_project))
             assert result.is_success
 
-        with allure.step("Add source with all attributes"):
-            source = Source(
+        with allure.step("Add sources with all attributes"):
+            text_source = Source(
                 id=SourceId("1"),
                 name="interview_01.txt",
                 source_type=SourceType.TEXT,
                 status=SourceStatus.IMPORTED,
                 fulltext="Content",
-            )
-            app_context.sources_context.source_repo.save(source)
-
-        with allure.step("Verify source has name, type, status"):
-            sources = app_context.sources_context.source_repo.get_all()
-            assert len(sources) == 1
-            assert sources[0].name == "interview_01.txt"
-            assert sources[0].source_type == SourceType.TEXT
-            assert sources[0].status == SourceStatus.IMPORTED
-
-    @allure.title("AC #2: Sources list shows multiple source types")
-    @allure.severity(allure.severity_level.NORMAL)
-    def test_sources_list_shows_types(
-        self, app_context: AppContext, existing_project: Path
-    ):
-        from src.contexts.projects.core.entities import Source, SourceType
-        from src.shared.common.types import SourceId
-
-        with allure.step("Open project"):
-            result = app_context.open_project(str(existing_project))
-            assert result.is_success
-
-        with allure.step("Add sources of different types"):
-            text_source = Source(
-                id=SourceId("1"),
-                name="document.txt",
-                source_type=SourceType.TEXT,
-                fulltext="Text content",
             )
             image_source = Source(
                 id=SourceId("2"),
@@ -343,15 +255,21 @@ class TestViewSourcesList:
             app_context.sources_context.source_repo.save(text_source)
             app_context.sources_context.source_repo.save(image_source)
 
-        with allure.step("Verify types"):
+        with allure.step("Verify source has name, type, status"):
             sources = app_context.sources_context.source_repo.get_all()
+            assert len(sources) == 2
+            text_src = next(s for s in sources if s.name == "interview_01.txt")
+            assert text_src.source_type == SourceType.TEXT
+            assert text_src.status == SourceStatus.IMPORTED
+
+        with allure.step("Verify types"):
             types = {s.source_type for s in sources}
             assert SourceType.TEXT in types
             assert SourceType.IMAGE in types
 
-    @allure.title("AC #3: Sources can be filtered by type")
+    @allure.title("AC #3-4: Sources can be filtered by type and selected as current")
     @allure.severity(allure.severity_level.NORMAL)
-    def test_sources_can_be_filtered(
+    def test_sources_filter_and_select(
         self, app_context: AppContext, existing_project: Path
     ):
         from src.contexts.projects.core.entities import Source, SourceType
@@ -379,24 +297,6 @@ class TestViewSourcesList:
             assert len(image_only) == 1
             assert all(s.source_type == SourceType.TEXT for s in text_only)
 
-    @allure.title("AC #4: Source can be selected to set as current")
-    @allure.severity(allure.severity_level.CRITICAL)
-    def test_select_source_sets_current(
-        self, app_context: AppContext, existing_project: Path
-    ):
-        from src.contexts.projects.core.entities import Source, SourceType
-        from src.shared.common.types import SourceId
-
-        with allure.step("Open project and add source"):
-            app_context.open_project(str(existing_project))
-            source = Source(
-                id=SourceId("1"),
-                name="selected.txt",
-                source_type=SourceType.TEXT,
-                fulltext="Content to code",
-            )
-            app_context.sources_context.source_repo.save(source)
-
         with allure.step("Select source (set current_source_id)"):
             from src.shared.common.types import SourceId as SId
 
@@ -410,9 +310,9 @@ class TestViewSourcesList:
 @allure.story("QC-026.04 Switch Screens/Views")
 @allure.severity(allure.severity_level.NORMAL)
 class TestSwitchScreens:
-    @allure.title("AC #4: Context preserved when switching screens")
+    @allure.title("AC #4-5: Context preserved when switching and all screens accessible")
     @allure.severity(allure.severity_level.CRITICAL)
-    def test_context_preserved_when_switching(
+    def test_context_preserved_and_all_screens(
         self, app_context: AppContext, existing_project: Path
     ):
         from src.contexts.projects.core.entities import Source, SourceType
@@ -442,14 +342,6 @@ class TestSwitchScreens:
         with allure.step("Verify context preserved"):
             assert app_context.state.current_source_id.value == "1"
 
-    @allure.title("AC #5: Screen navigation supports all main views")
-    @allure.severity(allure.severity_level.NORMAL)
-    def test_all_main_screens_accessible(
-        self, app_context: AppContext, existing_project: Path
-    ):
-        with allure.step("Open project"):
-            app_context.open_project(str(existing_project))
-
         with allure.step("Verify all screens can be set"):
             screens = ["sources", "coding", "cases", "analysis", "reports"]
             for screen in screens:
@@ -460,20 +352,29 @@ class TestSwitchScreens:
 @allure.story("QC-026.05 Agent Query Project Context")
 @allure.severity(allure.severity_level.CRITICAL)
 class TestAgentQueryContext:
-    @allure.title("AC #5: Agent can query current project context")
-    def test_get_project_context_when_open(
+    @allure.title("AC #5: Agent queries project context (open and closed)")
+    def test_project_context_open_and_closed(
         self, app_context: AppContext, existing_project: Path
     ):
         from src.contexts.projects.interface.mcp_tools import ProjectTools
+
+        with allure.step("Initialize ProjectTools without project"):
+            tools = ProjectTools(ctx=app_context)
+
+        with allure.step("Execute get_project_context when closed"):
+            result = tools.execute("get_project_context", {})
+
+        with allure.step("Verify no project response"):
+            assert isinstance(result, Success)
+            context = result.unwrap()
+            assert context["project_open"] is False
 
         with allure.step("Open project"):
             result = app_context.open_project(str(existing_project))
             assert result.is_success
 
-        with allure.step("Initialize ProjectTools"):
+        with allure.step("Execute get_project_context when open"):
             tools = ProjectTools(ctx=app_context)
-
-        with allure.step("Execute get_project_context tool"):
             result = tools.execute("get_project_context", {})
 
         with allure.step("Verify context returned"):
@@ -484,38 +385,28 @@ class TestAgentQueryContext:
             assert "source_count" in context
             assert "sources" in context
 
-    @allure.title("AC #5: Agent gets empty context when no project open")
-    @allure.severity(allure.severity_level.NORMAL)
-    def test_get_project_context_when_closed(self, app_context: AppContext):
-        from src.contexts.projects.interface.mcp_tools import ProjectTools
-
-        with allure.step("Initialize ProjectTools without project"):
-            tools = ProjectTools(ctx=app_context)
-
-        with allure.step("Execute get_project_context tool"):
-            result = tools.execute("get_project_context", {})
-
-        with allure.step("Verify no project response"):
-            assert isinstance(result, Success)
-            context = result.unwrap()
-            assert context["project_open"] is False
-
-    @allure.title("AC #5: Agent can list sources via MCP tool")
+    @allure.title("AC #5: Agent lists sources and filters by type")
     @allure.severity(allure.severity_level.CRITICAL)
-    def test_list_sources_tool(self, app_context: AppContext, existing_project: Path):
+    def test_list_and_filter_sources(
+        self, app_context: AppContext, existing_project: Path
+    ):
         from src.contexts.projects.core.entities import Source, SourceType
         from src.contexts.sources.interface.mcp_tools import SourceTools
         from src.shared.common.types import SourceId
 
-        with allure.step("Open project and add source"):
+        with allure.step("Open project and add sources"):
             app_context.open_project(str(existing_project))
-            source = Source(
+            text_src = Source(
                 id=SourceId("1"),
                 name="interview.txt",
                 source_type=SourceType.TEXT,
                 fulltext="Interview content",
             )
-            app_context.sources_context.source_repo.save(source)
+            image_src = Source(
+                id=SourceId("2"), name="img.png", source_type=SourceType.IMAGE
+            )
+            app_context.sources_context.source_repo.save(text_src)
+            app_context.sources_context.source_repo.save(image_src)
 
         with allure.step("Execute list_sources tool"):
             tools = SourceTools(ctx=app_context)
@@ -524,31 +415,9 @@ class TestAgentQueryContext:
         with allure.step("Verify sources listed"):
             assert isinstance(result, Success)
             data = result.unwrap()
-            assert data["count"] == 1
-            assert data["sources"][0]["name"] == "interview.txt"
-
-    @allure.title("AC #5: Agent can filter sources by type")
-    @allure.severity(allure.severity_level.NORMAL)
-    def test_list_sources_filtered_by_type(
-        self, app_context: AppContext, existing_project: Path
-    ):
-        from src.contexts.projects.core.entities import Source, SourceType
-        from src.contexts.sources.interface.mcp_tools import SourceTools
-        from src.shared.common.types import SourceId
-
-        with allure.step("Open project and add mixed sources"):
-            app_context.open_project(str(existing_project))
-            text_src = Source(
-                id=SourceId("1"), name="doc.txt", source_type=SourceType.TEXT
-            )
-            image_src = Source(
-                id=SourceId("2"), name="img.png", source_type=SourceType.IMAGE
-            )
-            app_context.sources_context.source_repo.save(text_src)
-            app_context.sources_context.source_repo.save(image_src)
+            assert data["count"] == 2
 
         with allure.step("Filter by text type"):
-            tools = SourceTools(ctx=app_context)
             result = tools.execute("list_sources", {"source_type": "text"})
 
         with allure.step("Verify only text sources returned"):
@@ -557,12 +426,13 @@ class TestAgentQueryContext:
             assert data["count"] == 1
             assert data["sources"][0]["type"] == "text"
 
-    @allure.title("AC #2: Agent can read source content")
+    @allure.title("AC #2-4: Agent reads source content and gets current source")
     @allure.severity(allure.severity_level.CRITICAL)
-    def test_read_source_content_tool(
+    def test_read_content_and_current_source(
         self, app_context: AppContext, existing_project: Path
     ):
         from src.contexts.projects.core.entities import Source, SourceType
+        from src.contexts.projects.interface.mcp_tools import ProjectTools
         from src.contexts.sources.interface.mcp_tools import SourceTools
         from src.shared.common.types import SourceId
 
@@ -586,27 +456,12 @@ class TestAgentQueryContext:
             assert "This is the full text content" in data["content"]
             assert data["source_id"] == 1
 
-    @allure.title("AC #4: Agent can get currently open source")
-    @allure.severity(allure.severity_level.CRITICAL)
-    def test_get_current_source(self, app_context: AppContext, existing_project: Path):
-        from src.contexts.projects.core.entities import Source, SourceType
-        from src.contexts.projects.interface.mcp_tools import ProjectTools
-        from src.shared.common.types import SourceId
-
-        with allure.step("Open project and set current source"):
-            app_context.open_project(str(existing_project))
-            source = Source(
-                id=SourceId("1"),
-                name="current_doc.txt",
-                source_type=SourceType.TEXT,
-                fulltext="Current document content",
-            )
-            app_context.sources_context.source_repo.save(source)
+        with allure.step("Set current source"):
             app_context.state.current_source_id = SourceId(value="1")
 
         with allure.step("Query project context"):
-            tools = ProjectTools(ctx=app_context)
-            tools.execute("get_project_context", {})
+            project_tools = ProjectTools(ctx=app_context)
+            project_tools.execute("get_project_context", {})
 
         with allure.step("Verify current source ID accessible via state"):
             assert app_context.state.current_source_id is not None
@@ -616,8 +471,10 @@ class TestAgentQueryContext:
 @allure.story("QC-026.06 Agent Navigate to Segment")
 @allure.severity(allure.severity_level.CRITICAL)
 class TestAgentNavigateToSegment:
-    @allure.title("AC #6: navigate_to_segment tool has correct schema and highlight option")
-    def test_navigate_to_segment_tool_schema(self, app_context: AppContext):
+    @allure.title("AC #6: Navigate tool schema, validation, and nonexistent source")
+    def test_navigate_schema_and_validation(
+        self, app_context: AppContext, existing_project: Path
+    ):
         from src.contexts.sources.interface.mcp_tools import SourceTools
 
         with allure.step("Get tool schemas"):
@@ -640,18 +497,10 @@ class TestAgentNavigateToSegment:
             assert "highlight" in props
             assert props["highlight"]["type"] == "boolean"
 
-    @allure.title("AC #6: Navigate tool validates required parameters")
-    @allure.severity(allure.severity_level.NORMAL)
-    def test_navigate_requires_parameters(
-        self, app_context: AppContext, existing_project: Path
-    ):
-        from src.contexts.sources.interface.mcp_tools import SourceTools
-
         with allure.step("Open project"):
             app_context.open_project(str(existing_project))
 
         with allure.step("Call navigate without source_id"):
-            tools = SourceTools(ctx=app_context)
             result = tools.execute(
                 "navigate_to_segment", {"start_pos": 0, "end_pos": 10}
             )
@@ -660,18 +509,7 @@ class TestAgentNavigateToSegment:
             assert isinstance(result, Failure)
             assert "source_id" in str(result.failure())
 
-    @allure.title("AC #6: Navigate tool fails for nonexistent source")
-    @allure.severity(allure.severity_level.NORMAL)
-    def test_navigate_nonexistent_source_fails(
-        self, app_context: AppContext, existing_project: Path
-    ):
-        from src.contexts.sources.interface.mcp_tools import SourceTools
-
-        with allure.step("Open project"):
-            app_context.open_project(str(existing_project))
-
         with allure.step("Navigate to nonexistent source"):
-            tools = SourceTools(ctx=app_context)
             result = tools.execute(
                 "navigate_to_segment",
                 {"source_id": 9999, "start_pos": 0, "end_pos": 10},
@@ -680,33 +518,9 @@ class TestAgentNavigateToSegment:
         with allure.step("Verify failure"):
             assert isinstance(result, Failure)
 
-    @allure.title("AC #4: Navigation publishes event for UI update")
-    @allure.severity(allure.severity_level.CRITICAL)
-    def test_navigation_publishes_event(
-        self, app_context: AppContext, existing_project: Path
-    ):
-        from src.contexts.projects.core.entities import Source, SourceType
-        from src.shared.common.types import SourceId
-
-        with allure.step("Open project and add source"):
-            app_context.open_project(str(existing_project))
-            source = Source(
-                id=SourceId("1"),
-                name="navigate_target.txt",
-                source_type=SourceType.TEXT,
-                fulltext="Content to navigate to",
-            )
-            app_context.sources_context.source_repo.save(source)
-
-        with allure.step("Verify event bus available for navigation events"):
-            assert app_context.event_bus is not None
-
-        with allure.step("Verify signal bridge available for UI updates"):
-            assert app_context.signal_bridge is not None
-
-    @allure.title("AC #6: Agent can suggest source metadata")
+    @allure.title("AC #4-6: Navigation publishes event and suggest metadata")
     @allure.severity(allure.severity_level.NORMAL)
-    def test_suggest_source_metadata_tool(
+    def test_navigation_event_and_metadata(
         self, app_context: AppContext, existing_project: Path
     ):
         from src.contexts.projects.core.entities import Source, SourceType
@@ -722,6 +536,12 @@ class TestAgentNavigateToSegment:
                 fulltext="Entrevista en español",
             )
             app_context.sources_context.source_repo.save(source)
+
+        with allure.step("Verify event bus available for navigation events"):
+            assert app_context.event_bus is not None
+
+        with allure.step("Verify signal bridge available for UI updates"):
+            assert app_context.signal_bridge is not None
 
         with allure.step("Suggest metadata via tool"):
             tools = SourceTools(ctx=app_context)
@@ -744,8 +564,10 @@ class TestAgentNavigateToSegment:
 @allure.story("QC-026 Integration")
 @allure.severity(allure.severity_level.CRITICAL)
 class TestProjectWorkflowIntegration:
-    @allure.title("Complete workflow: Create, open, add sources, query")
-    def test_full_project_workflow(self, app_context: AppContext, tmp_path: Path):
+    @allure.title("Complete workflow: Create, open, add sources, query, close")
+    def test_full_project_workflow_and_state_cleared(
+        self, app_context: AppContext, tmp_path: Path
+    ):
         from src.contexts.projects.core.entities import Source, SourceType
         from src.contexts.projects.interface.mcp_tools import ProjectTools
         from src.contexts.sources.interface.mcp_tools import SourceTools
@@ -774,45 +596,22 @@ class TestProjectWorkflowIntegration:
                 )
                 app_context.sources_context.source_repo.save(source)
 
-        with allure.step("Step 5: Agent queries context"):
+        with allure.step("Step 4: Agent queries context"):
             project_tools = ProjectTools(ctx=app_context)
             result = project_tools.execute("get_project_context", {})
             assert isinstance(result, Success)
             context = result.unwrap()
             assert context["source_count"] == 3
 
-        with allure.step("Step 6: Agent reads source content"):
+        with allure.step("Step 5: Agent reads source content"):
             source_tools = SourceTools(ctx=app_context)
             read_result = source_tools.execute("read_source_content", {"source_id": 2})
             assert isinstance(read_result, Success)
             assert "document 2" in read_result.unwrap()["content"]
 
-        with allure.step("Step 7: Close project"):
+        with allure.step("Step 6: Close project and verify state cleared"):
             close_result = app_context.close_project()
             assert close_result.is_success
-            assert not app_context.has_project
-
-    @allure.title("Project state cleared after close")
-    @allure.severity(allure.severity_level.CRITICAL)
-    def test_state_cleared_after_close(
-        self, app_context: AppContext, existing_project: Path
-    ):
-        from src.contexts.projects.core.entities import Source, SourceType
-        from src.shared.common.types import SourceId
-
-        with allure.step("Open and populate project"):
-            app_context.open_project(str(existing_project))
-            source = Source(
-                id=SourceId("1"), name="temp.txt", source_type=SourceType.TEXT
-            )
-            app_context.sources_context.source_repo.save(source)
-            sources = app_context.sources_context.source_repo.get_all()
-            assert len(sources) == 1
-
-        with allure.step("Close project"):
-            app_context.close_project()
-
-        with allure.step("Verify state cleared"):
             assert not app_context.has_project
             assert app_context.state.project is None
             assert app_context.sources_context is None

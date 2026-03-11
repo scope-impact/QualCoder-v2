@@ -134,10 +134,10 @@ class TestPatternSearch:
     Tests for pattern search functionality.
     """
 
-    @allure.title("AC #1.1: Dialog has pattern input field")
+    @allure.title("AC #1.1-2: Dialog has pattern input and user can enter search pattern")
     @allure.severity(allure.severity_level.CRITICAL)
-    def test_dialog_has_pattern_input(self, auto_code_dialog):
-        """Dialog should have a text input for search pattern."""
+    def test_dialog_has_pattern_input_and_user_can_enter(self, auto_code_dialog):
+        """Dialog has a text input for search pattern and user can type in it."""
         auto_code_dialog.show()
         QApplication.processEvents()
 
@@ -146,15 +146,7 @@ class TestPatternSearch:
             auto_code_dialog._pattern_input.placeholderText() == "Enter text to find..."
         )
 
-    @allure.title("AC #1.2: User can enter search pattern")
-    @allure.severity(allure.severity_level.CRITICAL)
-    def test_enter_search_pattern(self, auto_code_dialog):
-        """User can type a search pattern."""
-        auto_code_dialog.show()
-        QApplication.processEvents()
-
         auto_code_dialog.set_pattern("time management")
-
         assert auto_code_dialog.get_pattern() == "time management"
         attach_screenshot(auto_code_dialog, "AutoCode - Pattern Search")
 
@@ -197,10 +189,10 @@ class TestMatchPreview:
     Tests for match preview functionality.
     """
 
-    @allure.title("AC #2.1: Preview button emits find_matches_requested")
+    @allure.title("AC #2.1-2: Preview emits signal, receives and caches matches")
     @allure.severity(allure.severity_level.CRITICAL)
-    def test_preview_emits_signal(self, auto_code_dialog, sample_interview_text):
-        """Preview button emits find_matches_requested signal."""
+    def test_preview_emits_signal_and_caches_matches(self, auto_code_dialog, sample_interview_text):
+        """Preview button emits find_matches_requested signal and dialog caches matches."""
         auto_code_dialog.show()
         QApplication.processEvents()
 
@@ -222,14 +214,6 @@ class TestMatchPreview:
         assert signals[0][0] == "challenge"
         assert signals[0][1] == "contains"
         assert signals[0][2] == "all"
-        attach_screenshot(auto_code_dialog, "AutoCode - Preview Matches")
-
-    @allure.title("AC #2.2: Dialog receives and caches matches")
-    @allure.severity(allure.severity_level.NORMAL)
-    def test_receives_matches(self, auto_code_dialog):
-        """Dialog can receive and store match results."""
-        auto_code_dialog.show()
-        QApplication.processEvents()
 
         # Simulate receiving matches from controller
         matches = [(100, 110), (200, 210), (300, 310)]
@@ -238,7 +222,7 @@ class TestMatchPreview:
         cached = auto_code_dialog.get_cached_matches()
         assert len(cached) == 3
         assert cached[0] == (100, 110)
-        attach_screenshot(auto_code_dialog, "AutoCode - Matches Found")
+        attach_screenshot(auto_code_dialog, "AutoCode - Preview Matches")
 
     @allure.title("AC #2.3: Preview requires pattern and text")
     @allure.severity(allure.severity_level.NORMAL)
@@ -271,13 +255,26 @@ class TestApplyToMatches:
     Tests for batch code application.
     """
 
-    @allure.title("AC #3.1: Apply button emits apply_auto_code_requested")
+    @allure.title("AC #3.1-3: Apply emits signal with config, code display works correctly")
     @allure.severity(allure.severity_level.CRITICAL)
-    def test_apply_emits_signal(self, auto_code_dialog, sample_interview_text):
-        """Apply button emits apply_auto_code_requested with config."""
+    def test_apply_emits_signal_and_code_display(self, auto_code_dialog, sample_interview_text):
+        """Apply button emits signal with config, and code display shows/gets selected code."""
         auto_code_dialog.show()
         QApplication.processEvents()
 
+        # Verify initial state
+        assert auto_code_dialog._code_label.text() == "No code selected"
+
+        # Set code and verify display
+        auto_code_dialog.set_code({"id": "1", "name": "Positive", "color": "#4CAF50"})
+        QApplication.processEvents()
+        assert auto_code_dialog._code_label.text() == "Positive"
+        style = auto_code_dialog._code_color.styleSheet()
+        assert "#4CAF50" in style
+        code = auto_code_dialog.get_code()
+        assert code["name"] == "Positive"
+
+        # Now test apply signal
         signals = []
         auto_code_dialog.apply_auto_code_requested.connect(
             lambda config: signals.append(config)
@@ -296,29 +293,6 @@ class TestApplyToMatches:
         assert config["match_type"] == "contains"
         assert config["code"]["name"] == "Challenge"
 
-    @allure.title("AC #3.2-3: Code display shows selected code and get_code returns it")
-    @allure.severity(allure.severity_level.NORMAL)
-    def test_shows_and_gets_selected_code(self, auto_code_dialog):
-        """Dialog displays the selected code and get_code returns it."""
-        auto_code_dialog.show()
-        QApplication.processEvents()
-
-        # Verify initial state
-        assert auto_code_dialog._code_label.text() == "No code selected"
-
-        auto_code_dialog.set_code({"id": "1", "name": "Positive", "color": "#4CAF50"})
-        QApplication.processEvents()
-
-        # Verify UI updated with code name
-        assert auto_code_dialog._code_label.text() == "Positive"
-        # Verify color swatch updated (check stylesheet contains color)
-        style = auto_code_dialog._code_color.styleSheet()
-        assert "#4CAF50" in style
-
-        # Verify get_code returns the set code
-        code = auto_code_dialog.get_code()
-        assert code["name"] == "Positive"
-
         attach_screenshot(auto_code_dialog, "AutoCode - Selected Code Display")
 
 
@@ -334,40 +308,29 @@ class TestUndoBatchCoding:
     Tests for undoing auto-code operations.
     """
 
-    @allure.title("AC #4.1: Coding screen has undo capability")
+    @allure.title("AC #4.1-3: Coding screen has undo, tracks history, and re-applies code")
     @allure.severity(allure.severity_level.NORMAL)
-    def test_screen_has_undo(self, coding_screen):
-        """Coding screen supports undo operations."""
-        # Undo is typically handled at application level or via unmark history
+    def test_undo_capability_tracks_and_reapplies(self, coding_screen):
+        """Coding screen supports undo: has history, tracks operations, and re-applies code."""
+        # Verify undo capability exists
         assert coding_screen._unmark_history is not None
-        attach_screenshot(coding_screen, "AutoCode - Coding Screen with Undo")
 
-    @allure.title("AC #4.2: Unmark history tracks operations")
-    @allure.severity(allure.severity_level.NORMAL)
-    def test_unmark_history_tracks(self, coding_screen):
-        """Unmark operations are tracked for undo."""
+        # Track and unmark
         coding_screen.set_active_code("1", "Positive", "#4CAF50")
         coding_screen.set_text_selection(50, 100)
         coding_screen.unmark()
-
         assert len(coding_screen._unmark_history) == 1
 
-    @allure.title("AC #4.3: Undo re-applies code")
-    @allure.severity(allure.severity_level.NORMAL)
-    def test_undo_reapplies_code(self, coding_screen):
-        """Undo operation re-applies the unmarked code."""
+        # Undo re-applies code
         applied = []
         coding_screen.code_applied.connect(
             lambda cid, start, end: applied.append((cid, start, end))
         )
-
-        coding_screen.set_active_code("1", "Positive", "#4CAF50")
-        coding_screen.set_text_selection(50, 100)
-        coding_screen.unmark()
         coding_screen.undo_unmark()
         QApplication.processEvents()
-
         assert len(applied) >= 1
+
+        attach_screenshot(coding_screen, "AutoCode - Coding Screen with Undo")
 
 
 # =============================================================================
@@ -382,45 +345,36 @@ class TestAutoCodeBySpeaker:
     Tests for speaker-based auto-coding.
     """
 
-    @allure.title("AC #5.1: Dialog can request speaker detection")
+    @allure.title("AC #5.1+3: Dialog can request speaker detection and speaker segments")
     @allure.severity(allure.severity_level.CRITICAL)
-    def test_detect_speakers_signal(self, auto_code_dialog, sample_interview_text):
-        """Dialog emits detect_speakers_requested signal."""
+    def test_detect_speakers_and_get_segments_signals(self, auto_code_dialog, sample_interview_text):
+        """Dialog emits detect_speakers_requested and get_speaker_segments_requested signals."""
         auto_code_dialog.show()
         QApplication.processEvents()
 
-        signals = []
+        detect_signals = []
         auto_code_dialog.detect_speakers_requested.connect(
-            lambda text: signals.append(text)
+            lambda text: detect_signals.append(text)
         )
 
         auto_code_dialog.set_text(sample_interview_text)
         auto_code_dialog.detect_speakers_requested.emit(sample_interview_text)
         QApplication.processEvents()
+        assert len(detect_signals) == 1
 
-        assert len(signals) == 1
-        attach_screenshot(auto_code_dialog, "AutoCode - Speaker Detection")
-
-    @allure.title("AC #5.3: Dialog can request speaker segments")
-    @allure.severity(allure.severity_level.NORMAL)
-    def test_get_speaker_segments_signal(self, auto_code_dialog, sample_interview_text):
-        """Dialog emits get_speaker_segments_requested signal."""
-        auto_code_dialog.show()
-        QApplication.processEvents()
-
-        signals = []
+        segment_signals = []
         auto_code_dialog.get_speaker_segments_requested.connect(
-            lambda text, speaker: signals.append((text, speaker))
+            lambda text, speaker: segment_signals.append((text, speaker))
         )
 
-        auto_code_dialog.set_text(sample_interview_text)
         auto_code_dialog.get_speaker_segments_requested.emit(
             sample_interview_text, "PARTICIPANT"
         )
         QApplication.processEvents()
+        assert len(segment_signals) == 1
+        assert segment_signals[0][1] == "PARTICIPANT"
 
-        assert len(signals) == 1
-        assert signals[0][1] == "PARTICIPANT"
+        attach_screenshot(auto_code_dialog, "AutoCode - Speaker Detection")
 
 
 # =============================================================================
@@ -435,10 +389,10 @@ class TestAgentBatchOperations:
     Tests for AI-agent batch coding functionality.
     """
 
-    @allure.title("AC #6.1: Config includes all required fields")
+    @allure.title("AC #6-7: Config includes all required fields and regex match type available")
     @allure.severity(allure.severity_level.NORMAL)
-    def test_apply_config_fields(self, auto_code_dialog):
-        """Apply config includes pattern, match_type, scope, code."""
+    def test_apply_config_fields_and_regex_match_type(self, auto_code_dialog):
+        """Apply config includes pattern, match_type, scope, code; regex match type available."""
         auto_code_dialog.show()
         QApplication.processEvents()
 
@@ -459,16 +413,9 @@ class TestAgentBatchOperations:
         assert "scope" in config
         assert "code" in config
 
-    @allure.title("AC #7.1: Regex match type available for agents")
-    @allure.severity(allure.severity_level.NORMAL)
-    def test_regex_match_type(self, auto_code_dialog):
-        """Regex match type is available for pattern matching."""
-        auto_code_dialog.show()
-        QApplication.processEvents()
-
+        # Verify regex match type available
         auto_code_dialog._match_combo.setCurrentIndex(2)  # Regex
         QApplication.processEvents()
-
         assert auto_code_dialog._get_match_type_str() == "regex"
 
 
@@ -481,12 +428,12 @@ class TestAgentBatchOperations:
 class TestAutoCodeIntegration:
     """Integration tests for complete auto-code workflow."""
 
-    @allure.title("Full workflow: Set code, pattern, preview, apply")
+    @allure.title("Full workflow: Set code, pattern, preview, apply; and cancel without apply")
     @allure.severity(allure.severity_level.CRITICAL)
-    def test_full_auto_code_workflow(
+    def test_full_auto_code_workflow_and_cancel(
         self, auto_code_dialog, sample_interview_text, colors
     ):
-        """Test complete auto-code workflow from pattern to apply."""
+        """Test complete auto-code workflow from pattern to apply, and cancel without apply."""
         with allure.step("Open dialog and set text"):
             auto_code_dialog.show()
             QApplication.processEvents()
@@ -513,7 +460,6 @@ class TestAutoCodeIntegration:
             assert len(preview_signals) == 1
 
         with allure.step("Receive matches"):
-            # Simulate controller response
             auto_code_dialog.on_matches_found([(350, 366), (500, 516)])
             assert len(auto_code_dialog.get_cached_matches()) == 2
 
@@ -531,21 +477,12 @@ class TestAutoCodeIntegration:
             assert config["code"]["name"] == "Time Management"
             attach_screenshot(auto_code_dialog, "AutoCode - Applied")
 
-    @allure.title("Cancel button closes dialog without applying")
-    @allure.severity(allure.severity_level.NORMAL)
-    def test_cancel_without_apply(self, auto_code_dialog, sample_interview_text):
-        """Cancel button closes dialog without emitting apply signal."""
-        auto_code_dialog.show()
-        QApplication.processEvents()
-
-        apply_signals = []
-        auto_code_dialog.apply_auto_code_requested.connect(
-            lambda config: apply_signals.append(config)
-        )
-
-        auto_code_dialog.set_text(sample_interview_text)
-        auto_code_dialog.set_pattern("test")
-        auto_code_dialog.reject()  # Cancel
-        QApplication.processEvents()
-
-        assert len(apply_signals) == 0
+        with allure.step("Verify cancel closes without applying"):
+            cancel_signals = []
+            auto_code_dialog.apply_auto_code_requested.connect(
+                lambda config: cancel_signals.append(config)
+            )
+            auto_code_dialog.set_pattern("test")
+            auto_code_dialog.reject()  # Cancel
+            QApplication.processEvents()
+            assert len(cancel_signals) == 0

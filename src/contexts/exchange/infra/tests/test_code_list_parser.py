@@ -18,9 +18,9 @@ pytestmark = [pytest.mark.unit]
 class TestCodeListParser:
     """Tests for plain-text code list parser."""
 
-    @allure.title("Parses flat list and skips empty/comment lines")
-    def test_parse_flat_list_skips_blanks_and_comments(self):
-        """Flat codes parsed correctly; empty lines and #-comments are ignored."""
+    @allure.title("Parses flat list, skips blanks/comments, and handles empty input")
+    def test_parse_flat_list_blanks_comments_and_empty(self):
+        """Flat codes parsed; empty lines and comments ignored; empty text returns empty."""
         from src.contexts.exchange.infra.code_list_parser import parse_code_list
 
         text = "# header comment\nJoy\n\n\nAnger\n# inline comment\nSadness\n\n"
@@ -30,7 +30,12 @@ class TestCodeListParser:
         assert [c.name for c in result.codes] == ["Joy", "Anger", "Sadness"]
         assert len(result.categories) == 0
 
-    @allure.title("Parses indented list creating categories (spaces and tabs)")
+        # Empty text
+        empty_result = parse_code_list("")
+        assert len(empty_result.codes) == 0
+        assert len(empty_result.categories) == 0
+
+    @allure.title("Parses indented lists creating categories with references ({indent_type})")
     @pytest.mark.parametrize(
         "text",
         [
@@ -39,8 +44,8 @@ class TestCodeListParser:
         ],
         ids=["space-indent", "tab-indent"],
     )
-    def test_parse_indented_list_creates_categories(self, text):
-        """Indented items become codes under the parent category for both spaces and tabs."""
+    def test_parse_indented_list_with_categories_and_references(self, text):
+        """Indented items become codes under parent category; codes reference their category."""
         from src.contexts.exchange.infra.code_list_parser import parse_code_list
 
         result = parse_code_list(text)
@@ -51,18 +56,10 @@ class TestCodeListParser:
         assert "Actions" in cat_names
         assert len(result.codes) == 3
 
-    @allure.title("Parsed codes reference their parent category")
-    def test_parsed_codes_have_category_references(self):
-        """Indented codes should reference their parent category."""
-        from src.contexts.exchange.infra.code_list_parser import parse_code_list
-
-        text = "Emotions\n  Joy\n  Anger\n"
-        result = parse_code_list(text)
-
+        # Codes reference their parent category
         emotions_cat = next(c for c in result.categories if c.name == "Emotions")
         joy = next(c for c in result.codes if c.name == "Joy")
         anger = next(c for c in result.codes if c.name == "Anger")
-
         assert joy.category_name == emotions_cat.name
         assert anger.category_name == emotions_cat.name
 
@@ -82,11 +79,3 @@ class TestCodeListParser:
         assert "Joy" in code_names
         assert "Other" in code_names
         assert all(c.name == c.name.strip() for c in result.codes)
-
-    @allure.title("Empty text returns empty result")
-    def test_parse_empty_text_returns_empty(self):
-        from src.contexts.exchange.infra.code_list_parser import parse_code_list
-
-        result = parse_code_list("")
-        assert len(result.codes) == 0
-        assert len(result.categories) == 0

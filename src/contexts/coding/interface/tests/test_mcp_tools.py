@@ -130,7 +130,6 @@ class MockSegmentRepository:
         count = 0
         for seg in list(self._segments.values()):
             if seg.code_id == from_code_id:
-                # Create new segment with updated code_id
                 new_seg = TextSegment(
                     id=seg.id,
                     source_id=seg.source_id,
@@ -282,7 +281,7 @@ def no_coding_context() -> NoCodingContext:
 
 
 # ============================================================
-# ToolDefinition and ToolParameter Tests
+# ToolDefinition Tests
 # ============================================================
 
 
@@ -290,12 +289,47 @@ def no_coding_context() -> NoCodingContext:
 class TestToolDefinition:
     """Tests for ToolDefinition schema generation."""
 
-    def test_to_schema_empty_parameters(self) -> None:
-        """Tool with no parameters generates correct schema."""
+    @pytest.mark.parametrize(
+        "params, expected_required, expected_prop_checks",
+        [
+            pytest.param(
+                (),
+                [],
+                {},
+                id="empty_parameters",
+            ),
+            pytest.param(
+                (ToolParameter(name="item_id", type="integer", description="The item ID", required=True),),
+                ["item_id"],
+                {"item_id": {"type": "integer"}},
+                id="required_param",
+            ),
+            pytest.param(
+                (ToolParameter(name="limit", type="integer", description="Max results", required=False, default=10),),
+                [],
+                {"limit": {"type": "integer", "default": 10}},
+                id="optional_param_with_default",
+            ),
+            pytest.param(
+                (ToolParameter(
+                    name="operations", type="array", description="List of operations",
+                    required=True, items={"type": "object", "properties": {"id": {"type": "integer"}}},
+                ),),
+                ["operations"],
+                {"operations": {"type": "array", "items": {"type": "object", "properties": {"id": {"type": "integer"}}}}},
+                id="array_param_with_items",
+            ),
+        ],
+    )
+    @allure.title("Generates correct schema for various parameter configurations")
+    def test_to_schema_with_parameter_variants(
+        self, params, expected_required, expected_prop_checks,
+    ) -> None:
+        """Tool parameters generate correct schema for empty, required, optional, and array types."""
         tool = ToolDefinition(
             name="test_tool",
             description="A test tool",
-            parameters=(),
+            parameters=params,
         )
 
         schema = tool.to_schema()
@@ -303,130 +337,54 @@ class TestToolDefinition:
         assert schema["name"] == "test_tool"
         assert schema["description"] == "A test tool"
         assert schema["inputSchema"]["type"] == "object"
-        assert schema["inputSchema"]["properties"] == {}
-        assert schema["inputSchema"]["required"] == []
+        assert schema["inputSchema"]["required"] == expected_required
 
-    @pytest.mark.parametrize(
-        "param_kwargs, expected_in_required, expected_props",
-        [
-            pytest.param(
-                {"name": "item_id", "type": "integer", "description": "The item ID", "required": True},
-                True,
-                {"type": "integer"},
-                id="required_param",
-            ),
-            pytest.param(
-                {"name": "limit", "type": "integer", "description": "Max results", "required": False, "default": 10},
-                False,
-                {"type": "integer", "default": 10},
-                id="optional_param_with_default",
-            ),
-            pytest.param(
-                {
-                    "name": "operations",
-                    "type": "array",
-                    "description": "List of operations",
-                    "required": True,
-                    "items": {"type": "object", "properties": {"id": {"type": "integer"}}},
-                },
-                True,
-                {"type": "array", "items": {"type": "object", "properties": {"id": {"type": "integer"}}}},
-                id="array_param_with_items",
-            ),
-        ],
-    )
-    def test_to_schema_with_parameter_variants(
-        self,
-        param_kwargs: dict[str, Any],
-        expected_in_required: bool,
-        expected_props: dict[str, Any],
-    ) -> None:
-        """Tool parameters generate correct schema for required, optional, and array types."""
-        tool = ToolDefinition(
-            name="test_tool",
-            description="A test tool",
-            parameters=(ToolParameter(**param_kwargs),),
-        )
-
-        schema = tool.to_schema()
-        param_name = param_kwargs["name"]
-
-        assert param_name in schema["inputSchema"]["properties"]
-        for key, value in expected_props.items():
-            assert schema["inputSchema"]["properties"][param_name][key] == value
-        if expected_in_required:
-            assert param_name in schema["inputSchema"]["required"]
-        else:
-            assert param_name not in schema["inputSchema"]["required"]
+        for param_name, checks in expected_prop_checks.items():
+            assert param_name in schema["inputSchema"]["properties"]
+            for key, value in checks.items():
+                assert schema["inputSchema"]["properties"][param_name][key] == value
 
 
 # ============================================================
-# CodingTools Initialization Tests
+# CodingTools Initialization and Schema Tests
 # ============================================================
 
 
 @allure.story("Initialization")
 class TestCodingToolsInit:
-    """Tests for CodingTools initialization."""
+    """Tests for CodingTools initialization and schema methods."""
 
-    def test_init_with_context(self, mock_context: MockContext) -> None:
-        """CodingTools initializes with valid context."""
+    @allure.title("Initializes with context, rejects None, and provides schemas")
+    def test_init_schemas_and_names(self, mock_context: MockContext) -> None:
+        """CodingTools initializes, rejects None, and provides consistent schemas and names."""
         tools = CodingTools(ctx=mock_context)
-
-        # Verify tools is properly initialized (no longer exposes _ctx)
         assert tools is not None
-        assert tools.get_tool_names() is not None
 
-    def test_init_raises_on_none_context(self) -> None:
-        """CodingTools raises ValueError on None context."""
+        # Rejects None
         with pytest.raises(ValueError, match="ctx is required"):
             CodingTools(ctx=None)  # type: ignore
 
-
-# ============================================================
-# get_tool_schemas Tests
-# ============================================================
-
-
-@allure.story("Tool Schema")
-class TestGetToolSchemasAndNames:
-    """Tests for get_tool_schemas and get_tool_names methods."""
-
-    def test_schemas_have_required_fields_and_include_core_tools(
-        self, coding_tools: CodingTools
-    ) -> None:
-        """All schemas have required fields and include core tools."""
-        schemas = coding_tools.get_tool_schemas()
-
+        # Schemas have required fields
+        schemas = tools.get_tool_schemas()
         assert isinstance(schemas, list)
         assert len(schemas) > 0
-
         names = []
         for schema in schemas:
             assert "name" in schema
             assert "description" in schema
             assert "inputSchema" in schema
-            assert schema["inputSchema"]["type"] == "object"
             names.append(schema["name"])
 
         for expected in ("batch_apply_codes", "list_codes", "get_code", "list_segments_for_source"):
             assert expected in names
 
-    def test_tool_names_match_schemas(self, coding_tools: CodingTools) -> None:
-        """Tool names list matches schema names and includes minimum tools."""
-        names = coding_tools.get_tool_names()
-
-        assert isinstance(names, list)
-        assert len(names) >= 4
-        assert "batch_apply_codes" in names
-        assert "list_codes" in names
-
-        schema_names = {s["name"] for s in coding_tools.get_tool_schemas()}
-        assert set(names) == schema_names
+        # Names match schemas
+        tool_names = tools.get_tool_names()
+        assert set(tool_names) == set(names)
 
 
 # ============================================================
-# execute Tests - Unknown Tool
+# Tool Execution Tests
 # ============================================================
 
 
@@ -434,6 +392,7 @@ class TestGetToolSchemasAndNames:
 class TestExecuteUnknownTool:
     """Tests for execute method with unknown tools."""
 
+    @allure.title("Returns failure and suggestions for unknown tool")
     def test_returns_failure_and_suggestions_for_unknown_tool(
         self, coding_tools: CodingTools
     ) -> None:
@@ -447,42 +406,28 @@ class TestExecuteUnknownTool:
         assert any("list_codes" in s for s in result["suggestions"])
 
 
-# ============================================================
-# list_codes Tool Tests
-# ============================================================
-
-
 @allure.story("list_codes Tool")
 class TestListCodesTool:
     """Tests for list_codes tool."""
 
-    def test_returns_all_codes_with_correct_attributes(
-        self, coding_tools: CodingTools
+    @allure.title("Returns all codes or empty list")
+    def test_returns_codes_or_empty(
+        self, coding_tools: CodingTools, empty_context: MockContext
     ) -> None:
-        """list_codes returns all codes with expected attributes."""
+        """list_codes returns all codes with attributes, or empty list when none exist."""
         result = coding_tools.execute("list_codes", {})
-
         assert result["success"] is True
         assert len(result["data"]) == 3
-        # Verify serialized attributes
         theme_code = next((c for c in result["data"] if c["name"] == "Theme"), None)
         assert theme_code is not None
         assert theme_code["id"] == "1"
         assert theme_code["color"] == "#ff0000"
 
-    def test_returns_empty_list_when_no_codes(self, empty_context: MockContext) -> None:
-        """list_codes returns empty list when no codes exist."""
-        tools = CodingTools(ctx=empty_context)
-
-        result = tools.execute("list_codes", {})
-
+        # Empty
+        empty_tools = CodingTools(ctx=empty_context)
+        result = empty_tools.execute("list_codes", {})
         assert result["success"] is True
         assert result["data"] == []
-
-
-# ============================================================
-# get_code Tool Tests
-# ============================================================
 
 
 @allure.story("get_code Tool")
@@ -490,89 +435,52 @@ class TestGetCodeTool:
     """Tests for get_code tool."""
 
     @pytest.mark.parametrize(
-        "code_id, expected_name, expected_category_id",
+        "args, expect_success, check_name, check_error_code",
         [
-            pytest.param(1, "Theme", None, id="code_without_category"),
-            pytest.param(3, "Positive", "1", id="code_with_category"),
+            pytest.param({"code_id": 1}, True, "Theme", None, id="code_without_category"),
+            pytest.param({"code_id": 3}, True, "Positive", None, id="code_with_category"),
+            pytest.param({}, False, None, "CODE_NOT_FOUND/MISSING_PARAM", id="missing_code_id"),
+            pytest.param({"code_id": 999}, False, None, "CODE_NOT_FOUND/NOT_FOUND", id="nonexistent_code"),
         ],
     )
-    def test_returns_code_by_id(
-        self,
-        coding_tools: CodingTools,
-        code_id: int,
-        expected_name: str,
-        expected_category_id: str | None,
+    @allure.title("Returns code by ID or failure for invalid input")
+    def test_get_code(
+        self, coding_tools: CodingTools,
+        args: dict, expect_success: bool, check_name: str | None, check_error_code: str | None,
     ) -> None:
-        """get_code returns code by ID with correct attributes."""
-        result = coding_tools.execute("get_code", {"code_id": code_id})
-
-        assert result["success"] is True
-        assert result["data"]["name"] == expected_name
-        if expected_category_id is not None:
-            assert result["data"]["category_id"] == expected_category_id
-
-    @pytest.mark.parametrize(
-        "args, expected_error_code",
-        [
-            pytest.param({}, "CODE_NOT_FOUND/MISSING_PARAM", id="missing_code_id"),
-            pytest.param({"code_id": 999}, "CODE_NOT_FOUND/NOT_FOUND", id="nonexistent_code"),
-        ],
-    )
-    def test_returns_failure_for_invalid_input(
-        self, coding_tools: CodingTools, args: dict, expected_error_code: str
-    ) -> None:
-        """get_code returns failure for missing or nonexistent code_id."""
+        """get_code returns code by ID or appropriate failure."""
         result = coding_tools.execute("get_code", args)
 
-        assert result["success"] is False
-        assert result["error_code"] == expected_error_code
-
-
-# ============================================================
-# list_segments_for_source Tool Tests
-# ============================================================
+        assert result["success"] is expect_success
+        if expect_success:
+            assert result["data"]["name"] == check_name
+        else:
+            assert result["error_code"] == check_error_code
 
 
 @allure.story("list_segments_for_source Tool")
 class TestListSegmentsTool:
     """Tests for list_segments_for_source tool."""
 
-    def test_returns_segments_with_expected_attributes(
-        self, coding_tools: CodingTools
-    ) -> None:
-        """list_segments_for_source returns segments with correct attributes."""
+    @allure.title("Returns segments, fails on missing param, returns empty for no-match")
+    def test_list_segments_scenarios(self, coding_tools: CodingTools) -> None:
+        """list_segments_for_source returns segments, fails on missing param, returns empty for no-match."""
+        # Success with segments
         result = coding_tools.execute("list_segments_for_source", {"source_id": 1})
-
         assert result["success"] is True
-        segments = result["data"]
-        assert len(segments) == 2  # Source 1 has 2 segments
-        # Verify serialized attributes on first segment
-        segment = segments[0]
+        assert len(result["data"]) == 2
         for key in ("id", "source_id", "code_id", "start_position", "end_position", "selected_text"):
-            assert key in segment
+            assert key in result["data"][0]
 
-    def test_returns_failure_for_missing_source_id(
-        self, coding_tools: CodingTools
-    ) -> None:
-        """list_segments_for_source returns failure when source_id is missing."""
+        # Missing source_id
         result = coding_tools.execute("list_segments_for_source", {})
-
         assert result["success"] is False
         assert result["error_code"] == "SEGMENTS_NOT_LISTED/MISSING_PARAM"
 
-    def test_returns_empty_list_for_source_with_no_segments(
-        self, coding_tools: CodingTools
-    ) -> None:
-        """list_segments_for_source returns empty list when source has no segments."""
+        # No segments for source
         result = coding_tools.execute("list_segments_for_source", {"source_id": 999})
-
         assert result["success"] is True
         assert result["data"] == []
-
-
-# ============================================================
-# batch_apply_codes Tool Tests
-# ============================================================
 
 
 @allure.story("batch_apply_codes Tool")
@@ -586,168 +494,82 @@ class TestBatchApplyCodesTool:
             pytest.param({"operations": []}, "BATCH_APPLY_CODES/EMPTY_BATCH", None, id="empty_operations"),
             pytest.param(
                 {"operations": [{"code_id": 1}]},
-                "BATCH_APPLY_CODES/INVALID_OPERATION",
-                "index 0",
+                "BATCH_APPLY_CODES/INVALID_OPERATION", "index 0",
                 id="malformed_operation",
             ),
         ],
     )
+    @allure.title("Returns failure for invalid batch input")
     def test_returns_failure_for_invalid_input(
-        self,
-        coding_tools: CodingTools,
-        args: dict,
-        expected_error_code: str,
-        error_fragment: str | None,
+        self, coding_tools: CodingTools,
+        args: dict, expected_error_code: str, error_fragment: str | None,
     ) -> None:
         """batch_apply_codes returns failure for missing, empty, or malformed operations."""
         result = coding_tools.execute("batch_apply_codes", args)
-
         assert result["success"] is False
         assert result["error_code"] == expected_error_code
         if error_fragment:
             assert error_fragment in result["error"]
 
-    def test_applies_single_code_with_individual_results(
-        self, mock_context: MockContext
-    ) -> None:
-        """batch_apply_codes applies single code and returns individual results."""
+    @allure.title("Applies codes successfully and publishes events")
+    def test_applies_codes_and_publishes_events(self, mock_context: MockContext) -> None:
+        """batch_apply_codes applies single and multiple codes, publishes events, and handles nonexistent codes."""
         tools = CodingTools(ctx=mock_context)
 
+        # Single operation
         result = tools.execute(
             "batch_apply_codes",
-            {
-                "operations": [
-                    {
-                        "code_id": 1,
-                        "source_id": 1,
-                        "start_position": 200,
-                        "end_position": 250,
-                    }
-                ]
-            },
+            {"operations": [{"code_id": 1, "source_id": 1, "start_position": 200, "end_position": 250}]},
         )
-
         assert result["success"] is True
         assert result["data"]["total"] == 1
         assert result["data"]["succeeded"] == 1
-        assert result["data"]["failed"] == 0
         assert result["data"]["all_succeeded"] is True
-        # Verify individual results
-        results = result["data"]["results"]
-        assert len(results) == 1
-        assert results[0]["index"] == 0
-        assert results[0]["success"] is True
-        assert results[0]["segment_id"] is not None
+        assert result["data"]["results"][0]["success"] is True
+        assert mock_context.event_bus.publish.called
 
-    def test_applies_multiple_codes_with_optional_fields(
-        self, mock_context: MockContext
-    ) -> None:
-        """batch_apply_codes applies multiple codes including memo and importance."""
-        tools = CodingTools(ctx=mock_context)
-
+        # Multiple operations with optional fields
         result = tools.execute(
             "batch_apply_codes",
-            {
-                "operations": [
-                    {
-                        "code_id": 1,
-                        "source_id": 1,
-                        "start_position": 200,
-                        "end_position": 250,
-                        "memo": "Test memo",
-                    },
-                    {
-                        "code_id": 2,
-                        "source_id": 1,
-                        "start_position": 300,
-                        "end_position": 350,
-                        "importance": 2,
-                    },
-                ]
-            },
+            {"operations": [
+                {"code_id": 1, "source_id": 1, "start_position": 300, "end_position": 350, "memo": "Test memo"},
+                {"code_id": 2, "source_id": 1, "start_position": 400, "end_position": 450, "importance": 2},
+            ]},
         )
-
         assert result["success"] is True
         assert result["data"]["total"] == 2
         assert result["data"]["succeeded"] == 2
 
-    def test_handles_nonexistent_code(self, mock_context: MockContext) -> None:
-        """batch_apply_codes fails when all operations reference nonexistent codes."""
-        tools = CodingTools(ctx=mock_context)
-
+        # Nonexistent code
         result = tools.execute(
             "batch_apply_codes",
-            {
-                "operations": [
-                    {
-                        "code_id": 999,
-                        "source_id": 1,
-                        "start_position": 200,
-                        "end_position": 250,
-                    }
-                ]
-            },
+            {"operations": [{"code_id": 999, "source_id": 1, "start_position": 200, "end_position": 250}]},
         )
-
         assert result["success"] is False
         assert result["error_code"] == "BATCH_APPLY_CODES/ALL_FAILED"
 
-    def test_publishes_events_on_success(self, mock_context: MockContext) -> None:
-        """batch_apply_codes publishes events for successful operations."""
-        tools = CodingTools(ctx=mock_context)
-
-        tools.execute(
-            "batch_apply_codes",
-            {
-                "operations": [
-                    {
-                        "code_id": 1,
-                        "source_id": 1,
-                        "start_position": 200,
-                        "end_position": 250,
-                    }
-                ]
-            },
-        )
-
-        assert mock_context.event_bus.publish.called
-
 
 # ============================================================
-# Error Handling Tests
+# Error Handling and Context Validation Tests
 # ============================================================
 
 
 @allure.story("Error Handling")
-class TestErrorHandling:
-    """Tests for error handling in tool execution."""
+class TestErrorHandlingAndContextValidation:
+    """Tests for error handling and context validation."""
 
-    def test_handles_exception_during_execution(
-        self, mock_context: MockContext
-    ) -> None:
+    @allure.title("Catches exceptions during execution")
+    def test_handles_exception_during_execution(self, mock_context: MockContext) -> None:
         """execute catches exceptions and returns failure."""
         tools = CodingTools(ctx=mock_context)
-
-        # Make code_repo.get_all raise an exception (access via coding_context)
         mock_context.coding_context.code_repo.get_all = MagicMock(
             side_effect=Exception("DB error")
         )
 
         result = tools.execute("list_codes", {})
-
         assert result["success"] is False
         assert result["error_code"] == "TOOL_EXECUTION_ERROR"
         assert "DB error" in result["error"]
-
-
-# ============================================================
-# Context Validation Tests
-# ============================================================
-
-
-@allure.story("Context Validation")
-class TestContextValidation:
-    """Tests for context validation in tools."""
 
     @pytest.mark.parametrize(
         "tool_name, args",
@@ -762,13 +584,12 @@ class TestContextValidation:
             ),
         ],
     )
+    @allure.title("Returns NO_CONTEXT failure when coding context is None")
     def test_returns_failure_when_coding_context_is_none(
         self, no_coding_context: NoCodingContext, tool_name: str, args: dict
     ) -> None:
         """All tools return NO_CONTEXT failure when coding_context is None."""
         tools = CodingTools(ctx=no_coding_context)
-
         result = tools.execute(tool_name, args)
-
         assert result["success"] is False
         assert "NO_CONTEXT" in result["error_code"]

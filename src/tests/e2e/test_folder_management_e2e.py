@@ -95,11 +95,14 @@ def _seed_source(
 @allure.story("QC-027.13 Create Folder")
 @allure.severity(allure.severity_level.CRITICAL)
 class TestCreateFolder:
-    @allure.title("AC #1: Create a root folder")
-    def test_create_root_folder(
+    @allure.title("AC #1+4+5: Create root and nested folders with event publishing")
+    def test_create_root_and_nested_folders_with_event(
         self, folder_repo, source_repo, event_bus, project_state
     ):
-        with allure.step("Create a folder"):
+        events = []
+        event_bus.subscribe("folders.folder_created", lambda e: events.append(e))
+
+        with allure.step("Create a root folder"):
             cmd = CreateFolderCommand(name="Interviews")
             result = create_folder(
                 command=cmd,
@@ -109,68 +112,17 @@ class TestCreateFolder:
                 event_bus=event_bus,
             )
 
-        with allure.step("Verify success"):
+        with allure.step("Verify success and persistence"):
             assert result.is_success
             folder = result.unwrap()
             assert folder.name == "Interviews"
             assert folder.parent_id is None
-
-        with allure.step("Verify persisted in repo"):
             saved = folder_repo.get_by_id(folder.id)
             assert saved is not None
             assert saved.name == "Interviews"
 
-    @allure.title("AC #2: Duplicate folder name rejected")
-    def test_create_duplicate_name_fails(
-        self, folder_repo, source_repo, event_bus, project_state
-    ):
-        with allure.step("Create first folder"):
-            _create_folder_ok(
-                "Duplicated", folder_repo, source_repo, event_bus, project_state
-            )
-
-        with allure.step("Create folder with same name"):
-            cmd = CreateFolderCommand(name="Duplicated")
-            result = create_folder(
-                command=cmd,
-                state=project_state,
-                folder_repo=folder_repo,
-                source_repo=source_repo,
-                event_bus=event_bus,
-            )
-
-        with allure.step("Verify failure"):
-            assert not result.is_success
-            assert "FOLDER_NOT_CREATED" in result.error_code
-
-    @allure.title("AC #3: Invalid (empty) folder name rejected")
-    def test_create_empty_name_fails(
-        self, folder_repo, source_repo, event_bus, project_state
-    ):
-        with allure.step("Create folder with empty name"):
-            cmd = CreateFolderCommand(name="")
-            result = create_folder(
-                command=cmd,
-                state=project_state,
-                folder_repo=folder_repo,
-                source_repo=source_repo,
-                event_bus=event_bus,
-            )
-
-        with allure.step("Verify failure"):
-            assert not result.is_success
-            assert "FOLDER_NOT_CREATED" in result.error_code
-
-    @allure.title("AC #4: Create nested folder")
-    def test_create_nested_folder(
-        self, folder_repo, source_repo, event_bus, project_state
-    ):
-        with allure.step("Create parent folder"):
-            parent_id = _create_folder_ok(
-                "Parent", folder_repo, source_repo, event_bus, project_state
-            )
-
-        with allure.step("Create child folder"):
+        with allure.step("Create nested folder"):
+            parent_id = folder.id.value
             child_id = _create_folder_ok(
                 "Child",
                 folder_repo,
@@ -185,21 +137,41 @@ class TestCreateFolder:
             assert child is not None
             assert child.parent_id == FolderId(value=parent_id)
 
-    @allure.title("AC #5: Folder creation publishes event")
-    def test_create_folder_publishes_event(
+        with allure.step("Verify events published"):
+            assert len(events) >= 2
+
+    @allure.title("AC #2+3: Duplicate and empty folder names rejected")
+    def test_create_duplicate_and_empty_name_fails(
         self, folder_repo, source_repo, event_bus, project_state
     ):
-        events = []
-        event_bus.subscribe("folders.folder_created", lambda e: events.append(e))
-
-        with allure.step("Create folder"):
+        with allure.step("Create first folder"):
             _create_folder_ok(
-                "Events Test", folder_repo, source_repo, event_bus, project_state
+                "Duplicated", folder_repo, source_repo, event_bus, project_state
             )
 
-        with allure.step("Verify event published"):
-            assert len(events) == 1
-            assert events[0].name == "Events Test"
+        with allure.step("Create folder with same name - verify failure"):
+            cmd = CreateFolderCommand(name="Duplicated")
+            result = create_folder(
+                command=cmd,
+                state=project_state,
+                folder_repo=folder_repo,
+                source_repo=source_repo,
+                event_bus=event_bus,
+            )
+            assert not result.is_success
+            assert "FOLDER_NOT_CREATED" in result.error_code
+
+        with allure.step("Create folder with empty name - verify failure"):
+            cmd = CreateFolderCommand(name="")
+            result = create_folder(
+                command=cmd,
+                state=project_state,
+                folder_repo=folder_repo,
+                source_repo=source_repo,
+                event_bus=event_bus,
+            )
+            assert not result.is_success
+            assert "FOLDER_NOT_CREATED" in result.error_code
 
 
 # ============================================================

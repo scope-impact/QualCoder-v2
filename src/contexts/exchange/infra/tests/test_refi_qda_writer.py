@@ -45,59 +45,8 @@ class TestRefiQdaWriter:
             selected_text=text,
         )
 
-    @allure.title("Creates valid ZIP with project.qde and correct project root")
-    def test_creates_valid_zip_with_project_qde(self, tmp_path):
-        from src.contexts.exchange.infra.refi_qda_writer import write_refi_qda
-
-        output = tmp_path / "project.qdpx"
-        write_refi_qda(
-            codes=[],
-            categories=[],
-            sources=[],
-            segments=[],
-            output_path=output,
-            project_name="MyProject",
-        )
-
-        assert output.exists()
-        assert zipfile.is_zipfile(output)
-
-        with zipfile.ZipFile(output) as zf:
-            assert "project.qde" in zf.namelist()
-            xml_content = zf.read("project.qde")
-
-        root = ET.fromstring(xml_content)
-        assert root.tag.endswith("Project") or "Project" in root.tag
-        assert root.get("name") == "MyProject"
-
-    @allure.title("XML includes codes and sources")
-    def test_xml_includes_codes_and_sources(self, tmp_path):
-        from src.contexts.exchange.infra.refi_qda_writer import write_refi_qda
-
-        code = self._make_code("Joy", "#00FF00")
-        source = self._make_source("interview.txt", "Hello world.")
-        output = tmp_path / "project.qdpx"
-
-        write_refi_qda(
-            codes=[code],
-            categories=[],
-            sources=[source],
-            segments=[],
-            output_path=output,
-            project_name="Test",
-        )
-
-        with zipfile.ZipFile(output) as zf:
-            xml_str = zf.read("project.qde").decode("utf-8")
-            names = zf.namelist()
-
-        assert "Joy" in xml_str
-        assert "interview.txt" in xml_str
-        source_files = [n for n in names if n.startswith("Sources/")]
-        assert len(source_files) >= 1
-
-    @allure.title("XML includes codings for segments")
-    def test_xml_includes_codings(self, tmp_path):
+    @allure.title("Creates valid ZIP with project.qde, codes, sources, and codings")
+    def test_creates_valid_archive_with_content(self, tmp_path):
         from src.contexts.exchange.infra.refi_qda_writer import write_refi_qda
 
         source = self._make_source("doc.txt", "I felt happy today.")
@@ -111,11 +60,25 @@ class TestRefiQdaWriter:
             sources=[source],
             segments=[seg],
             output_path=output,
-            project_name="Test",
+            project_name="MyProject",
         )
 
+        assert output.exists()
+        assert zipfile.is_zipfile(output)
+
         with zipfile.ZipFile(output) as zf:
-            xml_str = zf.read("project.qde").decode("utf-8")
+            assert "project.qde" in zf.namelist()
+            xml_content = zf.read("project.qde")
+            xml_str = xml_content.decode("utf-8")
+            names = zf.namelist()
+
+        root = ET.fromstring(xml_content)
+        assert root.tag.endswith("Project") or "Project" in root.tag
+        assert root.get("name") == "MyProject"
+        assert "Joy" in xml_str
+        assert "doc.txt" in xml_str
+        source_files = [n for n in names if n.startswith("Sources/")]
+        assert len(source_files) >= 1
         assert "Coding" in xml_str or "coding" in xml_str
 
     @allure.title("Empty export produces valid archive")

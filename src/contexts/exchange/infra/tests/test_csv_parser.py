@@ -18,9 +18,9 @@ pytestmark = [pytest.mark.unit]
 class TestCsvParser:
     """Tests for survey CSV parser."""
 
-    @allure.title("Parses basic CSV with headers, data, whitespace stripping, and quoted fields")
-    def test_parse_csv_with_various_formats(self):
-        """Parse CSV with header row, data rows, stripped whitespace, and quoted commas."""
+    @allure.title("Parses CSV with headers, data, quoted fields, whitespace stripping, and name_column")
+    def test_parse_csv_formats_and_name_column(self):
+        """Parse CSV with various formats and name_column configuration."""
         from src.contexts.exchange.infra.csv_parser import parse_survey_csv
 
         csv_text = 'Name,Age,Comment\nAlice,30,"Has a, comma"\nBob,25,Simple\n'
@@ -33,17 +33,20 @@ class TestCsvParser:
         assert result.rows[0]["Comment"] == "Has a, comma"
         assert result.rows[1]["Name"] == "Bob"
 
-    @allure.title("First column used as default case name; custom name_column supported")
-    def test_parse_csv_name_column(self):
-        """Default name_column is first column; can override with name_column param."""
-        from src.contexts.exchange.infra.csv_parser import parse_survey_csv
+        # Default name_column is first column
+        assert result.name_column == "Name"
 
-        csv_text = "ID,Participant,Score\n1,Alice,85\n"
-        result_default = parse_survey_csv(csv_text)
-        assert result_default.name_column == "ID"
-
-        result_custom = parse_survey_csv(csv_text, name_column="Participant")
+        # Custom name_column
+        csv_text2 = "ID,Participant,Score\n1,Alice,85\n"
+        result_custom = parse_survey_csv(csv_text2, name_column="Participant")
         assert result_custom.name_column == "Participant"
+
+        # Whitespace stripping
+        csv_text3 = " Name , Age \n Alice , 30 \n"
+        result_ws = parse_survey_csv(csv_text3)
+        assert result_ws.headers == ["Name", "Age"]
+        assert result_ws.rows[0]["Name"] == "Alice"
+        assert result_ws.rows[0]["Age"] == "30"
 
     @allure.title("Empty and header-only CSV return empty rows")
     @pytest.mark.parametrize(
@@ -60,14 +63,3 @@ class TestCsvParser:
         result = parse_survey_csv(csv_text)
         assert len(result.rows) == 0
         assert result.headers == expected_headers
-
-    @allure.title("Strips whitespace from headers and values")
-    def test_parse_csv_strips_whitespace(self):
-        from src.contexts.exchange.infra.csv_parser import parse_survey_csv
-
-        csv_text = " Name , Age \n Alice , 30 \n"
-        result = parse_survey_csv(csv_text)
-
-        assert result.headers == ["Name", "Age"]
-        assert result.rows[0]["Name"] == "Alice"
-        assert result.rows[0]["Age"] == "30"
