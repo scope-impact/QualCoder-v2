@@ -22,6 +22,8 @@ Work through these parts in order. Each builds on the previous.
 | [Part 5](./05-signal-bridge.md) | SignalBridge Payloads | Connect domain to PySide6 |
 | [Part 6](./06-testing.md) | Testing Without Mocks | Appreciate pure function testability |
 | [Part 7](./07-complete-flow.md) | Complete Flow Reference | Full diagram of Code creation |
+| [Part 8](./08-database-lifecycle.md) | Database Lifecycle | ProjectLifecycle, Session, thread-local connections |
+| [Part 9](./09-threading-model.md) | Threading Model | Signal marshalling, qasync, sync threads |
 
 ## Appendices
 
@@ -100,9 +102,18 @@ src/shared/core/
 
 src/shared/infra/
 ├── event_bus.py          # Pub/sub for domain events
-└── signal_bridge/
-    ├── base.py           # BaseSignalBridge
-    └── payloads.py       # UI-friendly DTOs
+├── lifecycle.py          # ProjectLifecycle (DB connection management)
+├── session.py            # Thread-local Session wrapper
+├── signal_bridge/
+│   ├── base.py           # BaseSignalBridge (thread-safe emission)
+│   ├── payloads.py       # UI-friendly DTOs
+│   └── thread_utils.py   # is_main_thread(), ThreadChecker
+├── app_context/
+│   ├── context.py        # AppContext (composition root)
+│   ├── factory.py        # create_app_context()
+│   └── bounded_contexts.py # Context factories
+└── sync/
+    └── engine.py         # SyncEngine (background threads)
 ```
 
 ## After the Tutorial
@@ -113,6 +124,8 @@ You should be able to:
 2. Write a new invariant and its tests
 3. Modify a deriver to use new invariants
 4. Trace an event from deriver to UI
-5. Know where to look when adding new features
+5. Understand how database connections are managed per-thread
+6. Know which threading pattern to use for different scenarios
+7. Know where to look when adding new features
 
 Ready? Start with [Part 0: The Big Picture](./00-big-picture.md).

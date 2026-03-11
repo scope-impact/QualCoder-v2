@@ -266,6 +266,8 @@ For common patterns and recipes, see the appendices.
 
 ---
 
+**Next:** [Part 8: Database Connection Lifecycle](./08-database-lifecycle.md)
+
 **Appendices:**
 - [Appendix A: Common Patterns & Recipes](./appendices/A-common-patterns.md)
 - [Appendix B: When to Create New Patterns](./appendices/B-when-to-create.md)
