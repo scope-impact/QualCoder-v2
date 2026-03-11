@@ -8,11 +8,18 @@ from __future__ import annotations
 
 import threading
 
+import allure
 import pytest
 from sqlalchemy import Column, Integer, MetaData, String, Table, create_engine, text
 from sqlalchemy.pool import SingletonThreadPool
 
 from src.shared.infra.session import Session
+
+pytestmark = [
+    pytest.mark.unit,
+    allure.epic("QualCoder v2"),
+    allure.feature("Shared Infrastructure"),
+]
 
 
 @pytest.fixture
@@ -33,26 +40,29 @@ def session(engine):
     s.close()
 
 
-class TestSessionCreation:
-    """Session should wrap an engine and expose it."""
+@allure.story("QC-000.01 Session Management")
+class TestSessionCreationAndConnection:
+    """Session creation, engine exposure, and connection identity."""
 
-    def test_exposes_engine(self, session, engine):
+    @allure.title("Exposes engine, returns connection, and reuses same-thread connection")
+    def test_engine_and_connection(self, session, engine):
         assert session.engine is engine
 
-    def test_connection_returns_a_connection(self, session):
         conn = session.connection
         assert conn is not None
 
-    def test_same_thread_gets_same_connection(self, session):
-        conn1 = session.connection
+        # Same thread gets same connection
         conn2 = session.connection
-        assert conn1 is conn2
+        assert conn is conn2
 
 
-class TestSessionCommit:
-    """Session.commit() should persist data."""
+@allure.story("QC-000.01 Session Management")
+class TestSessionCommitAndRollback:
+    """Session commit persists data, rollback discards it."""
 
-    def test_commit_persists_insert(self, session):
+    @allure.title("Commit persists insert, rollback discards uncommitted data")
+    def test_commit_and_rollback(self, session):
+        # Commit persists
         session.connection.execute(
             text("INSERT INTO test_items (id, name) VALUES (1, 'alpha')")
         )
@@ -61,75 +71,57 @@ class TestSessionCommit:
         result = session.connection.execute(text("SELECT name FROM test_items WHERE id = 1"))
         assert result.fetchone()[0] == "alpha"
 
-    def test_uncommitted_data_lost_on_rollback(self, session):
+        # Rollback discards
         session.connection.execute(
             text("INSERT INTO test_items (id, name) VALUES (2, 'beta')")
         )
         session.rollback()
 
-        result = session.connection.execute(text("SELECT count(*) FROM test_items"))
+        result = session.connection.execute(text("SELECT count(*) FROM test_items WHERE id = 2"))
         assert result.fetchone()[0] == 0
 
 
+@allure.story("QC-000.01 Session Management")
 class TestSessionThreadSafety:
-    """Each thread should get its own connection."""
+    """Each thread gets its own connection, reused within that thread."""
 
-    def test_different_threads_get_different_connections(self, session):
+    @allure.title("Different threads get different connections, same thread reuses")
+    def test_thread_connection_isolation(self, session):
         main_conn = session.connection
-        worker_conn = None
+        worker_conns = []
 
         def worker():
-            nonlocal worker_conn
-            worker_conn = session.connection
+            worker_conns.append(session.connection)
+            worker_conns.append(session.connection)
 
         t = threading.Thread(target=worker)
         t.start()
         t.join()
 
-        assert worker_conn is not None
-        assert worker_conn is not main_conn
-
-    def test_worker_thread_gets_same_connection_on_repeated_access(self, session):
-        conns = []
-
-        def worker():
-            conns.append(session.connection)
-            conns.append(session.connection)
-
-        t = threading.Thread(target=worker)
-        t.start()
-        t.join()
-
-        assert len(conns) == 2
-        assert conns[0] is conns[1]
+        # Worker thread gets different connection from main
+        assert len(worker_conns) == 2
+        assert worker_conns[0] is not main_conn
+        # Worker thread reuses its own connection
+        assert worker_conns[0] is worker_conns[1]
 
 
-class TestSessionExecute:
-    """Session.execute() should delegate to the thread-local connection."""
+@allure.story("QC-000.01 Session Management")
+class TestSessionExecuteAndClose:
+    """Session.execute() delegates to connection, close() disposes engine."""
 
-    def test_execute_runs_sql(self, session):
-        session.execute(text("INSERT INTO test_items (id, name) VALUES (10, 'gamma')"))
-        session.commit()
+    @allure.title("Execute runs SQL and close disposes engine without error")
+    def test_execute_and_close(self, engine):
+        s = Session(engine)
 
-        result = session.execute(text("SELECT name FROM test_items WHERE id = 10"))
+        s.execute(text("INSERT INTO test_items (id, name) VALUES (10, 'gamma')"))
+        s.commit()
+
+        result = s.execute(text("SELECT name FROM test_items WHERE id = 10"))
         assert result.fetchone()[0] == "gamma"
 
-    def test_execute_returns_cursor_result(self, session):
-        session.execute(text("INSERT INTO test_items (id, name) VALUES (11, 'delta')"))
-        session.commit()
-
-        result = session.execute(text("SELECT count(*) FROM test_items"))
+        result = s.execute(text("SELECT count(*) FROM test_items"))
         assert result.fetchone()[0] >= 1
 
-
-class TestSessionClose:
-    """Session.close() should dispose the engine."""
-
-    def test_close_disposes_engine(self, engine):
-        s = Session(engine)
+        # Close disposes engine without raising
         _ = s.connection  # force connection creation
         s.close()
-
-        # After dispose, getting a new connection should still work
-        # (engine creates new pool) but the old pool is cleaned up.
-        # We just verify close doesn't raise.

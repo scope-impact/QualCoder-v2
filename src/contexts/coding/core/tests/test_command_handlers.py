@@ -210,67 +210,21 @@ def sample_segment() -> TextSegment:
 class TestDeleteCategoryHandler:
     """Tests for the delete_category command handler."""
 
-    @allure.title("Successfully deletes category without codes")
-    def test_delete_category_success(
-        self,
-        code_repo: MockCodeRepository,
-        category_repo: MockCategoryRepository,
-        segment_repo: MockSegmentRepository,
-        event_bus: MockEventBus,
-        sample_category: Category,
-    ):
-        """Should successfully delete a category that has no codes."""
-        from src.contexts.coding.core.commandHandlers.delete_category import (
-            delete_category,
-        )
-        from src.contexts.coding.core.events import CategoryDeleted
-
-        # Setup: add category to repo
-        category_repo.save(sample_category)
-
-        # Create command
-        command = DeleteCategoryCommand(
-            category_id=sample_category.id.value,
-            orphan_strategy="move_to_parent",
-        )
-
-        # Execute
-        result = delete_category(
-            command=command,
-            code_repo=code_repo,
-            category_repo=category_repo,
-            segment_repo=segment_repo,
-            event_bus=event_bus,
-        )
-
-        # Verify success
-        assert result.is_success
-        assert isinstance(result.data, CategoryDeleted)
-        assert result.data.category_id == sample_category.id
-        assert result.data.name == sample_category.name
-
-        # Verify category was deleted from repo
-        assert category_repo.get_by_id(sample_category.id) is None
-
-        # Verify event was published
-        assert len(event_bus.published_events) == 1
-        assert isinstance(event_bus.published_events[0], CategoryDeleted)
-
-    @allure.title("Successfully deletes category and moves codes to parent")
-    def test_delete_category_moves_codes_to_parent(
+    @allure.title("Successfully deletes category and moves orphan codes to parent")
+    def test_delete_category_success_and_move_codes(
         self,
         code_repo: MockCodeRepository,
         category_repo: MockCategoryRepository,
         segment_repo: MockSegmentRepository,
         event_bus: MockEventBus,
     ):
-        """Should move orphaned codes to parent category when deleting."""
+        """Should delete category without codes, and move orphaned codes to parent."""
         from src.contexts.coding.core.commandHandlers.delete_category import (
             delete_category,
         )
         from src.contexts.coding.core.events import CategoryDeleted
 
-        # Setup: create parent and child categories
+        # Setup: parent and child categories
         parent_category = Category(
             id=CategoryId(value="1"),
             name="Parent Category",
@@ -292,13 +246,11 @@ class TestDeleteCategoryHandler:
         )
         code_repo.save(code_in_child)
 
-        # Create command to delete child category
+        # Delete child category
         command = DeleteCategoryCommand(
             category_id=child_category.id.value,
             orphan_strategy="move_to_parent",
         )
-
-        # Execute
         result = delete_category(
             command=command,
             code_repo=code_repo,
@@ -317,7 +269,12 @@ class TestDeleteCategoryHandler:
         assert updated_code is not None
         assert updated_code.category_id == parent_category.id
 
-    @allure.title("Fails when category does not exist")
+        # Verify category was deleted and event published
+        assert category_repo.get_by_id(child_category.id) is None
+        assert len(event_bus.published_events) == 1
+        assert isinstance(event_bus.published_events[0], CategoryDeleted)
+
+    @allure.title("Fails with correct error when category not found")
     def test_delete_category_not_found(
         self,
         code_repo: MockCodeRepository,
@@ -330,13 +287,7 @@ class TestDeleteCategoryHandler:
             delete_category,
         )
 
-        # Create command for non-existent category
-        command = DeleteCategoryCommand(
-            category_id="999",
-            orphan_strategy="move_to_parent",
-        )
-
-        # Execute
+        command = DeleteCategoryCommand(category_id="999", orphan_strategy="move_to_parent")
         result = delete_category(
             command=command,
             code_repo=code_repo,
@@ -345,39 +296,12 @@ class TestDeleteCategoryHandler:
             event_bus=event_bus,
         )
 
-        # Verify failure
         assert result.is_failure
         assert result.error_code == "CATEGORY_NOT_DELETED/NOT_FOUND"
-
-        # Verify failure event was published
-        assert len(event_bus.published_events) == 1
-
-    @allure.title("Returns OperationResult with correct error code")
-    def test_delete_category_returns_operation_result_on_failure(
-        self,
-        code_repo: MockCodeRepository,
-        category_repo: MockCategoryRepository,
-        segment_repo: MockSegmentRepository,
-        event_bus: MockEventBus,
-    ):
-        """Should return OperationResult.fail() with proper error details."""
-        from src.contexts.coding.core.commandHandlers.delete_category import (
-            delete_category,
-        )
-
-        command = DeleteCategoryCommand(category_id="999")
-
-        result = delete_category(
-            command=command,
-            code_repo=code_repo,
-            category_repo=category_repo,
-            segment_repo=segment_repo,
-            event_bus=event_bus,
-        )
-
         assert not result.success
         assert result.error is not None
         assert "not found" in result.error.lower()
+        assert len(event_bus.published_events) == 1
 
 
 # ============================================================
@@ -391,8 +315,8 @@ class TestDeleteCategoryHandler:
 class TestChangeCodeColorHandler:
     """Tests for the change_code_color command handler."""
 
-    @allure.title("Successfully changes code color")
-    def test_change_code_color_success(
+    @allure.title("Successfully changes color and provides rollback command")
+    def test_change_code_color_success_with_rollback(
         self,
         code_repo: MockCodeRepository,
         category_repo: MockCategoryRepository,
@@ -400,22 +324,19 @@ class TestChangeCodeColorHandler:
         event_bus: MockEventBus,
         sample_code: Code,
     ):
-        """Should successfully change a code's color."""
+        """Should change color, publish event, and return rollback command."""
         from src.contexts.coding.core.commandHandlers.change_code_color import (
             change_code_color,
         )
         from src.contexts.coding.core.events import CodeColorChanged
 
-        # Setup: add code to repo
         code_repo.save(sample_code)
+        original_color_hex = sample_code.color.to_hex()
 
-        # Create command
         command = ChangeCodeColorCommand(
             code_id=sample_code.id.value,
-            new_color="#00FF00",  # Green
+            new_color="#00FF00",
         )
-
-        # Execute
         result = change_code_color(
             command=command,
             code_repo=code_repo,
@@ -430,149 +351,67 @@ class TestChangeCodeColorHandler:
         assert result.data.old_color == Color(255, 0, 0)
         assert result.data.new_color == Color(0, 255, 0)
 
-        # Verify code was updated in repo
+        # Verify code updated in repo
         updated_code = code_repo.get_by_id(sample_code.id)
         assert updated_code is not None
         assert updated_code.color == Color(0, 255, 0)
 
-        # Verify event was published
+        # Verify event published
         assert len(event_bus.published_events) == 1
         assert isinstance(event_bus.published_events[0], CodeColorChanged)
-
-    @allure.title("Returns rollback command for undo")
-    def test_change_code_color_returns_rollback_command(
-        self,
-        code_repo: MockCodeRepository,
-        category_repo: MockCategoryRepository,
-        segment_repo: MockSegmentRepository,
-        event_bus: MockEventBus,
-        sample_code: Code,
-    ):
-        """Should return a rollback command to restore original color."""
-        from src.contexts.coding.core.commandHandlers.change_code_color import (
-            change_code_color,
-        )
-
-        # Setup
-        code_repo.save(sample_code)
-        original_color = sample_code.color.to_hex()
-
-        command = ChangeCodeColorCommand(
-            code_id=sample_code.id.value,
-            new_color="#0000FF",
-        )
-
-        result = change_code_color(
-            command=command,
-            code_repo=code_repo,
-            category_repo=category_repo,
-            segment_repo=segment_repo,
-            event_bus=event_bus,
-        )
 
         # Verify rollback command
         assert result.rollback_command is not None
         assert isinstance(result.rollback_command, ChangeCodeColorCommand)
         assert result.rollback_command.code_id == sample_code.id.value
-        assert result.rollback_command.new_color == original_color
+        assert result.rollback_command.new_color == original_color_hex
 
-    @allure.title("Fails when code does not exist")
-    def test_change_code_color_not_found(
+    @allure.title("Fails when code not found or color is invalid")
+    def test_change_code_color_failures(
         self,
         code_repo: MockCodeRepository,
         category_repo: MockCategoryRepository,
         segment_repo: MockSegmentRepository,
         event_bus: MockEventBus,
+        sample_code: Code,
     ):
-        """Should fail with appropriate error when code doesn't exist."""
+        """Should fail for nonexistent code or invalid color with suggestions."""
         from src.contexts.coding.core.commandHandlers.change_code_color import (
             change_code_color,
         )
 
-        command = ChangeCodeColorCommand(
-            code_id="999",
-            new_color="#00FF00",
-        )
-
-        result = change_code_color(
-            command=command,
+        # Code not found
+        command_nf = ChangeCodeColorCommand(code_id="999", new_color="#00FF00")
+        result_nf = change_code_color(
+            command=command_nf,
             code_repo=code_repo,
             category_repo=category_repo,
             segment_repo=segment_repo,
             event_bus=event_bus,
         )
-
-        assert result.is_failure
-        assert result.error_code == "CODE_NOT_UPDATED/NOT_FOUND"
-
-        # Verify failure event was published
+        assert result_nf.is_failure
+        assert result_nf.error_code == "CODE_NOT_UPDATED/NOT_FOUND"
         assert len(event_bus.published_events) == 1
 
-    @allure.title("Fails with invalid hex color")
-    def test_change_code_color_invalid_color(
-        self,
-        code_repo: MockCodeRepository,
-        category_repo: MockCategoryRepository,
-        segment_repo: MockSegmentRepository,
-        event_bus: MockEventBus,
-        sample_code: Code,
-    ):
-        """Should fail with appropriate error for invalid color format."""
-        from src.contexts.coding.core.commandHandlers.change_code_color import (
-            change_code_color,
-        )
-
+        # Invalid color
+        event_bus.published_events.clear()
         code_repo.save(sample_code)
-
-        command = ChangeCodeColorCommand(
-            code_id=sample_code.id.value,
-            new_color="invalid-color",
-        )
-
-        result = change_code_color(
-            command=command,
-            code_repo=code_repo,
-            category_repo=category_repo,
-            segment_repo=segment_repo,
-            event_bus=event_bus,
-        )
-
-        assert result.is_failure
-        assert result.error_code == "CODE_COLOR_NOT_CHANGED/INVALID_COLOR"
-        assert len(result.suggestions) > 0
-
-    @allure.title("Provides helpful suggestions on failure")
-    def test_change_code_color_provides_suggestions(
-        self,
-        code_repo: MockCodeRepository,
-        category_repo: MockCategoryRepository,
-        segment_repo: MockSegmentRepository,
-        event_bus: MockEventBus,
-        sample_code: Code,
-    ):
-        """Should provide helpful suggestions when color is invalid."""
-        from src.contexts.coding.core.commandHandlers.change_code_color import (
-            change_code_color,
-        )
-
-        code_repo.save(sample_code)
-
-        command = ChangeCodeColorCommand(
+        command_ic = ChangeCodeColorCommand(
             code_id=sample_code.id.value,
             new_color="not-a-color",
         )
-
-        result = change_code_color(
-            command=command,
+        result_ic = change_code_color(
+            command=command_ic,
             code_repo=code_repo,
             category_repo=category_repo,
             segment_repo=segment_repo,
             event_bus=event_bus,
         )
-
-        assert result.suggestions is not None
-        assert len(result.suggestions) > 0
-        assert any("hex" in s.lower() for s in result.suggestions)
+        assert result_ic.is_failure
+        assert result_ic.error_code == "CODE_COLOR_NOT_CHANGED/INVALID_COLOR"
+        assert result_ic.suggestions is not None
+        assert len(result_ic.suggestions) > 0
+        assert any("hex" in s.lower() for s in result_ic.suggestions)
 
 
 # ============================================================
@@ -586,7 +425,7 @@ class TestChangeCodeColorHandler:
 class TestApplyCodeHandler:
     """Tests for the apply_code command handler."""
 
-    @allure.title("Successfully applies code to text segment")
+    @allure.title("Successfully applies code, saves segment, publishes event with rollback")
     def test_apply_code_success(
         self,
         code_repo: MockCodeRepository,
@@ -595,23 +434,21 @@ class TestApplyCodeHandler:
         event_bus: MockEventBus,
         sample_code: Code,
     ):
-        """Should successfully apply a code to a text segment."""
+        """Should apply code to segment, save it, publish event, and return rollback."""
         from src.contexts.coding.core.commandHandlers.apply_code import apply_code
+        from src.contexts.coding.core.commands import RemoveCodeCommand
         from src.contexts.coding.core.events import SegmentCoded
 
-        # Setup: add code to repo
         code_repo.save(sample_code)
 
-        # Create command
         command = ApplyCodeCommand(
             code_id=sample_code.id.value,
             source_id="1",
-            start_position=0,
-            end_position=10,
-            memo="Test segment",
+            start_position=5,
+            end_position=15,
+            memo="Important segment",
+            importance=1,
         )
-
-        # Execute
         result = apply_code(
             command=command,
             code_repo=code_repo,
@@ -623,18 +460,32 @@ class TestApplyCodeHandler:
         # Verify success
         assert result.is_success
         assert result.data is not None
-
-        # Verify segment was created
         segment = result.data
         assert segment.code_id == sample_code.id
         assert segment.source_id == SourceId(value="1")
 
-        # Verify event was published
-        assert len(event_bus.published_events) == 1
-        assert isinstance(event_bus.published_events[0], SegmentCoded)
+        # Verify segment saved with correct fields
+        saved_segment = segment_repo.get_by_id(result.data.id)
+        assert saved_segment is not None
+        assert saved_segment.memo == "Important segment"
+        assert saved_segment.importance == 1
 
-    @allure.title("Returns rollback command for undo")
-    def test_apply_code_returns_rollback_command(
+        # Verify event published
+        assert len(event_bus.published_events) == 1
+        event = event_bus.published_events[0]
+        assert isinstance(event, SegmentCoded)
+        assert event.code_id == sample_code.id
+        assert event.code_name == sample_code.name
+        assert event.source_id == SourceId(value="1")
+        assert event.memo == "Important segment"
+
+        # Verify rollback command
+        assert result.rollback_command is not None
+        assert isinstance(result.rollback_command, RemoveCodeCommand)
+        assert result.rollback_command.segment_id == result.data.id.value
+
+    @allure.title("Uses source content provider for selected text")
+    def test_apply_code_with_source_content_provider(
         self,
         code_repo: MockCodeRepository,
         category_repo: MockCategoryRepository,
@@ -642,31 +493,32 @@ class TestApplyCodeHandler:
         event_bus: MockEventBus,
         sample_code: Code,
     ):
-        """Should return a rollback command to remove the segment."""
+        """Should use source content provider to get selected text."""
         from src.contexts.coding.core.commandHandlers.apply_code import apply_code
-        from src.contexts.coding.core.commands import RemoveCodeCommand
 
         code_repo.save(sample_code)
+
+        source_provider = MagicMock()
+        source_provider.get_content.return_value = "Hello World! This is test content."
+        source_provider.get_length.return_value = 34
 
         command = ApplyCodeCommand(
             code_id=sample_code.id.value,
             source_id="1",
             start_position=0,
-            end_position=10,
+            end_position=12,
         )
-
         result = apply_code(
             command=command,
             code_repo=code_repo,
             category_repo=category_repo,
             segment_repo=segment_repo,
             event_bus=event_bus,
+            source_content_provider=source_provider,
         )
 
-        # Verify rollback command
-        assert result.rollback_command is not None
-        assert isinstance(result.rollback_command, RemoveCodeCommand)
-        assert result.rollback_command.segment_id == result.data.id.value
+        assert result.is_success
+        assert result.data.selected_text == "Hello World!"
 
     @allure.title("Fails when code does not exist")
     def test_apply_code_code_not_found(
@@ -685,7 +537,6 @@ class TestApplyCodeHandler:
             start_position=0,
             end_position=10,
         )
-
         result = apply_code(
             command=command,
             code_repo=code_repo,
@@ -696,123 +547,7 @@ class TestApplyCodeHandler:
 
         assert result.is_failure
         assert result.error_code == "SEGMENT_NOT_CODED/CODE_NOT_FOUND"
-
-        # Verify failure event was published
         assert len(event_bus.published_events) == 1
-
-    @allure.title("Creates segment with correct text content")
-    def test_apply_code_with_source_content_provider(
-        self,
-        code_repo: MockCodeRepository,
-        category_repo: MockCategoryRepository,
-        segment_repo: MockSegmentRepository,
-        event_bus: MockEventBus,
-        sample_code: Code,
-    ):
-        """Should use source content provider to get selected text."""
-        from src.contexts.coding.core.commandHandlers.apply_code import apply_code
-
-        code_repo.save(sample_code)
-
-        # Create mock source content provider
-        source_provider = MagicMock()
-        source_provider.get_content.return_value = "Hello World! This is test content."
-        source_provider.get_length.return_value = 34
-
-        command = ApplyCodeCommand(
-            code_id=sample_code.id.value,
-            source_id="1",
-            start_position=0,
-            end_position=12,
-        )
-
-        result = apply_code(
-            command=command,
-            code_repo=code_repo,
-            category_repo=category_repo,
-            segment_repo=segment_repo,
-            event_bus=event_bus,
-            source_content_provider=source_provider,
-        )
-
-        assert result.is_success
-        assert result.data.selected_text == "Hello World!"
-
-    @allure.title("Saves segment to repository")
-    def test_apply_code_saves_segment(
-        self,
-        code_repo: MockCodeRepository,
-        category_repo: MockCategoryRepository,
-        segment_repo: MockSegmentRepository,
-        event_bus: MockEventBus,
-        sample_code: Code,
-    ):
-        """Should save the created segment to the repository."""
-        from src.contexts.coding.core.commandHandlers.apply_code import apply_code
-
-        code_repo.save(sample_code)
-
-        command = ApplyCodeCommand(
-            code_id=sample_code.id.value,
-            source_id="1",
-            start_position=5,
-            end_position=15,
-            memo="Important segment",
-            importance=1,
-        )
-
-        result = apply_code(
-            command=command,
-            code_repo=code_repo,
-            category_repo=category_repo,
-            segment_repo=segment_repo,
-            event_bus=event_bus,
-        )
-
-        # Verify segment was saved
-        saved_segment = segment_repo.get_by_id(result.data.id)
-        assert saved_segment is not None
-        assert saved_segment.memo == "Important segment"
-        assert saved_segment.importance == 1
-
-    @allure.title("Publishes SegmentCoded event with correct data")
-    def test_apply_code_publishes_correct_event(
-        self,
-        code_repo: MockCodeRepository,
-        category_repo: MockCategoryRepository,
-        segment_repo: MockSegmentRepository,
-        event_bus: MockEventBus,
-        sample_code: Code,
-    ):
-        """Should publish SegmentCoded event with all relevant data."""
-        from src.contexts.coding.core.commandHandlers.apply_code import apply_code
-        from src.contexts.coding.core.events import SegmentCoded
-
-        code_repo.save(sample_code)
-
-        command = ApplyCodeCommand(
-            code_id=sample_code.id.value,
-            source_id="1",
-            start_position=0,
-            end_position=10,
-            memo="Event test",
-        )
-
-        result = apply_code(
-            command=command,
-            code_repo=code_repo,
-            category_repo=category_repo,
-            segment_repo=segment_repo,
-            event_bus=event_bus,
-        )
-
-        assert result.is_success
-        event = event_bus.published_events[0]
-        assert isinstance(event, SegmentCoded)
-        assert event.code_id == sample_code.id
-        assert event.code_name == sample_code.name
-        assert event.source_id == SourceId(value="1")
-        assert event.memo == "Event test"
 
 
 # ============================================================
@@ -826,8 +561,8 @@ class TestApplyCodeHandler:
 class TestHandlerIntegration:
     """Integration-like tests that verify handler flow."""
 
-    @allure.title("Change color then verify rollback works")
-    def test_change_color_rollback_integration(
+    @allure.title("Change color then undo via rollback; delete category moves codes")
+    def test_color_rollback_and_category_delete_integration(
         self,
         code_repo: MockCodeRepository,
         category_repo: MockCategoryRepository,
@@ -835,15 +570,18 @@ class TestHandlerIntegration:
         event_bus: MockEventBus,
         sample_code: Code,
     ):
-        """Should be able to undo a color change using rollback command."""
+        """Should undo color change via rollback and correctly move codes on category delete."""
         from src.contexts.coding.core.commandHandlers.change_code_color import (
             change_code_color,
         )
+        from src.contexts.coding.core.commandHandlers.delete_category import (
+            delete_category,
+        )
 
+        # --- Color rollback ---
         code_repo.save(sample_code)
         original_color = sample_code.color
 
-        # First change
         command = ChangeCodeColorCommand(
             code_id=sample_code.id.value,
             new_color="#00FF00",
@@ -855,11 +593,9 @@ class TestHandlerIntegration:
             segment_repo=segment_repo,
             event_bus=event_bus,
         )
-
         assert result.is_success
         assert code_repo.get_by_id(sample_code.id).color == Color(0, 255, 0)
 
-        # Use rollback command
         rollback_result = change_code_color(
             command=result.rollback_command,
             code_repo=code_repo,
@@ -867,65 +603,34 @@ class TestHandlerIntegration:
             segment_repo=segment_repo,
             event_bus=event_bus,
         )
-
         assert rollback_result.is_success
         assert code_repo.get_by_id(sample_code.id).color == original_color
 
-    @allure.title("Delete category with codes moves them correctly")
-    def test_delete_category_with_codes_integration(
-        self,
-        code_repo: MockCodeRepository,
-        category_repo: MockCategoryRepository,
-        segment_repo: MockSegmentRepository,
-        event_bus: MockEventBus,
-    ):
-        """Should correctly handle category deletion with orphan codes."""
-        from src.contexts.coding.core.commandHandlers.delete_category import (
-            delete_category,
-        )
-
-        # Setup hierarchy: root -> parent -> child
+        # --- Category delete with code hierarchy ---
+        event_bus.published_events.clear()
         root = Category(id=CategoryId(value="1"), name="Root")
         parent = Category(id=CategoryId(value="2"), name="Parent", parent_id=root.id)
         child = Category(id=CategoryId(value="3"), name="Child", parent_id=parent.id)
-
         category_repo.save(root)
         category_repo.save(parent)
         category_repo.save(child)
 
-        # Add codes at each level
-        code1 = Code(
-            id=CodeId(value="1"),
-            name="Code1",
-            color=Color(255, 0, 0),
-            category_id=child.id,
-        )
-        code2 = Code(
-            id=CodeId(value="2"),
-            name="Code2",
-            color=Color(0, 255, 0),
-            category_id=child.id,
-        )
+        code1 = Code(id=CodeId(value="10"), name="Code1", color=Color(255, 0, 0), category_id=child.id)
+        code2 = Code(id=CodeId(value="20"), name="Code2", color=Color(0, 255, 0), category_id=child.id)
         code_repo.save(code1)
         code_repo.save(code2)
 
-        # Delete child category
-        command = DeleteCategoryCommand(
+        del_command = DeleteCategoryCommand(
             category_id=child.id.value,
             orphan_strategy="move_to_parent",
         )
-        result = delete_category(
-            command=command,
+        del_result = delete_category(
+            command=del_command,
             code_repo=code_repo,
             category_repo=category_repo,
             segment_repo=segment_repo,
             event_bus=event_bus,
         )
-
-        assert result.is_success
-
-        # Verify codes moved to parent
-        updated_code1 = code_repo.get_by_id(CodeId(value="1"))
-        updated_code2 = code_repo.get_by_id(CodeId(value="2"))
-        assert updated_code1.category_id == parent.id
-        assert updated_code2.category_id == parent.id
+        assert del_result.is_success
+        assert code_repo.get_by_id(CodeId(value="10")).category_id == parent.id
+        assert code_repo.get_by_id(CodeId(value="20")).category_id == parent.id

@@ -83,23 +83,22 @@ class MockSignal:
 @allure.feature("Shared Infrastructure")
 @allure.story("QC-000.08 Signal Bridge")
 class TestBaseSignalBridgeSingleton:
-    """Tests for BaseSignalBridge singleton and lifecycle."""
+    """Tests for BaseSignalBridge singleton, lifecycle, and context manager."""
 
-    @allure.title("Singleton returns same instance; first call requires event_bus")
-    def test_singleton_pattern_and_requires_event_bus(self, mock_event_bus: MockEventBus) -> None:
+    @allure.title("Singleton pattern, start/stop lifecycle, and context manager")
+    def test_singleton_lifecycle_and_context_manager(self, mock_event_bus: MockEventBus) -> None:
         TestSignalBridge.clear_instance()
 
+        # Singleton requires event_bus on first call
         with pytest.raises(ValueError, match="requires event_bus"):
             TestSignalBridge.instance()
 
         bridge1 = TestSignalBridge.instance(mock_event_bus)
         bridge2 = TestSignalBridge.instance()
         assert bridge1 is bridge2
-
         TestSignalBridge.clear_instance()
 
-    @allure.title("start subscribes, stop unsubscribes, double calls are safe")
-    def test_start_stop_lifecycle(self, mock_event_bus: MockEventBus) -> None:
+        # Start/stop lifecycle
         bridge = TestSignalBridge(mock_event_bus)
         assert mock_event_bus.get_handler_count("test.sample_event") == 0
 
@@ -119,24 +118,21 @@ class TestBaseSignalBridgeSingleton:
         bridge.stop()
         assert bridge.is_running() is False
 
-    @allure.title("Context manager starts and stops bridge")
-    def test_context_manager(self, mock_event_bus: MockEventBus) -> None:
-        bridge = TestSignalBridge(mock_event_bus)
-
-        with bridge:
-            assert bridge.is_running() is True
-
-        assert bridge.is_running() is False
+        # Context manager
+        bridge2 = TestSignalBridge(mock_event_bus)
+        with bridge2:
+            assert bridge2.is_running() is True
+        assert bridge2.is_running() is False
 
 
 @allure.epic("Shared Infrastructure")
 @allure.feature("Shared Infrastructure")
 @allure.story("QC-000.08 Signal Bridge")
 class TestBaseSignalBridgeDispatch:
-    """Tests for event dispatch and activity logging."""
+    """Tests for event dispatch, activity logging, and converter validation."""
 
-    @allure.title("Events are converted, emitted, and activity is logged")
-    def test_event_dispatch_converts_emits_and_logs_activity(
+    @allure.title("Events converted and emitted; activity logged; converter validates; emit_activity works")
+    def test_dispatch_validation_and_activity(
         self,
         mock_event_bus: MockEventBus,
         sample_event: MockDomainEvent,
@@ -161,18 +157,16 @@ class TestBaseSignalBridgeDispatch:
         assert activity.context == "test"
         assert activity.status == ActivityStatus.COMPLETED
 
-    @allure.title("register_converter validates signal exists")
-    def test_register_converter_validates_signal(self, mock_event_bus: MockEventBus) -> None:
-        bridge = TestSignalBridge(mock_event_bus)
+        bridge.stop()
 
+        # register_converter validates signal exists
+        bridge2 = TestSignalBridge(mock_event_bus)
         with pytest.raises(ValueError, match="not found"):
-            bridge.register_converter("test.event", TestConverter(), "nonexistent_signal")
+            bridge2.register_converter("test.event", TestConverter(), "nonexistent_signal")
 
-    @allure.title("emit_activity directly emits activity with AI session")
-    def test_emit_activity_directly(self, mock_event_bus: MockEventBus) -> None:
-        bridge = TestSignalBridge(mock_event_bus)
-
-        bridge.emit_activity(
+        # emit_activity directly emits activity with AI session
+        bridge3 = TestSignalBridge(mock_event_bus)
+        bridge3.emit_activity(
             description="Test activity",
             entity_type="test",
             entity_id="123",
@@ -180,7 +174,7 @@ class TestBaseSignalBridgeDispatch:
             session_id="ai-session",
         )
 
-        activity_signal = bridge._signals["activity_logged"]
+        activity_signal = bridge3._signals["activity_logged"]
         assert len(activity_signal.emissions) == 1
         activity = activity_signal.emissions[0]
         assert activity.description == "Test activity"

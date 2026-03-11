@@ -62,8 +62,8 @@ LONG_TEXT = "I feel so frustrated with the deadline at work. " * 5
 class TestMockCodeAnalyzer:
     """Tests for MockCodeAnalyzer."""
 
-    @allure.title("Returns predefined suggestions, respects max, and tracks calls")
-    def test_returns_suggestions_with_limit_and_tracking(self) -> None:
+    @allure.title("Returns predefined suggestions, respects max, tracks calls, defaults, and generate_color")
+    def test_suggestions_limits_tracking_and_defaults(self) -> None:
         suggestions = [
             CodeSuggestion(
                 id=SuggestionId.new(), name=f"code_{i}", color=Color.from_hex("#FF0000"),
@@ -83,18 +83,15 @@ class TestMockCodeAnalyzer:
         # Respects max_suggestions
         result = analyzer.suggest_codes("text", (), SourceId(value="1"), max_suggestions=2)
         assert len(result.unwrap()) == 2
-
         assert analyzer.call_count == 2
 
-    @allure.title("Returns empty list by default and generate_color returns Color")
-    def test_defaults_and_generate_color(self) -> None:
-        analyzer = MockCodeAnalyzer()
-
-        result = analyzer.suggest_codes("text", (), SourceId(value="1"))
+        # Default returns empty; generate_color returns Color
+        default_analyzer = MockCodeAnalyzer()
+        result = default_analyzer.suggest_codes("text", (), SourceId(value="1"))
         assert isinstance(result, Success)
         assert result.unwrap() == []
 
-        color = analyzer.generate_color("test", ())
+        color = default_analyzer.generate_color("test", ())
         assert isinstance(color, Color)
 
 
@@ -109,12 +106,11 @@ class TestMockCodeAnalyzer:
 class TestLLMCodeAnalyzer:
     """Tests for LLMCodeAnalyzer with MockLLMProvider."""
 
-    @allure.title("suggest_codes returns parsed suggestions from LLM")
-    def test_suggest_codes_returns_suggestions(
+    @allure.title("suggest_codes returns parsed suggestions and filters by confidence/existing")
+    def test_suggest_codes_parsing_and_filtering(
         self, mock_llm_provider: MockLLMProvider, ai_config: AIConfig, sample_codes: tuple[Code, ...],
     ) -> None:
         analyzer = LLMCodeAnalyzer(llm_provider=mock_llm_provider, config=ai_config)
-
         result = analyzer.suggest_codes(text=LONG_TEXT, existing_codes=sample_codes, source_id=SourceId(value="1"))
 
         assert isinstance(result, Success)
@@ -122,8 +118,8 @@ class TestLLMCodeAnalyzer:
         assert len(suggestions) >= 1
         assert all(isinstance(s, CodeSuggestion) for s in suggestions)
 
-    @allure.title("suggest_codes rejects short text and filters low confidence")
-    def test_rejects_short_text_and_filters_low_confidence(self, ai_config: AIConfig) -> None:
+    @allure.title("Rejects short text, filters low confidence, and skips existing code names")
+    def test_rejects_short_text_filters_confidence_skips_existing(self, ai_config: AIConfig, sample_codes: tuple[Code, ...]) -> None:
         provider_low = MockLLMProvider(
             json_responses=[{
                 "suggestions": [
@@ -134,7 +130,7 @@ class TestLLMCodeAnalyzer:
         )
         analyzer = LLMCodeAnalyzer(llm_provider=provider_low, config=ai_config)
 
-        # Short text → Failure
+        # Short text -> Failure
         result = analyzer.suggest_codes(text="Too short", existing_codes=(), source_id=SourceId(value="1"))
         assert isinstance(result, Failure)
         assert "too short" in result.failure().lower()
@@ -144,9 +140,8 @@ class TestLLMCodeAnalyzer:
         assert isinstance(result, Success)
         assert all(s.confidence >= ai_config.min_confidence for s in result.unwrap())
 
-    @allure.title("suggest_codes skips suggestions matching existing code names")
-    def test_skips_similar_to_existing(self, ai_config: AIConfig, sample_codes: tuple[Code, ...]) -> None:
-        provider = MockLLMProvider(
+        # Skips existing code names
+        provider2 = MockLLMProvider(
             json_responses=[{
                 "suggestions": [
                     {"name": "anxiety", "rationale": "Matches existing", "confidence": 0.9, "relevant_excerpts": ["anxious"]},
@@ -154,15 +149,13 @@ class TestLLMCodeAnalyzer:
                 ]
             }]
         )
-        analyzer = LLMCodeAnalyzer(llm_provider=provider, config=ai_config)
-
-        result = analyzer.suggest_codes(text=LONG_TEXT, existing_codes=sample_codes, source_id=SourceId(value="1"))
-
+        analyzer2 = LLMCodeAnalyzer(llm_provider=provider2, config=ai_config)
+        result = analyzer2.suggest_codes(text=LONG_TEXT, existing_codes=sample_codes, source_id=SourceId(value="1"))
         assert isinstance(result, Success)
         assert all(s.name != "anxiety" for s in result.unwrap())
 
-    @allure.title("generate_color uses palette and avoids existing colors")
-    def test_generate_color_uses_palette_and_avoids_existing(
+    @allure.title("generate_color uses palette; exhausted provider returns empty")
+    def test_generate_color_and_exhausted_provider(
         self, mock_llm_provider: MockLLMProvider, ai_config: AIConfig,
     ) -> None:
         analyzer = LLMCodeAnalyzer(llm_provider=mock_llm_provider, config=ai_config)
@@ -175,13 +168,10 @@ class TestLLMCodeAnalyzer:
         color = analyzer.generate_color("test_code", existing)
         assert color.to_hex().upper() != ai_config.color_palette[0].upper()
 
-    @allure.title("Exhausted LLM provider returns empty suggestions")
-    def test_llm_failure_returns_empty(self, ai_config: AIConfig) -> None:
+        # Exhausted provider returns empty
         provider = MockLLMProvider(json_responses=[])
         provider.complete_json("exhaust")
-
-        analyzer = LLMCodeAnalyzer(llm_provider=provider, config=ai_config)
-        result = analyzer.suggest_codes(text=LONG_TEXT, existing_codes=(), source_id=SourceId(value="1"))
-
+        analyzer2 = LLMCodeAnalyzer(llm_provider=provider, config=ai_config)
+        result = analyzer2.suggest_codes(text=LONG_TEXT, existing_codes=(), source_id=SourceId(value="1"))
         assert isinstance(result, Success)
         assert result.unwrap() == []

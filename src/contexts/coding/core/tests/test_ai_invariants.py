@@ -114,117 +114,55 @@ class TestIsValidConfidenceAndRationale:
 
 
 @allure.story("QC-028.08 Agent Suggest New Codes")
-class TestCanSuggestionBeApproved:
-    """Tests for can_suggestion_be_approved invariant."""
+class TestSuggestionApprovalAndExistence:
+    """Tests for can_suggestion_be_approved and does_suggestion_exist invariants."""
 
-    @allure.title("Approval depends on pending status and unique name")
-    def test_approval_and_rejection_cases(self):
-        """Pending + unique name = approved; non-pending or duplicate = rejected."""
+    @allure.title("Approval depends on pending status, unique name; existence by ID")
+    def test_approval_rejection_and_existence(self):
+        """Pending + unique = approved; non-pending/duplicate = rejected; existence by ID."""
         from src.contexts.coding.core.ai_entities import CodeSuggestion, SuggestionId
-        from src.contexts.coding.core.ai_invariants import can_suggestion_be_approved
+        from src.contexts.coding.core.ai_invariants import can_suggestion_be_approved, does_suggestion_exist
         from src.contexts.coding.core.entities import Code, Color
         from src.shared import CodeId
 
         # Can approve: pending + unique name
         suggestion = CodeSuggestion(
-            id=SuggestionId.new(),
-            name="NewCode",
-            color=Color(255, 0, 0),
-            rationale="Test rationale",
-            status="pending",
+            id=SuggestionId.new(), name="NewCode", color=Color(255, 0, 0),
+            rationale="Test rationale", status="pending",
         )
         assert can_suggestion_be_approved(suggestion, []) is True
 
-        # Cannot approve: already approved
-        suggestion_approved = CodeSuggestion(
-            id=SuggestionId.new(),
-            name="NewCode",
-            color=Color(255, 0, 0),
-            rationale="Test rationale",
-            status="approved",
-        )
-        assert can_suggestion_be_approved(suggestion_approved, []) is False
-
-        # Cannot approve: rejected
-        suggestion_rejected = CodeSuggestion(
-            id=SuggestionId.new(),
-            name="NewCode",
-            color=Color(255, 0, 0),
-            rationale="Test rationale",
-            status="rejected",
-        )
-        assert can_suggestion_be_approved(suggestion_rejected, []) is False
+        # Cannot approve: already approved / rejected
+        for status in ("approved", "rejected"):
+            s = CodeSuggestion(
+                id=SuggestionId.new(), name="NewCode", color=Color(255, 0, 0),
+                rationale="Test rationale", status=status,
+            )
+            assert can_suggestion_be_approved(s, []) is False
 
         # Cannot approve: duplicate name (exact + case-insensitive)
-        existing = [
-            Code(id=CodeId(value="1"), name="ExistingCode", color=Color(0, 255, 0))
-        ]
-        suggestion_dup = CodeSuggestion(
-            id=SuggestionId.new(),
-            name="ExistingCode",
-            color=Color(255, 0, 0),
-            rationale="Test rationale",
-            status="pending",
-        )
-        assert can_suggestion_be_approved(suggestion_dup, existing) is False
+        existing = [Code(id=CodeId(value="1"), name="ExistingCode", color=Color(0, 255, 0))]
+        for name in ("ExistingCode", "existingcode"):
+            s = CodeSuggestion(
+                id=SuggestionId.new(), name=name, color=Color(255, 0, 0),
+                rationale="Test rationale", status="pending",
+            )
+            assert can_suggestion_be_approved(s, existing) is False
 
-        suggestion_ci = CodeSuggestion(
-            id=SuggestionId.new(),
-            name="existingcode",
-            color=Color(255, 0, 0),
-            rationale="Test rationale",
-            status="pending",
-        )
-        assert can_suggestion_be_approved(suggestion_ci, existing) is False
-
-
-@allure.story("QC-028.08 Agent Suggest New Codes")
-class TestDoesSuggestionExist:
-    """Tests for does_suggestion_exist invariant."""
-
-    @allure.title("does_suggestion_exist finds suggestion by ID in list")
-    def test_suggestion_existence(self):
-        """Checks existing, missing, and multi-suggestion scenarios."""
-        from src.contexts.coding.core.ai_entities import CodeSuggestion, SuggestionId
-        from src.contexts.coding.core.ai_invariants import does_suggestion_exist
-        from src.contexts.coding.core.entities import Color
-
-        # Missing in empty list
+        # does_suggestion_exist: missing in empty, found in single and multi-element lists
         assert does_suggestion_exist(SuggestionId.new(), []) is False
 
-        # Found in single-element list
         suggestion_id = SuggestionId.new()
         suggestions = [
-            CodeSuggestion(
-                id=suggestion_id,
-                name="Theme",
-                color=Color(255, 0, 0),
-                rationale="Test rationale",
-            )
+            CodeSuggestion(id=suggestion_id, name="Theme", color=Color(255, 0, 0), rationale="Test"),
         ]
         assert does_suggestion_exist(suggestion_id, suggestions) is True
 
-        # Found among multiple suggestions
         target_id = SuggestionId.new()
         suggestions = [
-            CodeSuggestion(
-                id=SuggestionId.new(),
-                name="Theme1",
-                color=Color(255, 0, 0),
-                rationale="Test 1",
-            ),
-            CodeSuggestion(
-                id=target_id,
-                name="Theme2",
-                color=Color(0, 255, 0),
-                rationale="Test 2",
-            ),
-            CodeSuggestion(
-                id=SuggestionId.new(),
-                name="Theme3",
-                color=Color(0, 0, 255),
-                rationale="Test 3",
-            ),
+            CodeSuggestion(id=SuggestionId.new(), name="T1", color=Color(255, 0, 0), rationale="R1"),
+            CodeSuggestion(id=target_id, name="T2", color=Color(0, 255, 0), rationale="R2"),
+            CodeSuggestion(id=SuggestionId.new(), name="T3", color=Color(0, 0, 255), rationale="R3"),
         ]
         assert does_suggestion_exist(target_id, suggestions) is True
 

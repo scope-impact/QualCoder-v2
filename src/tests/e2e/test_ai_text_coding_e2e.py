@@ -184,14 +184,14 @@ class TestAgentApplyCodeToTextRange:
     As an AI Agent, I want to apply codes to text ranges so that I can assist with coding.
     """
 
-    @allure.title("AC #1: Agent can specify source, start, end, and code")
-    def test_ac1_specify_coding_parameters(
+    @allure.title("AC #1+3: Agent can specify coding parameters with rationale")
+    def test_ac1_ac3_specify_parameters_with_rationale(
         self,
         coding_tools: CodingTools,
         app_context: AppContext,
         project_with_text_and_codes: Path,
     ):
-        """Agent can specify all parameters needed to apply a code to text."""
+        """Agent can specify all parameters and include rationale for code application."""
 
         with allure.step("Suggest code application with parameters"):
             result = coding_tools.execute(
@@ -199,13 +199,13 @@ class TestAgentApplyCodeToTextRange:
                 {
                     "source_id": 1,
                     "code_id": 1,  # Initial Skepticism
-                    "start_pos": 195,  # Start of "Initially, I was skeptical..."
-                    "end_pos": 310,  # End of the sentence
+                    "start_pos": 195,
+                    "end_pos": 310,
                     "rationale": "Participant expresses initial skepticism about online learning",
                 },
             )
 
-        with allure.step("Verify suggestion accepted"):
+        with allure.step("Verify suggestion accepted with correct parameters"):
             assert result.get("success") is True
             data = result["data"]
             assert data["source_id"] == 1
@@ -214,14 +214,33 @@ class TestAgentApplyCodeToTextRange:
             assert data["end_pos"] == 310
             assert "suggestion_id" in data
 
-    @allure.title("AC #2: Action requires researcher approval")
-    def test_ac2_requires_researcher_approval(
+        with allure.step("Submit suggestion with detailed rationale and confidence"):
+            result2 = coding_tools.execute(
+                "suggest_code_application",
+                {
+                    "source_id": 1,
+                    "code_id": 3,  # Time Management Challenge
+                    "start_pos": 800,
+                    "end_pos": 950,
+                    "rationale": "Participant explicitly mentions 'Time management was hard' and describes struggles with finding study time while working full-time.",
+                    "confidence": 92,
+                },
+            )
+
+        with allure.step("Verify rationale included"):
+            assert result2.get("success") is True
+            data2 = result2["data"]
+            assert "rationale" in data2
+            assert "time management" in data2["rationale"].lower()
+
+    @allure.title("AC #2+4: Suggestions require approval and are visible as pending")
+    def test_ac2_ac4_requires_approval_and_pending_visible(
         self,
         coding_tools: CodingTools,
         app_context: AppContext,
         project_with_text_and_codes: Path,
     ):
-        """Code application suggestions require researcher approval."""
+        """Code application suggestions require researcher approval and can be listed."""
 
         with allure.step("Submit coding suggestion"):
             result = coding_tools.execute(
@@ -235,15 +254,12 @@ class TestAgentApplyCodeToTextRange:
                 },
             )
 
-        with allure.step("Verify approval required"):
+        with allure.step("Verify approval required and segment NOT created"):
             assert result.get("success") is True
             data = result["data"]
             assert data["status"] == "pending_approval"
             assert data["requires_approval"] is True
-
-        with allure.step("Verify segment NOT created yet"):
             segments = app_context.coding_context.segment_repo.get_all()
-            # No segments should exist until approved
             matching = [
                 s
                 for s in segments
@@ -251,54 +267,7 @@ class TestAgentApplyCodeToTextRange:
             ]
             assert len(matching) == 0
 
-    @allure.title("AC #3: Agent can provide rationale for suggestion")
-    def test_ac3_provide_rationale(
-        self,
-        coding_tools: CodingTools,
-        app_context: AppContext,
-        project_with_text_and_codes: Path,
-    ):
-        """Agent includes rationale explaining why this code fits the text."""
-
-        with allure.step("Submit suggestion with detailed rationale"):
-            result = coding_tools.execute(
-                "suggest_code_application",
-                {
-                    "source_id": 1,
-                    "code_id": 3,  # Time Management Challenge
-                    "start_pos": 800,
-                    "end_pos": 950,
-                    "rationale": "Participant explicitly mentions 'Time management was hard' and describes struggles with finding study time while working full-time.",
-                    "confidence": 92,
-                },
-            )
-
-        with allure.step("Verify rationale included"):
-            assert result.get("success") is True
-            data = result["data"]
-            assert "rationale" in data
-            assert "time management" in data["rationale"].lower()
-
-    @allure.title("AC #4: Researcher sees pending suggestions")
-    def test_ac4_pending_suggestions_visible(
-        self,
-        coding_tools: CodingTools,
-        app_context: AppContext,
-        project_with_text_and_codes: Path,
-    ):
-        """Researcher can see all pending coding suggestions."""
-
-        with allure.step("Submit multiple coding suggestions"):
-            coding_tools.execute(
-                "suggest_code_application",
-                {
-                    "source_id": 1,
-                    "code_id": 1,
-                    "start_pos": 195,
-                    "end_pos": 310,
-                    "rationale": "Initial skepticism",
-                },
-            )
+        with allure.step("Submit additional suggestion"):
             coding_tools.execute(
                 "suggest_code_application",
                 {
@@ -323,17 +292,17 @@ class TestAgentApplyCodeToTextRange:
             assert all("suggestion_id" in s for s in data["suggestions"])
             assert all("rationale" in s for s in data["suggestions"])
 
-    @allure.title("Agent can suggest with text excerpt")
-    @allure.severity(allure.severity_level.NORMAL)
-    def test_suggest_with_text_excerpt(
+    @allure.title("Agent can suggest with text excerpt and approve suggestions")
+    @allure.severity(allure.severity_level.CRITICAL)
+    def test_suggest_with_excerpt_and_approve(
         self,
         coding_tools: CodingTools,
         app_context: AppContext,
         project_with_text_and_codes: Path,
     ):
-        """Agent can include the actual text being coded in the suggestion."""
+        """Agent can include text excerpt and approve coding suggestions."""
 
-        with allure.step("Submit suggestion"):
+        with allure.step("Submit suggestion with text excerpt"):
             result = coding_tools.execute(
                 "suggest_code_application",
                 {
@@ -342,7 +311,7 @@ class TestAgentApplyCodeToTextRange:
                     "start_pos": 580,
                     "end_pos": 620,
                     "rationale": "Participant expresses increased motivation",
-                    "include_text": True,  # Request text excerpt
+                    "include_text": True,
                 },
             )
 
@@ -352,17 +321,7 @@ class TestAgentApplyCodeToTextRange:
             assert "text_excerpt" in data
             assert len(data["text_excerpt"]) > 0
 
-    @allure.title("Agent can approve/reject suggestions via MCP")
-    @allure.severity(allure.severity_level.CRITICAL)
-    def test_approve_coding_suggestion(
-        self,
-        coding_tools: CodingTools,
-        app_context: AppContext,
-        project_with_text_and_codes: Path,
-    ):
-        """Agent (or UI) can approve a coding suggestion."""
-
-        with allure.step("Submit coding suggestion"):
+        with allure.step("Submit and approve a coding suggestion"):
             suggestion = coding_tools.execute(
                 "suggest_code_application",
                 {
@@ -375,19 +334,15 @@ class TestAgentApplyCodeToTextRange:
             )
             suggestion_id = suggestion["data"]["suggestion_id"]
 
-        with allure.step("Approve suggestion"):
             approval = coding_tools.execute(
                 "approve_coding_suggestion",
                 {"suggestion_id": suggestion_id},
             )
 
-        with allure.step("Verify segment created"):
+        with allure.step("Verify segment created after approval"):
             assert approval.get("success") is True
-            data = approval["data"]
-            assert data["status"] == "applied"
-            assert "segment_id" in data
-
-        with allure.step("Verify segment exists in repository"):
+            assert approval["data"]["status"] == "applied"
+            assert "segment_id" in approval["data"]
             segments = app_context.coding_context.segment_repo.get_all()
             matching = [
                 s
@@ -410,14 +365,14 @@ class TestAgentSuggestCodesForText:
     As an AI Agent, I want to suggest codes for uncoded text so that I can help complete coding.
     """
 
-    @allure.title("AC #1: Agent can analyze uncoded text")
-    def test_ac1_analyze_uncoded_text(
+    @allure.title("AC #1+2: Agent can analyze uncoded text and suggest appropriate codes with confidence")
+    def test_ac1_ac2_ac3_analyze_and_suggest_codes(
         self,
         coding_tools: CodingTools,
         app_context: AppContext,
         project_with_text_and_codes: Path,
     ):
-        """Agent can analyze text to find uncoded segments."""
+        """Agent can analyze text, suggest codes with confidence scores (0-100)."""
 
         with allure.step("Analyze source for uncoded segments"):
             result = coding_tools.execute(
@@ -432,65 +387,29 @@ class TestAgentSuggestCodesForText:
             assert data["total_length"] > 0
             assert "uncoded_percentage" in data
 
-    @allure.title("AC #2: Agent can suggest appropriate codes")
-    def test_ac2_suggest_appropriate_codes(
-        self,
-        coding_tools: CodingTools,
-        app_context: AppContext,
-        project_with_text_and_codes: Path,
-    ):
-        """Agent can suggest which existing codes fit uncoded text segments."""
-
         with allure.step("Request code suggestions for a text range"):
             result = coding_tools.execute(
                 "suggest_codes_for_range",
                 {
                     "source_id": 1,
-                    "start_pos": 1600,  # Suggestions section
+                    "start_pos": 1600,
                     "end_pos": 1800,
                 },
             )
 
-        with allure.step("Verify code suggestions returned"):
+        with allure.step("Verify code suggestions with confidence scores"):
             assert result.get("success") is True
             data = result["data"]
             assert "suggestions" in data
             assert len(data["suggestions"]) > 0
-
-        with allure.step("Verify suggestions include code info"):
             for suggestion in data["suggestions"]:
                 assert "code_id" in suggestion
                 assert "code_name" in suggestion
                 assert "confidence" in suggestion
                 assert "rationale" in suggestion
-
-    @allure.title("AC #3: Suggestions include confidence score")
-    def test_ac3_suggestions_include_confidence(
-        self,
-        coding_tools: CodingTools,
-        app_context: AppContext,
-        project_with_text_and_codes: Path,
-    ):
-        """Code suggestions include confidence scores (0-100)."""
-
-        with allure.step("Request suggestions"):
-            result = coding_tools.execute(
-                "suggest_codes_for_range",
-                {
-                    "source_id": 1,
-                    "start_pos": 800,  # Challenge section
-                    "end_pos": 1000,
-                },
-            )
-
-        with allure.step("Verify confidence scores"):
-            assert result.get("success") is True
-            data = result["data"]
-            for suggestion in data["suggestions"]:
-                assert "confidence" in suggestion
                 assert 0 <= suggestion["confidence"] <= 100
 
-    @allure.title("AC #4: Researcher can accept, reject, or modify")
+    @allure.title("AC #4: Researcher can accept, reject, or modify suggestions")
     def test_ac4_researcher_can_respond(
         self,
         coding_tools: CodingTools,
@@ -520,7 +439,6 @@ class TestAgentSuggestCodesForText:
             assert accept_result["data"]["applied_count"] >= 1
 
         with allure.step("Reject a suggestion"):
-            # Get new suggestions first
             suggestions2 = coding_tools.execute(
                 "suggest_codes_for_range",
                 {"source_id": 1, "start_pos": 100, "end_pos": 200},
@@ -538,56 +456,42 @@ class TestAgentSuggestCodesForText:
             assert reject_result.get("success") is True
             assert reject_result["data"]["status"] == "rejected"
 
-    @allure.title("Auto-suggest codes for entire source")
-    @allure.severity(allure.severity_level.NORMAL)
-    def test_auto_suggest_for_source(
+    @allure.title("Auto-suggest codes for entire source and verify pending batch")
+    @allure.severity(allure.severity_level.CRITICAL)
+    def test_auto_suggest_and_batch_pending(
         self,
         coding_tools: CodingTools,
         app_context: AppContext,
         project_with_text_and_codes: Path,
     ):
-        """Agent can auto-suggest codes for all uncoded portions of a source."""
+        """Agent can auto-suggest codes and batch suggestions are pending for review."""
 
         with allure.step("Auto-suggest for entire source"):
             result = coding_tools.execute(
                 "auto_suggest_codes",
                 {
                     "source_id": 1,
-                    "min_confidence": 70,  # Only suggest if >= 70% confident
+                    "min_confidence": 70,
                 },
             )
 
-        with allure.step("Verify batch suggestions returned"):
+        with allure.step("Verify batch suggestions returned meeting threshold"):
             assert result.get("success") is True
             data = result["data"]
             assert "suggestions" in data
             assert "total_suggested" in data
-            # Should find multiple segments to code
             assert data["total_suggested"] > 0
-
-        with allure.step("Verify all suggestions meet threshold"):
             for suggestion in data["suggestions"]:
                 assert suggestion["confidence"] >= 70
 
-    @allure.title("Batch suggestion creates pending items")
-    @allure.severity(allure.severity_level.CRITICAL)
-    def test_batch_suggestion_pending(
-        self,
-        coding_tools: CodingTools,
-        app_context: AppContext,
-        project_with_text_and_codes: Path,
-    ):
-        """Batch suggestions are created as pending items for review."""
-
-        with allure.step("Generate batch suggestions"):
-            result = coding_tools.execute(
+        with allure.step("Generate batch suggestions and verify pending status"):
+            result2 = coding_tools.execute(
                 "auto_suggest_codes",
                 {"source_id": 1, "min_confidence": 60},
             )
-            assert result.get("success") is True
-            batch_id = result["data"]["batch_id"]
+            assert result2.get("success") is True
+            batch_id = result2["data"]["batch_id"]
 
-        with allure.step("Verify batch is pending"):
             status = coding_tools.execute(
                 "get_suggestion_batch_status",
                 {"batch_id": batch_id},
@@ -607,14 +511,14 @@ class TestAgentSuggestCodesForText:
 class TestBatchCodingOperations:
     """Tests for batch coding across multiple sources."""
 
-    @allure.title("Agent can suggest same code across multiple sources")
-    def test_cross_source_suggestions(
+    @allure.title("Agent can find similar content and batch apply code across sources")
+    def test_cross_source_find_and_batch_suggest(
         self,
         coding_tools: CodingTools,
         app_context: AppContext,
         project_with_multiple_sources: Path,
     ):
-        """Agent can identify similar content across sources and suggest codes."""
+        """Agent can identify similar content across sources and suggest batch coding."""
 
         with allure.step("Find similar content across sources"):
             result = coding_tools.execute(
@@ -625,33 +529,17 @@ class TestBatchCodingOperations:
                 },
             )
 
-        with allure.step("Verify matches found across sources"):
+        with allure.step("Verify matches found across all 3 sources"):
             assert result.get("success") is True
             data = result["data"]
             assert "matches" in data
-            # Should find matches in all 3 sources
             source_ids = {m["source_id"] for m in data["matches"]}
             assert "1" in source_ids
             assert "2" in source_ids
             assert "3" in source_ids
 
-    @allure.title("Agent can batch apply code to similar segments")
-    def test_batch_apply_to_similar(
-        self,
-        coding_tools: CodingTools,
-        app_context: AppContext,
-        project_with_multiple_sources: Path,
-    ):
-        """Agent can request batch application of code to similar segments."""
-
-        with allure.step("Find similar content"):
-            find_result = coding_tools.execute(
-                "find_similar_content",
-                {"search_text": "time management", "code_id": 1},
-            )
-            matches = find_result["data"]["matches"]
-
         with allure.step("Suggest batch application"):
+            matches = data["matches"]
             batch_result = coding_tools.execute(
                 "suggest_batch_coding",
                 {
@@ -670,9 +558,9 @@ class TestBatchCodingOperations:
 
         with allure.step("Verify batch suggestion created"):
             assert batch_result.get("success") is True
-            data = batch_result["data"]
-            assert data["status"] == "pending_approval"
-            assert data["segment_count"] == len(matches)
+            batch_data = batch_result["data"]
+            assert batch_data["status"] == "pending_approval"
+            assert batch_data["segment_count"] == len(matches)
 
     @allure.title("Batch approval applies all segments")
     def test_batch_approval(

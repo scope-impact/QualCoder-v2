@@ -94,54 +94,35 @@ async def _wait_for_server(mcp: MCPServerManager, port: int):
 
 
 @pytest.mark.e2e
-def test_mcp_server_responds(mcp_test_env):
-    """Test MCP server info endpoint."""
+def test_mcp_server_info_tools_and_context(mcp_test_env):
+    """Test MCP server responds, lists tools, and returns project context."""
     loop = mcp_test_env["loop"]
     mcp_url = mcp_test_env["mcp_url"]
 
     async def _test():
         async with httpx.AsyncClient() as client:
+            # Verify server info endpoint
             response = await client.get(f"{mcp_url}/")
-        assert response.status_code == 200
-        assert response.json()["name"] == "qualcoder-v2"
+            assert response.status_code == 200
+            assert response.json()["name"] == "qualcoder-v2"
 
-    loop.run_until_complete(_test())
-
-
-@pytest.mark.e2e
-def test_mcp_lists_tools(mcp_test_env):
-    """Test MCP server lists all tools."""
-    loop = mcp_test_env["loop"]
-    mcp_url = mcp_test_env["mcp_url"]
-
-    async def _test():
-        async with httpx.AsyncClient() as client:
+            # Verify tools listing
             response = await client.get(f"{mcp_url}/tools")
-        assert response.status_code == 200
-        tool_names = [t["name"] for t in response.json()["tools"]]
-        assert "get_project_context" in tool_names
-        assert "list_codes" in tool_names
-        assert "batch_apply_codes" in tool_names
+            assert response.status_code == 200
+            tool_names = [t["name"] for t in response.json()["tools"]]
+            assert "get_project_context" in tool_names
+            assert "list_codes" in tool_names
+            assert "batch_apply_codes" in tool_names
 
-    loop.run_until_complete(_test())
-
-
-@pytest.mark.e2e
-def test_mcp_get_project_context(mcp_test_env):
-    """Test get_project_context returns open project."""
-    loop = mcp_test_env["loop"]
-    mcp_url = mcp_test_env["mcp_url"]
-
-    async def _test():
-        async with httpx.AsyncClient() as client:
+            # Verify get_project_context returns open project
             response = await client.post(
                 f"{mcp_url}/tools/get_project_context",
                 json={"arguments": {}},
             )
-        assert response.status_code == 200
-        data = response.json()
-        assert data["success"] is True
-        assert data["data"]["project_open"] is True
+            assert response.status_code == 200
+            data = response.json()
+            assert data["success"] is True
+            assert data["data"]["project_open"] is True
 
     loop.run_until_complete(_test())
 

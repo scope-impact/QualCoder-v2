@@ -658,14 +658,12 @@ class TestUIApplication:
     @allure.title("load_and_apply_settings restores theme/font and live update works")
     def test_load_apply_settings_and_live_update(self, qapp, temp_config_path):
         """
-        E2E: Changing theme in open dialog immediately updates AppShell.
+        E2E: Settings loaded from repository are applied at startup,
+        and changing theme in open dialog immediately updates AppShell.
 
-        This tests the full wired flow:
-        1. AppShell with settings_changed connected
-        2. User changes theme in dialog
-        3. settings_changed signal fires
-        4. AppShell.apply_theme() is called
-        5. UI colors change immediately
+        Verifies:
+        1. Save dark theme + custom font to JSON, load_and_apply_settings restores them
+        2. Live update: dialog theme change immediately updates AppShell
         """
         from design_system import get_colors, get_theme
         from src.contexts.settings.infra import UserSettingsRepository
@@ -675,18 +673,48 @@ class TestUIApplication:
         from src.shared.presentation.services.settings_service import SettingsService
         from src.shared.presentation.templates import AppShell
 
+        # --- Part 1: load_and_apply_settings restores from JSON ---
+
+        with allure.step("Save dark theme and Roboto 16px to JSON"):
+            repo = UserSettingsRepository(config_path=temp_config_path)
+            settings = repo.load()
+            settings = settings.with_theme(settings.theme.with_name("dark"))
+            settings = settings.with_font(
+                settings.font.with_family("Roboto").with_size(16)
+            )
+            repo.save(settings)
+
+        with allure.step("Create new AppShell and load settings"):
+            shell = AppShell(colors=get_colors())
+            shell.load_and_apply_settings(repo)
+            QApplication.processEvents()
+
+        with allure.step("Verify dark theme and font applied"):
+            dark_colors = get_theme("dark")
+            current_colors = get_colors()
+            assert current_colors.background == dark_colors.background
+            app_font = qapp.font()
+            assert app_font.family() == "Roboto"
+            assert app_font.pointSize() == 16
+
+        with allure.step("Cleanup first shell"):
+            shell.close()
+
+        # --- Part 2: Live settings update while dialog is open ---
+
         with allure.step("Create AppShell with light theme"):
             light_colors = get_theme("light")
             shell = AppShell(colors=light_colors)
-            repo = UserSettingsRepository(config_path=temp_config_path)
-            shell.load_and_apply_settings(repo)
-
-        with allure.step("Verify initial theme is light"):
-            assert shell._colors.background == light_colors.background
+            repo2 = UserSettingsRepository(config_path=temp_config_path)
+            # Reset to light theme for this part
+            settings = repo2.load()
+            settings = settings.with_theme(settings.theme.with_name("light"))
+            repo2.save(settings)
+            shell.load_and_apply_settings(repo2)
 
         with allure.step("Open settings dialog (non-blocking for test)"):
             event_bus = EventBus()
-            settings_service = SettingsService(repo, event_bus=event_bus)
+            settings_service = SettingsService(repo2, event_bus=event_bus)
             viewmodel = SettingsViewModel(settings_provider=settings_service)
             dialog = SettingsDialog(
                 viewmodel=viewmodel,
@@ -694,12 +722,11 @@ class TestUIApplication:
                 parent=shell,
             )
 
-            # Wire up the same way AppShell.open_settings_dialog does
             def on_settings_changed():
-                settings = repo.load()
-                if settings.theme.name in ("light", "dark"):
-                    shell.apply_theme(settings.theme.name)
-                shell.apply_font(settings.font.family, settings.font.size)
+                s = repo2.load()
+                if s.theme.name in ("light", "dark"):
+                    shell.apply_theme(s.theme.name)
+                shell.apply_font(s.font.family, s.font.size)
 
             dialog.settings_changed.connect(on_settings_changed)
             dialog.show()

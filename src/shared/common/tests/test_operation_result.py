@@ -25,11 +25,11 @@ from src.shared.common.operation_result import OperationResult
 
 
 @allure.story("QC-000.03 Operation Result")
-class TestOperationResultOk:
-    """Test OperationResult.ok() factory method."""
+class TestOperationResultFactories:
+    """Test factory methods: ok(), fail(), from_failure()."""
 
     @allure.title("ok() creates success result with data, rollback, and defaults")
-    def test_ok_creates_success_result_with_all_fields(self):
+    def test_ok_creates_success_result(self):
         rollback = {"action": "delete", "id": 123}
         result = OperationResult.ok(data="created_entity", rollback=rollback)
 
@@ -46,11 +46,6 @@ class TestOperationResultOk:
         empty = OperationResult.ok()
         assert empty.success is True
         assert empty.data is None
-
-
-@allure.story("QC-000.03 Operation Result")
-class TestOperationResultFail:
-    """Test OperationResult.fail() factory method."""
 
     @allure.title("fail() creates failure and normalizes suggestions")
     @pytest.mark.parametrize(
@@ -79,14 +74,8 @@ class TestOperationResultFail:
         assert result.suggestions == expected_suggestions
         assert isinstance(result.suggestions, tuple)
 
-
-@allure.story("QC-000.03 Operation Result")
-class TestOperationResultFromFailure:
-    """Test OperationResult.from_failure() for converting failure events."""
-
     @allure.title("from_failure() extracts fields and handles suggestions")
-    def test_from_failure_extracts_fields_and_handles_suggestions(self):
-        # Basic failure event - no suggestions
+    def test_from_failure_extracts_fields(self):
         event = FailureEvent(
             event_id="evt-1",
             occurred_at=datetime.now(UTC),
@@ -100,20 +89,19 @@ class TestOperationResultFromFailure:
         assert "Code Not Created" in result.error
         assert result.suggestions == ()
 
-        # Failure event with suggestions
+        # With suggestions
         @dataclass(frozen=True)
         class FailureEventWithSuggestions(FailureEvent):
             suggestions: tuple[str, ...] = ()
 
-        event_with_suggestions = FailureEventWithSuggestions(
+        event_with = FailureEventWithSuggestions(
             event_id="evt-2",
             occurred_at=datetime.now(UTC),
             event_type="CODE_NOT_CREATED/DUPLICATE_NAME",
             suggestions=("Use different name", "Delete existing"),
         )
 
-        result_with = OperationResult.from_failure(event_with_suggestions)
-
+        result_with = OperationResult.from_failure(event_with)
         assert result_with.suggestions == ("Use different name", "Delete existing")
 
 
@@ -121,68 +109,44 @@ class TestOperationResultFromFailure:
 class TestOperationResultUnwrap:
     """Test unwrap methods for accessing result data."""
 
-    @allure.title("unwrap returns data on success")
-    def test_unwrap_returns_data_on_success(self):
-        result = OperationResult.ok(data={"id": 42, "name": "Test"})
+    @allure.title("unwrap, unwrap_or, and unwrap_error behave correctly")
+    def test_unwrap_variants(self):
+        # unwrap returns data on success
+        ok_result = OperationResult.ok(data={"id": 42, "name": "Test"})
+        assert ok_result.unwrap() == {"id": 42, "name": "Test"}
 
-        assert result.unwrap() == {"id": 42, "name": "Test"}
+        # unwrap raises ValueError on failure
+        fail_result = OperationResult.fail(error="Cannot create")
+        with pytest.raises(ValueError, match="Cannot unwrap failed result"):
+            fail_result.unwrap()
 
-    @allure.title("unwrap raises ValueError on failure")
-    @pytest.mark.parametrize(
-        "error_msg,expected_match",
-        [
-            ("Cannot create", "Cannot unwrap failed result"),
-            ("Duplicate name 'Theme'", "Duplicate name 'Theme'"),
-        ],
-        ids=["generic_error", "includes_original_error"],
-    )
-    def test_unwrap_raises_value_error_on_failure(self, error_msg, expected_match):
-        result = OperationResult.fail(error=error_msg)
+        fail_result2 = OperationResult.fail(error="Duplicate name 'Theme'")
+        with pytest.raises(ValueError, match="Duplicate name 'Theme'"):
+            fail_result2.unwrap()
 
-        with pytest.raises(ValueError, match=expected_match):
-            result.unwrap()
+        # unwrap_or returns data on success, default on failure
+        assert ok_result.unwrap_or("default") == {"id": 42, "name": "Test"}
+        assert fail_result.unwrap_or("default") == "default"
+        assert fail_result.unwrap_or(None) is None
 
-    @allure.title("unwrap_or returns data or default")
-    @pytest.mark.parametrize(
-        "factory,default,expected",
-        [
-            (lambda: OperationResult.ok(data="actual_value"), "default", "actual_value"),
-            (lambda: OperationResult.fail(error="error"), "default", "default"),
-            (lambda: OperationResult.fail(error="error"), None, None),
-        ],
-        ids=["success_returns_data", "failure_returns_default", "failure_returns_none"],
-    )
-    def test_unwrap_or(self, factory, default, expected):
-        result = factory()
+        # unwrap_error returns error string on failure, raises on success
+        assert OperationResult.fail(error="Something broke").unwrap_error() == "Something broke"
+        assert OperationResult(success=False, error=None).unwrap_error() == ""
 
-        assert result.unwrap_or(default) == expected
-
-    @allure.title("unwrap_error returns error string or raises on success")
-    def test_unwrap_error_returns_error_or_raises(self):
-        result = OperationResult.fail(error="Something broke")
-        assert result.unwrap_error() == "Something broke"
-
-        # Edge case: failure with None error returns empty string
-        result_none = OperationResult(success=False, error=None)
-        assert result_none.unwrap_error() == ""
-
-        # Raises on success
-        result_ok = OperationResult.ok(data="value")
         with pytest.raises(ValueError, match="Cannot unwrap_error on successful"):
-            result_ok.unwrap_error()
+            ok_result.unwrap_error()
 
 
 @allure.story("QC-000.03 Operation Result")
-class TestOperationResultMap:
-    """Test map() transformation method."""
+class TestOperationResultTransformAndSerialize:
+    """Test map(), with_rollback(), and to_dict()."""
 
     @allure.title("map transforms success data and passes through failure")
-    def test_map_transforms_success_and_passes_through_failure(self):
+    def test_map(self):
         rollback = {"action": "undo"}
         result = OperationResult.ok(data=5, rollback=rollback)
 
         mapped = result.map(lambda x: x * 2)
-
         assert mapped.success is True
         assert mapped.data == 10
         assert mapped.rollback_command == rollback
@@ -194,48 +158,28 @@ class TestOperationResultMap:
         # Failure passes through unchanged
         fail_result = OperationResult.fail(error="error", error_code="ERR")
         fail_mapped = fail_result.map(lambda x: x * 2)
-
         assert fail_mapped is fail_result
         assert fail_mapped.is_failure is True
-        assert fail_mapped.error == "error"
-
-
-@allure.story("QC-000.03 Operation Result")
-class TestOperationResultWithRollback:
-    """Test with_rollback() method."""
 
     @allure.title("with_rollback adds command and preserves all fields")
-    def test_with_rollback_adds_command_and_preserves_fields(self):
-        # Success: adds/replaces rollback
+    def test_with_rollback(self):
         result = OperationResult.ok(data="entity", rollback={"old": "cmd"})
-
         with_rb = result.with_rollback({"new": "cmd"})
-
         assert with_rb.rollback_command == {"new": "cmd"}
         assert with_rb.data == "entity"
         assert with_rb.success is True
 
-        # Failure: preserves all fields
         fail_result = OperationResult.fail(
-            error="err",
-            error_code="ERR/CODE",
-            suggestions=("hint1", "hint2"),
+            error="err", error_code="ERR/CODE", suggestions=("hint1", "hint2"),
         )
-
         fail_with_rb = fail_result.with_rollback({"cmd": "value"})
-
         assert fail_with_rb.error == "err"
         assert fail_with_rb.error_code == "ERR/CODE"
         assert fail_with_rb.suggestions == ("hint1", "hint2")
         assert fail_with_rb.rollback_command == {"cmd": "value"}
 
-
-@allure.story("QC-000.03 Operation Result")
-class TestOperationResultToDict:
-    """Test to_dict() serialization for MCP tools."""
-
-    @allure.title("to_dict serializes success with various data types")
-    def test_to_dict_success_with_various_data_types(self):
+    @allure.title("to_dict serializes success and failure correctly")
+    def test_to_dict(self):
         # Primitive data
         d = OperationResult.ok(data=42).to_dict()
         assert d["success"] is True
@@ -265,17 +209,13 @@ class TestOperationResultToDict:
         assert d_dc["data"]["id"] == 1
         assert d_dc["data"]["name"] == "Test"
 
-    @allure.title("to_dict serializes failure with correct field inclusion")
-    def test_to_dict_failure_includes_and_omits_fields_correctly(self):
         # Full failure with all fields
         result = OperationResult.fail(
             error="Name exists",
             error_code="CODE_NOT_CREATED/DUPLICATE_NAME",
             suggestions=("Try different name", "Delete existing"),
         )
-
         d = result.to_dict()
-
         assert d["success"] is False
         assert d["error"] == "Name exists"
         assert d["error_code"] == "CODE_NOT_CREATED/DUPLICATE_NAME"
@@ -283,6 +223,5 @@ class TestOperationResultToDict:
 
         # Minimal failure omits optional fields
         d_minimal = OperationResult.fail(error="Something failed").to_dict()
-
         assert d_minimal == {"success": False, "error": "Something failed"}
         assert "suggestions" not in d_minimal

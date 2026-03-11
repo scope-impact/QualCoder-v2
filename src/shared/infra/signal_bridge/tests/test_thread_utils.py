@@ -19,8 +19,8 @@ from src.shared.infra.signal_bridge.thread_utils import (
 class TestIsMainThread:
     """Tests for is_main_thread and get_current_thread_name."""
 
-    @allure.title("Detects main thread, background thread, and thread pool")
-    def test_main_and_background_thread_detection(self) -> None:
+    @allure.title("Detects main/background/pool threads and returns thread names")
+    def test_thread_detection_and_names(self) -> None:
         assert is_main_thread() is True
 
         result: list[bool] = []
@@ -37,18 +37,16 @@ class TestIsMainThread:
             future = executor.submit(is_main_thread)
             assert future.result() is False
 
-    @allure.title("get_current_thread_name returns thread name")
-    def test_named_thread_returns_name(self) -> None:
-        result: list[str] = []
+        # Named thread returns name
+        name_result: list[str] = []
 
         def get_name_in_thread() -> None:
-            result.append(get_current_thread_name())
+            name_result.append(get_current_thread_name())
 
         thread = threading.Thread(target=get_name_in_thread, name="TestThread")
         thread.start()
         thread.join()
-
-        assert "TestThread" in result[0]
+        assert "TestThread" in name_result[0]
 
         # Main thread also returns a non-empty string
         assert len(get_current_thread_name()) > 0
@@ -60,8 +58,8 @@ class TestIsMainThread:
 class TestThreadChecker:
     """Tests for ThreadChecker utility class."""
 
-    @allure.title("assert_main_thread passes on main, fails on background with context")
-    def test_assert_main_thread_behavior(self) -> None:
+    @allure.title("assert_main_thread passes on main, fails on background; assert_background_thread inverse")
+    def test_assert_main_and_background_thread(self) -> None:
         # Should not raise on main thread
         ThreadChecker.assert_main_thread()
 
@@ -77,27 +75,25 @@ class TestThreadChecker:
         thread = threading.Thread(target=check_in_thread)
         thread.start()
         thread.join()
-
         assert "UI operation" in exception_message[0]
 
-    @allure.title("assert_background_thread passes on background, fails on main")
-    def test_assert_background_thread_behavior(self) -> None:
+        # assert_background_thread fails on main
         with pytest.raises(RuntimeError, match="Expected background thread"):
             ThreadChecker.assert_background_thread()
 
+        # assert_background_thread passes on background
         exception_raised: list[bool] = []
 
-        def check_in_thread() -> None:
+        def check_bg_in_thread() -> None:
             try:
                 ThreadChecker.assert_background_thread()
                 exception_raised.append(False)
             except RuntimeError:
                 exception_raised.append(True)
 
-        thread = threading.Thread(target=check_in_thread)
+        thread = threading.Thread(target=check_bg_in_thread)
         thread.start()
         thread.join()
-
         assert exception_raised[0] is False
 
     @allure.title("warn_if_not_main_thread returns True on main, False on background")

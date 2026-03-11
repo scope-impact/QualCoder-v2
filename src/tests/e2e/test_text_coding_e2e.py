@@ -139,10 +139,10 @@ class TestCreateCodeDialog:
     Test the CreateCodeDialog UI using black-box patterns.
     """
 
-    @allure.title("AC #1-2: Dialog shows name input, color grid, and accepts input")
+    @allure.title("AC #1-3: Dialog shows elements, accepts input, and supports memo")
     @allure.severity(allure.severity_level.CRITICAL)
-    def test_dialog_has_required_elements_and_accepts_input(self, create_code_dialog):
-        """Dialog has name input with placeholder, color grid, and accepts user input."""
+    def test_dialog_elements_input_and_memo(self, create_code_dialog):
+        """Dialog has name input, color grid, accepts user input, and supports optional memo."""
         create_code_dialog.show()
         QApplication.processEvents()
 
@@ -167,23 +167,15 @@ class TestCreateCodeDialog:
         # Verify via public getter
         assert create_code_dialog.get_code_color() == expected_color
 
-    @allure.title("AC #3: User can add optional memo")
-    @allure.severity(allure.severity_level.NORMAL)
-    def test_add_memo(self, create_code_dialog):
-        """User can add an optional description/memo."""
-        create_code_dialog.show()
-        QApplication.processEvents()
-
         # BLACK-BOX: Find memo input and set text via public API
         memo_text = "This code is for positive themes"
-        # Use public API if available
         create_code_dialog.set_code_memo(memo_text)
         assert create_code_dialog.get_code_memo() == memo_text
 
-    @allure.title("Create button toggles enabled state based on name input")
-    @allure.severity(allure.severity_level.NORMAL)
-    def test_create_button_enabled_state(self, create_code_dialog):
-        """Create button disabled when name empty, enabled when name entered."""
+    @allure.title("AC #4: Create button state and emits code_created signal")
+    @allure.severity(allure.severity_level.CRITICAL)
+    def test_create_button_state_and_signal(self, create_code_dialog):
+        """Create button disabled when empty, enabled with name, and emits signal on click."""
         create_code_dialog.show()
         QApplication.processEvents()
 
@@ -191,22 +183,14 @@ class TestCreateCodeDialog:
         assert not is_button_enabled(create_code_dialog, "Create")
 
         # Enter name - should become enabled
-        create_code_dialog.set_code_name("New Code")
+        create_code_dialog.set_code_name("Test Code")
         QApplication.processEvents()
         assert is_button_enabled(create_code_dialog, "Create")
-
-    @allure.title("AC #4: Clicking create emits code_created signal")
-    @allure.severity(allure.severity_level.CRITICAL)
-    def test_create_emits_signal(self, create_code_dialog):
-        """Clicking Create Code should emit the code_created signal."""
-        create_code_dialog.show()
-        QApplication.processEvents()
 
         # Setup signal spy
         spy = QSignalSpy(create_code_dialog.code_created)
 
         # Fill form using public API
-        create_code_dialog.set_code_name("Test Code")
         click_color_swatch_by_index(create_code_dialog, 2)
         create_code_dialog.set_code_memo("Test memo")
         QApplication.processEvents()
@@ -221,7 +205,7 @@ class TestCreateCodeDialog:
         assert name == "Test Code"
         assert memo == "Test memo"
 
-    @allure.title("Cancel button closes dialog")
+    @allure.title("Cancel button closes dialog without creating")
     @allure.severity(allure.severity_level.NORMAL)
     def test_cancel_closes_dialog(self, create_code_dialog):
         """Clicking Cancel should close the dialog."""
@@ -244,10 +228,10 @@ class TestCreateCodeDialog:
 class TestCodeSelectionUI:
     """Test selecting codes from the codes panel using black-box patterns."""
 
-    @allure.title("AC #1: Selecting a code sets it as active")
+    @allure.title("AC #1-2: Selecting a code sets it active and tracks recent codes")
     @allure.severity(allure.severity_level.CRITICAL)
-    def test_select_code_sets_active(self, coding_screen):
-        """Selecting a code sets it as the active code."""
+    def test_select_code_active_and_recent(self, coding_screen):
+        """Selecting a code sets it as active and adds to recent codes list."""
         # Use public API to set active code
         coding_screen.set_active_code("1", "Positive Experience", "#00FF00")
 
@@ -256,14 +240,7 @@ class TestCodeSelectionUI:
         assert active["id"] == "1"
         assert active["name"] == "Positive Experience"
 
-        # Screenshot for documentation
-        attach_screenshot(coding_screen, "CodingScreen - Code Selected")
-
-    @allure.title("AC #2: Selected code added to recent codes")
-    @allure.severity(allure.severity_level.NORMAL)
-    def test_selected_code_added_to_recent(self, coding_screen):
-        """Selecting codes adds them to recent codes list."""
-        coding_screen.set_active_code("1", "Positive Experience", "#00FF00")
+        # Select another code
         coding_screen.set_active_code("2", "Challenge", "#FF0000")
 
         # BLACK-BOX: Verify via public API that tracks recent count
@@ -273,6 +250,9 @@ class TestCodeSelectionUI:
         # Most recent should be the active one
         active = coding_screen.get_active_code()
         assert active["id"] == "2"
+
+        # Screenshot for documentation
+        attach_screenshot(coding_screen, "CodingScreen - Code Selected")
 
 
 # =============================================================================
@@ -284,10 +264,10 @@ class TestCodeSelectionUI:
 class TestApplyCodeUI:
     """Test selecting text and applying code using Q key (black-box)."""
 
-    @allure.title("AC #1: Text selection enables quick mark")
+    @allure.title("AC #1-2: Text selection enables quick mark and Q key applies code")
     @allure.severity(allure.severity_level.CRITICAL)
-    def test_text_selection_enables_quick_mark(self, coding_screen):
-        """Selecting text enables quick mark feature."""
+    def test_text_selection_and_quick_mark(self, coding_screen):
+        """Selecting text enables quick mark, and Q key applies the active code."""
         # Verify initial state via public API
         assert not coding_screen.is_quick_mark_enabled()
 
@@ -297,10 +277,6 @@ class TestApplyCodeUI:
         # Verify state change via public API
         assert coding_screen.is_quick_mark_enabled()
 
-    @allure.title("AC #2: Q key applies code to selection")
-    @allure.severity(allure.severity_level.CRITICAL)
-    def test_quick_mark_applies_code(self, coding_screen):
-        """Q key applies the active code to the selection."""
         # Use signal spy for black-box verification
         spy = QSignalSpy(coding_screen.code_applied)
 
@@ -344,11 +320,15 @@ class TestApplyCodeUI:
 class TestUnmarkUI:
     """Test removing codes from text using black-box patterns."""
 
-    @allure.title("AC #1: U key removes code from selection")
+    @allure.title("AC #1-3: U key removes code, enables undo, and Ctrl+Z undoes unmark")
     @allure.severity(allure.severity_level.NORMAL)
-    def test_unmark_removes_code(self, coding_screen):
-        """U key removes code from the selection."""
-        spy = QSignalSpy(coding_screen.code_removed)
+    def test_unmark_and_undo_workflow(self, coding_screen):
+        """U key removes code, enables undo, and Ctrl+Z re-applies the code."""
+        # Initially undo should not be available
+        assert not coding_screen.can_undo_unmark()
+
+        spy_removed = QSignalSpy(coding_screen.code_removed)
+        spy_applied = QSignalSpy(coding_screen.code_applied)
 
         coding_screen.set_active_code("1", "Positive Experience", "#00FF00")
         coding_screen.set_text_selection(50, 100)
@@ -356,52 +336,33 @@ class TestUnmarkUI:
         QApplication.processEvents()
 
         # BLACK-BOX: Verify signal emitted
-        assert spy.count() == 1
-        assert spy.at(0) == ["1", 50, 100]
-
-    @allure.title("AC #2: Unmark enables undo")
-    @allure.severity(allure.severity_level.NORMAL)
-    def test_unmark_enables_undo(self, coding_screen):
-        """Unmark adds operation to undo capability."""
-        # Initially undo should not be available
-        assert not coding_screen.can_undo_unmark()
-
-        coding_screen.set_active_code("1", "Positive Experience", "#00FF00")
-        coding_screen.set_text_selection(50, 100)
-        coding_screen.unmark()
+        assert spy_removed.count() == 1
+        assert spy_removed.at(0) == ["1", 50, 100]
 
         # BLACK-BOX: Verify undo became available via public API
         assert coding_screen.can_undo_unmark()
 
-    @allure.title("AC #3: Ctrl+Z undoes unmark")
-    @allure.severity(allure.severity_level.NORMAL)
-    def test_undo_reapplies_code(self, coding_screen):
-        """Ctrl+Z re-applies the unmarked code."""
-        spy = QSignalSpy(coding_screen.code_applied)
-
-        coding_screen.set_active_code("1", "Positive", "#00FF00")
-        coding_screen.set_text_selection(50, 100)
-        coding_screen.unmark()
+        # Undo the unmark
         coding_screen.undo_unmark()
         QApplication.processEvents()
 
         # BLACK-BOX: Verify code_applied signal was emitted
-        assert spy.count() >= 1
+        assert spy_applied.count() >= 1
 
 
 # =============================================================================
-# QC-029.01: Recent Codes (Black-Box)
+# QC-029.01: Recent Codes and Keyboard Shortcuts (Black-Box)
 # =============================================================================
 
 
 @allure.story("QC-029.01 Recent Codes")
-class TestRecentCodesUI:
-    """Test recent codes functionality using black-box patterns."""
+class TestRecentCodesAndShortcutsUI:
+    """Test recent codes and keyboard shortcuts using black-box patterns."""
 
-    @allure.title("Recent codes maintains MRU order")
+    @allure.title("Recent codes MRU order, 10-item limit, and all shortcuts registered")
     @allure.severity(allure.severity_level.NORMAL)
-    def test_recent_codes_order(self, coding_screen):
-        """Recent codes are in most-recently-used order."""
+    def test_recent_codes_and_shortcuts(self, coding_screen):
+        """Recent codes are in MRU order, limited to 10, and all shortcuts are registered."""
         coding_screen.set_active_code("1", "Code A", "#FF0000")
         coding_screen.set_active_code("2", "Code B", "#00FF00")
         coding_screen.set_active_code("1", "Code A", "#FF0000")
@@ -410,32 +371,15 @@ class TestRecentCodesUI:
         active = coding_screen.get_active_code()
         assert active["id"] == "1"
 
-    @allure.title("Recent codes limited to 10")
-    @allure.severity(allure.severity_level.NORMAL)
-    def test_recent_codes_max_10(self, coding_screen):
-        """Recent codes limited to 10 items."""
+        # Add many codes to test limit
         for i in range(15):
             coding_screen.set_active_code(str(i), f"Code {i}", "#FF0000")
 
         # BLACK-BOX: Verify via public API
         assert coding_screen.get_recent_codes_count() == 10
 
-
-# =============================================================================
-# Keyboard Shortcuts (Black-Box)
-# =============================================================================
-
-
-@allure.story("QC-007.10 Keyboard Shortcuts")
-class TestKeyboardShortcutsUI:
-    """Test keyboard shortcut registration using black-box patterns."""
-
-    @allure.title("All coding shortcuts are registered")
-    @allure.severity(allure.severity_level.NORMAL)
-    def test_shortcuts_registered(self, coding_screen):
-        """All coding shortcuts are registered."""
+        # Verify all coding shortcuts are registered
         shortcuts = coding_screen.get_registered_shortcuts()
-
         assert "Q" in shortcuts
         assert "U" in shortcuts
         assert "V" in shortcuts
@@ -544,25 +488,24 @@ class TestApplyCodeFullPath:
     Not via private attributes.
     """
 
-    @allure.title("Quick mark persists segment to database")
+    @allure.title("Quick mark persists segment to database and emits signal bridge event")
     @allure.severity(allure.severity_level.CRITICAL)
-    def test_quick_mark_persists_to_database(self, coding_screen_ready):
+    def test_quick_mark_persists_and_emits_signal(self, coding_screen_ready):
         """
-        Q key applies code and persists segment to database.
-
-        BLACK-BOX verification:
-        1. Check database state before
-        2. Perform user action
-        3. Check database state after
+        Q key applies code, persists segment to database, and emits signal bridge event.
         """
         ctx = coding_screen_ready["ctx"]
         screen = coding_screen_ready["screens"]["coding"]
+        signal_bridge = coding_screen_ready["coding_signal_bridge"]
         source = coding_screen_ready["seeded"]["sources"][0]
         code = coding_screen_ready["seeded"]["codes"][0]
 
         # Get initial segment count from database
         initial_segments = ctx.coding_context.segment_repo.get_by_source(source.id)
         initial_count = len(initial_segments)
+
+        # BLACK-BOX: Set up signal spy
+        spy = QSignalSpy(signal_bridge.segment_coded)
 
         # Apply code via screen public API
         screen.set_active_code(str(code.id.value), code.name, code.color.to_hex())
@@ -580,54 +523,28 @@ class TestApplyCodeFullPath:
         assert new_segment.position.start == 0
         assert new_segment.position.end == 20
 
+        # BLACK-BOX: Signal bridge should have emitted
+        assert spy.count() >= 1
+
     @allure.title("Screen is properly configured after wiring")
     @allure.severity(allure.severity_level.CRITICAL)
     def test_screen_is_wired(self, coding_screen_ready):
         """
         Verify screen is properly wired by testing functionality works.
-
-        BLACK-BOX: Don't check internal _viewmodel, test that
-        user actions produce expected outcomes.
         """
         screen = coding_screen_ready["screens"]["coding"]
 
         # BLACK-BOX: If wiring is correct, the document should be loaded
-        # and we should be able to interact with it
         screen.set_text_selection(0, 10)
         QApplication.processEvents()
 
         # If screen is wired, quick_mark_enabled should work
         assert screen.is_quick_mark_enabled()
 
-    @allure.title("Signal bridge receives segment_coded event")
-    @allure.severity(allure.severity_level.CRITICAL)
-    def test_signal_bridge_receives_event(self, coding_screen_ready):
-        """
-        Verify the reactive flow produces signals.
-
-        BLACK-BOX: Use signal spies to verify event flow
-        without checking internal bridge state.
-        """
-        screen = coding_screen_ready["screens"]["coding"]
-        signal_bridge = coding_screen_ready["coding_signal_bridge"]
-        code = coding_screen_ready["seeded"]["codes"][0]
-
-        # BLACK-BOX: Set up signal spy
-        spy = QSignalSpy(signal_bridge.segment_coded)
-
-        # Apply code
-        screen.set_active_code(str(code.id.value), code.name, code.color.to_hex())
-        screen.set_text_selection(5, 25)
-        screen.quick_mark()
-        QApplication.processEvents()
-
-        # BLACK-BOX: Signal bridge should have emitted
-        assert spy.count() >= 1
-
-    @allure.title("Multiple segments can be created for same source")
+    @allure.title("Multiple segments can be created and navigation loads source")
     @allure.severity(allure.severity_level.NORMAL)
-    def test_multiple_segments_same_source(self, coding_screen_ready):
-        """Multiple quick marks create multiple segments in database."""
+    def test_multiple_segments_and_navigation(self, coding_screen_ready):
+        """Multiple quick marks create multiple segments, and navigation loads correct source."""
         ctx = coding_screen_ready["ctx"]
         screen = coding_screen_ready["screens"]["coding"]
         source = coding_screen_ready["seeded"]["sources"][0]
@@ -655,44 +572,25 @@ class TestApplyCodeFullPath:
         segments = ctx.coding_context.segment_repo.get_by_source(source.id)
         assert len(segments) == initial_count + 2
 
-    @allure.title("Navigation loads source into coding screen")
+    @allure.title("Navigation loads source and database codes are available")
     @allure.severity(allure.severity_level.NORMAL)
-    def test_navigation_loads_source(self, seeded_app):
+    def test_navigation_and_codes_from_database(self, seeded_app):
         """
-        Test that navigation loads the correct source.
-
-        BLACK-BOX: Verify source is loaded by checking visible title.
+        Navigation loads correct source, and database codes can be selected.
         """
         app = seeded_app["app"]
+        ctx = seeded_app["ctx"]
         source = seeded_app["seeded"]["sources"][1]  # Second source
         screen = seeded_app["screens"]["coding"]
+        codes = seeded_app["seeded"]["codes"]
 
         # Navigate
         app._on_navigate_to_coding(str(source.id.value))
         QApplication.processEvents()
 
         # BLACK-BOX: Verify by checking the document title shown in UI
-        # The screen should display the source name
         current_title = screen.get_document_title()
         assert source.name in current_title or current_title == source.name
-
-
-@allure.story("QC-028 Full Application Path")
-class TestCodeManagementFullPath:
-    """E2E tests for code management using full application path (black-box)."""
-
-    @allure.title("Codes from database are available for selection")
-    @allure.severity(allure.severity_level.NORMAL)
-    def test_codes_available_from_database(self, coding_screen_ready):
-        """
-        Verify that codes seeded in database can be selected.
-
-        BLACK-BOX: Don't check internal viewmodel, verify codes
-        can be used in user workflows.
-        """
-        ctx = coding_screen_ready["ctx"]
-        screen = coding_screen_ready["screens"]["coding"]
-        codes = coding_screen_ready["seeded"]["codes"]
 
         # Codes should be in database
         db_codes = ctx.coding_context.code_repo.get_all()
@@ -712,48 +610,36 @@ class TestCodeManagementFullPath:
 class TestWiringVerification:
     """
     Tests that verify the wiring from main.py is correct.
-
-    BLACK-BOX: Verify wiring by testing that expected screens exist
-    and respond to interactions.
     """
 
-    @allure.title("All screens are created by _setup_shell")
+    @allure.title("All screens created, coding functional, and signal bridges running")
     @allure.severity(allure.severity_level.CRITICAL)
-    def test_all_screens_created(self, wired_app):
-        """Verify _setup_shell creates all required screens."""
+    def test_wiring_complete(self, wired_app):
+        """Verify screens are created, coding screen responds, and signal bridges run."""
         screens = wired_app["screens"]
 
+        # Verify all screens exist
         assert "project" in screens
         assert "files" in screens
         assert "cases" in screens
         assert "coding" in screens
 
-    @allure.title("Coding screen accepts code selection")
-    @allure.severity(allure.severity_level.CRITICAL)
-    def test_coding_screen_functional(self, wired_app):
-        """Verify coding screen responds to code selection."""
+        # Verify coding screen responds to code selection
         shell = wired_app["shell"]
         coding_screen = wired_app["screens"]["coding"]
-
-        # BLACK-BOX: If wired, set_active_code should work
         coding_screen.set_active_code("1", "Test", "#FF0000")
         active = coding_screen.get_active_code()
         assert active["id"] == "1"
 
+        # Verify signal bridges are running
+        coding_bridge = wired_app["coding_signal_bridge"]
+        project_bridge = wired_app["project_signal_bridge"]
+        assert coding_bridge.is_running()
+        assert project_bridge.is_running()
+
         # Screenshot for documentation
         attach_screenshot(shell, "CodingScreen - With Codes")
         DocScreenshot.capture(shell, "coding-screen-with-codes", max_width=1000)
-
-    @allure.title("Signal bridges produce events")
-    @allure.severity(allure.severity_level.CRITICAL)
-    def test_signal_bridges_running(self, wired_app):
-        """Verify signal bridges are started and can emit signals."""
-        coding_bridge = wired_app["coding_signal_bridge"]
-        project_bridge = wired_app["project_signal_bridge"]
-
-        # BLACK-BOX: Check running state via public API
-        assert coding_bridge.is_running()
-        assert project_bridge.is_running()
 
 
 # =============================================================================
@@ -765,29 +651,15 @@ class TestWiringVerification:
 class TestCreateCodeFullPath:
     """
     E2E tests for creating new codes through the full application path.
-
-    BLACK-BOX verification:
-    1. User presses N key on coding screen
-    2. CreateCodeDialog opens
-    3. User fills form and clicks Create
-    4. Code is persisted to database
-    5. Code appears in codes panel for selection
-
-    Tests the wiring: Screen → Dialog → ViewModel → Handler → Repository
     """
 
-    @allure.title("N key opens CreateCodeDialog")
+    @allure.title("N key opens dialog and creating code persists to database")
     @allure.severity(allure.severity_level.CRITICAL)
-    def test_n_key_opens_create_code_dialog(self, coding_screen_ready):
+    def test_n_key_opens_dialog_and_persists(self, coding_screen_ready):
         """
-        Pressing N key should open the CreateCodeDialog.
-
-        AC: User can press N to open new code dialog (QC-007.10 AC #3)
-
-        Note: This tests that the N shortcut is registered and triggers
-        show_new_code_dialog(). QTest.keyClick doesn't reliably trigger
-        QShortcut in headless CI, so we call the method directly.
+        N key opens CreateCodeDialog, and creating a code persists it to database.
         """
+        ctx = coding_screen_ready["ctx"]
         screen = coding_screen_ready["screens"]["coding"]
 
         # Verify shortcut is registered
@@ -795,42 +667,18 @@ class TestCreateCodeFullPath:
             "N shortcut should be registered"
         )
 
-        # Call the method that N key triggers (show_new_code_dialog)
+        # Get initial code count
+        initial_codes = ctx.coding_context.code_repo.get_all()
+        initial_count = len(initial_codes)
+
+        # Call the method that N key triggers
         screen.show_new_code_dialog()
 
-        # Verify dialog opened by finding it in top-level widgets
         dialog = wait_for_dialog(CreateCodeDialog)
         assert dialog is not None, "CreateCodeDialog should open when N is pressed"
 
         # Screenshot for documentation
         attach_screenshot(dialog, "CreateCodeDialog - Opened via N key")
-
-        dialog.close()
-
-    @allure.title("Create code via dialog persists to database")
-    @allure.severity(allure.severity_level.CRITICAL)
-    def test_create_code_dialog_persists_to_database(self, coding_screen_ready):
-        """
-        Creating a code through the dialog should persist it to the database.
-
-        Flow:
-        1. Open dialog (via show_new_code_dialog)
-        2. Fill name and select color
-        3. Click Create
-        4. Verify code exists in database
-        """
-        ctx = coding_screen_ready["ctx"]
-        screen = coding_screen_ready["screens"]["coding"]
-
-        # Get initial code count
-        initial_codes = ctx.coding_context.code_repo.get_all()
-        initial_count = len(initial_codes)
-
-        # Open dialog
-        screen.show_new_code_dialog()
-
-        dialog = wait_for_dialog(CreateCodeDialog)
-        assert dialog is not None, "Dialog should open"
 
         # BLACK-BOX: Fill form using public API
         dialog.set_code_name("Research Theme")
@@ -850,66 +698,22 @@ class TestCreateCodeFullPath:
         created_code = next((c for c in new_codes if c.name == "Research Theme"), None)
         assert created_code is not None, "Created code should have correct name"
 
-    @allure.title("Created code appears in codes panel")
+    @allure.title("Created code appears in panel and can be applied immediately")
     @allure.severity(allure.severity_level.CRITICAL)
-    def test_created_code_appears_in_codes_panel(self, coding_screen_ready):
+    def test_created_code_appears_and_applies(self, coding_screen_ready):
         """
-        After creating a code, it should appear in the codes panel for selection.
-
-        Verifies the reactive flow:
-        Handler emits CodeCreated → EventBus → SignalBridge → ViewModel → UI refresh
-        """
-        screen = coding_screen_ready["screens"]["coding"]
-        shell = coding_screen_ready["shell"]
-
-        # Open dialog and create code
-        screen.show_new_code_dialog()
-
-        dialog = wait_for_dialog(CreateCodeDialog)
-        assert dialog is not None, "CreateCodeDialog should open"
-
-        dialog.set_code_name("Interview Pattern")
-        click_color_swatch_by_index(dialog, 5)
-        QApplication.processEvents()
-
-        click_dialog_button(dialog, "Create")
-        QApplication.processEvents()
-
-        # BLACK-BOX: Verify code is selectable in the screen
-        # The code should now be available via the screen's public API
-        screen.set_active_code("Interview Pattern", "Interview Pattern", "#FF0000")
-        active = screen.get_active_code()
-
-        # The code name should match what we created
-        assert active["name"] == "Interview Pattern", (
-            "Created code should be selectable"
-        )
-
-        # Screenshot showing the code in the panel
-        attach_screenshot(shell, "CodingScreen - After Code Created")
-
-    @allure.title("Created code can be applied to text immediately")
-    @allure.severity(allure.severity_level.CRITICAL)
-    def test_created_code_can_be_applied_immediately(self, coding_screen_ready):
-        """
-        After creating a code, user should be able to apply it to text immediately.
-
-        Full workflow:
-        1. Open dialog
-        2. Create code "Quick Code"
-        3. Select text
-        4. Q key applies the new code
-        5. Segment persisted to database
+        After creating a code, it appears in the codes panel and can be applied to text.
         """
         ctx = coding_screen_ready["ctx"]
         screen = coding_screen_ready["screens"]["coding"]
+        shell = coding_screen_ready["shell"]
         source = coding_screen_ready["seeded"]["sources"][0]
 
         # Get initial segment count
         initial_segments = ctx.coding_context.segment_repo.get_by_source(source.id)
         initial_count = len(initial_segments)
 
-        # Step 1: Open dialog and create code
+        # Open dialog and create code
         screen.show_new_code_dialog()
 
         dialog = wait_for_dialog(CreateCodeDialog)
@@ -922,108 +726,83 @@ class TestCreateCodeFullPath:
         click_dialog_button(dialog, "Create")
         QApplication.processEvents()
 
-        # Step 2: Find the created code in database to get its ID
+        # Find the created code in database to get its ID
         codes = ctx.coding_context.code_repo.get_all()
         quick_code = next((c for c in codes if c.name == "Quick Code"), None)
         assert quick_code is not None, "Quick Code should exist in database"
 
-        # Step 3: Select the code and apply to text
+        # Select the code and apply to text
         screen.set_active_code(
             str(quick_code.id.value), quick_code.name, quick_code.color.to_hex()
         )
+        active = screen.get_active_code()
+        assert active["name"] == "Quick Code", "Created code should be selectable"
+
         screen.set_text_selection(0, 15)
         screen.quick_mark()
         QApplication.processEvents()
 
-        # Step 4: Verify segment was created with new code
+        # Verify segment was created with new code
         new_segments = ctx.coding_context.segment_repo.get_by_source(source.id)
         assert len(new_segments) == initial_count + 1, "Segment should be created"
-
-        # Verify the segment uses the newly created code
         new_segment = new_segments[-1]
         assert new_segment.code_id == quick_code.id
 
-    @allure.title("Dialog closes after successful creation")
+        # Screenshot showing the code in the panel
+        attach_screenshot(shell, "CodingScreen - After Code Created")
+
+    @allure.title("Dialog closes after creation, cancel does not create, and duplicate name rejected")
     @allure.severity(allure.severity_level.NORMAL)
-    def test_dialog_closes_after_create(self, coding_screen_ready):
+    def test_dialog_close_cancel_and_duplicate(self, coding_screen_ready):
         """
-        CreateCodeDialog should close automatically after successful creation.
-        """
-        screen = coding_screen_ready["screens"]["coding"]
-
-        # Open dialog
-        screen.show_new_code_dialog()
-
-        dialog = wait_for_dialog(CreateCodeDialog)
-        assert dialog is not None, "CreateCodeDialog should open"
-
-        # Fill and submit
-        dialog.set_code_name("Auto Close Test")
-        click_color_swatch_by_index(dialog, 2)
-        click_dialog_button(dialog, "Create")
-        QApplication.processEvents()
-
-        # BLACK-BOX: Dialog should no longer be visible
-        remaining_dialog = find_visible_dialog(CreateCodeDialog)
-        assert remaining_dialog is None, "Dialog should close after creation"
-
-    @allure.title("Cancel button closes dialog without creating code")
-    @allure.severity(allure.severity_level.NORMAL)
-    def test_cancel_does_not_create_code(self, coding_screen_ready):
-        """
-        Clicking Cancel should close dialog without creating a code.
-        """
-        ctx = coding_screen_ready["ctx"]
-        screen = coding_screen_ready["screens"]["coding"]
-
-        initial_count = len(ctx.coding_context.code_repo.get_all())
-
-        # Open dialog
-        screen.show_new_code_dialog()
-
-        dialog = wait_for_dialog(CreateCodeDialog)
-        assert dialog is not None, "CreateCodeDialog should open"
-
-        # Fill form but cancel
-        dialog.set_code_name("Should Not Exist")
-        click_color_swatch_by_index(dialog, 1)
-        click_dialog_button(dialog, "Cancel")
-        QApplication.processEvents()
-
-        # Verify no code was created
-        final_count = len(ctx.coding_context.code_repo.get_all())
-        assert final_count == initial_count, "Cancel should not create code"
-
-        # Verify dialog closed
-        assert find_visible_dialog(CreateCodeDialog) is None
-
-    @allure.title("Duplicate code name shows error")
-    @allure.severity(allure.severity_level.NORMAL)
-    def test_duplicate_code_name_shows_error(self, coding_screen_ready):
-        """
-        Attempting to create a code with an existing name should show an error.
+        Dialog closes after successful creation; Cancel closes without creating;
+        Duplicate name is rejected.
         """
         ctx = coding_screen_ready["ctx"]
         screen = coding_screen_ready["screens"]["coding"]
         existing_code = coding_screen_ready["seeded"]["codes"][0]
 
-        initial_count = len(ctx.coding_context.code_repo.get_all())
-
-        # Open dialog
+        # Test successful creation closes dialog
         screen.show_new_code_dialog()
-
         dialog = wait_for_dialog(CreateCodeDialog)
         assert dialog is not None, "CreateCodeDialog should open"
 
-        # Try to create code with existing name
+        dialog.set_code_name("Auto Close Test")
+        click_color_swatch_by_index(dialog, 2)
+        click_dialog_button(dialog, "Create")
+        QApplication.processEvents()
+
+        remaining_dialog = find_visible_dialog(CreateCodeDialog)
+        assert remaining_dialog is None, "Dialog should close after creation"
+
+        # Test cancel does not create code
+        initial_count = len(ctx.coding_context.code_repo.get_all())
+
+        screen.show_new_code_dialog()
+        dialog = wait_for_dialog(CreateCodeDialog)
+        assert dialog is not None, "CreateCodeDialog should open"
+
+        dialog.set_code_name("Should Not Exist")
+        click_color_swatch_by_index(dialog, 1)
+        click_dialog_button(dialog, "Cancel")
+        QApplication.processEvents()
+
+        final_count = len(ctx.coding_context.code_repo.get_all())
+        assert final_count == initial_count, "Cancel should not create code"
+        assert find_visible_dialog(CreateCodeDialog) is None
+
+        # Test duplicate code name is rejected
+        screen.show_new_code_dialog()
+        dialog = wait_for_dialog(CreateCodeDialog)
+        assert dialog is not None, "CreateCodeDialog should open"
+
         dialog.set_code_name(existing_code.name)  # "Positive" from seeded data
         click_color_swatch_by_index(dialog, 0)
         click_dialog_button(dialog, "Create")
         QApplication.processEvents()
 
-        # Verify no duplicate was created
-        final_count = len(ctx.coding_context.code_repo.get_all())
-        assert final_count == initial_count, "Duplicate code should not be created"
+        dup_final_count = len(ctx.coding_context.code_repo.get_all())
+        assert dup_final_count == initial_count, "Duplicate code should not be created"
 
         # Dialog may show error or remain open - cleanup
         dialog = find_visible_dialog(CreateCodeDialog)

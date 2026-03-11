@@ -53,58 +53,37 @@ def comparator() -> VectorCodeComparator:
 class TestVectorCodeComparator:
     """Tests for VectorCodeComparator."""
 
-    @allure.title("index_codes adds all codes to vector store")
-    def test_index_codes_adds_to_vector_store(
+    @allure.title("index_codes, find_duplicates with thresholds, single code, and similarity")
+    def test_index_find_duplicates_and_similarity(
         self,
         comparator: VectorCodeComparator,
         sample_codes: tuple[Code, ...],
     ) -> None:
+        # Index codes
         result = comparator.index_codes(sample_codes)
-
         assert isinstance(result, Success)
         assert comparator._store.count() == 5
 
-    @allure.title("find_duplicates returns candidates filtered by threshold")
-    def test_find_duplicates_respects_threshold(
-        self,
-        comparator: VectorCodeComparator,
-        sample_codes: tuple[Code, ...],
-    ) -> None:
-        comparator.index_codes(sample_codes)
-
+        # find_duplicates respects threshold
         high_result = comparator.find_duplicates(sample_codes, threshold=0.95)
         low_result = comparator.find_duplicates(sample_codes, threshold=0.1)
-
         assert isinstance(high_result, Success)
         assert isinstance(low_result, Success)
         assert len(high_result.unwrap()) <= len(low_result.unwrap())
 
-        # Candidates have required fields
         for candidate in low_result.unwrap():
             assert hasattr(candidate, "code_a_id")
             assert hasattr(candidate, "code_b_id")
             assert hasattr(candidate, "similarity")
 
-    @allure.title("find_duplicates returns empty for single code")
-    def test_find_duplicates_returns_empty_for_single_code(
-        self,
-        comparator: VectorCodeComparator,
-    ) -> None:
+        # Single code returns empty
         single_code = (Code(id=CodeId(value="1"), name="test", color=Color.from_hex("#FF0000")),)
-
         result = comparator.find_duplicates(single_code)
-
         assert isinstance(result, Success)
         assert result.unwrap() == []
 
-    @allure.title("calculate_similarity returns float between 0 and 1")
-    def test_calculate_similarity_returns_float(
-        self,
-        comparator: VectorCodeComparator,
-        sample_codes: tuple[Code, ...],
-    ) -> None:
+        # calculate_similarity returns float between 0 and 1
         similarity = comparator.calculate_similarity(sample_codes[0], sample_codes[1])
-
         assert isinstance(similarity, float)
         assert 0.0 <= similarity <= 1.0
 

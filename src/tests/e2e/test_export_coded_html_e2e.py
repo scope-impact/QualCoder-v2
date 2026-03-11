@@ -65,14 +65,18 @@ def coded_sources(source_repo, code_repo, segment_repo):
 
 @allure.story("QC-039.05 Export Coded Text as HTML")
 class TestExportCodedHTML:
-    @allure.title("AC #1: I can export coded text as HTML file")
-    def test_ac1_export_creates_html(
+    @allure.title("AC #1+#2+#3: Export creates HTML with highlighted coded segments and publishes event")
+    def test_export_coded_html_full(
         self, source_repo, code_repo, segment_repo, event_bus, coded_sources, tmp_path
     ):
         from src.contexts.exchange.core.commandHandlers.export_coded_html import (
             export_coded_html,
         )
         from src.contexts.exchange.core.commands import ExportCodedHTMLCommand
+        from src.contexts.exchange.core.events import CodedHTMLExported
+
+        published = []
+        event_bus.subscribe("exchange.coded_html_exported", published.append)
 
         output_path = tmp_path / "coded.html"
 
@@ -85,87 +89,22 @@ class TestExportCodedHTML:
                 event_bus=event_bus,
             )
 
-        with allure.step("Verify success"):
+        with allure.step("Verify success and HTML file created"):
             assert result.is_success, f"Export failed: {result.error}"
-
-        with allure.step("Verify HTML file created"):
             assert output_path.exists()
             content = output_path.read_text()
             assert "<html" in content
 
-    @allure.title("AC #2: HTML includes source name and coded text")
-    def test_ac2_html_includes_content(
-        self, source_repo, code_repo, segment_repo, event_bus, coded_sources, tmp_path
-    ):
-        from src.contexts.exchange.core.commandHandlers.export_coded_html import (
-            export_coded_html,
-        )
-        from src.contexts.exchange.core.commands import ExportCodedHTMLCommand
-
-        output_path = tmp_path / "coded.html"
-
-        export_coded_html(
-            command=ExportCodedHTMLCommand(output_path=str(output_path)),
-            source_repo=source_repo,
-            code_repo=code_repo,
-            segment_repo=segment_repo,
-            event_bus=event_bus,
-        )
-
-        with allure.step("Verify source name and text present"):
-            content = output_path.read_text()
+        with allure.step("Verify source name and coded text present"):
             assert "interview_01.txt" in content
             assert "happy" in content
             assert "learning experience" in content
 
-    @allure.title("AC #3: HTML highlights coded segments with colors")
-    def test_ac3_html_highlights_segments(
-        self, source_repo, code_repo, segment_repo, event_bus, coded_sources, tmp_path
-    ):
-        from src.contexts.exchange.core.commandHandlers.export_coded_html import (
-            export_coded_html,
-        )
-        from src.contexts.exchange.core.commands import ExportCodedHTMLCommand
-
-        output_path = tmp_path / "coded.html"
-
-        export_coded_html(
-            command=ExportCodedHTMLCommand(output_path=str(output_path)),
-            source_repo=source_repo,
-            code_repo=code_repo,
-            segment_repo=segment_repo,
-            event_bus=event_bus,
-        )
-
-        with allure.step("Verify highlight spans present"):
-            content = output_path.read_text()
+        with allure.step("Verify highlight spans with colors"):
             assert "<span" in content
-            # Code colors
             assert "#00ff00" in content.lower() or "#00FF00" in content
-            # Code names in title attributes
             assert "Positive" in content
             assert "Learning" in content
-
-    @allure.title("Export publishes CodedHTMLExported event")
-    def test_publishes_event(
-        self, source_repo, code_repo, segment_repo, event_bus, coded_sources, tmp_path
-    ):
-        from src.contexts.exchange.core.commandHandlers.export_coded_html import (
-            export_coded_html,
-        )
-        from src.contexts.exchange.core.commands import ExportCodedHTMLCommand
-        from src.contexts.exchange.core.events import CodedHTMLExported
-
-        published = []
-        event_bus.subscribe("exchange.coded_html_exported", published.append)
-
-        export_coded_html(
-            command=ExportCodedHTMLCommand(output_path=str(tmp_path / "out.html")),
-            source_repo=source_repo,
-            code_repo=code_repo,
-            segment_repo=segment_repo,
-            event_bus=event_bus,
-        )
 
         with allure.step("Verify event"):
             assert len(published) == 1

@@ -8,10 +8,16 @@ Implements QC-027.02: Import PDF Document
 
 from pathlib import Path
 
+import allure
 import pytest
 from returns.result import Failure
 
 from src.contexts.sources.infra.pdf_extractor import PdfExtractionResult, PdfExtractor
+
+pytestmark = [
+    allure.epic("QualCoder v2"),
+    allure.feature("QC-027 Manage Sources"),
+]
 
 
 @pytest.fixture
@@ -20,51 +26,45 @@ def extractor() -> PdfExtractor:
     return PdfExtractor()
 
 
+@allure.story("QC-027.02 Import PDF Document")
 class TestPdfExtraction:
     """Tests for extracting text from PDF documents."""
 
-    def test_supports_pdf_extension(self, extractor: PdfExtractor):
-        """Supports .pdf extension."""
+    @allure.title("Supports .pdf but not other extensions; fails for nonexistent file")
+    def test_supports_and_fails_for_nonexistent(self, extractor: PdfExtractor, tmp_path: Path):
+        """Supports .pdf extension; rejects non-PDF; fails for missing file."""
         assert extractor.supports(Path("document.pdf"))
-
-    def test_does_not_support_other_extensions(self, extractor: PdfExtractor):
-        """Does not support non-PDF files."""
         assert not extractor.supports(Path("document.txt"))
         assert not extractor.supports(Path("document.docx"))
 
-    def test_fails_for_nonexistent_file(self, extractor: PdfExtractor, tmp_path: Path):
-        """Returns failure for non-existent file."""
         missing = tmp_path / "missing.pdf"
-
         result = extractor.extract(missing)
-
         assert isinstance(result, Failure)
         assert "not found" in result.failure().lower()
 
 
+@allure.story("QC-027.02 Import PDF Document")
 class TestPdfExtractionResult:
     """Tests for PdfExtractionResult data class."""
 
-    def test_has_required_fields(self):
-        """PdfExtractionResult has content, page_count, and file_size."""
+    @allure.title("Has required fields and supports multi-page content")
+    def test_fields_and_multi_page(self):
+        """PdfExtractionResult stores content, page_count, file_size; handles multi-page."""
         result = PdfExtractionResult(
             content="test content",
             page_count=1,
             file_size=1024,
         )
-
         assert result.content == "test content"
         assert result.page_count == 1
         assert result.file_size == 1024
 
-    def test_multi_page_content(self):
-        """AC #4: Can store multi-page content."""
-        result = PdfExtractionResult(
+        # Multi-page content
+        multi = PdfExtractionResult(
             content="Page 1 content\n\n--- Page 2 ---\n\nPage 2 content",
             page_count=2,
             file_size=2048,
         )
-
-        assert result.page_count == 2
-        assert "Page 1" in result.content
-        assert "Page 2" in result.content
+        assert multi.page_count == 2
+        assert "Page 1" in multi.content
+        assert "Page 2" in multi.content
