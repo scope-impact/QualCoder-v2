@@ -301,39 +301,34 @@ class AppContext:
             sync_engine = self._sync_engine
             logger.info("SyncEngine created for SQLite-Convex cloud sync")
 
-        # Wrap the connection in a thread-safe proxy so repos work from
+        # Session provides thread-local connections so repos work from
         # both the Qt main thread and MCP worker threads (asyncio.to_thread).
-        from src.shared.infra.connection_provider import ThreadSafeConnectionProxy
-
-        proxy = ThreadSafeConnectionProxy(
-            main_connection=connection,
-            factory=self.lifecycle.connection_factory,
-        )
+        session = self.lifecycle.session
 
         # Create contexts with sync support
         self.sources_context = SourcesContext.create(
-            connection=proxy,
+            connection=session,
             convex_client=self.convex_client,
             backend_type=backend_type,
             sync_engine=sync_engine,
             event_bus=self.event_bus,
         )
         self.coding_context = CodingContext.create(
-            connection=proxy,
+            connection=session,
             convex_client=self.convex_client,
             backend_type=backend_type,
             sync_engine=sync_engine,
             event_bus=self.event_bus,
         )
         self.cases_context = CasesContext.create(
-            connection=proxy,
+            connection=session,
             convex_client=self.convex_client,
             backend_type=backend_type,
             sync_engine=sync_engine,
             event_bus=self.event_bus,
         )
         self.folders_context = FoldersContext.create(
-            connection=proxy,
+            connection=session,
             convex_client=self.convex_client,
             backend_type=backend_type,
             sync_engine=sync_engine,
@@ -341,7 +336,7 @@ class AppContext:
         )
         # ProjectsContext always uses SQLite for local project file management
         self.projects_context = ProjectsContext.create(
-            connection=proxy,
+            connection=session,
             _convex_client=self.convex_client,
             _backend_type=BackendType.SQLITE,
             project_path=project_path,

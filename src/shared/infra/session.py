@@ -63,6 +63,14 @@ class Session:
             self._local.conn = conn
         return conn
 
+    def execute(self, *args, **kwargs):
+        """Execute SQL on the thread-local connection.
+
+        Drop-in replacement for Connection.execute(), enabling repos
+        to use Session directly instead of a raw Connection or proxy.
+        """
+        return self.connection.execute(*args, **kwargs)
+
     def commit(self) -> None:
         """Commit the current transaction. Called by command handlers."""
         self.connection.commit()

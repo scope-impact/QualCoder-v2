@@ -104,6 +104,24 @@ class TestSessionThreadSafety:
         assert conns[0] is conns[1]
 
 
+class TestSessionExecute:
+    """Session.execute() should delegate to the thread-local connection."""
+
+    def test_execute_runs_sql(self, session):
+        session.execute(text("INSERT INTO test_items (id, name) VALUES (10, 'gamma')"))
+        session.commit()
+
+        result = session.execute(text("SELECT name FROM test_items WHERE id = 10"))
+        assert result.fetchone()[0] == "gamma"
+
+    def test_execute_returns_cursor_result(self, session):
+        session.execute(text("INSERT INTO test_items (id, name) VALUES (11, 'delta')"))
+        session.commit()
+
+        result = session.execute(text("SELECT count(*) FROM test_items"))
+        assert result.fetchone()[0] >= 1
+
+
 class TestSessionClose:
     """Session.close() should dispose the engine."""
 
