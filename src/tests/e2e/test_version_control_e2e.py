@@ -194,24 +194,19 @@ class TestVersionHistoryScreen:
     AC #3: View history of all changes.
     """
 
-    @pytest.mark.skip(
-        reason="Requires full VCS infrastructure with real git repository"
-    )
     @allure.title("AC #3: Screen displays when VCS is initialized")
     def test_screen_displays_when_vcs_initialized(self, version_history_screen):
         """E2E: Screen shows history panel when VCS is initialized."""
-        with allure.step("Verify history panel is visible"):
+        QApplication.processEvents()
+        with allure.step("Verify history panel is shown (not hidden)"):
             assert version_history_screen._history_panel is not None
-            assert version_history_screen._history_panel.isVisible()
+            assert not version_history_screen._history_panel.isHidden()
 
         with allure.step("Verify init container is hidden"):
-            assert not version_history_screen._init_container.isVisible()
+            assert version_history_screen._init_container.isHidden()
 
         attach_screenshot(version_history_screen, "VersionHistoryScreen - Initialized")
 
-    @pytest.mark.skip(
-        reason="Requires full VCS infrastructure with real git repository"
-    )
     @allure.title("AC #3: Screen shows empty state when no snapshots")
     def test_screen_shows_empty_state_with_no_snapshots(self, version_history_screen):
         """E2E: Screen shows empty message when no snapshots exist."""
@@ -272,9 +267,6 @@ class TestVersionHistoryScreen:
         attach_screenshot(panel, "VersionHistoryPanel - With Snapshots")
         panel.close()
 
-    @pytest.mark.skip(
-        reason="Requires full VCS infrastructure with real git repository"
-    )
     @allure.title("AC #3: Refresh button reloads history")
     def test_refresh_button_reloads_history(self, version_history_screen):
         """E2E: Clicking refresh button triggers history reload."""
@@ -479,9 +471,6 @@ class TestRestoreSnapshot:
 class TestVersionControlIntegration:
     """Integration tests for complete VCS workflow."""
 
-    @pytest.mark.skip(
-        reason="Requires full VCS infrastructure - covered by manual tests"
-    )
     @allure.title("Full workflow: Initialize → Create snapshots → View history")
     def test_full_vcs_workflow(self, qapp, colors, git_initialized_project):
         """
