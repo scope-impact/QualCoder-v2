@@ -102,48 +102,31 @@ def _reset_qualcoder_logger():
 class TestLogLevelUI:
     """E2E tests for log level configuration through the Settings dialog."""
 
-    @allure.title("AC #3.1: Changing log level via combo persists to JSON file")
-    def test_change_log_level_via_combo_persists_to_file(
+    @allure.title("AC #3.1-3: Log level changes persist and defaults are correct")
+    def test_log_level_changes_and_defaults(
         self, settings_dialog, settings_repo
     ):
-        """E2E: Selecting a different log level in the combo box persists to disk."""
-        with allure.step("Find DEBUG level in combo"):
+        """E2E: Log level changes persist to disk and defaults are correct."""
+        with allure.step("Verify defaults: INFO log level, telemetry enabled"):
+            settings = settings_repo.load()
+            assert settings.observability.log_level == "INFO"
+            assert settings.observability.enable_telemetry is True
+
+        with allure.step("Change to DEBUG and verify persistence"):
             combo = settings_dialog._log_level_combo
             debug_index = combo.findData("DEBUG")
             assert debug_index >= 0
-
-        with allure.step("Select DEBUG level"):
             combo.setCurrentIndex(debug_index)
             QApplication.processEvents()
-
-        with allure.step("Verify log level persisted to repository"):
             settings = settings_repo.load()
             assert settings.observability.log_level == "DEBUG"
 
-    @allure.title("AC #3.2: Changing log level to WARNING persists correctly")
-    def test_change_log_level_to_warning(self, settings_dialog, settings_repo):
-        """E2E: Selecting WARNING level persists to disk."""
-        with allure.step("Select WARNING level"):
-            combo = settings_dialog._log_level_combo
+        with allure.step("Change to WARNING and verify persistence"):
             warning_index = combo.findData("WARNING")
             combo.setCurrentIndex(warning_index)
             QApplication.processEvents()
-
-        with allure.step("Verify WARNING persisted"):
             settings = settings_repo.load()
             assert settings.observability.log_level == "WARNING"
-
-    @allure.title("AC #3.3: Default observability settings are correct")
-    def test_default_observability_settings(self, settings_repo):
-        """E2E: Fresh settings file defaults to INFO log level and telemetry enabled."""
-        with allure.step("Load default settings"):
-            settings = settings_repo.load()
-
-        with allure.step("Verify default log level is INFO"):
-            assert settings.observability.log_level == "INFO"
-
-        with allure.step("Verify telemetry enabled by default"):
-            assert settings.observability.enable_telemetry is True
 
 
 # =============================================================================
@@ -156,44 +139,24 @@ class TestLogLevelUI:
 class TestFileLoggingUI:
     """E2E tests for file logging toggle in the Settings dialog."""
 
-    @allure.title("AC #3.4-5: Enabling then disabling file logging persists to JSON file")
-    def test_toggle_file_logging_persists_to_file(self, settings_dialog, settings_repo):
-        """E2E: Checking then unchecking file logging checkbox persists correctly."""
-        with allure.step("Enable file logging checkbox"):
+    @allure.title("AC #3.4-7: File logging and telemetry toggles persist to JSON file")
+    def test_toggle_file_logging_and_telemetry_persists(self, settings_dialog, settings_repo):
+        """E2E: File logging and telemetry checkbox changes persist correctly."""
+        with allure.step("Enable file logging"):
             settings_dialog._file_logging_cb.setChecked(True)
             QApplication.processEvents()
-
-        with allure.step("Verify file logging enabled in repository"):
             settings = settings_repo.load()
             assert settings.observability.enable_file_logging is True
 
-        with allure.step("Disable file logging checkbox"):
+        with allure.step("Disable file logging"):
             settings_dialog._file_logging_cb.setChecked(False)
             QApplication.processEvents()
-
-        with allure.step("Verify file logging disabled in repository"):
             settings = settings_repo.load()
             assert settings.observability.enable_file_logging is False
 
-
-# =============================================================================
-# AC #3: Telemetry Configurable via UI
-# =============================================================================
-
-
-@allure.story("QC-049.03 Configure Telemetry via Settings UI")
-@allure.severity(allure.severity_level.NORMAL)
-class TestTelemetryUI:
-    """E2E tests for telemetry toggle in the Settings dialog."""
-
-    @allure.title("AC #3.7: Disabling telemetry via checkbox persists to JSON file")
-    def test_disable_telemetry_persists_to_file(self, settings_dialog, settings_repo):
-        """E2E: Unchecking the telemetry checkbox persists to disk."""
-        with allure.step("Disable telemetry checkbox"):
+        with allure.step("Disable telemetry"):
             settings_dialog._telemetry_cb.setChecked(False)
             QApplication.processEvents()
-
-        with allure.step("Verify telemetry disabled in repository"):
             settings = settings_repo.load()
             assert settings.observability.enable_telemetry is False
 
