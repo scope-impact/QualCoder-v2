@@ -26,6 +26,7 @@ from src.shared.infra.metrics import metered_command
 
 if TYPE_CHECKING:
     from src.shared.infra.event_bus import EventBus
+    from src.shared.infra.session import Session
 
 logger = logging.getLogger("qualcoder.coding.core")
 
@@ -37,6 +38,7 @@ def move_code_to_category(
     category_repo: CategoryRepository,
     segment_repo: SegmentRepository,
     event_bus: EventBus,
+    session: Session | None = None,
 ) -> OperationResult:
     """
     Move a code to a different category.
@@ -82,6 +84,8 @@ def move_code_to_category(
     if code:
         updated_code = code.with_category(event.new_category_id)
         code_repo.save(updated_code)
+    if session:
+        session.commit()
 
     event_bus.publish(event)
 

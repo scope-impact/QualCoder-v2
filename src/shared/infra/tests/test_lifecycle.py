@@ -75,6 +75,49 @@ class TestOpenDatabase:
         # Cleanup
         lifecycle.close_database()
 
+    def test_open_database_enables_wal_mode(self, tmp_path: Path) -> None:
+        """open_database() should enable WAL journal mode."""
+        from sqlalchemy import text
+
+        db_path = tmp_path / "test.qda"
+        db_path.touch()
+
+        lifecycle = ProjectLifecycle()
+        lifecycle.open_database(db_path)
+
+        result = lifecycle.connection.execute(text("PRAGMA journal_mode"))
+        mode = result.fetchone()[0]
+        assert mode == "wal"
+
+        lifecycle.close_database()
+
+    def test_open_database_creates_session(self, tmp_path: Path) -> None:
+        """open_database() should create a Session wrapping the engine."""
+        from src.shared.infra.session import Session
+
+        db_path = tmp_path / "test.qda"
+        db_path.touch()
+
+        lifecycle = ProjectLifecycle()
+        lifecycle.open_database(db_path)
+
+        assert lifecycle.session is not None
+        assert isinstance(lifecycle.session, Session)
+        assert lifecycle.session.engine is lifecycle.engine
+
+        lifecycle.close_database()
+
+    def test_close_database_clears_session(self, tmp_path: Path) -> None:
+        """close_database() should clear the session."""
+        db_path = tmp_path / "test.qda"
+        db_path.touch()
+
+        lifecycle = ProjectLifecycle()
+        lifecycle.open_database(db_path)
+        lifecycle.close_database()
+
+        assert lifecycle.session is None
+
     def test_open_database_closes_previous_connection(self, tmp_path: Path) -> None:
         """open_database() should close any existing connection first."""
         db_path1 = tmp_path / "test1.qda"

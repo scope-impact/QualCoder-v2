@@ -27,6 +27,7 @@ from src.shared.infra.metrics import metered_command
 
 if TYPE_CHECKING:
     from src.shared.infra.event_bus import EventBus
+    from src.shared.infra.session import Session
 
 logger = logging.getLogger("qualcoder.coding.core")
 
@@ -38,6 +39,7 @@ def create_code(
     category_repo: CategoryRepository,
     segment_repo: SegmentRepository,
     event_bus: EventBus,
+    session: Session | None = None,
 ) -> OperationResult:
     """
     Create a new code in the codebook.
@@ -99,6 +101,8 @@ def create_code(
         owner=event.owner,
     )
     code_repo.save(code)
+    if session:
+        session.commit()
 
     # Publish event
     event_bus.publish(event)

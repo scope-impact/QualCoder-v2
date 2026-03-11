@@ -25,6 +25,7 @@ from src.shared.infra.metrics import metered_command
 
 if TYPE_CHECKING:
     from src.shared.infra.event_bus import EventBus
+    from src.shared.infra.session import Session
     from src.shared.infra.state import ProjectState
 
 
@@ -37,6 +38,7 @@ def set_case_attribute(
     state: ProjectState,
     case_repo: CaseRepository | None,
     event_bus: EventBus,
+    session: Session | None = None,
 ) -> OperationResult:
     """Set an attribute on a case."""
     logger.debug(
@@ -71,6 +73,9 @@ def set_case_attribute(
             value=event.attr_value,
         )
         case_repo.save_attribute(case_id, attr)
+
+    if session:
+        session.commit()
 
     event_bus.publish(event)
 

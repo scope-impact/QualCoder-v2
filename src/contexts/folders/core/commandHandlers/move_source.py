@@ -26,6 +26,7 @@ from src.shared.infra.state import ProjectState
 
 if TYPE_CHECKING:
     from src.shared.infra.event_bus import EventBus
+    from src.shared.infra.session import Session
 
 
 logger = logging.getLogger("qualcoder.folders.core")
@@ -38,6 +39,7 @@ def move_source_to_folder(
     folder_repo: FolderRepository | None,
     source_repo: SourceRepository | None,
     event_bus: EventBus,
+    session: Session | None = None,
 ) -> OperationResult:
     """
     Move a source to a different folder.
@@ -95,6 +97,9 @@ def move_source_to_folder(
         if source:
             updated_source = source.with_folder(event.new_folder_id)
             source_repo.save(updated_source)
+
+    if session:
+        session.commit()
 
     # Publish event
     event_bus.publish(event)

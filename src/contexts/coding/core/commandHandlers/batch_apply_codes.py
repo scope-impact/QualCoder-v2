@@ -32,6 +32,7 @@ from src.shared.infra.metrics import metered_command
 
 if TYPE_CHECKING:
     from src.shared.infra.event_bus import EventBus
+    from src.shared.infra.session import Session
 
 
 @dataclass(frozen=True)
@@ -71,6 +72,7 @@ def batch_apply_codes(
     segment_repo: SegmentRepository,
     event_bus: EventBus,
     source_content_provider: Any | None = None,
+    session: Session | None = None,
 ) -> OperationResult:
     """
     Apply multiple codes to multiple text segments in a single batch.
@@ -137,6 +139,9 @@ def batch_apply_codes(
             succeeded += 1
         else:
             failed += 1
+
+    if session:
+        session.commit()
 
     # Build aggregated result
     batch_result = BatchApplyCodesResult(

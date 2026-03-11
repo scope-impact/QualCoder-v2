@@ -26,6 +26,7 @@ from src.shared.infra.metrics import metered_command
 
 if TYPE_CHECKING:
     from src.shared.infra.event_bus import EventBus
+    from src.shared.infra.session import Session
 
 logger = logging.getLogger("qualcoder.coding.core")
 
@@ -37,6 +38,7 @@ def delete_code(
     category_repo: CategoryRepository,
     segment_repo: SegmentRepository,
     event_bus: EventBus,
+    session: Session | None = None,
 ) -> OperationResult:
     """
     Delete a code from the codebook.
@@ -78,6 +80,8 @@ def delete_code(
             segment_repo.delete_by_code(code_id)
         code_repo.delete(code_id)
         uow.commit()
+    if session:
+        session.commit()
 
     event_bus.publish(event)
 

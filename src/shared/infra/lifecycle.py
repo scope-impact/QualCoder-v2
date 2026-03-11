@@ -27,6 +27,8 @@ if TYPE_CHECKING:
 
     from src.contexts.projects.core.entities import Project
 
+from src.shared.infra.session import Session
+
 
 class ProjectLifecycle:
     """
@@ -45,6 +47,7 @@ class ProjectLifecycle:
         """Initialize the lifecycle manager."""
         self._engine: Engine | None = None
         self._connection: Connection | None = None
+        self._session: Session | None = None
         self._current_path: Path | None = None
         self._thread_local: threading.local = threading.local()
         self._connection_factory: Callable[[], Connection] | None = None
@@ -58,6 +61,11 @@ class ProjectLifecycle:
     def engine(self) -> Engine | None:
         """Get the current SQLAlchemy engine."""
         return self._engine
+
+    @property
+    def session(self) -> Session | None:
+        """Get the current Session (project-scoped, thread-safe)."""
+        return self._session
 
     @property
     def connection_factory(self) -> Callable[[], Connection] | None:
@@ -117,7 +125,17 @@ class ProjectLifecycle:
 
             instrument_sqlalchemy(self._engine)
 
+            from sqlalchemy import text
+
+            # Enable WAL mode before creating connections.
+            # WAL allows concurrent readers + writer, eliminating most
+            # "database is locked" errors in multi-threaded access.
+            with self._engine.connect() as setup_conn:
+                setup_conn.execute(text("PRAGMA journal_mode=WAL"))
+                setup_conn.commit()
+
             self._connection = self._engine.connect()
+            self._session = Session(self._engine)
             self._current_path = path
 
             # Store main-thread connection in thread-local for the factory
@@ -202,8 +220,9 @@ class ProjectLifecycle:
 
     def _cleanup(self) -> None:
         """Clean up connection and engine resources."""
-        # Clear the factory and thread-local state
+        # Clear the factory, session, and thread-local state
         self._connection_factory = None
+        self._session = None
         self._thread_local = threading.local()
 
         # Close connection

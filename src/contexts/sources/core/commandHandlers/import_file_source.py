@@ -40,6 +40,7 @@ from src.shared.infra.state import ProjectState
 
 if TYPE_CHECKING:
     from src.shared.infra.event_bus import EventBus
+    from src.shared.infra.session import Session
 
 logger = logging.getLogger("qualcoder.sources.core")
 
@@ -77,6 +78,7 @@ def import_file_source(
     state: ProjectState,
     source_repo: SourceRepository | None,
     event_bus: EventBus,
+    session: Session | None = None,
 ) -> OperationResult:
     """
     Import a file-based source into the current project.
@@ -212,6 +214,9 @@ def import_file_source(
     # Persist to repository
     if source_repo:
         source_repo.save(source)
+
+    if session:
+        session.commit()
 
     # Step 5: Publish SourceAdded event
     event = SourceAdded.create(

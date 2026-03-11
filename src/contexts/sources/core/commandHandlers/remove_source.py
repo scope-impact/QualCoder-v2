@@ -26,6 +26,7 @@ from src.shared.infra.state import ProjectState
 
 if TYPE_CHECKING:
     from src.shared.infra.event_bus import EventBus
+    from src.shared.infra.session import Session
 
 logger = logging.getLogger("qualcoder.sources.core")
 
@@ -37,6 +38,7 @@ def remove_source(
     source_repo: SourceRepository | None,
     segment_repo: SegmentRepository | None,
     event_bus: EventBus,
+    session: Session | None = None,
 ) -> OperationResult:
     """
     Remove a source from the current project.
@@ -92,6 +94,9 @@ def remove_source(
             segment_repo.delete_by_source(source_id)
         source_repo.delete(source_id)
         uow.commit()
+
+    if session:
+        session.commit()
 
     event_bus.publish(event)
     logger.info("remove_source: removed source_id=%s", source_id)

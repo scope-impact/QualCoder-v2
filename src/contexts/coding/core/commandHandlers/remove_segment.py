@@ -26,6 +26,7 @@ from src.shared.infra.metrics import metered_command
 
 if TYPE_CHECKING:
     from src.shared.infra.event_bus import EventBus
+    from src.shared.infra.session import Session
 
 logger = logging.getLogger("qualcoder.coding.core")
 
@@ -37,6 +38,7 @@ def remove_segment(
     category_repo: CategoryRepository,
     segment_repo: SegmentRepository,
     event_bus: EventBus,
+    session: Session | None = None,
 ) -> OperationResult:
     """
     Remove coding from a segment.
@@ -71,6 +73,8 @@ def remove_segment(
 
     # Delete the segment
     segment_repo.delete(segment_id)
+    if session:
+        session.commit()
 
     event_bus.publish(event)
 
