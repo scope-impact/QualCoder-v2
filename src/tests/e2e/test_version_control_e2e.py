@@ -465,11 +465,12 @@ class TestVersionControlIntegration:
 class TestDesignSystemIntegration:
     """Tests for design system token usage in VCS components."""
 
-    @allure.title("DiffHighlighter uses design system diff colors")
-    def test_diff_highlighter_uses_design_tokens(self, qapp, colors):
-        """E2E: DiffHighlighter uses ColorPalette diff tokens."""
+    @allure.title("DiffHighlighter uses design system diff colors and themes differ")
+    def test_diff_highlighter_uses_design_tokens_and_themes_differ(self, qapp, colors):
+        """E2E: DiffHighlighter uses ColorPalette diff tokens and dark/light themes differ."""
         from PySide6.QtGui import QColor, QTextDocument
 
+        from design_system import get_theme
         from src.contexts.projects.presentation.dialogs.diff_viewer_dialog import (
             DiffHighlighter,
         )
@@ -478,31 +479,14 @@ class TestDesignSystemIntegration:
             doc = QTextDocument()
             highlighter = DiffHighlighter(colors, doc)
 
-        with allure.step("Verify add format uses design system colors"):
+        with allure.step("Verify add/remove formats use design system colors"):
             add_bg = highlighter._add_format.background().color()
-            expected_bg = QColor(colors.diff_add_bg)
-            assert add_bg == expected_bg
-
-        with allure.step("Verify remove format uses design system colors"):
+            assert add_bg == QColor(colors.diff_add_bg)
             remove_bg = highlighter._remove_format.background().color()
-            expected_bg = QColor(colors.diff_remove_bg)
-            assert remove_bg == expected_bg
+            assert remove_bg == QColor(colors.diff_remove_bg)
 
-    @allure.title("Theme switch updates diff colors")
-    def test_theme_switch_updates_diff_colors(self, qapp):
-        """E2E: Dark theme has different diff colors than light theme."""
-        from design_system import get_theme
-
-        with allure.step("Get light theme colors"):
+        with allure.step("Verify dark and light themes have different diff colors"):
             light = get_theme("light")
-            light_add_bg = light.diff_add_bg
-            light_remove_bg = light.diff_remove_bg
-
-        with allure.step("Get dark theme colors"):
             dark = get_theme("dark")
-            dark_add_bg = dark.diff_add_bg
-            dark_remove_bg = dark.diff_remove_bg
-
-        with allure.step("Verify colors are different"):
-            assert light_add_bg != dark_add_bg
-            assert light_remove_bg != dark_remove_bg
+            assert light.diff_add_bg != dark.diff_add_bg
+            assert light.diff_remove_bg != dark.diff_remove_bg

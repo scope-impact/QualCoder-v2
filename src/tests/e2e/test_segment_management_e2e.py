@@ -176,10 +176,10 @@ class TestOverlappingCodes:
     Tests for overlapping code segments.
     """
 
-    @allure.title("AC #2.1: Can apply second code to same selection")
+    @allure.title("AC #2.1-2: Apply multiple codes to same and overlapping selections")
     @allure.severity(allure.severity_level.CRITICAL)
-    def test_apply_second_code(self, coding_screen_with_overlaps):
-        """User can apply a second code to text that already has a code."""
+    def test_apply_multiple_codes_to_overlapping_regions(self, coding_screen_with_overlaps):
+        """User can apply multiple codes to same region and overlapping regions."""
         screen = coding_screen_with_overlaps
 
         applied_codes = []
@@ -187,37 +187,8 @@ class TestOverlappingCodes:
             lambda cid, start, end: applied_codes.append((cid, start, end))
         )
 
-        # Get initial code count (may be > 0 from sample data)
-        initial_count = screen.get_code_count("2")
-
-        # Set active code and apply to overlapping region
-        screen.set_active_code("2", "Challenge", "#FF0000")
-        screen.set_text_selection(50, 100)  # Same region as seg-1
-        screen.quick_mark()
-        QApplication.processEvents()
-
-        # Verify signal emitted
-        assert len(applied_codes) == 1
-        assert applied_codes[0][0] == "2"  # Challenge code
-
-        # Verify UI state: code count incremented
-        assert screen.get_code_count("2") == initial_count + 1
-
-        attach_screenshot(screen, "CodingScreen - Apply Second Code")
-
-    @allure.title("AC #2.2: Multiple codes can be applied to overlapping regions")
-    @allure.severity(allure.severity_level.NORMAL)
-    def test_overlapping_codes_tracked(self, coding_screen_with_overlaps):
-        """Screen can track multiple codes applied to same region."""
-        screen = coding_screen_with_overlaps
-
-        applied_codes = []
-        screen.code_applied.connect(
-            lambda cid, start, end: applied_codes.append((cid, start, end))
-        )
-
-        # Get initial counts (may be > 0 from sample data)
         initial_count_1 = screen.get_code_count("1")
+        initial_count_2 = screen.get_code_count("2")
         initial_count_3 = screen.get_code_count("3")
 
         # Apply first code
@@ -226,17 +197,27 @@ class TestOverlappingCodes:
         screen.quick_mark()
         QApplication.processEvents()
 
-        # Apply second code to overlapping region
+        # Apply second code to same region
+        screen.set_active_code("2", "Challenge", "#FF0000")
+        screen.set_text_selection(50, 100)
+        screen.quick_mark()
+        QApplication.processEvents()
+
+        # Apply third code to overlapping region
         screen.set_active_code("3", "Learning", "#0000FF")
         screen.set_text_selection(70, 120)
         screen.quick_mark()
         QApplication.processEvents()
 
-        # Both codes should be applied (signals)
-        assert len(applied_codes) == 2
+        # All codes should be applied
+        assert len(applied_codes) == 3
+        assert applied_codes[0][0] == "1"
+        assert applied_codes[1][0] == "2"
+        assert applied_codes[2][0] == "3"
 
-        # Verify UI state: both code counts incremented
+        # Verify UI state: all code counts incremented
         assert screen.get_code_count("1") == initial_count_1 + 1
+        assert screen.get_code_count("2") == initial_count_2 + 1
         assert screen.get_code_count("3") == initial_count_3 + 1
 
         attach_screenshot(screen, "CodingScreen - Multiple Codes Applied")
@@ -254,45 +235,34 @@ class TestSegmentHighlighting:
     Tests for visual highlighting of coded text.
     """
 
-    @allure.title("AC #3.1: Screen supports navigation to segment")
+    @allure.title("AC #3.1-2: Navigate to segment and quick mark state tracking")
     @allure.severity(allure.severity_level.CRITICAL)
-    def test_navigate_to_segment(self, coding_screen_with_overlaps):
-        """Screen can navigate to and highlight a segment."""
+    def test_navigate_to_segment_and_quick_mark_state(self, coding_screen_with_overlaps):
+        """Screen navigates to segments and tracks quick mark state based on selection."""
         screen = coding_screen_with_overlaps
 
+        # Navigation
         flash_signals = []
         screen.highlight_flashed.connect(
             lambda start, end: flash_signals.append((start, end))
         )
-
         screen.navigate_to_segment(50, 100)
         QApplication.processEvents()
-
         assert len(flash_signals) == 1
         assert flash_signals[0] == (50, 100)
 
-        attach_screenshot(screen, "CodingScreen - Navigate to Segment")
-
-    @allure.title("AC #3.2: Screen has method to check quick mark state")
-    @allure.severity(allure.severity_level.NORMAL)
-    def test_quick_mark_state(self, coding_screen_with_overlaps):
-        """Screen tracks quick mark enabled state based on selection."""
-        screen = coding_screen_with_overlaps
-
-        # Initially no selection - UI state
-        assert not screen.is_quick_mark_enabled()
-
-        # After selection - UI state should change
-        screen.set_text_selection(10, 50)
-        QApplication.processEvents()
-
-        assert screen.is_quick_mark_enabled()
-
-        # Clear selection - UI state should revert
+        # Quick mark state tracking - clear any selection from navigation
         screen.set_text_selection(0, 0)
         QApplication.processEvents()
-
         assert not screen.is_quick_mark_enabled()
+        screen.set_text_selection(10, 50)
+        QApplication.processEvents()
+        assert screen.is_quick_mark_enabled()
+        screen.set_text_selection(0, 0)
+        QApplication.processEvents()
+        assert not screen.is_quick_mark_enabled()
+
+        attach_screenshot(screen, "CodingScreen - Navigate to Segment")
 
 
 # =============================================================================
@@ -307,26 +277,20 @@ class TestViewSegmentsForCode:
     Tests for segment listing by code.
     """
 
-    @allure.title("AC #4.1: Codes panel shows segment counts")
+    @allure.title("AC #4.1-2: Codes show segment counts and screen supports active code filtering")
     @allure.severity(allure.severity_level.NORMAL)
-    def test_code_shows_segment_count(self, sample_data_with_overlaps):
-        """Codes in the panel show their segment counts."""
+    def test_code_segment_counts_and_active_code_filter(self, coding_screen_with_overlaps, sample_data_with_overlaps):
+        """Codes show segment counts and screen can set active code for filtering."""
+        # Verify segment counts in data
         codes = sample_data_with_overlaps.categories[0].codes
-
         positive = next(c for c in codes if c.name == "Positive Experience")
         assert positive.count == 5
-
         challenge = next(c for c in codes if c.name == "Challenge")
         assert challenge.count == 3
 
-    @allure.title("AC #4.2: Screen supports setting active code for filtering")
-    @allure.severity(allure.severity_level.NORMAL)
-    def test_set_active_code_for_filter(self, coding_screen_with_overlaps):
-        """Screen can set active code which could filter displayed segments."""
+        # Verify active code filtering
         screen = coding_screen_with_overlaps
-
         screen.set_active_code("1", "Positive Experience", "#00FF00")
-
         active = screen.get_active_code()
         assert active["id"] == "1"
         assert active["name"] == "Positive Experience"
@@ -344,10 +308,10 @@ class TestSegmentMemos:
     Tests for segment-level memo functionality.
     """
 
-    @allure.title("AC #6.1-2: Dialog shows segment preview and code info")
-    @allure.severity(allure.severity_level.NORMAL)
-    def test_dialog_shows_segment_preview_and_code_info(self, segment_memo_dialog):
-        """Segment memo dialog shows preview of coded text and code name."""
+    @allure.title("AC #6.1-3: Dialog shows preview, code info, and user can enter memo text")
+    @allure.severity(allure.severity_level.CRITICAL)
+    def test_dialog_shows_preview_and_enter_memo(self, segment_memo_dialog):
+        """Segment memo dialog shows preview, code name, and user can enter memo text."""
         segment_memo_dialog.show()
         QApplication.processEvents()
 
@@ -357,52 +321,33 @@ class TestSegmentMemos:
         title = segment_memo_dialog.get_title()
         assert "Positive Experience" in title
 
-        attach_screenshot(segment_memo_dialog, "SegmentMemoDialog - Preview and Code Info")
-
-    @allure.title("AC #6.3: User can enter memo text")
-    @allure.severity(allure.severity_level.CRITICAL)
-    def test_enter_memo_text(self, segment_memo_dialog):
-        """User can type memo content for the segment."""
-        segment_memo_dialog.show()
-        QApplication.processEvents()
-
         segment_memo_dialog.set_content("Important insight about this passage")
-
         assert (
             segment_memo_dialog.get_content() == "Important insight about this passage"
         )
 
-        attach_screenshot(segment_memo_dialog, "SegmentMemoDialog - Memo Text Entered")
+        attach_screenshot(segment_memo_dialog, "SegmentMemoDialog - Preview and Memo Text")
 
-    @allure.title("AC #6.4: Save button emits save_clicked")
+    @allure.title("AC #6.4-5: Save emits signal and content_changed fires on edit")
     @allure.severity(allure.severity_level.CRITICAL)
-    def test_save_emits_signal(self, segment_memo_dialog):
-        """Save button emits save_clicked signal."""
+    def test_save_and_content_changed_signals(self, segment_memo_dialog):
+        """Save button emits save_clicked and content_changed fires on edit."""
         segment_memo_dialog.show()
         QApplication.processEvents()
 
-        signals = []
-        segment_memo_dialog.save_clicked.connect(lambda: signals.append(True))
-
+        # Test save signal
+        save_signals = []
+        segment_memo_dialog.save_clicked.connect(lambda: save_signals.append(True))
         segment_memo_dialog.set_content("Test memo")
         segment_memo_dialog._on_save()
         QApplication.processEvents()
+        assert len(save_signals) == 1
 
-        assert len(signals) == 1
-
-    @allure.title("AC #6.5: Content changed signal emitted on edit")
-    @allure.severity(allure.severity_level.NORMAL)
-    def test_content_changed_signal(self, segment_memo_dialog):
-        """content_changed signal emitted when memo text changes."""
-        segment_memo_dialog.show()
-        QApplication.processEvents()
-
+        # Test content changed signal
         changes = []
         segment_memo_dialog.content_changed.connect(lambda text: changes.append(text))
-
         segment_memo_dialog._editor.setPlainText("New content")
         QApplication.processEvents()
-
         assert len(changes) >= 1
 
 

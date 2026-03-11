@@ -45,8 +45,8 @@ def _open_project(app_context: AppContext, tmp_path: Path, name: str) -> Path:
 
 @allure.story("QC-INF.01 SingletonThreadPool Connection Factory")
 class TestConnectionFactory:
-    @allure.title("Engine is configured with SingletonThreadPool")
-    def test_engine_uses_singleton_thread_pool(
+    @allure.title("Engine uses SingletonThreadPool and factory returns same conn on same thread")
+    def test_engine_pool_and_factory_same_thread(
         self, app_context: AppContext, tmp_path: Path
     ):
         from sqlalchemy.pool import SingletonThreadPool
@@ -56,39 +56,34 @@ class TestConnectionFactory:
         assert engine is not None
         assert isinstance(engine.pool, SingletonThreadPool)
 
-    @allure.title("connection_factory returns a callable")
-    def test_connection_factory_exists(self, app_context: AppContext, tmp_path: Path):
-        _open_project(app_context, tmp_path, "factory_exists")
         factory = app_context.lifecycle.connection_factory
         assert factory is not None
         assert callable(factory)
-
-    @allure.title("connection_factory returns same connection on same thread")
-    def test_factory_returns_same_conn_on_same_thread(
-        self, app_context: AppContext, tmp_path: Path
-    ):
-        _open_project(app_context, tmp_path, "factory_same")
-        factory = app_context.lifecycle.connection_factory
 
         conn1 = factory()
         conn2 = factory()
         assert conn1 is conn2, "Same thread should get same cached connection"
 
-    @allure.title("connection_factory returns different connection on different thread")
-    def test_factory_returns_different_conn_on_different_thread(
+    @allure.title("Factory returns different conn on different thread with busy_timeout")
+    def test_factory_different_thread_with_busy_timeout(
         self, app_context: AppContext, tmp_path: Path
     ):
+        from sqlalchemy import text
+
         _open_project(app_context, tmp_path, "factory_diff")
         factory = app_context.lifecycle.connection_factory
 
         main_conn = factory()
         worker_conn = None
+        busy_timeout = None
         errors: list[Exception] = []
 
         def _worker():
-            nonlocal worker_conn
+            nonlocal worker_conn, busy_timeout
             try:
                 worker_conn = factory()
+                row = worker_conn.execute(text("PRAGMA busy_timeout")).fetchone()
+                busy_timeout = row[0] if row else None
             except Exception as e:
                 errors.append(e)
 
@@ -99,34 +94,7 @@ class TestConnectionFactory:
         assert not errors, f"Worker thread failed: {errors}"
         assert worker_conn is not None
         assert worker_conn is not main_conn
-
-    @allure.title("Worker thread connection has busy_timeout PRAGMA set")
-    def test_worker_connection_has_busy_timeout(
-        self, app_context: AppContext, tmp_path: Path
-    ):
-        from sqlalchemy import text
-
-        _open_project(app_context, tmp_path, "busy_timeout")
-        factory = app_context.lifecycle.connection_factory
-
-        result = None
-        errors: list[Exception] = []
-
-        def _worker():
-            nonlocal result
-            try:
-                conn = factory()
-                row = conn.execute(text("PRAGMA busy_timeout")).fetchone()
-                result = row[0] if row else None
-            except Exception as e:
-                errors.append(e)
-
-        t = threading.Thread(target=_worker)
-        t.start()
-        t.join(timeout=5)
-
-        assert not errors, f"Worker thread failed: {errors}"
-        assert result == 5000, f"Expected busy_timeout=5000, got {result}"
+        assert busy_timeout == 5000, f"Expected busy_timeout=5000, got {busy_timeout}"
 
 
 # ---------------------------------------------------------------------------
@@ -136,53 +104,43 @@ class TestConnectionFactory:
 
 @allure.story("QC-INF.02 Repo Worker Thread Access")
 class TestRepoWorkerThreadAccess:
-    @allure.title("Worker thread can read data written by main thread")
-    def test_worker_reads_main_thread_writes(
+    @allure.title("Worker and main threads can read each other's writes")
+    def test_cross_thread_reads_and_writes(
         self, app_context: AppContext, tmp_path: Path
     ):
-        _open_project(app_context, tmp_path, "repo_read")
+        _open_project(app_context, tmp_path, "repo_rw")
         code_repo = app_context.coding_context.code_repo
 
         from src.contexts.coding.core.entities import Code, Color
         from src.shared.common.types import CodeId
 
+        # Main writes, worker reads
         code_repo.save(
             Code(id=CodeId(1), name="main-code", color=Color.from_hex("#FF0000"))
         )
         app_context.session.commit()
 
-        results: dict = {}
+        read_results: dict = {}
         errors: list[Exception] = []
 
-        def _worker():
+        def _reader():
             try:
                 codes = code_repo.get_all()
-                results["count"] = len(codes)
-                results["names"] = [c.name for c in codes]
+                read_results["count"] = len(codes)
+                read_results["names"] = [c.name for c in codes]
             except Exception as e:
                 errors.append(e)
 
-        t = threading.Thread(target=_worker)
+        t = threading.Thread(target=_reader)
         t.start()
         t.join(timeout=5)
 
-        assert not errors, f"Worker thread failed: {errors}"
-        assert results["count"] >= 1
-        assert "main-code" in results["names"]
+        assert not errors, f"Worker read failed: {errors}"
+        assert read_results["count"] >= 1
+        assert "main-code" in read_results["names"]
 
-    @allure.title("Main thread can read data written by worker thread")
-    def test_main_reads_worker_thread_writes(
-        self, app_context: AppContext, tmp_path: Path
-    ):
-        _open_project(app_context, tmp_path, "repo_write")
-        code_repo = app_context.coding_context.code_repo
-
-        from src.contexts.coding.core.entities import Code, Color
-        from src.shared.common.types import CodeId
-
-        errors: list[Exception] = []
-
-        def _worker():
+        # Worker writes, main reads
+        def _writer():
             try:
                 code_repo.save(
                     Code(
@@ -195,13 +153,11 @@ class TestRepoWorkerThreadAccess:
             except Exception as e:
                 errors.append(e)
 
-        t = threading.Thread(target=_worker)
+        t = threading.Thread(target=_writer)
         t.start()
         t.join(timeout=5)
 
-        assert not errors, f"Worker thread failed: {errors}"
-
-        # Main thread reads worker's write
+        assert not errors, f"Worker write failed: {errors}"
         codes = code_repo.get_all()
         assert any(c.name == "worker-code" for c in codes)
 
@@ -269,8 +225,8 @@ class TestConcurrentRepoAccess:
 
 @allure.story("QC-INF.04 MCP asyncio.to_thread Integration")
 class TestMcpAsyncToThread:
-    @allure.title("_execute_tool runs safely via asyncio.to_thread")
-    def test_execute_tool_in_thread(self, app_context: AppContext, tmp_path: Path):
+    @allure.title("_execute_tool runs safely via asyncio.to_thread for reads and writes")
+    def test_execute_tool_reads_and_writes_in_thread(self, app_context: AppContext, tmp_path: Path):
         import asyncio
 
         _open_project(app_context, tmp_path, "async_thread")
@@ -280,30 +236,15 @@ class TestMcpAsyncToThread:
         server = MCPServerManager(ctx=app_context)
 
         async def _run():
+            # Concurrent reads
             r1, r2 = await asyncio.gather(
                 asyncio.to_thread(server._execute_tool, "list_codes", {}, None),
                 asyncio.to_thread(server._execute_tool, "list_codes", {}, None),
             )
-            return r1, r2
+            assert r1["success"], f"Tool call 1 failed: {r1}"
+            assert r2["success"], f"Tool call 2 failed: {r2}"
 
-        r1, r2 = asyncio.run(_run())
-
-        assert r1["success"], f"Tool call 1 failed: {r1}"
-        assert r2["success"], f"Tool call 2 failed: {r2}"
-
-    @allure.title("Sequential tool writes via to_thread produce correct results")
-    def test_sequential_writes_via_to_thread(
-        self, app_context: AppContext, tmp_path: Path
-    ):
-        import asyncio
-
-        _open_project(app_context, tmp_path, "async_writes")
-
-        from src.shared.infra.mcp_server import MCPServerManager
-
-        server = MCPServerManager(ctx=app_context)
-
-        async def _run():
+            # Sequential write then read
             result = await asyncio.to_thread(
                 server._execute_tool,
                 "create_code",
