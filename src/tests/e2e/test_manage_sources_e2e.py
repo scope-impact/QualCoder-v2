@@ -637,6 +637,7 @@ class TestOrganizeSources:
                 ctx.folders_context.folder_repo,
                 ctx.sources_context.source_repo,
                 ctx.event_bus,
+                session=ctx.session,
             )
             assert folder_result.is_success
             folder = folder_result.data
@@ -650,6 +651,7 @@ class TestOrganizeSources:
                 folder_id=folder.id,
             )
             ctx.sources_context.source_repo.save(source)
+            ctx.session.commit()
 
         with allure.step("Step 2: Close project"):
             ctx.close_project()
@@ -943,6 +945,7 @@ class TestSourceManagementIntegration:
                 origin="test_import",
             )
             ctx.sources_context.source_repo.save(source)
+            ctx.session.commit()
 
         with allure.step("Step 2: Close project and stop context"):
             ctx.close_project()
@@ -1016,6 +1019,7 @@ class TestSourceManagementIntegration:
                 file_size=sample_files.wav_file.stat().st_size,
             )
             ctx.sources_context.source_repo.save(audio_source)
+            ctx.session.commit()
 
         with allure.step("Step 2: Close project"):
             ctx.close_project()

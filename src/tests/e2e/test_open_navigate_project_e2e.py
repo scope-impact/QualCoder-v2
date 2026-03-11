@@ -47,6 +47,7 @@ def project_with_data(app_context: AppContext, tmp_path: Path) -> Path:
         fulltext="Previously saved content",
     )
     app_context.sources_context.source_repo.save(source)
+    app_context.session.commit()
     app_context.close_project()
     return project_path
 

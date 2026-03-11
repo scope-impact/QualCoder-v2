@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import logging
 import threading
+from collections.abc import Callable
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -24,13 +25,22 @@ class Session:
     """
     Project-scoped database session.
 
-    Each thread gets its own connection (thread-local storage).
+    Wraps a connection factory that returns thread-local connections.
     Command handlers call session.commit() to persist changes.
     Repos never commit — they only execute.
+
+    The connection factory must return the same connection that repos use
+    (i.e., the ThreadSafeConnectionProxy's underlying connection) so that
+    session.commit() commits the repos' writes.
     """
 
-    def __init__(self, engine: Engine) -> None:
+    def __init__(
+        self,
+        engine: Engine,
+        connection_factory: Callable[[], Connection] | None = None,
+    ) -> None:
         self._engine = engine
+        self._connection_factory = connection_factory
         self._local = threading.local()
 
     @property
@@ -41,6 +51,9 @@ class Session:
     @property
     def connection(self) -> Connection:
         """Thread-local connection. Same thread always gets the same one."""
+        if self._connection_factory is not None:
+            return self._connection_factory()
+        # Fallback: create our own connection (for tests without a proxy)
         conn = getattr(self._local, "conn", None)
         if conn is None:
             from sqlalchemy import text

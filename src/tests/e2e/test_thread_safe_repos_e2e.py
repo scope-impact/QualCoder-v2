@@ -149,6 +149,7 @@ class TestRepoWorkerThreadAccess:
         code_repo.save(
             Code(id=CodeId(1), name="main-code", color=Color.from_hex("#FF0000"))
         )
+        app_context.session.commit()
 
         results: dict = {}
         errors: list[Exception] = []
@@ -190,6 +191,7 @@ class TestRepoWorkerThreadAccess:
                         color=Color.from_hex("#00FF00"),
                     )
                 )
+                app_context.session.commit()
             except Exception as e:
                 errors.append(e)
 
@@ -234,6 +236,7 @@ class TestConcurrentRepoAccess:
                             color=Color.from_hex("#AA0000"),
                         )
                     )
+                    app_context.session.commit()
                     code_repo.get_all()
             except Exception as e:
                 errors.append(("worker", e))

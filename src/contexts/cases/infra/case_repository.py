@@ -101,7 +101,7 @@ class SQLiteCaseRepository:
             self._outbox.write_upsert(
                 "case", case.id.value, {"name": case.name, "memo": case.memo}
             )
-        self._conn.commit()
+
 
     def delete(self, case_id: CaseId) -> None:
         """Delete a case and its attributes/links."""
@@ -118,7 +118,7 @@ class SQLiteCaseRepository:
         self._conn.execute(delete(cas_case).where(cas_case.c.id == case_id.value))
         if self._outbox:
             self._outbox.write_delete("case", case_id.value)
-        self._conn.commit()
+
 
     def exists(self, case_id: CaseId) -> bool:
         """Check if a case exists."""
@@ -172,7 +172,7 @@ class SQLiteCaseRepository:
                 date=datetime.now(UTC).isoformat(),
             )
         )
-        self._conn.commit()
+
 
     def save_attribute(self, case_id: CaseId, attribute: CaseAttribute) -> None:
         """Save a single case attribute."""
@@ -186,7 +186,7 @@ class SQLiteCaseRepository:
 
         values = self._attribute_to_values(case_id, attribute)
         self._conn.execute(cas_attribute.insert().values(**values))
-        self._conn.commit()
+
 
     def unlink_source(self, case_id: CaseId, source_id: SourceId) -> None:
         """Unlink a source from a case."""
@@ -196,7 +196,7 @@ class SQLiteCaseRepository:
                 cas_source_link.c.source_id == source_id.value,
             )
         )
-        self._conn.commit()
+
 
     def update_source_name(self, source_id: SourceId, new_name: str) -> None:
         """
@@ -209,7 +209,7 @@ class SQLiteCaseRepository:
             .where(cas_source_link.c.source_id == source_id.value)
             .values(source_name=new_name)
         )
-        self._conn.commit()
+
 
     def get_source_ids(self, case_id: CaseId) -> list[str]:
         """Get list of source IDs linked to a case."""
@@ -250,7 +250,7 @@ class SQLiteCaseRepository:
             cas_attribute.c.name == attr_name,
         )
         result = self._conn.execute(stmt)
-        self._conn.commit()
+
         return result.rowcount > 0
 
     def _save_attributes(

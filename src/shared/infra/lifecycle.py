@@ -135,12 +135,18 @@ class ProjectLifecycle:
                 setup_conn.commit()
 
             self._connection = self._engine.connect()
-            self._session = Session(self._engine)
             self._current_path = path
 
             # Store main-thread connection in thread-local for the factory
             self._thread_local.connection = self._connection
             self._connection_factory = self._get_or_create_connection
+
+            # Session uses the same connection factory so session.commit()
+            # commits the same connection that repos use via the proxy.
+            self._session = Session(
+                self._engine,
+                connection_factory=self._get_or_create_connection,
+            )
 
             logger.info("Database opened: %s", path)
             return Success(self._connection)
