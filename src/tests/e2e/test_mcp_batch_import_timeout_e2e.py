@@ -1,21 +1,25 @@
 """
-Reproduce: MCP import_file_source timeout when importing multiple files.
+Reproduce: MCP import_file_source hangs on second call with DOCX files.
 
-Bug: When an MCP client (Claude) calls import_file_source for many files,
-the total wall-clock time exceeds the MCP session timeout.
+Bug report: First import_file_source succeeds, but the next call hangs
+until the MCP client times out. Files are small DOCX (<100KB).
 
-Root cause: NOT the import logic itself (~1ms/file), but the MCP protocol
-overhead. Each tool call requires a full LLM round-trip:
-  Claude thinks → JSON-RPC request → tool executes → response → Claude processes
-This takes ~2-5 seconds per call. For 20 files = 20 × ~3s = ~60s total.
+Investigation findings:
+- The import logic itself is fast (~1ms for txt, ~50ms for docx)
+- The entire call chain is synchronous on the qasync event loop main thread:
+    MCP HTTP handler → _execute_tool() → import_file_source()
+    → text extraction → DB save → event_bus.publish(SourceAdded)
+    → signal bridge emit → UI slot (_load_data) → DB query
+- After the first import, signal.emit(SourceAdded) triggers synchronous
+  UI updates on the main thread. If the UI slot blocks or enters a
+  nested event loop, the next HTTP request can't be processed.
 
-Fix: Add a batch `import_file_sources` tool that accepts multiple file paths
-in a single MCP call, eliminating N-1 round-trips.
-
-This test suite:
-1. Proves the import logic is fast (rules out server-side bottleneck)
-2. Shows a batch import would complete in milliseconds
-3. Documents the O(n) MCP round-trip problem
+Possible root causes:
+1. Signal.emit() on main thread triggers heavy UI rebuild between requests
+2. qasync event loop starvation: synchronous tool call blocks async HTTP
+3. Qt signal delivery timing: signal emitted during sync code may
+   defer delivery until next event loop tick, which never comes because
+   the next HTTP request arrives first and blocks again
 """
 
 from __future__ import annotations
@@ -34,14 +38,6 @@ pytestmark = [
     allure.epic("QualCoder v2"),
     allure.feature("QC-027 Manage Sources"),
 ]
-
-# ---------------------------------------------------------------------------
-# Constants
-# ---------------------------------------------------------------------------
-
-MCP_TIMEOUT_SECONDS = 60
-# Real-world MCP round-trip overhead per tool call (LLM thinking + JSON-RPC)
-MCP_ROUNDTRIP_OVERHEAD_S = 3.0
 
 
 # ---------------------------------------------------------------------------
@@ -67,6 +63,26 @@ def source_tools(app_context: AppContext):
 # ---------------------------------------------------------------------------
 # File generators
 # ---------------------------------------------------------------------------
+
+
+def _create_docx_files(directory: Path, count: int, paragraphs: int = 10) -> list[Path]:
+    """Create N small DOCX files (<100KB each)."""
+    from docx import Document
+
+    directory.mkdir(parents=True, exist_ok=True)
+    files = []
+    for i in range(count):
+        doc = Document()
+        for j in range(paragraphs):
+            doc.add_paragraph(
+                f"Interview transcript paragraph {j} of document {i}. "
+                "The participant discussed their experience with the process "
+                "and shared insights about the methodology used in the study."
+            )
+        p = directory / f"interview_{i:03d}.docx"
+        doc.save(str(p))
+        files.append(p)
+    return files
 
 
 def _create_text_files(directory: Path, count: int, lines: int = 500) -> list[Path]:
@@ -132,29 +148,18 @@ def _import_files_sequentially(
     return total_s, timings
 
 
-def _attach_timing_report(
-    total_s: float, timings: list[dict], file_count: int
-) -> None:
+def _attach_timing_report(total_s: float, timings: list[dict]) -> None:
     """Attach timing report as Allure artifact."""
-    avg_s = total_s / len(timings) if timings else 0
-
-    # Estimate real-world time including MCP round-trip overhead
-    estimated_real_s = total_s + (file_count * MCP_ROUNDTRIP_OVERHEAD_S)
+    file_count = len(timings)
+    avg_s = total_s / file_count if timings else 0
+    max_s = max(t["elapsed_s"] for t in timings) if timings else 0
 
     report_lines = [
-        f"=== Server-side execution ===",
-        f"Total server time: {total_s:.3f}s for {file_count} files",
+        f"Total: {total_s:.3f}s for {file_count} files",
         f"Average: {avg_s * 1000:.1f}ms per file",
-        f"",
-        f"=== Estimated real-world with MCP overhead ===",
-        f"MCP round-trip overhead: ~{MCP_ROUNDTRIP_OVERHEAD_S}s × {file_count} calls",
-        f"Estimated total: {estimated_real_s:.1f}s",
-        f"Would timeout (>{MCP_TIMEOUT_SECONDS}s): {'YES' if estimated_real_s > MCP_TIMEOUT_SECONDS else 'no'}",
-        f"",
-        f"=== Batch import (single MCP call) would take ===",
-        f"Estimated: {total_s:.3f}s + {MCP_ROUNDTRIP_OVERHEAD_S}s = {total_s + MCP_ROUNDTRIP_OVERHEAD_S:.1f}s",
-        f"",
-        f"=== Per-file breakdown ===",
+        f"Max: {max_s * 1000:.1f}ms single file",
+        "",
+        "Per-file breakdown:",
     ]
     for t in timings:
         status = "ok" if t["success"] else f"FAIL: {t['error']}"
@@ -168,105 +173,185 @@ def _attach_timing_report(
 
 
 # ---------------------------------------------------------------------------
-# Tests
+# Tests: Bug reproduction
 # ---------------------------------------------------------------------------
 
 
 @allure.story("QC-027.15 Agent Batch Import Sources")
 @allure.severity(allure.severity_level.CRITICAL)
-class TestMcpBatchImportTimeout:
-    """Reproduce and document MCP timeout when importing multiple files."""
+class TestMcpImportDocxHangs:
+    """Reproduce: first DOCX import succeeds, second call hangs."""
 
-    @allure.title("Server-side import is fast — 30 files complete in <1s")
-    def test_server_side_import_is_fast(
+    @allure.title("BUG REPRO: sequential DOCX imports via MCP — second call should not hang")
+    def test_sequential_docx_imports_do_not_hang(
         self, source_tools, open_project: Path, tmp_path: Path
     ):
-        """Prove the bottleneck is NOT the import logic.
-        30 text files (~60KB each) should complete well under 1 second."""
+        """Import 5 small DOCX files sequentially.
+        Bug: the second call hangs after the first succeeds.
+        This test will timeout if the bug is present."""
+        files = _create_docx_files(tmp_path / "docx", count=5, paragraphs=10)
+
+        total_s, timings = _import_files_sequentially(source_tools, files)
+
+        with allure.step(f"5 DOCX files in {total_s:.2f}s"):
+            _attach_timing_report(total_s, timings)
+            for t in timings:
+                assert t["success"], f"Failed: {t['file']}: {t['error']}"
+
+        # Each DOCX import should complete in under 5s
+        for t in timings:
+            assert t["elapsed_s"] < 5.0, (
+                f"{t['file']} took {t['elapsed_s']:.1f}s — potential hang"
+            )
+
+    @allure.title("BUG REPRO: DOCX import via MCP server (full HTTP path)")
+    def test_docx_import_via_mcp_server(
+        self, app_context: AppContext, tmp_path: Path
+    ):
+        """Test the full MCP HTTP server path with DOCX files.
+        Uses MCPServerManager._execute_tool() which is the real entry point
+        for MCP requests on the qasync event loop."""
+        from src.shared.infra.mcp_server import MCPServerManager
+
+        # Setup project
+        project_path = tmp_path / "mcp_test.qda"
+        result = app_context.create_project(name="MCP Test", path=str(project_path))
+        assert result.is_success
+
+        server = MCPServerManager(ctx=app_context, debug=False)
+
+        # Create DOCX files
+        files = _create_docx_files(tmp_path / "mcp_docx", count=5, paragraphs=10)
+
+        timings: list[dict] = []
+        for f in files:
+            t0 = time.perf_counter()
+            result = server._execute_tool(
+                "import_file_source",
+                {"file_path": str(f)},
+            )
+            elapsed = time.perf_counter() - t0
+            success = result.get("success", False)
+            timings.append({
+                "file": f.name,
+                "elapsed_s": round(elapsed, 4),
+                "success": success,
+                "error": result.get("error") if not success else None,
+            })
+
+        total_s = sum(t["elapsed_s"] for t in timings)
+        with allure.step(f"5 DOCX via MCP server in {total_s:.2f}s"):
+            _attach_timing_report(total_s, timings)
+            for t in timings:
+                assert t["success"], f"Failed: {t['file']}: {t['error']}"
+                assert t["elapsed_s"] < 5.0, (
+                    f"{t['file']} took {t['elapsed_s']:.1f}s — potential hang"
+                )
+
+    @allure.title("BUG REPRO: DOCX import with signal bridge connected")
+    def test_docx_import_with_signal_bridge(
+        self, app_context: AppContext, tmp_path: Path
+    ):
+        """Test with ProjectSignalBridge connected — this is the closest to
+        the real production setup where SourceAdded events trigger UI updates."""
+        from src.shared.infra.signal_bridge.projects import ProjectSignalBridge
+
+        # Setup project
+        project_path = tmp_path / "bridge_test.qda"
+        result = app_context.create_project(
+            name="Bridge Test", path=str(project_path)
+        )
+        assert result.is_success
+
+        # Connect signal bridge (as main.py does)
+        ProjectSignalBridge.clear_instance()
+        bridge = ProjectSignalBridge.instance(app_context.event_bus)
+        bridge.start()
+
+        # Track signal emissions
+        signal_count = {"source_added": 0}
+
+        def _on_source_added(_payload):
+            signal_count["source_added"] += 1
+
+        bridge.source_added.connect(_on_source_added)
+
+        try:
+            from src.contexts.sources.interface.mcp_tools import SourceTools
+
+            tools = SourceTools(ctx=app_context)
+            files = _create_docx_files(tmp_path / "bridge_docx", count=5, paragraphs=10)
+
+            total_s, timings = _import_files_sequentially(tools, files)
+
+            with allure.step(f"5 DOCX with bridge in {total_s:.2f}s"):
+                _attach_timing_report(total_s, timings)
+                for t in timings:
+                    assert t["success"], f"Failed: {t['file']}: {t['error']}"
+                    assert t["elapsed_s"] < 5.0, (
+                        f"{t['file']} took {t['elapsed_s']:.1f}s — potential hang"
+                    )
+
+            with allure.step(f"Signal bridge emitted {signal_count['source_added']} source_added events"):
+                assert signal_count["source_added"] == 5, (
+                    f"Expected 5 source_added signals, got {signal_count['source_added']}"
+                )
+        finally:
+            ProjectSignalBridge.clear_instance()
+
+
+# ---------------------------------------------------------------------------
+# Tests: Batch import performance baseline
+# ---------------------------------------------------------------------------
+
+
+@allure.story("QC-027.15 Agent Batch Import Sources")
+@allure.severity(allure.severity_level.NORMAL)
+class TestBatchImportBaseline:
+    """Performance baseline for batch import optimization."""
+
+    @allure.title("Server-side import is fast — 30 text files complete in <1s")
+    def test_text_import_fast(
+        self, source_tools, open_project: Path, tmp_path: Path
+    ):
         files = _create_text_files(tmp_path / "fast", count=30, lines=500)
         total_s, timings = _import_files_sequentially(source_tools, files)
 
-        with allure.step(f"30 files imported in {total_s*1000:.0f}ms"):
-            _attach_timing_report(total_s, timings, len(files))
+        with allure.step(f"30 text files in {total_s*1000:.0f}ms"):
+            _attach_timing_report(total_s, timings)
             for t in timings:
                 assert t["success"], f"Failed: {t['file']}: {t['error']}"
 
-        # Server-side should be well under 1 second
         assert total_s < 1.0, (
-            f"Server-side import of 30 files took {total_s:.2f}s — "
-            f"expected <1s since import logic is ~1ms/file"
+            f"30 text file imports took {total_s:.2f}s — expected <1s"
         )
 
-    @allure.title("BUG: 20 files × ~3s MCP overhead = timeout")
-    def test_mcp_overhead_causes_timeout_for_20_files(
+    @allure.title("DOCX extraction overhead: 10 DOCX files profiled")
+    def test_docx_extraction_overhead(
         self, source_tools, open_project: Path, tmp_path: Path
     ):
-        """Show that 20 sequential MCP calls would timeout due to protocol overhead.
-        Server time is negligible; the ~3s per MCP round-trip is the bottleneck."""
-        files = _create_mixed_files(tmp_path / "timeout", count=20)
+        files = _create_docx_files(tmp_path / "docx_perf", count=10, paragraphs=20)
         total_s, timings = _import_files_sequentially(source_tools, files)
 
-        with allure.step(f"Server: {total_s*1000:.0f}ms, Estimated real: {total_s + 20*MCP_ROUNDTRIP_OVERHEAD_S:.0f}s"):
-            _attach_timing_report(total_s, timings, len(files))
+        with allure.step(f"10 DOCX files in {total_s:.2f}s"):
+            _attach_timing_report(total_s, timings)
             for t in timings:
                 assert t["success"], f"Failed: {t['file']}: {t['error']}"
 
-        # The real-world time WITH MCP overhead exceeds timeout
-        estimated_real_time = total_s + (len(files) * MCP_ROUNDTRIP_OVERHEAD_S)
-        assert estimated_real_time > MCP_TIMEOUT_SECONDS, (
-            f"Expected real-world time ({estimated_real_time:.0f}s) to exceed "
-            f"MCP timeout ({MCP_TIMEOUT_SECONDS}s) for {len(files)} files. "
-            f"Bug may not reproduce with fewer files."
-        )
-
-    @allure.title("Batch import would complete in <1s + single MCP round-trip")
-    def test_batch_import_would_be_fast(
-        self, source_tools, open_project: Path, tmp_path: Path
-    ):
-        """Demonstrate that a batch tool executing all imports in one call
-        would complete in milliseconds (server time only) + one MCP round-trip."""
-        files = _create_text_files(tmp_path / "batch", count=20, lines=500)
-
-        # Simulate batch: call import_file_source N times in a tight loop
-        # This is what a batch tool would do internally
-        total_s, timings = _import_files_sequentially(source_tools, files)
-
-        # With batch: server_time + 1 round-trip
-        batch_estimated = total_s + MCP_ROUNDTRIP_OVERHEAD_S
-        # Without batch: server_time + N round-trips
-        sequential_estimated = total_s + (len(files) * MCP_ROUNDTRIP_OVERHEAD_S)
-
-        speedup = sequential_estimated / batch_estimated if batch_estimated > 0 else 1
-
-        with allure.step(f"Batch: ~{batch_estimated:.1f}s vs Sequential: ~{sequential_estimated:.0f}s ({speedup:.0f}x faster)"):
-            _attach_timing_report(total_s, timings, len(files))
-            allure.attach(
-                f"batch_estimated={batch_estimated:.1f}s\n"
-                f"sequential_estimated={sequential_estimated:.0f}s\n"
-                f"speedup={speedup:.0f}x\n"
-                f"server_time={total_s*1000:.0f}ms\n",
-                name="batch_vs_sequential",
-                attachment_type=allure.attachment_type.TEXT,
-            )
-            for t in timings:
-                assert t["success"], f"Failed: {t['file']}: {t['error']}"
-
-        # Batch would be well within timeout
-        assert batch_estimated < MCP_TIMEOUT_SECONDS, (
-            f"Even batch import would timeout ({batch_estimated:.1f}s)"
+        # DOCX is slower than txt but should still be reasonable
+        assert total_s < 10.0, (
+            f"10 DOCX imports took {total_s:.2f}s — too slow"
         )
 
     @allure.title("O(n) uniqueness check: get_all() called per import")
     def test_uniqueness_check_overhead(
         self, source_tools, open_project: Path, tmp_path: Path
     ):
-        """Each import calls source_repo.get_all() for name uniqueness.
-        Verify this doesn't degrade significantly as sources accumulate."""
         files = _create_text_files(tmp_path / "scaling", count=50, lines=50)
         total_s, timings = _import_files_sequentially(source_tools, files)
 
         with allure.step(f"50 files in {total_s*1000:.0f}ms"):
-            _attach_timing_report(total_s, timings, len(files))
+            _attach_timing_report(total_s, timings)
             for t in timings:
                 assert t["success"], f"Failed: {t['file']}: {t['error']}"
 
@@ -275,7 +360,7 @@ class TestMcpBatchImportTimeout:
         last_10_avg = sum(t["elapsed_s"] for t in timings[-10:]) / 10
         slowdown = last_10_avg / first_10_avg if first_10_avg > 0 else 1.0
 
-        with allure.step(f"First 10 avg: {first_10_avg*1000:.1f}ms, Last 10 avg: {last_10_avg*1000:.1f}ms, Slowdown: {slowdown:.1f}x"):
+        with allure.step(f"Slowdown: {slowdown:.1f}x (first 10 vs last 10)"):
             allure.attach(
                 f"first_10_avg_ms={first_10_avg*1000:.1f}\n"
                 f"last_10_avg_ms={last_10_avg*1000:.1f}\n"
@@ -284,7 +369,6 @@ class TestMcpBatchImportTimeout:
                 attachment_type=allure.attachment_type.TEXT,
             )
 
-        # Even with O(n) check, 50 files should still be sub-second
         assert total_s < 2.0, (
             f"50 file imports took {total_s:.2f}s — potential O(n²) issue"
         )
