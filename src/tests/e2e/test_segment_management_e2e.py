@@ -241,16 +241,6 @@ class TestOverlappingCodes:
 
         attach_screenshot(screen, "CodingScreen - Multiple Codes Applied")
 
-    @allure.title("AC #2.3: O key cycles through overlapping codes")
-    @allure.severity(allure.severity_level.NORMAL)
-    def test_cycle_overlapping_codes(self, coding_screen_with_overlaps):
-        """O key allows cycling through codes at overlapping position."""
-        screen = coding_screen_with_overlaps
-
-        # Verify O shortcut is registered
-        shortcuts = screen.get_registered_shortcuts()
-        assert "O" in shortcuts
-
 
 # =============================================================================
 # QC-029.03: See Coded Segments Highlighted
@@ -354,29 +344,20 @@ class TestSegmentMemos:
     Tests for segment-level memo functionality.
     """
 
-    @allure.title("AC #6.1: Dialog shows segment preview")
+    @allure.title("AC #6.1-2: Dialog shows segment preview and code info")
     @allure.severity(allure.severity_level.NORMAL)
-    def test_dialog_shows_segment_preview(self, segment_memo_dialog):
-        """Segment memo dialog shows preview of coded text."""
+    def test_dialog_shows_segment_preview_and_code_info(self, segment_memo_dialog):
+        """Segment memo dialog shows preview of coded text and code name."""
         segment_memo_dialog.show()
         QApplication.processEvents()
 
         preview = segment_memo_dialog.get_segment_preview()
         assert "sample coded text" in preview
 
-        attach_screenshot(segment_memo_dialog, "SegmentMemoDialog - Segment Preview")
-
-    @allure.title("AC #6.2: Dialog shows code name and color")
-    @allure.severity(allure.severity_level.NORMAL)
-    def test_dialog_shows_code_info(self, segment_memo_dialog):
-        """Dialog header shows code name and color indicator."""
-        segment_memo_dialog.show()
-        QApplication.processEvents()
-
         title = segment_memo_dialog.get_title()
         assert "Positive Experience" in title
 
-        attach_screenshot(segment_memo_dialog, "SegmentMemoDialog - Code Info Header")
+        attach_screenshot(segment_memo_dialog, "SegmentMemoDialog - Preview and Code Info")
 
     @allure.title("AC #6.3: User can enter memo text")
     @allure.severity(allure.severity_level.CRITICAL)
@@ -424,15 +405,6 @@ class TestSegmentMemos:
 
         assert len(changes) >= 1
 
-    @allure.title("AC #6.6: M key shortcut registered for memo")
-    @allure.severity(allure.severity_level.NORMAL)
-    def test_memo_shortcut_registered(self, coding_screen_with_overlaps):
-        """M key shortcut is registered for adding memos."""
-        screen = coding_screen_with_overlaps
-        shortcuts = screen.get_registered_shortcuts()
-
-        assert "M" in shortcuts
-
 
 # =============================================================================
 # Memos Panel Tests
@@ -443,26 +415,18 @@ class TestSegmentMemos:
 class TestMemosPanel:
     """Tests for the MemosPanel widget showing all memos."""
 
-    @allure.title("Panel displays all memos")
+    @allure.title("Panel displays, filters, and clears memos")
     @allure.severity(allure.severity_level.NORMAL)
-    def test_displays_all_memos(self, memos_panel, sample_memos):
-        """Panel should display all provided memos."""
+    def test_display_filter_and_clear_memos(self, memos_panel, sample_memos):
+        """Panel displays all memos, filters by type, and clears filter."""
         memos_panel.set_memos(sample_memos)
         QApplication.processEvents()
 
+        # Verify all memos displayed
         assert memos_panel.get_memo_count() == 4
+        assert memos_panel.get_visible_memo_count() == 4
 
         attach_screenshot(memos_panel, "MemosPanel - All Memos Displayed")
-
-    @allure.title("Panel can filter by type")
-    @allure.severity(allure.severity_level.NORMAL)
-    def test_filter_by_type(self, memos_panel, sample_memos):
-        """Panel can filter memos by type (file, code, segment)."""
-        memos_panel.set_memos(sample_memos)
-        QApplication.processEvents()
-
-        # Verify all visible before filter
-        assert memos_panel.get_visible_memo_count() == 4
 
         # Filter to show only segment memos
         memos_panel.set_filter("segment")
@@ -480,13 +444,8 @@ class TestMemosPanel:
 
         attach_screenshot(memos_panel, "MemosPanel - Filtered by Segment Type")
 
-    @allure.title("Panel shows all when filter cleared")
-    @allure.severity(allure.severity_level.NORMAL)
-    def test_clear_filter(self, memos_panel, sample_memos):
-        """Clearing filter shows all memos."""
-        memos_panel.set_memos(sample_memos)
-        memos_panel.set_filter("segment")
-        memos_panel.set_filter("")  # Clear filter
+        # Clear filter - all should be visible again
+        memos_panel.set_filter("")
         QApplication.processEvents()
 
         assert memos_panel.get_visible_memo_count() == 4

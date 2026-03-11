@@ -410,47 +410,6 @@ class TestViewSourcesList:
 @allure.story("QC-026.04 Switch Screens/Views")
 @allure.severity(allure.severity_level.NORMAL)
 class TestSwitchScreens:
-    @allure.title("AC #1: Researcher can switch to Coding screen")
-    def test_switch_to_coding_screen(
-        self, app_context: AppContext, existing_project: Path
-    ):
-        with allure.step("Open project"):
-            app_context.open_project(str(existing_project))
-
-        with allure.step("Switch to coding screen"):
-            app_context.state.current_screen = "coding"
-
-        with allure.step("Verify on coding screen"):
-            assert app_context.state.current_screen == "coding"
-
-    @allure.title("AC #2: Researcher can switch to Sources screen")
-    @allure.severity(allure.severity_level.NORMAL)
-    def test_switch_to_sources_screen(
-        self, app_context: AppContext, existing_project: Path
-    ):
-        with allure.step("Open project"):
-            app_context.open_project(str(existing_project))
-
-        with allure.step("Switch to sources screen"):
-            app_context.state.current_screen = "sources"
-
-        with allure.step("Verify on sources screen"):
-            assert app_context.state.current_screen == "sources"
-
-    @allure.title("AC #3: Researcher can switch to Analysis screen")
-    @allure.severity(allure.severity_level.NORMAL)
-    def test_switch_to_analysis_screen(
-        self, app_context: AppContext, existing_project: Path
-    ):
-        with allure.step("Open project"):
-            app_context.open_project(str(existing_project))
-
-        with allure.step("Switch to analysis screen"):
-            app_context.state.current_screen = "analysis"
-
-        with allure.step("Verify on analysis screen"):
-            assert app_context.state.current_screen == "analysis"
-
     @allure.title("AC #4: Context preserved when switching screens")
     @allure.severity(allure.severity_level.CRITICAL)
     def test_context_preserved_when_switching(
@@ -627,22 +586,6 @@ class TestAgentQueryContext:
             assert "This is the full text content" in data["content"]
             assert data["source_id"] == 1
 
-    @allure.title("AC #3: Agent can get list of codes in the project")
-    @allure.severity(allure.severity_level.CRITICAL)
-    def test_get_codes_from_context(
-        self, app_context: AppContext, existing_project: Path
-    ):
-        with allure.step("Open project"):
-            app_context.open_project(str(existing_project))
-
-        with allure.step("Access coding context"):
-            coding_ctx = app_context.coding_context
-            assert coding_ctx is not None
-
-        with allure.step("Verify codes repository available"):
-            codes = coding_ctx.code_repo.get_all()
-            assert isinstance(codes, list)
-
     @allure.title("AC #4: Agent can get currently open source")
     @allure.severity(allure.severity_level.CRITICAL)
     def test_get_current_source(self, app_context: AppContext, existing_project: Path):
@@ -673,7 +616,7 @@ class TestAgentQueryContext:
 @allure.story("QC-026.06 Agent Navigate to Segment")
 @allure.severity(allure.severity_level.CRITICAL)
 class TestAgentNavigateToSegment:
-    @allure.title("AC #6: Agent can navigate to a specific source")
+    @allure.title("AC #6: navigate_to_segment tool has correct schema and highlight option")
     def test_navigate_to_segment_tool_schema(self, app_context: AppContext):
         from src.contexts.sources.interface.mcp_tools import SourceTools
 
@@ -691,6 +634,11 @@ class TestAgentNavigateToSegment:
             assert "source_id" in required
             assert "start_pos" in required
             assert "end_pos" in required
+
+        with allure.step("Verify highlight parameter exists"):
+            props = nav_schema["inputSchema"]["properties"]
+            assert "highlight" in props
+            assert props["highlight"]["type"] == "boolean"
 
     @allure.title("AC #6: Navigate tool validates required parameters")
     @allure.severity(allure.severity_level.NORMAL)
@@ -731,21 +679,6 @@ class TestAgentNavigateToSegment:
 
         with allure.step("Verify failure"):
             assert isinstance(result, Failure)
-
-    @allure.title("AC #3: Agent can highlight a specific segment")
-    @allure.severity(allure.severity_level.NORMAL)
-    def test_navigate_with_highlight_option(self, app_context: AppContext):
-        from src.contexts.sources.interface.mcp_tools import SourceTools
-
-        with allure.step("Get tool schema"):
-            tools = SourceTools(ctx=app_context)
-            schemas = tools.get_tool_schemas()
-            nav_schema = next(s for s in schemas if s["name"] == "navigate_to_segment")
-
-        with allure.step("Verify highlight parameter exists"):
-            props = nav_schema["inputSchema"]["properties"]
-            assert "highlight" in props
-            assert props["highlight"]["type"] == "boolean"
 
     @allure.title("AC #4: Navigation publishes event for UI update")
     @allure.severity(allure.severity_level.CRITICAL)

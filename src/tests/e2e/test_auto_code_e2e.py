@@ -158,44 +158,31 @@ class TestPatternSearch:
         assert auto_code_dialog.get_pattern() == "time management"
         attach_screenshot(auto_code_dialog, "AutoCode - Pattern Search")
 
-    @allure.title("AC #1.3: Match type options available")
+    @allure.title("AC #1.3-5: Match type and scope options available and selectable")
     @allure.severity(allure.severity_level.NORMAL)
-    def test_match_type_options(self, auto_code_dialog):
-        """Dialog provides match type options (exact, contains, regex)."""
+    def test_match_type_and_scope_options(self, auto_code_dialog):
+        """Dialog provides match type and scope options that can be selected."""
         auto_code_dialog.show()
         QApplication.processEvents()
 
+        # Verify match type options
         match_types = auto_code_dialog.get_available_match_types()
-
         assert "exact" in match_types
         assert "contains" in match_types
         assert "regex" in match_types
-        attach_screenshot(auto_code_dialog, "AutoCode - Match Type Options")
 
-    @allure.title("AC #1.4: User can select match type")
-    @allure.severity(allure.severity_level.NORMAL)
-    def test_select_match_type(self, auto_code_dialog):
-        """User can select a match type from dropdown."""
-        auto_code_dialog.show()
-        QApplication.processEvents()
-
+        # Verify user can select match type
         auto_code_dialog._match_combo.setCurrentIndex(1)  # "Contains"
         QApplication.processEvents()
-
         assert auto_code_dialog._get_match_type_str() == "contains"
 
-    @allure.title("AC #1.5: Scope options available")
-    @allure.severity(allure.severity_level.NORMAL)
-    def test_scope_options(self, auto_code_dialog):
-        """Dialog provides scope options (all, first, last)."""
-        auto_code_dialog.show()
-        QApplication.processEvents()
-
+        # Verify scope options
         scopes = auto_code_dialog.get_available_scopes()
-
         assert "all" in scopes
         assert "first" in scopes
         assert "last" in scopes
+
+        attach_screenshot(auto_code_dialog, "AutoCode - Match Type and Scope Options")
 
 
 # =============================================================================
@@ -309,10 +296,10 @@ class TestApplyToMatches:
         assert config["match_type"] == "contains"
         assert config["code"]["name"] == "Challenge"
 
-    @allure.title("AC #3.2: Code display shows selected code")
+    @allure.title("AC #3.2-3: Code display shows selected code and get_code returns it")
     @allure.severity(allure.severity_level.NORMAL)
-    def test_shows_selected_code(self, auto_code_dialog):
-        """Dialog displays the code that will be applied."""
+    def test_shows_and_gets_selected_code(self, auto_code_dialog):
+        """Dialog displays the selected code and get_code returns it."""
         auto_code_dialog.show()
         QApplication.processEvents()
 
@@ -327,19 +314,12 @@ class TestApplyToMatches:
         # Verify color swatch updated (check stylesheet contains color)
         style = auto_code_dialog._code_color.styleSheet()
         assert "#4CAF50" in style
-        attach_screenshot(auto_code_dialog, "AutoCode - Selected Code Display")
 
-    @allure.title("AC #3.3: Get code returns selected code")
-    @allure.severity(allure.severity_level.NORMAL)
-    def test_get_code(self, auto_code_dialog):
-        """get_code returns the currently selected code."""
-        auto_code_dialog.show()
-        QApplication.processEvents()
-
-        auto_code_dialog.set_code({"id": "1", "name": "Test", "color": "#FF0000"})
-
+        # Verify get_code returns the set code
         code = auto_code_dialog.get_code()
-        assert code["name"] == "Test"
+        assert code["name"] == "Positive"
+
+        attach_screenshot(auto_code_dialog, "AutoCode - Selected Code Display")
 
 
 # =============================================================================
@@ -421,20 +401,6 @@ class TestAutoCodeBySpeaker:
         assert len(signals) == 1
         attach_screenshot(auto_code_dialog, "AutoCode - Speaker Detection")
 
-    @allure.title("AC #5.2: Dialog receives detected speakers")
-    @allure.severity(allure.severity_level.NORMAL)
-    def test_receives_speakers(self, auto_code_dialog):
-        """Dialog can receive detected speaker list."""
-        auto_code_dialog.show()
-        QApplication.processEvents()
-
-        speakers = [
-            {"name": "INTERVIEWER", "count": 4},
-            {"name": "PARTICIPANT", "count": 4},
-        ]
-        auto_code_dialog.on_speakers_detected(speakers)
-        # No assertion needed - just verify no crash
-
     @allure.title("AC #5.3: Dialog can request speaker segments")
     @allure.severity(allure.severity_level.NORMAL)
     def test_get_speaker_segments_signal(self, auto_code_dialog, sample_interview_text):
@@ -504,17 +470,6 @@ class TestAgentBatchOperations:
         QApplication.processEvents()
 
         assert auto_code_dialog._get_match_type_str() == "regex"
-
-    @allure.title("AC #8.1: Error handler slot available")
-    @allure.severity(allure.severity_level.NORMAL)
-    def test_error_handler(self, auto_code_dialog):
-        """Dialog has error handler slot for reporting issues."""
-        auto_code_dialog.show()
-        QApplication.processEvents()
-
-        # Call error handler - should not crash
-        auto_code_dialog.on_error("batch_apply", "Test error message")
-        # No assertion - just verify no crash
 
 
 # =============================================================================

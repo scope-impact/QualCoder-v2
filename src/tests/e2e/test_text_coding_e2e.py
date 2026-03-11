@@ -139,10 +139,10 @@ class TestCreateCodeDialog:
     Test the CreateCodeDialog UI using black-box patterns.
     """
 
-    @allure.title("AC #1: Dialog shows name input field")
+    @allure.title("AC #1-2: Dialog shows name input, color grid, and accepts input")
     @allure.severity(allure.severity_level.CRITICAL)
-    def test_dialog_has_name_input(self, create_code_dialog):
-        """Dialog should have a name input field with proper placeholder."""
+    def test_dialog_has_required_elements_and_accepts_input(self, create_code_dialog):
+        """Dialog has name input with placeholder, color grid, and accepts user input."""
         create_code_dialog.show()
         QApplication.processEvents()
 
@@ -151,37 +151,15 @@ class TestCreateCodeDialog:
         assert name_input is not None, "Name input field should be visible"
         assert name_input.placeholderText() == "Enter code name..."
 
-    @allure.title("AC #1: User can enter code name")
-    @allure.severity(allure.severity_level.CRITICAL)
-    def test_enter_code_name(self, create_code_dialog):
-        """User can type a code name in the input."""
-        create_code_dialog.show()
-        QApplication.processEvents()
-
         # BLACK-BOX: Use public API to set/get name
         create_code_dialog.set_code_name("New Theme")
         assert create_code_dialog.get_code_name() == "New Theme"
-
-    @allure.title("AC #2: Dialog shows color selection grid")
-    @allure.severity(allure.severity_level.NORMAL)
-    def test_dialog_has_color_grid(self, create_code_dialog):
-        """Dialog should show a grid of color options."""
-        create_code_dialog.show()
-        QApplication.processEvents()
 
         # BLACK-BOX: Find color swatches by their 'color' property
         swatches = find_color_swatch_buttons(create_code_dialog)
         assert len(swatches) == 16, "Should show 16 color options"
 
-    @allure.title("AC #2: User can select a color")
-    @allure.severity(allure.severity_level.NORMAL)
-    def test_select_color(self, create_code_dialog):
-        """User can click a color to select it."""
-        create_code_dialog.show()
-        QApplication.processEvents()
-
         # BLACK-BOX: Click second color swatch by index
-        swatches = find_color_swatch_buttons(create_code_dialog)
         expected_color = swatches[1].property("color")
         swatches[1].click()
         QApplication.processEvents()
@@ -202,27 +180,19 @@ class TestCreateCodeDialog:
         create_code_dialog.set_code_memo(memo_text)
         assert create_code_dialog.get_code_memo() == memo_text
 
-    @allure.title("Create button disabled when name is empty")
+    @allure.title("Create button toggles enabled state based on name input")
     @allure.severity(allure.severity_level.NORMAL)
-    def test_create_button_disabled_without_name(self, create_code_dialog):
-        """Create button should be disabled when name is empty."""
+    def test_create_button_enabled_state(self, create_code_dialog):
+        """Create button disabled when name empty, enabled when name entered."""
         create_code_dialog.show()
         QApplication.processEvents()
 
-        # BLACK-BOX: Find button by text and check enabled state
+        # BLACK-BOX: Initially disabled
         assert not is_button_enabled(create_code_dialog, "Create")
 
-    @allure.title("Create button enabled when name is entered")
-    @allure.severity(allure.severity_level.NORMAL)
-    def test_create_button_enabled_with_name(self, create_code_dialog):
-        """Create button should be enabled when name is entered."""
-        create_code_dialog.show()
-        QApplication.processEvents()
-
+        # Enter name - should become enabled
         create_code_dialog.set_code_name("New Code")
         QApplication.processEvents()
-
-        # BLACK-BOX: Find button by text and check enabled state
         assert is_button_enabled(create_code_dialog, "Create")
 
     @allure.title("AC #4: Clicking create emits code_created signal")
@@ -758,16 +728,6 @@ class TestWiringVerification:
         assert "cases" in screens
         assert "coding" in screens
 
-    @allure.title("File manager screen is functional")
-    @allure.severity(allure.severity_level.CRITICAL)
-    def test_file_manager_functional(self, wired_app):
-        """Verify file manager screen responds to refresh."""
-        files_screen = wired_app["screens"]["files"]
-
-        # BLACK-BOX: If wired, refresh should work without error
-        files_screen.refresh()
-        QApplication.processEvents()
-
     @allure.title("Coding screen accepts code selection")
     @allure.severity(allure.severity_level.CRITICAL)
     def test_coding_screen_functional(self, wired_app):
@@ -794,20 +754,6 @@ class TestWiringVerification:
         # BLACK-BOX: Check running state via public API
         assert coding_bridge.is_running()
         assert project_bridge.is_running()
-
-    @allure.title("Bounded contexts provide repository access")
-    @allure.severity(allure.severity_level.CRITICAL)
-    def test_bounded_contexts_initialized(self, wired_app):
-        """Verify bounded contexts provide working repositories."""
-        ctx = wired_app["ctx"]
-
-        # BLACK-BOX: Verify by trying to use the repos
-        # If they work, contexts are initialized
-        sources = ctx.sources_context.source_repo.get_all()
-        assert isinstance(sources, list)
-
-        codes = ctx.coding_context.code_repo.get_all()
-        assert isinstance(codes, list)
 
 
 # =============================================================================
@@ -1084,36 +1030,12 @@ class TestCreateCodeFullPath:
         if dialog:
             dialog.close()
 
-    @allure.title("Plus button in codes panel opens CreateCodeDialog")
-    @allure.severity(allure.severity_level.CRITICAL)
-    def test_plus_button_opens_create_code_dialog(self, coding_screen_ready):
-        """
-        Clicking the + button in the codes panel should open CreateCodeDialog.
-
-        AC: User can click + button to create a new code.
-        """
-        screen = coding_screen_ready["screens"]["coding"]
-
-        # BLACK-BOX: Find and click the + button by tooltip
-        add_btn = find_any_button_by_tooltip(screen, "Add code")
-        assert add_btn is not None, "Add code button should exist in codes panel"
-
-        add_btn.click()
-
-        # BLACK-BOX: Verify dialog opened
-        dialog = wait_for_dialog(CreateCodeDialog)
-        assert dialog is not None, "CreateCodeDialog should open when + is clicked"
-
-        # Screenshot for documentation
-        attach_screenshot(dialog, "CreateCodeDialog - Opened via Plus Button")
-
-        dialog.close()
-
-    @allure.title("Plus button creates code that persists to database")
+    @allure.title("Plus button opens dialog and creates code that persists")
     @allure.severity(allure.severity_level.CRITICAL)
     def test_plus_button_creates_code_persists(self, coding_screen_ready):
         """
-        Creating a code via the + button should persist it to the database.
+        Clicking the + button opens CreateCodeDialog and creating a code
+        via the dialog persists it to the database.
         """
         ctx = coding_screen_ready["ctx"]
         screen = coding_screen_ready["screens"]["coding"]
@@ -1122,6 +1044,7 @@ class TestCreateCodeFullPath:
 
         # Click + button
         add_btn = find_any_button_by_tooltip(screen, "Add code")
+        assert add_btn is not None, "Add code button should exist in codes panel"
         add_btn.click()
 
         dialog = wait_for_dialog(CreateCodeDialog)

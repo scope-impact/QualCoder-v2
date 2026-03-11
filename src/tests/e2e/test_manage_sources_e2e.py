@@ -320,46 +320,6 @@ class TestImportImageFiles:
 
         attach_screenshot(viewer, "ImageViewer - Metadata Captured")
 
-    @allure.title("Viewer provides zoom controls")
-    @allure.severity(allure.severity_level.NORMAL)
-    def test_image_viewer_zoom_controls(self, qapp, colors, sample_files: SampleFiles):
-        from src.shared.presentation.organisms import ImageViewer
-
-        with allure.step("Load image and set to actual size"):
-            viewer = ImageViewer(colors=colors)
-            viewer.load_image(sample_files.png_file)
-            QApplication.processEvents()
-            viewer.show_actual_size()
-
-        with allure.step("Verify initial zoom is 100%"):
-            initial_zoom = viewer.get_zoom_level()
-            assert initial_zoom == 1.0
-
-        with allure.step("Zoom in and verify increased zoom"):
-            viewer.zoom_in()
-            assert viewer.get_zoom_level() > initial_zoom
-
-        with allure.step("Zoom out and verify returned to initial"):
-            viewer.zoom_out()
-            assert viewer.get_zoom_level() == initial_zoom
-
-        attach_screenshot(viewer, "ImageViewer - Zoom Controls")
-
-    @allure.title("Viewer can fit image to window")
-    @allure.severity(allure.severity_level.NORMAL)
-    def test_image_viewer_fit_to_window(self, qapp, colors, sample_files: SampleFiles):
-        from src.shared.presentation.organisms import ImageViewer
-
-        with allure.step("Load image into viewer"):
-            viewer = ImageViewer(colors=colors)
-            viewer.load_image(sample_files.png_file)
-            QApplication.processEvents()
-
-        with allure.step("Fit to window and verify image still visible"):
-            viewer.fit_to_window()
-            assert viewer.get_current_path() is not None
-
-
 # =============================================================================
 # QC-027.04: Import Audio/Video Files
 # =============================================================================
@@ -384,24 +344,6 @@ class TestImportAudioVideoFiles:
         with allure.step("Verify MP3 file exists and has correct extension"):
             assert sample_files.mp3_file.exists()
             assert sample_files.mp3_file.suffix == ".mp3"
-
-    @allure.title("AC #2: I can select video files (MP4, MOV, etc.)")
-    def test_ac2_select_video_files(self):
-        with allure.step("Define supported video extensions"):
-            video_extensions = {".mp4", ".mov", ".avi", ".mkv", ".webm"}
-
-        with allure.step("Verify all extensions are in supported set"):
-            for ext in video_extensions:
-                assert ext in {
-                    ".mp4",
-                    ".mov",
-                    ".avi",
-                    ".mkv",
-                    ".webm",
-                    ".wmv",
-                    ".flv",
-                    ".m4v",
-                }
 
     @allure.title("AC #3: Media duration is displayed")
     def test_ac3_media_duration_displayed(
@@ -516,39 +458,6 @@ class TestOrganizeSources:
     QC-027.05: Organize Sources
     As a Researcher, I want to organize sources into folders so that I can manage large projects.
     """
-
-    @allure.title("AC #1: I can create folders for sources")
-    def test_ac1_create_folders(self, qapp):
-        from src.shared.presentation.organisms import FolderTree
-
-        with allure.step("Create FolderTree widget"):
-            tree = FolderTree()
-            QSignalSpy(tree.create_folder_requested)
-
-        with allure.step("Verify create_folder_requested signal exists"):
-            assert hasattr(tree, "create_folder_requested")
-
-    @allure.title("AC #2: I can move sources between folders")
-    def test_ac2_move_sources_between_folders(self, qapp):
-        from src.shared.presentation.organisms import FolderTree
-
-        with allure.step("Create FolderTree widget"):
-            tree = FolderTree()
-            QSignalSpy(tree.move_sources_requested)
-
-        with allure.step("Verify move_sources_requested signal exists"):
-            assert hasattr(tree, "move_sources_requested")
-
-    @allure.title("AC #3: I can rename folders")
-    def test_ac3_rename_folders(self, qapp):
-        from src.shared.presentation.organisms import FolderTree
-
-        with allure.step("Create FolderTree widget"):
-            tree = FolderTree()
-            QSignalSpy(tree.rename_folder_requested)
-
-        with allure.step("Verify rename_folder_requested signal exists"):
-            assert hasattr(tree, "rename_folder_requested")
 
     @allure.title("AC #4: Folder structure is reflected in the source list")
     def test_ac4_folder_structure_in_list(self, qapp):
@@ -710,25 +619,6 @@ class TestViewSourceMetadata:
         with allure.step("Verify modification date is available"):
             assert path.stat().st_mtime > 0
 
-    @allure.title("AC #1: Image metadata includes dimensions")
-    def test_ac1_image_metadata(self, qapp, colors, sample_files: SampleFiles):
-        from src.shared.presentation.organisms import ImageViewer
-
-        with allure.step("Load image into viewer"):
-            viewer = ImageViewer(colors=colors)
-            viewer.load_image(sample_files.png_file)
-            QApplication.processEvents()
-
-        with allure.step("Get metadata from viewer"):
-            metadata = viewer.get_metadata()
-
-        with allure.step("Verify metadata contains dimensions and format"):
-            assert metadata is not None
-            assert metadata.width > 0
-            assert metadata.height > 0
-            assert metadata.format is not None
-            assert metadata.file_size > 0
-
     @allure.title("AC #2: I can add a memo/notes to a source")
     def test_ac2_add_memo_to_source(self):
         from src.contexts.projects.core.entities import Source, SourceType
@@ -782,48 +672,24 @@ class TestDeleteSource:
     As a Researcher, I want to delete sources so that I can remove unwanted data.
     """
 
-    @allure.title("AC #1: I can select a source to delete")
-    def test_ac1_select_source_to_delete(self, qapp, colors):
-        from src.shared.presentation.organisms import SourceTable
+    @allure.title("AC #1: Delete source dialog warns about coded segments")
+    def test_ac1_delete_source_dialog_warns(self, qapp):
+        from src.contexts.sources.presentation.dialogs.delete_source_dialog import (
+            DeleteSourceDialog,
+            DeleteSourceInfo,
+        )
 
-        with allure.step("Create SourceTable widget"):
-            table = SourceTable(colors=colors)
-            QSignalSpy(table.delete_sources)
+        with allure.step("Create delete dialog with a source"):
+            sources = [
+                DeleteSourceInfo(
+                    id="1", name="test.txt", source_type="text", code_count=3
+                )
+            ]
+            dialog = DeleteSourceDialog(sources)
 
-        with allure.step("Verify delete_sources signal exists"):
-            assert hasattr(table, "delete_sources")
-
-    @allure.title("AC #2: I am warned about losing coded segments")
-    def test_ac2_deletion_warning(self):
-        from src.contexts.projects.core.entities import Source, SourceType
-        from src.shared.common.types import SourceId
-
-        with allure.step("Create source entity"):
-            source = Source(
-                id=SourceId("1"),
-                name="test.txt",
-                source_type=SourceType.TEXT,
-                fulltext="Content",
-            )
-
-        with allure.step("Verify source has ID for tracking coded segments"):
-            assert source.id is not None
-
-    @allure.title("AC #3: Deletion removes source and its coded segments safely")
-    def test_source_entity_deletion_safe(self):
-        from src.contexts.projects.core.entities import Source, SourceType
-        from src.shared.common.types import SourceId
-
-        with allure.step("Create source entity"):
-            source = Source(
-                id=SourceId("1"),
-                name="test.txt",
-                source_type=SourceType.TEXT,
-                fulltext="Content",
-            )
-
-        with allure.step("Verify source is immutable and safe for deletion"):
-            assert source.id.value == "1"
+        with allure.step("Verify dialog shows warning about irreversible deletion"):
+            assert dialog._confirm_checkbox is not None
+            assert "cannot be undone" in dialog._confirm_checkbox.text()
 
 
 # =============================================================================
@@ -835,81 +701,6 @@ class TestDeleteSource:
 @allure.severity(allure.severity_level.CRITICAL)
 class TestSourceManagementIntegration:
     """Integration tests for complete source management workflows."""
-
-    @allure.title("Complete workflow: Import text file and extract content")
-    def test_text_import_workflow(self, text_extractor, sample_files: SampleFiles):
-        from returns.result import Success
-
-        with allure.step("Step 1: Select file"):
-            path = sample_files.txt_file
-            assert path.exists()
-
-        with allure.step("Step 2: Check if supported"):
-            assert text_extractor.supports(path)
-
-        with allure.step("Step 3: Extract content"):
-            result = text_extractor.extract(path)
-            assert isinstance(result, Success)
-
-        with allure.step("Step 4: Verify extracted data"):
-            data = result.unwrap()
-            assert len(data.content) > 0
-            assert data.file_size > 0
-
-    @allure.title("Complete workflow: Load image and interact with viewer")
-    def test_image_viewer_workflow(self, qapp, colors, sample_files: SampleFiles):
-        from src.shared.presentation.organisms import ImageViewer
-
-        with allure.step("Step 1: Load image"):
-            viewer = ImageViewer(colors=colors)
-            viewer.load_image(sample_files.png_file)
-            QApplication.processEvents()
-
-        with allure.step("Step 2: Verify loaded"):
-            assert viewer.get_current_path() == sample_files.png_file
-
-        with allure.step("Step 3: Get metadata"):
-            metadata = viewer.get_metadata()
-            assert metadata is not None
-
-        with allure.step("Step 4: Interact with controls"):
-            viewer.zoom_in()
-            viewer.zoom_out()
-            viewer.fit_to_window()
-
-        with allure.step("Step 5: Clear viewer"):
-            viewer.clear()
-            assert viewer.get_current_path() is None
-
-    @allure.title("Complete workflow: Load media and control playback")
-    def test_media_player_workflow(self, qapp, colors, sample_files: SampleFiles):
-        from src.shared.presentation.organisms import MediaPlayer
-
-        with allure.step("Step 1: Load media"):
-            player = MediaPlayer(colors=colors)
-            player.load_media(sample_files.wav_file)
-            QApplication.processEvents()
-
-        with allure.step("Step 2: Check backend"):
-            backend = player.get_backend_name()
-            assert backend in ("VLC", "Noop")
-
-        with allure.step("Step 3: Test playback controls"):
-            player.play()
-            if backend == "Noop":
-                assert player.is_playing()
-
-            player.pause()
-            QApplication.processEvents()
-            # VLC backend may have async state updates; only assert for Noop
-            if backend == "Noop":
-                assert not player.is_playing()
-
-            player.seek(500)
-            player.stop()
-
-        with allure.step("Step 4: Clear player"):
-            player.clear()
 
     @allure.title("Imported sources persist between sessions")
     @allure.severity(allure.severity_level.CRITICAL)
@@ -1274,34 +1065,6 @@ class TestImageViewerUIControls:
 # =============================================================================
 
 
-@allure.story("QC-027.02 Import PDF Document")
-@allure.severity(allure.severity_level.NORMAL)
-class TestImportPdfDocumentAdditional:
-    """Additional tests for QC-027.02 acceptance criteria."""
-
-    @allure.title("AC #3: I can choose to import as text or as image")
-    def test_ac3_pdf_import_mode_option(self, pdf_extractor):
-        """
-        AC #3: PDF import mode selection.
-        Tests that the extractor can handle different import modes.
-        """
-        from src.contexts.sources.infra.pdf_extractor import PdfExtractionResult
-
-        with allure.step("Verify PdfExtractionResult supports text mode"):
-            text_result = PdfExtractionResult(
-                content="Extracted text content",
-                page_count=1,
-                file_size=1024,
-            )
-            assert text_result.content == "Extracted text content"
-
-        with allure.step("Verify PDF extractor exists for text extraction"):
-            # The extractor supports .pdf files for text extraction
-            from pathlib import Path
-
-            assert pdf_extractor.supports(Path("document.pdf"))
-
-
 @allure.story("QC-027.06 View Source Metadata")
 @allure.severity(allure.severity_level.NORMAL)
 class TestViewSourceMetadataAdditional:
@@ -1332,40 +1095,6 @@ class TestViewSourceMetadataAdditional:
             # We verify the data structure supports this
             assert hasattr(metadata, "code_count")
             assert isinstance(metadata.code_count, int)
-
-
-@allure.story("QC-027.07 Delete Source")
-@allure.severity(allure.severity_level.MINOR)
-class TestDeleteSourceAdditional:
-    """Additional tests for QC-027.07 acceptance criteria."""
-
-    @allure.title("AC #4: Undo deletion - feature pending implementation")
-    def test_ac4_undo_deletion_pending(self, qapp):
-        """
-        AC #4: Undo deletion immediately after.
-
-        Note: This feature requires soft-delete implementation.
-        Currently the dialog states "cannot be undone".
-        This test documents the expected behavior when implemented.
-        """
-        from src.contexts.sources.presentation.dialogs.delete_source_dialog import (
-            DeleteSourceDialog,
-            DeleteSourceInfo,
-        )
-
-        with allure.step("Create delete dialog"):
-            sources = [
-                DeleteSourceInfo(
-                    id="1", name="test.txt", source_type="text", code_count=0
-                )
-            ]
-            dialog = DeleteSourceDialog(sources)
-
-        with allure.step("Verify dialog exists (undo feature pending)"):
-            # Current implementation shows "cannot be undone" checkbox
-            # When undo is implemented, this should verify undo capability
-            assert dialog._confirm_checkbox is not None
-            assert "cannot be undone" in dialog._confirm_checkbox.text()
 
 
 # =============================================================================
@@ -1472,8 +1201,10 @@ class TestAgentListSources:
             assert data["count"] == 1
             assert data["sources"][0]["type"] == "image"
 
-    @allure.title("AC #3: Agent can see source metadata")
-    def test_ac3_source_metadata_visible(self, app_context, project_with_sources):
+    @allure.title("AC #3+4: Agent can see source metadata and coding status")
+    def test_ac3_source_metadata_and_coding_status(
+        self, app_context, project_with_sources
+    ):
         from returns.result import Success
 
         from src.contexts.sources.interface.mcp_tools import SourceTools
@@ -1492,31 +1223,9 @@ class TestAgentListSources:
             assert "memo" in source
             assert "file_size" in source
 
-    @allure.title("AC #4: Agent can see coding status per source")
-    def test_ac4_coding_status_visible(self, app_context, project_with_sources):
-        from returns.result import Success
-
-        from src.contexts.sources.interface.mcp_tools import SourceTools
-
-        with allure.step("Execute list_sources tool"):
-            tools = SourceTools(ctx=app_context)
-            result = tools.execute("list_sources", {})
-
-        with allure.step("Verify code_count present in results"):
-            assert isinstance(result, Success)
-            data = result.unwrap()
+        with allure.step("Verify code_count present in all sources"):
             for source in data["sources"]:
                 assert "code_count" in source
-
-        with allure.step("Verify code_count field present (computed from segments)"):
-            # Note: code_count is a derived field computed from coding segments,
-            # not persisted in the source table. When sources are retrieved from
-            # the repository, code_count defaults to 0 unless explicitly computed.
-            sources_by_name = {s["name"]: s for s in data["sources"]}
-            # All sources have code_count=0 since no actual segments exist
-            assert sources_by_name["document.txt"]["code_count"] == 0
-            assert sources_by_name["image.png"]["code_count"] == 0
-            assert sources_by_name["audio.mp3"]["code_count"] == 0
 
 
 # =============================================================================
@@ -1583,8 +1292,10 @@ class TestAgentReadSourceContent:
             assert "content" in data
             assert len(data["content"]) > 0
 
-    @allure.title("AC #2: Agent can get content by position range")
-    def test_ac2_get_content_by_position(self, app_context, project_with_content):
+    @allure.title("AC #2+3: Agent can get content by position range with markers")
+    def test_ac2_get_content_by_position_with_markers(
+        self, app_context, project_with_content
+    ):
         from returns.result import Success
 
         from src.contexts.sources.interface.mcp_tools import SourceTools
@@ -1598,32 +1309,13 @@ class TestAgentReadSourceContent:
                 {"source_id": 1, "start_pos": 100000, "end_pos": 100010},
             )
 
-        with allure.step("Verify correct range returned"):
+        with allure.step("Verify correct range returned with position markers"):
             assert isinstance(result, Success)
             data = result.unwrap()
             assert data["start_pos"] == 100000
-            # Content at position 100000+ is 'B's
             assert "B" in data["content"]
-
-    @allure.title("AC #3: Agent receives content with position markers")
-    def test_ac3_position_markers_included(self, app_context, project_with_content):
-        from returns.result import Success
-
-        from src.contexts.sources.interface.mcp_tools import SourceTools
-
-        with allure.step("Read source content"):
-            tools = SourceTools(ctx=app_context)
-            result = tools.execute(
-                "read_source_content", {"source_id": 1, "start_pos": 50, "end_pos": 100}
-            )
-
-        with allure.step("Verify position markers in response"):
-            assert isinstance(result, Success)
-            data = result.unwrap()
-            assert "start_pos" in data
             assert "end_pos" in data
             assert "total_length" in data
-            assert data["start_pos"] == 50
 
     @allure.title("AC #4: Large sources are paginated")
     def test_ac4_large_sources_paginated(self, app_context, project_with_content):

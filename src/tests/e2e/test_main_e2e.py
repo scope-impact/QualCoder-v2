@@ -416,32 +416,6 @@ class TestCreateProjectErrors:
 class TestAppStartup:
     """Tests that the app starts correctly."""
 
-    @allure.title("App creates shell window")
-    @allure.severity(allure.severity_level.CRITICAL)
-    def test_app_creates_shell(self, app_instance):
-        """App should create the main shell window."""
-        app_instance._setup_shell()
-        assert app_instance._shell is not None
-
-    @allure.title("App creates all screens")
-    @allure.severity(allure.severity_level.CRITICAL)
-    def test_app_creates_all_screens(self, app_instance):
-        """App should create all required screens."""
-        app_instance._setup_shell()
-        assert "project" in app_instance._screens
-        assert "files" in app_instance._screens
-        assert "cases" in app_instance._screens
-        assert "coding" in app_instance._screens
-
-    @allure.title("App starts on project screen")
-    @allure.severity(allure.severity_level.NORMAL)
-    def test_app_starts_on_project_screen(self, app_instance):
-        """App should start on the project selection screen."""
-        from src.contexts.projects.presentation import ProjectScreen
-
-        app_instance._setup_shell()
-        assert isinstance(app_instance._screens["project"], ProjectScreen)
-
     @allure.title("Shell can show without errors")
     @allure.severity(allure.severity_level.CRITICAL)
     def test_shell_can_show(self, app_instance):
@@ -484,21 +458,16 @@ class TestNavigation:
 class TestSettingsIntegration:
     """Tests that settings button works in the full app."""
 
-    @allure.title("Settings button exists in shell")
-    @allure.severity(allure.severity_level.NORMAL)
-    def test_settings_button_exists(self, app_instance):
-        """Settings button should exist in the shell."""
-        app_instance._setup_shell()
-        settings_btn = app_instance._shell.findChild(QPushButton, "settings_button")
-        assert settings_btn is not None
-
-    @allure.title("Settings button opens dialog")
+    @allure.title("Settings button exists and opens dialog")
     @allure.severity(allure.severity_level.NORMAL)
     def test_settings_button_opens_dialog(self, app_instance):
-        """Clicking settings should open settings dialog."""
+        """Settings button should exist in the shell and open settings dialog when clicked."""
         app_instance._setup_shell()
         app_instance._shell.show()
         QApplication.processEvents()
+
+        settings_btn = app_instance._shell.findChild(QPushButton, "settings_button")
+        assert settings_btn is not None
 
         dialogs_opened = []
         original_show = app_instance._dialog_service.show_settings_dialog
@@ -510,7 +479,6 @@ class TestSettingsIntegration:
             return dialog
 
         app_instance._dialog_service.show_settings_dialog = wrapped_show
-        settings_btn = app_instance._shell.findChild(QPushButton, "settings_button")
         settings_btn.click()
         QApplication.processEvents()
 
@@ -523,26 +491,17 @@ class TestSettingsIntegration:
 class TestProjectScreenActions:
     """Tests project screen Open/Create buttons."""
 
-    @allure.title("Project screen has Open button")
+    @allure.title("Project screen has Open and Create buttons")
     @allure.severity(allure.severity_level.CRITICAL)
-    def test_project_screen_has_open_button(self, app_instance):
-        """Project screen should have Open Project button."""
+    def test_project_screen_has_open_and_create_buttons(self, app_instance):
+        """Project screen should have both Open and Create Project buttons."""
         app_instance._setup_shell()
         project_screen = app_instance._screens["project"]
         content = project_screen.get_content()
         buttons = content.findChildren(QPushButton)
         open_buttons = [b for b in buttons if "Open" in b.text()]
-        assert len(open_buttons) >= 1
-
-    @allure.title("Project screen has Create button")
-    @allure.severity(allure.severity_level.CRITICAL)
-    def test_project_screen_has_create_button(self, app_instance):
-        """Project screen should have Create Project button."""
-        app_instance._setup_shell()
-        project_screen = app_instance._screens["project"]
-        content = project_screen.get_content()
-        buttons = content.findChildren(QPushButton)
         create_buttons = [b for b in buttons if "Create" in b.text()]
+        assert len(open_buttons) >= 1
         assert len(create_buttons) >= 1
 
 

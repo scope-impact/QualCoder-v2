@@ -455,43 +455,25 @@ class TestAgentDetectDuplicateCodes:
             data = result["data"]
             assert data["requires_approval"] is True
 
-    @allure.title("Detection returns similarity scores")
+    @allure.title("Detection returns similarity scores and segment counts")
     @allure.severity(allure.severity_level.NORMAL)
-    def test_similarity_scores_returned(
+    def test_similarity_scores_and_segment_counts(
         self,
         coding_tools: CodingTools,
         app_context: AppContext,
         project_with_codes: Path,
     ):
-        """Each duplicate pair includes a similarity score."""
+        """Each duplicate pair includes similarity scores and segment counts."""
 
         with allure.step("Detect duplicates"):
             result = coding_tools.execute("detect_duplicate_codes", {"threshold": 0.5})
 
-        with allure.step("Verify similarity scores"):
+        with allure.step("Verify similarity scores and segment counts"):
             assert result.get("success") is True
             data = result["data"]
             for candidate in data["candidates"]:
                 assert "similarity" in candidate
                 assert 0 <= candidate["similarity"] <= 100
-
-    @allure.title("Detection shows segment counts for merge decision")
-    @allure.severity(allure.severity_level.NORMAL)
-    def test_shows_segment_counts(
-        self,
-        coding_tools: CodingTools,
-        app_context: AppContext,
-        project_with_codes: Path,
-    ):
-        """Detection results show segment counts to help merge decision."""
-
-        with allure.step("Detect duplicates"):
-            result = coding_tools.execute("detect_duplicate_codes", {"threshold": 0.7})
-
-        with allure.step("Verify segment counts included"):
-            assert result.get("success") is True
-            data = result["data"]
-            for candidate in data["candidates"]:
                 assert "code_a_segments" in candidate
                 assert "code_b_segments" in candidate
                 assert isinstance(candidate["code_a_segments"], int)
@@ -636,50 +618,50 @@ class TestAICodeManagementIntegration:
 class TestAIToolsSchema:
     """Tests to verify MCP tool schemas are correctly defined."""
 
-    @allure.title("suggest_new_code tool has correct schema")
-    def test_suggest_new_code_schema(
+    @allure.title("All AI coding tools have correct schemas")
+    def test_all_ai_tool_schemas(
         self, coding_tools: CodingTools, app_context: AppContext
     ):
-        """Verify suggest_new_code tool schema."""
+        """Verify schemas for suggest_new_code, detect_duplicate_codes, list_codes, and create_code."""
 
         with allure.step("Get tool schemas"):
             schemas = coding_tools.get_tool_schemas()
+            schema_map = {s["name"]: s for s in schemas}
 
-        with allure.step("Find suggest_new_code schema"):
-            schema = next((s for s in schemas if s["name"] == "suggest_new_code"), None)
+        with allure.step("Verify suggest_new_code schema"):
+            schema = schema_map.get("suggest_new_code")
             assert schema is not None
-
-        with allure.step("Verify required parameters"):
             required = schema["inputSchema"]["required"]
             assert "name" in required
             assert "rationale" in required
-
-        with allure.step("Verify optional parameters"):
             props = schema["inputSchema"]["properties"]
             assert "color" in props
             assert "description" in props
             assert "confidence" in props
             assert "sample_contexts" in props
 
-    @allure.title("detect_duplicate_codes tool has correct schema")
-    def test_detect_duplicate_codes_schema(
-        self, coding_tools: CodingTools, app_context: AppContext
-    ):
-        """Verify detect_duplicate_codes tool schema."""
-
-        with allure.step("Get tool schemas"):
-            schemas = coding_tools.get_tool_schemas()
-
-        with allure.step("Find detect_duplicate_codes schema"):
-            schema = next(
-                (s for s in schemas if s["name"] == "detect_duplicate_codes"), None
-            )
+        with allure.step("Verify detect_duplicate_codes schema"):
+            schema = schema_map.get("detect_duplicate_codes")
             assert schema is not None
-
-        with allure.step("Verify threshold parameter"):
             props = schema["inputSchema"]["properties"]
             assert "threshold" in props
             assert props["threshold"]["type"] in ("number", "integer")
+
+        with allure.step("Verify list_codes schema"):
+            schema = schema_map.get("list_codes")
+            assert schema is not None
+            required = schema["inputSchema"].get("required", [])
+            assert len(required) == 0
+
+        with allure.step("Verify create_code schema"):
+            schema = schema_map.get("create_code")
+            assert schema is not None
+            required = schema["inputSchema"]["required"]
+            assert "name" in required
+            assert "color" in required
+            props = schema["inputSchema"]["properties"]
+            assert "memo" in props
+            assert "category_id" in props
 
 
 # =============================================================================
@@ -713,19 +695,19 @@ class TestAgentListCodes:
             assert isinstance(data, list)
             assert len(data) == 6  # We created 6 codes in fixture
 
-    @allure.title("AC #2: Each code includes required fields")
-    def test_ac2_codes_include_required_fields(
+    @allure.title("AC #2-3: Each code includes required fields and memo")
+    def test_ac2_ac3_codes_include_required_fields_and_memo(
         self,
         coding_tools: CodingTools,
         app_context: AppContext,
         project_with_codes: Path,
     ):
-        """Each code returned has id, name, and color fields."""
+        """Each code returned has id, name, color, and memo fields."""
 
         with allure.step("List codes"):
             result = coding_tools.execute("list_codes", {})
 
-        with allure.step("Verify required fields for each code"):
+        with allure.step("Verify required fields and memo for each code"):
             assert result.get("success") is True
             for code in result["data"]:
                 assert "id" in code
@@ -735,22 +717,6 @@ class TestAgentListCodes:
                 assert isinstance(code["name"], str)
                 assert isinstance(code["color"], str)
                 assert code["color"].startswith("#")
-
-    @allure.title("AC #3: Each code includes memo field")
-    def test_ac3_codes_include_memo(
-        self,
-        coding_tools: CodingTools,
-        app_context: AppContext,
-        project_with_codes: Path,
-    ):
-        """Each code returned includes the memo field."""
-
-        with allure.step("List codes"):
-            result = coding_tools.execute("list_codes", {})
-
-        with allure.step("Verify memo field exists"):
-            assert result.get("success") is True
-            for code in result["data"]:
                 assert "memo" in code
                 # Memo can be None or string
                 assert code["memo"] is None or isinstance(code["memo"], str)
@@ -775,25 +741,6 @@ class TestAgentListCodes:
         with allure.step("Verify empty list returned"):
             assert result.get("success") is True
             assert result["data"] == []
-
-    @allure.title("list_codes tool has correct schema")
-    @allure.severity(allure.severity_level.NORMAL)
-    def test_list_codes_schema(
-        self, coding_tools: CodingTools, app_context: AppContext
-    ):
-        """Verify list_codes tool schema is correctly defined."""
-
-        with allure.step("Get tool schemas"):
-            schemas = coding_tools.get_tool_schemas()
-
-        with allure.step("Find list_codes schema"):
-            schema = next((s for s in schemas if s["name"] == "list_codes"), None)
-            assert schema is not None
-
-        with allure.step("Verify no required parameters"):
-            # list_codes should have no required params
-            required = schema["inputSchema"].get("required", [])
-            assert len(required) == 0
 
 
 # =============================================================================
@@ -996,26 +943,3 @@ class TestAgentCreateCode:
             assert result.get("success") is False
             assert "color" in result.get("error", "").lower()
 
-    @allure.title("create_code tool has correct schema")
-    @allure.severity(allure.severity_level.NORMAL)
-    def test_create_code_schema(
-        self, coding_tools: CodingTools, app_context: AppContext
-    ):
-        """Verify create_code tool schema is correctly defined."""
-
-        with allure.step("Get tool schemas"):
-            schemas = coding_tools.get_tool_schemas()
-
-        with allure.step("Find create_code schema"):
-            schema = next((s for s in schemas if s["name"] == "create_code"), None)
-            assert schema is not None
-
-        with allure.step("Verify required parameters"):
-            required = schema["inputSchema"]["required"]
-            assert "name" in required
-            assert "color" in required
-
-        with allure.step("Verify optional parameters"):
-            props = schema["inputSchema"]["properties"]
-            assert "memo" in props
-            assert "category_id" in props

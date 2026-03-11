@@ -380,37 +380,24 @@ class TestDeleteCaseFlow:
         # Verify removed from database
         assert case_repo.get_by_id(CaseId(value="2")) is None
 
-    def test_delete_case_removes_source_links(self, case_manager_window, case_repo):
+    def test_delete_case_cascades_source_links_and_attributes(
+        self, case_manager_window, case_repo
+    ):
         """
-        E2E: Deleting a case removes its source links.
+        E2E: Deleting a case removes its source links and attributes.
         """
         viewmodel = case_manager_window["viewmodel"]
 
-        # Case 1 has source links
+        # Case 1 has source links and attributes
         assert len(case_repo.get_source_ids(CaseId(value="1"))) == 2
+        assert len(case_repo.get_attributes(CaseId(value="1"))) == 2
 
         # Delete case
         viewmodel.delete_case(case_id="1")
 
-        # Source links should be gone
+        # Source links and attributes should be gone
         assert len(case_repo.get_source_ids(CaseId(value="1"))) == 0
-
-    def test_delete_case_removes_attributes(self, case_manager_window, case_repo):
-        """
-        E2E: Deleting a case removes its attributes.
-        """
-        viewmodel = case_manager_window["viewmodel"]
-
-        # Case 1 has attributes
-        attrs = case_repo.get_attributes(CaseId(value="1"))
-        assert len(attrs) == 2
-
-        # Delete case
-        viewmodel.delete_case(case_id="1")
-
-        # Attributes should be gone
-        attrs = case_repo.get_attributes(CaseId(value="1"))
-        assert len(attrs) == 0
+        assert len(case_repo.get_attributes(CaseId(value="1"))) == 0
 
     def test_delete_case_updates_ui_on_refresh(self, case_manager_window, qapp):
         """
@@ -519,12 +506,13 @@ class TestAddAttributeFlow:
         assert attr is not None
         assert attr.value == "engineer"
 
-    def test_add_number_attribute(self, case_manager_window, case_repo):
+    def test_add_typed_attributes_persist_correctly(self, case_manager_window, case_repo):
         """
-        E2E: Adding a number attribute persists correctly.
+        E2E: Adding number and boolean attributes persists with correct types.
         """
         viewmodel = case_manager_window["viewmodel"]
 
+        # Number attribute
         result = viewmodel.add_attribute(
             case_id="1",
             name="income",
@@ -538,12 +526,7 @@ class TestAddAttributeFlow:
         assert attr.attr_type == AttributeType.NUMBER
         assert attr.value == 75000
 
-    def test_add_boolean_attribute(self, case_manager_window, case_repo):
-        """
-        E2E: Adding a boolean attribute persists correctly.
-        """
-        viewmodel = case_manager_window["viewmodel"]
-
+        # Boolean attribute
         result = viewmodel.add_attribute(
             case_id="1",
             name="employed",
@@ -666,9 +649,9 @@ class TestViewCaseDataFlow:
         assert gamma.source_count == 1
         assert len(gamma.attributes) == 0
 
-    def test_search_cases_filters_correctly(self, case_manager_window):
+    def test_search_cases_filters_by_name_case_insensitive(self, case_manager_window):
         """
-        E2E: Searching cases filters by name.
+        E2E: Searching cases filters by name (case-insensitive).
         """
         viewmodel = case_manager_window["viewmodel"]
 
@@ -685,13 +668,7 @@ class TestViewCaseDataFlow:
         assert len(results) == 1
         assert results[0].name == "Site Gamma"
 
-    def test_case_insensitive_search(self, case_manager_window):
-        """
-        E2E: Search is case-insensitive.
-        """
-        viewmodel = case_manager_window["viewmodel"]
-
-        # Lowercase search
+        # Case-insensitive search
         results = viewmodel.search_cases("alpha")
         assert len(results) == 1
         assert results[0].name == "Participant Alpha"
@@ -700,45 +677,34 @@ class TestViewCaseDataFlow:
 class TestStatsRowFiltering:
     """E2E tests for filtering via stats row clicks."""
 
-    def test_click_all_cases_card_emits_filter_signal(self, case_manager_window, qapp):
+    def test_clicking_stat_cards_emits_filter_signals(self, case_manager_window, qapp):
         """
-        E2E: Clicking all cases card emits filter signal.
+        E2E: Clicking stat cards emits correct filter signals and updates active state.
         """
         screen = case_manager_window["screen"]
 
-        spy = QSignalSpy(screen.page.filter_changed)
-
-        # Click the all cases card
+        # Click "all" card
+        spy_all = QSignalSpy(screen.page.filter_changed)
         all_card = screen.page._stats_row._cards["all"]
         all_card.clicked.emit("all")
         QApplication.processEvents()
 
-        assert spy.count() == 1
-        assert spy.at(0)[0] == "all"
+        assert spy_all.count() == 1
+        assert spy_all.at(0)[0] == "all"
 
-        attach_screenshot(screen, "stats_row_all_filter_clicked")
-
-    def test_click_with_sources_card_filters_display(self, case_manager_window, qapp):
-        """
-        E2E: Clicking "with sources" card filters to cases with linked sources.
-        """
-        screen = case_manager_window["screen"]
-
-        spy = QSignalSpy(screen.page.filter_changed)
-
-        # Emit filter signal
+        # Click "with_sources" card
+        spy_sources = QSignalSpy(screen.page.filter_changed)
         screen.page._stats_row._cards["with_sources"].clicked.emit("with_sources")
         QApplication.processEvents()
 
-        # Verify signal emitted with correct filter type
-        assert spy.count() == 1
-        assert spy.at(0)[0] == "with_sources"
+        assert spy_sources.count() == 1
+        assert spy_sources.at(0)[0] == "with_sources"
 
         # Verify card visual state changed (active style applied)
         card = screen.page._stats_row._cards["with_sources"]
         assert card._active is True
 
-        attach_screenshot(screen, "stats_row_with_sources_filter_active")
+        attach_screenshot(screen, "stats_row_filter_cards")
 
 
 class TestTableSelection:
@@ -842,18 +808,12 @@ class TestScreenProtocol:
 
         attach_screenshot(screen, "status_message_with_summary")
 
-    def test_get_content_returns_self(self, case_manager_window):
+    def test_screen_protocol_conformance(self, case_manager_window):
         """
-        E2E: get_content returns the screen itself.
+        E2E: Screen conforms to ScreenProtocol (content returns self, no toolbar).
         """
         screen = case_manager_window["screen"]
         assert screen.get_content() == screen
-
-    def test_get_toolbar_content_returns_none(self, case_manager_window):
-        """
-        E2E: get_toolbar_content returns None (embedded toolbar).
-        """
-        screen = case_manager_window["screen"]
         assert screen.get_toolbar_content() is None
 
 
@@ -903,37 +863,22 @@ class TestReactiveSignalBridgeFlow:
     to trigger ViewModel signal emissions for UI updates.
     """
 
-    def test_create_case_emits_cases_changed_signal(self, viewmodel, qapp):
+    def test_create_case_emits_reactive_signals(self, viewmodel, qapp):
         """
-        E2E: Creating a case emits cases_changed signal via SignalBridge.
+        E2E: Creating a case emits both cases_changed and summary_changed signals.
 
-        Flow: create_case() → CaseCreated event → SignalBridge → ViewModel.cases_changed
+        Flow: create_case() → CaseCreated event → SignalBridge → ViewModel signals
         """
-        # Set up signal spy
-        spy = QSignalSpy(viewmodel.cases_changed)
+        cases_spy = QSignalSpy(viewmodel.cases_changed)
+        summary_spy = QSignalSpy(viewmodel.summary_changed)
 
-        # Create a case
         result = viewmodel.create_case(name="Reactive Test Case")
         assert result is True
 
-        # Process Qt events to allow signal propagation
         QApplication.processEvents()
 
-        # Verify signal was emitted
-        assert spy.count() == 1, "cases_changed signal should be emitted once"
-
-    def test_create_case_emits_summary_changed_signal(self, viewmodel, qapp):
-        """
-        E2E: Creating a case also emits summary_changed signal.
-
-        Flow: create_case() → CaseCreated event → SignalBridge → ViewModel.summary_changed
-        """
-        spy = QSignalSpy(viewmodel.summary_changed)
-
-        viewmodel.create_case(name="Summary Test Case")
-        QApplication.processEvents()
-
-        assert spy.count() == 1, "summary_changed signal should be emitted once"
+        assert cases_spy.count() == 1, "cases_changed signal should be emitted once"
+        assert summary_spy.count() == 1, "summary_changed signal should be emitted once"
 
     def test_delete_case_emits_cases_changed_signal(self, viewmodel, qapp):
         """

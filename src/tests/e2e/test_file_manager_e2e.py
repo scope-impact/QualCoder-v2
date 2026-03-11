@@ -405,55 +405,22 @@ class TestTableSelection:
 class TestToolbarActions:
     """E2E tests for toolbar button actions."""
 
-    def test_import_button_emits_signal(self, file_manager_window, qapp):
+    @pytest.mark.parametrize(
+        "signal_name",
+        ["import_clicked", "link_clicked", "create_text_clicked", "export_clicked"],
+    )
+    def test_toolbar_button_emits_signal(self, file_manager_window, qapp, signal_name):
         """
-        E2E: Import button click emits import_clicked signal.
-        """
-        screen = file_manager_window["screen"]
-
-        spy = QSignalSpy(screen.page.import_clicked)
-
-        # Click import button via toolbar signal
-        screen.page.toolbar.import_clicked.emit()
-        QApplication.processEvents()
-
-        assert spy.count() == 1
-
-    def test_link_button_emits_signal(self, file_manager_window, qapp):
-        """
-        E2E: Link button click emits link_clicked signal.
+        E2E: Toolbar button click emits the corresponding signal on the page.
         """
         screen = file_manager_window["screen"]
 
-        spy = QSignalSpy(screen.page.link_clicked)
+        page_signal = getattr(screen.page, signal_name)
+        toolbar_signal = getattr(screen.page.toolbar, signal_name)
 
-        screen.page.toolbar.link_clicked.emit()
-        QApplication.processEvents()
+        spy = QSignalSpy(page_signal)
 
-        assert spy.count() == 1
-
-    def test_create_text_button_emits_signal(self, file_manager_window, qapp):
-        """
-        E2E: Create Text button click emits create_text_clicked signal.
-        """
-        screen = file_manager_window["screen"]
-
-        spy = QSignalSpy(screen.page.create_text_clicked)
-
-        screen.page.toolbar.create_text_clicked.emit()
-        QApplication.processEvents()
-
-        assert spy.count() == 1
-
-    def test_export_button_emits_signal(self, file_manager_window, qapp):
-        """
-        E2E: Export button click emits export_clicked signal.
-        """
-        screen = file_manager_window["screen"]
-
-        spy = QSignalSpy(screen.page.export_clicked)
-
-        screen.page.toolbar.export_clicked.emit()
+        toolbar_signal.emit()
         QApplication.processEvents()
 
         assert spy.count() == 1
@@ -477,101 +444,60 @@ class TestSearchFunctionality:
         assert spy.count() == 1
         assert spy.at(0)[0] == "interview"
 
-    def test_search_propagates_to_page(self, file_manager_window, qapp):
-        """
-        E2E: Search signal propagates from toolbar to page.
-        """
-        screen = file_manager_window["screen"]
-
-        spy = QSignalSpy(screen.page.search_changed)
-
-        screen.page.toolbar.search_changed.emit("test")
-        QApplication.processEvents()
-
-        assert spy.count() == 1
-        assert spy.at(0)[0] == "test"
-
 
 class TestBulkActions:
     """E2E tests for bulk action operations."""
 
-    def test_bulk_delete_emits_signal(self, file_manager_window, qapp):
+    def test_bulk_actions_emit_signals(self, file_manager_window, qapp):
         """
-        E2E: Bulk delete action emits delete_sources signal.
+        E2E: Bulk delete, export, and open-for-coding actions emit their signals.
         """
         screen = file_manager_window["screen"]
 
-        spy = QSignalSpy(screen.page.delete_sources)
+        delete_spy = QSignalSpy(screen.page.delete_sources)
+        export_spy = QSignalSpy(screen.page.export_sources)
+        coding_spy = QSignalSpy(screen.page.open_for_coding)
 
-        # Simulate bulk delete from table
+        # Bulk delete
         screen.page.source_table.delete_sources.emit(["1", "2", "3"])
         QApplication.processEvents()
+        assert delete_spy.count() == 1
+        assert delete_spy.at(0)[0] == ["1", "2", "3"]
 
-        assert spy.count() == 1
-        assert spy.at(0)[0] == ["1", "2", "3"]
-
-    def test_bulk_export_emits_signal(self, file_manager_window, qapp):
-        """
-        E2E: Bulk export action emits export_sources signal.
-        """
-        screen = file_manager_window["screen"]
-
-        spy = QSignalSpy(screen.page.export_sources)
-
+        # Bulk export
         screen.page.source_table.export_sources.emit(["1", "4"])
         QApplication.processEvents()
+        assert export_spy.count() == 1
+        assert export_spy.at(0)[0] == ["1", "4"]
 
-        assert spy.count() == 1
-        assert spy.at(0)[0] == ["1", "4"]
-
-    def test_open_for_coding_emits_signal(self, file_manager_window, qapp):
-        """
-        E2E: Open for coding action emits signal.
-        """
-        screen = file_manager_window["screen"]
-
-        spy = QSignalSpy(screen.page.open_for_coding)
-
+        # Open for coding
         screen.page.source_table.open_for_coding.emit("2")
         QApplication.processEvents()
-
-        assert spy.count() == 1
-        assert spy.at(0)[0] == "2"
+        assert coding_spy.count() == 1
+        assert coding_spy.at(0)[0] == "2"
 
 
 class TestEmptyStateActions:
     """E2E tests for empty state interactions."""
 
-    def test_empty_state_import_button_emits_signal(
+    def test_empty_state_buttons_emit_signals(
         self, empty_file_manager_window, qapp
     ):
         """
-        E2E: Import button in empty state emits import_clicked signal.
+        E2E: Import and Link buttons in empty state emit their signals.
         """
         screen = empty_file_manager_window["screen"]
 
-        spy = QSignalSpy(screen.page.import_clicked)
+        import_spy = QSignalSpy(screen.page.import_clicked)
+        link_spy = QSignalSpy(screen.page.link_clicked)
 
-        # Click import in empty state
         screen.page.empty_state.import_clicked.emit()
         QApplication.processEvents()
-
-        assert spy.count() == 1
-
-    def test_empty_state_link_button_emits_signal(
-        self, empty_file_manager_window, qapp
-    ):
-        """
-        E2E: Link button in empty state emits link_clicked signal.
-        """
-        screen = empty_file_manager_window["screen"]
-
-        spy = QSignalSpy(screen.page.link_clicked)
+        assert import_spy.count() == 1
 
         screen.page.empty_state.link_clicked.emit()
         QApplication.processEvents()
-
-        assert spy.count() == 1
+        assert link_spy.count() == 1
 
 
 class TestNavigationSignals:

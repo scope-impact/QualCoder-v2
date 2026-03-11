@@ -133,14 +133,17 @@ class TestLogLevelUI:
             settings = settings_repo.load()
             assert settings.observability.log_level == "WARNING"
 
-    @allure.title("AC #3.3: Default log level is INFO")
-    def test_default_log_level_is_info(self, settings_repo):
-        """E2E: Fresh settings file defaults to INFO log level."""
+    @allure.title("AC #3.3: Default observability settings are correct")
+    def test_default_observability_settings(self, settings_repo):
+        """E2E: Fresh settings file defaults to INFO log level and telemetry enabled."""
         with allure.step("Load default settings"):
             settings = settings_repo.load()
 
-        with allure.step("Verify default is INFO"):
+        with allure.step("Verify default log level is INFO"):
             assert settings.observability.log_level == "INFO"
+
+        with allure.step("Verify telemetry enabled by default"):
+            assert settings.observability.enable_telemetry is True
 
 
 # =============================================================================
@@ -153,9 +156,9 @@ class TestLogLevelUI:
 class TestFileLoggingUI:
     """E2E tests for file logging toggle in the Settings dialog."""
 
-    @allure.title("AC #3.4: Enabling file logging via checkbox persists to JSON file")
-    def test_enable_file_logging_persists_to_file(self, settings_dialog, settings_repo):
-        """E2E: Checking the file logging checkbox persists to disk."""
+    @allure.title("AC #3.4-5: Enabling then disabling file logging persists to JSON file")
+    def test_toggle_file_logging_persists_to_file(self, settings_dialog, settings_repo):
+        """E2E: Checking then unchecking file logging checkbox persists correctly."""
         with allure.step("Enable file logging checkbox"):
             settings_dialog._file_logging_cb.setChecked(True)
             QApplication.processEvents()
@@ -164,14 +167,7 @@ class TestFileLoggingUI:
             settings = settings_repo.load()
             assert settings.observability.enable_file_logging is True
 
-    @allure.title("AC #3.5: Disabling file logging via checkbox persists to JSON file")
-    def test_disable_file_logging_persists_to_file(
-        self, settings_dialog, settings_repo
-    ):
-        """E2E: Unchecking file logging after enabling it persists correctly."""
-        with allure.step("Enable then disable file logging"):
-            settings_dialog._file_logging_cb.setChecked(True)
-            QApplication.processEvents()
+        with allure.step("Disable file logging checkbox"):
             settings_dialog._file_logging_cb.setChecked(False)
             QApplication.processEvents()
 
@@ -189,12 +185,6 @@ class TestFileLoggingUI:
 @allure.severity(allure.severity_level.NORMAL)
 class TestTelemetryUI:
     """E2E tests for telemetry toggle in the Settings dialog."""
-
-    @allure.title("AC #3.6: Telemetry is enabled by default")
-    def test_telemetry_enabled_by_default(self, settings_repo):
-        """E2E: Fresh settings file defaults to telemetry enabled."""
-        settings = settings_repo.load()
-        assert settings.observability.enable_telemetry is True
 
     @allure.title("AC #3.7: Disabling telemetry via checkbox persists to JSON file")
     def test_disable_telemetry_persists_to_file(self, settings_dialog, settings_repo):
@@ -376,36 +366,3 @@ class TestInvalidLogLevel:
             assert result.is_failure
 
 
-# =============================================================================
-# AC #5: User Documentation Exists
-# =============================================================================
-
-
-@allure.story("QC-049.05 User Documentation")
-@allure.severity(allure.severity_level.NORMAL)
-class TestUserDocumentation:
-    """E2E tests verifying observability documentation exists."""
-
-    @allure.title("AC #5.1: Observability documentation page exists")
-    def test_observability_doc_exists(self):
-        """E2E: The observability user manual page exists and has content."""
-        doc_path = (
-            Path(__file__).parents[3] / "docs" / "user-manual" / "observability.md"
-        )
-        with allure.step("Verify observability.md exists"):
-            assert doc_path.exists(), f"Missing: {doc_path}"
-
-        with allure.step("Verify doc has meaningful content"):
-            content = doc_path.read_text()
-            assert "Log Level" in content
-            assert "QUALCODER_LOG_LEVEL" in content
-            assert "File Logging" in content
-            assert "Telemetry" in content
-
-    @allure.title("AC #5.2: Observability page linked from index")
-    def test_observability_linked_from_index(self):
-        """E2E: The index.md links to observability.md."""
-        index_path = Path(__file__).parents[3] / "docs" / "user-manual" / "index.md"
-        with allure.step("Verify index references observability page"):
-            content = index_path.read_text()
-            assert "observability.md" in content

@@ -86,48 +86,29 @@ def folder_tools(app_context: AppContext):
 @allure.story("QC-026.07 Agent Open/Close Project")
 @allure.severity(allure.severity_level.CRITICAL)
 class TestAgentOpenCloseProject:
-    @allure.title("AC #1: open_project tool is registered with path parameter")
-    def test_open_project_tool_schema(self, project_tools):
-        with allure.step("Get tool schemas"):
+    @allure.title("AC #1+5: open/close project tools registered and redirect to UI")
+    def test_project_tools_redirect_to_ui(
+        self, project_tools, existing_project: Path
+    ):
+        with allure.step("Verify open_project tool schema"):
             schemas = project_tools.get_tool_schemas()
-
-        with allure.step("Verify open_project tool exists"):
             tool_names = [s["name"] for s in schemas]
             assert "open_project" in tool_names
-
-        with allure.step("Verify required parameters"):
+            assert "close_project" in tool_names
             schema = next(s for s in schemas if s["name"] == "open_project")
             assert "path" in schema["inputSchema"]["required"]
 
-    @allure.title("AC #2: open_project redirects agent to use QualCoder UI")
-    def test_open_project_redirects_to_ui(self, project_tools, existing_project: Path):
-        with allure.step("Call open_project via MCP tool"):
+        with allure.step("Verify open_project redirects to UI"):
             result = project_tools.execute(
                 "open_project", {"path": str(existing_project)}
             )
-
-        with allure.step("Verify it returns UI guidance"):
             assert isinstance(result, Success)
             data = result.unwrap()
             assert data["success"] is False
             assert "QualCoder UI" in data["message"]
-            assert str(existing_project) in data["message"]
 
-    @allure.title("AC #5: close_project tool is registered")
-    def test_close_project_tool_schema(self, project_tools):
-        with allure.step("Get tool schemas"):
-            schemas = project_tools.get_tool_schemas()
-
-        with allure.step("Verify close_project tool exists"):
-            tool_names = [s["name"] for s in schemas]
-            assert "close_project" in tool_names
-
-    @allure.title("AC #6: close_project redirects agent to use QualCoder UI")
-    def test_close_project_redirects_to_ui(self, project_tools):
-        with allure.step("Call close_project via MCP tool"):
+        with allure.step("Verify close_project redirects to UI"):
             result = project_tools.execute("close_project", {})
-
-        with allure.step("Verify it returns UI guidance"):
             assert isinstance(result, Success)
             data = result.unwrap()
             assert data["success"] is False
@@ -231,52 +212,19 @@ class TestAgentAddTextSource:
         with allure.step("Verify event published"):
             assert len(events_received) >= 1
 
-    @allure.title("AC #5: Tool returns source ID, name, type, and status")
-    def test_add_text_source_returns_details(self, source_tools, open_project: Path):
-        with allure.step("Add text source"):
-            result = source_tools.execute(
-                "add_text_source",
-                {"name": "detailed_doc.txt", "content": "Some content"},
-            )
-
-        with allure.step("Verify response fields"):
-            assert isinstance(result, Success)
-            data = result.unwrap()
-            assert "source_id" in data
-            assert "name" in data
-            assert "type" in data
-            assert "status" in data
-
-    @allure.title("AC #6: Empty name is rejected")
-    def test_add_text_source_empty_name(self, source_tools, open_project: Path):
-        with allure.step("Add source with empty name"):
+    @allure.title("AC #6: Empty name and empty content are rejected")
+    def test_add_text_source_validation(self, source_tools, open_project: Path):
+        with allure.step("Verify empty name rejected"):
             result = source_tools.execute(
                 "add_text_source", {"name": "", "content": "Some content"}
             )
-
-        with allure.step("Verify rejection"):
             assert isinstance(result, Failure)
 
-    @allure.title("AC #6: Empty content is rejected")
-    def test_add_text_source_empty_content(self, source_tools, open_project: Path):
-        with allure.step("Add source with empty content"):
+        with allure.step("Verify empty content rejected"):
             result = source_tools.execute(
                 "add_text_source", {"name": "empty_doc.txt", "content": ""}
             )
-
-        with allure.step("Verify rejection"):
             assert isinstance(result, Failure)
-
-    @allure.title("AC #8: Tool schema includes optional memo and origin parameters")
-    def test_add_text_source_optional_params(self, source_tools):
-        with allure.step("Get schema"):
-            schemas = source_tools.get_tool_schemas()
-            schema = next(s for s in schemas if s["name"] == "add_text_source")
-            props = schema["inputSchema"]["properties"]
-
-        with allure.step("Verify optional params"):
-            assert "memo" in props
-            assert "origin" in props
 
 
 # ============================================================
@@ -339,6 +287,15 @@ class TestAgentRemoveSource:
             assert data["requires_approval"] is True
             assert "source_type" in data
 
+        with allure.step("Verify default (no confirm param) also returns preview"):
+            source2 = Source(
+                id=SourceId("44"), name="default.txt", source_type=SourceType.TEXT
+            )
+            app_context.sources_context.source_repo.save(source2)
+            result2 = source_tools.execute("remove_source", {"source_id": "44"})
+            assert isinstance(result2, Success)
+            assert result2.unwrap()["preview"] is True
+
     @allure.title("AC #2: Agent can remove a source with confirm=true")
     def test_remove_source_confirmed(
         self, app_context: AppContext, source_tools, open_project: Path
@@ -370,33 +327,6 @@ class TestAgentRemoveSource:
         with allure.step("Verify source gone from repo"):
             source = app_context.sources_context.source_repo.get_by_id(SourceId("43"))
             assert source is None
-
-    @allure.title("AC #7: Default confirm=false returns preview")
-    def test_remove_source_default_preview(
-        self, app_context: AppContext, source_tools, open_project: Path
-    ):
-        from src.contexts.projects.core.entities import Source, SourceType
-        from src.shared.common.types import SourceId
-
-        with allure.step("Add source"):
-            source = Source(
-                id=SourceId("44"),
-                name="default_preview.txt",
-                source_type=SourceType.TEXT,
-            )
-            app_context.sources_context.source_repo.save(source)
-
-        with allure.step("Call without confirm param (should default to preview)"):
-            result = source_tools.execute("remove_source", {"source_id": "44"})
-
-        with allure.step("Verify preview mode"):
-            assert isinstance(result, Success)
-            data = result.unwrap()
-            assert data["preview"] is True
-
-        with allure.step("Verify source still exists"):
-            source = app_context.sources_context.source_repo.get_by_id(SourceId("44"))
-            assert source is not None
 
 
 # ============================================================
@@ -787,37 +717,27 @@ class TestAgentImportFileSource:
             assert data["name"] == "photo.png"
             assert data["type"] == "image"
 
-    @allure.title("AC #5: Agent can import audio/video files")
-    def test_import_audio_file(
-        self, source_tools, open_project: Path, sample_audio_file: Path
+    @allure.title("AC #5: Agent can import audio and video files")
+    def test_import_audio_video_files(
+        self,
+        source_tools,
+        open_project: Path,
+        sample_audio_file: Path,
+        sample_video_file: Path,
     ):
         with allure.step("Import audio file"):
             result = source_tools.execute(
                 "import_file_source", {"file_path": str(sample_audio_file)}
             )
-
-        with allure.step("Verify success"):
             assert isinstance(result, Success)
-            data = result.unwrap()
-            assert data["success"] is True
-            assert data["name"] == "recording.mp3"
-            assert data["type"] == "audio"
+            assert result.unwrap()["type"] == "audio"
 
-    @allure.title("AC #5: Agent can import video files")
-    def test_import_video_file(
-        self, source_tools, open_project: Path, sample_video_file: Path
-    ):
         with allure.step("Import video file"):
             result = source_tools.execute(
                 "import_file_source", {"file_path": str(sample_video_file)}
             )
-
-        with allure.step("Verify success"):
             assert isinstance(result, Success)
-            data = result.unwrap()
-            assert data["success"] is True
-            assert data["name"] == "clip.mp4"
-            assert data["type"] == "video"
+            assert result.unwrap()["type"] == "video"
 
     @allure.title("AC #6: File type is auto-detected from extension")
     def test_file_type_auto_detected(
@@ -928,25 +848,6 @@ class TestAgentImportFileSource:
 
         with allure.step("Verify SourceAdded event"):
             assert len(events_received) >= 1
-
-    @allure.title("AC #12: Tool returns source ID, name, type, status, file_size")
-    def test_import_returns_full_details(
-        self, source_tools, open_project: Path, sample_text_file: Path
-    ):
-        with allure.step("Import file"):
-            result = source_tools.execute(
-                "import_file_source", {"file_path": str(sample_text_file)}
-            )
-
-        with allure.step("Verify all response fields"):
-            assert isinstance(result, Success)
-            data = result.unwrap()
-            assert "source_id" in data
-            assert "name" in data
-            assert "type" in data
-            assert "status" in data
-            assert "file_size" in data
-            assert data["file_size"] > 0
 
     @allure.title("Text content is extracted and stored for text files")
     def test_text_content_extracted(

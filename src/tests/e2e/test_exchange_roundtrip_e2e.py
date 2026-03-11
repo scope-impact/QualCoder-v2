@@ -269,8 +269,8 @@ class TestRefiQdaRoundTrip:
 
 @allure.story("QC-039.02 Import REFI-QDA Project")
 class TestRefiQdaDeepImport:
-    @allure.title("Import creates segments with correct positions")
-    def test_import_creates_segments(
+    @allure.title("Import REFI-QDA preserves segments, colors, categories, and source text")
+    def test_import_preserves_all_aspects(
         self,
         source_repo,
         code_repo,
@@ -299,46 +299,14 @@ class TestRefiQdaDeepImport:
             event_bus=event_bus,
         )
 
-        with allure.step("Verify segments exist"):
+        with allure.step("Verify segments exist with correct positions"):
             all_segments = segment_repo.get_all()
             assert len(all_segments) >= 2, (
                 f"Expected 2+ segments, got {len(all_segments)}"
             )
-
-        with allure.step("Verify segment positions"):
             positions = [(s.position.start, s.position.end) for s in all_segments]
             assert (7, 12) in positions, f"Missing segment 7-12 in {positions}"
             assert (17, 20) in positions, f"Missing segment 17-20 in {positions}"
-
-    @allure.title("Import creates codes with correct colors")
-    def test_import_preserves_colors(
-        self,
-        source_repo,
-        code_repo,
-        category_repo,
-        segment_repo,
-        event_bus,
-        tmp_path,
-    ):
-        from src.contexts.exchange.core.commandHandlers.import_refi_qda import (
-            import_refi_qda,
-        )
-        from src.contexts.exchange.core.commands import ImportRefiQdaCommand
-
-        qdpx = _make_qdpx(
-            tmp_path,
-            REFI_QDA_XML,
-            {"Sources/interview.txt": "I felt happy and sad today."},
-        )
-
-        import_refi_qda(
-            command=ImportRefiQdaCommand(source_path=str(qdpx)),
-            source_repo=source_repo,
-            code_repo=code_repo,
-            category_repo=category_repo,
-            segment_repo=segment_repo,
-            event_bus=event_bus,
-        )
 
         with allure.step("Verify code colors"):
             codes = code_repo.get_all()
@@ -353,77 +321,15 @@ class TestRefiQdaDeepImport:
             assert anger is not None, "Anger code not found"
             assert anger.color.to_hex().lower() == "#ff0000"
 
-    @allure.title("Import creates categories from non-codable Code elements")
-    def test_import_creates_categories(
-        self,
-        source_repo,
-        code_repo,
-        category_repo,
-        segment_repo,
-        event_bus,
-        tmp_path,
-    ):
-        from src.contexts.exchange.core.commandHandlers.import_refi_qda import (
-            import_refi_qda,
-        )
-        from src.contexts.exchange.core.commands import ImportRefiQdaCommand
-
-        qdpx = _make_qdpx(
-            tmp_path,
-            REFI_QDA_XML,
-            {"Sources/interview.txt": "I felt happy and sad today."},
-        )
-
-        import_refi_qda(
-            command=ImportRefiQdaCommand(source_path=str(qdpx)),
-            source_repo=source_repo,
-            code_repo=code_repo,
-            category_repo=category_repo,
-            segment_repo=segment_repo,
-            event_bus=event_bus,
-        )
-
         with allure.step("Verify Emotions category created"):
             categories = category_repo.get_all()
             cat_names = {c.name for c in categories}
             assert "Emotions" in cat_names, f"Missing 'Emotions' in {cat_names}"
 
         with allure.step("Verify Anger is under Emotions category"):
-            codes = code_repo.get_all()
-            anger = next((c for c in codes if c.name == "Anger"), None)
-            assert anger is not None
+            assert anger.category_id is not None
             emotions_cat = next(c for c in categories if c.name == "Emotions")
             assert anger.category_id == emotions_cat.id
-
-    @allure.title("Import preserves source text content")
-    def test_import_preserves_source_text(
-        self,
-        source_repo,
-        code_repo,
-        category_repo,
-        segment_repo,
-        event_bus,
-        tmp_path,
-    ):
-        from src.contexts.exchange.core.commandHandlers.import_refi_qda import (
-            import_refi_qda,
-        )
-        from src.contexts.exchange.core.commands import ImportRefiQdaCommand
-
-        qdpx = _make_qdpx(
-            tmp_path,
-            REFI_QDA_XML,
-            {"Sources/interview.txt": "I felt happy and sad today."},
-        )
-
-        import_refi_qda(
-            command=ImportRefiQdaCommand(source_path=str(qdpx)),
-            source_repo=source_repo,
-            code_repo=code_repo,
-            category_repo=category_repo,
-            segment_repo=segment_repo,
-            event_bus=event_bus,
-        )
 
         with allure.step("Verify source text"):
             sources = source_repo.get_all()
@@ -439,8 +345,8 @@ class TestRefiQdaDeepImport:
 
 @allure.story("QC-039.03 Import RQDA Project")
 class TestRqdaDeepImport:
-    @allure.title("Import creates segments with correct text and positions")
-    def test_import_creates_segments(
+    @allure.title("Import RQDA preserves segments, colors, and skips deleted items")
+    def test_import_preserves_all_and_skips_deleted(
         self,
         source_repo,
         code_repo,
@@ -463,38 +369,20 @@ class TestRqdaDeepImport:
             event_bus=event_bus,
         )
 
-        with allure.step("Verify segments"):
+        with allure.step("Verify segments with correct positions"):
             segments = segment_repo.get_all()
-            assert len(segments) >= 1, f"Expected 1+ segments, got {len(segments)}"
+            assert len(segments) == 1, f"Expected 1 segment, got {len(segments)}"
 
             seg = segments[0]
             assert seg.position.start == 12
             assert seg.position.end == 17
             assert seg.selected_text == "happy"
 
-    @allure.title("Import skips deleted sources, codes, and segments")
-    def test_import_skips_deleted_items(
-        self,
-        source_repo,
-        code_repo,
-        category_repo,
-        segment_repo,
-        event_bus,
-        tmp_path,
-    ):
-        from src.contexts.exchange.core.commandHandlers.import_rqda import import_rqda
-        from src.contexts.exchange.core.commands import ImportRqdaCommand
-
-        rqda_path = _create_rqda_db(tmp_path / "project.rqda")
-
-        import_rqda(
-            command=ImportRqdaCommand(source_path=str(rqda_path)),
-            source_repo=source_repo,
-            code_repo=code_repo,
-            category_repo=category_repo,
-            segment_repo=segment_repo,
-            event_bus=event_bus,
-        )
+        with allure.step("Verify code colors"):
+            codes = code_repo.get_all()
+            positive = next((c for c in codes if c.name == "Positive"), None)
+            assert positive is not None
+            assert positive.color.to_hex().lower() == "#00ff00"
 
         with allure.step("Verify deleted source skipped"):
             sources = source_repo.get_all()
@@ -502,44 +390,9 @@ class TestRqdaDeepImport:
             assert "deleted.txt" not in source_names
 
         with allure.step("Verify deleted code skipped"):
-            codes = code_repo.get_all()
             code_names = {c.name for c in codes}
             assert "Deleted" not in code_names
             assert len(codes) == 2  # Only Positive and Learning
-
-        with allure.step("Verify only active segment imported"):
-            segments = segment_repo.get_all()
-            assert len(segments) == 1  # Deleted coding was skipped
-
-    @allure.title("Import preserves code colors from RQDA")
-    def test_import_preserves_colors(
-        self,
-        source_repo,
-        code_repo,
-        category_repo,
-        segment_repo,
-        event_bus,
-        tmp_path,
-    ):
-        from src.contexts.exchange.core.commandHandlers.import_rqda import import_rqda
-        from src.contexts.exchange.core.commands import ImportRqdaCommand
-
-        rqda_path = _create_rqda_db(tmp_path / "project.rqda")
-
-        import_rqda(
-            command=ImportRqdaCommand(source_path=str(rqda_path)),
-            source_repo=source_repo,
-            code_repo=code_repo,
-            category_repo=category_repo,
-            segment_repo=segment_repo,
-            event_bus=event_bus,
-        )
-
-        with allure.step("Verify colors"):
-            codes = code_repo.get_all()
-            positive = next((c for c in codes if c.name == "Positive"), None)
-            assert positive is not None
-            assert positive.color.to_hex().lower() == "#00ff00"
 
 
 # =============================================================================

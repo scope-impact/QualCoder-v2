@@ -177,33 +177,20 @@ class TestColorPickerDialog:
     @allure.title("AC #3.3: User can enter custom hex color")
     @allure.severity(allure.severity_level.NORMAL)
     def test_enter_custom_hex_color(self, color_picker_dialog):
-        """User can enter a custom hex color value."""
+        """User can enter a custom hex color value and it updates selection."""
         color_picker_dialog.show()
         QApplication.processEvents()
 
-        # BLACK-BOX: Find input and enter value via public API
         color_picker_dialog.select_color("#123ABC")
         QApplication.processEvents()
-
-        attach_screenshot(color_picker_dialog, "ColorPickerDialog - Custom Hex")
-
         assert color_picker_dialog.get_selected_color() == "#123ABC"
 
-    @allure.title("AC #3.4: Valid hex colors are accepted")
-    @allure.severity(allure.severity_level.NORMAL)
-    def test_valid_hex_accepted(self, color_picker_dialog):
-        """Valid hex values update the selection."""
-        color_picker_dialog.show()
-        QApplication.processEvents()
-
-        # Set a valid hex color
+        # Verify a different hex also works
         color_picker_dialog.select_color("#ABCDEF")
         QApplication.processEvents()
-
-        attach_screenshot(color_picker_dialog, "ColorPickerDialog - Valid Hex")
-
-        # Should update to new color
         assert color_picker_dialog.get_selected_color() == "#ABCDEF"
+
+        attach_screenshot(color_picker_dialog, "ColorPickerDialog - Custom Hex")
 
     @allure.title("AC #3.5: Select button emits color_selected signal")
     @allure.severity(allure.severity_level.CRITICAL)
@@ -228,22 +215,6 @@ class TestColorPickerDialog:
         assert spy.count() >= 1
         # Last emission should have our color
         assert spy.at(spy.count() - 1)[0] == "#AABBCC"
-
-    @allure.title("AC #3.6: Preview updates with selection")
-    @allure.severity(allure.severity_level.NORMAL)
-    def test_preview_updates(self, color_picker_dialog):
-        """Preview updates when color changes."""
-        color_picker_dialog.show()
-        QApplication.processEvents()
-
-        # Set color via public API
-        color_picker_dialog.select_color("#FF0000")
-        QApplication.processEvents()
-
-        attach_screenshot(color_picker_dialog, "ColorPickerDialog - Preview Red")
-
-        # Verify via public getter
-        assert color_picker_dialog.get_selected_color() == "#FF0000"
 
     @allure.title("AC #3.7: Swatch selection state updates visually")
     @allure.severity(allure.severity_level.NORMAL)
@@ -304,21 +275,6 @@ class TestDuplicateCodesDialog:
         attach_screenshot(duplicate_dialog, "DuplicateCodesDialog - Candidates")
 
         # BLACK-BOX: Verify via public API
-        assert duplicate_dialog.get_candidate_count() == 2
-
-    @allure.title("AC #5.2: Candidate card shows similarity percentage")
-    @allure.severity(allure.severity_level.NORMAL)
-    def test_card_shows_similarity(self, duplicate_dialog, sample_duplicate_candidates):
-        """Each candidate card displays the similarity percentage."""
-        duplicate_dialog.show()
-        QApplication.processEvents()
-
-        duplicate_dialog.on_duplicates_detected(sample_duplicate_candidates)
-        QApplication.processEvents()
-
-        attach_screenshot(duplicate_dialog, "DuplicateCodesDialog - Similarity")
-
-        # BLACK-BOX: Cards are created with data
         assert duplicate_dialog.get_candidate_count() == 2
 
     @allure.title("AC #5.3: User can merge code A into code B")
@@ -429,22 +385,6 @@ class TestCodeSuggestionDialog:
 
         attach_screenshot(suggestion_dialog, "CodeSuggestionDialog - Suggestions")
 
-        # BLACK-BOX: Verify via public API
-        assert suggestion_dialog.get_suggestion_count() == 2
-
-    @allure.title("AC #8.2: Suggestion card shows name and rationale")
-    @allure.severity(allure.severity_level.NORMAL)
-    def test_card_shows_details(self, suggestion_dialog, sample_suggestions):
-        """Suggestion cards display name, rationale, and confidence."""
-        suggestion_dialog.show()
-        QApplication.processEvents()
-
-        suggestion_dialog.on_suggestions_received(sample_suggestions)
-        QApplication.processEvents()
-
-        attach_screenshot(suggestion_dialog, "CodeSuggestionDialog - Card Details")
-
-        # BLACK-BOX: Verify cards contain expected data
         assert suggestion_dialog.get_suggestion_count() == 2
 
     @allure.title("AC #8.3: User can edit suggested name before approval")
@@ -569,61 +509,6 @@ class TestCodeSuggestionDialog:
 # =============================================================================
 # QC-028.09: Agent Detect Duplicates (Black-Box)
 # =============================================================================
-
-
-@allure.story("QC-028.09 Agent Detect Duplicates")
-class TestDuplicateDetection:
-    """
-    QC-028.09: Agent Detect Potential Duplicate Codes
-    Test duplicate detection using black-box patterns.
-    """
-
-    @allure.title("AC #9.1: Detection shows similarity scores")
-    @allure.severity(allure.severity_level.NORMAL)
-    def test_shows_similarity_scores(
-        self, duplicate_dialog, sample_duplicate_candidates
-    ):
-        """Detection results show similarity scores for each pair."""
-        duplicate_dialog.show()
-        QApplication.processEvents()
-
-        duplicate_dialog.on_duplicates_detected(sample_duplicate_candidates)
-        QApplication.processEvents()
-
-        attach_screenshot(duplicate_dialog, "DuplicateDetection - Similarity Scores")
-
-        # BLACK-BOX: Verify via public API
-        assert duplicate_dialog.get_candidate_count() == 2
-
-    @allure.title("AC #9.2: High similarity pairs shown first")
-    @allure.severity(allure.severity_level.NORMAL)
-    def test_sorted_by_similarity(self, duplicate_dialog, sample_duplicate_candidates):
-        """Duplicate pairs should be sorted by similarity (highest first)."""
-        duplicate_dialog.show()
-        QApplication.processEvents()
-
-        duplicate_dialog.on_duplicates_detected(sample_duplicate_candidates)
-        QApplication.processEvents()
-
-        attach_screenshot(duplicate_dialog, "DuplicateDetection - Sorted")
-
-        # BLACK-BOX: Verify count
-        assert duplicate_dialog.get_candidate_count() == 2
-
-    @allure.title("AC #9.3: Detection considers segment counts")
-    @allure.severity(allure.severity_level.NORMAL)
-    def test_shows_segment_counts(self, duplicate_dialog, sample_duplicate_candidates):
-        """Duplicate cards show segment counts for each code."""
-        duplicate_dialog.show()
-        QApplication.processEvents()
-
-        duplicate_dialog.on_duplicates_detected(sample_duplicate_candidates)
-        QApplication.processEvents()
-
-        attach_screenshot(duplicate_dialog, "DuplicateDetection - Segment Counts")
-
-        # BLACK-BOX: Cards are created with segment count info
-        assert duplicate_dialog.get_candidate_count() == 2
 
 
 # =============================================================================
@@ -815,26 +700,14 @@ class TestCreateCategoryDialog:
             == "Category for interview themes"
         )
 
-    @allure.title("AC #2.6: Create button disabled when name is empty")
+    @allure.title("AC #2.6: Create button toggles based on name input")
     @allure.severity(allure.severity_level.NORMAL)
-    def test_create_button_disabled_without_name(self, create_category_dialog):
-        """Create button should be disabled when name is empty."""
+    def test_create_button_toggles_with_name(self, create_category_dialog):
+        """Create button disabled when empty, enabled when name entered."""
         create_category_dialog.show()
         QApplication.processEvents()
 
-        attach_screenshot(
-            create_category_dialog, "CreateCategoryDialog - Button Disabled"
-        )
-
-        # BLACK-BOX: Find button and check state
         assert not is_button_enabled(create_category_dialog, "Create")
-
-    @allure.title("AC #2.7: Create button enabled when name is entered")
-    @allure.severity(allure.severity_level.NORMAL)
-    def test_create_button_enabled_with_name(self, create_category_dialog):
-        """Create button should be enabled when name is entered."""
-        create_category_dialog.show()
-        QApplication.processEvents()
 
         create_category_dialog.set_category_name("New Category")
         QApplication.processEvents()
@@ -843,7 +716,6 @@ class TestCreateCategoryDialog:
             create_category_dialog, "CreateCategoryDialog - Button Enabled"
         )
 
-        # BLACK-BOX: Find button and check state
         assert is_button_enabled(create_category_dialog, "Create")
 
     @allure.title("AC #2.8: Clicking create emits category_created signal")

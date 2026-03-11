@@ -120,9 +120,9 @@ def settings_dialog(qapp, colors, settings_viewmodel):
 class TestSettingsDialogDefaults:
     """E2E tests for Settings Dialog default values."""
 
-    @allure.title("Dialog opens with light theme selected by default")
-    def test_dialog_opens_with_default_theme(self, settings_dialog):
-        """E2E: Dialog displays light theme selected by default."""
+    @allure.title("Dialog opens with default theme, font size, and language")
+    def test_dialog_opens_with_defaults(self, settings_dialog):
+        """E2E: Dialog displays correct defaults for theme, font size, and language."""
         with allure.step("Find theme buttons in dialog"):
             theme_buttons = [
                 btn
@@ -142,22 +142,16 @@ class TestSettingsDialogDefaults:
             assert light_btn is not None
             assert light_btn.isChecked()
 
-        attach_screenshot(settings_dialog, "SettingsDialog - Default Theme")
-
-    @allure.title("Dialog opens with font size 14 by default")
-    def test_dialog_opens_with_default_font_size(self, settings_dialog):
-        """E2E: Dialog displays font size 14 by default."""
         with allure.step("Verify font slider default value"):
             assert settings_dialog._font_slider.value() == 14
 
         with allure.step("Verify font size label shows 14px"):
             assert "14px" in settings_dialog._font_size_label.text()
 
-    @allure.title("Dialog opens with English selected by default")
-    def test_dialog_opens_with_default_language(self, settings_dialog):
-        """E2E: Dialog displays English selected by default."""
         with allure.step("Verify language combo shows English"):
             assert settings_dialog._language_combo.currentData() == "en"
+
+        attach_screenshot(settings_dialog, "SettingsDialog - Defaults")
 
 
 # =============================================================================
@@ -452,15 +446,13 @@ class TestDialogNavigation:
 class TestDialogAcceptCancel:
     """E2E tests for dialog OK/Cancel behavior."""
 
-    @allure.title("OK button accepts the dialog")
-    def test_ok_button_accepts_dialog(self, qapp, colors, settings_viewmodel):
-        """E2E: OK button accepts the dialog with Accepted result code."""
+    @allure.title("OK button accepts and Cancel button rejects the dialog")
+    def test_ok_accepts_and_cancel_rejects_dialog(self, qapp, colors, settings_viewmodel):
+        """E2E: OK button accepts and Cancel button rejects the dialog."""
         from src.contexts.settings.presentation.dialogs import SettingsDialog
 
-        with allure.step("Create settings dialog"):
+        with allure.step("Create settings dialog and verify OK button exists"):
             dialog = SettingsDialog(viewmodel=settings_viewmodel, colors=colors)
-
-        with allure.step("Verify OK button exists"):
             ok_buttons = [
                 btn for btn in dialog.findChildren(QPushButton) if btn.text() == "OK"
             ]
@@ -475,22 +467,15 @@ class TestDialogAcceptCancel:
             assert dialog.result() == QDialog.DialogCode.Accepted
             dialog.close()
 
-    @allure.title("Cancel button rejects the dialog")
-    def test_cancel_button_rejects_dialog(self, qapp, colors, settings_viewmodel):
-        """E2E: Cancel button rejects the dialog with Rejected result code."""
-        from src.contexts.settings.presentation.dialogs import SettingsDialog
-
-        with allure.step("Create and show settings dialog"):
-            dialog = SettingsDialog(viewmodel=settings_viewmodel, colors=colors)
-            dialog.show()
+        with allure.step("Create new dialog, show, and reject"):
+            dialog2 = SettingsDialog(viewmodel=settings_viewmodel, colors=colors)
+            dialog2.show()
             QApplication.processEvents()
-
-        with allure.step("Reject dialog"):
-            dialog.reject()
+            dialog2.reject()
 
         with allure.step("Verify dialog result is Rejected"):
-            assert dialog.result() == QDialog.DialogCode.Rejected
-            dialog.close()
+            assert dialog2.result() == QDialog.DialogCode.Rejected
+            dialog2.close()
 
 
 # =============================================================================

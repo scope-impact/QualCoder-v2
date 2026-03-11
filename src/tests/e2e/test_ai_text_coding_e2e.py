@@ -836,70 +836,39 @@ class TestAITextCodingIntegration:
 class TestAICodingToolsSchema:
     """Tests to verify MCP tool schemas are correctly defined."""
 
-    @allure.title("suggest_code_application tool has correct schema")
-    def test_suggest_code_application_schema(
+    @allure.title("AI coding tools have correct schemas")
+    def test_ai_coding_tools_schemas(
         self, coding_tools: CodingTools, app_context: AppContext
     ):
-        """Verify suggest_code_application tool schema."""
+        """Verify schemas for suggest_code_application, suggest_codes_for_range, and auto_suggest_codes."""
 
         with allure.step("Get tool schemas"):
             schemas = coding_tools.get_tool_schemas()
+            schema_map = {s["name"]: s for s in schemas}
 
-        with allure.step("Find suggest_code_application schema"):
-            schema = next(
-                (s for s in schemas if s["name"] == "suggest_code_application"), None
-            )
+        with allure.step("Verify suggest_code_application schema"):
+            schema = schema_map.get("suggest_code_application")
             assert schema is not None
-
-        with allure.step("Verify required parameters"):
             required = schema["inputSchema"]["required"]
             assert "source_id" in required
             assert "code_id" in required
             assert "start_pos" in required
             assert "end_pos" in required
-
-        with allure.step("Verify optional parameters"):
             props = schema["inputSchema"]["properties"]
             assert "rationale" in props
             assert "confidence" in props
 
-    @allure.title("suggest_codes_for_range tool has correct schema")
-    def test_suggest_codes_for_range_schema(
-        self, coding_tools: CodingTools, app_context: AppContext
-    ):
-        """Verify suggest_codes_for_range tool schema."""
-
-        with allure.step("Get tool schemas"):
-            schemas = coding_tools.get_tool_schemas()
-
-        with allure.step("Find suggest_codes_for_range schema"):
-            schema = next(
-                (s for s in schemas if s["name"] == "suggest_codes_for_range"), None
-            )
+        with allure.step("Verify suggest_codes_for_range schema"):
+            schema = schema_map.get("suggest_codes_for_range")
             assert schema is not None
-
-        with allure.step("Verify parameters"):
             props = schema["inputSchema"]["properties"]
             assert "source_id" in props
             assert "start_pos" in props
             assert "end_pos" in props
 
-    @allure.title("auto_suggest_codes tool has correct schema")
-    def test_auto_suggest_codes_schema(
-        self, coding_tools: CodingTools, app_context: AppContext
-    ):
-        """Verify auto_suggest_codes tool schema."""
-
-        with allure.step("Get tool schemas"):
-            schemas = coding_tools.get_tool_schemas()
-
-        with allure.step("Find auto_suggest_codes schema"):
-            schema = next(
-                (s for s in schemas if s["name"] == "auto_suggest_codes"), None
-            )
+        with allure.step("Verify auto_suggest_codes schema"):
+            schema = schema_map.get("auto_suggest_codes")
             assert schema is not None
-
-        with allure.step("Verify parameters"):
             props = schema["inputSchema"]["properties"]
             assert "source_id" in props
             assert "min_confidence" in props
