@@ -233,6 +233,7 @@ class QualCoderApp:
                 else None
             ),
             signal_bridge=self._project_signal_bridge,
+            session=self._ctx.session,
         )
         self._screens["files"].set_viewmodel(file_manager_viewmodel)
 
@@ -255,6 +256,7 @@ class QualCoderApp:
             source_repo=self._ctx.sources_context.source_repo,
             case_repo=self._ctx.cases_context.case_repo,
             event_bus=self._ctx.event_bus,
+            session=self._ctx.session,
         )
         exchange_viewmodel = ExchangeViewModel(coordinator=exchange_coordinator)
         self._screens["files"].set_exchange_viewmodel(exchange_viewmodel)
@@ -266,6 +268,7 @@ class QualCoderApp:
                 category_repo=self._ctx.coding_context.category_repo,
                 segment_repo=self._ctx.coding_context.segment_repo,
                 event_bus=self._ctx.event_bus,
+                session=self._ctx.session,
             )
             text_coding_viewmodel = TextCodingViewModel(
                 controller=coding_coordinator,

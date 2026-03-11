@@ -182,6 +182,7 @@ def handle_approve_suggestion(
         category_repo=ctx.category_repo,
         segment_repo=ctx.segment_repo,
         event_bus=ctx.event_bus,
+        session=ctx.session,
     )
 
     if result.is_success:

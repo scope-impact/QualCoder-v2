@@ -76,6 +76,10 @@ class HandlerContext:
         return self._ctx.event_bus
 
     @property
+    def session(self):
+        return getattr(self._ctx, "session", None)
+
+    @property
     def source_repo(self):
         sources_ctx = getattr(self._ctx, "sources_context", None)
         return sources_ctx.source_repo if sources_ctx else None
@@ -110,6 +114,7 @@ class HandlerContext:
             category_repo=self.category_repo,
             segment_repo=self.segment_repo,
             event_bus=self.event_bus,
+            session=self.session,
         )
 
 

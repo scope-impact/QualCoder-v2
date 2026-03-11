@@ -44,6 +44,7 @@ if TYPE_CHECKING:
         SQLiteSegmentRepository,
     )
     from src.shared.infra.event_bus import EventBus
+    from src.shared.infra.session import Session
 
 
 class CodingCoordinator:
@@ -62,11 +63,13 @@ class CodingCoordinator:
         category_repo: SQLiteCategoryRepository,
         segment_repo: SQLiteSegmentRepository,
         event_bus: EventBus,
+        session: Session | None = None,
     ) -> None:
         self._code_repo = code_repo
         self._category_repo = category_repo
         self._segment_repo = segment_repo
         self._event_bus = event_bus
+        self._session = session
 
     def _dispatch(self, handler, command) -> OperationResult:
         """Dispatch a command to a handler with all standard dependencies."""
@@ -76,6 +79,7 @@ class CodingCoordinator:
             self._category_repo,
             self._segment_repo,
             self._event_bus,
+            session=self._session,
         )
 
     # =========================================================================

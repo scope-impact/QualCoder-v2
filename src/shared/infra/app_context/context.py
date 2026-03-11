@@ -103,6 +103,11 @@ class AppContext:
     # Internal state
     _started: bool = field(default=False, init=False, repr=False)
 
+    @property
+    def session(self):
+        """Get the current Session (project-scoped, thread-safe). None if no project open."""
+        return self.lifecycle.session
+
     # =========================================================================
     # Lifecycle Methods
     # =========================================================================

@@ -59,6 +59,7 @@ from src.shared.presentation.dto import FolderDTO, ProjectSummaryDTO, SourceDTO
 if TYPE_CHECKING:
     from src.contexts.cases.core.entities import Case
     from src.shared.infra.event_bus import EventBus
+    from src.shared.infra.session import Session
     from src.shared.infra.state import ProjectState
 
 logger = logging.getLogger("qualcoder.sources.viewmodel")
@@ -139,6 +140,7 @@ class FileManagerViewModel(QObject):
         event_bus: EventBus,
         segment_repo: SegmentRepository | None = None,
         signal_bridge: ProjectSignalBridge | None = None,
+        session: Session | None = None,
         parent: QObject | None = None,
     ) -> None:
         """
@@ -152,6 +154,7 @@ class FileManagerViewModel(QObject):
             event_bus: Event bus for publishing events
             segment_repo: Segment repository for cascade deletion on source removal
             signal_bridge: Signal bridge for reactive updates (optional)
+            session: Session for tracking user actions (optional)
             parent: Qt parent object
         """
         super().__init__(parent)
@@ -162,6 +165,7 @@ class FileManagerViewModel(QObject):
         self._event_bus = event_bus
         self._segment_repo = segment_repo
         self._signal_bridge = signal_bridge
+        self._session = session
 
         # Selection state
         self._selected_source_ids: set[str] = set()
@@ -428,6 +432,7 @@ class FileManagerViewModel(QObject):
             state=self._state,
             source_repo=self._source_repo,
             event_bus=self._event_bus,
+            session=self._session,
         )
 
         return result.is_success
@@ -625,6 +630,7 @@ class FileManagerViewModel(QObject):
             source_repo=self._source_repo,
             segment_repo=self._segment_repo,
             event_bus=self._event_bus,
+            session=self._session,
         )
 
         if result.is_success:
@@ -693,6 +699,7 @@ class FileManagerViewModel(QObject):
             state=self._state,
             event_bus=self._event_bus,
             source_repo=self._source_repo,
+            session=self._session,
         )
 
         if result.is_success:
@@ -732,6 +739,7 @@ class FileManagerViewModel(QObject):
             state=self._state,
             source_repo=self._source_repo,
             event_bus=self._event_bus,
+            session=self._session,
         )
 
         return result.is_success
@@ -852,6 +860,7 @@ class FileManagerViewModel(QObject):
             folder_repo=self._folder_repo,
             source_repo=self._source_repo,
             event_bus=self._event_bus,
+            session=self._session,
         )
 
         return result.is_success
@@ -875,6 +884,7 @@ class FileManagerViewModel(QObject):
             folder_repo=self._folder_repo,
             source_repo=self._source_repo,
             event_bus=self._event_bus,
+            session=self._session,
         )
 
         return result.is_success
@@ -897,6 +907,7 @@ class FileManagerViewModel(QObject):
             folder_repo=self._folder_repo,
             source_repo=self._source_repo,
             event_bus=self._event_bus,
+            session=self._session,
         )
 
         return result.is_success
@@ -920,6 +931,7 @@ class FileManagerViewModel(QObject):
             folder_repo=self._folder_repo,
             source_repo=self._source_repo,
             event_bus=self._event_bus,
+            session=self._session,
         )
 
         return result.is_success

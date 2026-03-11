@@ -57,6 +57,7 @@ if TYPE_CHECKING:
     from src.contexts.cases.core.entities import Case
     from src.shared.infra.app_context import CasesContext
     from src.shared.infra.event_bus import EventBus
+    from src.shared.infra.session import Session
     from src.shared.infra.state import ProjectState
 
     class CaseRepository(Protocol):
@@ -105,6 +106,7 @@ class CaseManagerViewModel(QObject):
         event_bus: EventBus,
         cases_ctx: CasesContext | None = None,
         signal_bridge: CasesSignalBridge | None = None,
+        session: Session | None = None,
         parent: QObject | None = None,
     ) -> None:
         super().__init__(parent)
@@ -113,6 +115,7 @@ class CaseManagerViewModel(QObject):
         self._event_bus = event_bus
         self._cases_ctx = cases_ctx
         self._signal_bridge = signal_bridge
+        self._session = session
 
         # Selection state
         self._selected_case_id: str | None = None
@@ -251,6 +254,7 @@ class CaseManagerViewModel(QObject):
             state=self._state,
             case_repo=self._case_repo,
             event_bus=self._event_bus,
+            session=self._session,
         )
         return result.is_success
 
@@ -273,6 +277,7 @@ class CaseManagerViewModel(QObject):
             state=self._state,
             case_repo=self._case_repo,
             event_bus=self._event_bus,
+            session=self._session,
         )
         return result.is_success
 
@@ -287,6 +292,7 @@ class CaseManagerViewModel(QObject):
             state=self._state,
             case_repo=self._case_repo,
             event_bus=self._event_bus,
+            session=self._session,
         )
 
         if result.is_success and self._selected_case_id == case_id:
@@ -305,6 +311,7 @@ class CaseManagerViewModel(QObject):
             state=self._state,
             case_repo=self._case_repo,
             event_bus=self._event_bus,
+            session=self._session,
         )
         return result.is_success
 
@@ -315,6 +322,7 @@ class CaseManagerViewModel(QObject):
             state=self._state,
             case_repo=self._case_repo,
             event_bus=self._event_bus,
+            session=self._session,
         )
         return result.is_success
 
@@ -337,6 +345,7 @@ class CaseManagerViewModel(QObject):
             state=self._state,
             case_repo=self._case_repo,
             event_bus=self._event_bus,
+            session=self._session,
         )
         return result.is_success
 
@@ -347,6 +356,7 @@ class CaseManagerViewModel(QObject):
             state=self._state,
             case_repo=self._case_repo,
             event_bus=self._event_bus,
+            session=self._session,
         )
         return result.is_success
 

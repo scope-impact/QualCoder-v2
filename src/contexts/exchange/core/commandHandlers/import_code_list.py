@@ -30,6 +30,7 @@ if TYPE_CHECKING:
         SegmentRepository,
     )
     from src.shared.infra.event_bus import EventBus
+    from src.shared.infra.session import Session
 
 logger = logging.getLogger("qualcoder.exchange.core")
 
@@ -40,6 +41,7 @@ def import_code_list(
     category_repo: CategoryRepository,
     segment_repo: SegmentRepository,
     event_bus: EventBus,
+    session: Session | None = None,
 ) -> OperationResult:
     """
     Import codes from a plain-text code list.
@@ -86,6 +88,7 @@ def import_code_list(
                 category_repo=category_repo,
                 segment_repo=segment_repo,
                 event_bus=event_bus,
+                session=session,
             )
             if cat_result.is_success:
                 category_name_to_id[parsed_cat.name] = cat_result.data.id.value
@@ -113,6 +116,7 @@ def import_code_list(
             category_repo=category_repo,
             segment_repo=segment_repo,
             event_bus=event_bus,
+            session=session,
         )
 
         if result.is_success:

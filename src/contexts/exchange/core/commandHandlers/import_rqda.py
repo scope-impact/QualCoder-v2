@@ -32,6 +32,7 @@ if TYPE_CHECKING:
     )
     from src.contexts.sources.core.commandHandlers._state import SourceRepository
     from src.shared.infra.event_bus import EventBus
+    from src.shared.infra.session import Session
 
 logger = logging.getLogger("qualcoder.exchange.core")
 
@@ -43,6 +44,7 @@ def import_rqda(
     category_repo: CategoryRepository,
     segment_repo: SegmentRepository,
     event_bus: EventBus,
+    session: Session | None = None,
 ) -> OperationResult:
     """
     Import an RQDA project from a SQLite database.
@@ -86,6 +88,7 @@ def import_rqda(
             category_repo=category_repo,
             segment_repo=segment_repo,
             event_bus=event_bus,
+            session=session,
         )
 
         if result.is_success:

@@ -23,6 +23,7 @@ from src.shared.common.operation_result import OperationResult
 if TYPE_CHECKING:
     from src.contexts.cases.core.commandHandlers._state import CaseRepository
     from src.shared.infra.event_bus import EventBus
+    from src.shared.infra.session import Session
 
 logger = logging.getLogger("qualcoder.exchange.core")
 
@@ -31,6 +32,7 @@ def import_survey_csv(
     command: ImportSurveyCSVCommand,
     case_repo: CaseRepository,
     event_bus: EventBus,
+    session: Session | None = None,
 ) -> OperationResult:
     """
     Import survey data from a CSV file.
