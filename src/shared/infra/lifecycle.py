@@ -219,7 +219,9 @@ class ProjectLifecycle:
         from sqlalchemy import text
 
         conn = self._engine.connect()
-        conn.execute(text("PRAGMA busy_timeout = 5000"))
+        from src.shared.infra.session import SQLITE_BUSY_TIMEOUT_MS
+
+        conn.execute(text(f"PRAGMA busy_timeout = {SQLITE_BUSY_TIMEOUT_MS}"))
         conn.commit()
         self._thread_local.connection = conn
         return conn

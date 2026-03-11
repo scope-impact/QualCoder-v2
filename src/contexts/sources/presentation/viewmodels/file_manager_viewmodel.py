@@ -363,13 +363,15 @@ class FileManagerViewModel(QObject):
 
         total_codes = len(self._case_repo.get_all()) if self._case_repo else 0
 
+        from src.contexts.projects.core.entities import SourceType
+
         return ProjectSummaryDTO(
             total_sources=len(sources),
-            text_count=type_counts.get("text", 0),
-            audio_count=type_counts.get("audio", 0),
-            video_count=type_counts.get("video", 0),
-            image_count=type_counts.get("image", 0),
-            pdf_count=type_counts.get("pdf", 0),
+            text_count=type_counts.get(SourceType.TEXT.value, 0),
+            audio_count=type_counts.get(SourceType.AUDIO.value, 0),
+            video_count=type_counts.get(SourceType.VIDEO.value, 0),
+            image_count=type_counts.get(SourceType.IMAGE.value, 0),
+            pdf_count=type_counts.get(SourceType.PDF.value, 0),
             total_codes=total_codes,
             total_segments=total_segments,
         )
@@ -557,6 +559,8 @@ class FileManagerViewModel(QObject):
                     )
 
                     self._source_repo.save(source)
+                    if self._session:
+                        self._session.commit()
 
                     event = SourceAdded.create(
                         source_id=source.id,

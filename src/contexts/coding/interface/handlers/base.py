@@ -23,6 +23,7 @@ if TYPE_CHECKING:
     from src.contexts.coding.core.ai_entities import CodingSuggestion
     from src.contexts.coding.infra.suggestion_cache import SuggestionCache
     from src.shared.infra.event_bus import EventBus
+    from src.shared.infra.session import Session
 
 
 @runtime_checkable
@@ -33,10 +34,14 @@ class CodingToolsContext(Protocol):
     Required properties:
     - coding_context: CodingContext with repositories
     - event_bus: EventBus for publishing events
+    - session: Session for database commits (optional)
     """
 
     @property
     def event_bus(self) -> EventBus: ...
+
+    @property
+    def session(self) -> Session | None: ...
 
 
 class HandlerContext:
@@ -76,8 +81,8 @@ class HandlerContext:
         return self._ctx.event_bus
 
     @property
-    def session(self):
-        return getattr(self._ctx, "session", None)
+    def session(self) -> Session | None:
+        return self._ctx.session
 
     @property
     def source_repo(self):

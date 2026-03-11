@@ -89,6 +89,9 @@ def import_survey_csv(
         event_bus.publish(CaseCreated.create(name=case_name, case_id=case.id))
         cases_created += 1
 
+    if session:
+        session.commit()
+
     event = SurveyCSVImported.create(
         source_path=command.source_path,
         cases_created=cases_created,

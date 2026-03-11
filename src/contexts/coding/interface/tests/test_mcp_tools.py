@@ -162,6 +162,7 @@ class MockContext:
 
     coding_context: MockCodingContext = field(default_factory=MockCodingContext)
     event_bus: Any = field(default_factory=MagicMock)
+    session: Any = None
 
 
 @dataclass
@@ -170,6 +171,7 @@ class NoCodingContext:
 
     coding_context: Any = None
     event_bus: Any = field(default_factory=MagicMock)
+    session: Any = None
 
 
 # ============================================================

@@ -20,6 +20,10 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 
+# Default busy_timeout in ms for SQLite connections.
+# Shared with ProjectLifecycle._get_or_create_connection.
+SQLITE_BUSY_TIMEOUT_MS = 5000
+
 
 class Session:
     """
@@ -59,7 +63,7 @@ class Session:
             from sqlalchemy import text
 
             conn = self._engine.connect()
-            conn.execute(text("PRAGMA busy_timeout = 5000"))
+            conn.execute(text(f"PRAGMA busy_timeout = {SQLITE_BUSY_TIMEOUT_MS}"))
             self._local.conn = conn
         return conn
 

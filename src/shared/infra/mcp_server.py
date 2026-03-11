@@ -656,3 +656,7 @@ class _CodingToolsContextWrapper:
     @property
     def event_bus(self):
         return self._ctx.event_bus
+
+    @property
+    def session(self):
+        return self._ctx.session
