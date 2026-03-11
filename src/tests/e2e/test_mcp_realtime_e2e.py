@@ -39,6 +39,14 @@ def mcp_test_env(qapp, tmp_path):
     signal_bridge = CodingSignalBridge.instance(ctx.event_bus)
     signal_bridge.start()
 
+    # Flush any pending deferred deletions (deleteLater) from prior tests.
+    # Unprocessed DeferredDelete events fire inside qasync.QEventLoop.run_until_complete()
+    # and cause it to stop prematurely with "Event loop stopped before Future completed."
+    from PySide6.QtCore import QEvent
+
+    qapp.sendPostedEvents(None, QEvent.Type.DeferredDelete)
+    qapp.processEvents()
+
     # Unified event loop (same as production)
     loop = qasync.QEventLoop(qapp)
     asyncio.set_event_loop(loop)
@@ -66,15 +74,22 @@ def mcp_test_env(qapp, tmp_path):
 
 
 async def _wait_for_server(mcp: MCPServerManager, port: int):
-    """Start MCP server task and wait until it accepts connections."""
+    """Start MCP server task and wait until it accepts connections.
+
+    Uses raw TCP socket probes instead of httpx for readiness checks.
+    httpx depends on anyio, which is incompatible with qasync.QEventLoop
+    (anyio's CancelScope raises RuntimeError when asyncio.current_task()
+    fails under qasync, corrupting the event loop's running state).
+    """
+    import socket
+
     asyncio.get_event_loop().create_task(mcp.serve_async())
-    async with httpx.AsyncClient() as client:
-        for _ in range(50):
-            try:
-                await client.get(f"http://localhost:{port}/", timeout=0.5)
-                return
-            except (httpx.ConnectError, httpx.TimeoutException):
-                await asyncio.sleep(0.1)
+    for _ in range(50):
+        try:
+            with socket.create_connection(("localhost", port), timeout=0.5):
+                return  # Server is accepting connections
+        except (ConnectionRefusedError, OSError):
+            await asyncio.sleep(0.1)
     raise RuntimeError(f"MCP server did not start on port {port}")
 
 

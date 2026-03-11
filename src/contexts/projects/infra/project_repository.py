@@ -192,6 +192,10 @@ class SQLiteProjectRepository:
         """
         Load project metadata from existing .qda database.
 
+        Uses ``self._conn`` when available (the normal path during
+        ``open_project``) so we share the lifecycle connection instead of
+        opening a competing one that can deadlock with the SyncEngine.
+
         Args:
             path: Path to the .qda file
 
@@ -201,49 +205,56 @@ class SQLiteProjectRepository:
         path = Path(path).resolve()
         logger.debug("load: %s", path)
 
+        # When we already have a connection (normal open_project path),
+        # skip validate_database (which opens yet another engine) and
+        # read/write using the shared connection directly.
+        conn = self._conn
+        if conn is not None:
+            return self._load_with_connection(conn, path)
+
+        # Standalone path (no pre-existing connection) — used by CLI tools
         if not self.validate_database(path):
             return None
 
         try:
             engine = self._create_engine(path)
             try:
-                with engine.connect() as conn:
-                    # Load settings
-                    name = self._get_setting(conn, self.SETTING_PROJECT_NAME)
-                    owner = self._get_setting(conn, self.SETTING_PROJECT_OWNER)
-                    memo = self._get_setting(conn, self.SETTING_PROJECT_MEMO)
-                    created_at_str = self._get_setting(conn, self.SETTING_CREATED_AT)
-
-                    # Parse timestamps
-                    now = datetime.now(UTC)
-                    created_at = (
-                        datetime.fromisoformat(created_at_str)
-                        if created_at_str
-                        else now
-                    )
-
-                    # Compute summary statistics
-                    summary = self._compute_summary(conn)
-
-                    # Update last opened timestamp
-                    self._update_setting(
-                        conn, self.SETTING_LAST_OPENED_AT, now.isoformat()
-                    )
-                    conn.commit()
-
-                    return Project(
-                        id=ProjectId.from_path(path),
-                        name=name or path.stem,
-                        path=path,
-                        memo=memo,
-                        owner=owner,
-                        created_at=created_at,
-                        last_opened_at=now,
-                        summary=summary,
-                    )
+                with engine.connect() as standalone_conn:
+                    return self._load_with_connection(standalone_conn, path)
             finally:
                 engine.dispose()
+        except Exception:
+            logger.error("load failed: %s", path, exc_info=True)
+            return None
 
+    def _load_with_connection(self, conn: Connection, path: Path) -> Project | None:
+        """Load project metadata using an existing connection."""
+        try:
+            name = self._get_setting(conn, self.SETTING_PROJECT_NAME)
+            owner = self._get_setting(conn, self.SETTING_PROJECT_OWNER)
+            memo = self._get_setting(conn, self.SETTING_PROJECT_MEMO)
+            created_at_str = self._get_setting(conn, self.SETTING_CREATED_AT)
+
+            now = datetime.now(UTC)
+            created_at = (
+                datetime.fromisoformat(created_at_str) if created_at_str else now
+            )
+
+            summary = self._compute_summary(conn)
+
+            self._update_setting(conn, self.SETTING_LAST_OPENED_AT, now.isoformat())
+            conn.commit()
+
+            return Project(
+                id=ProjectId.from_path(path),
+                name=name or path.stem,
+                path=path,
+                memo=memo,
+                owner=owner,
+                created_at=created_at,
+                last_opened_at=now,
+                summary=summary,
+            )
         except Exception:
             logger.error("load failed: %s", path, exc_info=True)
             return None

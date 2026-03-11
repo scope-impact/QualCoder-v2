@@ -116,9 +116,15 @@ graph TB
         SET[SETTINGS<br>Preferences<br>Theme, font, language]
     end
 
+    subgraph Generic Domain
+        EXC[EXCHANGE<br>Import/Export<br>REFI-QDA, CSV, Codebook]
+    end
+
     SRC -->|"SourceImported / DomainEvent"| COD
     CAS -->|"CaseLinked / DomainEvent"| COD
     FLD -->|"SourceMoved / DomainEvent"| SRC
+    EXC -->|"CodeListImported / DomainEvent"| COD
+    EXC -->|"SurveyCSVImported / DomainEvent"| CAS
 ```
 
 ### Bounded Context Summary
@@ -129,8 +135,9 @@ graph TB
 | **Sources** | Source, Folder | Import files, manage folders |
 | **Cases** | Case, CaseAttribute | Link sources, assign attributes |
 | **Projects** | Project | Open, close, manage lifecycle |
-| **Settings** | Settings | Configure preferences (theme, font, language) |
+| **Settings** | Theme, Font, Language, Backup, AVCoding, Observability, CloudSync | Configure preferences, cloud sync, observability |
 | **Folders** | Folder | Organize sources in folders |
+| **Exchange** | — (stateless) | Import/export codebooks, coded HTML, REFI-QDA, RQDA, CSV |
 
 ### Application Shell Components (C3)
 
@@ -304,8 +311,18 @@ class CodeCreatedConverter(EventConverter[CodeCreated, CodePayload]):
 **Folders** (`src/contexts/folders/core/events.py`):
 - `FolderCreated`, `FolderRenamed`, `FolderDeleted`, `SourceMovedToFolder`
 
+**Settings** (`src/contexts/settings/core/events.py`):
+- `ThemeChanged`, `FontChanged`, `LanguageChanged`
+- `BackupConfigChanged`, `AVCodingConfigChanged`, `ObservabilityConfigChanged`
+- `CloudSyncConfigChanged`, `CloudSyncEnabled`, `CloudSyncDisabled`
+
+**Exchange** (`src/contexts/exchange/core/events.py`):
+- `CodebookExported`, `CodedHTMLExported`, `RefiQdaExported`
+- `CodeListImported`, `SurveyCSVImported`, `RefiQdaImported`, `RqdaImported`
+
 **Version Control** (`src/contexts/projects/core/vcs_events.py`):
 - `VersionControlInitialized`, `SnapshotCreated`, `SnapshotRestored`
+- Decision events (internal): `AutoCommitDecided`, `RestoreDecided`, `InitializeDecided`
 
 **Sync** (`src/shared/core/sync/events.py`):
 - `SyncPullStarted`, `SyncPullCompleted`, `SyncPullFailed`, `RemoteChangesReceived`
@@ -349,6 +366,83 @@ def suppress_reloads(self):
 This supports nesting — inner contexts accumulate changes silently, and only the outermost exit triggers a single UI refresh.
 
 See [Onboarding Tutorials](./tutorials/README.md) for hands-on examples.
+
+### 4.7 Threading & Unified Event Loop
+
+QualCoder v2 uses **qasync** to run asyncio and Qt on a single unified event loop. This eliminates cross-thread marshalling between the MCP server and the Qt UI.
+
+```mermaid
+graph TB
+    subgraph "Single Process — One Event Loop (qasync)"
+        LOOP["qasync.QEventLoop"]
+
+        subgraph "Qt Events"
+            PAINT[Widget Repaint]
+            CLICK[Button Click]
+            SIGNAL[Signal Delivery]
+        end
+
+        subgraph "asyncio Coroutines"
+            MCP[MCP aiohttp Server]
+            BATCH[Batch Import Task]
+        end
+
+        subgraph "Thread Pool (run_in_executor)"
+            EXTRACT[Text Extraction — DOCX, PDF]
+            TOOL[MCP Tool Execution — DB Access]
+        end
+    end
+
+    LOOP --> PAINT
+    LOOP --> CLICK
+    LOOP --> SIGNAL
+    LOOP --> MCP
+    LOOP --> BATCH
+
+    BATCH -- "await run_in_executor()" --> EXTRACT
+    EXTRACT -- "returns to main thread" --> BATCH
+    MCP -- "await asyncio.to_thread()" --> TOOL
+    TOOL -- "returns to main thread" --> MCP
+```
+
+**Setup** (`main.py`):
+
+```python
+loop = qasync.QEventLoop(self._app)   # Wraps QApplication
+asyncio.set_event_loop(loop)
+
+with loop:
+    loop.create_task(self._mcp_server.serve_async())  # MCP as coroutine
+    loop.run_forever()                                 # Qt + asyncio interleaved
+```
+
+**Three execution contexts:**
+
+| Context | Runs On | Used For | Example |
+|---------|---------|----------|---------|
+| Qt events | Main thread | UI repaints, signal delivery, widget interaction | Button clicks, progress bar updates |
+| asyncio coroutines | Main thread | Orchestration, awaiting I/O | MCP request routing, batch import loop |
+| Thread pool | Worker thread | CPU-bound or blocking work | DOCX/PDF text extraction, DB queries from MCP tools |
+
+**Key pattern — async/await splitting:**
+
+```python
+# Main thread: validate (fast)
+source_type = detect_source_type(file_path)
+
+# Worker thread: extract text (slow, 5-30s for DOCX)
+fulltext = await loop.run_in_executor(None, extract_text, source_type, file_path)
+
+# Main thread again: persist and publish (thread-safe)
+self._source_repo.save(source)
+self._event_bus.publish(SourceAdded(...))
+```
+
+Each `await` yields control back to the event loop, so Qt processes repaints and clicks between files. The UI never freezes.
+
+**MCP tool execution** uses `asyncio.to_thread()` to run tool handlers on a worker thread. Repositories use a thread-local connection factory for DB access, and SignalBridge detects non-main-thread callers and queues signals via `QueuedConnection`.
+
+**Why not separate threads?** The previous architecture ran the MCP server in its own thread with a `_MainThreadExecutor` that marshalled calls to Qt via `QMetaObject.invokeMethod` + `threading.Event.wait(30s)`. This caused cascading timeouts when the main thread was busy with long-running imports. The unified loop eliminates this class of bugs entirely.
 
 ---
 
@@ -437,7 +531,7 @@ sequenceDiagram
 | Database | SQLite | Embedded, portable projects, no server |
 | Vector Store | ChromaDB | Embedded, Python-native, simple API |
 | Event System | Custom EventBus | Thread-safe pub/sub with subscribe_all, history buffer, type-based routing, weak refs, metrics |
-| Result Type | Custom | Minimal (~50 lines), no dependency |
+| Result Type | Custom `OperationResult` + `returns` library | Command handlers use custom; MCP/infra uses `returns` |
 | Version Control | Git + sqlite-diffable | Cross-platform, human-readable diffs |
 | Cloud Sync | Convex | Real-time sync, TypeScript backend |
 
@@ -652,8 +746,9 @@ src/
 │   │   └── presentation/       # Context-specific UI
 │   ├── sources/                # Source file management
 │   ├── cases/                  # Case/participant management
-│   ├── projects/               # Project lifecycle
-│   ├── settings/               # User settings
+│   ├── projects/               # Project lifecycle + VCS
+│   ├── exchange/               # Import/export (REFI-QDA, CSV, codebook)
+│   ├── settings/               # User settings, cloud sync config
 │   └── folders/                # Folder organization
 │
 ├── shared/                     # Cross-cutting concerns
@@ -692,10 +787,11 @@ design_system/                  # Reusable UI components, tokens
 | Context | Purpose | Key Events | Integration Pattern |
 |---------|---------|------------|---------------------|
 | **Coding** | Apply semantic codes to data | CodeCreated, SegmentCoded | Core - others depend on it |
-| **Sources** | Manage documents, media | SourceImported, SourceDeleted | Open Host Service |
+| **Sources** | Manage documents, media | SourceAdded, SourceRemoved | Open Host Service |
 | **Cases** | Group and categorize | CaseCreated, SourceLinked | Conformist to Coding |
-| **Projects** | Lifecycle management | ProjectOpened, ProjectClosed | Anti-Corruption Layer |
-| **Settings** | User preferences | SettingsUpdated | Independent |
+| **Projects** | Lifecycle + version control | ProjectOpened, SnapshotCreated | Anti-Corruption Layer |
+| **Exchange** | Import/export projects and data | CodeListImported, RefiQdaExported | Generic — delegates to Coding, Cases, Sources |
+| **Settings** | User preferences, cloud sync | ThemeChanged, CloudSyncConfigChanged | Independent |
 | **Folders** | Folder organization | FolderCreated, SourceMoved | Supporting |
 
 ### Planned Contexts (Future)
@@ -704,9 +800,9 @@ design_system/                  # Reusable UI components, tokens
 |---------|---------|------------|---------------------|
 | Analysis | Generate insights | ReportGenerated | Subscribes to Coding events |
 | Collaboration | Multi-coder workflows | CoderSwitched, CodingsMerged | Published Language |
-| Export | Reports, charts | ReportExported | Downstream consumer |
 
 > **Note:** AI coding capabilities are integrated within the Coding context (`ai_entities.py`, `ai_derivers.py`, etc.) rather than as a separate AI Services context.
+> The previously planned Export context has been implemented as the Exchange bounded context.
 
 ---
 
@@ -727,7 +823,7 @@ design_system/                  # Reusable UI components, tokens
 |-----------|------------|-------------|
 | EventBus | Thread-safe, subscribe_all, history buffer, weak refs, metrics | Blinker, PyPubSub |
 | SignalBridge | Thread-safe domain-to-Qt bridge with converter pattern, batch emission | None available |
-| Result Type | Minimal, no dependency | returns library |
+| Result Type | Custom `OperationResult` for command handlers; `returns` library for MCP/infra | Either alone |
 
 ---
 
