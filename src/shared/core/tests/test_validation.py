@@ -12,6 +12,15 @@ Key business logic tested:
 - Composite validators (validate_all, validate_field)
 """
 
+import allure
+import pytest
+
+pytestmark = [
+    pytest.mark.unit,
+    allure.epic("QualCoder v2"),
+    allure.feature("Shared Core"),
+]
+
 from src.shared.core.validation import (
     ValidationFailure,
     ValidationSuccess,
@@ -36,162 +45,129 @@ from src.shared.core.validation import (
 )
 
 
+@allure.story("QC-000.01 Validation Utilities")
 class TestValidationResultHelpers:
     """Test is_valid and is_invalid helpers."""
 
-    def test_is_valid_returns_true_for_success(self):
-        assert is_valid(ValidationSuccess()) is True
+    @allure.title("is_valid returns True for success, is_invalid returns True for failure")
+    def test_is_valid_and_is_invalid(self):
+        success = ValidationSuccess()
+        failure = ValidationFailure(reason="error")
 
-    def test_is_valid_returns_false_for_failure(self):
-        assert is_valid(ValidationFailure(reason="error")) is False
-
-    def test_is_invalid_returns_true_for_failure(self):
-        assert is_invalid(ValidationFailure(reason="error")) is True
-
-    def test_is_invalid_returns_false_for_success(self):
-        assert is_invalid(ValidationSuccess()) is False
+        assert is_valid(success) is True
+        assert is_valid(failure) is False
+        assert is_invalid(failure) is True
+        assert is_invalid(success) is False
 
 
+@allure.story("QC-000.01 Validation Utilities")
 class TestValidationFailure:
     """Test ValidationFailure str representation."""
 
-    def test_str_with_field(self):
-        failure = ValidationFailure(reason="must be positive", field="age")
+    @allure.title("ValidationFailure str includes field name when present")
+    def test_str_with_and_without_field(self):
+        with_field = ValidationFailure(reason="must be positive", field="age")
+        without_field = ValidationFailure(reason="invalid input")
 
-        assert str(failure) == "age: must be positive"
-
-    def test_str_without_field(self):
-        failure = ValidationFailure(reason="invalid input")
-
-        assert str(failure) == "invalid input"
+        assert str(with_field) == "age: must be positive"
+        assert str(without_field) == "invalid input"
 
 
+@allure.story("QC-000.01 Validation Utilities")
 class TestIsNonEmptyString:
     """Test is_non_empty_string validator."""
 
-    def test_valid_string(self):
-        assert is_non_empty_string("hello") is True
-
-    def test_empty_string(self):
-        assert is_non_empty_string("") is False
-
-    def test_whitespace_only(self):
-        assert is_non_empty_string("   ") is False
-
-    def test_whitespace_with_tabs_and_newlines(self):
-        assert is_non_empty_string("\t\n  ") is False
-
-    def test_string_with_spaces_and_content(self):
-        assert is_non_empty_string("  hello  ") is True
+    @allure.title("is_non_empty_string validates non-blank strings")
+    @pytest.mark.parametrize("value, expected", [
+        ("hello", True),
+        ("", False),
+        ("   ", False),
+        ("\t\n  ", False),
+        ("  hello  ", True),
+    ])
+    def test_is_non_empty_string(self, value, expected):
+        assert is_non_empty_string(value) is expected
 
 
+@allure.story("QC-000.01 Validation Utilities")
 class TestIsWithinLength:
     """Test is_within_length validator."""
 
-    def test_within_default_bounds(self):
-        assert is_within_length("hello") is True
-
-    def test_at_min_boundary(self):
-        assert is_within_length("a", min_len=1) is True
-
-    def test_below_min_boundary(self):
-        assert is_within_length("", min_len=1) is False
-
-    def test_at_max_boundary(self):
-        assert is_within_length("hello", max_len=5) is True
-
-    def test_above_max_boundary(self):
-        assert is_within_length("hello!", max_len=5) is False
-
-    def test_empty_string_with_zero_min(self):
-        assert is_within_length("", min_len=0) is True
-
-    def test_none_treated_as_length_zero(self):
-        # Edge case: None value should be handled
-        assert is_within_length(None, min_len=0) is True
-        assert is_within_length(None, min_len=1) is False
+    @allure.title("is_within_length validates string length bounds")
+    @pytest.mark.parametrize("value, kwargs, expected", [
+        ("hello", {}, True),
+        ("a", {"min_len": 1}, True),
+        ("", {"min_len": 1}, False),
+        ("hello", {"max_len": 5}, True),
+        ("hello!", {"max_len": 5}, False),
+        ("", {"min_len": 0}, True),
+        (None, {"min_len": 0}, True),
+        (None, {"min_len": 1}, False),
+    ])
+    def test_is_within_length(self, value, kwargs, expected):
+        assert is_within_length(value, **kwargs) is expected
 
 
+@allure.story("QC-000.01 Validation Utilities")
 class TestIsUniqueInCollection:
     """Test is_unique_in_collection validator."""
 
-    def test_unique_value_in_list(self):
+    @allure.title("is_unique_in_collection detects duplicates in basic cases")
+    def test_basic_cases(self):
         assert is_unique_in_collection(4, [1, 2, 3]) is True
-
-    def test_duplicate_value_in_list(self):
         assert is_unique_in_collection(2, [1, 2, 3]) is False
-
-    def test_empty_collection_always_unique(self):
         assert is_unique_in_collection("anything", []) is True
+        assert is_unique_in_collection("x", ["a", "b", "c"], key=None) is True
+        assert is_unique_in_collection("b", ["a", "b", "c"], key=None) is False
 
-    def test_with_key_function(self):
+    @allure.title("is_unique_in_collection supports key function and exclude")
+    def test_with_key_and_exclude(self):
         items = [{"name": "alice"}, {"name": "bob"}]
+        key = lambda x: x["name"]
 
-        assert (
-            is_unique_in_collection(
-                {"name": "charlie"},
-                items,
-                key=lambda x: x["name"],
-            )
-            is True
-        )
+        assert is_unique_in_collection({"name": "charlie"}, items, key=key) is True
+        assert is_unique_in_collection({"name": "alice"}, items, key=key) is False
 
-        assert (
-            is_unique_in_collection(
-                {"name": "alice"},
-                items,
-                key=lambda x: x["name"],
-            )
-            is False
-        )
+        # exclude for updates
+        assert is_unique_in_collection(2, [1, 2, 3], exclude=2) is True
 
-    def test_with_exclude_for_updates(self):
-        items = [1, 2, 3]
-        # When updating item 2, it should be excluded from uniqueness check
-        assert is_unique_in_collection(2, items, exclude=2) is True
-
-    def test_exclude_with_key_function(self):
-        items = [{"id": 1, "name": "alice"}, {"id": 2, "name": "bob"}]
-
-        # Updating alice's name to "alice" (same name) should be OK
+        # exclude with key function
+        items_with_id = [{"id": 1, "name": "alice"}, {"id": 2, "name": "bob"}]
         assert (
             is_unique_in_collection(
                 {"id": 1, "name": "alice"},
-                items,
-                key=lambda x: x["name"],
+                items_with_id,
+                key=key,
                 exclude={"id": 1, "name": "alice"},
             )
             is True
         )
 
-    def test_none_key_uses_identity(self):
-        assert is_unique_in_collection("x", ["a", "b", "c"], key=None) is True
-        assert is_unique_in_collection("b", ["a", "b", "c"], key=None) is False
 
-
+@allure.story("QC-000.01 Validation Utilities")
 class TestIsNameUnique:
     """Test is_name_unique validator."""
 
-    def test_unique_name(self):
+    @allure.title("is_name_unique validates case-insensitive name uniqueness")
+    def test_basic_cases(self):
         assert is_name_unique("Charlie", ["Alice", "Bob"]) is True
-
-    def test_duplicate_name(self):
         assert is_name_unique("Alice", ["Alice", "Bob"]) is False
-
-    def test_case_insensitive_default(self):
+        # case insensitive by default
         assert is_name_unique("ALICE", ["Alice", "Bob"]) is False
         assert is_name_unique("alice", ["Alice", "Bob"]) is False
+        # empty list
+        assert is_name_unique("Any", []) is True
+        # generator support
+        names_gen = (n for n in ["Alice", "Bob"])
+        assert is_name_unique("Charlie", names_gen) is True
 
-    def test_case_sensitive_when_enabled(self):
+    @allure.title("is_name_unique supports case_sensitive and exclude_name options")
+    def test_options_case_sensitive_and_exclude(self):
         assert is_name_unique("ALICE", ["Alice", "Bob"], case_sensitive=True) is True
         assert is_name_unique("Alice", ["Alice", "Bob"], case_sensitive=True) is False
-
-    def test_exclude_name_for_renames(self):
-        # Renaming "Alice" to "Alice" (no change) should be OK
+        # exclude for renames
         assert is_name_unique("Alice", ["Alice", "Bob"], exclude_name="Alice") is True
-
-    def test_exclude_name_case_insensitive(self):
-        # Renaming "alice" to "ALICE" should be OK
+        # exclude case insensitive
         assert (
             is_name_unique(
                 "ALICE",
@@ -202,339 +178,243 @@ class TestIsNameUnique:
             is True
         )
 
-    def test_empty_existing_names(self):
-        assert is_name_unique("Any", []) is True
 
-    def test_with_generator(self):
-        # Should work with generators, not just lists
-        names_gen = (n for n in ["Alice", "Bob"])
-        assert is_name_unique("Charlie", names_gen) is True
-
-
+@allure.story("QC-000.01 Validation Utilities")
 class TestIsValidRange:
     """Test is_valid_range validator."""
 
-    def test_valid_range(self):
-        assert is_valid_range(0, 10) is True
-
-    def test_start_equals_end_invalid(self):
-        assert is_valid_range(5, 5) is False
-
-    def test_start_greater_than_end_invalid(self):
-        assert is_valid_range(10, 5) is False
-
-    def test_negative_range(self):
-        assert is_valid_range(-10, -5) is True
+    @allure.title("is_valid_range validates start < end")
+    @pytest.mark.parametrize("start, end, expected", [
+        (0, 10, True),
+        (5, 5, False),
+        (10, 5, False),
+        (-10, -5, True),
+    ])
+    def test_is_valid_range(self, start, end, expected):
+        assert is_valid_range(start, end) is expected
 
 
+@allure.story("QC-000.01 Validation Utilities")
 class TestIsWithinBounds:
     """Test is_within_bounds validator."""
 
-    def test_valid_range_within_bounds(self):
-        assert is_within_bounds(0, 10, length=20) is True
-
-    def test_start_at_zero(self):
-        assert is_within_bounds(0, 5, length=10) is True
-
-    def test_end_at_length(self):
-        assert is_within_bounds(5, 10, length=10) is True
-
-    def test_start_negative_invalid(self):
-        assert is_within_bounds(-1, 5, length=10) is False
-
-    def test_end_exceeds_length_invalid(self):
-        assert is_within_bounds(5, 11, length=10) is False
-
-    def test_start_equals_end_invalid(self):
-        assert is_within_bounds(5, 5, length=10) is False
-
-    def test_zero_length_allows_nothing(self):
-        assert is_within_bounds(0, 1, length=0) is False
-        # Even (0, 0) is invalid because start must be < end
-        assert is_within_bounds(0, 0, length=0) is False
+    @allure.title("is_within_bounds validates range fits within length")
+    @pytest.mark.parametrize("start, end, length, expected", [
+        (0, 10, 20, True),
+        (0, 5, 10, True),
+        (5, 10, 10, True),
+        (-1, 5, 10, False),
+        (5, 11, 10, False),
+        (5, 5, 10, False),
+        (0, 1, 0, False),
+        (0, 0, 0, False),
+    ])
+    def test_is_within_bounds(self, start, end, length, expected):
+        assert is_within_bounds(start, end, length=length) is expected
 
 
+@allure.story("QC-000.01 Validation Utilities")
 class TestNumericValidators:
     """Test is_positive, is_non_negative, is_in_range."""
 
-    def test_is_positive_with_positive(self):
-        assert is_positive(1) is True
-        assert is_positive(100) is True
+    @allure.title("is_positive rejects zero and negative values")
+    @pytest.mark.parametrize("value, expected", [
+        (1, True),
+        (100, True),
+        (0, False),
+        (-1, False),
+    ])
+    def test_is_positive(self, value, expected):
+        assert is_positive(value) is expected
 
-    def test_is_positive_with_zero(self):
-        assert is_positive(0) is False
+    @allure.title("is_non_negative accepts zero and positive values")
+    @pytest.mark.parametrize("value, expected", [
+        (1, True),
+        (0, True),
+        (-1, False),
+    ])
+    def test_is_non_negative(self, value, expected):
+        assert is_non_negative(value) is expected
 
-    def test_is_positive_with_negative(self):
-        assert is_positive(-1) is False
-
-    def test_is_non_negative_with_positive(self):
-        assert is_non_negative(1) is True
-
-    def test_is_non_negative_with_zero(self):
-        assert is_non_negative(0) is True
-
-    def test_is_non_negative_with_negative(self):
-        assert is_non_negative(-1) is False
-
-    def test_is_in_range_within(self):
-        assert is_in_range(5, min_val=0, max_val=10) is True
-
-    def test_is_in_range_at_boundaries(self):
-        assert is_in_range(0, min_val=0, max_val=10) is True
-        assert is_in_range(10, min_val=0, max_val=10) is True
-
-    def test_is_in_range_outside(self):
-        assert is_in_range(-1, min_val=0, max_val=10) is False
-        assert is_in_range(11, min_val=0, max_val=10) is False
+    @allure.title("is_in_range validates value within min/max bounds")
+    @pytest.mark.parametrize("value, expected", [
+        (5, True),
+        (0, True),
+        (10, True),
+        (-1, False),
+        (11, False),
+    ])
+    def test_is_in_range(self, value, expected):
+        assert is_in_range(value, min_val=0, max_val=10) is expected
 
 
+@allure.story("QC-000.01 Validation Utilities")
 class TestIsValidHexColor:
     """Test is_valid_hex_color validator."""
 
-    def test_valid_uppercase(self):
-        assert is_valid_hex_color("#FF0000") is True
-
-    def test_valid_lowercase(self):
-        assert is_valid_hex_color("#ff0000") is True
-
-    def test_valid_mixed_case(self):
-        assert is_valid_hex_color("#Ff00Ab") is True
-
-    def test_missing_hash(self):
-        assert is_valid_hex_color("FF0000") is False
-
-    def test_three_digit_shorthand(self):
-        assert is_valid_hex_color("#F00") is True
-
-    def test_wrong_length_long(self):
-        assert is_valid_hex_color("#FF00000") is False
-
-    def test_invalid_characters(self):
-        assert is_valid_hex_color("#GGGGGG") is False
-        assert is_valid_hex_color("#XY1234") is False
-
-    def test_empty_string(self):
-        assert is_valid_hex_color("") is False
-
-    def test_none(self):
-        assert is_valid_hex_color(None) is False
+    @allure.title("is_valid_hex_color validates hex color format")
+    @pytest.mark.parametrize("value, expected", [
+        ("#FF0000", True),
+        ("#ff0000", True),
+        ("#Ff00Ab", True),
+        ("FF0000", False),
+        ("#F00", True),
+        ("#FF00000", False),
+        ("#GGGGGG", False),
+        ("#XY1234", False),
+        ("", False),
+        (None, False),
+    ])
+    def test_is_valid_hex_color(self, value, expected):
+        assert is_valid_hex_color(value) is expected
 
 
+@allure.story("QC-000.01 Validation Utilities")
 class TestIsAcyclicHierarchy:
     """Test is_acyclic_hierarchy - prevents parent-child cycles."""
 
-    def test_moving_to_root_always_safe(self):
-        def get_parent(node_id):
-            return None
-
+    @allure.title("is_acyclic_hierarchy allows valid hierarchy moves")
+    def test_valid_moves(self):
+        # Moving to root is always safe
         assert (
-            is_acyclic_hierarchy(
-                node_id=1,
-                new_parent_id=None,
-                get_parent=get_parent,
-            )
+            is_acyclic_hierarchy(node_id=1, new_parent_id=None, get_parent=lambda _: None)
             is True
         )
 
-    def test_cannot_be_own_parent(self):
-        def get_parent(node_id):
-            return None
-
-        assert (
-            is_acyclic_hierarchy(
-                node_id=1,
-                new_parent_id=1,
-                get_parent=get_parent,
-            )
-            is False
-        )
-
-    def test_detects_direct_cycle(self):
-        # Hierarchy: 1 -> 2 (1 is parent of 2)
-        # Trying to make 2 the parent of 1 creates cycle
-        parents = {1: None, 2: 1}
-
-        def get_parent(node_id):
-            return parents.get(node_id)
-
-        assert (
-            is_acyclic_hierarchy(
-                node_id=1,
-                new_parent_id=2,
-                get_parent=get_parent,
-            )
-            is False
-        )
-
-    def test_detects_indirect_cycle(self):
-        # Hierarchy: 1 -> 2 -> 3 (1 is grandparent of 3)
-        # Trying to make 3 the parent of 1 creates cycle
-        parents = {1: None, 2: 1, 3: 2}
-
-        def get_parent(node_id):
-            return parents.get(node_id)
-
-        assert (
-            is_acyclic_hierarchy(
-                node_id=1,
-                new_parent_id=3,
-                get_parent=get_parent,
-            )
-            is False
-        )
-
-    def test_allows_valid_parent_change(self):
-        # Hierarchy: 1, 2 (both roots)
-        # Moving 1 under 2 is fine
+        # Moving between independent roots
         parents = {1: None, 2: None}
-
-        def get_parent(node_id):
-            return parents.get(node_id)
-
         assert (
-            is_acyclic_hierarchy(
-                node_id=1,
-                new_parent_id=2,
-                get_parent=get_parent,
-            )
+            is_acyclic_hierarchy(node_id=1, new_parent_id=2, get_parent=parents.get)
             is True
         )
 
-    def test_allows_sibling_move(self):
-        # Hierarchy: root -> [1, 2, 3]
-        # Moving 1 under 2 is fine
+        # Moving to sibling
         parents = {1: "root", 2: "root", 3: "root", "root": None}
-
-        def get_parent(node_id):
-            return parents.get(node_id)
-
         assert (
-            is_acyclic_hierarchy(
-                node_id=1,
-                new_parent_id=2,
-                get_parent=get_parent,
-            )
+            is_acyclic_hierarchy(node_id=1, new_parent_id=2, get_parent=parents.get)
             is True
         )
 
-    def test_max_depth_prevents_infinite_loop(self):
-        # Simulate corrupted data with infinite loop
-        def get_parent(node_id):
-            # Always returns something, never reaches root
-            return node_id + 1
-
-        # Should return True (no cycle detected within max_depth)
-        # rather than hanging forever
+        # Max depth prevents infinite loop on corrupted data
         result = is_acyclic_hierarchy(
             node_id=1,
             new_parent_id=2,
-            get_parent=get_parent,
+            get_parent=lambda nid: nid + 1,
             max_depth=10,
         )
-        assert result is True  # No cycle found within depth limit
+        assert result is True
+
+    @allure.title("is_acyclic_hierarchy detects direct and indirect cycles")
+    def test_cycle_detection(self):
+        # Cannot be own parent
+        assert (
+            is_acyclic_hierarchy(node_id=1, new_parent_id=1, get_parent=lambda _: None)
+            is False
+        )
+
+        # Direct cycle: 1 -> 2, trying to make 2 parent of 1
+        parents = {1: None, 2: 1}
+        assert (
+            is_acyclic_hierarchy(node_id=1, new_parent_id=2, get_parent=parents.get)
+            is False
+        )
+
+        # Indirect cycle: 1 -> 2 -> 3, trying to make 3 parent of 1
+        parents = {1: None, 2: 1, 3: 2}
+        assert (
+            is_acyclic_hierarchy(node_id=1, new_parent_id=3, get_parent=parents.get)
+            is False
+        )
 
 
+@allure.story("QC-000.01 Validation Utilities")
 class TestCollectionValidators:
     """Test all_exist, none_exist, has_no_references."""
 
-    def test_all_exist_when_all_present(self):
-        existing = {1, 2, 3, 4, 5}
-
-        assert all_exist([1, 2, 3], exists_fn=lambda x: x in existing) is True
-
-    def test_all_exist_when_some_missing(self):
+    @allure.title("all_exist and none_exist check collection membership")
+    def test_all_exist_and_none_exist(self):
         existing = {1, 2, 3}
+        exists_fn = lambda x: x in existing
 
-        assert all_exist([1, 2, 99], exists_fn=lambda x: x in existing) is False
-
-    def test_all_exist_empty_list(self):
+        # all_exist
+        assert all_exist([1, 2, 3], exists_fn=lambda x: x in {1, 2, 3, 4, 5}) is True
+        assert all_exist([1, 2, 99], exists_fn=exists_fn) is False
         assert all_exist([], exists_fn=lambda _x: False) is True
 
-    def test_none_exist_when_all_missing(self):
-        existing = {1, 2, 3}
-
-        assert none_exist([4, 5, 6], exists_fn=lambda x: x in existing) is True
-
-    def test_none_exist_when_some_present(self):
-        existing = {1, 2, 3}
-
-        assert none_exist([3, 4, 5], exists_fn=lambda x: x in existing) is False
-
-    def test_none_exist_empty_list(self):
+        # none_exist
+        assert none_exist([4, 5, 6], exists_fn=exists_fn) is True
+        assert none_exist([3, 4, 5], exists_fn=exists_fn) is False
         assert none_exist([], exists_fn=lambda _x: True) is True
 
-    def test_has_no_references_when_zero(self):
+    @allure.title("has_no_references returns True when reference count is zero")
+    def test_has_no_references(self):
         assert has_no_references(1, count_references=lambda _x: 0) is True
-
-    def test_has_no_references_when_some(self):
         assert has_no_references(1, count_references=lambda _x: 5) is False
 
 
+@allure.story("QC-000.01 Validation Utilities")
 class TestValidateAll:
     """Test validate_all composite validator."""
 
-    def test_all_success_returns_success(self):
+    @allure.title("validate_all returns first failure or success when all pass")
+    def test_validate_all(self):
+        # All success
         result = validate_all(
             ValidationSuccess(),
             ValidationSuccess(),
             ValidationSuccess(),
         )
-
         assert isinstance(result, ValidationSuccess)
 
-    def test_returns_first_failure(self):
+        # Returns first failure
         result = validate_all(
             ValidationSuccess(),
             ValidationFailure(reason="first error"),
             ValidationFailure(reason="second error"),
         )
-
         assert isinstance(result, ValidationFailure)
         assert result.reason == "first error"
 
-    def test_empty_returns_success(self):
-        result = validate_all()
+        # Empty returns success
+        assert isinstance(validate_all(), ValidationSuccess)
 
-        assert isinstance(result, ValidationSuccess)
-
-    def test_single_failure(self):
+        # Single failure
         result = validate_all(ValidationFailure(reason="only error"))
-
         assert isinstance(result, ValidationFailure)
 
 
+@allure.story("QC-000.01 Validation Utilities")
 class TestValidateField:
     """Test validate_field helper."""
 
-    def test_valid_field_returns_success(self):
+    @allure.title("validate_field returns success or failure with field details")
+    def test_validate_field(self):
+        # Valid field
         result = validate_field(
             field_name="age",
             value=25,
             predicate=lambda x: x > 0,
             error_message="must be positive",
         )
-
         assert isinstance(result, ValidationSuccess)
 
-    def test_invalid_field_returns_failure(self):
+        # Invalid field with all attributes
         result = validate_field(
             field_name="age",
             value=-5,
             predicate=lambda x: x > 0,
             error_message="must be positive",
         )
-
         assert isinstance(result, ValidationFailure)
         assert result.field == "age"
         assert result.reason == "must be positive"
         assert result.value == -5
 
-    def test_failure_captures_value(self):
+        # Failure captures value
         result = validate_field(
             field_name="name",
             value="",
             predicate=is_non_empty_string,
             error_message="cannot be empty",
         )
-
         assert result.value == ""

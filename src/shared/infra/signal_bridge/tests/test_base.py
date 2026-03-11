@@ -3,6 +3,7 @@
 from dataclasses import dataclass
 from typing import Any
 
+import allure
 import pytest
 
 from src.shared.infra.signal_bridge.base import BaseSignalBridge
@@ -78,54 +79,48 @@ class MockSignal:
         return self
 
 
-class TestBaseSignalBridge:
-    """Tests for BaseSignalBridge class."""
+@allure.epic("Shared Infrastructure")
+@allure.feature("Shared Infrastructure")
+@allure.story("QC-000.08 Signal Bridge")
+class TestBaseSignalBridgeSingleton:
+    """Tests for BaseSignalBridge singleton and lifecycle."""
 
-    def test_singleton_pattern(self, mock_event_bus: MockEventBus) -> None:
-        """Test that instance() returns singleton."""
-        # Clear any existing instances
-        TestSignalBridge.clear_instance()
-
-        bridge1 = TestSignalBridge.instance(mock_event_bus)
-        bridge2 = TestSignalBridge.instance()
-
-        assert bridge1 is bridge2
-
-        # Cleanup
-        TestSignalBridge.clear_instance()
-
-    def test_singleton_requires_event_bus_first_call(self) -> None:
-        """Test that first instance() call requires event_bus."""
+    @allure.title("Singleton returns same instance; first call requires event_bus")
+    def test_singleton_pattern_and_requires_event_bus(self, mock_event_bus: MockEventBus) -> None:
         TestSignalBridge.clear_instance()
 
         with pytest.raises(ValueError, match="requires event_bus"):
             TestSignalBridge.instance()
 
-    def test_start_subscribes_to_events(self, mock_event_bus: MockEventBus) -> None:
-        """Test that start() subscribes to registered event types."""
-        bridge = TestSignalBridge(mock_event_bus)
+        bridge1 = TestSignalBridge.instance(mock_event_bus)
+        bridge2 = TestSignalBridge.instance()
+        assert bridge1 is bridge2
 
+        TestSignalBridge.clear_instance()
+
+    @allure.title("start subscribes, stop unsubscribes, double calls are safe")
+    def test_start_stop_lifecycle(self, mock_event_bus: MockEventBus) -> None:
+        bridge = TestSignalBridge(mock_event_bus)
         assert mock_event_bus.get_handler_count("test.sample_event") == 0
 
         bridge.start()
-
         assert mock_event_bus.get_handler_count("test.sample_event") == 1
         assert bridge.is_running() is True
 
-    def test_stop_unsubscribes_from_events(self, mock_event_bus: MockEventBus) -> None:
-        """Test that stop() unsubscribes from events."""
-        bridge = TestSignalBridge(mock_event_bus)
+        # Double start is safe
         bridge.start()
-
-        assert bridge.is_running() is True
+        assert mock_event_bus.get_handler_count("test.sample_event") == 1
 
         bridge.stop()
-
         assert bridge.is_running() is False
         assert mock_event_bus.get_handler_count("test.sample_event") == 0
 
+        # Double stop is safe
+        bridge.stop()
+        assert bridge.is_running() is False
+
+    @allure.title("Context manager starts and stops bridge")
     def test_context_manager(self, mock_event_bus: MockEventBus) -> None:
-        """Test context manager protocol."""
         bridge = TestSignalBridge(mock_event_bus)
 
         with bridge:
@@ -133,62 +128,48 @@ class TestBaseSignalBridge:
 
         assert bridge.is_running() is False
 
-    def test_event_dispatch_converts_and_emits(
+
+@allure.epic("Shared Infrastructure")
+@allure.feature("Shared Infrastructure")
+@allure.story("QC-000.08 Signal Bridge")
+class TestBaseSignalBridgeDispatch:
+    """Tests for event dispatch and activity logging."""
+
+    @allure.title("Events are converted, emitted, and activity is logged")
+    def test_event_dispatch_converts_emits_and_logs_activity(
         self,
         mock_event_bus: MockEventBus,
         sample_event: MockDomainEvent,
     ) -> None:
-        """Test that events are converted and emitted."""
         bridge = TestSignalBridge(mock_event_bus)
         bridge.start()
 
-        # Publish event
         mock_event_bus.publish(sample_event)
 
-        # Check signal was emitted
+        # Check signal was emitted with converted payload
         signal = bridge.test_event_signal
         assert len(signal.emissions) == 1
-
         payload = signal.emissions[0]
         assert isinstance(payload, TestPayload)
         assert payload.data == "sample data"
         assert payload.event_type == "test.sample_event"
 
-    def test_activity_logged_on_event(
-        self,
-        mock_event_bus: MockEventBus,
-        sample_event: MockDomainEvent,
-    ) -> None:
-        """Test that activity is logged when events are dispatched."""
-        bridge = TestSignalBridge(mock_event_bus)
-        bridge.start()
-
-        mock_event_bus.publish(sample_event)
-
         # Check activity was logged
         activity_signal = bridge._signals["activity_logged"]
         assert len(activity_signal.emissions) == 1
-
         activity = activity_signal.emissions[0]
         assert activity.context == "test"
         assert activity.status == ActivityStatus.COMPLETED
 
-    def test_register_converter_validates_signal(
-        self,
-        mock_event_bus: MockEventBus,
-    ) -> None:
-        """Test that register_converter validates signal exists."""
+    @allure.title("register_converter validates signal exists")
+    def test_register_converter_validates_signal(self, mock_event_bus: MockEventBus) -> None:
         bridge = TestSignalBridge(mock_event_bus)
 
         with pytest.raises(ValueError, match="not found"):
-            bridge.register_converter(
-                "test.event",
-                TestConverter(),
-                "nonexistent_signal",
-            )
+            bridge.register_converter("test.event", TestConverter(), "nonexistent_signal")
 
+    @allure.title("emit_activity directly emits activity with AI session")
     def test_emit_activity_directly(self, mock_event_bus: MockEventBus) -> None:
-        """Test emitting activity directly without event."""
         bridge = TestSignalBridge(mock_event_bus)
 
         bridge.emit_activity(
@@ -201,25 +182,7 @@ class TestBaseSignalBridge:
 
         activity_signal = bridge._signals["activity_logged"]
         assert len(activity_signal.emissions) == 1
-
         activity = activity_signal.emissions[0]
         assert activity.description == "Test activity"
         assert activity.status == ActivityStatus.PENDING
         assert activity.is_ai_action is True
-
-    def test_double_start_is_safe(self, mock_event_bus: MockEventBus) -> None:
-        """Test that calling start() twice is safe."""
-        bridge = TestSignalBridge(mock_event_bus)
-        bridge.start()
-        bridge.start()  # Should not raise or double-subscribe
-
-        assert mock_event_bus.get_handler_count("test.sample_event") == 1
-
-    def test_double_stop_is_safe(self, mock_event_bus: MockEventBus) -> None:
-        """Test that calling stop() twice is safe."""
-        bridge = TestSignalBridge(mock_event_bus)
-        bridge.start()
-        bridge.stop()
-        bridge.stop()  # Should not raise
-
-        assert bridge.is_running() is False

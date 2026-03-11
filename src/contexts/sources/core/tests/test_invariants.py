@@ -8,6 +8,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
+import allure
 import pytest
 
 from src.contexts.sources.core.entities import Source, SourceStatus, SourceType
@@ -25,210 +26,168 @@ from src.contexts.sources.core.invariants import (
 )
 from src.shared.common.types import SourceId
 
+pytestmark = [
+    allure.epic("QualCoder v2"),
+    allure.feature("QC-027 Manage Sources"),
+]
 
+
+def _make_source(source_id: str, name: str) -> Source:
+    """Create a source for testing."""
+    return Source(
+        id=SourceId(value=source_id),
+        name=name,
+        source_type=SourceType.TEXT,
+        status=SourceStatus.IMPORTED,
+        code_count=0,
+        memo=None,
+        origin=None,
+        folder_id=None,
+    )
+
+
+@allure.story("QC-027.01 Import Text Document")
 class TestIsValidSourceName:
     """Tests for is_valid_source_name invariant."""
 
-    def test_valid_name(self) -> None:
-        """Valid source name should pass."""
-        assert is_valid_source_name("interview.txt") is True
-
-    def test_valid_name_with_spaces(self) -> None:
-        """Source name with spaces should be valid."""
-        assert is_valid_source_name("field interview 2024.txt") is True
-
-    def test_empty_name(self) -> None:
-        """Empty name should fail."""
-        assert is_valid_source_name("") is False
-
-    def test_whitespace_only(self) -> None:
-        """Whitespace-only name should fail."""
-        assert is_valid_source_name("   ") is False
-        assert is_valid_source_name("\t\n") is False
-
-    def test_name_at_max_length(self) -> None:
-        """Name at max length (255) should pass."""
-        name = "a" * 255
-        assert is_valid_source_name(name) is True
-
-    def test_name_exceeds_max_length(self) -> None:
-        """Name exceeding 255 chars should fail."""
-        name = "a" * 256
-        assert is_valid_source_name(name) is False
+    @allure.title("Validates source name format and length")
+    @pytest.mark.parametrize(
+        "name, expected",
+        [
+            ("interview.txt", True),
+            ("field interview 2024.txt", True),
+            ("a" * 255, True),
+            ("", False),
+            ("   ", False),
+            ("\t\n", False),
+            ("a" * 256, False),
+        ],
+    )
+    def test_valid_and_invalid_names(self, name: str, expected: bool) -> None:
+        """Valid names pass, empty/whitespace/too-long names fail."""
+        assert is_valid_source_name(name) is expected
 
 
+@allure.story("QC-027.01 Import Text Document")
 class TestIsSourceNameUnique:
     """Tests for is_source_name_unique invariant."""
 
-    def _make_source(self, source_id: str, name: str) -> Source:
-        """Create a source for testing."""
-        return Source(
-            id=SourceId(value=source_id),
-            name=name,
-            source_type=SourceType.TEXT,
-            status=SourceStatus.IMPORTED,
-            code_count=0,
-            memo=None,
-            origin=None,
-            folder_id=None,
-        )
+    @allure.title("Detects unique names in empty and populated lists")
+    @pytest.mark.parametrize(
+        "candidate, existing_names, expected",
+        [
+            ("new_file.txt", [], True),
+            ("file3.txt", ["file1.txt", "file2.txt"], True),
+            ("interview.txt", ["Interview.txt"], False),
+            ("INTERVIEW.TXT", ["Interview.txt"], False),
+        ],
+    )
+    def test_uniqueness_checks(
+        self, candidate: str, existing_names: list[str], expected: bool
+    ) -> None:
+        """Any name is unique in empty list; case-insensitive duplicate detection."""
+        existing = [_make_source(str(i), n) for i, n in enumerate(existing_names)]
+        assert is_source_name_unique(candidate, existing) is expected
 
-    def test_unique_name_in_empty_list(self) -> None:
-        """Any name should be unique in empty list."""
-        assert is_source_name_unique("new_file.txt", []) is True
-
-    def test_unique_name_among_existing(self) -> None:
-        """Different name should be unique."""
-        existing = [
-            self._make_source("1", "file1.txt"),
-            self._make_source("2", "file2.txt"),
-        ]
-        assert is_source_name_unique("file3.txt", existing) is True
-
-    def test_duplicate_name_exact_match(self) -> None:
-        """Exact duplicate should fail."""
-        existing = [self._make_source("1", "interview.txt")]
-        assert is_source_name_unique("interview.txt", existing) is False
-
-    def test_duplicate_name_case_insensitive(self) -> None:
-        """Duplicate with different case should fail (case-insensitive)."""
-        existing = [self._make_source("1", "Interview.txt")]
-        assert is_source_name_unique("interview.txt", existing) is False
-        assert is_source_name_unique("INTERVIEW.TXT", existing) is False
-
+    @allure.title("Exclude-ID allows rename but still rejects conflicts")
     def test_unique_with_exclude_id(self) -> None:
-        """Excluding source's own ID should allow same name (for rename)."""
-        source_id = SourceId(value="1")
-        existing = [self._make_source("1", "interview.txt")]
-        # When renaming to same name (excluding self), should pass
+        """Excluding source's own ID allows same name; still rejects other conflicts."""
+        existing = [
+            _make_source("1", "interview.txt"),
+            _make_source("2", "target_name.txt"),
+        ]
+        # Own ID excluded - same name allowed
         assert (
             is_source_name_unique(
-                "interview.txt", existing, exclude_source_id=source_id
+                "interview.txt", existing, exclude_source_id=SourceId(value="1")
             )
             is True
         )
-
-    def test_duplicate_with_exclude_id(self) -> None:
-        """Excluding source ID should still fail if another source has the name."""
-        source_id_to_rename = SourceId(value="1")
-        existing = [
-            self._make_source("1", "file1.txt"),
-            self._make_source("2", "target_name.txt"),  # Another source has this name
-        ]
-        # Renaming file1.txt to target_name.txt should fail
+        # Own ID excluded - but conflicts with another source
         assert (
             is_source_name_unique(
-                "target_name.txt", existing, exclude_source_id=source_id_to_rename
+                "target_name.txt", existing, exclude_source_id=SourceId(value="1")
             )
             is False
         )
 
 
+@allure.story("QC-027.01 Import Text Document")
 class TestDetectSourceType:
     """Tests for detect_source_type invariant."""
 
-    @pytest.mark.parametrize("ext", sorted(TEXT_EXTENSIONS))
-    def test_text_extensions(self, ext: str) -> None:
-        """Text file extensions should return TEXT type."""
-        path = Path(f"document{ext}")
-        assert detect_source_type(path) == SourceType.TEXT
+    @allure.title("Detects correct source type for all supported extensions")
+    @pytest.mark.parametrize(
+        "ext, expected_type",
+        [(ext, SourceType.TEXT) for ext in sorted(TEXT_EXTENSIONS)]
+        + [(ext, SourceType.AUDIO) for ext in sorted(AUDIO_EXTENSIONS)]
+        + [(ext, SourceType.VIDEO) for ext in sorted(VIDEO_EXTENSIONS)]
+        + [(ext, SourceType.IMAGE) for ext in sorted(IMAGE_EXTENSIONS)]
+        + [(ext, SourceType.PDF) for ext in sorted(PDF_EXTENSIONS)],
+    )
+    def test_known_extensions(self, ext: str, expected_type: SourceType) -> None:
+        """Known file extensions should return correct source type."""
+        assert detect_source_type(Path(f"file{ext}")) == expected_type
 
-    @pytest.mark.parametrize("ext", sorted(AUDIO_EXTENSIONS))
-    def test_audio_extensions(self, ext: str) -> None:
-        """Audio file extensions should return AUDIO type."""
-        path = Path(f"recording{ext}")
-        assert detect_source_type(path) == SourceType.AUDIO
-
-    @pytest.mark.parametrize("ext", sorted(VIDEO_EXTENSIONS))
-    def test_video_extensions(self, ext: str) -> None:
-        """Video file extensions should return VIDEO type."""
-        path = Path(f"video{ext}")
-        assert detect_source_type(path) == SourceType.VIDEO
-
-    @pytest.mark.parametrize("ext", sorted(IMAGE_EXTENSIONS))
-    def test_image_extensions(self, ext: str) -> None:
-        """Image file extensions should return IMAGE type."""
-        path = Path(f"photo{ext}")
-        assert detect_source_type(path) == SourceType.IMAGE
-
-    @pytest.mark.parametrize("ext", sorted(PDF_EXTENSIONS))
-    def test_pdf_extensions(self, ext: str) -> None:
-        """PDF file extensions should return PDF type."""
-        path = Path(f"document{ext}")
-        assert detect_source_type(path) == SourceType.PDF
-
-    def test_unknown_extension(self) -> None:
-        """Unknown extension should return UNKNOWN type."""
-        path = Path("file.xyz")
-        assert detect_source_type(path) == SourceType.UNKNOWN
-
-    def test_case_insensitive(self) -> None:
-        """Extension detection should be case-insensitive."""
-        assert detect_source_type(Path("doc.TXT")) == SourceType.TEXT
-        assert detect_source_type(Path("doc.Txt")) == SourceType.TEXT
-        assert detect_source_type(Path("photo.JPG")) == SourceType.IMAGE
+    @allure.title("Unknown extension returns UNKNOWN and detection is case-insensitive")
+    @pytest.mark.parametrize(
+        "filename, expected",
+        [
+            ("file.xyz", SourceType.UNKNOWN),
+            ("doc.TXT", SourceType.TEXT),
+            ("doc.Txt", SourceType.TEXT),
+            ("photo.JPG", SourceType.IMAGE),
+        ],
+    )
+    def test_unknown_and_case_insensitive(self, filename: str, expected: SourceType) -> None:
+        """Unknown extensions return UNKNOWN; detection is case-insensitive."""
+        assert detect_source_type(Path(filename)) == expected
 
 
+@allure.story("QC-027.01 Import Text Document")
 class TestIsSupportedSourceType:
     """Tests for is_supported_source_type invariant."""
 
-    def test_supported_text(self) -> None:
-        """Text files should be supported."""
-        assert is_supported_source_type(Path("doc.txt")) is True
-
-    def test_supported_audio(self) -> None:
-        """Audio files should be supported."""
-        assert is_supported_source_type(Path("audio.mp3")) is True
-
-    def test_supported_video(self) -> None:
-        """Video files should be supported."""
-        assert is_supported_source_type(Path("video.mp4")) is True
-
-    def test_supported_image(self) -> None:
-        """Image files should be supported."""
-        assert is_supported_source_type(Path("photo.jpg")) is True
-
-    def test_supported_pdf(self) -> None:
-        """PDF files should be supported."""
-        assert is_supported_source_type(Path("doc.pdf")) is True
-
-    def test_unsupported_type(self) -> None:
-        """Unknown file types should not be supported."""
-        assert is_supported_source_type(Path("file.xyz")) is False
-        assert is_supported_source_type(Path("file.exe")) is False
-        assert is_supported_source_type(Path("file.dll")) is False
+    @allure.title("Supported and unsupported file types: {filename}")
+    @pytest.mark.parametrize(
+        "filename, expected",
+        [
+            ("doc.txt", True),
+            ("audio.mp3", True),
+            ("video.mp4", True),
+            ("photo.jpg", True),
+            ("doc.pdf", True),
+            ("file.xyz", False),
+            ("file.exe", False),
+            ("file.dll", False),
+        ],
+    )
+    def test_supported_and_unsupported(self, filename: str, expected: bool) -> None:
+        """Known file types are supported; unknown types are not."""
+        assert is_supported_source_type(Path(filename)) is expected
 
 
+@allure.story("QC-027.01 Import Text Document")
 class TestCanImportSource:
     """Tests for can_import_source invariant."""
 
-    def _make_source(self, source_id: str, name: str) -> Source:
-        """Create a source for testing."""
-        return Source(
-            id=SourceId(value=source_id),
-            name=name,
-            source_type=SourceType.TEXT,
-            status=SourceStatus.IMPORTED,
-            code_count=0,
-            memo=None,
-            origin=None,
-            folder_id=None,
+    @allure.title("Import allowed/rejected based on file existence and name uniqueness")
+    @pytest.mark.parametrize(
+        "file_exists, existing_names, expected",
+        [
+            (True, [], True),
+            (False, [], False),
+            (True, ["interview.txt"], False),
+        ],
+    )
+    def test_can_import_scenarios(
+        self, file_exists: bool, existing_names: list[str], expected: bool
+    ) -> None:
+        """Can import when file exists and name is unique; cannot otherwise."""
+        existing = [_make_source(str(i), n) for i, n in enumerate(existing_names)]
+        assert (
+            can_import_source(
+                Path("/data/interview.txt"), lambda _: file_exists, existing
+            )
+            is expected
         )
-
-    def test_can_import_existing_file(self) -> None:
-        """Can import when file exists and name is unique."""
-        path = Path("/data/interview.txt")
-        existing: list[Source] = []
-        assert can_import_source(path, lambda _: True, existing) is True
-
-    def test_cannot_import_nonexistent_file(self) -> None:
-        """Cannot import when file doesn't exist."""
-        path = Path("/data/missing.txt")
-        existing: list[Source] = []
-        assert can_import_source(path, lambda _: False, existing) is False
-
-    def test_cannot_import_duplicate_name(self) -> None:
-        """Cannot import when name already exists."""
-        path = Path("/data/interview.txt")
-        existing = [self._make_source("1", "interview.txt")]
-        assert can_import_source(path, lambda _: True, existing) is False

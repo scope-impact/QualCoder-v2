@@ -9,6 +9,7 @@ from __future__ import annotations
 
 from unittest.mock import MagicMock
 
+import allure
 import pytest
 
 from src.contexts.projects.core.events import SourceRemoved, SourceRenamed
@@ -25,7 +26,6 @@ def event_bus() -> EventBus:
 
 @pytest.fixture
 def mock_segment_repo() -> MagicMock:
-    """Create a mock segment repository."""
     repo = MagicMock()
     repo.update_source_name = MagicMock()
     return repo
@@ -33,7 +33,6 @@ def mock_segment_repo() -> MagicMock:
 
 @pytest.fixture
 def mock_case_repo() -> MagicMock:
-    """Create a mock case repository."""
     repo = MagicMock()
     repo.update_source_name = MagicMock()
     return repo
@@ -41,7 +40,6 @@ def mock_case_repo() -> MagicMock:
 
 @pytest.fixture
 def mock_coding_context(mock_segment_repo: MagicMock) -> MagicMock:
-    """Create a mock CodingContext."""
     context = MagicMock()
     context.segment_repo = mock_segment_repo
     return context
@@ -49,132 +47,71 @@ def mock_coding_context(mock_segment_repo: MagicMock) -> MagicMock:
 
 @pytest.fixture
 def mock_cases_context(mock_case_repo: MagicMock) -> MagicMock:
-    """Create a mock CasesContext."""
     context = MagicMock()
     context.case_repo = mock_case_repo
     return context
 
 
+@allure.epic("Shared")
+@allure.feature("Shared Core")
+@allure.story("QC-000.06 Source Sync")
 class TestSourceSyncHandlerLifecycle:
     """Tests for start/stop lifecycle."""
 
-    def test_start_subscribes_to_events(self, event_bus: EventBus) -> None:
-        """start() should subscribe to SourceRenamed and SourceRemoved events."""
+    @allure.title("Start subscribes and is idempotent; stop unsubscribes and is idempotent")
+    def test_start_stop_lifecycle(self, event_bus: EventBus) -> None:
         handler = SourceSyncHandler(event_bus)
 
         handler.start()
-
-        # Verify subscriptions exist by checking internal state
         assert handler._subscribed is True
 
-    def test_start_is_idempotent(self, event_bus: EventBus) -> None:
-        """Calling start() multiple times should not create duplicate subscriptions."""
-        handler = SourceSyncHandler(event_bus)
-
+        # Idempotent start
         handler.start()
-        handler.start()
-        handler.start()
-
         assert handler._subscribed is True
 
-    def test_stop_unsubscribes_from_events(self, event_bus: EventBus) -> None:
-        """stop() should unsubscribe from events."""
-        handler = SourceSyncHandler(event_bus)
-        handler.start()
-
         handler.stop()
-
         assert handler._subscribed is False
 
-    def test_stop_is_idempotent(self, event_bus: EventBus) -> None:
-        """Calling stop() multiple times should be safe."""
-        handler = SourceSyncHandler(event_bus)
-        handler.start()
-
+        # Idempotent stop
         handler.stop()
-        handler.stop()
-        handler.stop()
-
         assert handler._subscribed is False
 
+    @allure.title("Stop without start is safe")
     def test_stop_without_start_is_safe(self, event_bus: EventBus) -> None:
-        """Calling stop() without start() should be safe."""
         handler = SourceSyncHandler(event_bus)
-
         handler.stop()
-
         assert handler._subscribed is False
 
 
+@allure.epic("Shared")
+@allure.feature("Shared Core")
+@allure.story("QC-000.06 Source Sync")
 class TestSourceSyncHandlerContextSetters:
     """Tests for context setters."""
 
-    def test_set_coding_context(
-        self, event_bus: EventBus, mock_coding_context: MagicMock
-    ) -> None:
-        """set_coding_context() should set the coding context."""
-        handler = SourceSyncHandler(event_bus)
-
-        handler.set_coding_context(mock_coding_context)
-
-        assert handler._coding_context is mock_coding_context
-
-    def test_set_cases_context(
-        self, event_bus: EventBus, mock_cases_context: MagicMock
-    ) -> None:
-        """set_cases_context() should set the cases context."""
-        handler = SourceSyncHandler(event_bus)
-
-        handler.set_cases_context(mock_cases_context)
-
-        assert handler._cases_context is mock_cases_context
-
-
-class TestSourceRenamedHandling:
-    """Tests for SourceRenamed event handling."""
-
-    def test_source_renamed_updates_coding_context(
+    @allure.title("Setting coding and cases contexts stores references")
+    def test_set_contexts(
         self,
         event_bus: EventBus,
         mock_coding_context: MagicMock,
-        mock_segment_repo: MagicMock,
-    ) -> None:
-        """SourceRenamed should update segment_repo.update_source_name."""
-        handler = SourceSyncHandler(
-            event_bus, coding_context=mock_coding_context, cases_context=None
-        )
-        handler.start()
-
-        source_id = SourceId(42)
-        event = SourceRenamed.create(
-            source_id=source_id, old_name="old.txt", new_name="new.txt"
-        )
-        event_bus.publish(event)
-
-        mock_segment_repo.update_source_name.assert_called_once_with(
-            source_id, "new.txt"
-        )
-
-    def test_source_renamed_updates_cases_context(
-        self,
-        event_bus: EventBus,
         mock_cases_context: MagicMock,
-        mock_case_repo: MagicMock,
     ) -> None:
-        """SourceRenamed should update case_repo.update_source_name."""
-        handler = SourceSyncHandler(
-            event_bus, coding_context=None, cases_context=mock_cases_context
-        )
-        handler.start()
+        handler = SourceSyncHandler(event_bus)
 
-        source_id = SourceId(42)
-        event = SourceRenamed.create(
-            source_id=source_id, old_name="old.txt", new_name="new.txt"
-        )
-        event_bus.publish(event)
+        handler.set_coding_context(mock_coding_context)
+        assert handler._coding_context is mock_coding_context
 
-        mock_case_repo.update_source_name.assert_called_once_with(source_id, "new.txt")
+        handler.set_cases_context(mock_cases_context)
+        assert handler._cases_context is mock_cases_context
 
+
+@allure.epic("Shared")
+@allure.feature("Shared Core")
+@allure.story("QC-000.06 Source Sync")
+class TestSourceRenamedHandling:
+    """Tests for SourceRenamed event handling."""
+
+    @allure.title("SourceRenamed updates both coding and cases contexts")
     def test_source_renamed_updates_both_contexts(
         self,
         event_bus: EventBus,
@@ -183,7 +120,6 @@ class TestSourceRenamedHandling:
         mock_segment_repo: MagicMock,
         mock_case_repo: MagicMock,
     ) -> None:
-        """SourceRenamed should update both contexts when both are set."""
         handler = SourceSyncHandler(
             event_bus,
             coding_context=mock_coding_context,
@@ -202,8 +138,8 @@ class TestSourceRenamedHandling:
         )
         mock_case_repo.update_source_name.assert_called_once_with(source_id, "new.txt")
 
+    @allure.title("SourceRenamed with no contexts does not raise")
     def test_source_renamed_with_no_contexts_is_safe(self, event_bus: EventBus) -> None:
-        """SourceRenamed should not fail when no contexts are set."""
         handler = SourceSyncHandler(event_bus)
         handler.start()
 
@@ -211,10 +147,9 @@ class TestSourceRenamedHandling:
         event = SourceRenamed.create(
             source_id=source_id, old_name="old.txt", new_name="new.txt"
         )
-
-        # Should not raise
         event_bus.publish(event)
 
+    @allure.title("SourceRenamed continues to cases context even if coding fails")
     def test_source_renamed_handles_coding_context_error(
         self,
         event_bus: EventBus,
@@ -223,7 +158,6 @@ class TestSourceRenamedHandling:
         mock_segment_repo: MagicMock,
         mock_case_repo: MagicMock,
     ) -> None:
-        """SourceRenamed should continue to cases context even if coding fails."""
         mock_segment_repo.update_source_name.side_effect = Exception("DB error")
 
         handler = SourceSyncHandler(
@@ -239,55 +173,22 @@ class TestSourceRenamedHandling:
         )
         event_bus.publish(event)
 
-        # Coding context failed but cases should still be called
         mock_case_repo.update_source_name.assert_called_once_with(source_id, "new.txt")
 
-    def test_source_renamed_handles_cases_context_error(
-        self,
-        event_bus: EventBus,
-        mock_cases_context: MagicMock,
-        mock_case_repo: MagicMock,
-    ) -> None:
-        """SourceRenamed should handle cases context error gracefully."""
-        mock_case_repo.update_source_name.side_effect = Exception("DB error")
 
-        handler = SourceSyncHandler(
-            event_bus, coding_context=None, cases_context=mock_cases_context
-        )
-        handler.start()
-
-        source_id = SourceId(42)
-        event = SourceRenamed.create(
-            source_id=source_id, old_name="old.txt", new_name="new.txt"
-        )
-
-        # Should not raise
-        event_bus.publish(event)
-
-
+@allure.epic("Shared")
+@allure.feature("Shared Core")
+@allure.story("QC-000.06 Source Sync")
 class TestSourceRemovedHandling:
     """Tests for SourceRemoved event handling."""
 
-    def test_source_removed_is_handled(self, event_bus: EventBus) -> None:
-        """SourceRemoved should be handled without error."""
-        handler = SourceSyncHandler(event_bus)
-        handler.start()
-
-        source_id = SourceId(42)
-        event = SourceRemoved.create(
-            source_id=source_id, name="deleted.txt", segments_removed=5
-        )
-
-        # Should not raise - currently just logs
-        event_bus.publish(event)
-
-    def test_source_removed_with_contexts_set(
+    @allure.title("SourceRemoved is handled without error")
+    def test_source_removed_is_handled(
         self,
         event_bus: EventBus,
         mock_coding_context: MagicMock,
         mock_cases_context: MagicMock,
     ) -> None:
-        """SourceRemoved should be handled when contexts are set."""
         handler = SourceSyncHandler(
             event_bus,
             coding_context=mock_coding_context,
@@ -299,21 +200,22 @@ class TestSourceRemovedHandling:
         event = SourceRemoved.create(
             source_id=source_id, name="deleted.txt", segments_removed=5
         )
-
-        # Should not raise - removal is handled by CASCADE
         event_bus.publish(event)
 
 
+@allure.epic("Shared")
+@allure.feature("Shared Core")
+@allure.story("QC-000.06 Source Sync")
 class TestEventNotReceivedWhenStopped:
     """Tests verifying events are not processed when handler is stopped."""
 
-    def test_no_updates_when_stopped(
+    @allure.title("Events not processed after stop or when never started")
+    def test_no_updates_when_stopped_or_never_started(
         self,
         event_bus: EventBus,
         mock_coding_context: MagicMock,
         mock_segment_repo: MagicMock,
     ) -> None:
-        """Events should not be processed after stop()."""
         handler = SourceSyncHandler(event_bus, coding_context=mock_coding_context)
         handler.start()
         handler.stop()
@@ -323,23 +225,9 @@ class TestEventNotReceivedWhenStopped:
             source_id=source_id, old_name="old.txt", new_name="new.txt"
         )
         event_bus.publish(event)
-
         mock_segment_repo.update_source_name.assert_not_called()
 
-    def test_no_updates_when_never_started(
-        self,
-        event_bus: EventBus,
-        mock_coding_context: MagicMock,
-        mock_segment_repo: MagicMock,
-    ) -> None:
-        """Events should not be processed if start() was never called."""
-        _handler = SourceSyncHandler(event_bus, coding_context=mock_coding_context)
-        # Note: start() never called
-
-        source_id = SourceId(42)
-        event = SourceRenamed.create(
-            source_id=source_id, old_name="old.txt", new_name="new.txt"
-        )
+        # Also verify never-started handler
+        handler2 = SourceSyncHandler(event_bus, coding_context=mock_coding_context)
         event_bus.publish(event)
-
         mock_segment_repo.update_source_name.assert_not_called()

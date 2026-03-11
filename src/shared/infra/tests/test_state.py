@@ -1,110 +1,71 @@
-"""
-Tests for ProjectState session state management.
-"""
+"""Tests for ProjectState session state management."""
 
 from __future__ import annotations
 
 from pathlib import Path
 from unittest.mock import MagicMock
 
+import allure
+import pytest
+
 from src.shared.common.types import SourceId
 from src.shared.infra.state import ProjectState
 
 
-class TestProjectStateBasic:
-    """Tests for basic ProjectState functionality."""
+@allure.epic("Shared Infrastructure")
+@allure.feature("Shared Infrastructure")
+@allure.story("QC-000.07 Application State")
+class TestProjectStateInitialDefaults:
+    """Initial ProjectState should have sensible defaults."""
 
-    def test_initial_state_has_no_project(self) -> None:
-        """New state should have no project open."""
+    @allure.title("New state has no project, screen, source, or recent projects")
+    def test_initial_state_defaults(self) -> None:
         state = ProjectState()
 
         assert state.project is None
         assert state.is_project_open is False
-
-    def test_initial_state_has_no_screen(self) -> None:
-        """New state should have no current screen."""
-        state = ProjectState()
-
         assert state.current_screen is None
-
-    def test_initial_state_has_no_source(self) -> None:
-        """New state should have no current source."""
-        state = ProjectState()
-
         assert state.current_source_id is None
-
-    def test_initial_state_has_empty_recent_projects(self) -> None:
-        """New state should have empty recent projects list."""
-        state = ProjectState()
-
         assert state.recent_projects == []
 
+    @allure.title("is_project_open returns True when project is set")
     def test_is_project_open_true_when_project_set(self) -> None:
-        """is_project_open should return True when project is set."""
         state = ProjectState()
         state.project = MagicMock()
 
         assert state.is_project_open is True
 
 
+@allure.epic("Shared Infrastructure")
+@allure.feature("Shared Infrastructure")
+@allure.story("QC-000.07 Application State")
 class TestProjectStateClear:
     """Tests for ProjectState.clear() method."""
 
-    def test_clear_removes_project(self) -> None:
-        """clear() should remove the project."""
+    @allure.title("clear() resets project, screen, source but preserves recent projects")
+    def test_clear_resets_transient_state_but_preserves_recent(self) -> None:
         state = ProjectState()
         state.project = MagicMock()
-
-        state.clear()
-
-        assert state.project is None
-
-    def test_clear_removes_screen(self) -> None:
-        """clear() should remove the current screen."""
-        state = ProjectState()
         state.current_screen = "text_coding"
-
-        state.clear()
-
-        assert state.current_screen is None
-
-    def test_clear_removes_source_id(self) -> None:
-        """clear() should remove the current source ID."""
-        state = ProjectState()
         state.current_source_id = SourceId(42)
-
-        state.clear()
-
-        assert state.current_source_id is None
-
-    def test_clear_preserves_recent_projects(self) -> None:
-        """clear() should NOT clear recent projects list."""
-        state = ProjectState()
         state.recent_projects = [MagicMock()]
 
         state.clear()
 
+        assert state.project is None
+        assert state.current_screen is None
+        assert state.current_source_id is None
         assert len(state.recent_projects) == 1
 
 
+@allure.epic("Shared Infrastructure")
+@allure.feature("Shared Infrastructure")
+@allure.story("QC-000.07 Application State")
 class TestProjectStateRecentProjects:
     """Tests for ProjectState.add_to_recent() method."""
 
-    def test_add_to_recent_adds_project(self) -> None:
-        """add_to_recent() should add project to list."""
-        state = ProjectState()
-        project = MagicMock()
-        project.path = Path("/test/project.qda")
-        project.name = "Test Project"
-
-        state.add_to_recent(project)
-
-        assert len(state.recent_projects) == 1
-        assert state.recent_projects[0].path == Path("/test/project.qda")
-        assert state.recent_projects[0].name == "Test Project"
-
-    def test_add_to_recent_adds_at_front(self) -> None:
-        """add_to_recent() should add new projects at front of list."""
+    @allure.title("add_to_recent adds project at front with timestamp")
+    def test_add_to_recent_adds_at_front_with_timestamp(self) -> None:
         state = ProjectState()
 
         project1 = MagicMock()
@@ -118,48 +79,33 @@ class TestProjectStateRecentProjects:
         state.add_to_recent(project1)
         state.add_to_recent(project2)
 
+        assert len(state.recent_projects) == 2
         assert state.recent_projects[0].name == "Project 2"
         assert state.recent_projects[1].name == "Project 1"
+        assert state.recent_projects[0].last_opened is not None
 
-    def test_add_to_recent_removes_duplicate(self) -> None:
-        """add_to_recent() should remove existing entry for same path."""
+    @allure.title("add_to_recent deduplicates by path and limits to 10")
+    def test_add_to_recent_deduplicates_and_limits(self) -> None:
         state = ProjectState()
 
+        # Add a project twice with different names
         project = MagicMock()
         project.path = Path("/test/project.qda")
-        project.name = "Original Name"
-
+        project.name = "Original"
         state.add_to_recent(project)
 
-        # Re-add with different name
-        project.name = "Updated Name"
+        project.name = "Updated"
         state.add_to_recent(project)
 
         assert len(state.recent_projects) == 1
-        assert state.recent_projects[0].name == "Updated Name"
+        assert state.recent_projects[0].name == "Updated"
 
-    def test_add_to_recent_limits_to_10(self) -> None:
-        """add_to_recent() should limit list to 10 projects."""
-        state = ProjectState()
-
-        # Add 15 projects
+        # Add 15 distinct projects — list should cap at 10
         for i in range(15):
-            project = MagicMock()
-            project.path = Path(f"/test/project{i}.qda")
-            project.name = f"Project {i}"
-            state.add_to_recent(project)
+            p = MagicMock()
+            p.path = Path(f"/test/project{i}.qda")
+            p.name = f"Project {i}"
+            state.add_to_recent(p)
 
         assert len(state.recent_projects) == 10
-        # Most recent should be at front
         assert state.recent_projects[0].name == "Project 14"
-
-    def test_add_to_recent_sets_last_opened(self) -> None:
-        """add_to_recent() should set last_opened timestamp."""
-        state = ProjectState()
-        project = MagicMock()
-        project.path = Path("/test/project.qda")
-        project.name = "Test Project"
-
-        state.add_to_recent(project)
-
-        assert state.recent_projects[0].last_opened is not None

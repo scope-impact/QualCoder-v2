@@ -1,5 +1,5 @@
 """
-Exchange Infra: RQDA Reader Tests (TDD - RED phase)
+Exchange Infra: RQDA Reader Tests
 
 Tests for reading RQDA SQLite databases.
 RQDA is an R package for qualitative data analysis that stores data in SQLite.
@@ -8,6 +8,11 @@ RQDA is an R package for qualitative data analysis that stores data in SQLite.
 from __future__ import annotations
 
 import sqlite3
+
+import allure
+import pytest
+
+pytestmark = [pytest.mark.unit]
 
 
 def _create_rqda_db(path):
@@ -43,7 +48,12 @@ def _create_rqda_db(path):
     return conn
 
 
+@allure.epic("QC-036 Exchange")
+@allure.feature("QC-036 Exchange")
+@allure.story("QC-036.03 Import RQDA")
 class TestRqdaReader:
+
+    @allure.title("Reads codes from RQDA database excluding deleted")
     def test_read_codes(self, tmp_path):
         from src.contexts.exchange.infra.rqda_reader import read_rqda
 
@@ -68,6 +78,7 @@ class TestRqdaReader:
         assert "Joy" in names
         assert "Anger" in names
 
+    @allure.title("Reads sources from RQDA database")
     def test_read_sources(self, tmp_path):
         from src.contexts.exchange.infra.rqda_reader import read_rqda
 
@@ -85,6 +96,7 @@ class TestRqdaReader:
         assert result.sources[0].name == "interview.txt"
         assert result.sources[0].fulltext == "Hello world."
 
+    @allure.title("Reads codings with correct references and positions")
     def test_read_codings(self, tmp_path):
         from src.contexts.exchange.infra.rqda_reader import read_rqda
 
@@ -111,6 +123,7 @@ class TestRqdaReader:
         assert result.codings[0].end == 12
         assert result.codings[0].selected_text == "happy"
 
+    @allure.title("Excludes deleted sources from results")
     def test_read_excludes_deleted(self, tmp_path):
         from src.contexts.exchange.infra.rqda_reader import read_rqda
 
@@ -130,6 +143,7 @@ class TestRqdaReader:
         assert len(result.sources) == 1
         assert result.sources[0].name == "active.txt"
 
+    @allure.title("Empty database returns empty results")
     def test_read_empty_db(self, tmp_path):
         from src.contexts.exchange.infra.rqda_reader import read_rqda
 

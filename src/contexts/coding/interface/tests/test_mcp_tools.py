@@ -306,71 +306,58 @@ class TestToolDefinition:
         assert schema["inputSchema"]["properties"] == {}
         assert schema["inputSchema"]["required"] == []
 
-    def test_to_schema_with_required_parameter(self) -> None:
-        """Tool with required parameter generates correct schema."""
-        tool = ToolDefinition(
-            name="get_item",
-            description="Get an item by ID",
-            parameters=(
-                ToolParameter(
-                    name="item_id",
-                    type="integer",
-                    description="The item ID",
-                    required=True,
-                ),
+    @pytest.mark.parametrize(
+        "param_kwargs, expected_in_required, expected_props",
+        [
+            pytest.param(
+                {"name": "item_id", "type": "integer", "description": "The item ID", "required": True},
+                True,
+                {"type": "integer"},
+                id="required_param",
             ),
+            pytest.param(
+                {"name": "limit", "type": "integer", "description": "Max results", "required": False, "default": 10},
+                False,
+                {"type": "integer", "default": 10},
+                id="optional_param_with_default",
+            ),
+            pytest.param(
+                {
+                    "name": "operations",
+                    "type": "array",
+                    "description": "List of operations",
+                    "required": True,
+                    "items": {"type": "object", "properties": {"id": {"type": "integer"}}},
+                },
+                True,
+                {"type": "array", "items": {"type": "object", "properties": {"id": {"type": "integer"}}}},
+                id="array_param_with_items",
+            ),
+        ],
+    )
+    def test_to_schema_with_parameter_variants(
+        self,
+        param_kwargs: dict[str, Any],
+        expected_in_required: bool,
+        expected_props: dict[str, Any],
+    ) -> None:
+        """Tool parameters generate correct schema for required, optional, and array types."""
+        tool = ToolDefinition(
+            name="test_tool",
+            description="A test tool",
+            parameters=(ToolParameter(**param_kwargs),),
         )
 
         schema = tool.to_schema()
+        param_name = param_kwargs["name"]
 
-        assert "item_id" in schema["inputSchema"]["properties"]
-        assert schema["inputSchema"]["properties"]["item_id"]["type"] == "integer"
-        assert "item_id" in schema["inputSchema"]["required"]
-
-    def test_to_schema_with_optional_parameter(self) -> None:
-        """Tool with optional parameter generates correct schema."""
-        tool = ToolDefinition(
-            name="search",
-            description="Search items",
-            parameters=(
-                ToolParameter(
-                    name="limit",
-                    type="integer",
-                    description="Max results",
-                    required=False,
-                    default=10,
-                ),
-            ),
-        )
-
-        schema = tool.to_schema()
-
-        assert "limit" in schema["inputSchema"]["properties"]
-        assert schema["inputSchema"]["properties"]["limit"]["default"] == 10
-        assert "limit" not in schema["inputSchema"]["required"]
-
-    def test_to_schema_with_array_parameter(self) -> None:
-        """Tool with array parameter includes items schema."""
-        tool = ToolDefinition(
-            name="batch",
-            description="Batch operation",
-            parameters=(
-                ToolParameter(
-                    name="operations",
-                    type="array",
-                    description="List of operations",
-                    required=True,
-                    items={"type": "object", "properties": {"id": {"type": "integer"}}},
-                ),
-            ),
-        )
-
-        schema = tool.to_schema()
-
-        assert schema["inputSchema"]["properties"]["operations"]["items"] == {
-            "type": "object",
-            "properties": {"id": {"type": "integer"}},
-        }
+        assert param_name in schema["inputSchema"]["properties"]
+        for key, value in expected_props.items():
+            assert schema["inputSchema"]["properties"][param_name][key] == value
+        if expected_in_required:
+            assert param_name in schema["inputSchema"]["required"]
+        else:
+            assert param_name not in schema["inputSchema"]["required"]
 
 
 # ============================================================
@@ -402,82 +389,40 @@ class TestCodingToolsInit:
 
 
 @allure.story("Tool Schema")
-class TestGetToolSchemas:
-    """Tests for get_tool_schemas method."""
+class TestGetToolSchemasAndNames:
+    """Tests for get_tool_schemas and get_tool_names methods."""
 
-    def test_returns_list_of_schemas(self, coding_tools: CodingTools) -> None:
-        """get_tool_schemas returns list of tool schemas."""
+    def test_schemas_have_required_fields_and_include_core_tools(
+        self, coding_tools: CodingTools
+    ) -> None:
+        """All schemas have required fields and include core tools."""
         schemas = coding_tools.get_tool_schemas()
 
         assert isinstance(schemas, list)
         assert len(schemas) > 0
 
-    def test_all_schemas_have_required_fields(self, coding_tools: CodingTools) -> None:
-        """All tool schemas have name, description, and inputSchema."""
-        schemas = coding_tools.get_tool_schemas()
-
+        names = []
         for schema in schemas:
             assert "name" in schema
             assert "description" in schema
             assert "inputSchema" in schema
             assert schema["inputSchema"]["type"] == "object"
+            names.append(schema["name"])
 
-    def test_includes_batch_apply_codes_tool(self, coding_tools: CodingTools) -> None:
-        """Schemas include batch_apply_codes tool."""
-        schemas = coding_tools.get_tool_schemas()
-        names = [s["name"] for s in schemas]
+        for expected in ("batch_apply_codes", "list_codes", "get_code", "list_segments_for_source"):
+            assert expected in names
 
-        assert "batch_apply_codes" in names
-
-    def test_includes_list_codes_tool(self, coding_tools: CodingTools) -> None:
-        """Schemas include list_codes tool."""
-        schemas = coding_tools.get_tool_schemas()
-        names = [s["name"] for s in schemas]
-
-        assert "list_codes" in names
-
-    def test_includes_get_code_tool(self, coding_tools: CodingTools) -> None:
-        """Schemas include get_code tool."""
-        schemas = coding_tools.get_tool_schemas()
-        names = [s["name"] for s in schemas]
-
-        assert "get_code" in names
-
-    def test_includes_list_segments_tool(self, coding_tools: CodingTools) -> None:
-        """Schemas include list_segments_for_source tool."""
-        schemas = coding_tools.get_tool_schemas()
-        names = [s["name"] for s in schemas]
-
-        assert "list_segments_for_source" in names
-
-
-# ============================================================
-# get_tool_names Tests
-# ============================================================
-
-
-@allure.story("Tool Schema")
-class TestGetToolNames:
-    """Tests for get_tool_names method."""
-
-    def test_returns_list_of_names(self, coding_tools: CodingTools) -> None:
-        """get_tool_names returns list of tool names."""
+    def test_tool_names_match_schemas(self, coding_tools: CodingTools) -> None:
+        """Tool names list matches schema names and includes minimum tools."""
         names = coding_tools.get_tool_names()
 
         assert isinstance(names, list)
-        # Core tools + AI-assisted tools (QC-028.07, QC-028.08, QC-029.07, QC-029.08)
-        assert (
-            len(names) >= 4
-        )  # At minimum: batch_apply_codes, list_codes, get_code, list_segments
+        assert len(names) >= 4
         assert "batch_apply_codes" in names
         assert "list_codes" in names
 
-    def test_names_match_schemas(self, coding_tools: CodingTools) -> None:
-        """Tool names match schema names."""
-        names = set(coding_tools.get_tool_names())
         schema_names = {s["name"] for s in coding_tools.get_tool_schemas()}
-
-        assert names == schema_names
+        assert set(names) == schema_names
 
 
 # ============================================================
@@ -489,21 +434,17 @@ class TestGetToolNames:
 class TestExecuteUnknownTool:
     """Tests for execute method with unknown tools."""
 
-    def test_returns_failure_for_unknown_tool(self, coding_tools: CodingTools) -> None:
-        """execute returns failure for unknown tool name."""
+    def test_returns_failure_and_suggestions_for_unknown_tool(
+        self, coding_tools: CodingTools
+    ) -> None:
+        """execute returns failure with suggestions for unknown tool name."""
         result = coding_tools.execute("nonexistent_tool", {})
 
         assert result["success"] is False
         assert result["error_code"] == "TOOL_NOT_FOUND"
         assert "nonexistent_tool" in result["error"]
-
-    def test_suggests_available_tools(self, coding_tools: CodingTools) -> None:
-        """execute suggests available tools on unknown tool."""
-        result = coding_tools.execute("nonexistent_tool", {})
-
         assert "suggestions" in result
-        suggestions = result["suggestions"]
-        assert any("list_codes" in s for s in suggestions)
+        assert any("list_codes" in s for s in result["suggestions"])
 
 
 # ============================================================
@@ -515,13 +456,19 @@ class TestExecuteUnknownTool:
 class TestListCodesTool:
     """Tests for list_codes tool."""
 
-    def test_returns_all_codes(self, coding_tools: CodingTools) -> None:
-        """list_codes returns all codes."""
+    def test_returns_all_codes_with_correct_attributes(
+        self, coding_tools: CodingTools
+    ) -> None:
+        """list_codes returns all codes with expected attributes."""
         result = coding_tools.execute("list_codes", {})
 
         assert result["success"] is True
-        assert "data" in result
         assert len(result["data"]) == 3
+        # Verify serialized attributes
+        theme_code = next((c for c in result["data"] if c["name"] == "Theme"), None)
+        assert theme_code is not None
+        assert theme_code["id"] == "1"
+        assert theme_code["color"] == "#ff0000"
 
     def test_returns_empty_list_when_no_codes(self, empty_context: MockContext) -> None:
         """list_codes returns empty list when no codes exist."""
@@ -531,20 +478,6 @@ class TestListCodesTool:
 
         assert result["success"] is True
         assert result["data"] == []
-
-    def test_returns_code_with_correct_attributes(
-        self, coding_tools: CodingTools
-    ) -> None:
-        """list_codes returns codes with expected attributes (serialized as dicts)."""
-        result = coding_tools.execute("list_codes", {})
-
-        assert result["success"] is True
-        codes = result["data"]
-        # Find the Theme code (now serialized as dict)
-        theme_code = next((c for c in codes if c["name"] == "Theme"), None)
-        assert theme_code is not None
-        assert theme_code["id"] == "1"
-        assert theme_code["color"] == "#ff0000"  # Serialized as hex
 
 
 # ============================================================
@@ -556,42 +489,43 @@ class TestListCodesTool:
 class TestGetCodeTool:
     """Tests for get_code tool."""
 
-    def test_returns_code_by_id(self, coding_tools: CodingTools) -> None:
-        """get_code returns code by ID (serialized as dict)."""
-        result = coding_tools.execute("get_code", {"code_id": 1})
+    @pytest.mark.parametrize(
+        "code_id, expected_name, expected_category_id",
+        [
+            pytest.param(1, "Theme", None, id="code_without_category"),
+            pytest.param(3, "Positive", "1", id="code_with_category"),
+        ],
+    )
+    def test_returns_code_by_id(
+        self,
+        coding_tools: CodingTools,
+        code_id: int,
+        expected_name: str,
+        expected_category_id: str | None,
+    ) -> None:
+        """get_code returns code by ID with correct attributes."""
+        result = coding_tools.execute("get_code", {"code_id": code_id})
 
         assert result["success"] is True
-        code = result["data"]
-        # Data is serialized to JSON-compatible dict
-        assert code["id"] == "1"
-        assert code["name"] == "Theme"
+        assert result["data"]["name"] == expected_name
+        if expected_category_id is not None:
+            assert result["data"]["category_id"] == expected_category_id
 
-    def test_returns_failure_for_missing_code_id(
-        self, coding_tools: CodingTools
+    @pytest.mark.parametrize(
+        "args, expected_error_code",
+        [
+            pytest.param({}, "CODE_NOT_FOUND/MISSING_PARAM", id="missing_code_id"),
+            pytest.param({"code_id": 999}, "CODE_NOT_FOUND/NOT_FOUND", id="nonexistent_code"),
+        ],
+    )
+    def test_returns_failure_for_invalid_input(
+        self, coding_tools: CodingTools, args: dict, expected_error_code: str
     ) -> None:
-        """get_code returns failure when code_id is missing."""
-        result = coding_tools.execute("get_code", {})
+        """get_code returns failure for missing or nonexistent code_id."""
+        result = coding_tools.execute("get_code", args)
 
         assert result["success"] is False
-        assert result["error_code"] == "CODE_NOT_FOUND/MISSING_PARAM"
-
-    def test_returns_failure_for_nonexistent_code(
-        self, coding_tools: CodingTools
-    ) -> None:
-        """get_code returns failure for nonexistent code."""
-        result = coding_tools.execute("get_code", {"code_id": 999})
-
-        assert result["success"] is False
-        assert result["error_code"] == "CODE_NOT_FOUND/NOT_FOUND"
-
-    def test_returns_code_with_category(self, coding_tools: CodingTools) -> None:
-        """get_code returns code with category info (serialized as dict)."""
-        result = coding_tools.execute("get_code", {"code_id": 3})
-
-        assert result["success"] is True
-        code = result["data"]
-        # Data is serialized to JSON-compatible dict
-        assert code["category_id"] == "1"
+        assert result["error_code"] == expected_error_code
 
 
 # ============================================================
@@ -603,13 +537,19 @@ class TestGetCodeTool:
 class TestListSegmentsTool:
     """Tests for list_segments_for_source tool."""
 
-    def test_returns_segments_for_source(self, coding_tools: CodingTools) -> None:
-        """list_segments_for_source returns segments for given source."""
+    def test_returns_segments_with_expected_attributes(
+        self, coding_tools: CodingTools
+    ) -> None:
+        """list_segments_for_source returns segments with correct attributes."""
         result = coding_tools.execute("list_segments_for_source", {"source_id": 1})
 
         assert result["success"] is True
         segments = result["data"]
         assert len(segments) == 2  # Source 1 has 2 segments
+        # Verify serialized attributes on first segment
+        segment = segments[0]
+        for key in ("id", "source_id", "code_id", "start_position", "end_position", "selected_text"):
+            assert key in segment
 
     def test_returns_failure_for_missing_source_id(
         self, coding_tools: CodingTools
@@ -629,21 +569,6 @@ class TestListSegmentsTool:
         assert result["success"] is True
         assert result["data"] == []
 
-    def test_segment_has_expected_attributes(self, coding_tools: CodingTools) -> None:
-        """Segments have expected attributes (serialized as dicts)."""
-        result = coding_tools.execute("list_segments_for_source", {"source_id": 1})
-
-        assert result["success"] is True
-        segments = result["data"]
-        segment = segments[0]
-        # Segments are serialized to JSON-compatible dicts
-        assert "id" in segment
-        assert "source_id" in segment
-        assert "code_id" in segment
-        assert "start_position" in segment
-        assert "end_position" in segment
-        assert "selected_text" in segment
-
 
 # ============================================================
 # batch_apply_codes Tool Tests
@@ -654,43 +579,38 @@ class TestListSegmentsTool:
 class TestBatchApplyCodesTool:
     """Tests for batch_apply_codes tool."""
 
-    def test_returns_failure_for_missing_operations(
-        self, coding_tools: CodingTools
+    @pytest.mark.parametrize(
+        "args, expected_error_code, error_fragment",
+        [
+            pytest.param({}, "BATCH_APPLY_CODES/MISSING_PARAM", None, id="missing_operations"),
+            pytest.param({"operations": []}, "BATCH_APPLY_CODES/EMPTY_BATCH", None, id="empty_operations"),
+            pytest.param(
+                {"operations": [{"code_id": 1}]},
+                "BATCH_APPLY_CODES/INVALID_OPERATION",
+                "index 0",
+                id="malformed_operation",
+            ),
+        ],
+    )
+    def test_returns_failure_for_invalid_input(
+        self,
+        coding_tools: CodingTools,
+        args: dict,
+        expected_error_code: str,
+        error_fragment: str | None,
     ) -> None:
-        """batch_apply_codes returns failure when operations is missing."""
-        result = coding_tools.execute("batch_apply_codes", {})
+        """batch_apply_codes returns failure for missing, empty, or malformed operations."""
+        result = coding_tools.execute("batch_apply_codes", args)
 
         assert result["success"] is False
-        assert result["error_code"] == "BATCH_APPLY_CODES/MISSING_PARAM"
+        assert result["error_code"] == expected_error_code
+        if error_fragment:
+            assert error_fragment in result["error"]
 
-    def test_returns_failure_for_empty_operations(
-        self, coding_tools: CodingTools
+    def test_applies_single_code_with_individual_results(
+        self, mock_context: MockContext
     ) -> None:
-        """batch_apply_codes returns failure for empty operations array."""
-        result = coding_tools.execute("batch_apply_codes", {"operations": []})
-
-        assert result["success"] is False
-        assert result["error_code"] == "BATCH_APPLY_CODES/EMPTY_BATCH"
-
-    def test_returns_failure_for_invalid_operation(
-        self, coding_tools: CodingTools
-    ) -> None:
-        """batch_apply_codes returns failure for malformed operation."""
-        result = coding_tools.execute(
-            "batch_apply_codes",
-            {
-                "operations": [
-                    {"code_id": 1}  # Missing required fields
-                ]
-            },
-        )
-
-        assert result["success"] is False
-        assert result["error_code"] == "BATCH_APPLY_CODES/INVALID_OPERATION"
-        assert "index 0" in result["error"]
-
-    def test_applies_single_code_successfully(self, mock_context: MockContext) -> None:
-        """batch_apply_codes applies single code successfully."""
+        """batch_apply_codes applies single code and returns individual results."""
         tools = CodingTools(ctx=mock_context)
 
         result = tools.execute(
@@ -712,39 +632,17 @@ class TestBatchApplyCodesTool:
         assert result["data"]["succeeded"] == 1
         assert result["data"]["failed"] == 0
         assert result["data"]["all_succeeded"] is True
+        # Verify individual results
+        results = result["data"]["results"]
+        assert len(results) == 1
+        assert results[0]["index"] == 0
+        assert results[0]["success"] is True
+        assert results[0]["segment_id"] is not None
 
-    def test_applies_multiple_codes_successfully(
+    def test_applies_multiple_codes_with_optional_fields(
         self, mock_context: MockContext
     ) -> None:
-        """batch_apply_codes applies multiple codes successfully."""
-        tools = CodingTools(ctx=mock_context)
-
-        result = tools.execute(
-            "batch_apply_codes",
-            {
-                "operations": [
-                    {
-                        "code_id": 1,
-                        "source_id": 1,
-                        "start_position": 200,
-                        "end_position": 250,
-                    },
-                    {
-                        "code_id": 2,
-                        "source_id": 1,
-                        "start_position": 300,
-                        "end_position": 350,
-                    },
-                ]
-            },
-        )
-
-        assert result["success"] is True
-        assert result["data"]["total"] == 2
-        assert result["data"]["succeeded"] == 2
-
-    def test_includes_memo_in_operation(self, mock_context: MockContext) -> None:
-        """batch_apply_codes includes memo when provided."""
+        """batch_apply_codes applies multiple codes including memo and importance."""
         tools = CodingTools(ctx=mock_context)
 
         result = tools.execute(
@@ -757,63 +655,24 @@ class TestBatchApplyCodesTool:
                         "start_position": 200,
                         "end_position": 250,
                         "memo": "Test memo",
-                    }
-                ]
-            },
-        )
-
-        assert result["success"] is True
-
-    def test_includes_importance_in_operation(self, mock_context: MockContext) -> None:
-        """batch_apply_codes includes importance when provided."""
-        tools = CodingTools(ctx=mock_context)
-
-        result = tools.execute(
-            "batch_apply_codes",
-            {
-                "operations": [
+                    },
                     {
-                        "code_id": 1,
+                        "code_id": 2,
                         "source_id": 1,
-                        "start_position": 200,
-                        "end_position": 250,
+                        "start_position": 300,
+                        "end_position": 350,
                         "importance": 2,
-                    }
+                    },
                 ]
             },
         )
 
         assert result["success"] is True
-
-    def test_returns_individual_results_on_success(
-        self, mock_context: MockContext
-    ) -> None:
-        """batch_apply_codes returns individual results for each operation."""
-        tools = CodingTools(ctx=mock_context)
-
-        result = tools.execute(
-            "batch_apply_codes",
-            {
-                "operations": [
-                    {
-                        "code_id": 1,
-                        "source_id": 1,
-                        "start_position": 200,
-                        "end_position": 250,
-                    }
-                ]
-            },
-        )
-
-        assert result["success"] is True
-        results = result["data"]["results"]
-        assert len(results) == 1
-        assert results[0]["index"] == 0
-        assert results[0]["success"] is True
-        assert results[0]["segment_id"] is not None
+        assert result["data"]["total"] == 2
+        assert result["data"]["succeeded"] == 2
 
     def test_handles_nonexistent_code(self, mock_context: MockContext) -> None:
-        """batch_apply_codes handles operation with nonexistent code."""
+        """batch_apply_codes fails when all operations reference nonexistent codes."""
         tools = CodingTools(ctx=mock_context)
 
         result = tools.execute(
@@ -821,7 +680,7 @@ class TestBatchApplyCodesTool:
             {
                 "operations": [
                     {
-                        "code_id": 999,  # Nonexistent
+                        "code_id": 999,
                         "source_id": 1,
                         "start_position": 200,
                         "end_position": 250,
@@ -830,7 +689,6 @@ class TestBatchApplyCodesTool:
             },
         )
 
-        # Should fail because all operations failed
         assert result["success"] is False
         assert result["error_code"] == "BATCH_APPLY_CODES/ALL_FAILED"
 
@@ -852,7 +710,6 @@ class TestBatchApplyCodesTool:
             },
         )
 
-        # Verify event_bus.publish was called
         assert mock_context.event_bus.publish.called
 
 
@@ -892,58 +749,26 @@ class TestErrorHandling:
 class TestContextValidation:
     """Tests for context validation in tools."""
 
-    def test_batch_apply_returns_failure_when_code_repo_is_none(
-        self, no_coding_context: NoCodingContext
+    @pytest.mark.parametrize(
+        "tool_name, args",
+        [
+            pytest.param("list_codes", {}, id="list_codes"),
+            pytest.param("get_code", {"code_id": 1}, id="get_code"),
+            pytest.param("list_segments_for_source", {"source_id": 1}, id="list_segments"),
+            pytest.param(
+                "batch_apply_codes",
+                {"operations": [{"code_id": 1, "source_id": 1, "start_position": 0, "end_position": 10}]},
+                id="batch_apply_codes",
+            ),
+        ],
+    )
+    def test_returns_failure_when_coding_context_is_none(
+        self, no_coding_context: NoCodingContext, tool_name: str, args: dict
     ) -> None:
-        """batch_apply_codes returns failure when coding_context is None."""
+        """All tools return NO_CONTEXT failure when coding_context is None."""
         tools = CodingTools(ctx=no_coding_context)
 
-        result = tools.execute(
-            "batch_apply_codes",
-            {
-                "operations": [
-                    {
-                        "code_id": 1,
-                        "source_id": 1,
-                        "start_position": 0,
-                        "end_position": 10,
-                    }
-                ]
-            },
-        )
-
-        assert result["success"] is False
-        assert "NO_CONTEXT" in result["error_code"]
-
-    def test_list_codes_returns_failure_when_code_repo_is_none(
-        self, no_coding_context: NoCodingContext
-    ) -> None:
-        """list_codes returns failure when coding_context is None."""
-        tools = CodingTools(ctx=no_coding_context)
-
-        result = tools.execute("list_codes", {})
-
-        assert result["success"] is False
-        assert "NO_CONTEXT" in result["error_code"]
-
-    def test_get_code_returns_failure_when_code_repo_is_none(
-        self, no_coding_context: NoCodingContext
-    ) -> None:
-        """get_code returns failure when coding_context is None."""
-        tools = CodingTools(ctx=no_coding_context)
-
-        result = tools.execute("get_code", {"code_id": 1})
-
-        assert result["success"] is False
-        assert "NO_CONTEXT" in result["error_code"]
-
-    def test_list_segments_returns_failure_when_segment_repo_is_none(
-        self, no_coding_context: NoCodingContext
-    ) -> None:
-        """list_segments returns failure when coding_context is None."""
-        tools = CodingTools(ctx=no_coding_context)
-
-        result = tools.execute("list_segments_for_source", {"source_id": 1})
+        result = tools.execute(tool_name, args)
 
         assert result["success"] is False
         assert "NO_CONTEXT" in result["error_code"]

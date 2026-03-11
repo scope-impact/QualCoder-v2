@@ -1,43 +1,43 @@
 """
 Tests for ProjectLifecycle database connection management.
+
+Consolidated tests for open, close, and create database operations.
 """
 
 from __future__ import annotations
 
 from pathlib import Path
 
+import allure
+import pytest
 from returns.result import Failure, Success
 
 from src.shared.infra.lifecycle import ProjectLifecycle
 
 
+@allure.epic("Shared")
+@allure.feature("Shared Infrastructure")
+@allure.story("QC-000.05 Application Lifecycle")
 class TestProjectLifecycleInitialState:
     """Tests for initial state of ProjectLifecycle."""
 
-    def test_initial_connection_is_none(self) -> None:
-        """New lifecycle should have no connection."""
+    @allure.title("New lifecycle has no connection, no path, and is not open")
+    def test_initial_state(self) -> None:
         lifecycle = ProjectLifecycle()
 
         assert lifecycle.connection is None
-
-    def test_initial_current_path_is_none(self) -> None:
-        """New lifecycle should have no current path."""
-        lifecycle = ProjectLifecycle()
-
         assert lifecycle.current_path is None
-
-    def test_initial_is_open_is_false(self) -> None:
-        """New lifecycle should not be open."""
-        lifecycle = ProjectLifecycle()
-
         assert lifecycle.is_open is False
 
 
+@allure.epic("Shared")
+@allure.feature("Shared Infrastructure")
+@allure.story("QC-000.05 Application Lifecycle")
 class TestOpenDatabase:
     """Tests for ProjectLifecycle.open_database()."""
 
+    @allure.title("Opening nonexistent file returns Failure")
     def test_open_nonexistent_file_returns_failure(self) -> None:
-        """open_database() should fail for nonexistent file."""
         lifecycle = ProjectLifecycle()
         path = Path("/nonexistent/path/to/database.qda")
 
@@ -46,9 +46,12 @@ class TestOpenDatabase:
         assert isinstance(result, Failure)
         assert "not found" in result.failure()
 
-    def test_open_existing_database_returns_success(self, tmp_path: Path) -> None:
-        """open_database() should succeed for existing database file."""
-        # Create a minimal SQLite database
+    @allure.title("Opening existing database sets connection, path, session, and WAL mode")
+    def test_open_existing_database(self, tmp_path: Path) -> None:
+        from sqlalchemy import text
+
+        from src.shared.infra.session import Session
+
         db_path = tmp_path / "test.qda"
         db_path.touch()
 
@@ -58,68 +61,18 @@ class TestOpenDatabase:
         assert isinstance(result, Success)
         assert lifecycle.is_open is True
         assert lifecycle.current_path == db_path
-
-        # Cleanup
-        lifecycle.close_database()
-
-    def test_open_database_sets_connection(self, tmp_path: Path) -> None:
-        """open_database() should set the connection property."""
-        db_path = tmp_path / "test.qda"
-        db_path.touch()
-
-        lifecycle = ProjectLifecycle()
-        lifecycle.open_database(db_path)
-
         assert lifecycle.connection is not None
-
-        # Cleanup
-        lifecycle.close_database()
-
-    def test_open_database_enables_wal_mode(self, tmp_path: Path) -> None:
-        """open_database() should enable WAL journal mode."""
-        from sqlalchemy import text
-
-        db_path = tmp_path / "test.qda"
-        db_path.touch()
-
-        lifecycle = ProjectLifecycle()
-        lifecycle.open_database(db_path)
-
-        result = lifecycle.connection.execute(text("PRAGMA journal_mode"))
-        mode = result.fetchone()[0]
-        assert mode == "wal"
-
-        lifecycle.close_database()
-
-    def test_open_database_creates_session(self, tmp_path: Path) -> None:
-        """open_database() should create a Session wrapping the engine."""
-        from src.shared.infra.session import Session
-
-        db_path = tmp_path / "test.qda"
-        db_path.touch()
-
-        lifecycle = ProjectLifecycle()
-        lifecycle.open_database(db_path)
-
-        assert lifecycle.session is not None
         assert isinstance(lifecycle.session, Session)
         assert lifecycle.session.engine is lifecycle.engine
 
+        # WAL mode enabled
+        wal_result = lifecycle.connection.execute(text("PRAGMA journal_mode"))
+        assert wal_result.fetchone()[0] == "wal"
+
         lifecycle.close_database()
 
-    def test_close_database_clears_session(self, tmp_path: Path) -> None:
-        """close_database() should clear the session."""
-        db_path = tmp_path / "test.qda"
-        db_path.touch()
-
-        lifecycle = ProjectLifecycle()
-        lifecycle.open_database(db_path)
-        lifecycle.close_database()
-
-        assert lifecycle.session is None
-
+    @allure.title("Opening second database closes previous connection")
     def test_open_database_closes_previous_connection(self, tmp_path: Path) -> None:
-        """open_database() should close any existing connection first."""
         db_path1 = tmp_path / "test1.qda"
         db_path1.touch()
         db_path2 = tmp_path / "test2.qda"
@@ -134,15 +87,17 @@ class TestOpenDatabase:
         assert lifecycle.current_path == db_path2
         assert lifecycle.connection is not first_connection
 
-        # Cleanup
         lifecycle.close_database()
 
 
+@allure.epic("Shared")
+@allure.feature("Shared Infrastructure")
+@allure.story("QC-000.05 Application Lifecycle")
 class TestCloseDatabase:
     """Tests for ProjectLifecycle.close_database()."""
 
-    def test_close_database_clears_connection(self, tmp_path: Path) -> None:
-        """close_database() should clear the connection."""
+    @allure.title("Closing clears connection, path, session, and sets is_open False")
+    def test_close_database_clears_state(self, tmp_path: Path) -> None:
         db_path = tmp_path / "test.qda"
         db_path.touch()
 
@@ -151,34 +106,14 @@ class TestCloseDatabase:
         lifecycle.close_database()
 
         assert lifecycle.connection is None
-
-    def test_close_database_clears_path(self, tmp_path: Path) -> None:
-        """close_database() should clear the current path."""
-        db_path = tmp_path / "test.qda"
-        db_path.touch()
-
-        lifecycle = ProjectLifecycle()
-        lifecycle.open_database(db_path)
-        lifecycle.close_database()
-
         assert lifecycle.current_path is None
-
-    def test_close_database_sets_is_open_false(self, tmp_path: Path) -> None:
-        """close_database() should set is_open to False."""
-        db_path = tmp_path / "test.qda"
-        db_path.touch()
-
-        lifecycle = ProjectLifecycle()
-        lifecycle.open_database(db_path)
-        lifecycle.close_database()
-
         assert lifecycle.is_open is False
+        assert lifecycle.session is None
 
+    @allure.title("Closing is idempotent (safe to call multiple times)")
     def test_close_database_is_idempotent(self) -> None:
-        """close_database() should be safe to call multiple times."""
         lifecycle = ProjectLifecycle()
 
-        # Should not raise
         lifecycle.close_database()
         lifecycle.close_database()
         lifecycle.close_database()
@@ -186,32 +121,31 @@ class TestCloseDatabase:
         assert lifecycle.is_open is False
 
 
+@allure.epic("Shared")
+@allure.feature("Shared Infrastructure")
+@allure.story("QC-000.05 Application Lifecycle")
 class TestCreateDatabase:
     """Tests for ProjectLifecycle.create_database()."""
 
-    def test_create_database_fails_if_file_exists(self, tmp_path: Path) -> None:
-        """create_database() should fail if file already exists."""
-        db_path = tmp_path / "existing.qda"
-        db_path.touch()
-
+    @allure.title("Creating fails if file exists or parent missing")
+    def test_create_database_failure_cases(self, tmp_path: Path) -> None:
         lifecycle = ProjectLifecycle()
-        result = lifecycle.create_database(db_path, "Test Project")
 
+        # File already exists
+        existing = tmp_path / "existing.qda"
+        existing.touch()
+        result = lifecycle.create_database(existing, "Test")
         assert isinstance(result, Failure)
         assert "already exists" in result.failure()
 
-    def test_create_database_fails_if_parent_missing(self) -> None:
-        """create_database() should fail if parent directory doesn't exist."""
-        db_path = Path("/nonexistent/parent/test.qda")
-
-        lifecycle = ProjectLifecycle()
-        result = lifecycle.create_database(db_path, "Test Project")
-
+        # Parent directory missing
+        missing_parent = Path("/nonexistent/parent/test.qda")
+        result = lifecycle.create_database(missing_parent, "Test")
         assert isinstance(result, Failure)
         assert "Parent directory" in result.failure()
 
-    def test_create_database_creates_file(self, tmp_path: Path) -> None:
-        """create_database() should create the database file."""
+    @allure.title("Creating new database succeeds and returns Project entity")
+    def test_create_database_success(self, tmp_path: Path) -> None:
         db_path = tmp_path / "new_project.qda"
 
         lifecycle = ProjectLifecycle()
@@ -221,20 +155,8 @@ class TestCreateDatabase:
         assert db_path.exists()
         assert lifecycle.is_open is True
 
-        # Cleanup
-        lifecycle.close_database()
-
-    def test_create_database_returns_project(self, tmp_path: Path) -> None:
-        """create_database() should return Project entity on success."""
-        db_path = tmp_path / "new_project.qda"
-
-        lifecycle = ProjectLifecycle()
-        result = lifecycle.create_database(db_path, "New Project")
-
-        assert isinstance(result, Success)
         project = result.unwrap()
         assert project.name == "New Project"
         assert project.path == db_path
 
-        # Cleanup
         lifecycle.close_database()
