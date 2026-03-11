@@ -14,6 +14,7 @@ Architecture (per SKILL.md - calls use cases directly):
 
 from __future__ import annotations
 
+import asyncio
 import contextlib
 import logging
 import time
@@ -57,7 +58,6 @@ from src.shared.presentation.dto import FolderDTO, ProjectSummaryDTO, SourceDTO
 
 if TYPE_CHECKING:
     from src.contexts.cases.core.entities import Case
-    from src.contexts.sources.infra.import_worker import ImportWorker
     from src.shared.infra.event_bus import EventBus
     from src.shared.infra.state import ProjectState
 
@@ -126,7 +126,9 @@ class FileManagerViewModel(QObject):
 
     # Batch import signals
     batch_import_progress = Signal(int, int, str)  # (current, total, filename)
-    batch_import_finished = Signal(int, int, list)  # (imported_count, failed_count, imported_paths)
+    batch_import_finished = Signal(
+        int, int, list
+    )  # (imported_count, failed_count, imported_paths)
 
     def __init__(
         self,
@@ -170,12 +172,9 @@ class FileManagerViewModel(QObject):
         # when the batch completes.
         self._suppress_reloads: int = 0
 
-        # Batch import state
-        self._import_worker: ImportWorker | None = None
-        self._batch_total: int = 0
-        self._batch_imported: int = 0
-        self._batch_failed: int = 0
-        self._batch_imported_paths: list[str] = []
+        # Batch import state (async)
+        self._import_task: asyncio.Task | None = None
+        self._import_cancelled: bool = False
 
         # Connect to signal bridge if provided
         if self._signal_bridge is not None:
@@ -353,7 +352,9 @@ class FileManagerViewModel(QObject):
         type_counts: dict[str, int] = {}
         total_segments = 0
         for s in sources:
-            type_counts[s.source_type.value] = type_counts.get(s.source_type.value, 0) + 1
+            type_counts[s.source_type.value] = (
+                type_counts.get(s.source_type.value, 0) + 1
+            )
             total_segments += s.code_count
 
         total_codes = len(self._case_repo.get_all()) if self._case_repo else 0
@@ -438,7 +439,7 @@ class FileManagerViewModel(QObject):
     @property
     def is_importing(self) -> bool:
         """True while a batch import is running."""
-        return self._import_worker is not None and self._import_worker.isRunning()
+        return self._import_task is not None and not self._import_task.done()
 
     def import_sources_batch(
         self,
@@ -446,163 +447,165 @@ class FileManagerViewModel(QObject):
         origin: str | None = None,
         memo: str | None = None,
     ) -> None:
-        """Start a background batch import.
+        """Start an async batch import.
 
-        Extraction runs in a worker thread; persistence and event
-        publishing happen on the main thread via signal callbacks.
+        Extraction runs in a thread-pool executor; persistence and event
+        publishing resume on the main thread after each ``await``.
 
         Args:
             file_paths: Absolute paths to import.
             origin: Optional origin tag for all imported sources.
             memo: Optional memo for all imported sources.
         """
-        from src.contexts.sources.infra.import_worker import ImportWorker
-
         if self.is_importing:
             logger.warning("import_sources_batch: import already in progress, ignoring")
             return
 
-        # Snapshot existing names for the worker's uniqueness check.
-        existing_names = frozenset(
-            s.name.lower() for s in self._source_repo.get_all()
-        )
-
-        self._batch_total = len(file_paths)
-        self._batch_imported = 0
-        self._batch_imported_paths = []
-        self._batch_failed = 0
-        self._suppress_reloads += 1
+        self._import_cancelled = False
 
         logger.info(
-            "import_sources_batch: starting batch of %d files (origin=%s), reloads suppressed",
-            self._batch_total,
+            "import_sources_batch: starting async batch of %d files (origin=%s)",
+            len(file_paths),
             origin,
         )
 
-        self._import_worker = ImportWorker(
-            file_paths=file_paths,
-            existing_names=existing_names,
-            origin=origin,
-            memo=memo,
-            parent=self,
+        loop = asyncio.get_event_loop()
+        self._import_task = loop.create_task(
+            self._import_sources_async(file_paths, origin, memo)
         )
-        self._import_worker.file_extracted.connect(self._on_file_extracted)
-        self._import_worker.file_failed.connect(self._on_file_failed)
-        self._import_worker.all_done.connect(self._on_batch_done)
-        self._import_worker.finished.connect(self._on_worker_finished)
-        self._import_worker.start()
 
     def cancel_import(self) -> None:
         """Request cancellation of the running batch import."""
-        if self._import_worker and self._import_worker.isRunning():
-            logger.info("cancel_import: requesting interruption")
-            self._import_worker.requestInterruption()
+        if self.is_importing:
+            logger.info("cancel_import: setting cancellation flag")
+            self._import_cancelled = True
 
-    def _on_file_extracted(self, result: object) -> None:
-        """Main-thread slot: persist extracted source and publish event.
+    async def _import_sources_async(
+        self,
+        file_paths: list[str],
+        origin: str | None,
+        memo: str | None,
+    ) -> None:
+        """Async coroutine that imports files one at a time.
 
-        Called for each file that was successfully extracted by the worker.
+        Heavy extraction runs in a thread pool via ``run_in_executor``.
+        After each ``await``, execution resumes on the main thread, so
+        persistence and signal emission are automatically thread-safe.
         """
+        from src.contexts.projects.core.entities import Source, SourceStatus, SourceType
         from src.contexts.projects.core.events import SourceAdded
-        from src.contexts.sources.infra.import_worker import ExtractionResult
+        from src.contexts.projects.core.invariants import detect_source_type
+        from src.contexts.sources.core.commandHandlers.import_file_source import (
+            extract_text,
+        )
+        from src.shared.common.types import SourceId
 
-        res: ExtractionResult = result  # type: ignore[assignment]
-        source = res.source
-        persist_start = time.perf_counter()
+        loop = asyncio.get_running_loop()
+        total = len(file_paths)
+        imported = 0
+        failed = 0
+        imported_paths: list[str] = []
+        batch_start = time.perf_counter()
 
+        # Snapshot existing names for uniqueness check
+        existing_names = frozenset(s.name.lower() for s in self._source_repo.get_all())
+        seen_names: set[str] = set()
+
+        self._suppress_reloads += 1
         try:
-            # Persist (must be on main thread for SQLite safety)
-            self._source_repo.save(source)
+            for idx, raw_path in enumerate(file_paths):
+                if self._import_cancelled:
+                    logger.info("batch_import: cancelled after %d/%d files", idx, total)
+                    break
 
-            # Publish domain event
-            event = SourceAdded.create(
-                source_id=source.id,
-                name=source.name,
-                source_type=source.source_type,
-                file_path=source.file_path,
-                file_size=source.file_size,
-                origin=source.origin,
-                memo=source.memo,
-                owner=None,
-            )
-            self._event_bus.publish(event)
+                file_path = Path(raw_path)
+                file_start = time.perf_counter()
 
-            persist_ms = (time.perf_counter() - persist_start) * 1000
-            self._batch_imported += 1
-            self._batch_imported_paths.append(res.file_path)
+                try:
+                    # --- Validate (main thread, fast) ---
+                    source_type = detect_source_type(file_path)
+                    if source_type == SourceType.UNKNOWN:
+                        raise ValueError(f"Unsupported file type: {file_path.suffix}")
 
-            logger.info(
-                "batch_import: [%d/%d] persisted %s (extract=%.1fms, persist=%.1fms)",
-                res.index + 1,
-                self._batch_total,
-                source.name,
-                res.elapsed_ms,
-                persist_ms,
-            )
-        except Exception:
-            self._batch_failed += 1
-            logger.exception(
-                "batch_import: [%d/%d] persist failed for %s",
-                res.index + 1,
-                self._batch_total,
-                source.name,
-            )
+                    name = file_path.name
+                    if name.lower() in existing_names or name.lower() in seen_names:
+                        raise ValueError(f"Duplicate source name: {name}")
 
-        self.batch_import_progress.emit(
-            self._batch_imported + self._batch_failed,
-            self._batch_total,
-            source.name,
-        )
+                    file_size = file_path.stat().st_size
 
-    def _on_file_failed(self, failure: object) -> None:
-        """Main-thread slot: handle a file that failed extraction."""
-        from src.contexts.sources.infra.import_worker import ExtractionFailure
+                    # --- Extract text in thread pool (THE SLOW PART) ---
+                    fulltext = await loop.run_in_executor(
+                        None, extract_text, source_type, file_path
+                    )
 
-        fail: ExtractionFailure = failure  # type: ignore[assignment]
-        self._batch_failed += 1
+                    # --- Back on main thread: build entity, persist, publish ---
+                    source = Source(
+                        id=SourceId.new(),
+                        name=name,
+                        source_type=source_type,
+                        status=SourceStatus.IMPORTED,
+                        file_path=file_path,
+                        file_size=file_size,
+                        origin=origin,
+                        memo=memo,
+                        fulltext=fulltext,
+                    )
 
-        logger.warning(
-            "batch_import: [%d/%d] extraction failed %s: %s (%.1fms)",
-            fail.index + 1,
-            self._batch_total,
-            fail.file_path,
-            fail.error,
-            fail.elapsed_ms,
-        )
+                    self._source_repo.save(source)
 
-        self.batch_import_progress.emit(
-            self._batch_imported + self._batch_failed,
-            self._batch_total,
-            Path(fail.file_path).name if fail.file_path else "?",
-        )
+                    event = SourceAdded.create(
+                        source_id=source.id,
+                        name=source.name,
+                        source_type=source.source_type,
+                        file_path=source.file_path,
+                        file_size=source.file_size,
+                        origin=source.origin,
+                        memo=source.memo,
+                        owner=None,
+                    )
+                    self._event_bus.publish(event)
 
-    def _on_batch_done(self, imported: int, failed: int, elapsed_ms: float) -> None:
-        """Main-thread slot: batch extraction finished.
+                    seen_names.add(name.lower())
+                    imported += 1
+                    imported_paths.append(raw_path)
 
-        Re-enables reload suppression and emits a single sources_changed
-        so the UI rebuilds the table exactly once.
-        """
-        self._suppress_reloads = max(0, self._suppress_reloads - 1)
+                    elapsed_ms = (time.perf_counter() - file_start) * 1000
+                    logger.info(
+                        "batch_import: [%d/%d] imported %s (%.1fms)",
+                        idx + 1,
+                        total,
+                        name,
+                        elapsed_ms,
+                    )
 
+                except Exception as exc:
+                    failed += 1
+                    elapsed_ms = (time.perf_counter() - file_start) * 1000
+                    logger.warning(
+                        "batch_import: [%d/%d] failed %s: %s (%.1fms)",
+                        idx + 1,
+                        total,
+                        file_path.name,
+                        exc,
+                        elapsed_ms,
+                    )
+
+                self.batch_import_progress.emit(idx + 1, total, file_path.name)
+
+        finally:
+            self._suppress_reloads = max(0, self._suppress_reloads - 1)
+
+        batch_ms = (time.perf_counter() - batch_start) * 1000
         logger.info(
-            "batch_import: done — %d imported, %d failed (worker elapsed %.1fms), "
-            "emitting single sources_changed",
+            "batch_import: done — %d imported, %d failed (%.1fms total)",
             imported,
             failed,
-            elapsed_ms,
+            batch_ms,
         )
-        self.batch_import_finished.emit(self._batch_imported, self._batch_failed, self._batch_imported_paths)
-
-        # Always emit so UI exits suppressed state, even if all files failed
+        self._import_task = None  # Release coroutine frame + locals
+        self.batch_import_finished.emit(imported, failed, imported_paths)
         self.sources_changed.emit()
         self.summary_changed.emit()
-
-    def _on_worker_finished(self) -> None:
-        """Clean up worker reference after thread exits."""
-        logger.debug("batch_import: worker thread finished, cleaning up")
-        if self._import_worker:
-            self._import_worker.deleteLater()
-            self._import_worker = None
 
     def remove_source(self, source_id: str) -> bool:
         """
@@ -938,7 +941,10 @@ class FileManagerViewModel(QObject):
             if s.folder_id:
                 fid = s.folder_id.value
                 folder_counts[fid] = folder_counts.get(fid, 0) + 1
-        return [self._folder_to_dto(f, folder_source_count=folder_counts.get(f.id.value, 0)) for f in folders]
+        return [
+            self._folder_to_dto(f, folder_source_count=folder_counts.get(f.id.value, 0))
+            for f in folders
+        ]
 
     # =========================================================================
     # Private Helpers
@@ -969,7 +975,9 @@ class FileManagerViewModel(QObject):
             modified_at=source.modified_at.isoformat() if source.modified_at else None,
         )
 
-    def _folder_to_dto(self, folder: Folder, folder_source_count: int | None = None) -> FolderDTO:
+    def _folder_to_dto(
+        self, folder: Folder, folder_source_count: int | None = None
+    ) -> FolderDTO:
         """Convert a Folder entity to DTO.
 
         Args:
@@ -979,7 +987,9 @@ class FileManagerViewModel(QObject):
         if folder_source_count is None:
             sources = self._source_repo.get_all()
             folder_source_count = sum(
-                1 for s in sources if s.folder_id and s.folder_id.value == folder.id.value
+                1
+                for s in sources
+                if s.folder_id and s.folder_id.value == folder.id.value
             )
 
         return FolderDTO(
