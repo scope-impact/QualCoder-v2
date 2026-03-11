@@ -87,7 +87,8 @@ class AppContext:
     # Optional Convex client for cloud backend
     convex_client: ConvexClientWrapper | None = None
 
-    # Optional sync engine for SQLite-Convex sync
+    # Cloud sync infrastructure (SyncContext owns Convex client + SyncEngine)
+    _sync_ctx: Any = field(default=None, init=False, repr=False)
     _sync_engine: Any = field(default=None, init=False, repr=False)
 
     # VCS auto-commit listener (enabled per-project)
@@ -266,40 +267,16 @@ class AppContext:
         Returns:
             Dict of context name to context object
         """
-        # Determine backend type from settings
-        # SQLite is always primary; Convex is optional cloud sync
+        # Initialize cloud sync infrastructure (Convex client + SyncEngine)
+        from .sync_context import SyncContext
+
         backend_config = self.settings_repo.get_backend_config()
         backend_type = BackendType.SQLITE  # Always SQLite as primary
 
-        # Initialize Convex client and SyncEngine if cloud sync is enabled.
-        # Check reachability BEFORE creating the client — the Convex Python
-        # client hangs indefinitely on mutation() when the server is down,
-        # which blocks the outbound sync thread and can deadlock SQLite.
-        sync_engine = None
-        if backend_config.uses_convex and self.convex_client is None:
-            if self._is_convex_reachable(backend_config.convex_url):
-                from src.shared.infra.convex import ConvexClientWrapper
-
-                try:
-                    self.convex_client = ConvexClientWrapper(backend_config.convex_url)
-                    logger.info(
-                        f"Connected to Convex for cloud sync: {backend_config.convex_url}"
-                    )
-                except Exception as e:
-                    logger.warning(f"Failed to connect to Convex (sync disabled): {e}")
-                    self.convex_client = None
-            else:
-                logger.warning(
-                    "Convex server unreachable — cloud sync disabled this session"
-                )
-
-        # Create SyncEngine BEFORE contexts so repos can use it.
-        if backend_config.uses_convex and self.convex_client:
-            from src.shared.infra.sync import SyncEngine
-
-            self._sync_engine = SyncEngine(connection, self.convex_client)
-            sync_engine = self._sync_engine
-            logger.info("SyncEngine created for SQLite-Convex cloud sync")
+        self._sync_ctx = SyncContext.create(connection, backend_config)
+        self.convex_client = self._sync_ctx.convex_client
+        self._sync_engine = self._sync_ctx.sync_engine
+        sync_engine = self._sync_engine
 
         # Session provides thread-local connections so repos work from
         # both the Qt main thread and MCP worker threads (asyncio.to_thread).
@@ -343,9 +320,7 @@ class AppContext:
         )
 
         # Start sync engine after contexts are created
-        if self._sync_engine is not None:
-            self._sync_engine.start()
-            logger.info("SyncEngine started")
+        self._sync_ctx.start()
 
         # Enable VCS auto-commit listener if adapters are available
         if (
@@ -396,14 +371,10 @@ class AppContext:
         self.projects_context = None
         self.folders_context = None
 
-        # Stop sync engine if running
-        if self._sync_engine is not None:
-            self._sync_engine.stop()
+        # Stop sync infrastructure (engine + Convex client)
+        if hasattr(self, "_sync_ctx") and self._sync_ctx is not None:
+            self._sync_ctx.stop()
             self._sync_engine = None
-
-        # Close Convex client if open
-        if self.convex_client is not None:
-            self.convex_client.close()
             self.convex_client = None
 
         logger.debug("Cleared bounded contexts")
@@ -412,23 +383,6 @@ class AppContext:
         """Wire contexts to sync handler after project opens."""
         self.source_sync_handler.set_coding_context(self.coding_context)
         self.source_sync_handler.set_cases_context(self.cases_context)
-
-    @staticmethod
-    def _is_convex_reachable(url: str | None) -> bool:
-        """Quick TCP check to see if the Convex server is accepting connections."""
-        if not url:
-            return False
-        import socket
-        from urllib.parse import urlparse
-
-        try:
-            parsed = urlparse(url)
-            host = parsed.hostname or "127.0.0.1"
-            port = parsed.port or (443 if parsed.scheme == "https" else 80)
-            with socket.create_connection((host, port), timeout=2.0):
-                return True
-        except (OSError, ValueError):
-            return False
 
     # =========================================================================
     # Properties
