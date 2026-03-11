@@ -171,50 +171,42 @@ class TestFileLoggingUI:
 class TestEnvVarOverride:
     """E2E tests for the QUALCODER_LOG_LEVEL environment variable override."""
 
-    @allure.title("AC #3.8: Env var overrides settings-configured log level")
-    def test_env_var_overrides_settings_level(self):
-        """E2E: QUALCODER_LOG_LEVEL env var takes priority over level param."""
+    @allure.title("AC #3.8-10: Env var overrides settings, falls back without, and is case-insensitive")
+    def test_env_var_override_behavior(self):
+        """E2E: QUALCODER_LOG_LEVEL env var overrides settings, falls back, and is case-insensitive."""
         from src.shared.infra.logging_config import configure_logging
 
         with (
-            allure.step("Configure logging with INFO but env var set to DEBUG"),
+            allure.step("Env var DEBUG overrides INFO setting"),
             patch.dict("os.environ", {"QUALCODER_LOG_LEVEL": "DEBUG"}),
         ):
             configure_logging(level="INFO", enable_console=False)
+        root = logging.getLogger("qualcoder")
+        assert root.level == logging.DEBUG
 
-        with allure.step("Verify logger uses DEBUG from env var"):
-            root = logging.getLogger("qualcoder")
-            assert root.level == logging.DEBUG
-
-    @allure.title("AC #3.9: Without env var, settings level is used")
-    def test_settings_level_used_without_env_var(self):
-        """E2E: Without env var, the level parameter controls the logger."""
-        from src.shared.infra.logging_config import configure_logging
+        # Reset for next test
+        root.handlers.clear()
+        root.setLevel(logging.WARNING)
 
         with (
-            allure.step("Configure logging with WARNING, no env var"),
+            allure.step("Without env var, settings level is used"),
             patch.dict("os.environ", {}, clear=True),
         ):
             configure_logging(level="WARNING", enable_console=False)
+        root = logging.getLogger("qualcoder")
+        assert root.level == logging.WARNING
 
-        with allure.step("Verify logger uses WARNING from settings"):
-            root = logging.getLogger("qualcoder")
-            assert root.level == logging.WARNING
-
-    @allure.title("AC #3.10: Env var is case-insensitive")
-    def test_env_var_case_insensitive(self):
-        """E2E: QUALCODER_LOG_LEVEL accepts lowercase values."""
-        from src.shared.infra.logging_config import configure_logging
+        # Reset for next test
+        root.handlers.clear()
+        root.setLevel(logging.WARNING)
 
         with (
-            allure.step("Set env var with lowercase 'debug'"),
+            allure.step("Env var is case-insensitive (lowercase 'debug')"),
             patch.dict("os.environ", {"QUALCODER_LOG_LEVEL": "debug"}),
         ):
             configure_logging(level="INFO", enable_console=False)
-
-        with allure.step("Verify logger uses DEBUG"):
-            root = logging.getLogger("qualcoder")
-            assert root.level == logging.DEBUG
+        root = logging.getLogger("qualcoder")
+        assert root.level == logging.DEBUG
 
 
 # =============================================================================
