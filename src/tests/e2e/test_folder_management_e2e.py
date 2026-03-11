@@ -310,10 +310,15 @@ class TestDeleteFolder:
 @allure.story("QC-027.16 Move Source to Folder")
 @allure.severity(allure.severity_level.NORMAL)
 class TestMoveSourceToFolder:
-    @allure.title("AC #1: Move source to folder")
-    def test_move_source_to_folder(
+    @allure.title("AC #1+3+4: Move source to folder, publish event, and move back to root")
+    def test_move_source_to_folder_with_event_and_root(
         self, folder_repo, source_repo, event_bus, project_state
     ):
+        events = []
+        event_bus.subscribe(
+            "folders.source_moved_to_folder", lambda e: events.append(e)
+        )
+
         with allure.step("Create folder and source"):
             fid = _create_folder_ok(
                 "Target", folder_repo, source_repo, event_bus, project_state
@@ -330,12 +335,28 @@ class TestMoveSourceToFolder:
                 event_bus=event_bus,
             )
 
-        with allure.step("Verify success"):
+        with allure.step("Verify success and source in folder"):
             assert result.is_success
-
-        with allure.step("Verify source in folder"):
             updated = source_repo.get_by_id(source.id)
             assert updated.folder_id == FolderId(value=fid)
+
+        with allure.step("Verify event published"):
+            assert len(events) >= 1
+            assert events[-1].source_id == source.id
+            assert events[-1].new_folder_id == FolderId(value=fid)
+
+        with allure.step("Move source back to root"):
+            cmd = MoveSourceToFolderCommand(source_id=source.id.value, folder_id=None)
+            result = move_source_to_folder(
+                command=cmd,
+                state=project_state,
+                folder_repo=folder_repo,
+                source_repo=source_repo,
+                event_bus=event_bus,
+            )
+            assert result.is_success
+            updated = source_repo.get_by_id(source.id)
+            assert updated.folder_id is None
 
     @allure.title("AC #2: Move to non-existent folder rejected")
     def test_move_to_nonexistent_folder_fails(
@@ -344,7 +365,7 @@ class TestMoveSourceToFolder:
         with allure.step("Create source"):
             _seed_source(source_repo, source_id="601", name="orphan.txt")
 
-        with allure.step("Move to non-existent folder"):
+        with allure.step("Move to non-existent folder - verify failure"):
             cmd = MoveSourceToFolderCommand(source_id="601", folder_id="9999")
             result = move_source_to_folder(
                 command=cmd,
@@ -353,63 +374,8 @@ class TestMoveSourceToFolder:
                 source_repo=source_repo,
                 event_bus=event_bus,
             )
-
-        with allure.step("Verify failure"):
             assert not result.is_success
             assert "SOURCE_NOT_MOVED" in result.error_code
-
-    @allure.title("AC #3: Move source publishes event")
-    def test_move_publishes_event(
-        self, folder_repo, source_repo, event_bus, project_state
-    ):
-        events = []
-        event_bus.subscribe(
-            "folders.source_moved_to_folder", lambda e: events.append(e)
-        )
-
-        with allure.step("Create folder and source, then move"):
-            fid = _create_folder_ok(
-                "Evt Folder", folder_repo, source_repo, event_bus, project_state
-            )
-            _seed_source(source_repo, source_id="602", name="evt_source.txt")
-            cmd = MoveSourceToFolderCommand(source_id="602", folder_id=fid)
-            move_source_to_folder(
-                command=cmd,
-                state=project_state,
-                folder_repo=folder_repo,
-                source_repo=source_repo,
-                event_bus=event_bus,
-            )
-
-        with allure.step("Verify event"):
-            assert len(events) == 1
-            assert events[0].source_id == SourceId(value="602")
-            assert events[0].new_folder_id == FolderId(value=fid)
-
-    @allure.title("AC #4: Move source back to root (no folder)")
-    def test_move_source_to_root(
-        self, folder_repo, source_repo, event_bus, project_state
-    ):
-        with allure.step("Create folder and source in it"):
-            fid = _create_folder_ok(
-                "Temp", folder_repo, source_repo, event_bus, project_state
-            )
-            _seed_source(source_repo, source_id="603", name="rooted.txt", folder_id=fid)
-
-        with allure.step("Move source to root (folder_id=None)"):
-            cmd = MoveSourceToFolderCommand(source_id="603", folder_id=None)
-            result = move_source_to_folder(
-                command=cmd,
-                state=project_state,
-                folder_repo=folder_repo,
-                source_repo=source_repo,
-                event_bus=event_bus,
-            )
-
-        with allure.step("Verify success and source at root"):
-            assert result.is_success
-            updated = source_repo.get_by_id(SourceId(value="603"))
-            assert updated.folder_id is None
 
 
 # ============================================================
