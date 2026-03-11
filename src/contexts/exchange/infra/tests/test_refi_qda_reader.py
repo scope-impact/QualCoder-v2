@@ -52,10 +52,11 @@ BASIC_XML = """\
 @allure.story("QC-036.01 Import REFI-QDA")
 class TestRefiQdaReader:
 
-    @allure.title("Parses project name, codes with colors, and sources")
-    def test_parse_project_codes_and_sources(self, tmp_path):
+    @allure.title("Parses project name, codes, sources, codings, and nested categories")
+    def test_parse_project_codes_sources_codings_and_categories(self, tmp_path):
         from src.contexts.exchange.infra.refi_qda_reader import read_refi_qda
 
+        # Basic project with codes, sources, and codings
         qdpx = _make_qdpx(
             tmp_path, BASIC_XML, {"Sources/interview.txt": "I felt happy today."}
         )
@@ -71,15 +72,6 @@ class TestRefiQdaReader:
         assert len(result.sources) == 1
         assert result.sources[0].name == "interview.txt"
         assert result.sources[0].fulltext == "I felt happy today."
-
-    @allure.title("Parses codings with correct references and positions")
-    def test_parse_codings(self, tmp_path):
-        from src.contexts.exchange.infra.refi_qda_reader import read_refi_qda
-
-        qdpx = _make_qdpx(
-            tmp_path, BASIC_XML, {"Sources/interview.txt": "I felt happy today."}
-        )
-        result = read_refi_qda(qdpx)
 
         assert len(result.codings) == 1
         coding = result.codings[0]

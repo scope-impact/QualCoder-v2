@@ -182,10 +182,13 @@ class TestCreateFolder:
 @allure.story("QC-027.14 Rename Folder")
 @allure.severity(allure.severity_level.NORMAL)
 class TestRenameFolder:
-    @allure.title("AC #1: Rename folder successfully")
-    def test_rename_folder_success(
+    @allure.title("AC #1+3: Rename folder successfully and publish event")
+    def test_rename_folder_success_with_event(
         self, folder_repo, source_repo, event_bus, project_state
     ):
+        events = []
+        event_bus.subscribe("folders.folder_renamed", lambda e: events.append(e))
+
         with allure.step("Create a folder"):
             fid = _create_folder_ok(
                 "Old Name", folder_repo, source_repo, event_bus, project_state
@@ -201,14 +204,17 @@ class TestRenameFolder:
                 event_bus=event_bus,
             )
 
-        with allure.step("Verify success"):
+        with allure.step("Verify success and persistence"):
             assert result.is_success
             updated = result.unwrap()
             assert updated.name == "New Name"
-
-        with allure.step("Verify persisted"):
             saved = folder_repo.get_by_id(FolderId(value=fid))
             assert saved.name == "New Name"
+
+        with allure.step("Verify event published"):
+            assert len(events) == 1
+            assert events[0].old_name == "Old Name"
+            assert events[0].new_name == "New Name"
 
     @allure.title("AC #2: Rename to conflicting name rejected")
     def test_rename_folder_name_conflict(
@@ -222,7 +228,7 @@ class TestRenameFolder:
                 "Folder B", folder_repo, source_repo, event_bus, project_state
             )
 
-        with allure.step("Rename B to A"):
+        with allure.step("Rename B to A - verify failure"):
             cmd = RenameFolderCommand(folder_id=fid_b, new_name="Folder A")
             result = rename_folder(
                 command=cmd,
@@ -231,35 +237,8 @@ class TestRenameFolder:
                 source_repo=source_repo,
                 event_bus=event_bus,
             )
-
-        with allure.step("Verify failure"):
             assert not result.is_success
             assert "FOLDER_NOT_RENAMED" in result.error_code
-
-    @allure.title("AC #3: Rename publishes event")
-    def test_rename_publishes_event(
-        self, folder_repo, source_repo, event_bus, project_state
-    ):
-        events = []
-        event_bus.subscribe("folders.folder_renamed", lambda e: events.append(e))
-
-        with allure.step("Create and rename folder"):
-            fid = _create_folder_ok(
-                "Before", folder_repo, source_repo, event_bus, project_state
-            )
-            cmd = RenameFolderCommand(folder_id=fid, new_name="After")
-            rename_folder(
-                command=cmd,
-                state=project_state,
-                folder_repo=folder_repo,
-                source_repo=source_repo,
-                event_bus=event_bus,
-            )
-
-        with allure.step("Verify event"):
-            assert len(events) == 1
-            assert events[0].old_name == "Before"
-            assert events[0].new_name == "After"
 
 
 # ============================================================
@@ -270,10 +249,13 @@ class TestRenameFolder:
 @allure.story("QC-027.15 Delete Folder")
 @allure.severity(allure.severity_level.NORMAL)
 class TestDeleteFolder:
-    @allure.title("AC #1: Delete empty folder")
-    def test_delete_empty_folder(
+    @allure.title("AC #1+3: Delete empty folder and publish event")
+    def test_delete_empty_folder_with_event(
         self, folder_repo, source_repo, event_bus, project_state
     ):
+        events = []
+        event_bus.subscribe("folders.folder_deleted", lambda e: events.append(e))
+
         with allure.step("Create folder"):
             fid = _create_folder_ok(
                 "To Delete", folder_repo, source_repo, event_bus, project_state
@@ -289,11 +271,13 @@ class TestDeleteFolder:
                 event_bus=event_bus,
             )
 
-        with allure.step("Verify success"):
+        with allure.step("Verify success and removed from repo"):
             assert result.is_success
-
-        with allure.step("Verify removed from repo"):
             assert folder_repo.get_by_id(FolderId(value=fid)) is None
+
+        with allure.step("Verify event published"):
+            assert len(events) == 1
+            assert events[0].name == "To Delete"
 
     @allure.title("AC #2: Delete non-empty folder rejected")
     def test_delete_nonempty_folder_fails(
@@ -305,7 +289,7 @@ class TestDeleteFolder:
             )
             _seed_source(source_repo, source_id="500", name="inside.txt", folder_id=fid)
 
-        with allure.step("Try to delete"):
+        with allure.step("Try to delete - verify failure"):
             cmd = DeleteFolderCommand(folder_id=fid)
             result = delete_folder(
                 command=cmd,
@@ -314,34 +298,8 @@ class TestDeleteFolder:
                 source_repo=source_repo,
                 event_bus=event_bus,
             )
-
-        with allure.step("Verify failure"):
             assert not result.is_success
             assert "FOLDER_NOT_DELETED" in result.error_code
-
-    @allure.title("AC #3: Delete publishes event")
-    def test_delete_publishes_event(
-        self, folder_repo, source_repo, event_bus, project_state
-    ):
-        events = []
-        event_bus.subscribe("folders.folder_deleted", lambda e: events.append(e))
-
-        with allure.step("Create and delete folder"):
-            fid = _create_folder_ok(
-                "Event Delete", folder_repo, source_repo, event_bus, project_state
-            )
-            cmd = DeleteFolderCommand(folder_id=fid)
-            delete_folder(
-                command=cmd,
-                state=project_state,
-                folder_repo=folder_repo,
-                source_repo=source_repo,
-                event_bus=event_bus,
-            )
-
-        with allure.step("Verify event"):
-            assert len(events) == 1
-            assert events[0].name == "Event Delete"
 
 
 # ============================================================
