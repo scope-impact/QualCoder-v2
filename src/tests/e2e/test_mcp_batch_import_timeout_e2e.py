@@ -204,63 +204,20 @@ class TestMcpImportDocxHangs:
                 f"{t['file']} took {t['elapsed_s']:.1f}s — potential hang"
             )
 
-    @allure.title("BUG REPRO: DOCX import via MCP server (full HTTP path)")
-    def test_docx_import_via_mcp_server(
+    @allure.title("BUG REPRO: DOCX import via MCP server and signal bridge (full production path)")
+    def test_docx_import_via_mcp_server_with_signal_bridge(
         self, app_context: AppContext, tmp_path: Path
     ):
-        """Test the full MCP HTTP server path with DOCX files.
-        Uses MCPServerManager._execute_tool() which is the real entry point
-        for MCP requests on the qasync event loop."""
+        """Test the full MCP HTTP server path with DOCX files and signal bridge.
+        Combines MCP server _execute_tool() entry point with ProjectSignalBridge
+        connected — closest to real production setup where SourceAdded events
+        trigger UI updates."""
         from src.shared.infra.mcp_server import MCPServerManager
-
-        # Setup project
-        project_path = tmp_path / "mcp_test.qda"
-        result = app_context.create_project(name="MCP Test", path=str(project_path))
-        assert result.is_success
-
-        server = MCPServerManager(ctx=app_context, debug=False)
-
-        # Create DOCX files
-        files = _create_docx_files(tmp_path / "mcp_docx", count=5, paragraphs=10)
-
-        timings: list[dict] = []
-        for f in files:
-            t0 = time.perf_counter()
-            result = server._execute_tool(
-                "import_file_source",
-                {"file_path": str(f)},
-            )
-            elapsed = time.perf_counter() - t0
-            success = result.get("success", False)
-            timings.append({
-                "file": f.name,
-                "elapsed_s": round(elapsed, 4),
-                "success": success,
-                "error": result.get("error") if not success else None,
-            })
-
-        total_s = sum(t["elapsed_s"] for t in timings)
-        with allure.step(f"5 DOCX via MCP server in {total_s:.2f}s"):
-            _attach_timing_report(total_s, timings)
-            for t in timings:
-                assert t["success"], f"Failed: {t['file']}: {t['error']}"
-                assert t["elapsed_s"] < 5.0, (
-                    f"{t['file']} took {t['elapsed_s']:.1f}s — potential hang"
-                )
-
-    @allure.title("BUG REPRO: DOCX import with signal bridge connected")
-    def test_docx_import_with_signal_bridge(
-        self, app_context: AppContext, tmp_path: Path
-    ):
-        """Test with ProjectSignalBridge connected — this is the closest to
-        the real production setup where SourceAdded events trigger UI updates."""
         from src.shared.infra.signal_bridge.projects import ProjectSignalBridge
 
         # Setup project
-        project_path = tmp_path / "bridge_test.qda"
-        result = app_context.create_project(
-            name="Bridge Test", path=str(project_path)
-        )
+        project_path = tmp_path / "mcp_bridge_test.qda"
+        result = app_context.create_project(name="MCP Bridge Test", path=str(project_path))
         assert result.is_success
 
         # Connect signal bridge (as main.py does)
@@ -268,7 +225,6 @@ class TestMcpImportDocxHangs:
         bridge = ProjectSignalBridge.instance(app_context.event_bus)
         bridge.start()
 
-        # Track signal emissions
         signal_count = {"source_added": 0}
 
         def _on_source_added(_payload):
@@ -277,14 +233,31 @@ class TestMcpImportDocxHangs:
         bridge.source_added.connect(_on_source_added)
 
         try:
-            from src.contexts.sources.interface.mcp_tools import SourceTools
+            server = MCPServerManager(ctx=app_context, debug=False)
 
-            tools = SourceTools(ctx=app_context)
-            files = _create_docx_files(tmp_path / "bridge_docx", count=5, paragraphs=10)
+            # Create DOCX files
+            files = _create_docx_files(tmp_path / "mcp_docx", count=5, paragraphs=10)
 
-            total_s, timings = _import_files_sequentially(tools, files)
+            with allure.step("Import 5 DOCX files via MCP server _execute_tool()"):
+                timings: list[dict] = []
+                for f in files:
+                    t0 = time.perf_counter()
+                    result = server._execute_tool(
+                        "import_file_source",
+                        {"file_path": str(f)},
+                    )
+                    elapsed = time.perf_counter() - t0
+                    success = result.get("success", False)
+                    timings.append({
+                        "file": f.name,
+                        "elapsed_s": round(elapsed, 4),
+                        "success": success,
+                        "error": result.get("error") if not success else None,
+                    })
 
-            with allure.step(f"5 DOCX with bridge in {total_s:.2f}s"):
+                total_s = sum(t["elapsed_s"] for t in timings)
+
+            with allure.step(f"5 DOCX via MCP server in {total_s:.2f}s"):
                 _attach_timing_report(total_s, timings)
                 for t in timings:
                     assert t["success"], f"Failed: {t['file']}: {t['error']}"
@@ -310,38 +283,29 @@ class TestMcpImportDocxHangs:
 class TestBatchImportBaseline:
     """Performance baseline for batch import optimization."""
 
-    @allure.title("Server-side import is fast — 30 text files complete in <1s")
-    def test_text_import_fast(
+    @allure.title("Batch import performance: text files fast, DOCX reasonable overhead")
+    def test_text_and_docx_import_performance(
         self, source_tools, open_project: Path, tmp_path: Path
     ):
-        files = _create_text_files(tmp_path / "fast", count=30, lines=500)
-        total_s, timings = _import_files_sequentially(source_tools, files)
-
-        with allure.step(f"30 text files in {total_s*1000:.0f}ms"):
-            _attach_timing_report(total_s, timings)
-            for t in timings:
+        with allure.step("Import 30 text files — should complete in <1s"):
+            txt_files = _create_text_files(tmp_path / "fast", count=30, lines=500)
+            txt_total_s, txt_timings = _import_files_sequentially(source_tools, txt_files)
+            _attach_timing_report(txt_total_s, txt_timings)
+            for t in txt_timings:
                 assert t["success"], f"Failed: {t['file']}: {t['error']}"
+            assert txt_total_s < 1.0, (
+                f"30 text file imports took {txt_total_s:.2f}s — expected <1s"
+            )
 
-        assert total_s < 1.0, (
-            f"30 text file imports took {total_s:.2f}s — expected <1s"
-        )
-
-    @allure.title("DOCX extraction overhead: 10 DOCX files profiled")
-    def test_docx_extraction_overhead(
-        self, source_tools, open_project: Path, tmp_path: Path
-    ):
-        files = _create_docx_files(tmp_path / "docx_perf", count=10, paragraphs=20)
-        total_s, timings = _import_files_sequentially(source_tools, files)
-
-        with allure.step(f"10 DOCX files in {total_s:.2f}s"):
-            _attach_timing_report(total_s, timings)
-            for t in timings:
+        with allure.step("Import 10 DOCX files — should complete in <10s"):
+            docx_files = _create_docx_files(tmp_path / "docx_perf", count=10, paragraphs=20)
+            docx_total_s, docx_timings = _import_files_sequentially(source_tools, docx_files)
+            _attach_timing_report(docx_total_s, docx_timings)
+            for t in docx_timings:
                 assert t["success"], f"Failed: {t['file']}: {t['error']}"
-
-        # DOCX is slower than txt but should still be reasonable
-        assert total_s < 10.0, (
-            f"10 DOCX imports took {total_s:.2f}s — too slow"
-        )
+            assert docx_total_s < 10.0, (
+                f"10 DOCX imports took {docx_total_s:.2f}s — too slow"
+            )
 
     @allure.title("O(n) uniqueness check: get_all() called per import")
     def test_uniqueness_check_overhead(

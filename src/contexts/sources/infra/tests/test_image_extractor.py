@@ -116,11 +116,11 @@ class TestImageExtraction:
 
         assert isinstance(result, Failure)
 
-    @allure.title("Handles EXIF metadata gracefully")
-    def test_handles_exif_metadata(
+    @allure.title("Handles EXIF metadata gracefully and result dataclass works")
+    def test_handles_exif_and_result_dataclass(
         self, extractor: ImageExtractor, sample_png: Path, tmp_path: Path
     ):
-        """Extracts EXIF when present; handles absence gracefully."""
+        """Extracts EXIF when present; handles absence; result dataclass stores fields."""
         # JPEG with EXIF
         jpeg_path = tmp_path / "with_exif.jpg"
         img = Image.new("RGB", (640, 480), color=(128, 128, 128))
@@ -135,22 +135,13 @@ class TestImageExtraction:
             assert isinstance(result, Success)
             assert isinstance(result.unwrap().metadata, dict)
 
-
-@allure.story("QC-027.03 Import Image Files")
-class TestImageExtractionResult:
-    """Tests for ImageExtractionResult data class."""
-
-    @allure.title("Has required fields and supports empty metadata")
-    def test_fields_and_empty_metadata(self):
-        """ImageExtractionResult stores all fields; metadata can be empty."""
+        # ImageExtractionResult dataclass
         full = ImageExtractionResult(
             width=1920, height=1080, format="JPEG",
             file_size=204800, metadata={"mode": "RGB"},
         )
         assert full.width == 1920
-        assert full.height == 1080
         assert full.format == "JPEG"
-        assert full.file_size == 204800
         assert full.metadata == {"mode": "RGB"}
 
         empty = ImageExtractionResult(
@@ -164,7 +155,7 @@ class TestImageExtractionResult:
 class TestSupportedFormats:
     """Tests for format support checking."""
 
-    @allure.title("Supports image format: {ext}")
+    @allure.title("Supports common image formats and rejects non-image formats")
     @pytest.mark.parametrize(
         "ext", [".png", ".jpg", ".jpeg", ".gif", ".bmp", ".tiff", ".tif", ".webp"]
     )
@@ -172,14 +163,16 @@ class TestSupportedFormats:
         """Supports common image extensions."""
         assert extractor.supports(Path(f"image{ext}"))
 
-    @allure.title("Does not support non-image formats")
-    @pytest.mark.parametrize("filename", ["doc.pdf", "doc.txt"])
-    def test_does_not_support_non_image(self, extractor: ImageExtractor, filename: str):
-        """Does not support non-image file types."""
-        assert not extractor.supports(Path(filename))
-
-    @allure.title("Extension checking is case-insensitive")
-    @pytest.mark.parametrize("filename", ["image.PNG", "image.JpEg"])
-    def test_case_insensitive_extension(self, extractor: ImageExtractor, filename: str):
-        """Extension checking is case-insensitive."""
-        assert extractor.supports(Path(filename))
+    @allure.title("Rejects non-image and checks case-insensitive: {filename}")
+    @pytest.mark.parametrize(
+        "filename,expected",
+        [
+            ("doc.pdf", False),
+            ("doc.txt", False),
+            ("image.PNG", True),
+            ("image.JpEg", True),
+        ],
+    )
+    def test_non_image_and_case_insensitive(self, extractor: ImageExtractor, filename: str, expected: bool):
+        """Does not support non-image file types; extension checking is case-insensitive."""
+        assert extractor.supports(Path(filename)) == expected

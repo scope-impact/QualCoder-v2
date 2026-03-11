@@ -5,152 +5,119 @@ TDD tests written BEFORE implementation.
 Extracted from presentation/dialogs/auto_code_dialog.py SpeakerDetector.
 """
 
+import allure
+import pytest
+
 from src.contexts.sources.core.services.speaker_detector import (
     SpeakerDetector,
 )
 
+pytestmark = [
+    pytest.mark.unit,
+    allure.epic("QualCoder v2"),
+    allure.feature("QC-027 Manage Sources"),
+]
 
+
+@allure.story("QC-027.02 Speaker Detection")
 class TestSpeakerDetectorPatterns:
     """Tests for speaker pattern detection."""
 
-    def test_detects_uppercase_speaker_pattern(self):
-        """Should detect UPPERCASE NAME: pattern."""
-        text = """INTERVIEWER: Hello, how are you?
-PARTICIPANT: I'm doing well, thanks."""
-        detector = SpeakerDetector(text)
-
-        speakers = detector.detect_speakers()
-
+    @allure.title("Detects speakers in uppercase, title case, and bracket patterns")
+    def test_detects_speaker_patterns(self):
+        """Should detect UPPERCASE, Title Case, and [Bracket] speaker patterns."""
+        # Uppercase pattern
+        text_upper = "INTERVIEWER: Hello, how are you?\nPARTICIPANT: I'm doing well, thanks."
+        speakers = SpeakerDetector(text_upper).detect_speakers()
         assert len(speakers) == 2
         names = [s.name for s in speakers]
         assert "INTERVIEWER" in names
         assert "PARTICIPANT" in names
 
-    def test_detects_title_case_speaker_pattern(self):
-        """Should detect Title Case Name: pattern."""
-        text = """John Smith: I think that...
-Jane Doe: That's interesting."""
-        detector = SpeakerDetector(text)
-
-        speakers = detector.detect_speakers()
-
+        # Title case pattern
+        text_title = "John Smith: I think that...\nJane Doe: That's interesting."
+        speakers = SpeakerDetector(text_title).detect_speakers()
         assert len(speakers) == 2
         names = [s.name for s in speakers]
         assert "John Smith" in names
         assert "Jane Doe" in names
 
-    def test_detects_bracket_speaker_pattern(self):
-        """Should detect [Speaker] pattern."""
-        text = """[Moderator] Welcome everyone.
-[Participant 1] Thanks for having me."""
-        detector = SpeakerDetector(text)
-
-        speakers = detector.detect_speakers()
-
+        # Bracket pattern
+        text_bracket = "[Moderator] Welcome everyone.\n[Participant 1] Thanks for having me."
+        speakers = SpeakerDetector(text_bracket).detect_speakers()
         assert len(speakers) == 2
         names = [s.name for s in speakers]
         assert "Moderator" in names
         assert "Participant 1" in names
 
-    def test_counts_speaker_occurrences(self):
-        """Should count how many times each speaker appears."""
-        text = """JOHN: First statement.
-JANE: Response.
-JOHN: Follow-up.
-JOHN: Another point."""
-        detector = SpeakerDetector(text)
-
-        speakers = detector.detect_speakers()
-
+    @allure.title("Counts speaker occurrences and handles mixed patterns")
+    def test_counts_and_mixed_patterns(self):
+        """Should count occurrences and handle different patterns in same text."""
+        text = "JOHN: First statement.\nJANE: Response.\nJOHN: Follow-up.\nJOHN: Another point."
+        speakers = SpeakerDetector(text).detect_speakers()
         john = next(s for s in speakers if s.name == "JOHN")
         jane = next(s for s in speakers if s.name == "JANE")
         assert john.count == 3
         assert jane.count == 1
 
-    def test_handles_mixed_patterns(self):
-        """Should handle different patterns in same text."""
-        text = """FACILITATOR: Let's begin.
-Dr. Johnson: I'd like to add...
-[Observer] Noting the interaction."""
-        detector = SpeakerDetector(text)
-
-        speakers = detector.detect_speakers()
-
-        # Should detect at least the clear patterns
+        # Mixed patterns
+        text_mixed = "FACILITATOR: Let's begin.\nDr. Johnson: I'd like to add...\n[Observer] Noting the interaction."
+        speakers = SpeakerDetector(text_mixed).detect_speakers()
         assert len(speakers) >= 2
 
 
+@allure.story("QC-027.02 Speaker Detection")
 class TestSpeakerSegmentExtraction:
     """Tests for extracting speaker segments."""
 
-    def test_extracts_segments_for_speaker(self):
-        """Should extract all segments for a specific speaker."""
-        text = """JOHN: This is my first point.
-JANE: I disagree.
-JOHN: Let me clarify."""
+    @allure.title("Extracts segments with correct positions and text content")
+    def test_extracts_segments_with_positions_and_text(self):
+        """Should extract segments with correct positions and text for a speaker."""
+        text = "JOHN: This is my first point.\nJANE: I disagree.\nJOHN: Let me clarify."
         detector = SpeakerDetector(text)
-
         segments = detector.get_speaker_segments("JOHN")
-
         assert len(segments) == 2
 
-    def test_segment_has_correct_positions(self):
-        """Segments should have correct start/end positions."""
-        text = "SPEAKER: Hello world"
-        detector = SpeakerDetector(text)
+        # Verify position correctness on simple text
+        simple_text = "SPEAKER: Hello world"
+        detector2 = SpeakerDetector(simple_text)
+        segments2 = detector2.get_speaker_segments("SPEAKER")
+        assert len(segments2) == 1
+        seg = segments2[0]
+        assert seg.start >= 0
+        assert seg.end <= len(simple_text)
+        assert seg.start < seg.end
 
-        segments = detector.get_speaker_segments("SPEAKER")
+        # Verify text content
+        text3 = "JOHN: This is the content."
+        segments3 = SpeakerDetector(text3).get_speaker_segments("JOHN")
+        assert len(segments3) == 1
+        assert "This is the content" in segments3[0].text
 
-        assert len(segments) == 1
-        segment = segments[0]
-        assert segment.start >= 0
-        assert segment.end <= len(text)
-        assert segment.start < segment.end
-
-    def test_segment_contains_text_after_speaker(self):
-        """Segment text should be the content after speaker label."""
-        text = "JOHN: This is the content."
-        detector = SpeakerDetector(text)
-
-        segments = detector.get_speaker_segments("JOHN")
-
-        assert len(segments) == 1
-        assert "This is the content" in segments[0].text
-
+    @allure.title("Non-existent speaker returns empty list")
     def test_nonexistent_speaker_returns_empty(self):
         """Should return empty list for non-existent speaker."""
-        text = "JOHN: Something."
-        detector = SpeakerDetector(text)
-
-        segments = detector.get_speaker_segments("JANE")
-
+        segments = SpeakerDetector("JOHN: Something.").get_speaker_segments("JANE")
         assert segments == []
 
 
+@allure.story("QC-027.02 Speaker Detection")
 class TestSpeakerReturnTypes:
     """Tests for return value structures."""
 
-    def test_speaker_has_name_and_count(self):
-        """Speaker should have name and count attributes."""
-        text = "JOHN: Hello"
-        detector = SpeakerDetector(text)
-
-        speakers = detector.detect_speakers()
-
-        assert len(speakers) == 1
-        speaker = speakers[0]
-        assert hasattr(speaker, "name")
-        assert hasattr(speaker, "count")
-        assert speaker.name == "JOHN"
-        assert speaker.count == 1
-
-    def test_segment_has_required_attributes(self):
-        """SpeakerSegment should have start, end, text."""
+    @allure.title("Speaker and segment have required attributes")
+    def test_speaker_and_segment_attributes(self):
+        """Speaker has name/count; SpeakerSegment has start/end/text."""
         text = "JOHN: Content here"
         detector = SpeakerDetector(text)
 
-        segments = detector.get_speaker_segments("JOHN")
+        speakers = detector.detect_speakers()
+        assert len(speakers) == 1
+        speaker = speakers[0]
+        assert speaker.name == "JOHN"
+        assert speaker.count == 1
 
+        segments = detector.get_speaker_segments("JOHN")
         assert len(segments) == 1
         segment = segments[0]
         assert hasattr(segment, "start")
@@ -158,82 +125,49 @@ class TestSpeakerReturnTypes:
         assert hasattr(segment, "text")
 
 
+@allure.story("QC-027.02 Speaker Detection")
 class TestSpeakerDetectorEdgeCases:
     """Tests for edge cases."""
 
-    def test_empty_text_returns_empty_speakers(self):
-        """Should handle empty text gracefully."""
-        detector = SpeakerDetector("")
+    @allure.title("Handles empty text, no speakers, and blank lines")
+    def test_empty_no_speakers_and_blank_lines(self):
+        """Should handle empty text, no speaker markers, and blank lines."""
+        assert SpeakerDetector("").detect_speakers() == []
+        assert SpeakerDetector("This is just regular text without any speaker markers.").detect_speakers() == []
 
-        speakers = detector.detect_speakers()
+        text = "JOHN: First line.\n\nJANE: After blank line."
+        assert len(SpeakerDetector(text).detect_speakers()) == 2
 
-        assert speakers == []
-
-    def test_no_speakers_in_text(self):
-        """Should return empty when no speaker patterns found."""
-        text = "This is just regular text without any speaker markers."
-        detector = SpeakerDetector(text)
-
-        speakers = detector.detect_speakers()
-
-        assert speakers == []
-
-    def test_handles_blank_lines(self):
-        """Should handle text with blank lines."""
-        text = """JOHN: First line.
-
-JANE: After blank line."""
-        detector = SpeakerDetector(text)
-
-        speakers = detector.detect_speakers()
-
-        assert len(speakers) == 2
-
-    def test_speaker_at_start_of_line_only(self):
-        """Should only match speakers at line start."""
-        text = """This mentions JOHN: but not as speaker.
-JANE: This is a real speaker."""
-        detector = SpeakerDetector(text)
-
-        speakers = detector.detect_speakers()
-
-        # Should only detect JANE as speaker (at line start)
+    @allure.title("Only matches speakers at line start; colon required for uppercase")
+    def test_line_start_and_colon_required(self):
+        """Should only match speakers at line start; UPPERCASE without colon should not match."""
+        text = "This mentions JOHN: but not as speaker.\nJANE: This is a real speaker."
+        speakers = SpeakerDetector(text).detect_speakers()
         names = [s.name for s in speakers]
         assert "JANE" in names
 
-    def test_colon_required_for_uppercase(self):
-        """UPPERCASE without colon should not match."""
-        text = """JOHN said something
-JANE: This has a colon."""
-        detector = SpeakerDetector(text)
-
-        speakers = detector.detect_speakers()
-
-        names = [s.name for s in speakers]
-        assert "JANE" in names
-        # JOHN without colon is not detected as a speaker pattern
+        text2 = "JOHN said something\nJANE: This has a colon."
+        speakers2 = SpeakerDetector(text2).detect_speakers()
+        names2 = [s.name for s in speakers2]
+        assert "JANE" in names2
 
 
+@allure.story("QC-027.02 Speaker Detection")
 class TestSpeakerDetectorImmutability:
-    """Tests verifying immutability and purity."""
+    """Tests verifying immutability and consistency."""
 
-    def test_detection_does_not_modify_text(self):
-        """Detection should not modify original text."""
+    @allure.title("Detection does not modify text and multiple calls are consistent")
+    def test_immutability_and_consistency(self):
+        """Detection should not modify text; multiple calls return consistent results."""
         original = "JOHN: Hello"
         text = original
         detector = SpeakerDetector(text)
-
         detector.detect_speakers()
-
         assert text == original
 
-    def test_multiple_detections_consistent(self):
-        """Multiple calls should return consistent results."""
-        text = "JOHN: Hello\nJANE: Hi"
-        detector = SpeakerDetector(text)
-
-        speakers1 = detector.detect_speakers()
-        speakers2 = detector.detect_speakers()
-
+        text2 = "JOHN: Hello\nJANE: Hi"
+        detector2 = SpeakerDetector(text2)
+        speakers1 = detector2.detect_speakers()
+        speakers2 = detector2.detect_speakers()
         assert len(speakers1) == len(speakers2)
         assert speakers1[0].name == speakers2[0].name

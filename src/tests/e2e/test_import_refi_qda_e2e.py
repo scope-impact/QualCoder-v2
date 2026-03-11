@@ -40,110 +40,8 @@ IMPORT_XML = """\
 
 @allure.story("QC-039.02 Import REFI-QDA Project")
 class TestImportRefiQDA:
-    @allure.title("AC #1: I can import a .qdpx file")
-    def test_ac1_import_qdpx(
-        self,
-        source_repo,
-        code_repo,
-        category_repo,
-        segment_repo,
-        event_bus,
-        tmp_path,
-        make_qdpx,
-    ):
-        from src.contexts.exchange.core.commandHandlers.import_refi_qda import (
-            import_refi_qda,
-        )
-        from src.contexts.exchange.core.commands import ImportRefiQdaCommand
-
-        qdpx = make_qdpx(
-            tmp_path, IMPORT_XML, {"Sources/doc.txt": "I felt happy today."}
-        )
-
-        with allure.step("Import QDPX"):
-            result = import_refi_qda(
-                command=ImportRefiQdaCommand(source_path=str(qdpx)),
-                source_repo=source_repo,
-                code_repo=code_repo,
-                category_repo=category_repo,
-                segment_repo=segment_repo,
-                event_bus=event_bus,
-            )
-
-        with allure.step("Verify success"):
-            assert result.is_success, f"Import failed: {result.error}"
-
-    @allure.title("AC #2: Import creates codes from QDPX")
-    def test_ac2_creates_codes(
-        self,
-        source_repo,
-        code_repo,
-        category_repo,
-        segment_repo,
-        event_bus,
-        tmp_path,
-        make_qdpx,
-    ):
-        from src.contexts.exchange.core.commandHandlers.import_refi_qda import (
-            import_refi_qda,
-        )
-        from src.contexts.exchange.core.commands import ImportRefiQdaCommand
-
-        qdpx = make_qdpx(
-            tmp_path, IMPORT_XML, {"Sources/doc.txt": "I felt happy today."}
-        )
-
-        import_refi_qda(
-            command=ImportRefiQdaCommand(source_path=str(qdpx)),
-            source_repo=source_repo,
-            code_repo=code_repo,
-            category_repo=category_repo,
-            segment_repo=segment_repo,
-            event_bus=event_bus,
-        )
-
-        with allure.step("Verify codes"):
-            codes = code_repo.get_all()
-            code_names = {c.name for c in codes}
-            assert "Joy" in code_names
-            assert "Sadness" in code_names
-
-    @allure.title("AC #3: Import creates sources from QDPX")
-    def test_ac3_creates_sources(
-        self,
-        source_repo,
-        code_repo,
-        category_repo,
-        segment_repo,
-        event_bus,
-        tmp_path,
-        make_qdpx,
-    ):
-        from src.contexts.exchange.core.commandHandlers.import_refi_qda import (
-            import_refi_qda,
-        )
-        from src.contexts.exchange.core.commands import ImportRefiQdaCommand
-
-        qdpx = make_qdpx(
-            tmp_path, IMPORT_XML, {"Sources/doc.txt": "I felt happy today."}
-        )
-
-        import_refi_qda(
-            command=ImportRefiQdaCommand(source_path=str(qdpx)),
-            source_repo=source_repo,
-            code_repo=code_repo,
-            category_repo=category_repo,
-            segment_repo=segment_repo,
-            event_bus=event_bus,
-        )
-
-        with allure.step("Verify sources"):
-            sources = source_repo.get_all()
-            assert len(sources) >= 1
-            assert any(s.name == "doc.txt" for s in sources)
-
-    @allure.title("Import publishes RefiQdaImported event")
-    def test_publishes_event(
+    @allure.title("AC #1+#2+#3: Import QDPX creates codes, sources, and publishes event")
+    def test_import_qdpx_full(
         self,
         source_repo,
         code_repo,
@@ -166,14 +64,29 @@ class TestImportRefiQDA:
             tmp_path, IMPORT_XML, {"Sources/doc.txt": "I felt happy today."}
         )
 
-        import_refi_qda(
-            command=ImportRefiQdaCommand(source_path=str(qdpx)),
-            source_repo=source_repo,
-            code_repo=code_repo,
-            category_repo=category_repo,
-            segment_repo=segment_repo,
-            event_bus=event_bus,
-        )
+        with allure.step("Import QDPX"):
+            result = import_refi_qda(
+                command=ImportRefiQdaCommand(source_path=str(qdpx)),
+                source_repo=source_repo,
+                code_repo=code_repo,
+                category_repo=category_repo,
+                segment_repo=segment_repo,
+                event_bus=event_bus,
+            )
+
+        with allure.step("Verify success"):
+            assert result.is_success, f"Import failed: {result.error}"
+
+        with allure.step("Verify codes"):
+            codes = code_repo.get_all()
+            code_names = {c.name for c in codes}
+            assert "Joy" in code_names
+            assert "Sadness" in code_names
+
+        with allure.step("Verify sources"):
+            sources = source_repo.get_all()
+            assert len(sources) >= 1
+            assert any(s.name == "doc.txt" for s in sources)
 
         with allure.step("Verify event"):
             assert len(published) == 1

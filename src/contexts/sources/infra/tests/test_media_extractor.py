@@ -87,11 +87,11 @@ def sample_wav(tmp_path: Path) -> Path:
 class TestMediaExtraction:
     """Tests for extracting media metadata."""
 
-    @allure.title("Extracts metadata from MP3 file (format, size, duration)")
-    def test_extracts_mp3_metadata(self, extractor: MediaExtractor, sample_mp3: Path):
-        """Extracts duration, format, and bitrate from MP3 file."""
+    @allure.title("Extracts metadata from MP3 and WAV files")
+    def test_extracts_audio_metadata(self, extractor: MediaExtractor, sample_mp3: Path, sample_wav: Path):
+        """Extracts duration, format, and metadata from audio files."""
+        # MP3
         result = extractor.extract(sample_mp3)
-
         assert isinstance(result, Success)
         data = result.unwrap()
         assert data.format == "MP3"
@@ -101,11 +101,8 @@ class TestMediaExtraction:
         assert data.width is None
         assert data.height is None
 
-    @allure.title("Extracts metadata from WAV file (format, sample rate, size)")
-    def test_extracts_wav_metadata(self, extractor: MediaExtractor, sample_wav: Path):
-        """Extracts duration, format, and sample rate from WAV file."""
+        # WAV
         result = extractor.extract(sample_wav)
-
         assert isinstance(result, Success)
         data = result.unwrap()
         assert data.format == "WAV"
@@ -113,39 +110,31 @@ class TestMediaExtraction:
         assert data.duration_seconds >= 0
         assert data.sample_rate == 44100
 
-    @allure.title("Fails for nonexistent file")
-    def test_fails_for_nonexistent_file(
-        self, extractor: MediaExtractor, tmp_path: Path
-    ):
-        """Returns failure for non-existent file."""
-        missing = tmp_path / "missing.mp3"
+    @allure.title("Fails for nonexistent, non-media, and corrupted files")
+    @pytest.mark.parametrize(
+        "setup, error_check",
+        [
+            pytest.param("nonexistent", "not found", id="nonexistent"),
+            pytest.param("non_media", "cannot identify|error", id="non-media"),
+            pytest.param("corrupted", None, id="corrupted"),
+        ],
+    )
+    def test_fails_for_invalid_files(self, extractor: MediaExtractor, tmp_path: Path, setup, error_check):
+        import re
 
-        result = extractor.extract(missing)
+        if setup == "nonexistent":
+            path = tmp_path / "missing.mp3"
+        elif setup == "non_media":
+            path = tmp_path / "not_media.txt"
+            path.write_text("This is not a media file")
+        else:
+            path = tmp_path / "corrupted.mp3"
+            path.write_bytes(b"MP3\x00\x00\x00corrupted")
 
+        result = extractor.extract(path)
         assert isinstance(result, Failure)
-        assert "not found" in result.failure().lower()
-
-    @allure.title("Fails for non-media file")
-    def test_fails_for_non_media_file(self, extractor: MediaExtractor, tmp_path: Path):
-        """Returns failure for non-media file."""
-        text_file = tmp_path / "not_media.txt"
-        text_file.write_text("This is not a media file")
-
-        result = extractor.extract(text_file)
-
-        assert isinstance(result, Failure)
-        error_msg = result.failure().lower()
-        assert "cannot identify" in error_msg or "error" in error_msg
-
-    @allure.title("Fails for corrupted media file")
-    def test_fails_for_corrupted_media(self, extractor: MediaExtractor, tmp_path: Path):
-        """Returns failure for corrupted media file."""
-        corrupted = tmp_path / "corrupted.mp3"
-        corrupted.write_bytes(b"MP3\x00\x00\x00corrupted")
-
-        result = extractor.extract(corrupted)
-
-        assert isinstance(result, Failure)
+        if error_check:
+            assert re.search(error_check, result.failure().lower())
 
     @allure.title("Returns graceful error when mutagen is missing")
     def test_handles_missing_mutagen_library(
@@ -154,8 +143,6 @@ class TestMediaExtraction:
         sample_mp3: Path,
         monkeypatch: pytest.MonkeyPatch,
     ):
-        """Returns graceful error when mutagen is not installed."""
-
         def mock_import(name, *args, **kwargs):
             if name == "mutagen":
                 raise ImportError("No module named 'mutagen'")
@@ -174,9 +161,9 @@ class TestMediaExtraction:
 class TestMediaExtractionResult:
     """Tests for MediaExtractionResult data class."""
 
-    @allure.title("Has all required fields with correct values")
-    def test_has_required_fields(self):
-        """MediaExtractionResult has all required fields."""
+    @allure.title("Has all required fields with correct values and optional defaults")
+    def test_fields_and_optional_defaults(self):
+        # Full result with all fields
         result = MediaExtractionResult(
             duration_seconds=180.5,
             format="MP4",
@@ -199,10 +186,8 @@ class TestMediaExtractionResult:
         assert result.height == 1080
         assert result.metadata == {"title": "Sample Video"}
 
-    @allure.title("Optional fields default to None and metadata can be empty")
-    def test_optional_fields_and_empty_metadata(self):
-        """Optional fields can be None and metadata can be empty."""
-        result = MediaExtractionResult(
+        # Optional fields default to None, metadata can be empty
+        result_minimal = MediaExtractionResult(
             duration_seconds=60.0,
             format="MP3",
             file_size=1024,
@@ -214,38 +199,44 @@ class TestMediaExtractionResult:
             metadata={},
         )
 
-        assert result.codec is None
-        assert result.bitrate is None
-        assert result.sample_rate is None
-        assert result.width is None
-        assert result.height is None
-        assert result.metadata == {}
+        assert result_minimal.codec is None
+        assert result_minimal.bitrate is None
+        assert result_minimal.sample_rate is None
+        assert result_minimal.width is None
+        assert result_minimal.height is None
+        assert result_minimal.metadata == {}
 
 
 @allure.story("QC-027.04 Import Audio/Video Files")
 class TestSupportedFormats:
     """Tests for format support checking."""
 
-    @allure.title("Supports audio format: {ext}")
-    @pytest.mark.parametrize("ext", [".mp3", ".wav", ".m4a", ".ogg", ".flac", ".aac", ".wma"])
-    def test_supports_audio_formats(self, extractor: MediaExtractor, ext: str):
-        """Supports common audio extensions."""
-        assert extractor.supports(Path(f"audio{ext}"))
-
-    @allure.title("Supports video format: {ext}")
-    @pytest.mark.parametrize("ext", [".mp4", ".mov", ".avi", ".mkv", ".wmv", ".webm", ".m4v"])
-    def test_supports_video_formats(self, extractor: MediaExtractor, ext: str):
-        """Supports common video extensions."""
-        assert extractor.supports(Path(f"video{ext}"))
-
-    @allure.title("Does not support non-media formats")
-    @pytest.mark.parametrize("filename", ["doc.pdf", "doc.txt", "image.jpg", "image.png"])
-    def test_does_not_support_non_media(self, extractor: MediaExtractor, filename: str):
-        """Does not support non-media file types."""
-        assert not extractor.supports(Path(filename))
-
-    @allure.title("Extension checking is case-insensitive")
-    @pytest.mark.parametrize("filename", ["audio.MP3", "video.Mp4", "audio.WaV"])
-    def test_case_insensitive_extension(self, extractor: MediaExtractor, filename: str):
-        """Extension checking is case-insensitive."""
-        assert extractor.supports(Path(filename))
+    @allure.title("Supports audio/video formats and rejects non-media (case-insensitive)")
+    @pytest.mark.parametrize(
+        "filename, expected",
+        [
+            pytest.param("audio.mp3", True, id="mp3"),
+            pytest.param("audio.wav", True, id="wav"),
+            pytest.param("audio.m4a", True, id="m4a"),
+            pytest.param("audio.ogg", True, id="ogg"),
+            pytest.param("audio.flac", True, id="flac"),
+            pytest.param("audio.aac", True, id="aac"),
+            pytest.param("audio.wma", True, id="wma"),
+            pytest.param("video.mp4", True, id="mp4"),
+            pytest.param("video.mov", True, id="mov"),
+            pytest.param("video.avi", True, id="avi"),
+            pytest.param("video.mkv", True, id="mkv"),
+            pytest.param("video.wmv", True, id="wmv"),
+            pytest.param("video.webm", True, id="webm"),
+            pytest.param("video.m4v", True, id="m4v"),
+            pytest.param("doc.pdf", False, id="pdf"),
+            pytest.param("doc.txt", False, id="txt"),
+            pytest.param("image.jpg", False, id="jpg"),
+            pytest.param("image.png", False, id="png"),
+            pytest.param("audio.MP3", True, id="MP3-upper"),
+            pytest.param("video.Mp4", True, id="Mp4-mixed"),
+            pytest.param("audio.WaV", True, id="WaV-mixed"),
+        ],
+    )
+    def test_format_support(self, extractor: MediaExtractor, filename: str, expected: bool):
+        assert extractor.supports(Path(filename)) == expected

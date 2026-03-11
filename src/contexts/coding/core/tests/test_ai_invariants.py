@@ -77,8 +77,8 @@ class TestIsSuggestionNameUnique:
 
 
 @allure.story("QC-028.08 Agent Suggest New Codes")
-class TestIsValidConfidence:
-    """Tests for is_valid_confidence invariant."""
+class TestIsValidConfidenceAndRationale:
+    """Tests for is_valid_confidence and is_valid_rationale invariants."""
 
     @allure.title("is_valid_confidence validates 0.0-1.0 range")
     @pytest.mark.parametrize("value, expected", [
@@ -96,11 +96,6 @@ class TestIsValidConfidence:
         from src.contexts.coding.core.ai_invariants import is_valid_confidence
 
         assert is_valid_confidence(value) is expected
-
-
-@allure.story("QC-028.08 Agent Suggest New Codes")
-class TestIsValidRationale:
-    """Tests for is_valid_rationale invariant."""
 
     @allure.title("is_valid_rationale validates non-empty text within length bounds")
     @pytest.mark.parametrize("value, expected", [
@@ -122,13 +117,15 @@ class TestIsValidRationale:
 class TestCanSuggestionBeApproved:
     """Tests for can_suggestion_be_approved invariant."""
 
-    @allure.title("Pending suggestion with unique name can be approved")
-    def test_approved_cases(self):
-        """Pending suggestion with unique name can be approved."""
+    @allure.title("Approval depends on pending status and unique name")
+    def test_approval_and_rejection_cases(self):
+        """Pending + unique name = approved; non-pending or duplicate = rejected."""
         from src.contexts.coding.core.ai_entities import CodeSuggestion, SuggestionId
         from src.contexts.coding.core.ai_invariants import can_suggestion_be_approved
-        from src.contexts.coding.core.entities import Color
+        from src.contexts.coding.core.entities import Code, Color
+        from src.shared import CodeId
 
+        # Can approve: pending + unique name
         suggestion = CodeSuggestion(
             id=SuggestionId.new(),
             name="NewCode",
@@ -136,18 +133,9 @@ class TestCanSuggestionBeApproved:
             rationale="Test rationale",
             status="pending",
         )
-
         assert can_suggestion_be_approved(suggestion, []) is True
 
-    @allure.title("Non-pending status or duplicate name prevents approval")
-    def test_rejected_cases(self):
-        """Non-pending status or duplicate name prevents approval."""
-        from src.contexts.coding.core.ai_entities import CodeSuggestion, SuggestionId
-        from src.contexts.coding.core.ai_invariants import can_suggestion_be_approved
-        from src.contexts.coding.core.entities import Code, Color
-        from src.shared import CodeId
-
-        # Already approved
+        # Cannot approve: already approved
         suggestion_approved = CodeSuggestion(
             id=SuggestionId.new(),
             name="NewCode",
@@ -157,7 +145,7 @@ class TestCanSuggestionBeApproved:
         )
         assert can_suggestion_be_approved(suggestion_approved, []) is False
 
-        # Rejected
+        # Cannot approve: rejected
         suggestion_rejected = CodeSuggestion(
             id=SuggestionId.new(),
             name="NewCode",
@@ -167,7 +155,10 @@ class TestCanSuggestionBeApproved:
         )
         assert can_suggestion_be_approved(suggestion_rejected, []) is False
 
-        # Duplicate name (exact match)
+        # Cannot approve: duplicate name (exact + case-insensitive)
+        existing = [
+            Code(id=CodeId(value="1"), name="ExistingCode", color=Color(0, 255, 0))
+        ]
         suggestion_dup = CodeSuggestion(
             id=SuggestionId.new(),
             name="ExistingCode",
@@ -175,12 +166,8 @@ class TestCanSuggestionBeApproved:
             rationale="Test rationale",
             status="pending",
         )
-        existing = [
-            Code(id=CodeId(value="1"), name="ExistingCode", color=Color(0, 255, 0))
-        ]
         assert can_suggestion_be_approved(suggestion_dup, existing) is False
 
-        # Case-insensitive duplicate
         suggestion_ci = CodeSuggestion(
             id=SuggestionId.new(),
             name="existingcode",
@@ -248,8 +235,8 @@ class TestDoesSuggestionExist:
 
 
 @allure.story("QC-028.09 Agent Detect Duplicates")
-class TestIsValidSimilarityThreshold:
-    """Tests for is_valid_similarity_threshold invariant."""
+class TestSimilarityInvariants:
+    """Tests for is_valid_similarity_threshold and is_similarity_above_threshold."""
 
     @allure.title("is_valid_similarity_threshold validates 0.0-1.0 range")
     @pytest.mark.parametrize("value, expected", [
@@ -267,11 +254,6 @@ class TestIsValidSimilarityThreshold:
         from src.contexts.coding.core.ai_invariants import is_valid_similarity_threshold
 
         assert is_valid_similarity_threshold(value) is expected
-
-
-@allure.story("QC-028.09 Agent Detect Duplicates")
-class TestIsSimilarityAboveThreshold:
-    """Tests for is_similarity_above_threshold invariant."""
 
     @allure.title("is_similarity_above_threshold compares score against threshold")
     @pytest.mark.parametrize("similarity, threshold, expected", [
@@ -292,51 +274,38 @@ class TestIsSimilarityAboveThreshold:
 class TestCanCodesBeCompared:
     """Tests for can_codes_be_compared invariant."""
 
-    @allure.title("Two different codes with valid names can be compared")
-    def test_valid_comparison(self):
-        """Two different codes with valid names can be compared."""
+    @allure.title("Valid comparison, self-comparison, and invalid names")
+    def test_comparison_scenarios(self):
+        """Two different codes with valid names can be compared; self/invalid cannot."""
         from src.contexts.coding.core.ai_invariants import can_codes_be_compared
         from src.contexts.coding.core.entities import Code, Color
         from src.shared import CodeId
 
         code_a = Code(id=CodeId(value="1"), name="Theme", color=Color(255, 0, 0))
         code_b = Code(id=CodeId(value="2"), name="Pattern", color=Color(0, 255, 0))
-
         assert can_codes_be_compared(code_a, code_b) is True
 
-    @allure.title("Self-comparison and invalid names prevent comparison")
-    def test_invalid_comparisons(self):
-        """Self-comparison and invalid names prevent comparison."""
-        from src.contexts.coding.core.ai_invariants import can_codes_be_compared
-        from src.contexts.coding.core.entities import Code, Color
-        from src.shared import CodeId
-
         # Cannot compare with self
-        code = Code(id=CodeId(value="1"), name="Theme", color=Color(255, 0, 0))
-        assert can_codes_be_compared(code, code) is False
+        assert can_codes_be_compared(code_a, code_a) is False
 
-        # Invalid name on code_a
-        code_a_empty = Code(id=CodeId(value="1"), name="", color=Color(255, 0, 0))
-        code_b = Code(id=CodeId(value="2"), name="Pattern", color=Color(0, 255, 0))
-        assert can_codes_be_compared(code_a_empty, code_b) is False
+        # Invalid names
+        code_empty = Code(id=CodeId(value="1"), name="", color=Color(255, 0, 0))
+        assert can_codes_be_compared(code_empty, code_b) is False
 
-        # Invalid name on code_b
-        code_a = Code(id=CodeId(value="1"), name="Theme", color=Color(255, 0, 0))
-        code_b_ws = Code(id=CodeId(value="2"), name="   ", color=Color(0, 255, 0))
-        assert can_codes_be_compared(code_a, code_b_ws) is False
+        code_ws = Code(id=CodeId(value="2"), name="   ", color=Color(0, 255, 0))
+        assert can_codes_be_compared(code_a, code_ws) is False
 
-        # Too-long name
-        code_a_long = Code(id=CodeId(value="1"), name="a" * 101, color=Color(255, 0, 0))
-        assert can_codes_be_compared(code_a_long, code_b) is False
+        code_long = Code(id=CodeId(value="1"), name="a" * 101, color=Color(255, 0, 0))
+        assert can_codes_be_compared(code_long, code_b) is False
 
 
 @allure.story("QC-028.09 Agent Detect Duplicates")
 class TestCanMergeBeApproved:
     """Tests for can_merge_be_approved invariant."""
 
-    @allure.title("Pending merge with both codes existing can be approved")
-    def test_approved_case(self):
-        """Pending merge with both codes existing can be approved."""
+    @allure.title("Merge approval depends on pending status and code existence")
+    def test_approval_and_rejection(self):
+        """Pending + both codes exist = approved; non-pending or missing codes = rejected."""
         from src.contexts.coding.core.ai_entities import (
             DuplicateCandidate,
             SimilarityScore,
@@ -344,6 +313,7 @@ class TestCanMergeBeApproved:
         from src.contexts.coding.core.ai_invariants import can_merge_be_approved
         from src.shared import CodeId
 
+        # Can approve: pending + both codes exist
         candidate = DuplicateCandidate(
             code_a_id=CodeId(value="1"),
             code_a_name="Theme",
@@ -353,73 +323,38 @@ class TestCanMergeBeApproved:
             rationale="Similar concepts",
             status="pending",
         )
+        assert can_merge_be_approved(candidate, lambda cid: cid.value in ("1", "2")) is True
 
-        def code_exists(code_id: CodeId) -> bool:
-            return code_id.value in ("1", "2")
-
-        assert can_merge_be_approved(candidate, code_exists) is True
-
-    @allure.title("Non-pending status or missing codes prevent merge approval")
-    def test_rejected_cases(self):
-        """Non-pending status or missing codes prevent merge approval."""
-        from src.contexts.coding.core.ai_entities import (
-            DuplicateCandidate,
-            SimilarityScore,
-        )
-        from src.contexts.coding.core.ai_invariants import can_merge_be_approved
-        from src.shared import CodeId
-
-        # Already merged
+        # Cannot: already merged
         candidate_merged = DuplicateCandidate(
-            code_a_id=CodeId(value="1"),
-            code_a_name="Theme",
-            code_b_id=CodeId(value="2"),
-            code_b_name="Pattern",
-            similarity=SimilarityScore(value=0.9),
-            rationale="Similar concepts",
+            code_a_id=CodeId(value="1"), code_a_name="Theme",
+            code_b_id=CodeId(value="2"), code_b_name="Pattern",
+            similarity=SimilarityScore(value=0.9), rationale="Similar concepts",
             status="merged",
         )
         assert can_merge_be_approved(candidate_merged, lambda _: True) is False
 
-        # Dismissed
+        # Cannot: dismissed
         candidate_dismissed = DuplicateCandidate(
-            code_a_id=CodeId(value="1"),
-            code_a_name="Theme",
-            code_b_id=CodeId(value="2"),
-            code_b_name="Pattern",
-            similarity=SimilarityScore(value=0.9),
-            rationale="Similar concepts",
+            code_a_id=CodeId(value="1"), code_a_name="Theme",
+            code_b_id=CodeId(value="2"), code_b_name="Pattern",
+            similarity=SimilarityScore(value=0.9), rationale="Similar concepts",
             status="dismissed",
         )
         assert can_merge_be_approved(candidate_dismissed, lambda _: True) is False
 
-        # Code A missing
-        candidate_pending = DuplicateCandidate(
-            code_a_id=CodeId(value="1"),
-            code_a_name="Theme",
-            code_b_id=CodeId(value="2"),
-            code_b_name="Pattern",
-            similarity=SimilarityScore(value=0.9),
-            rationale="Similar concepts",
-            status="pending",
-        )
-        assert can_merge_be_approved(
-            candidate_pending, lambda cid: cid.value == "2"
-        ) is False
-
-        # Code B missing
-        assert can_merge_be_approved(
-            candidate_pending, lambda cid: cid.value == "1"
-        ) is False
+        # Cannot: code A or B missing
+        assert can_merge_be_approved(candidate, lambda cid: cid.value == "2") is False
+        assert can_merge_be_approved(candidate, lambda cid: cid.value == "1") is False
 
 
 @allure.story("QC-028.09 Agent Detect Duplicates")
 class TestIsDuplicatePairUnique:
     """Tests for is_duplicate_pair_unique invariant."""
 
-    @allure.title("Unique pairs are accepted including partially overlapping")
-    def test_unique_cases(self):
-        """Empty list, different pair, and partially overlapping pair are all unique."""
+    @allure.title("Unique pairs accepted; existing and reversed pairs rejected")
+    def test_unique_and_duplicate_pairs(self):
+        """Empty list, different pair, partial overlap are unique; exact/reversed are not."""
         from src.contexts.coding.core.ai_entities import (
             DuplicateCandidate,
             SimilarityScore,
@@ -428,65 +363,23 @@ class TestIsDuplicatePairUnique:
         from src.shared import CodeId
 
         # Any pair is unique with no existing candidates
-        assert (
-            is_duplicate_pair_unique(CodeId(value="1"), CodeId(value="2"), []) is True
-        )
+        assert is_duplicate_pair_unique(CodeId(value="1"), CodeId(value="2"), []) is True
 
         existing = [
             DuplicateCandidate(
-                code_a_id=CodeId(value="1"),
-                code_a_name="Theme",
-                code_b_id=CodeId(value="2"),
-                code_b_name="Pattern",
-                similarity=SimilarityScore(value=0.9),
-                rationale="Similar",
+                code_a_id=CodeId(value="1"), code_a_name="Theme",
+                code_b_id=CodeId(value="2"), code_b_name="Pattern",
+                similarity=SimilarityScore(value=0.9), rationale="Similar",
             )
         ]
 
-        # Different pair (3, 4) should be unique
-        assert (
-            is_duplicate_pair_unique(CodeId(value="3"), CodeId(value="4"), existing)
-            is True
-        )
+        # Different pair and partial overlap are unique
+        assert is_duplicate_pair_unique(CodeId(value="3"), CodeId(value="4"), existing) is True
+        assert is_duplicate_pair_unique(CodeId(value="1"), CodeId(value="3"), existing) is True
 
-        # Pair (1, 3) shares one code but is a different pair
-        assert (
-            is_duplicate_pair_unique(CodeId(value="1"), CodeId(value="3"), existing)
-            is True
-        )
-
-    @allure.title("Existing pair and reversed pair are detected as duplicates")
-    def test_duplicate_detection(self):
-        """Existing pair and reversed pair are both detected as duplicates."""
-        from src.contexts.coding.core.ai_entities import (
-            DuplicateCandidate,
-            SimilarityScore,
-        )
-        from src.contexts.coding.core.ai_invariants import is_duplicate_pair_unique
-        from src.shared import CodeId
-
-        existing = [
-            DuplicateCandidate(
-                code_a_id=CodeId(value="1"),
-                code_a_name="Theme",
-                code_b_id=CodeId(value="2"),
-                code_b_name="Pattern",
-                similarity=SimilarityScore(value=0.9),
-                rationale="Similar",
-            )
-        ]
-
-        # Exact pair
-        assert (
-            is_duplicate_pair_unique(CodeId(value="1"), CodeId(value="2"), existing)
-            is False
-        )
-
-        # Reverse order
-        assert (
-            is_duplicate_pair_unique(CodeId(value="2"), CodeId(value="1"), existing)
-            is False
-        )
+        # Exact pair and reversed pair are duplicates
+        assert is_duplicate_pair_unique(CodeId(value="1"), CodeId(value="2"), existing) is False
+        assert is_duplicate_pair_unique(CodeId(value="2"), CodeId(value="1"), existing) is False
 
 
 # ============================================================
@@ -498,7 +391,7 @@ class TestIsDuplicatePairUnique:
 class TestHasMinimumCodesForDetection:
     """Tests for has_minimum_codes_for_detection invariant."""
 
-    @allure.title("has_minimum_codes_for_detection checks code count against minimum")
+    @allure.title("Checks code count against minimum, custom minimum, and generators")
     @pytest.mark.parametrize("count, expected", [
         (0, False),
         (1, False),
@@ -517,10 +410,9 @@ class TestHasMinimumCodesForDetection:
             Code(id=CodeId(value=i), name=f"Code{i}", color=Color(i, i, i))
             for i in range(count)
         ]
-
         assert has_minimum_codes_for_detection(codes) is expected
 
-    @allure.title("has_minimum_codes_for_detection supports custom minimum and generators")
+    @allure.title("Custom minimum and generator support")
     def test_custom_minimum_and_generator(self):
         """Respects custom minimum parameter and works with generators."""
         from src.contexts.coding.core.ai_invariants import (
@@ -533,13 +425,9 @@ class TestHasMinimumCodesForDetection:
             Code(id=CodeId(value="1"), name="Theme", color=Color(255, 0, 0)),
             Code(id=CodeId(value="2"), name="Pattern", color=Color(0, 255, 0)),
         ]
-
-        # Default minimum (2) is satisfied
         assert has_minimum_codes_for_detection(codes, minimum=2) is True
-        # Higher minimum (3) is not satisfied
         assert has_minimum_codes_for_detection(codes, minimum=3) is False
 
-        # Generator should work without consuming entire iterable
         def code_generator():
             for i in range(5):
                 yield Code(id=CodeId(value=i), name=f"Code{i}", color=Color(i, i, i))
