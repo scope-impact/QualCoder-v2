@@ -77,8 +77,6 @@ def update_code_memo(
     if code:
         updated_code = code.with_memo(event.new_memo)
         code_repo.save(updated_code)
-    if session:
-        session.commit()
 
     event_bus.publish(event)
 

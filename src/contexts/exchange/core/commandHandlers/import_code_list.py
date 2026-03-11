@@ -22,6 +22,7 @@ from src.contexts.exchange.core.events import CodeListImported
 from src.contexts.exchange.core.failure_events import ImportFailed
 from src.contexts.exchange.infra.code_list_parser import parse_code_list
 from src.shared.common.operation_result import OperationResult
+from src.shared.infra.metrics import metered_command
 
 if TYPE_CHECKING:
     from src.contexts.coding.core.commandHandlers._state import (
@@ -35,6 +36,7 @@ if TYPE_CHECKING:
 logger = logging.getLogger("qualcoder.exchange.core")
 
 
+@metered_command("import_code_list")
 def import_code_list(
     command: ImportCodeListCommand,
     code_repo: CodeRepository,

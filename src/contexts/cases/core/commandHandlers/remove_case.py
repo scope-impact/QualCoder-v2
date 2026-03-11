@@ -57,8 +57,6 @@ def remove_case(
     if case_repo:
         case_repo.delete(case_id)
 
-    if session:
-        session.commit()
 
     event_bus.publish(event)
 

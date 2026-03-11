@@ -114,8 +114,6 @@ def apply_code(
         owner=event.owner,
     )
     segment_repo.save(segment)
-    if session:
-        session.commit()
 
     event_bus.publish(event)
 

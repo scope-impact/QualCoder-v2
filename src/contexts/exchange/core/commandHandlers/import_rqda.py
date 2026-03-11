@@ -23,6 +23,7 @@ from src.contexts.projects.core.events import SourceAdded
 from src.contexts.sources.core.entities import Source, SourceType
 from src.shared.common.operation_result import OperationResult
 from src.shared.common.types import CodeId, SegmentId, SourceId
+from src.shared.infra.metrics import metered_command
 
 if TYPE_CHECKING:
     from src.contexts.coding.core.commandHandlers._state import (
@@ -37,6 +38,7 @@ if TYPE_CHECKING:
 logger = logging.getLogger("qualcoder.exchange.core")
 
 
+@metered_command("import_rqda")
 def import_rqda(
     command: ImportRqdaCommand,
     source_repo: SourceRepository,
@@ -126,8 +128,7 @@ def import_rqda(
         rqda_id_to_source_name[rqda_source.id] = rqda_source.name
         sources_created += 1
 
-    if session:
-        session.commit()
+
 
     # 3. Create segments
     # Note: Direct persistence + event publishing (see import_refi_qda.py for rationale)
@@ -160,8 +161,7 @@ def import_rqda(
         )
         segments_created += 1
 
-    if session:
-        session.commit()
+
 
     # 4. Publish event
     event = RqdaImported.create(

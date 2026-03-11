@@ -19,6 +19,7 @@ from src.contexts.exchange.core.failure_events import ImportFailed
 from src.contexts.exchange.infra.csv_parser import parse_survey_csv
 from src.shared import CaseId
 from src.shared.common.operation_result import OperationResult
+from src.shared.infra.metrics import metered_command
 
 if TYPE_CHECKING:
     from src.contexts.cases.core.commandHandlers._state import CaseRepository
@@ -28,6 +29,7 @@ if TYPE_CHECKING:
 logger = logging.getLogger("qualcoder.exchange.core")
 
 
+@metered_command("import_survey_csv")
 def import_survey_csv(
     command: ImportSurveyCSVCommand,
     case_repo: CaseRepository,
@@ -88,9 +90,6 @@ def import_survey_csv(
         case_repo.save(case)
         event_bus.publish(CaseCreated.create(name=case_name, case_id=case.id))
         cases_created += 1
-
-    if session:
-        session.commit()
 
     event = SurveyCSVImported.create(
         source_path=command.source_path,

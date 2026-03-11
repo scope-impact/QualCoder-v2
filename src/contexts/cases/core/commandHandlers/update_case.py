@@ -71,8 +71,6 @@ def update_case(
     if case_repo:
         case_repo.save(updated_case)
 
-    if session:
-        session.commit()
 
     event_bus.publish(event)
 

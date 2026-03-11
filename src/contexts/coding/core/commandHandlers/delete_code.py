@@ -76,8 +76,6 @@ def delete_code(
     if command.delete_segments:
         segment_repo.delete_by_code(code_id)
     code_repo.delete(code_id)
-    if session:
-        session.commit()
 
     event_bus.publish(event)
 

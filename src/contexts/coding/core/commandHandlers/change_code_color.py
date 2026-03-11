@@ -92,8 +92,6 @@ def change_code_color(
     if code:
         updated_code = code.with_color(event.new_color)
         code_repo.save(updated_code)
-    if session:
-        session.commit()
 
     event_bus.publish(event)
 

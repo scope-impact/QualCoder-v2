@@ -29,6 +29,7 @@ from src.contexts.projects.core.events import SourceAdded
 from src.contexts.sources.core.entities import Source, SourceType
 from src.shared.common.operation_result import OperationResult
 from src.shared.common.types import CodeId, SegmentId, SourceId
+from src.shared.infra.metrics import metered_command
 
 if TYPE_CHECKING:
     from src.contexts.coding.core.commandHandlers._state import (
@@ -43,6 +44,7 @@ if TYPE_CHECKING:
 logger = logging.getLogger("qualcoder.exchange.core")
 
 
+@metered_command("import_refi_qda")
 def import_refi_qda(
     command: ImportRefiQdaCommand,
     source_repo: SourceRepository,
@@ -163,8 +165,7 @@ def import_refi_qda(
         guid_to_fulltext[parsed_source.guid] = parsed_source.fulltext
         sources_created += 1
 
-    if session:
-        session.commit()
+
 
     # 4. Create segments (codings)
     # Note: We persist directly rather than delegating to apply_code because
@@ -202,8 +203,7 @@ def import_refi_qda(
         )
         segments_created += 1
 
-    if session:
-        session.commit()
+
 
     # 5. Publish event
     event = RefiQdaImported.create(

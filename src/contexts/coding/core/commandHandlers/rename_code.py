@@ -79,8 +79,6 @@ def rename_code(
     if code:
         updated_code = code.with_name(event.new_name)
         code_repo.save(updated_code)
-    if session:
-        session.commit()
 
     event_bus.publish(event)
 

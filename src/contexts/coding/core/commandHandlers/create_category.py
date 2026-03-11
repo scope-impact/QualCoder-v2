@@ -86,8 +86,6 @@ def create_category(
         memo=event.memo,
     )
     category_repo.save(category)
-    if session:
-        session.commit()
 
     event_bus.publish(event)
 

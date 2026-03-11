@@ -80,8 +80,6 @@ def delete_category(
             updated_code = code.with_category(parent_id)
             code_repo.save(updated_code)
     category_repo.delete(category_id)
-    if session:
-        session.commit()
 
     event_bus.publish(event)
 

@@ -495,28 +495,21 @@ class FileManagerViewModel(QObject):
     ) -> None:
         """Async coroutine that imports files one at a time.
 
-        Heavy extraction runs in a thread pool via ``run_in_executor``.
-        After each ``await``, execution resumes on the main thread, so
-        persistence and signal emission are automatically thread-safe.
+        Delegates each file to the ``import_file_source`` command handler,
+        which handles validation, text extraction, persistence, and event
+        publishing.  An ``await asyncio.sleep(0)`` after each file yields
+        to the event loop so the UI stays responsive.
         """
-        from src.contexts.projects.core.entities import Source, SourceStatus, SourceType
-        from src.contexts.projects.core.events import SourceAdded
-        from src.contexts.projects.core.invariants import detect_source_type
+        from src.contexts.projects.core.commands import ImportFileSourceCommand
         from src.contexts.sources.core.commandHandlers.import_file_source import (
-            extract_text,
+            import_file_source,
         )
-        from src.shared.common.types import SourceId
 
-        loop = asyncio.get_running_loop()
         total = len(file_paths)
         imported = 0
         failed = 0
         imported_paths: list[str] = []
         batch_start = time.perf_counter()
-
-        # Snapshot existing names for uniqueness check
-        existing_names = frozenset(s.name.lower() for s in self._source_repo.get_all())
-        seen_names: set[str] = set()
 
         self._suppress_reloads += 1
         try:
@@ -529,63 +522,41 @@ class FileManagerViewModel(QObject):
                 file_start = time.perf_counter()
 
                 try:
-                    # --- Validate (main thread, fast) ---
-                    source_type = detect_source_type(file_path)
-                    if source_type == SourceType.UNKNOWN:
-                        raise ValueError(f"Unsupported file type: {file_path.suffix}")
-
-                    name = file_path.name
-                    if name.lower() in existing_names or name.lower() in seen_names:
-                        raise ValueError(f"Duplicate source name: {name}")
-
-                    file_size = file_path.stat().st_size
-
-                    # --- Extract text in thread pool (THE SLOW PART) ---
-                    fulltext = await loop.run_in_executor(
-                        None, extract_text, source_type, file_path
-                    )
-
-                    # --- Back on main thread: build entity, persist, publish ---
-                    source = Source(
-                        id=SourceId.new(),
-                        name=name,
-                        source_type=source_type,
-                        status=SourceStatus.IMPORTED,
-                        file_path=file_path,
-                        file_size=file_size,
+                    command = ImportFileSourceCommand(
+                        file_path=raw_path,
                         origin=origin,
                         memo=memo,
-                        fulltext=fulltext,
+                    )
+                    result = import_file_source(
+                        command=command,
+                        state=self._state,
+                        source_repo=self._source_repo,
+                        event_bus=self._event_bus,
+                        session=self._session,
                     )
 
-                    self._source_repo.save(source)
-                    if self._session:
-                        self._session.commit()
-
-                    event = SourceAdded.create(
-                        source_id=source.id,
-                        name=source.name,
-                        source_type=source.source_type,
-                        file_path=source.file_path,
-                        file_size=source.file_size,
-                        origin=source.origin,
-                        memo=source.memo,
-                        owner=None,
-                    )
-                    self._event_bus.publish(event)
-
-                    seen_names.add(name.lower())
-                    imported += 1
-                    imported_paths.append(raw_path)
-
-                    elapsed_ms = (time.perf_counter() - file_start) * 1000
-                    logger.info(
-                        "batch_import: [%d/%d] imported %s (%.1fms)",
-                        idx + 1,
-                        total,
-                        name,
-                        elapsed_ms,
-                    )
+                    if result.is_success:
+                        imported += 1
+                        imported_paths.append(raw_path)
+                        elapsed_ms = (time.perf_counter() - file_start) * 1000
+                        logger.info(
+                            "batch_import: [%d/%d] imported %s (%.1fms)",
+                            idx + 1,
+                            total,
+                            file_path.name,
+                            elapsed_ms,
+                        )
+                    else:
+                        failed += 1
+                        elapsed_ms = (time.perf_counter() - file_start) * 1000
+                        logger.warning(
+                            "batch_import: [%d/%d] failed %s: %s (%.1fms)",
+                            idx + 1,
+                            total,
+                            file_path.name,
+                            result.error,
+                            elapsed_ms,
+                        )
 
                 except Exception as exc:
                     failed += 1
@@ -600,6 +571,7 @@ class FileManagerViewModel(QObject):
                     )
 
                 self.batch_import_progress.emit(idx + 1, total, file_path.name)
+                await asyncio.sleep(0)  # Yield to event loop for UI responsiveness
 
         finally:
             self._suppress_reloads = max(0, self._suppress_reloads - 1)
@@ -703,7 +675,6 @@ class FileManagerViewModel(QObject):
             state=self._state,
             event_bus=self._event_bus,
             source_repo=self._source_repo,
-            session=self._session,
         )
 
         if result.is_success:

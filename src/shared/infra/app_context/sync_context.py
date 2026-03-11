@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import logging
 import socket
+import threading
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Any
 from urllib.parse import urlparse
@@ -37,7 +38,10 @@ class SyncContext:
         connection: Connection,
         backend_config: Any,
     ) -> SyncContext:
-        """Create a SyncContext, initializing Convex and SyncEngine if configured.
+        """Create a SyncContext, initializing SyncEngine if configured.
+
+        The Convex client connection is deferred to a background thread
+        so the main/UI thread is never blocked by network I/O.
 
         Args:
             connection: SQLAlchemy connection for SyncEngine
@@ -48,31 +52,45 @@ class SyncContext:
         if not backend_config.uses_convex:
             return ctx
 
-        # Check reachability BEFORE creating the client — the Convex Python
-        # client hangs indefinitely on mutation() when the server is down.
-        if not _is_convex_reachable(backend_config.convex_url):
+        from src.shared.infra.sync import SyncEngine
+
+        # Create SyncEngine in offline mode (no Convex client yet).
+        # It will queue outbound changes until the client is connected.
+        ctx.sync_engine = SyncEngine(connection, convex_client=None)
+        logger.info("SyncEngine created in offline mode (Convex check deferred)")
+
+        # Check reachability and connect in a background thread so the
+        # UI is never blocked by the up-to-2s TCP handshake timeout.
+        threading.Thread(
+            target=ctx._connect_convex_async,
+            args=(backend_config.convex_url,),
+            daemon=True,
+            name="ConvexReachabilityCheck",
+        ).start()
+
+        return ctx
+
+    def _connect_convex_async(self, convex_url: str) -> None:
+        """Background thread: check reachability and inject Convex client."""
+        if not _is_convex_reachable(convex_url):
             logger.warning(
                 "Convex server unreachable — cloud sync disabled this session"
             )
-            return ctx
+            return
 
         from src.shared.infra.convex import ConvexClientWrapper
 
         try:
-            ctx.convex_client = ConvexClientWrapper(backend_config.convex_url)
-            logger.info(
-                "Connected to Convex for cloud sync: %s", backend_config.convex_url
-            )
+            client = ConvexClientWrapper(convex_url)
+            logger.info("Connected to Convex for cloud sync: %s", convex_url)
         except Exception as e:
             logger.warning("Failed to connect to Convex (sync disabled): %s", e)
-            return ctx
+            return
 
-        from src.shared.infra.sync import SyncEngine
-
-        ctx.sync_engine = SyncEngine(connection, ctx.convex_client)
-        logger.info("SyncEngine created for SQLite-Convex cloud sync")
-
-        return ctx
+        self.convex_client = client
+        if self.sync_engine is not None:
+            self.sync_engine.set_convex_client(client)
+            logger.info("SyncEngine upgraded to online mode")
 
     def start(self) -> None:
         """Start the sync engine if available."""

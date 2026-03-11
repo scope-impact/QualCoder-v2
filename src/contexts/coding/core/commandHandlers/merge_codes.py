@@ -80,8 +80,6 @@ def merge_codes(
     # Reassign segments + delete source code, then commit via session
     segment_repo.reassign_code(source_code_id, target_code_id)
     code_repo.delete(source_code_id)
-    if session:
-        session.commit()
 
     event_bus.publish(event)
 

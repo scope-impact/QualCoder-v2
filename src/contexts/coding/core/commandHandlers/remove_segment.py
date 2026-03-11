@@ -73,8 +73,6 @@ def remove_segment(
 
     # Delete the segment
     segment_repo.delete(segment_id)
-    if session:
-        session.commit()
 
     event_bus.publish(event)
 

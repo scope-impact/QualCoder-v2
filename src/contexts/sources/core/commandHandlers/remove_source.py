@@ -90,8 +90,6 @@ def remove_source(
     if segment_repo:
         segment_repo.delete_by_source(source_id)
     source_repo.delete(source_id)
-    if session:
-        session.commit()
 
     event_bus.publish(event)
     logger.info("remove_source: removed source_id=%s", source_id)

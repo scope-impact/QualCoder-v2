@@ -101,8 +101,6 @@ def create_code(
         owner=event.owner,
     )
     code_repo.save(code)
-    if session:
-        session.commit()
 
     # Publish event
     event_bus.publish(event)

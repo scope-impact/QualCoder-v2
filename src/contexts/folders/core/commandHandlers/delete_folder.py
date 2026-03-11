@@ -84,8 +84,6 @@ def delete_folder(
     if folder_repo:
         folder_repo.delete(folder_id)
 
-    if session:
-        session.commit()
 
     # Publish event
     event_bus.publish(event)

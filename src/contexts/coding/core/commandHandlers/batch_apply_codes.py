@@ -140,8 +140,6 @@ def batch_apply_codes(
         else:
             failed += 1
 
-    if session:
-        session.commit()
 
     # Build aggregated result
     batch_result = BatchApplyCodesResult(

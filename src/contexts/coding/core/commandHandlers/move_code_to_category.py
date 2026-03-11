@@ -84,8 +84,6 @@ def move_code_to_category(
     if code:
         updated_code = code.with_category(event.new_category_id)
         code_repo.save(updated_code)
-    if session:
-        session.commit()
 
     event_bus.publish(event)
 

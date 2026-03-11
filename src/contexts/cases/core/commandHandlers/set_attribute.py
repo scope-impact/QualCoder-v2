@@ -74,8 +74,6 @@ def set_case_attribute(
         )
         case_repo.save_attribute(case_id, attr)
 
-    if session:
-        session.commit()
 
     event_bus.publish(event)
 
