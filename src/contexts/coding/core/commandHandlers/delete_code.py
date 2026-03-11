@@ -72,14 +72,10 @@ def delete_code(
 
     event: CodeDeleted = result
 
-    # Atomic: delete segments + code in one transaction
-    from src.shared.infra.unit_of_work import UnitOfWork
-
-    with UnitOfWork(code_repo._conn) as uow:
-        if command.delete_segments:
-            segment_repo.delete_by_code(code_id)
-        code_repo.delete(code_id)
-        uow.commit()
+    # Delete segments + code, then commit via session
+    if command.delete_segments:
+        segment_repo.delete_by_code(code_id)
+    code_repo.delete(code_id)
     if session:
         session.commit()
 

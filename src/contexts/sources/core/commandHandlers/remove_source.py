@@ -86,15 +86,10 @@ def remove_source(
 
     event: SourceRemoved = result
 
-    # Atomic: cascade delete segments + delete source in one transaction
-    from src.shared.infra.unit_of_work import UnitOfWork
-
-    with UnitOfWork(source_repo._conn) as uow:
-        if segment_repo:
-            segment_repo.delete_by_source(source_id)
-        source_repo.delete(source_id)
-        uow.commit()
-
+    # Cascade delete segments + delete source, then commit via session
+    if segment_repo:
+        segment_repo.delete_by_source(source_id)
+    source_repo.delete(source_id)
     if session:
         session.commit()
 

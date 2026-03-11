@@ -77,13 +77,9 @@ def merge_codes(
 
     event: CodesMerged = result
 
-    # Atomic: reassign segments + delete source code in one transaction
-    from src.shared.infra.unit_of_work import UnitOfWork
-
-    with UnitOfWork(code_repo._conn) as uow:
-        segment_repo.reassign_code(source_code_id, target_code_id)
-        code_repo.delete(source_code_id)
-        uow.commit()
+    # Reassign segments + delete source code, then commit via session
+    segment_repo.reassign_code(source_code_id, target_code_id)
+    code_repo.delete(source_code_id)
     if session:
         session.commit()
 

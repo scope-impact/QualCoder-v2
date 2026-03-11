@@ -72,18 +72,14 @@ def delete_category(
 
     event: CategoryDeleted = result
 
-    # Atomic: handle orphaned codes + delete category in one transaction
-    from src.shared.infra.unit_of_work import UnitOfWork
-
-    with UnitOfWork(category_repo._conn) as uow:
-        if command.orphan_strategy == "move_to_parent":
-            category = category_repo.get_by_id(category_id)
-            parent_id = category.parent_id if category else None
-            for code in code_repo.get_by_category(category_id):
-                updated_code = code.with_category(parent_id)
-                code_repo.save(updated_code)
-        category_repo.delete(category_id)
-        uow.commit()
+    # Handle orphaned codes + delete category, then commit via session
+    if command.orphan_strategy == "move_to_parent":
+        category = category_repo.get_by_id(category_id)
+        parent_id = category.parent_id if category else None
+        for code in code_repo.get_by_category(category_id):
+            updated_code = code.with_category(parent_id)
+            code_repo.save(updated_code)
+    category_repo.delete(category_id)
     if session:
         session.commit()
 
