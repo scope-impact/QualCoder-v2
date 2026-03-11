@@ -4,7 +4,7 @@ Welcome to the QualCoder v2 architecture tutorial! This hands-on guide teaches y
 
 ## Prerequisites
 
-- Python 3.10+ familiarity
+- Python 3.11+ familiarity
 - Basic understanding of classes and dataclasses
 - No prior DDD or functional programming experience required
 
@@ -59,7 +59,8 @@ graph LR
         D --> E[Events]
     end
 
-    subgraph App ["Application"]
+    subgraph App ["Shared Infrastructure"]
+        CH[Command Handlers]
         EB[EventBus]
         SB[SignalBridge]
     end
@@ -68,7 +69,7 @@ graph LR
         W[Qt Widgets]
     end
 
-    E --> EB --> SB --> W
+    E --> CH --> EB --> SB --> W
 ```
 
 ## Key Files Reference
@@ -77,27 +78,31 @@ As you work through the tutorial, you'll reference these files:
 
 ```
 src/contexts/coding/core/
-├── invariants.py     # Pure validation functions
-├── derivers.py       # Event derivation logic
-├── events.py         # Domain event definitions
-├── failure_events.py # Failure event types
-├── entities.py       # Code, Category, Segment entities
+├── invariants.py         # Pure validation functions
+├── derivers.py           # Event derivation logic
+├── events.py             # Domain event definitions
+├── failure_events.py     # Failure event types
+├── entities.py           # Code, Category, Segment entities
+├── commandHandlers/      # Use cases (orchestrate deriver + persist + publish)
 └── tests/
     ├── test_invariants.py
     └── test_derivers.py
 
+src/contexts/coding/interface/
+└── signal_bridge.py      # CodingSignalBridge (context-specific)
+
 src/shared/common/
-├── types.py          # DomainEvent base, typed IDs
-└── operation_result.py # Success/Failure result pattern
+├── types.py              # DomainEvent base, typed IDs
+└── operation_result.py   # Success/Failure result pattern
 
 src/shared/core/
-└── validation.py     # Shared validation helpers
+└── validation.py         # Shared validation helpers
 
 src/shared/infra/
-├── event_bus.py      # Pub/sub for domain events
+├── event_bus.py          # Pub/sub for domain events
 └── signal_bridge/
-    ├── base.py       # BaseSignalBridge
-    └── payloads.py   # UI-friendly DTOs
+    ├── base.py           # BaseSignalBridge
+    └── payloads.py       # UI-friendly DTOs
 ```
 
 ## After the Tutorial

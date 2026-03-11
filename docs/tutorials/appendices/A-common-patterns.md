@@ -155,7 +155,7 @@ flowchart LR
         E3[CodeMovedToCategory]
     end
 
-    subgraph Controller
+    subgraph CommandHandler ["Command Handler"]
         C[Publish each event]
     end
 
@@ -215,19 +215,20 @@ def derive_delete_category_cascade(
     )
 ```
 
-### Controller Publishes All
+### Command Handler Publishes All
 
 ```python
-def delete_category(self, category_id, strategy):
-    result = derive_delete_category_cascade(category_id, strategy, state)
+# src/contexts/coding/core/commandHandlers/delete_category.py
+def delete_category(command, category_repo, code_repo, event_bus):
+    result = derive_delete_category_cascade(command.category_id, command.strategy, state)
 
     if isinstance(result, CategoryNotDeleted):
         return result
 
     # Publish each event
-    self._event_bus.publish(result.category_deleted)
+    event_bus.publish(result.category_deleted)
     for move_event in result.codes_moved:
-        self._event_bus.publish(move_event)
+        event_bus.publish(move_event)
 
     return result
 ```
@@ -240,11 +241,11 @@ Update the UI immediately, then confirm with server/domain.
 sequenceDiagram
     participant U as User
     participant UI as TreeView
-    participant C as Controller
+    participant C as Command Handler
 
     U->>UI: Rename to "New Name"
     UI->>UI: 1. Show "New Name" immediately
-    UI->>C: rename_code(id, "New Name")
+    UI->>C: rename_code(command, repo, event_bus)
 
     alt Success
         C-->>UI: CodeRenamed event
@@ -270,8 +271,8 @@ class CodebookTreeView:
         old_name = item.text()
         item.setText(new_name)
 
-        # 2. Send to controller (might be async)
-        result = self.controller.rename_code(code_id, new_name)
+        # 2. Send to command handler (might be async)
+        result = rename_code(RenameCodeCommand(code_id, new_name), repo, event_bus)
 
         # 3. Rollback if failed
         if isinstance(result, CodeNotRenamed):

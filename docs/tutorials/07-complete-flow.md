@@ -16,8 +16,8 @@ flowchart TB
         ActivityPanel[ActivityPanel]
     end
 
-    subgraph Controller ["Controller (Application)"]
-        Ctrl[CodingController.create_code]
+    subgraph Handler ["Command Handler (commandHandlers/)"]
+        CH[create_code handler]
         BuildState["Build CodingState from repos"]
         Persist["repo.save_from_event()"]
         Publish["event_bus.publish()"]
@@ -43,8 +43,8 @@ flowchart TB
     end
 
     UA --> Dialog
-    Dialog --> Ctrl
-    Ctrl --> BuildState
+    Dialog --> CH
+    CH --> BuildState
     BuildState --> Deriver
 
     Deriver --> Inv1
@@ -72,7 +72,7 @@ flowchart TB
 | Layer | Responsibility | Pure? | Side Effects |
 |-------|---------------|-------|--------------|
 | Presentation | User input, rendering | No | UI events |
-| Controller | Orchestration | No | Read/write repos, publish |
+| Command Handler | Orchestration | No | Read/write repos, publish |
 | Domain | Business logic | **Yes** | None |
 | EventBus | Message routing | No | Handler invocation |
 | SignalBridge | Event→Signal conversion | No | Thread marshaling |
@@ -86,13 +86,17 @@ src/contexts/coding/core/
 ├── derivers.py            # derive_create_code()
 ├── events.py              # CodeCreated (with priority)
 ├── failure_events.py      # CodeNotCreated, CodeNotDeleted, etc.
-└── entities.py            # Code entity
+├── entities.py            # Code entity
+└── commandHandlers/       # Use cases (create_code, etc.)
 
-src/contexts/shared/core/
+src/contexts/coding/interface/
+└── signal_bridge.py       # CodingSignalBridge (context-specific)
+
+src/shared/common/
 ├── types.py               # DomainEvent, typed IDs
 └── failure_events.py      # FailureEvent base class
 
-src/application/
+src/shared/infra/
 ├── event_bus.py           # EventBus
 └── signal_bridge/
     ├── base.py            # BaseSignalBridge
@@ -106,7 +110,7 @@ sequenceDiagram
     autonumber
     participant U as User
     participant D as Dialog
-    participant C as Controller
+    participant C as Command Handler
     participant R as Repository
     participant DV as Deriver
     participant EB as EventBus
@@ -115,7 +119,7 @@ sequenceDiagram
     participant AP as ActivityPanel
 
     U->>D: Click "Create Code"
-    D->>C: create_code(name, color, priority)
+    D->>C: create_code(command, code_repo, event_bus)
 
     Note over C: Build state from repositories
     C->>R: get_all_codes()
@@ -170,7 +174,7 @@ graph TB
         DER_PROPS["✓ Data fixtures<br/>✓ No database<br/>✓ Fast"]
     end
 
-    subgraph CONV ["Converters (src/application/signal_bridge/tests/test_payloads.py)"]
+    subgraph CONV ["Converters (src/contexts/coding/interface/tests/)"]
         CONV_TEST["def test_converter_includes_priority():<br/>    event = CodeCreated(..., priority=3)<br/>    payload = converter.convert(event)<br/>    assert payload.priority == 3"]
         CONV_PROPS["✓ Pure transformation<br/>✓ No Qt required"]
     end
@@ -237,7 +241,7 @@ flowchart LR
    - [ ] Add field to event dataclass
    - [ ] Add to `create()` factory method
 
-5. **Payload** (`src/application/signal_bridge/payloads.py`)
+5. **Payload** (`src/shared/infra/signal_bridge/payloads.py`)
    - [ ] Add field to payload dataclass
 
 6. **Converter** (context-specific)

@@ -69,7 +69,7 @@ except DuplicateNameError:
 
 ## The Failure Events Solution
 
-QualCoder v2 uses **failure events** - domain events that represent failed operations. These are defined in `src/contexts/{context}/core/failure_events.py`:
+QualCoder v2 uses **failure events** - domain events that represent failed operations. These are defined in `src/contexts/coding/core/failure_events.py`:
 
 ```python
 @dataclass(frozen=True)
@@ -105,7 +105,7 @@ def derive_create_code(...) -> CodeCreated | CodeNotCreated:
 
 The return type tells you: "You'll get a `CodeCreated` success event OR a `CodeNotCreated` failure event."
 
-> **Note:** The codebase also re-exports the [`returns`](https://returns.readthedocs.io/) library's `Success`/`Failure` types from `src/contexts/shared/core/types.py` for use in other scenarios.
+> **Note:** The codebase also provides the `OperationResult` pattern from `src/shared/common/operation_result.py` for use in command handlers.
 
 ## Benefits
 
@@ -201,7 +201,7 @@ def create_and_apply(name, color, source_id, position, state):
     return segment_result  # Could be SegmentCoded or SegmentNotCoded
 ```
 
-> **Note:** The `returns` library (`Success`/`Failure`/`Result`) is also available from `src/contexts/shared/core/types.py` for scenarios where you need monadic composition.
+> **Note:** The `OperationResult` pattern from `src/shared/common/operation_result.py` is also available for command handlers that need to wrap success/failure outcomes.
 
 ## Failure Events in QualCoder
 

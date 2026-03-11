@@ -56,6 +56,7 @@ graph TB
 | **Projects** | Project lifecycle management |
 | **Settings** | User preferences (theme, font, language) |
 | **Folders** | Organize sources in folders |
+| **Exchange** | Import/export and data interchange (RQDA, roundtrip) |
 
 ## Quick Start
 
@@ -76,11 +77,11 @@ graph TB
 | Layer | Technology |
 |-------|------------|
 | UI | PySide6 (Qt 6) |
-| Database | SQLite |
-| Vector Store | ChromaDB |
+| Database | SQLite (local), Convex (cloud sync) |
 | AI | OpenAI / Anthropic / Ollama |
 | Icons | qtawesome (mdi6) |
 | Charts | pyqtgraph |
+| Observability | OpenTelemetry |
 
 ## Building the Docs
 

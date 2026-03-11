@@ -264,16 +264,19 @@ src/contexts/coding/core/tests/
 ├── test_invariants.py    # Pure predicate tests
 └── test_derivers.py      # Event derivation tests
 
-src/application/tests/
-├── test_event_bus.py     # Pub/sub tests
-└── test_converters.py    # Payload conversion tests
+src/contexts/coding/infra/tests/
+└── test_repositories.py  # Repository tests
 
-src/application/signal_bridge/tests/
-├── test_base.py          # SignalBridge tests
-└── test_payloads.py      # Payload tests
+src/contexts/coding/interface/tests/
+└── test_signal_bridge.py # SignalBridge converter tests
+
+src/tests/e2e/
+├── test_main_e2e.py      # App startup & project lifecycle
+├── test_file_manager_e2e.py
+└── test_ai_code_suggestions_e2e.py
 ```
 
-Each layer tested in isolation.
+Each layer tested in isolation. Domain tests (invariants, derivers) need no database or UI. E2E tests in `src/tests/e2e/` exercise full flows with Allure reporting.
 
 ## Running Tests
 
