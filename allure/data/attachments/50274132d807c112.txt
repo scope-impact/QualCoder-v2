@@ -1,0 +1,4 @@
+ERROR    qualcoder.sources.core:import_file_source.py:152 import_file_source: unsupported file type=.xyz
+ERROR    qualcoder.sources.core:import_file_source.py:170 import_file_source: duplicate source name=interview.txt
+ERROR    qualcoder.projects.core:auto_commit.py:61 auto_commit: skipped reason=NOT_INITIALIZED
+ERROR    src.contexts.projects.infra.version_control_listener:version_control_listener.py:163 VCS auto-commit failed: Version control not initialized [AUTO_COMMIT_SKIPPED/NOT_INITIALIZED]

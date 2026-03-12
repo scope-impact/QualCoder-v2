@@ -1,0 +1,1 @@
+ERROR    qualcoder.folders.core:move_source.py:64 move_source_to_folder: no project is currently open

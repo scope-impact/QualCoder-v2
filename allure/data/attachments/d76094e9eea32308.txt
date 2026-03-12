@@ -1,0 +1,2 @@
+ERROR    qualcoder.sources.core:import_file_source.py:170 import_file_source: duplicate source name=doc_000.txt
+WARNING  qualcoder.sources.viewmodel:file_manager_viewmodel.py:552 batch_import: [1/10] failed doc_000.txt: Source with name 'doc_000.txt' already exists (0.5ms)

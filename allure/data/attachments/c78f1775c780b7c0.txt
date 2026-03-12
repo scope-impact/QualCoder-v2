@@ -1,0 +1,1 @@
+ERROR    qualcoder.folders.core:delete_folder.py:60 delete_folder: no project is currently open
