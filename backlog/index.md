@@ -6,8 +6,6 @@ Project backlog containing tasks, architecture decisions, and planning documents
 
 - **[Tasks](tasks/)** — Feature specifications and implementation tasks
 - **[Decisions](decisions/)** — Architecture Decision Records (ADRs)
-- **[Backlog Restructure](BACKLOG_RESTRUCTURE.md)** — Backlog organization and structure
-- **[Dependency Analysis](DEPENDENCY_ANALYSIS.md)** — Task dependency mapping
 
 ## Tasks Overview
 

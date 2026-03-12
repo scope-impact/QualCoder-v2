@@ -167,12 +167,6 @@ nav:
           - backlog/tasks/qc-045 - Complete-Coding-Context.md
           - backlog/tasks/qc-046 - Remove-premature-v1→v2-migration-code.md
 
-  - AI Plans (Historical):
-      - ai/README.md
-
-  - Archive (Historical):
-      - archive/README.md
-
   - Test Reports:
       - test-reports/index.md
 

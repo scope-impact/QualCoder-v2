@@ -191,7 +191,7 @@ This is thread-safe because SQLite WAL mode allows concurrent readers while the 
 
 ## Implementation Plan
 
-See [`docs/ai/SYNC_ENGINE_REFACTOR_PLAN.md`](../ai/SYNC_ENGINE_REFACTOR_PLAN.md) for the full phased plan.
+Implementation plan has been completed and the planning document archived.
 
 **Summary of phases:**
 
@@ -227,4 +227,3 @@ See [`docs/ai/SYNC_ENGINE_REFACTOR_PLAN.md`](../ai/SYNC_ENGINE_REFACTOR_PLAN.md)
 - [Hybrid Logical Clocks — Martin Fowler](https://martinfowler.com/articles/patterns-of-distributed-systems/hybrid-clock.html)
 - [SQLite WAL Mode](https://sqlite.org/wal.html)
 - [Offline sync & conflict resolution patterns](https://www.sachith.co.uk/offline-sync-conflict-resolution-patterns-architecture-trade%E2%80%91offs-practical-guide-feb-19-2026/)
-- Research session: `docs/ai/SYNC_ENGINE_RESEARCH.md`

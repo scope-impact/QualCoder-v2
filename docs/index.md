@@ -43,8 +43,6 @@ graph TB
 | [Tutorials](tutorials/README.md) | Hands-on fDDD onboarding through a practical example |
 | [Design System](api/index.md) | 180+ PySide6 components, tokens, and patterns |
 | [Design Documents](design/) | Detailed specs (Functional DDD, Agent Context) |
-| [AI Plans](ai/) | AI-generated planning documents (historical reference) |
-| [Archive](archive/) | Historical planning documents |
 
 ## Bounded Contexts
 

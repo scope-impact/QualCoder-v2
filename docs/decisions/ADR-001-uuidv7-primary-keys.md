@@ -109,7 +109,7 @@ UUIDv7's time-ordering means SQLite B-tree indexes for the `id` column remain ap
 
 ## Implementation Plan
 
-See [`docs/ai/UUIDV7_MIGRATION_PLAN.md`](../ai/UUIDV7_MIGRATION_PLAN.md) for the full phased implementation plan.
+Implementation plan has been completed and the planning document archived.
 
 **Summary of phases:**
 
@@ -133,4 +133,3 @@ See [`docs/ai/UUIDV7_MIGRATION_PLAN.md`](../ai/UUIDV7_MIGRATION_PLAN.md) for the
 - [uuid-utils Python library](https://pypi.org/project/uuid-utils/)
 - [PowerSync Sequential ID Mapping](https://docs.powersync.com/tutorials/client/data/sequential-id-mapping) — the problem we are solving by not needing this
 - [The Two ID Problem — Dan Lew](https://blog.danlew.net/2017/03/09/the-two-id-problem/) — the root cause
-- Research session that led to this decision: `docs/ai/SYNC_ENGINE_RESEARCH.md`
