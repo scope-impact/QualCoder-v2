@@ -52,7 +52,7 @@ def mock_cases_context(mock_case_repo: MagicMock) -> MagicMock:
     return context
 
 
-@allure.epic("Shared")
+@allure.epic("QualCoder v2")
 @allure.feature("Shared Core")
 @allure.story("QC-000.06 Source Sync")
 class TestSourceSyncHandlerLifecycle:
@@ -91,7 +91,7 @@ class TestSourceSyncHandlerLifecycle:
         assert handler._cases_context is mock_cases_context
 
 
-@allure.epic("Shared")
+@allure.epic("QualCoder v2")
 @allure.feature("Shared Core")
 @allure.story("QC-000.06 Source Sync")
 class TestSourceRenamedHandling:
@@ -154,7 +154,7 @@ class TestSourceRenamedHandling:
         handler3.stop()
 
 
-@allure.epic("Shared")
+@allure.epic("QualCoder v2")
 @allure.feature("Shared Core")
 @allure.story("QC-000.06 Source Sync")
 class TestSourceRemovedAndStoppedHandling:

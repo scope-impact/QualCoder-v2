@@ -41,7 +41,7 @@ if TYPE_CHECKING:
 pytestmark = [
     pytest.mark.unit,
     allure.epic("QualCoder v2"),
-    allure.feature("Cases MCP Tools"),
+    allure.feature("QC-034 Manage Cases"),
 ]
 
 

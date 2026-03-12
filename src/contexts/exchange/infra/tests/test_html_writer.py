@@ -15,8 +15,8 @@ from src.shared.common.types import CodeId, SegmentId, SourceId
 pytestmark = [pytest.mark.unit]
 
 
-@allure.epic("QC-036 Exchange")
-@allure.feature("QC-036 Exchange")
+@allure.epic("QualCoder v2")
+@allure.feature("QC-039 Import Export Formats")
 @allure.story("QC-036.08 Export HTML")
 class TestHTMLWriter:
     """Tests for coded text HTML writer."""

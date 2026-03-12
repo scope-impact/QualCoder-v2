@@ -16,7 +16,7 @@ from PySide6.QtWidgets import QApplication, QPushButton
 pytestmark = pytest.mark.e2e
 
 
-@allure.epic("Shared Presentation")
+@allure.epic("QualCoder v2")
 @allure.feature("Shared Presentation")
 @allure.story("QC-000.11 App Shell")
 class TestAppShellSettingsButton:

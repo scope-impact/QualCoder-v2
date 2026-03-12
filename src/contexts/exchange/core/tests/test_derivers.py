@@ -15,8 +15,8 @@ from src.shared.common.types import CategoryId, CodeId
 pytestmark = [pytest.mark.unit]
 
 
-@allure.epic("QC-036 Exchange")
-@allure.feature("QC-036 Exchange")
+@allure.epic("QualCoder v2")
+@allure.feature("QC-039 Import Export Formats")
 @allure.story("QC-036.07 Export Derivers")
 class TestDeriveExportCodebook:
     """Tests for the codebook export deriver."""

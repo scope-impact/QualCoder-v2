@@ -13,7 +13,7 @@ from src.shared.infra.signal_bridge.thread_utils import (
 )
 
 
-@allure.epic("Shared Infrastructure")
+@allure.epic("QualCoder v2")
 @allure.feature("Shared Infrastructure")
 @allure.story("QC-000.08 Signal Bridge")
 class TestIsMainThread:
@@ -52,7 +52,7 @@ class TestIsMainThread:
         assert len(get_current_thread_name()) > 0
 
 
-@allure.epic("Shared Infrastructure")
+@allure.epic("QualCoder v2")
 @allure.feature("Shared Infrastructure")
 @allure.story("QC-000.08 Signal Bridge")
 class TestThreadChecker:

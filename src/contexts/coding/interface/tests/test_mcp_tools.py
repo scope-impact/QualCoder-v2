@@ -37,7 +37,7 @@ from src.shared.common.types import CategoryId, CodeId, SegmentId, SourceId
 pytestmark = [
     pytest.mark.unit,
     allure.epic("QualCoder v2"),
-    allure.feature("Coding MCP Tools"),
+    allure.feature("QC-028 Code Management"),
 ]
 
 

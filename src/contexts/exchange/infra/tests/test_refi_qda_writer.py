@@ -19,8 +19,8 @@ from src.shared.common.types import CodeId, SegmentId, SourceId
 pytestmark = [pytest.mark.unit]
 
 
-@allure.epic("QC-036 Exchange")
-@allure.feature("QC-036 Exchange")
+@allure.epic("QualCoder v2")
+@allure.feature("QC-039 Import Export Formats")
 @allure.story("QC-036.02 Export REFI-QDA")
 class TestRefiQdaWriter:
     """Tests for REFI-QDA .qdpx writer."""

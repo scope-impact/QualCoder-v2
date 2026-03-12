@@ -29,7 +29,7 @@ from src.contexts.settings.core.failure_events import SettingsNotChanged
 pytestmark = [
     pytest.mark.unit,
     allure.epic("QualCoder v2"),
-    allure.feature("QC-035 Settings"),
+    allure.feature("QC-038 Settings and Preferences"),
 ]
 
 

@@ -56,7 +56,7 @@ LONG_TEXT = "I feel so frustrated with the deadline at work. " * 5
 # ============================================================
 
 
-@allure.epic("QC-028 Code Management")
+@allure.epic("QualCoder v2")
 @allure.feature("QC-028 Code Management")
 @allure.story("QC-028.08 Agent Suggest New Codes")
 class TestMockCodeAnalyzer:
@@ -100,7 +100,7 @@ class TestMockCodeAnalyzer:
 # ============================================================
 
 
-@allure.epic("QC-028 Code Management")
+@allure.epic("QualCoder v2")
 @allure.feature("QC-028 Code Management")
 @allure.story("QC-028.08 Agent Suggest New Codes")
 class TestLLMCodeAnalyzer:

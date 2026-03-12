@@ -12,7 +12,7 @@ from src.shared.common.types import SourceId
 from src.shared.infra.state import ProjectState
 
 
-@allure.epic("Shared Infrastructure")
+@allure.epic("QualCoder v2")
 @allure.feature("Shared Infrastructure")
 @allure.story("QC-000.07 Application State")
 class TestProjectStateDefaults:
@@ -46,7 +46,7 @@ class TestProjectStateDefaults:
         assert len(state.recent_projects) == 1
 
 
-@allure.epic("Shared Infrastructure")
+@allure.epic("QualCoder v2")
 @allure.feature("Shared Infrastructure")
 @allure.story("QC-000.07 Application State")
 class TestProjectStateRecentProjects:

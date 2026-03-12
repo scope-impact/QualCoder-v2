@@ -12,8 +12,8 @@ import pytest
 pytestmark = [pytest.mark.unit]
 
 
-@allure.epic("QC-036 Exchange")
-@allure.feature("QC-036 Exchange")
+@allure.epic("QualCoder v2")
+@allure.feature("QC-039 Import Export Formats")
 @allure.story("QC-036.05 Import Survey CSV")
 class TestCsvParser:
     """Tests for survey CSV parser."""

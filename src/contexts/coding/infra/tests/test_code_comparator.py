@@ -47,7 +47,7 @@ def comparator() -> VectorCodeComparator:
 # ============================================================
 
 
-@allure.epic("QC-028 Code Management")
+@allure.epic("QualCoder v2")
 @allure.feature("QC-028 Code Management")
 @allure.story("QC-028.09 Agent Detect Duplicates")
 class TestVectorCodeComparator:
@@ -110,7 +110,7 @@ class TestVectorCodeComparator:
 # ============================================================
 
 
-@allure.epic("QC-028 Code Management")
+@allure.epic("QualCoder v2")
 @allure.feature("QC-028 Code Management")
 @allure.story("QC-028.09 Agent Detect Duplicates")
 class TestMockCodeComparator:

@@ -13,7 +13,7 @@ import pytest
 pytestmark = [
     pytest.mark.unit,
     allure.epic("QualCoder v2"),
-    allure.feature("QC-030 Case Management"),
+    allure.feature("QC-034 Manage Cases"),
 ]
 
 

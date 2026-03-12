@@ -48,8 +48,8 @@ def _create_rqda_db(path):
     return conn
 
 
-@allure.epic("QC-036 Exchange")
-@allure.feature("QC-036 Exchange")
+@allure.epic("QualCoder v2")
+@allure.feature("QC-039 Import Export Formats")
 @allure.story("QC-036.03 Import RQDA")
 class TestRqdaReader:
 

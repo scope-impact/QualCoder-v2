@@ -79,7 +79,7 @@ class MockSignal:
         return self
 
 
-@allure.epic("Shared Infrastructure")
+@allure.epic("QualCoder v2")
 @allure.feature("Shared Infrastructure")
 @allure.story("QC-000.08 Signal Bridge")
 class TestBaseSignalBridgeSingleton:
@@ -125,7 +125,7 @@ class TestBaseSignalBridgeSingleton:
         assert bridge2.is_running() is False
 
 
-@allure.epic("Shared Infrastructure")
+@allure.epic("QualCoder v2")
 @allure.feature("Shared Infrastructure")
 @allure.story("QC-000.08 Signal Bridge")
 class TestBaseSignalBridgeDispatch:

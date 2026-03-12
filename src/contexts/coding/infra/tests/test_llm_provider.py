@@ -18,7 +18,7 @@ from src.contexts.coding.infra.llm_provider import (
 )
 
 
-@allure.epic("Coding")
+@allure.epic("QualCoder v2")
 @allure.feature("QC-028 Code Management")
 @allure.story("QC-028.08 Agent Suggest New Codes")
 class TestMockLLMProvider:
@@ -56,7 +56,7 @@ class TestMockLLMProvider:
         assert len(provider.prompts) == 0
 
 
-@allure.epic("Coding")
+@allure.epic("QualCoder v2")
 @allure.feature("QC-028 Code Management")
 @allure.story("QC-028.08 Agent Suggest New Codes")
 class TestLLMConfigAndFactory:
@@ -99,7 +99,7 @@ class TestLLMConfigAndFactory:
             create_llm_provider(config)
 
 
-@allure.epic("Coding")
+@allure.epic("QualCoder v2")
 @allure.feature("QC-028 Code Management")
 @allure.story("QC-028.08 Agent Suggest New Codes")
 class TestOpenAICompatibleLLMProvider:

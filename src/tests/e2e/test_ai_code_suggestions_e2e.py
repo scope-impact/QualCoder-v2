@@ -24,7 +24,7 @@ if TYPE_CHECKING:
 pytestmark = [
     pytest.mark.e2e,
     allure.epic("QualCoder v2"),
-    allure.feature("QC-028 Code Management - AI Features"),
+    allure.feature("QC-028 Code Management"),
 ]
 
 

@@ -49,7 +49,7 @@ def repos(session):
     }
 
 
-@allure.epic("Shared Infrastructure")
+@allure.epic("QualCoder v2")
 @allure.feature("Shared Infrastructure")
 @allure.story("QC-000.09 Session Management")
 class TestCommandHandlerWithSession:

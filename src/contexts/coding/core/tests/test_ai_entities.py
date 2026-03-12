@@ -21,7 +21,7 @@ from src.contexts.coding.core.entities import Color, TextPosition
 from src.shared.common.types import CodeId, SourceId
 
 
-@allure.epic("Coding")
+@allure.epic("QualCoder v2")
 @allure.feature("QC-028 Code Management")
 @allure.story("QC-028.08 Agent Suggest New Codes")
 class TestValueObjects:
@@ -76,7 +76,7 @@ class TestValueObjects:
         assert id1.value.startswith("sug_")
 
 
-@allure.epic("Coding")
+@allure.epic("QualCoder v2")
 @allure.feature("QC-028 Code Management")
 @allure.story("QC-028.08 Agent Suggest New Codes")
 class TestCodeSuggestion:
@@ -130,7 +130,7 @@ class TestCodeSuggestion:
         assert renamed.name == "New Name"
 
 
-@allure.epic("Coding")
+@allure.epic("QualCoder v2")
 @allure.feature("QC-028 Code Management")
 @allure.story("QC-028.08 Agent Suggest New Codes")
 class TestAggregateEntities:

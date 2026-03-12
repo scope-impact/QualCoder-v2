@@ -26,7 +26,7 @@ from src.shared.common.types import (
 )
 
 
-@allure.epic("Shared")
+@allure.epic("QualCoder v2")
 @allure.feature("Shared Common")
 @allure.story("QC-000.04 Domain Types")
 class TestTypedIdentifiers:
@@ -50,7 +50,7 @@ class TestTypedIdentifiers:
         assert d[id2] == "test"
 
 
-@allure.epic("Shared")
+@allure.epic("QualCoder v2")
 @allure.feature("Shared Common")
 @allure.story("QC-000.04 Domain Types")
 class TestFailureReasons:
@@ -74,7 +74,7 @@ class TestFailureReasons:
         assert check_fn(failure), f"Message check failed for {reason_type}: {failure.message}"
 
 
-@allure.epic("Shared")
+@allure.epic("QualCoder v2")
 @allure.feature("Shared Common")
 @allure.story("QC-000.04 Domain Types")
 class TestDomainEvent:

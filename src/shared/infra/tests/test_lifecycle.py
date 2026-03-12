@@ -15,7 +15,7 @@ from returns.result import Failure, Success
 from src.shared.infra.lifecycle import ProjectLifecycle
 
 
-@allure.epic("Shared")
+@allure.epic("QualCoder v2")
 @allure.feature("Shared Infrastructure")
 @allure.story("QC-000.05 Application Lifecycle")
 class TestProjectLifecycleOpenClose:

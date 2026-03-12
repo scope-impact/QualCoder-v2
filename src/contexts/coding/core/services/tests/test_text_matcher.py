@@ -19,7 +19,7 @@ from src.contexts.coding.core.services.text_matcher import (
 pytestmark = [
     pytest.mark.unit,
     allure.epic("QualCoder v2"),
-    allure.feature("QC-029 Text Coding"),
+    allure.feature("QC-029 Apply Codes to Text"),
 ]
 
 

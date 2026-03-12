@@ -27,7 +27,7 @@ from src.contexts.settings.infra import UserSettingsRepository
 pytestmark = [
     pytest.mark.unit,
     allure.epic("QualCoder v2"),
-    allure.feature("QC-035 Settings"),
+    allure.feature("QC-038 Settings and Preferences"),
 ]
 
 

@@ -204,8 +204,8 @@ def sample_segment() -> TextSegment:
 # ============================================================
 
 
-@allure.epic("Coding")
-@allure.feature("Command Handlers")
+@allure.epic("QualCoder v2")
+@allure.feature("QC-028 Code Management")
 @allure.story("Delete Category")
 class TestDeleteCategoryHandler:
     """Tests for the delete_category command handler."""
@@ -309,8 +309,8 @@ class TestDeleteCategoryHandler:
 # ============================================================
 
 
-@allure.epic("Coding")
-@allure.feature("Command Handlers")
+@allure.epic("QualCoder v2")
+@allure.feature("QC-028 Code Management")
 @allure.story("Change Code Color")
 class TestChangeCodeColorHandler:
     """Tests for the change_code_color command handler."""
@@ -419,8 +419,8 @@ class TestChangeCodeColorHandler:
 # ============================================================
 
 
-@allure.epic("Coding")
-@allure.feature("Command Handlers")
+@allure.epic("QualCoder v2")
+@allure.feature("QC-028 Code Management")
 @allure.story("Apply Code")
 class TestApplyCodeHandler:
     """Tests for the apply_code command handler."""
@@ -555,8 +555,8 @@ class TestApplyCodeHandler:
 # ============================================================
 
 
-@allure.epic("Coding")
-@allure.feature("Command Handlers")
+@allure.epic("QualCoder v2")
+@allure.feature("QC-028 Code Management")
 @allure.story("Handler Integration")
 class TestHandlerIntegration:
     """Integration-like tests that verify handler flow."""
