@@ -37,6 +37,7 @@ def _make_tools(
     return ExchangeTools(coordinator=coordinator)
 
 
+@allure.story("QC-039.01 Exchange MCP Tools")
 class TestExchangeTools:
     """Tests for exchange MCP tools."""
 

@@ -36,7 +36,11 @@ from src.shared.common.types import CategoryId, CodeId, SegmentId, SourceId
 if TYPE_CHECKING:
     pass
 
-pytestmark = [pytest.mark.unit]
+pytestmark = [
+    pytest.mark.unit,
+    allure.epic("QualCoder v2"),
+    allure.feature("QC-028 Code Management"),
+]
 
 
 # ============================================================
@@ -204,9 +208,7 @@ def sample_segment() -> TextSegment:
 # ============================================================
 
 
-@allure.epic("QualCoder v2")
-@allure.feature("QC-028 Code Management")
-@allure.story("Delete Category")
+@allure.story("QC-028.10 Delete Category")
 class TestDeleteCategoryHandler:
     """Tests for the delete_category command handler."""
 
@@ -309,9 +311,7 @@ class TestDeleteCategoryHandler:
 # ============================================================
 
 
-@allure.epic("QualCoder v2")
-@allure.feature("QC-028 Code Management")
-@allure.story("Change Code Color")
+@allure.story("QC-028.11 Change Code Color")
 class TestChangeCodeColorHandler:
     """Tests for the change_code_color command handler."""
 
@@ -419,9 +419,7 @@ class TestChangeCodeColorHandler:
 # ============================================================
 
 
-@allure.epic("QualCoder v2")
-@allure.feature("QC-028 Code Management")
-@allure.story("Apply Code")
+@allure.story("QC-028.12 Apply Code")
 class TestApplyCodeHandler:
     """Tests for the apply_code command handler."""
 
@@ -555,9 +553,7 @@ class TestApplyCodeHandler:
 # ============================================================
 
 
-@allure.epic("QualCoder v2")
-@allure.feature("QC-028 Code Management")
-@allure.story("Handler Integration")
+@allure.story("QC-028.13 Handler Integration")
 class TestHandlerIntegration:
     """Integration-like tests that verify handler flow."""
 

@@ -23,6 +23,7 @@ from __future__ import annotations
 
 from datetime import UTC, datetime
 
+import allure
 import pytest
 from PySide6.QtTest import QSignalSpy
 from PySide6.QtWidgets import QApplication, QMainWindow, QVBoxLayout, QWidget
@@ -33,7 +34,11 @@ from src.contexts.cases.presentation import CaseManagerScreen, CaseManagerViewMo
 from src.shared.common.types import CaseId, SourceId
 from src.tests.e2e.helpers import attach_screenshot
 
-pytestmark = pytest.mark.e2e  # All tests in this module are E2E tests
+pytestmark = [
+    pytest.mark.e2e,
+    allure.epic("QualCoder v2"),
+    allure.feature("QC-034 Manage Cases"),
+]
 
 
 @pytest.fixture
@@ -219,6 +224,7 @@ def empty_case_manager_window(qapp, colors, viewmodel):
 # =============================================================================
 
 
+@allure.story("QC-034.01 View Cases")
 class TestCaseManagerDisplayWithRealData:
     """E2E tests for Case Manager display with real database data."""
 
@@ -258,6 +264,7 @@ class TestCaseManagerDisplayWithRealData:
         attach_screenshot(screen, "case_manager_empty_state")
 
 
+@allure.story("QC-034.02 Create Case")
 class TestCreateCaseFlow:
     """
     E2E tests for create case flow.
@@ -327,6 +334,7 @@ class TestCreateCaseFlow:
         attach_screenshot(screen, "case_created_ui_refresh")
 
 
+@allure.story("QC-034.03 Delete Case")
 class TestDeleteCaseFlow:
     """E2E tests for delete case flow."""
 
@@ -371,6 +379,7 @@ class TestDeleteCaseFlow:
         attach_screenshot(screen, "case_deleted_ui_refresh")
 
 
+@allure.story("QC-034.04 Link Sources to Cases")
 class TestLinkSourceFlow:
     """
     E2E tests for link source to case flow.
@@ -404,6 +413,7 @@ class TestLinkSourceFlow:
         assert summary.cases_with_sources == 2  # alpha, gamma
 
 
+@allure.story("QC-034.05 Case Attributes")
 class TestAddAttributeFlow:
     """
     E2E tests for add attribute to case flow.
@@ -472,6 +482,7 @@ class TestAddAttributeFlow:
         assert summary.total_attributes == initial_attrs + 1
 
 
+@allure.story("QC-034.06 View Case Data")
 class TestViewCaseDataFlow:
     """
     E2E tests for viewing case data.
@@ -532,6 +543,7 @@ class TestViewCaseDataFlow:
         assert results[0].name == "Participant Alpha"
 
 
+@allure.story("QC-034.01 View Cases")
 class TestStatsRowFiltering:
     """E2E tests for filtering via stats row clicks."""
 
@@ -560,6 +572,7 @@ class TestStatsRowFiltering:
         attach_screenshot(screen, "stats_row_filter_cards")
 
 
+@allure.story("QC-034.01 View Cases")
 class TestTableSelection:
     """E2E tests for table row selection."""
 
@@ -585,6 +598,7 @@ class TestTableSelection:
         attach_screenshot(screen, "table_row_selected")
 
 
+@allure.story("QC-034.07 Data Refresh")
 class TestDataRefresh:
     """E2E tests for data refresh operations."""
 
@@ -622,6 +636,7 @@ class TestDataRefresh:
         assert screen2.page._case_table._table.rowCount() == 5
 
 
+@allure.story("QC-034.01 View Cases")
 class TestScreenProtocol:
     """E2E tests for ScreenProtocol implementation."""
 
@@ -642,6 +657,7 @@ class TestScreenProtocol:
         attach_screenshot(screen, "status_message_with_summary")
 
 
+@allure.story("QC-034.01 View Cases")
 class TestSelectionManagement:
     """E2E tests for selection state management."""
 
@@ -667,6 +683,7 @@ class TestSelectionManagement:
         attach_screenshot(screen, "selection_cleared")
 
 
+@allure.story("QC-034.07 Data Refresh")
 class TestReactiveSignalBridgeFlow:
     """
     E2E tests for reactive SignalBridge updates.

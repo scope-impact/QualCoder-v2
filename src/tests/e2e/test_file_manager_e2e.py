@@ -18,6 +18,7 @@ from __future__ import annotations
 import tempfile
 from pathlib import Path
 
+import allure
 import pytest
 from PySide6.QtTest import QSignalSpy
 from PySide6.QtWidgets import QApplication, QMainWindow, QVBoxLayout, QWidget
@@ -27,7 +28,11 @@ from src.shared.presentation.dto import FolderDTO, ProjectSummaryDTO, SourceDTO
 from src.tests.e2e.helpers import attach_screenshot
 from src.tests.e2e.utils import DocScreenshot
 
-pytestmark = pytest.mark.e2e  # All tests in this module are E2E tests
+pytestmark = [
+    pytest.mark.e2e,
+    allure.epic("QualCoder v2"),
+    allure.feature("QC-027 Manage Sources"),
+]
 
 
 # =============================================================================
@@ -217,6 +222,7 @@ def temp_source_files():
 # =============================================================================
 
 
+@allure.story("QC-027.01 View Sources")
 class TestFileManagerDisplay:
     """E2E tests for File Manager display and initial state."""
 
@@ -257,6 +263,7 @@ class TestFileManagerDisplay:
         DocScreenshot.capture(window, "file-manager-empty", max_width=1000)
 
 
+@allure.story("QC-027.01 View Sources")
 class TestStatsRowFiltering:
     """E2E tests for filtering via stats row clicks."""
 
@@ -314,6 +321,7 @@ class TestStatsRowFiltering:
         assert audio_card.is_active()
 
 
+@allure.story("QC-027.02 Navigate Sources")
 class TestTableAndNavigationSignals:
     """E2E tests for table row selection and navigation signals."""
 
@@ -345,6 +353,7 @@ class TestTableAndNavigationSignals:
         assert nav_spy.at(0)[0] == "1"
 
 
+@allure.story("QC-027.03 Search and Filter")
 class TestToolbarAndSearch:
     """E2E tests for toolbar buttons and search functionality."""
 
@@ -383,6 +392,7 @@ class TestToolbarAndSearch:
         assert spy.at(0)[0] == "interview"
 
 
+@allure.story("QC-027.04 Bulk Actions")
 class TestBulkAndEmptyStateActions:
     """E2E tests for bulk actions and empty state interactions."""
 
@@ -431,6 +441,7 @@ class TestBulkAndEmptyStateActions:
         assert link_spy.count() == 1
 
 
+@allure.story("QC-027.05 Data Refresh")
 class TestDataRefreshAndStateManagement:
     """E2E tests for data refresh and state management operations."""
 
@@ -566,6 +577,7 @@ def file_manager_with_folders(
     window.close()
 
 
+@allure.story("QC-027.06 Folder Management")
 class TestFolderScreenshots:
     """Capture documentation screenshots for folder features."""
 

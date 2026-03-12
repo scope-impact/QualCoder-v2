@@ -35,6 +35,7 @@ pytestmark = [
 # =============================================================================
 
 
+@allure.story("QC-026.01 Open Project Dialog")
 class TestOpenProjectDialogInitialization:
     """Tests for OpenProjectDialog initialization."""
 
@@ -84,6 +85,7 @@ class TestOpenProjectDialogInitialization:
         dialog.close()
 
 
+@allure.story("QC-026.01 Open Project Dialog")
 class TestOpenProjectDialogRecentProjects:
     """Tests for OpenProjectDialog recent projects interaction."""
 
@@ -136,6 +138,7 @@ class TestOpenProjectDialogRecentProjects:
         dialog.close()
 
 
+@allure.story("QC-026.01 Open Project Dialog")
 class TestOpenProjectDialogSignals:
     """Tests for OpenProjectDialog signal emissions."""
 
@@ -209,6 +212,7 @@ class TestOpenProjectDialogSignals:
         dialog2.close()
 
 
+@allure.story("QC-026.01 Open Project Dialog")
 class TestOpenProjectDialogBrowse:
     """Tests for OpenProjectDialog browse functionality."""
 
@@ -262,6 +266,7 @@ class TestOpenProjectDialogBrowse:
 # =============================================================================
 
 
+@allure.story("QC-026.02 Create Project Dialog")
 class TestCreateProjectDialogInitialization:
     """Tests for CreateProjectDialog initialization."""
 
@@ -291,6 +296,7 @@ class TestCreateProjectDialogInitialization:
             dialog.close()
 
 
+@allure.story("QC-026.02 Create Project Dialog")
 class TestCreateProjectDialogValidation:
     """Tests for CreateProjectDialog form validation."""
 
@@ -355,6 +361,7 @@ class TestCreateProjectDialogValidation:
             dialog.close()
 
 
+@allure.story("QC-026.02 Create Project Dialog")
 class TestCreateProjectDialogPathPreview:
     """Tests for CreateProjectDialog path preview."""
 
@@ -410,6 +417,7 @@ class TestCreateProjectDialogPathPreview:
             dialog.close()
 
 
+@allure.story("QC-026.02 Create Project Dialog")
 class TestCreateProjectDialogNameSanitization:
     """Tests for CreateProjectDialog name sanitization."""
 
@@ -451,6 +459,7 @@ class TestCreateProjectDialogNameSanitization:
             dialog.close()
 
 
+@allure.story("QC-026.02 Create Project Dialog")
 class TestCreateProjectDialogSignals:
     """Tests for CreateProjectDialog signal emissions."""
 
@@ -490,6 +499,7 @@ class TestCreateProjectDialogSignals:
         dialog2.close()
 
 
+@allure.story("QC-026.02 Create Project Dialog")
 class TestCreateProjectDialogBrowse:
     """Tests for CreateProjectDialog browse functionality."""
 
@@ -536,6 +546,7 @@ class TestCreateProjectDialogBrowse:
             dialog.close()
 
 
+@allure.story("QC-026.02 Create Project Dialog")
 class TestCreateProjectDialogResultAndGetters:
     """Tests for CreateProjectDialog result codes and getter methods."""
 

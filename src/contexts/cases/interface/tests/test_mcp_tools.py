@@ -181,7 +181,7 @@ def context_with_cases(mock_project, mock_case_repo_with_cases):
 # =============================================================================
 
 
-@allure.story("Tool Schema Generation")
+@allure.story("QC-034.10 Tool Schema Generation")
 @allure.severity(allure.severity_level.CRITICAL)
 class TestToolDefinition:
     @allure.title("ToolParameter stores metadata with required and optional fields")
@@ -248,7 +248,7 @@ class TestToolDefinition:
         assert "include_sources" not in schema["inputSchema"]["required"]
 
 
-@allure.story("Tool Schema Generation")
+@allure.story("QC-034.10 Tool Schema Generation")
 @allure.severity(allure.severity_level.CRITICAL)
 class TestPredefinedToolSchemas:
     @allure.title("Predefined tool has correct schema")
@@ -288,7 +288,7 @@ class TestPredefinedToolSchemas:
 # =============================================================================
 
 
-@allure.story("CaseTools Initialization")
+@allure.story("QC-034.10 Tool Schema Generation")
 @allure.severity(allure.severity_level.CRITICAL)
 class TestCaseToolsInitialization:
     @allure.title("CaseTools initializes and exposes tool schemas and names")
@@ -314,7 +314,7 @@ class TestCaseToolsInitialization:
 # =============================================================================
 
 
-@allure.story("Tool Execution Dispatch")
+@allure.story("QC-034.11 Tool Execution")
 @allure.severity(allure.severity_level.CRITICAL)
 class TestExecuteDispatch:
     @allure.title("execute returns error for unknown tool")
@@ -363,7 +363,7 @@ class TestExecuteDispatch:
 # =============================================================================
 
 
-@allure.story("list_cases Tool")
+@allure.story("QC-034.11 Tool Execution")
 @allure.severity(allure.severity_level.CRITICAL)
 class TestListCasesTool:
     @allure.title("list_cases fails when no project open")
@@ -410,7 +410,7 @@ class TestListCasesTool:
 # =============================================================================
 
 
-@allure.story("get_case Tool")
+@allure.story("QC-034.11 Tool Execution")
 @allure.severity(allure.severity_level.CRITICAL)
 class TestGetCaseTool:
     @allure.title("get_case fails with validation errors")
@@ -466,7 +466,7 @@ class TestGetCaseTool:
 # =============================================================================
 
 
-@allure.story("suggest_case_groupings Tool")
+@allure.story("QC-034.12 AI Case Groupings")
 @allure.severity(allure.severity_level.NORMAL)
 class TestSuggestCaseGroupingsTool:
     @allure.title("suggest_case_groupings returns empty when no cases available")
@@ -545,7 +545,7 @@ class TestSuggestCaseGroupingsTool:
 # =============================================================================
 
 
-@allure.story("compare_cases Tool")
+@allure.story("QC-034.13 Compare Cases")
 @allure.severity(allure.severity_level.NORMAL)
 class TestCompareCasesTool:
     @allure.title("compare_cases fails with validation errors")
@@ -600,7 +600,7 @@ class TestCompareCasesTool:
 # =============================================================================
 
 
-@allure.story("Edge Cases")
+@allure.story("QC-034.11 Tool Execution")
 @allure.severity(allure.severity_level.NORMAL)
 class TestEdgeCases:
     @allure.title("Tools handle None cases_context and string case_id")

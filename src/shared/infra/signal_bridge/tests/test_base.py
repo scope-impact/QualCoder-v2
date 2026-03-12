@@ -10,6 +10,12 @@ from src.shared.infra.signal_bridge.base import BaseSignalBridge
 from src.shared.infra.signal_bridge.payloads import ActivityStatus, SignalPayload
 from src.shared.infra.signal_bridge.tests.conftest import MockDomainEvent, MockEventBus
 
+pytestmark = [
+    pytest.mark.unit,
+    allure.epic("QualCoder v2"),
+    allure.feature("QC-000 Shared Infrastructure"),
+]
+
 
 # Test payload type
 @dataclass(frozen=True)
@@ -79,9 +85,7 @@ class MockSignal:
         return self
 
 
-@allure.epic("QualCoder v2")
-@allure.feature("Shared Infrastructure")
-@allure.story("QC-000.08 Signal Bridge")
+@allure.story("QC-000.01 Signal Bridge")
 class TestBaseSignalBridgeSingleton:
     """Tests for BaseSignalBridge singleton, lifecycle, and context manager."""
 
@@ -125,9 +129,7 @@ class TestBaseSignalBridgeSingleton:
         assert bridge2.is_running() is False
 
 
-@allure.epic("QualCoder v2")
-@allure.feature("Shared Infrastructure")
-@allure.story("QC-000.08 Signal Bridge")
+@allure.story("QC-000.01 Signal Bridge")
 class TestBaseSignalBridgeDispatch:
     """Tests for event dispatch, activity logging, and converter validation."""
 

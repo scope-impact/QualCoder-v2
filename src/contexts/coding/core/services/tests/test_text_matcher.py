@@ -28,6 +28,7 @@ pytestmark = [
 # ============================================================
 
 
+@allure.story("QC-029.01 Text Pattern Matching")
 class TestTextMatchCreation:
     """Tests for TextMatch value object creation."""
 
@@ -65,6 +66,7 @@ class TestTextMatchCreation:
 # ============================================================
 
 
+@allure.story("QC-029.01 Text Pattern Matching")
 class TestTextMatcherExactMatches:
     """Tests for EXACT (word boundary) matching."""
 
@@ -140,6 +142,7 @@ class TestTextMatcherExactMatches:
 # ============================================================
 
 
+@allure.story("QC-029.01 Text Pattern Matching")
 class TestTextMatcherContainsMatches:
     """Tests for CONTAINS (substring) matching."""
 
@@ -197,6 +200,7 @@ class TestTextMatcherContainsMatches:
 # ============================================================
 
 
+@allure.story("QC-029.01 Text Pattern Matching")
 class TestTextMatcherRegexMatches:
     """Tests for REGEX matching."""
 
@@ -262,6 +266,7 @@ class TestTextMatcherRegexMatches:
 # ============================================================
 
 
+@allure.story("QC-029.01 Text Pattern Matching")
 class TestTextMatcherScope:
     """Tests for match scope filtering."""
 
@@ -309,6 +314,7 @@ class TestTextMatcherScope:
 # ============================================================
 
 
+@allure.story("QC-029.01 Text Pattern Matching")
 class TestTextMatcherEdgeCases:
     """Tests for edge cases and error handling."""
 
@@ -372,6 +378,7 @@ class TestTextMatcherEdgeCases:
 # ============================================================
 
 
+@allure.story("QC-029.01 Text Pattern Matching")
 class TestTextMatcherImmutability:
     """Tests verifying immutability and purity."""
 
@@ -406,6 +413,7 @@ class TestTextMatcherImmutability:
 # ============================================================
 
 
+@allure.story("QC-029.01 Text Pattern Matching")
 class TestTextMatcherDefaults:
     """Tests for default parameter values."""
 

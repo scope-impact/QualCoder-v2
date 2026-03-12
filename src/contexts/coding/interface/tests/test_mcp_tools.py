@@ -285,7 +285,7 @@ def no_coding_context() -> NoCodingContext:
 # ============================================================
 
 
-@allure.story("Tool Schema")
+@allure.story("QC-028.10 Tool Schema")
 class TestToolDefinition:
     """Tests for ToolDefinition schema generation."""
 
@@ -350,7 +350,7 @@ class TestToolDefinition:
 # ============================================================
 
 
-@allure.story("Initialization")
+@allure.story("QC-028.10 Tool Schema")
 class TestCodingToolsInit:
     """Tests for CodingTools initialization and schema methods."""
 
@@ -388,7 +388,7 @@ class TestCodingToolsInit:
 # ============================================================
 
 
-@allure.story("Tool Dispatching")
+@allure.story("QC-028.14 Tool Dispatching")
 class TestExecuteUnknownTool:
     """Tests for execute method with unknown tools."""
 
@@ -406,7 +406,7 @@ class TestExecuteUnknownTool:
         assert any("list_codes" in s for s in result["suggestions"])
 
 
-@allure.story("list_codes Tool")
+@allure.story("QC-028.14 Tool Dispatching")
 class TestListCodesTool:
     """Tests for list_codes tool."""
 
@@ -430,7 +430,7 @@ class TestListCodesTool:
         assert result["data"] == []
 
 
-@allure.story("get_code Tool")
+@allure.story("QC-028.14 Tool Dispatching")
 class TestGetCodeTool:
     """Tests for get_code tool."""
 
@@ -458,7 +458,7 @@ class TestGetCodeTool:
             assert result["error_code"] == check_error_code
 
 
-@allure.story("list_segments_for_source Tool")
+@allure.story("QC-028.14 Tool Dispatching")
 class TestListSegmentsTool:
     """Tests for list_segments_for_source tool."""
 
@@ -483,7 +483,7 @@ class TestListSegmentsTool:
         assert result["data"] == []
 
 
-@allure.story("batch_apply_codes Tool")
+@allure.story("QC-028.14 Tool Dispatching")
 class TestBatchApplyCodesTool:
     """Tests for batch_apply_codes tool."""
 
@@ -554,7 +554,7 @@ class TestBatchApplyCodesTool:
 # ============================================================
 
 
-@allure.story("Error Handling")
+@allure.story("QC-028.15 Error Handling")
 class TestErrorHandlingAndContextValidation:
     """Tests for error handling and context validation."""
 
