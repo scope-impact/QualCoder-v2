@@ -90,7 +90,9 @@ class TestBaseSignalBridgeSingleton:
     """Tests for BaseSignalBridge singleton, lifecycle, and context manager."""
 
     @allure.title("Singleton pattern, start/stop lifecycle, and context manager")
-    def test_singleton_lifecycle_and_context_manager(self, mock_event_bus: MockEventBus) -> None:
+    def test_singleton_lifecycle_and_context_manager(
+        self, mock_event_bus: MockEventBus
+    ) -> None:
         TestSignalBridge.clear_instance()
 
         # Singleton requires event_bus on first call
@@ -133,7 +135,9 @@ class TestBaseSignalBridgeSingleton:
 class TestBaseSignalBridgeDispatch:
     """Tests for event dispatch, activity logging, and converter validation."""
 
-    @allure.title("Events converted and emitted; activity logged; converter validates; emit_activity works")
+    @allure.title(
+        "Events converted and emitted; activity logged; converter validates; emit_activity works"
+    )
     def test_dispatch_validation_and_activity(
         self,
         mock_event_bus: MockEventBus,
@@ -164,7 +168,9 @@ class TestBaseSignalBridgeDispatch:
         # register_converter validates signal exists
         bridge2 = TestSignalBridge(mock_event_bus)
         with pytest.raises(ValueError, match="not found"):
-            bridge2.register_converter("test.event", TestConverter(), "nonexistent_signal")
+            bridge2.register_converter(
+                "test.event", TestConverter(), "nonexistent_signal"
+            )
 
         # emit_activity directly emits activity with AI session
         bridge3 = TestSignalBridge(mock_event_bus)

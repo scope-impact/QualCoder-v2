@@ -299,31 +299,65 @@ class TestToolDefinition:
                 id="empty_parameters",
             ),
             pytest.param(
-                (ToolParameter(name="item_id", type="integer", description="The item ID", required=True),),
+                (
+                    ToolParameter(
+                        name="item_id",
+                        type="integer",
+                        description="The item ID",
+                        required=True,
+                    ),
+                ),
                 ["item_id"],
                 {"item_id": {"type": "integer"}},
                 id="required_param",
             ),
             pytest.param(
-                (ToolParameter(name="limit", type="integer", description="Max results", required=False, default=10),),
+                (
+                    ToolParameter(
+                        name="limit",
+                        type="integer",
+                        description="Max results",
+                        required=False,
+                        default=10,
+                    ),
+                ),
                 [],
                 {"limit": {"type": "integer", "default": 10}},
                 id="optional_param_with_default",
             ),
             pytest.param(
-                (ToolParameter(
-                    name="operations", type="array", description="List of operations",
-                    required=True, items={"type": "object", "properties": {"id": {"type": "integer"}}},
-                ),),
+                (
+                    ToolParameter(
+                        name="operations",
+                        type="array",
+                        description="List of operations",
+                        required=True,
+                        items={
+                            "type": "object",
+                            "properties": {"id": {"type": "integer"}},
+                        },
+                    ),
+                ),
                 ["operations"],
-                {"operations": {"type": "array", "items": {"type": "object", "properties": {"id": {"type": "integer"}}}}},
+                {
+                    "operations": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {"id": {"type": "integer"}},
+                        },
+                    }
+                },
                 id="array_param_with_items",
             ),
         ],
     )
     @allure.title("Generates correct schema for various parameter configurations")
     def test_to_schema_with_parameter_variants(
-        self, params, expected_required, expected_prop_checks,
+        self,
+        params,
+        expected_required,
+        expected_prop_checks,
     ) -> None:
         """Tool parameters generate correct schema for empty, required, optional, and array types."""
         tool = ToolDefinition(
@@ -375,7 +409,12 @@ class TestCodingToolsInit:
             assert "inputSchema" in schema
             names.append(schema["name"])
 
-        for expected in ("batch_apply_codes", "list_codes", "get_code", "list_segments_for_source"):
+        for expected in (
+            "batch_apply_codes",
+            "list_codes",
+            "get_code",
+            "list_segments_for_source",
+        ):
             assert expected in names
 
         # Names match schemas
@@ -437,16 +476,32 @@ class TestGetCodeTool:
     @pytest.mark.parametrize(
         "args, expect_success, check_name, check_error_code",
         [
-            pytest.param({"code_id": 1}, True, "Theme", None, id="code_without_category"),
-            pytest.param({"code_id": 3}, True, "Positive", None, id="code_with_category"),
-            pytest.param({}, False, None, "CODE_NOT_FOUND/MISSING_PARAM", id="missing_code_id"),
-            pytest.param({"code_id": 999}, False, None, "CODE_NOT_FOUND/NOT_FOUND", id="nonexistent_code"),
+            pytest.param(
+                {"code_id": 1}, True, "Theme", None, id="code_without_category"
+            ),
+            pytest.param(
+                {"code_id": 3}, True, "Positive", None, id="code_with_category"
+            ),
+            pytest.param(
+                {}, False, None, "CODE_NOT_FOUND/MISSING_PARAM", id="missing_code_id"
+            ),
+            pytest.param(
+                {"code_id": 999},
+                False,
+                None,
+                "CODE_NOT_FOUND/NOT_FOUND",
+                id="nonexistent_code",
+            ),
         ],
     )
     @allure.title("Returns code by ID or failure for invalid input")
     def test_get_code(
-        self, coding_tools: CodingTools,
-        args: dict, expect_success: bool, check_name: str | None, check_error_code: str | None,
+        self,
+        coding_tools: CodingTools,
+        args: dict,
+        expect_success: bool,
+        check_name: str | None,
+        check_error_code: str | None,
     ) -> None:
         """get_code returns code by ID or appropriate failure."""
         result = coding_tools.execute("get_code", args)
@@ -462,14 +517,23 @@ class TestGetCodeTool:
 class TestListSegmentsTool:
     """Tests for list_segments_for_source tool."""
 
-    @allure.title("Returns segments, fails on missing param, returns empty for no-match")
+    @allure.title(
+        "Returns segments, fails on missing param, returns empty for no-match"
+    )
     def test_list_segments_scenarios(self, coding_tools: CodingTools) -> None:
         """list_segments_for_source returns segments, fails on missing param, returns empty for no-match."""
         # Success with segments
         result = coding_tools.execute("list_segments_for_source", {"source_id": 1})
         assert result["success"] is True
         assert len(result["data"]) == 2
-        for key in ("id", "source_id", "code_id", "start_position", "end_position", "selected_text"):
+        for key in (
+            "id",
+            "source_id",
+            "code_id",
+            "start_position",
+            "end_position",
+            "selected_text",
+        ):
             assert key in result["data"][0]
 
         # Missing source_id
@@ -490,19 +554,30 @@ class TestBatchApplyCodesTool:
     @pytest.mark.parametrize(
         "args, expected_error_code, error_fragment",
         [
-            pytest.param({}, "BATCH_APPLY_CODES/MISSING_PARAM", None, id="missing_operations"),
-            pytest.param({"operations": []}, "BATCH_APPLY_CODES/EMPTY_BATCH", None, id="empty_operations"),
+            pytest.param(
+                {}, "BATCH_APPLY_CODES/MISSING_PARAM", None, id="missing_operations"
+            ),
+            pytest.param(
+                {"operations": []},
+                "BATCH_APPLY_CODES/EMPTY_BATCH",
+                None,
+                id="empty_operations",
+            ),
             pytest.param(
                 {"operations": [{"code_id": 1}]},
-                "BATCH_APPLY_CODES/INVALID_OPERATION", "index 0",
+                "BATCH_APPLY_CODES/INVALID_OPERATION",
+                "index 0",
                 id="malformed_operation",
             ),
         ],
     )
     @allure.title("Returns failure for invalid batch input")
     def test_returns_failure_for_invalid_input(
-        self, coding_tools: CodingTools,
-        args: dict, expected_error_code: str, error_fragment: str | None,
+        self,
+        coding_tools: CodingTools,
+        args: dict,
+        expected_error_code: str,
+        error_fragment: str | None,
     ) -> None:
         """batch_apply_codes returns failure for missing, empty, or malformed operations."""
         result = coding_tools.execute("batch_apply_codes", args)
@@ -512,14 +587,25 @@ class TestBatchApplyCodesTool:
             assert error_fragment in result["error"]
 
     @allure.title("Applies codes successfully and publishes events")
-    def test_applies_codes_and_publishes_events(self, mock_context: MockContext) -> None:
+    def test_applies_codes_and_publishes_events(
+        self, mock_context: MockContext
+    ) -> None:
         """batch_apply_codes applies single and multiple codes, publishes events, and handles nonexistent codes."""
         tools = CodingTools(ctx=mock_context)
 
         # Single operation
         result = tools.execute(
             "batch_apply_codes",
-            {"operations": [{"code_id": 1, "source_id": 1, "start_position": 200, "end_position": 250}]},
+            {
+                "operations": [
+                    {
+                        "code_id": 1,
+                        "source_id": 1,
+                        "start_position": 200,
+                        "end_position": 250,
+                    }
+                ]
+            },
         )
         assert result["success"] is True
         assert result["data"]["total"] == 1
@@ -531,10 +617,24 @@ class TestBatchApplyCodesTool:
         # Multiple operations with optional fields
         result = tools.execute(
             "batch_apply_codes",
-            {"operations": [
-                {"code_id": 1, "source_id": 1, "start_position": 300, "end_position": 350, "memo": "Test memo"},
-                {"code_id": 2, "source_id": 1, "start_position": 400, "end_position": 450, "importance": 2},
-            ]},
+            {
+                "operations": [
+                    {
+                        "code_id": 1,
+                        "source_id": 1,
+                        "start_position": 300,
+                        "end_position": 350,
+                        "memo": "Test memo",
+                    },
+                    {
+                        "code_id": 2,
+                        "source_id": 1,
+                        "start_position": 400,
+                        "end_position": 450,
+                        "importance": 2,
+                    },
+                ]
+            },
         )
         assert result["success"] is True
         assert result["data"]["total"] == 2
@@ -543,7 +643,16 @@ class TestBatchApplyCodesTool:
         # Nonexistent code
         result = tools.execute(
             "batch_apply_codes",
-            {"operations": [{"code_id": 999, "source_id": 1, "start_position": 200, "end_position": 250}]},
+            {
+                "operations": [
+                    {
+                        "code_id": 999,
+                        "source_id": 1,
+                        "start_position": 200,
+                        "end_position": 250,
+                    }
+                ]
+            },
         )
         assert result["success"] is False
         assert result["error_code"] == "BATCH_APPLY_CODES/ALL_FAILED"
@@ -559,7 +668,9 @@ class TestErrorHandlingAndContextValidation:
     """Tests for error handling and context validation."""
 
     @allure.title("Catches exceptions during execution")
-    def test_handles_exception_during_execution(self, mock_context: MockContext) -> None:
+    def test_handles_exception_during_execution(
+        self, mock_context: MockContext
+    ) -> None:
         """execute catches exceptions and returns failure."""
         tools = CodingTools(ctx=mock_context)
         mock_context.coding_context.code_repo.get_all = MagicMock(
@@ -576,10 +687,21 @@ class TestErrorHandlingAndContextValidation:
         [
             pytest.param("list_codes", {}, id="list_codes"),
             pytest.param("get_code", {"code_id": 1}, id="get_code"),
-            pytest.param("list_segments_for_source", {"source_id": 1}, id="list_segments"),
+            pytest.param(
+                "list_segments_for_source", {"source_id": 1}, id="list_segments"
+            ),
             pytest.param(
                 "batch_apply_codes",
-                {"operations": [{"code_id": 1, "source_id": 1, "start_position": 0, "end_position": 10}]},
+                {
+                    "operations": [
+                        {
+                            "code_id": 1,
+                            "source_id": 1,
+                            "start_position": 0,
+                            "end_position": 10,
+                        }
+                    ]
+                },
                 id="batch_apply_codes",
             ),
         ],

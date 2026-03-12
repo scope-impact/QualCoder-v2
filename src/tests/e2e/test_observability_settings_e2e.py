@@ -103,9 +103,7 @@ class TestLogLevelUI:
     """E2E tests for log level configuration through the Settings dialog."""
 
     @allure.title("AC #3.1-3: Log level changes persist and defaults are correct")
-    def test_log_level_changes_and_defaults(
-        self, settings_dialog, settings_repo
-    ):
+    def test_log_level_changes_and_defaults(self, settings_dialog, settings_repo):
         """E2E: Log level changes persist to disk and defaults are correct."""
         with allure.step("Verify defaults: INFO log level, telemetry enabled"):
             settings = settings_repo.load()
@@ -140,7 +138,9 @@ class TestFileLoggingUI:
     """E2E tests for file logging toggle in the Settings dialog."""
 
     @allure.title("AC #3.4-7: File logging and telemetry toggles persist to JSON file")
-    def test_toggle_file_logging_and_telemetry_persists(self, settings_dialog, settings_repo):
+    def test_toggle_file_logging_and_telemetry_persists(
+        self, settings_dialog, settings_repo
+    ):
         """E2E: File logging and telemetry checkbox changes persist correctly."""
         with allure.step("Enable file logging"):
             settings_dialog._file_logging_cb.setChecked(True)
@@ -171,7 +171,9 @@ class TestFileLoggingUI:
 class TestEnvVarOverride:
     """E2E tests for the QUALCODER_LOG_LEVEL environment variable override."""
 
-    @allure.title("AC #3.8-10: Env var overrides settings, falls back without, and is case-insensitive")
+    @allure.title(
+        "AC #3.8-10: Env var overrides settings, falls back without, and is case-insensitive"
+    )
     def test_env_var_override_behavior(self):
         """E2E: QUALCODER_LOG_LEVEL env var overrides settings, falls back, and is case-insensitive."""
         from src.shared.infra.logging_config import configure_logging
@@ -319,5 +321,3 @@ class TestInvalidLogLevel:
 
         with allure.step("Verify the operation failed"):
             assert result.is_failure
-
-

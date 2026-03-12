@@ -45,7 +45,9 @@ def _open_project(app_context: AppContext, tmp_path: Path, name: str) -> Path:
 
 @allure.story("QC-INF.01 SingletonThreadPool Connection Factory")
 class TestConnectionFactory:
-    @allure.title("Engine uses SingletonThreadPool and factory returns same conn on same thread")
+    @allure.title(
+        "Engine uses SingletonThreadPool and factory returns same conn on same thread"
+    )
     def test_engine_pool_and_factory_same_thread(
         self, app_context: AppContext, tmp_path: Path
     ):
@@ -64,7 +66,9 @@ class TestConnectionFactory:
         conn2 = factory()
         assert conn1 is conn2, "Same thread should get same cached connection"
 
-    @allure.title("Factory returns different conn on different thread with busy_timeout")
+    @allure.title(
+        "Factory returns different conn on different thread with busy_timeout"
+    )
     def test_factory_different_thread_with_busy_timeout(
         self, app_context: AppContext, tmp_path: Path
     ):
@@ -225,8 +229,12 @@ class TestConcurrentRepoAccess:
 
 @allure.story("QC-INF.04 MCP asyncio.to_thread Integration")
 class TestMcpAsyncToThread:
-    @allure.title("_execute_tool runs safely via asyncio.to_thread for reads and writes")
-    def test_execute_tool_reads_and_writes_in_thread(self, app_context: AppContext, tmp_path: Path):
+    @allure.title(
+        "_execute_tool runs safely via asyncio.to_thread for reads and writes"
+    )
+    def test_execute_tool_reads_and_writes_in_thread(
+        self, app_context: AppContext, tmp_path: Path
+    ):
         import asyncio
 
         _open_project(app_context, tmp_path, "async_thread")

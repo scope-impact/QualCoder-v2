@@ -113,10 +113,14 @@ class TestTextMatcherExactMatches:
         text = "Cat CAT cat CaT"
         matcher = TextMatcher(text)
 
-        matches_insensitive = matcher.find_matches("cat", MatchType.EXACT, case_sensitive=False)
+        matches_insensitive = matcher.find_matches(
+            "cat", MatchType.EXACT, case_sensitive=False
+        )
         assert len(matches_insensitive) == 4
 
-        matches_sensitive = matcher.find_matches("cat", MatchType.EXACT, case_sensitive=True)
+        matches_sensitive = matcher.find_matches(
+            "cat", MatchType.EXACT, case_sensitive=True
+        )
         assert len(matches_sensitive) == 1
         assert text[matches_sensitive[0].start : matches_sensitive[0].end] == "cat"
 
@@ -176,10 +180,14 @@ class TestTextMatcherContainsMatches:
         text = "Cat CAT cat"
         matcher = TextMatcher(text)
 
-        matches_insensitive = matcher.find_matches("cat", MatchType.CONTAINS, case_sensitive=False)
+        matches_insensitive = matcher.find_matches(
+            "cat", MatchType.CONTAINS, case_sensitive=False
+        )
         assert len(matches_insensitive) == 3
 
-        matches_sensitive = matcher.find_matches("cat", MatchType.CONTAINS, case_sensitive=True)
+        matches_sensitive = matcher.find_matches(
+            "cat", MatchType.CONTAINS, case_sensitive=True
+        )
         assert len(matches_sensitive) == 1
 
     def test_contains_preserves_original_positions(self):
@@ -244,10 +252,14 @@ class TestTextMatcherRegexMatches:
         text = "Cat CAT cat"
         matcher = TextMatcher(text)
 
-        matches_insensitive = matcher.find_matches(r"cat", MatchType.REGEX, case_sensitive=False)
+        matches_insensitive = matcher.find_matches(
+            r"cat", MatchType.REGEX, case_sensitive=False
+        )
         assert len(matches_insensitive) == 3
 
-        matches_sensitive = matcher.find_matches(r"cat", MatchType.REGEX, case_sensitive=True)
+        matches_sensitive = matcher.find_matches(
+            r"cat", MatchType.REGEX, case_sensitive=True
+        )
         assert len(matches_sensitive) == 1
 
     def test_invalid_regex_returns_empty(self):
@@ -278,11 +290,15 @@ class TestTextMatcherScope:
         matches_all = matcher.find_matches("cat", MatchType.EXACT, scope=MatchScope.ALL)
         assert len(matches_all) == 3
 
-        matches_first = matcher.find_matches("cat", MatchType.EXACT, scope=MatchScope.FIRST)
+        matches_first = matcher.find_matches(
+            "cat", MatchType.EXACT, scope=MatchScope.FIRST
+        )
         assert len(matches_first) == 1
         assert matches_first[0].start == 0
 
-        matches_last = matcher.find_matches("cat", MatchType.EXACT, scope=MatchScope.LAST)
+        matches_last = matcher.find_matches(
+            "cat", MatchType.EXACT, scope=MatchScope.LAST
+        )
         assert len(matches_last) == 1
         assert matches_last[0].start == 8
 
@@ -292,20 +308,28 @@ class TestTextMatcherScope:
         text = "one cat here"
         matcher = TextMatcher(text)
 
-        matches_first = matcher.find_matches("cat", MatchType.EXACT, scope=MatchScope.FIRST)
+        matches_first = matcher.find_matches(
+            "cat", MatchType.EXACT, scope=MatchScope.FIRST
+        )
         assert len(matches_first) == 1
 
-        matches_last = matcher.find_matches("cat", MatchType.EXACT, scope=MatchScope.LAST)
+        matches_last = matcher.find_matches(
+            "cat", MatchType.EXACT, scope=MatchScope.LAST
+        )
         assert len(matches_last) == 1
 
         # No matches - FIRST and LAST return empty
         text2 = "no match here"
         matcher2 = TextMatcher(text2)
 
-        matches_first2 = matcher2.find_matches("xyz", MatchType.EXACT, scope=MatchScope.FIRST)
+        matches_first2 = matcher2.find_matches(
+            "xyz", MatchType.EXACT, scope=MatchScope.FIRST
+        )
         assert matches_first2 == []
 
-        matches_last2 = matcher2.find_matches("xyz", MatchType.EXACT, scope=MatchScope.LAST)
+        matches_last2 = matcher2.find_matches(
+            "xyz", MatchType.EXACT, scope=MatchScope.LAST
+        )
         assert matches_last2 == []
 
 

@@ -38,7 +38,9 @@ class TestCodeNameInvariants:
             ("a" * 101, False),
         ],
     )
-    @allure.title("Validates code names: accepts valid, rejects empty/whitespace/too-long")
+    @allure.title(
+        "Validates code names: accepts valid, rejects empty/whitespace/too-long"
+    )
     def test_validates_code_names(self, name, expected):
         """Valid names are accepted; empty, whitespace-only, and too-long names are rejected."""
         from src.contexts.coding.core.invariants import is_valid_code_name
@@ -65,8 +67,14 @@ class TestCodeNameInvariants:
         assert is_code_name_unique("Different", existing) is True
 
         # Exclude self on rename
-        assert is_code_name_unique("Theme", existing, exclude_code_id=CodeId(value="1")) is True
-        assert is_code_name_unique("Pattern", existing, exclude_code_id=CodeId(value="1")) is False
+        assert (
+            is_code_name_unique("Theme", existing, exclude_code_id=CodeId(value="1"))
+            is True
+        )
+        assert (
+            is_code_name_unique("Pattern", existing, exclude_code_id=CodeId(value="1"))
+            is False
+        )
 
 
 @allure.story("QC-028.01 Code Deletion and Merge")
@@ -84,15 +92,22 @@ class TestCodeDeletionAndMerge:
 
         segments = [
             TextSegment(
-                id=SegmentId(value="1"), source_id=SourceId(value="1"),
-                code_id=CodeId(value="1"), position=TextPosition(start=0, end=10),
+                id=SegmentId(value="1"),
+                source_id=SourceId(value="1"),
+                code_id=CodeId(value="1"),
+                position=TextPosition(start=0, end=10),
                 selected_text="test text",
             )
         ]
         assert can_code_be_deleted(CodeId(value="1"), segments) is False
-        assert can_code_be_deleted(CodeId(value="1"), segments, allow_with_segments=True) is True
+        assert (
+            can_code_be_deleted(CodeId(value="1"), segments, allow_with_segments=True)
+            is True
+        )
 
-    @allure.title("Merge rules: allows different existing codes, prevents invalid merges")
+    @allure.title(
+        "Merge rules: allows different existing codes, prevents invalid merges"
+    )
     def test_merge_rules(self):
         """Two different existing codes can merge; self-merge and missing codes prevented."""
         from src.contexts.coding.core.invariants import are_codes_mergeable
@@ -101,18 +116,30 @@ class TestCodeDeletionAndMerge:
         def code_exists(code_id: CodeId) -> bool:
             return code_id.value in ("1", "2")
 
-        assert are_codes_mergeable(CodeId(value="1"), CodeId(value="2"), code_exists) is True
-        assert are_codes_mergeable(CodeId(value="1"), CodeId(value="1"), code_exists) is False  # self
+        assert (
+            are_codes_mergeable(CodeId(value="1"), CodeId(value="2"), code_exists)
+            is True
+        )
+        assert (
+            are_codes_mergeable(CodeId(value="1"), CodeId(value="1"), code_exists)
+            is False
+        )  # self
 
         def only_target(code_id: CodeId) -> bool:
             return code_id.value == "2"
 
-        assert are_codes_mergeable(CodeId(value="1"), CodeId(value="2"), only_target) is False  # source missing
+        assert (
+            are_codes_mergeable(CodeId(value="1"), CodeId(value="2"), only_target)
+            is False
+        )  # source missing
 
         def only_source(code_id: CodeId) -> bool:
             return code_id.value == "1"
 
-        assert are_codes_mergeable(CodeId(value="1"), CodeId(value="2"), only_source) is False  # target missing
+        assert (
+            are_codes_mergeable(CodeId(value="1"), CodeId(value="2"), only_source)
+            is False
+        )  # target missing
 
 
 # ============================================================
@@ -156,7 +183,9 @@ class TestCategoryInvariants:
         assert is_category_name_unique("themes", existing) is False
         assert is_category_name_unique("Patterns", existing) is True
 
-    @allure.title("Validates hierarchy: root ok, self-parent blocked, valid parent allowed")
+    @allure.title(
+        "Validates hierarchy: root ok, self-parent blocked, valid parent allowed"
+    )
     def test_hierarchy_rules(self):
         """Move to root is valid; self-parent is invalid; valid parent is allowed."""
         from src.contexts.coding.core.entities import Category
@@ -165,12 +194,26 @@ class TestCategoryInvariants:
 
         categories = [
             Category(id=CategoryId(value="1"), name="Parent"),
-            Category(id=CategoryId(value="2"), name="Child", parent_id=CategoryId(value="1")),
+            Category(
+                id=CategoryId(value="2"), name="Child", parent_id=CategoryId(value="1")
+            ),
         ]
 
-        assert is_category_hierarchy_valid(CategoryId(value="2"), None, categories) is True
-        assert is_category_hierarchy_valid(CategoryId(value="1"), CategoryId(value="1"), categories) is False
-        assert is_category_hierarchy_valid(CategoryId(value="2"), CategoryId(value="1"), categories) is True
+        assert (
+            is_category_hierarchy_valid(CategoryId(value="2"), None, categories) is True
+        )
+        assert (
+            is_category_hierarchy_valid(
+                CategoryId(value="1"), CategoryId(value="1"), categories
+            )
+            is False
+        )
+        assert (
+            is_category_hierarchy_valid(
+                CategoryId(value="2"), CategoryId(value="1"), categories
+            )
+            is True
+        )
 
     @allure.title("Deletion rules: empty ok, codes block, children block unless forced")
     def test_deletion_rules(self):
@@ -181,12 +224,28 @@ class TestCategoryInvariants:
 
         assert can_category_be_deleted(CategoryId(value="1"), [], []) is True
 
-        codes = [Code(id=CodeId(value="1"), name="Theme", color=Color(255, 0, 0), category_id=CategoryId(value="1"))]
+        codes = [
+            Code(
+                id=CodeId(value="1"),
+                name="Theme",
+                color=Color(255, 0, 0),
+                category_id=CategoryId(value="1"),
+            )
+        ]
         assert can_category_be_deleted(CategoryId(value="1"), codes, []) is False
 
-        children = [Category(id=CategoryId(value="2"), name="Child", parent_id=CategoryId(value="1"))]
+        children = [
+            Category(
+                id=CategoryId(value="2"), name="Child", parent_id=CategoryId(value="1")
+            )
+        ]
         assert can_category_be_deleted(CategoryId(value="1"), [], children) is False
-        assert can_category_be_deleted(CategoryId(value="1"), [], children, allow_with_children=True) is True
+        assert (
+            can_category_be_deleted(
+                CategoryId(value="1"), [], children, allow_with_children=True
+            )
+            is True
+        )
 
 
 # ============================================================
@@ -231,7 +290,9 @@ class TestSegmentPositionInvariants:
         from src.contexts.coding.core.invariants import is_valid_image_region
 
         region = ImageRegion(x=x, y=y, width=width, height=height)
-        assert is_valid_image_region(region, image_width=100, image_height=100) is expected
+        assert (
+            is_valid_image_region(region, image_width=100, image_height=100) is expected
+        )
 
     @pytest.mark.parametrize(
         "start_ms, end_ms, duration_ms, expected",
@@ -266,7 +327,9 @@ class TestSegmentPositionInvariants:
 class TestSegmentOverlap:
     """Tests for does_segment_overlap invariant."""
 
-    @allure.title("Detects overlap with same code; no overlap with different code or adjacent")
+    @allure.title(
+        "Detects overlap with same code; no overlap with different code or adjacent"
+    )
     def test_overlap_detection(self):
         """Detects overlap with same code; no overlap with different code or adjacent."""
         from src.contexts.coding.core.entities import TextPosition, TextSegment
@@ -275,15 +338,32 @@ class TestSegmentOverlap:
 
         existing = [
             TextSegment(
-                id=SegmentId(value="1"), source_id=SourceId(value="1"),
-                code_id=CodeId(value="1"), position=TextPosition(start=10, end=20),
+                id=SegmentId(value="1"),
+                source_id=SourceId(value="1"),
+                code_id=CodeId(value="1"),
+                position=TextPosition(start=10, end=20),
                 selected_text="test",
             )
         ]
 
-        assert does_segment_overlap(TextPosition(start=15, end=25), existing, CodeId(value="1")) is True
-        assert does_segment_overlap(TextPosition(start=15, end=25), existing, CodeId(value="2")) is False
-        assert does_segment_overlap(TextPosition(start=20, end=30), existing, CodeId(value="1")) is False
+        assert (
+            does_segment_overlap(
+                TextPosition(start=15, end=25), existing, CodeId(value="1")
+            )
+            is True
+        )
+        assert (
+            does_segment_overlap(
+                TextPosition(start=15, end=25), existing, CodeId(value="2")
+            )
+            is False
+        )
+        assert (
+            does_segment_overlap(
+                TextPosition(start=20, end=30), existing, CodeId(value="1")
+            )
+            is False
+        )
 
 
 # ============================================================
@@ -299,7 +379,10 @@ class TestCrossEntityInvariants:
     def test_entity_existence(self):
         """Finds existing code/category; returns False for missing."""
         from src.contexts.coding.core.entities import Category, Code, Color
-        from src.contexts.coding.core.invariants import does_category_exist, does_code_exist
+        from src.contexts.coding.core.invariants import (
+            does_category_exist,
+            does_code_exist,
+        )
         from src.shared import CategoryId, CodeId
 
         codes = [Code(id=CodeId(value="1"), name="Theme", color=Color(255, 0, 0))]
@@ -313,26 +396,64 @@ class TestCrossEntityInvariants:
     @allure.title("Counts segments for code and codes in category")
     def test_counting(self):
         """Should count segments for a code and codes in a category."""
-        from src.contexts.coding.core.entities import Code, Color, TextPosition, TextSegment
-        from src.contexts.coding.core.invariants import count_codes_in_category, count_segments_for_code
+        from src.contexts.coding.core.entities import (
+            Code,
+            Color,
+            TextPosition,
+            TextSegment,
+        )
+        from src.contexts.coding.core.invariants import (
+            count_codes_in_category,
+            count_segments_for_code,
+        )
         from src.shared import CategoryId, CodeId, SegmentId, SourceId
 
         segments = [
-            TextSegment(id=SegmentId(value="1"), source_id=SourceId(value="1"),
-                        code_id=CodeId(value="1"), position=TextPosition(start=0, end=10), selected_text="test"),
-            TextSegment(id=SegmentId(value="2"), source_id=SourceId(value="1"),
-                        code_id=CodeId(value="1"), position=TextPosition(start=20, end=30), selected_text="test2"),
-            TextSegment(id=SegmentId(value="3"), source_id=SourceId(value="1"),
-                        code_id=CodeId(value="2"), position=TextPosition(start=40, end=50), selected_text="test3"),
+            TextSegment(
+                id=SegmentId(value="1"),
+                source_id=SourceId(value="1"),
+                code_id=CodeId(value="1"),
+                position=TextPosition(start=0, end=10),
+                selected_text="test",
+            ),
+            TextSegment(
+                id=SegmentId(value="2"),
+                source_id=SourceId(value="1"),
+                code_id=CodeId(value="1"),
+                position=TextPosition(start=20, end=30),
+                selected_text="test2",
+            ),
+            TextSegment(
+                id=SegmentId(value="3"),
+                source_id=SourceId(value="1"),
+                code_id=CodeId(value="2"),
+                position=TextPosition(start=40, end=50),
+                selected_text="test3",
+            ),
         ]
         assert count_segments_for_code(CodeId(value="1"), segments) == 2
         assert count_segments_for_code(CodeId(value="2"), segments) == 1
         assert count_segments_for_code(CodeId(value="3"), segments) == 0
 
         codes = [
-            Code(id=CodeId(value="1"), name="Theme1", color=Color(255, 0, 0), category_id=CategoryId(value="1")),
-            Code(id=CodeId(value="2"), name="Theme2", color=Color(0, 255, 0), category_id=CategoryId(value="1")),
-            Code(id=CodeId(value="3"), name="Pattern", color=Color(0, 0, 255), category_id=CategoryId(value="2")),
+            Code(
+                id=CodeId(value="1"),
+                name="Theme1",
+                color=Color(255, 0, 0),
+                category_id=CategoryId(value="1"),
+            ),
+            Code(
+                id=CodeId(value="2"),
+                name="Theme2",
+                color=Color(0, 255, 0),
+                category_id=CategoryId(value="1"),
+            ),
+            Code(
+                id=CodeId(value="3"),
+                name="Pattern",
+                color=Color(0, 0, 255),
+                category_id=CategoryId(value="2"),
+            ),
         ]
         assert count_codes_in_category(CategoryId(value="1"), codes) == 2
         assert count_codes_in_category(CategoryId(value="2"), codes) == 1

@@ -115,7 +115,6 @@ class SQLiteFolderRepository:
                 },
             )
 
-
     def delete(self, folder_id: FolderId) -> None:
         """Delete a folder by ID."""
         logger.debug("delete: %s", folder_id.value)
@@ -123,7 +122,6 @@ class SQLiteFolderRepository:
         self._conn.execute(stmt)
         if self._outbox:
             self._outbox.write_delete("folder", folder_id.value)
-
 
     def exists(self, folder_id: FolderId) -> bool:
         """Check if a folder exists."""
@@ -161,7 +159,6 @@ class SQLiteFolderRepository:
             .values(parent_id=new_parent_id.value if new_parent_id else None)
         )
         self._conn.execute(stmt)
-
 
     def get_descendants(self, folder_id: FolderId) -> list[Folder]:
         """Get all descendant folders (recursive children)."""

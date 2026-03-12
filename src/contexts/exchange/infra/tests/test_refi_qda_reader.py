@@ -51,7 +51,6 @@ BASIC_XML = """\
 @allure.feature("QC-039 Import Export Formats")
 @allure.story("QC-036.01 Import REFI-QDA")
 class TestRefiQdaReader:
-
     @allure.title("Parses project name, codes, sources, codings, and nested categories")
     def test_parse_project_codes_sources_codings_and_categories(self, tmp_path):
         from src.contexts.exchange.infra.refi_qda_reader import read_refi_qda

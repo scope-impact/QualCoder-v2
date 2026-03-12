@@ -195,7 +195,9 @@ class TestVersionHistoryScreen:
     """
 
     @allure.title("AC #3: Screen displays when VCS is initialized with empty state")
-    def test_screen_displays_when_vcs_initialized_with_empty_state(self, version_history_screen):
+    def test_screen_displays_when_vcs_initialized_with_empty_state(
+        self, version_history_screen
+    ):
         """E2E: Screen shows history panel when VCS is initialized, with empty state."""
         QApplication.processEvents()
         with allure.step("Verify history panel is shown (not hidden)"):
@@ -212,7 +214,9 @@ class TestVersionHistoryScreen:
         attach_screenshot(version_history_screen, "VersionHistoryScreen - Initialized")
 
     @allure.title("AC #3: Screen displays snapshot cards and supports refresh")
-    def test_screen_displays_snapshot_cards_and_refresh(self, qapp, colors, version_history_screen):
+    def test_screen_displays_snapshot_cards_and_refresh(
+        self, qapp, colors, version_history_screen
+    ):
         """E2E: Screen shows snapshot cards when history exists and supports refresh."""
         from src.shared.presentation.organisms import SnapshotItem, VersionHistoryPanel
 

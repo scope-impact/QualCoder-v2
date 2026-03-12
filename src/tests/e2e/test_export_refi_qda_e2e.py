@@ -52,7 +52,9 @@ def project_data(source_repo, code_repo, segment_repo):
 
 @allure.story("QC-039.01 Export REFI-QDA Project")
 class TestExportRefiQDA:
-    @allure.title("AC #1+#2: Export creates valid QDPX with project data and publishes event")
+    @allure.title(
+        "AC #1+#2: Export creates valid QDPX with project data and publishes event"
+    )
     def test_export_qdpx_full(
         self,
         source_repo,

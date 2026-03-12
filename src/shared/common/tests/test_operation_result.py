@@ -52,13 +52,24 @@ class TestOperationResultFactories:
         "suggestions_input,expected_suggestions",
         [
             (None, ()),
-            (("Try a different name", "Rename existing"), ("Try a different name", "Rename existing")),
-            (["Try a different name", "Rename existing"], ("Try a different name", "Rename existing")),
+            (
+                ("Try a different name", "Rename existing"),
+                ("Try a different name", "Rename existing"),
+            ),
+            (
+                ["Try a different name", "Rename existing"],
+                ("Try a different name", "Rename existing"),
+            ),
         ],
         ids=["no_suggestions", "tuple_suggestions", "list_suggestions"],
     )
-    def test_fail_creates_failure_and_normalizes_suggestions(self, suggestions_input, expected_suggestions):
-        kwargs = {"error": "Name exists", "error_code": "CODE_NOT_CREATED/DUPLICATE_NAME"}
+    def test_fail_creates_failure_and_normalizes_suggestions(
+        self, suggestions_input, expected_suggestions
+    ):
+        kwargs = {
+            "error": "Name exists",
+            "error_code": "CODE_NOT_CREATED/DUPLICATE_NAME",
+        }
         if suggestions_input is not None:
             kwargs["suggestions"] = suggestions_input
 
@@ -130,7 +141,10 @@ class TestOperationResultUnwrap:
         assert fail_result.unwrap_or(None) is None
 
         # unwrap_error returns error string on failure, raises on success
-        assert OperationResult.fail(error="Something broke").unwrap_error() == "Something broke"
+        assert (
+            OperationResult.fail(error="Something broke").unwrap_error()
+            == "Something broke"
+        )
         assert OperationResult(success=False, error=None).unwrap_error() == ""
 
         with pytest.raises(ValueError, match="Cannot unwrap_error on successful"):
@@ -170,7 +184,9 @@ class TestOperationResultTransformAndSerialize:
         assert with_rb.success is True
 
         fail_result = OperationResult.fail(
-            error="err", error_code="ERR/CODE", suggestions=("hint1", "hint2"),
+            error="err",
+            error_code="ERR/CODE",
+            suggestions=("hint1", "hint2"),
         )
         fail_with_rb = fail_result.with_rollback({"cmd": "value"})
         assert fail_with_rb.error == "err"

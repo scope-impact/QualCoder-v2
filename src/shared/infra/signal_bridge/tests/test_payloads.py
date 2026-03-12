@@ -1,6 +1,6 @@
 """Tests for Signal Bridge payloads."""
 
-from datetime import UTC, datetime
+from datetime import datetime
 
 import allure
 import pytest
@@ -35,7 +35,9 @@ class TestActivityStatus:
 class TestSignalPayload:
     """Tests for SignalPayload base type."""
 
-    @allure.title("Creates payload, is immutable, and from_event handles local/AI sessions")
+    @allure.title(
+        "Creates payload, is immutable, and from_event handles local/AI sessions"
+    )
     def test_create_immutability_and_from_event(self) -> None:
         ts = datetime(2026, 1, 29, 12, 0, 0)
 
@@ -99,7 +101,9 @@ class TestActivityItem:
         assert item.is_ai_action is False
         assert item.metadata == {}
 
-    @allure.title("Factory methods (completed, pending, failed) set correct status and metadata")
+    @allure.title(
+        "Factory methods (completed, pending, failed) set correct status and metadata"
+    )
     def test_factory_methods(self) -> None:
         # completed
         completed = ActivityItem.completed(

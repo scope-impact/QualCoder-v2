@@ -101,7 +101,6 @@ def rename_folder(
     if folder_repo:
         folder_repo.save(updated_folder)
 
-
     # Publish event
     event_bus.publish(event)
 

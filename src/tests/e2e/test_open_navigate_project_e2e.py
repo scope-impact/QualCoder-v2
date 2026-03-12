@@ -80,9 +80,7 @@ class TestOpenExistingProject:
 
     @allure.title("AC #1: Open fails for non-existent file and invalid database")
     @allure.severity(allure.severity_level.NORMAL)
-    def test_open_fails_for_invalid(
-        self, app_context: AppContext, tmp_path: Path
-    ):
+    def test_open_fails_for_invalid(self, app_context: AppContext, tmp_path: Path):
         with allure.step("Attempt to open non-existent project"):
             nonexistent = tmp_path / "does_not_exist.qda"
             result = app_context.open_project(str(nonexistent))
@@ -101,7 +99,9 @@ class TestOpenExistingProject:
             is_valid = repo.validate_database(invalid_file)
             assert not is_valid
 
-    @allure.title("AC #3-4: Previously saved sources loaded and recent projects tracked")
+    @allure.title(
+        "AC #3-4: Previously saved sources loaded and recent projects tracked"
+    )
     @allure.severity(allure.severity_level.CRITICAL)
     def test_sources_loaded_and_recent_tracked(
         self, app_context: AppContext, project_with_data: Path
@@ -128,7 +128,9 @@ class TestOpenExistingProject:
 @allure.story("QC-026.02 Create New Project")
 @allure.severity(allure.severity_level.CRITICAL)
 class TestCreateNewProject:
-    @allure.title("AC #1-3: Create project with name/location, valid schema, and openable")
+    @allure.title(
+        "AC #1-3: Create project with name/location, valid schema, and openable"
+    )
     def test_create_project_full(
         self, app_context: AppContext, temp_project_path: Path
     ):
@@ -180,9 +182,7 @@ class TestCreateNewProject:
 
         with allure.step("Create and open new project to verify it starts empty"):
             empty_path = tmp_path / "empty_project.qda"
-            app_context.create_project(
-                name="Empty Project", path=str(empty_path)
-            )
+            app_context.create_project(name="Empty Project", path=str(empty_path))
             app_context.close_project()
             app_context.open_project(str(empty_path))
 
@@ -310,7 +310,9 @@ class TestViewSourcesList:
 @allure.story("QC-026.04 Switch Screens/Views")
 @allure.severity(allure.severity_level.NORMAL)
 class TestSwitchScreens:
-    @allure.title("AC #4-5: Context preserved when switching and all screens accessible")
+    @allure.title(
+        "AC #4-5: Context preserved when switching and all screens accessible"
+    )
     @allure.severity(allure.severity_level.CRITICAL)
     def test_context_preserved_and_all_screens(
         self, app_context: AppContext, existing_project: Path

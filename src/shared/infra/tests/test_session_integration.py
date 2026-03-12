@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import allure
 import pytest
-from sqlalchemy import create_engine, text
+from sqlalchemy import create_engine
 from sqlalchemy.pool import SingletonThreadPool
 
 from src.contexts.coding.core.commandHandlers.create_code import create_code
@@ -55,7 +55,9 @@ def repos(session):
 class TestCommandHandlerWithSession:
     """Command handlers should accept optional session and call session.commit()."""
 
-    @allure.title("create_code accepts session, persists data, and works without session")
+    @allure.title(
+        "create_code accepts session, persists data, and works without session"
+    )
     def test_create_code_with_and_without_session(self, session, repos):
         event_bus = EventBus(history_size=10)
 

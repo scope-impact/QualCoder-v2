@@ -219,7 +219,9 @@ class TestOpenProjectDialogBrowse:
     @patch(
         "src.contexts.projects.presentation.dialogs.project_dialog.QFileDialog.getOpenFileName"
     )
-    def test_browse_opens_file_dialog_and_sets_path(self, mock_file_dialog, qapp, colors):
+    def test_browse_opens_file_dialog_and_sets_path(
+        self, mock_file_dialog, qapp, colors
+    ):
         """Browse button exists, opens file dialog, and sets path on selection."""
         mock_file_dialog.return_value = ("/selected/file.qda", "")
 
@@ -506,7 +508,9 @@ class TestCreateProjectDialogBrowse:
     @patch(
         "src.contexts.projects.presentation.dialogs.project_dialog.QFileDialog.getExistingDirectory"
     )
-    def test_browse_opens_directory_dialog_and_sets_location(self, mock_dir_dialog, qapp, colors):
+    def test_browse_opens_directory_dialog_and_sets_location(
+        self, mock_dir_dialog, qapp, colors
+    ):
         """Browse button exists, opens directory dialog, and updates location."""
         with tempfile.TemporaryDirectory() as tmpdir:
             mock_dir_dialog.return_value = tmpdir

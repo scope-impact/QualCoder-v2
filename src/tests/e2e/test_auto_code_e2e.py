@@ -134,7 +134,9 @@ class TestPatternSearch:
     Tests for pattern search functionality.
     """
 
-    @allure.title("AC #1.1-2: Dialog has pattern input and user can enter search pattern")
+    @allure.title(
+        "AC #1.1-2: Dialog has pattern input and user can enter search pattern"
+    )
     @allure.severity(allure.severity_level.CRITICAL)
     def test_dialog_has_pattern_input_and_user_can_enter(self, auto_code_dialog):
         """Dialog has a text input for search pattern and user can type in it."""
@@ -191,7 +193,9 @@ class TestMatchPreview:
 
     @allure.title("AC #2.1-2: Preview emits signal, receives and caches matches")
     @allure.severity(allure.severity_level.CRITICAL)
-    def test_preview_emits_signal_and_caches_matches(self, auto_code_dialog, sample_interview_text):
+    def test_preview_emits_signal_and_caches_matches(
+        self, auto_code_dialog, sample_interview_text
+    ):
         """Preview button emits find_matches_requested signal and dialog caches matches."""
         auto_code_dialog.show()
         QApplication.processEvents()
@@ -255,9 +259,13 @@ class TestApplyToMatches:
     Tests for batch code application.
     """
 
-    @allure.title("AC #3.1-3: Apply emits signal with config, code display works correctly")
+    @allure.title(
+        "AC #3.1-3: Apply emits signal with config, code display works correctly"
+    )
     @allure.severity(allure.severity_level.CRITICAL)
-    def test_apply_emits_signal_and_code_display(self, auto_code_dialog, sample_interview_text):
+    def test_apply_emits_signal_and_code_display(
+        self, auto_code_dialog, sample_interview_text
+    ):
         """Apply button emits signal with config, and code display shows/gets selected code."""
         auto_code_dialog.show()
         QApplication.processEvents()
@@ -308,7 +316,9 @@ class TestUndoBatchCoding:
     Tests for undoing auto-code operations.
     """
 
-    @allure.title("AC #4.1-3: Coding screen has undo, tracks history, and re-applies code")
+    @allure.title(
+        "AC #4.1-3: Coding screen has undo, tracks history, and re-applies code"
+    )
     @allure.severity(allure.severity_level.NORMAL)
     def test_undo_capability_tracks_and_reapplies(self, coding_screen):
         """Coding screen supports undo: has history, tracks operations, and re-applies code."""
@@ -345,9 +355,13 @@ class TestAutoCodeBySpeaker:
     Tests for speaker-based auto-coding.
     """
 
-    @allure.title("AC #5.1+3: Dialog can request speaker detection and speaker segments")
+    @allure.title(
+        "AC #5.1+3: Dialog can request speaker detection and speaker segments"
+    )
     @allure.severity(allure.severity_level.CRITICAL)
-    def test_detect_speakers_and_get_segments_signals(self, auto_code_dialog, sample_interview_text):
+    def test_detect_speakers_and_get_segments_signals(
+        self, auto_code_dialog, sample_interview_text
+    ):
         """Dialog emits detect_speakers_requested and get_speaker_segments_requested signals."""
         auto_code_dialog.show()
         QApplication.processEvents()
@@ -389,7 +403,9 @@ class TestAgentBatchOperations:
     Tests for AI-agent batch coding functionality.
     """
 
-    @allure.title("AC #6-7: Config includes all required fields and regex match type available")
+    @allure.title(
+        "AC #6-7: Config includes all required fields and regex match type available"
+    )
     @allure.severity(allure.severity_level.NORMAL)
     def test_apply_config_fields_and_regex_match_type(self, auto_code_dialog):
         """Apply config includes pattern, match_type, scope, code; regex match type available."""
@@ -428,7 +444,9 @@ class TestAgentBatchOperations:
 class TestAutoCodeIntegration:
     """Integration tests for complete auto-code workflow."""
 
-    @allure.title("Full workflow: Set code, pattern, preview, apply; and cancel without apply")
+    @allure.title(
+        "Full workflow: Set code, pattern, preview, apply; and cancel without apply"
+    )
     @allure.severity(allure.severity_level.CRITICAL)
     def test_full_auto_code_workflow_and_cancel(
         self, auto_code_dialog, sample_interview_text, colors

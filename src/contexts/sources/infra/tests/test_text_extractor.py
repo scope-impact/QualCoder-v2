@@ -31,8 +31,12 @@ def extractor() -> TextExtractor:
 class TestTextExtraction:
     """Tests for extracting text from documents."""
 
-    @allure.title("Extracts text preserving content, line breaks, unicode, and file size")
-    def test_extracts_text_with_formatting_and_metadata(self, extractor: TextExtractor, tmp_path: Path):
+    @allure.title(
+        "Extracts text preserving content, line breaks, unicode, and file size"
+    )
+    def test_extracts_text_with_formatting_and_metadata(
+        self, extractor: TextExtractor, tmp_path: Path
+    ):
         """AC #2 & #4: Extracts text and preserves formatting."""
         # Basic text extraction
         txt_file = tmp_path / "sample.txt"
@@ -119,5 +123,7 @@ class TestSupportedFormats:
             pytest.param("image.png", False, id="png"),
         ],
     )
-    def test_format_support(self, extractor: TextExtractor, filename: str, expected: bool):
+    def test_format_support(
+        self, extractor: TextExtractor, filename: str, expected: bool
+    ):
         assert extractor.supports(Path(filename)) == expected

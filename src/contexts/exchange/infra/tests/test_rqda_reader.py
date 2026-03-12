@@ -52,7 +52,6 @@ def _create_rqda_db(path):
 @allure.feature("QC-039 Import Export Formats")
 @allure.story("QC-036.03 Import RQDA")
 class TestRqdaReader:
-
     @allure.title("Reads codes, sources, and codings; excludes deleted records")
     def test_read_codes_sources_codings_excluding_deleted(self, tmp_path):
         from src.contexts.exchange.infra.rqda_reader import read_rqda
@@ -66,9 +65,7 @@ class TestRqdaReader:
         conn.execute(
             "INSERT INTO freecode (name, id, color, status) VALUES ('Anger', 2, '#ff0000', 1)"
         )
-        conn.execute(
-            "INSERT INTO freecode (name, id, status) VALUES ('Deleted', 3, 0)"
-        )
+        conn.execute("INSERT INTO freecode (name, id, status) VALUES ('Deleted', 3, 0)")
         # Sources: 1 active, 1 deleted
         conn.execute(
             "INSERT INTO source (name, id, file, status) VALUES ('interview.txt', 1, 'Hello world.', 1)"

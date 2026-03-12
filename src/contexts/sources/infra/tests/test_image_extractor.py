@@ -137,16 +137,22 @@ class TestImageExtraction:
 
         # ImageExtractionResult dataclass
         full = ImageExtractionResult(
-            width=1920, height=1080, format="JPEG",
-            file_size=204800, metadata={"mode": "RGB"},
+            width=1920,
+            height=1080,
+            format="JPEG",
+            file_size=204800,
+            metadata={"mode": "RGB"},
         )
         assert full.width == 1920
         assert full.format == "JPEG"
         assert full.metadata == {"mode": "RGB"}
 
         empty = ImageExtractionResult(
-            width=800, height=600, format="PNG",
-            file_size=1024, metadata={},
+            width=800,
+            height=600,
+            format="PNG",
+            file_size=1024,
+            metadata={},
         )
         assert empty.metadata == {}
 
@@ -173,6 +179,8 @@ class TestSupportedFormats:
             ("image.JpEg", True),
         ],
     )
-    def test_non_image_and_case_insensitive(self, extractor: ImageExtractor, filename: str, expected: bool):
+    def test_non_image_and_case_insensitive(
+        self, extractor: ImageExtractor, filename: str, expected: bool
+    ):
         """Does not support non-image file types; extension checking is case-insensitive."""
         assert extractor.supports(Path(filename)) == expected

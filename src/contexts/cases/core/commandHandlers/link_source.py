@@ -70,7 +70,6 @@ def link_source_to_case(
     if case_repo:
         case_repo.link_source(case_id, source_id, "")
 
-
     event_bus.publish(event)
 
     logger.info(

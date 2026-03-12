@@ -289,7 +289,9 @@ class TestDeleteCategoryHandler:
             delete_category,
         )
 
-        command = DeleteCategoryCommand(category_id="999", orphan_strategy="move_to_parent")
+        command = DeleteCategoryCommand(
+            category_id="999", orphan_strategy="move_to_parent"
+        )
         result = delete_category(
             command=command,
             code_repo=code_repo,
@@ -423,7 +425,9 @@ class TestChangeCodeColorHandler:
 class TestApplyCodeHandler:
     """Tests for the apply_code command handler."""
 
-    @allure.title("Successfully applies code, saves segment, publishes event with rollback")
+    @allure.title(
+        "Successfully applies code, saves segment, publishes event with rollback"
+    )
     def test_apply_code_success(
         self,
         code_repo: MockCodeRepository,
@@ -611,8 +615,18 @@ class TestHandlerIntegration:
         category_repo.save(parent)
         category_repo.save(child)
 
-        code1 = Code(id=CodeId(value="10"), name="Code1", color=Color(255, 0, 0), category_id=child.id)
-        code2 = Code(id=CodeId(value="20"), name="Code2", color=Color(0, 255, 0), category_id=child.id)
+        code1 = Code(
+            id=CodeId(value="10"),
+            name="Code1",
+            color=Color(255, 0, 0),
+            category_id=child.id,
+        )
+        code2 = Code(
+            id=CodeId(value="20"),
+            name="Code2",
+            color=Color(0, 255, 0),
+            category_id=child.id,
+        )
         code_repo.save(code1)
         code_repo.save(code2)
 

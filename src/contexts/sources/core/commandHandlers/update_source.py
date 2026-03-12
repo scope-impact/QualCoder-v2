@@ -113,7 +113,6 @@ def update_source(
     # Step 4: Persist to repository (source of truth)
     source_repo.save(updated_source)
 
-
     # Step 5: Publish event
     event_bus.publish(event)
 

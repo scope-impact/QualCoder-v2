@@ -65,7 +65,9 @@ def coded_sources(source_repo, code_repo, segment_repo):
 
 @allure.story("QC-039.05 Export Coded Text as HTML")
 class TestExportCodedHTML:
-    @allure.title("AC #1+#2+#3: Export creates HTML with highlighted coded segments and publishes event")
+    @allure.title(
+        "AC #1+#2+#3: Export creates HTML with highlighted coded segments and publishes event"
+    )
     def test_export_coded_html_full(
         self, source_repo, code_repo, segment_repo, event_bus, coded_sources, tmp_path
     ):

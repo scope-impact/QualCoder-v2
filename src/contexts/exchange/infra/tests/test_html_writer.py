@@ -33,7 +33,9 @@ class TestHTMLWriter:
             selected_text=text,
         )
 
-    @allure.title("Writes HTML with sources, segments, highlights, and escaped special chars")
+    @allure.title(
+        "Writes HTML with sources, segments, highlights, and escaped special chars"
+    )
     def test_write_html_with_sources_highlights_and_escaping(self, tmp_path):
         from src.contexts.exchange.infra.html_writer import write_coded_html
 
@@ -41,7 +43,6 @@ class TestHTMLWriter:
         sid2 = SourceId.new()
         sid3 = SourceId.new()
         code = self._make_code("Joy", "#00FF00")
-        code2 = self._make_code("Important", "#FFAA00")
 
         sources_data = [
             {

@@ -57,7 +57,6 @@ def remove_case(
     if case_repo:
         case_repo.delete(case_id)
 
-
     event_bus.publish(event)
 
     logger.info("Case removed: id=%s", command.case_id)

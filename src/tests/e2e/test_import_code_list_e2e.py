@@ -66,12 +66,10 @@ class TestImportCodeList:
     def test_ac2_ac3_categories_and_duplicates(
         self, code_repo, category_repo, segment_repo, event_bus, tmp_path
     ):
-        from src.contexts.coding.core.entities import Code, Color
         from src.contexts.exchange.core.commandHandlers.import_code_list import (
             import_code_list,
         )
         from src.contexts.exchange.core.commands import ImportCodeListCommand
-        from src.shared.common.types import CodeId
 
         with allure.step("Import indented code list with categories"):
             code_list_file = tmp_path / "codes.txt"
@@ -145,7 +143,9 @@ class TestImportCodeList:
 
         with allure.step("Verify failure with nonexistent file"):
             result = import_code_list(
-                command=ImportCodeListCommand(source_path=str(tmp_path / "missing.txt")),
+                command=ImportCodeListCommand(
+                    source_path=str(tmp_path / "missing.txt")
+                ),
                 code_repo=code_repo,
                 category_repo=category_repo,
                 segment_repo=segment_repo,

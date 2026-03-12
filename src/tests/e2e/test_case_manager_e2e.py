@@ -428,7 +428,10 @@ class TestAddAttributeFlow:
 
         # Text attribute
         result = viewmodel.add_attribute(
-            case_id="1", name="occupation", attr_type="text", value="engineer",
+            case_id="1",
+            name="occupation",
+            attr_type="text",
+            value="engineer",
         )
         assert result is True
         attr = case_repo.get_attribute(CaseId(value="1"), "occupation")
@@ -437,7 +440,10 @@ class TestAddAttributeFlow:
 
         # Number attribute
         result = viewmodel.add_attribute(
-            case_id="1", name="income", attr_type="number", value=75000,
+            case_id="1",
+            name="income",
+            attr_type="number",
+            value=75000,
         )
         assert result is True
         attr = case_repo.get_attribute(CaseId(value="1"), "income")
@@ -446,7 +452,10 @@ class TestAddAttributeFlow:
 
         # Boolean attribute
         result = viewmodel.add_attribute(
-            case_id="1", name="employed", attr_type="boolean", value=True,
+            case_id="1",
+            name="employed",
+            attr_type="boolean",
+            value=True,
         )
         assert result is True
         attr = case_repo.get_attribute(CaseId(value="1"), "employed")
@@ -476,7 +485,10 @@ class TestAddAttributeFlow:
         summary = viewmodel.get_summary()
         initial_attrs = summary.total_attributes
         viewmodel.add_attribute(
-            case_id="3", name="location_type", attr_type="text", value="urban",
+            case_id="3",
+            name="location_type",
+            attr_type="text",
+            value="urban",
         )
         summary = viewmodel.get_summary()
         assert summary.total_attributes == initial_attrs + 1

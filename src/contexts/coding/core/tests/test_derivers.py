@@ -37,9 +37,12 @@ class TestDeriveCreateCode:
         # Success case
         state = CodingState(existing_codes=())
         result = derive_create_code(
-            name="Theme", color=Color(255, 128, 0),
+            name="Theme",
+            color=Color(255, 128, 0),
             memo="A recurring theme in interviews",
-            category_id=None, owner="user1", state=state,
+            category_id=None,
+            owner="user1",
+            state=state,
         )
         assert isinstance(result, CodeCreated)
         assert result.name == "Theme"
@@ -48,27 +51,41 @@ class TestDeriveCreateCode:
 
         # Empty name
         result = derive_create_code(
-            name="", color=Color(255, 0, 0), memo=None,
-            category_id=None, owner=None, state=state,
+            name="",
+            color=Color(255, 0, 0),
+            memo=None,
+            category_id=None,
+            owner=None,
+            state=state,
         )
         assert isinstance(result, CodeNotCreated)
         assert result.reason == "EMPTY_NAME"
 
         # Whitespace name
         result = derive_create_code(
-            name="   ", color=Color(255, 0, 0), memo=None,
-            category_id=None, owner=None, state=state,
+            name="   ",
+            color=Color(255, 0, 0),
+            memo=None,
+            category_id=None,
+            owner=None,
+            state=state,
         )
         assert isinstance(result, CodeNotCreated)
         assert result.reason == "EMPTY_NAME"
 
         # Duplicate name
         state_dup = CodingState(
-            existing_codes=(Code(id=CodeId(value="1"), name="Theme", color=Color(255, 0, 0)),)
+            existing_codes=(
+                Code(id=CodeId(value="1"), name="Theme", color=Color(255, 0, 0)),
+            )
         )
         result = derive_create_code(
-            name="Theme", color=Color(255, 0, 0), memo=None,
-            category_id=None, owner=None, state=state_dup,
+            name="Theme",
+            color=Color(255, 0, 0),
+            memo=None,
+            category_id=None,
+            owner=None,
+            state=state_dup,
         )
         assert isinstance(result, CodeNotCreated)
         assert result.reason == "DUPLICATE_NAME"
@@ -76,8 +93,11 @@ class TestDeriveCreateCode:
 
         # Invalid category
         result = derive_create_code(
-            name="Theme", color=Color(255, 0, 0), memo=None,
-            category_id=CategoryId(value="999"), owner=None,
+            name="Theme",
+            color=Color(255, 0, 0),
+            memo=None,
+            category_id=CategoryId(value="999"),
+            owner=None,
             state=CodingState(existing_codes=(), existing_categories=()),
         )
         assert isinstance(result, CodeNotCreated)
@@ -104,13 +124,19 @@ class TestDeriveRenameCode:
         state = CodingState(existing_codes=existing)
 
         # Success
-        result = derive_rename_code(code_id=CodeId(value="1"), new_name="New Name", state=state)
+        result = derive_rename_code(
+            code_id=CodeId(value="1"), new_name="New Name", state=state
+        )
         assert isinstance(result, CodeRenamed)
         assert result.old_name == "Old Name"
         assert result.new_name == "New Name"
 
         # Not found
-        result = derive_rename_code(code_id=CodeId(value="999"), new_name="New Name", state=CodingState(existing_codes=()))
+        result = derive_rename_code(
+            code_id=CodeId(value="999"),
+            new_name="New Name",
+            state=CodingState(existing_codes=()),
+        )
         assert isinstance(result, CodeNotRenamed)
         assert result.reason == "NOT_FOUND"
 
@@ -120,7 +146,9 @@ class TestDeriveRenameCode:
         assert result.reason == "EMPTY_NAME"
 
         # Duplicate name
-        result = derive_rename_code(code_id=CodeId(value="1"), new_name="Pattern", state=state)
+        result = derive_rename_code(
+            code_id=CodeId(value="1"), new_name="Pattern", state=state
+        )
         assert isinstance(result, CodeNotRenamed)
         assert result.reason == "DUPLICATE_NAME"
 
@@ -145,14 +173,17 @@ class TestDeriveChangeCodeColor:
         state = CodingState(existing_codes=existing)
 
         result = derive_change_code_color(
-            code_id=CodeId(value="1"), new_color=Color(0, 255, 0), state=state,
+            code_id=CodeId(value="1"),
+            new_color=Color(0, 255, 0),
+            state=state,
         )
         assert isinstance(result, CodeColorChanged)
         assert result.old_color == Color(255, 0, 0)
         assert result.new_color == Color(0, 255, 0)
 
         result = derive_change_code_color(
-            code_id=CodeId(value="999"), new_color=Color(0, 255, 0),
+            code_id=CodeId(value="999"),
+            new_color=Color(0, 255, 0),
             state=CodingState(existing_codes=()),
         )
         assert isinstance(result, CodeNotUpdated)
@@ -176,17 +207,25 @@ class TestDeriveUpdateCodeMemo:
         from src.shared import CodeId
 
         existing = (
-            Code(id=CodeId(value="1"), name="Theme", color=Color(255, 0, 0), memo="Old memo"),
+            Code(
+                id=CodeId(value="1"),
+                name="Theme",
+                color=Color(255, 0, 0),
+                memo="Old memo",
+            ),
         )
         state = CodingState(existing_codes=existing)
 
-        result = derive_update_code_memo(code_id=CodeId(value="1"), new_memo="New memo", state=state)
+        result = derive_update_code_memo(
+            code_id=CodeId(value="1"), new_memo="New memo", state=state
+        )
         assert isinstance(result, CodeMemoUpdated)
         assert result.old_memo == "Old memo"
         assert result.new_memo == "New memo"
 
         result = derive_update_code_memo(
-            code_id=CodeId(value="999"), new_memo="New memo",
+            code_id=CodeId(value="999"),
+            new_memo="New memo",
             state=CodingState(existing_codes=()),
         )
         assert isinstance(result, CodeNotUpdated)
@@ -201,21 +240,29 @@ class TestDeriveDeleteCode:
     def test_deletes_and_rejects_invalid(self):
         """Should delete code and reject when not found or has references."""
         from src.contexts.coding.core.derivers import CodingState, derive_delete_code
-        from src.contexts.coding.core.entities import Code, Color, TextPosition, TextSegment
+        from src.contexts.coding.core.entities import (
+            Code,
+            Color,
+            TextPosition,
+            TextSegment,
+        )
         from src.contexts.coding.core.events import CodeDeleted
         from src.contexts.coding.core.failure_events import CodeNotDeleted
         from src.shared import CodeId, SegmentId, SourceId
 
         existing = (Code(id=CodeId(value="1"), name="Theme", color=Color(255, 0, 0)),)
         segment = TextSegment(
-            id=SegmentId(value="1"), source_id=SourceId(value="1"),
-            code_id=CodeId(value="1"), position=TextPosition(start=0, end=10),
+            id=SegmentId(value="1"),
+            source_id=SourceId(value="1"),
+            code_id=CodeId(value="1"),
+            position=TextPosition(start=0, end=10),
             selected_text="test",
         )
 
         # Without segments
         result = derive_delete_code(
-            code_id=CodeId(value="1"), delete_segments=False,
+            code_id=CodeId(value="1"),
+            delete_segments=False,
             state=CodingState(existing_codes=existing, existing_segments=()),
         )
         assert isinstance(result, CodeDeleted)
@@ -223,7 +270,8 @@ class TestDeriveDeleteCode:
 
         # With segments, forced
         result = derive_delete_code(
-            code_id=CodeId(value="1"), delete_segments=True,
+            code_id=CodeId(value="1"),
+            delete_segments=True,
             state=CodingState(existing_codes=existing, existing_segments=(segment,)),
         )
         assert isinstance(result, CodeDeleted)
@@ -231,7 +279,8 @@ class TestDeriveDeleteCode:
 
         # Not found
         result = derive_delete_code(
-            code_id=CodeId(value="999"), delete_segments=False,
+            code_id=CodeId(value="999"),
+            delete_segments=False,
             state=CodingState(existing_codes=(), existing_segments=()),
         )
         assert isinstance(result, CodeNotDeleted)
@@ -239,7 +288,8 @@ class TestDeriveDeleteCode:
 
         # Has references without force
         result = derive_delete_code(
-            code_id=CodeId(value="1"), delete_segments=False,
+            code_id=CodeId(value="1"),
+            delete_segments=False,
             state=CodingState(existing_codes=existing, existing_segments=(segment,)),
         )
         assert isinstance(result, CodeNotDeleted)
@@ -267,37 +317,49 @@ class TestDeriveMergeCodes:
 
         # Success
         result = derive_merge_codes(
-            source_code_id=CodeId(value="1"), target_code_id=CodeId(value="2"), state=state,
+            source_code_id=CodeId(value="1"),
+            target_code_id=CodeId(value="2"),
+            state=state,
         )
         assert isinstance(result, CodesMerged)
         assert result.source_code_id == CodeId(value="1")
 
         # Self-merge
-        state_self = CodingState(existing_codes=(
-            Code(id=CodeId(value="1"), name="Theme", color=Color(255, 0, 0)),
-        ))
+        state_self = CodingState(
+            existing_codes=(
+                Code(id=CodeId(value="1"), name="Theme", color=Color(255, 0, 0)),
+            )
+        )
         result = derive_merge_codes(
-            source_code_id=CodeId(value="1"), target_code_id=CodeId(value="1"), state=state_self,
+            source_code_id=CodeId(value="1"),
+            target_code_id=CodeId(value="1"),
+            state=state_self,
         )
         assert isinstance(result, CodesNotMerged)
         assert result.reason == "SAME_CODE"
 
         # Source not found
         result = derive_merge_codes(
-            source_code_id=CodeId(value="1"), target_code_id=CodeId(value="2"),
-            state=CodingState(existing_codes=(
-                Code(id=CodeId(value="2"), name="Target", color=Color(0, 255, 0)),
-            )),
+            source_code_id=CodeId(value="1"),
+            target_code_id=CodeId(value="2"),
+            state=CodingState(
+                existing_codes=(
+                    Code(id=CodeId(value="2"), name="Target", color=Color(0, 255, 0)),
+                )
+            ),
         )
         assert isinstance(result, CodesNotMerged)
         assert result.reason == "SOURCE_NOT_FOUND"
 
         # Target not found
         result = derive_merge_codes(
-            source_code_id=CodeId(value="1"), target_code_id=CodeId(value="2"),
-            state=CodingState(existing_codes=(
-                Code(id=CodeId(value="1"), name="Source", color=Color(255, 0, 0)),
-            )),
+            source_code_id=CodeId(value="1"),
+            target_code_id=CodeId(value="2"),
+            state=CodingState(
+                existing_codes=(
+                    Code(id=CodeId(value="1"), name="Source", color=Color(255, 0, 0)),
+                )
+            ),
         )
         assert isinstance(result, CodesNotMerged)
         assert result.reason == "TARGET_NOT_FOUND"
@@ -310,29 +372,44 @@ class TestDeriveMoveCodeToCategory:
     @allure.title("Moves code to category/root and rejects invalid inputs")
     def test_moves_and_rejects_invalid(self):
         """Should move code to category/root and reject when not found."""
-        from src.contexts.coding.core.derivers import CodingState, derive_move_code_to_category
+        from src.contexts.coding.core.derivers import (
+            CodingState,
+            derive_move_code_to_category,
+        )
         from src.contexts.coding.core.entities import Category, Code, Color
         from src.contexts.coding.core.events import CodeMovedToCategory
         from src.contexts.coding.core.failure_events import CodeNotMoved
         from src.shared import CategoryId, CodeId
 
-        existing_codes = (Code(id=CodeId(value="1"), name="Theme", color=Color(255, 0, 0)),)
+        existing_codes = (
+            Code(id=CodeId(value="1"), name="Theme", color=Color(255, 0, 0)),
+        )
         existing_categories = (Category(id=CategoryId(value="1"), name="Themes"),)
-        state = CodingState(existing_codes=existing_codes, existing_categories=existing_categories)
+        state = CodingState(
+            existing_codes=existing_codes, existing_categories=existing_categories
+        )
 
         # Move to category
         result = derive_move_code_to_category(
-            code_id=CodeId(value="1"), new_category_id=CategoryId(value="1"), state=state,
+            code_id=CodeId(value="1"),
+            new_category_id=CategoryId(value="1"),
+            state=state,
         )
         assert isinstance(result, CodeMovedToCategory)
         assert result.new_category_id == CategoryId(value="1")
 
         # Move to root
         existing_with_cat = (
-            Code(id=CodeId(value="1"), name="Theme", color=Color(255, 0, 0), category_id=CategoryId(value="1")),
+            Code(
+                id=CodeId(value="1"),
+                name="Theme",
+                color=Color(255, 0, 0),
+                category_id=CategoryId(value="1"),
+            ),
         )
         result = derive_move_code_to_category(
-            code_id=CodeId(value="1"), new_category_id=None,
+            code_id=CodeId(value="1"),
+            new_category_id=None,
             state=CodingState(existing_codes=existing_with_cat),
         )
         assert isinstance(result, CodeMovedToCategory)
@@ -340,7 +417,8 @@ class TestDeriveMoveCodeToCategory:
 
         # Code not found
         result = derive_move_code_to_category(
-            code_id=CodeId(value="999"), new_category_id=CategoryId(value="1"),
+            code_id=CodeId(value="999"),
+            new_category_id=CategoryId(value="1"),
             state=CodingState(existing_codes=(), existing_categories=()),
         )
         assert isinstance(result, CodeNotMoved)
@@ -348,7 +426,8 @@ class TestDeriveMoveCodeToCategory:
 
         # Category not found
         result = derive_move_code_to_category(
-            code_id=CodeId(value="1"), new_category_id=CategoryId(value="999"),
+            code_id=CodeId(value="1"),
+            new_category_id=CategoryId(value="999"),
             state=CodingState(existing_codes=existing_codes, existing_categories=()),
         )
         assert isinstance(result, CodeNotMoved)
@@ -367,7 +446,10 @@ class TestDeriveCreateCategory:
     @allure.title("Creates category and rejects invalid inputs")
     def test_creates_and_rejects_invalid(self):
         """Should create category and reject invalid inputs."""
-        from src.contexts.coding.core.derivers import CodingState, derive_create_category
+        from src.contexts.coding.core.derivers import (
+            CodingState,
+            derive_create_category,
+        )
         from src.contexts.coding.core.entities import Category
         from src.contexts.coding.core.events import CategoryCreated
         from src.contexts.coding.core.failure_events import CategoryNotCreated
@@ -377,14 +459,19 @@ class TestDeriveCreateCategory:
 
         # Success
         result = derive_create_category(
-            name="Themes", parent_id=None, memo="Main themes category",
-            owner="user1", state=state,
+            name="Themes",
+            parent_id=None,
+            memo="Main themes category",
+            owner="user1",
+            state=state,
         )
         assert isinstance(result, CategoryCreated)
         assert result.name == "Themes"
 
         # Empty name
-        result = derive_create_category(name="", parent_id=None, memo=None, owner=None, state=state)
+        result = derive_create_category(
+            name="", parent_id=None, memo=None, owner=None, state=state
+        )
         assert isinstance(result, CategoryNotCreated)
         assert result.reason == "EMPTY_NAME"
 
@@ -392,13 +479,18 @@ class TestDeriveCreateCategory:
         state_dup = CodingState(
             existing_categories=(Category(id=CategoryId(value="1"), name="Themes"),)
         )
-        result = derive_create_category(name="Themes", parent_id=None, memo=None, owner=None, state=state_dup)
+        result = derive_create_category(
+            name="Themes", parent_id=None, memo=None, owner=None, state=state_dup
+        )
         assert isinstance(result, CategoryNotCreated)
         assert result.reason == "DUPLICATE_NAME"
 
         # Invalid parent
         result = derive_create_category(
-            name="Child", parent_id=CategoryId(value="999"), memo=None, owner=None,
+            name="Child",
+            parent_id=CategoryId(value="999"),
+            memo=None,
+            owner=None,
             state=CodingState(existing_categories=()),
         )
         assert isinstance(result, CategoryNotCreated)
@@ -412,7 +504,10 @@ class TestDeriveRenameCategory:
     @allure.title("Renames category and fails when not found")
     def test_renames_category_and_fails_when_not_found(self):
         """Should rename category with valid inputs and fail when not found."""
-        from src.contexts.coding.core.derivers import CodingState, derive_rename_category
+        from src.contexts.coding.core.derivers import (
+            CodingState,
+            derive_rename_category,
+        )
         from src.contexts.coding.core.entities import Category
         from src.contexts.coding.core.events import CategoryRenamed
         from src.contexts.coding.core.failure_events import CategoryNotRenamed
@@ -421,13 +516,16 @@ class TestDeriveRenameCategory:
         existing = (Category(id=CategoryId(value="1"), name="Old Name"),)
         state = CodingState(existing_categories=existing)
 
-        result = derive_rename_category(category_id=CategoryId(value="1"), new_name="New Name", state=state)
+        result = derive_rename_category(
+            category_id=CategoryId(value="1"), new_name="New Name", state=state
+        )
         assert isinstance(result, CategoryRenamed)
         assert result.old_name == "Old Name"
         assert result.new_name == "New Name"
 
         result = derive_rename_category(
-            category_id=CategoryId(value="999"), new_name="New Name",
+            category_id=CategoryId(value="999"),
+            new_name="New Name",
             state=CodingState(existing_categories=()),
         )
         assert isinstance(result, CategoryNotRenamed)
@@ -441,7 +539,10 @@ class TestDeriveDeleteCategory:
     @allure.title("Deletes category and fails when not found")
     def test_deletes_category_and_fails_when_not_found(self):
         """Should delete category with valid inputs and fail when not found."""
-        from src.contexts.coding.core.derivers import CodingState, derive_delete_category
+        from src.contexts.coding.core.derivers import (
+            CodingState,
+            derive_delete_category,
+        )
         from src.contexts.coding.core.entities import Category
         from src.contexts.coding.core.events import CategoryDeleted
         from src.contexts.coding.core.failure_events import CategoryNotDeleted
@@ -451,13 +552,16 @@ class TestDeriveDeleteCategory:
         state = CodingState(existing_categories=existing)
 
         result = derive_delete_category(
-            category_id=CategoryId(value="1"), orphan_strategy="move_to_parent", state=state,
+            category_id=CategoryId(value="1"),
+            orphan_strategy="move_to_parent",
+            state=state,
         )
         assert isinstance(result, CategoryDeleted)
         assert result.name == "Themes"
 
         result = derive_delete_category(
-            category_id=CategoryId(value="999"), orphan_strategy="move_to_parent",
+            category_id=CategoryId(value="999"),
+            orphan_strategy="move_to_parent",
             state=CodingState(existing_categories=()),
         )
         assert isinstance(result, CategoryNotDeleted)
@@ -476,20 +580,33 @@ class TestDeriveApplyCodeToText:
     @allure.title("Applies code to text and rejects invalid inputs")
     def test_applies_and_rejects_invalid(self):
         """Should create SegmentCoded event and reject invalid inputs."""
-        from src.contexts.coding.core.derivers import CodingState, derive_apply_code_to_text
+        from src.contexts.coding.core.derivers import (
+            CodingState,
+            derive_apply_code_to_text,
+        )
         from src.contexts.coding.core.entities import Code, Color
         from src.contexts.coding.core.events import SegmentCoded
         from src.contexts.coding.core.failure_events import SegmentNotCoded
         from src.shared import CodeId, SourceId
 
-        existing_codes = (Code(id=CodeId(value="1"), name="Theme", color=Color(255, 0, 0)),)
+        existing_codes = (
+            Code(id=CodeId(value="1"), name="Theme", color=Color(255, 0, 0)),
+        )
 
         # Success
-        state = CodingState(existing_codes=existing_codes, source_length=100, source_exists=True)
+        state = CodingState(
+            existing_codes=existing_codes, source_length=100, source_exists=True
+        )
         result = derive_apply_code_to_text(
-            code_id=CodeId(value="1"), source_id=SourceId(value="1"),
-            start=10, end=20, selected_text="sample text",
-            memo="A note", importance=1, owner="user1", state=state,
+            code_id=CodeId(value="1"),
+            source_id=SourceId(value="1"),
+            start=10,
+            end=20,
+            selected_text="sample text",
+            memo="A note",
+            importance=1,
+            owner="user1",
+            state=state,
         )
         assert isinstance(result, SegmentCoded)
         assert result.code_id == CodeId(value="1")
@@ -497,29 +614,51 @@ class TestDeriveApplyCodeToText:
         # Code not found
         state_nc = CodingState(existing_codes=(), source_length=100, source_exists=True)
         result = derive_apply_code_to_text(
-            code_id=CodeId(value="999"), source_id=SourceId(value="1"),
-            start=10, end=20, selected_text="sample text",
-            memo=None, importance=0, owner=None, state=state_nc,
+            code_id=CodeId(value="999"),
+            source_id=SourceId(value="1"),
+            start=10,
+            end=20,
+            selected_text="sample text",
+            memo=None,
+            importance=0,
+            owner=None,
+            state=state_nc,
         )
         assert isinstance(result, SegmentNotCoded)
         assert result.reason == "CODE_NOT_FOUND"
 
         # Source not found
-        state_ns = CodingState(existing_codes=existing_codes, source_length=0, source_exists=False)
+        state_ns = CodingState(
+            existing_codes=existing_codes, source_length=0, source_exists=False
+        )
         result = derive_apply_code_to_text(
-            code_id=CodeId(value="1"), source_id=SourceId(value="1"),
-            start=10, end=20, selected_text="sample text",
-            memo=None, importance=0, owner=None, state=state_ns,
+            code_id=CodeId(value="1"),
+            source_id=SourceId(value="1"),
+            start=10,
+            end=20,
+            selected_text="sample text",
+            memo=None,
+            importance=0,
+            owner=None,
+            state=state_ns,
         )
         assert isinstance(result, SegmentNotCoded)
         assert result.reason == "SOURCE_NOT_FOUND"
 
         # Invalid position
-        state_ip = CodingState(existing_codes=existing_codes, source_length=50, source_exists=True)
+        state_ip = CodingState(
+            existing_codes=existing_codes, source_length=50, source_exists=True
+        )
         result = derive_apply_code_to_text(
-            code_id=CodeId(value="1"), source_id=SourceId(value="1"),
-            start=40, end=60, selected_text="sample text",
-            memo=None, importance=0, owner=None, state=state_ip,
+            code_id=CodeId(value="1"),
+            source_id=SourceId(value="1"),
+            start=40,
+            end=60,
+            selected_text="sample text",
+            memo=None,
+            importance=0,
+            owner=None,
+            state=state_ip,
         )
         assert isinstance(result, SegmentNotCoded)
         assert result.reason == "INVALID_POSITION"
@@ -539,13 +678,19 @@ class TestDeriveRemoveSegmentAndUpdateMemo:
         )
         from src.contexts.coding.core.entities import TextPosition, TextSegment
         from src.contexts.coding.core.events import SegmentMemoUpdated, SegmentUncoded
-        from src.contexts.coding.core.failure_events import SegmentNotRemoved, SegmentNotUpdated
+        from src.contexts.coding.core.failure_events import (
+            SegmentNotRemoved,
+            SegmentNotUpdated,
+        )
         from src.shared import CodeId, SegmentId, SourceId
 
         segment = TextSegment(
-            id=SegmentId(value="1"), source_id=SourceId(value="1"),
-            code_id=CodeId(value="1"), position=TextPosition(start=0, end=10),
-            selected_text="test", memo="Old memo",
+            id=SegmentId(value="1"),
+            source_id=SourceId(value="1"),
+            code_id=CodeId(value="1"),
+            position=TextPosition(start=0, end=10),
+            selected_text="test",
+            memo="Old memo",
         )
         state = CodingState(existing_segments=(segment,))
 
@@ -556,14 +701,17 @@ class TestDeriveRemoveSegmentAndUpdateMemo:
 
         # Remove not found
         result = derive_remove_segment(
-            segment_id=SegmentId(value="999"), state=CodingState(existing_segments=()),
+            segment_id=SegmentId(value="999"),
+            state=CodingState(existing_segments=()),
         )
         assert isinstance(result, SegmentNotRemoved)
         assert result.reason == "NOT_FOUND"
 
         # Update memo success
         result = derive_update_segment_memo(
-            segment_id=SegmentId(value="1"), new_memo="New memo", state=state,
+            segment_id=SegmentId(value="1"),
+            new_memo="New memo",
+            state=state,
         )
         assert isinstance(result, SegmentMemoUpdated)
         assert result.old_memo == "Old memo"
@@ -571,7 +719,8 @@ class TestDeriveRemoveSegmentAndUpdateMemo:
 
         # Update memo not found
         result = derive_update_segment_memo(
-            segment_id=SegmentId(value="999"), new_memo="New memo",
+            segment_id=SegmentId(value="999"),
+            new_memo="New memo",
             state=CodingState(existing_segments=()),
         )
         assert isinstance(result, SegmentNotUpdated)
@@ -595,18 +744,30 @@ class TestDeriveBatchOperations:
             derive_create_batch,
             derive_undo_batch,
         )
-        from src.contexts.coding.core.entities import AutoCodeBatch, BatchId, Code, Color
+        from src.contexts.coding.core.entities import (
+            AutoCodeBatch,
+            BatchId,
+            Code,
+            Color,
+        )
         from src.contexts.coding.core.events import BatchCreated, BatchUndone
-        from src.contexts.coding.core.failure_events import BatchNotCreated, BatchNotUndone
+        from src.contexts.coding.core.failure_events import (
+            BatchNotCreated,
+            BatchNotUndone,
+        )
         from src.shared import CodeId, SegmentId
 
-        existing_codes = (Code(id=CodeId(value="1"), name="Theme", color=Color(255, 0, 0)),)
+        existing_codes = (
+            Code(id=CodeId(value="1"), name="Theme", color=Color(255, 0, 0)),
+        )
 
         # Create batch success
         result = derive_create_batch(
-            code_id=CodeId(value="1"), pattern="test pattern",
+            code_id=CodeId(value="1"),
+            pattern="test pattern",
             segment_ids=(SegmentId(value="1"), SegmentId(value="2")),
-            owner="user1", state=CodingState(existing_codes=existing_codes),
+            owner="user1",
+            state=CodingState(existing_codes=existing_codes),
         )
         assert isinstance(result, BatchCreated)
         assert result.code_id == CodeId(value="1")
@@ -614,8 +775,10 @@ class TestDeriveBatchOperations:
 
         # Create batch code not found
         result = derive_create_batch(
-            code_id=CodeId(value="999"), pattern="test pattern",
-            segment_ids=(SegmentId(value="1"),), owner=None,
+            code_id=CodeId(value="999"),
+            pattern="test pattern",
+            segment_ids=(SegmentId(value="1"),),
+            owner=None,
             state=CodingState(existing_codes=()),
         )
         assert isinstance(result, BatchNotCreated)
@@ -624,8 +787,10 @@ class TestDeriveBatchOperations:
         # Undo batch success
         existing_batches = (
             AutoCodeBatch(
-                id=BatchId(value="batch_123"), code_id=CodeId(value="1"),
-                pattern="test", segment_ids=(SegmentId(value="1"), SegmentId(value="2")),
+                id=BatchId(value="batch_123"),
+                code_id=CodeId(value="1"),
+                pattern="test",
+                segment_ids=(SegmentId(value="1"), SegmentId(value="2")),
             ),
         )
         result = derive_undo_batch(

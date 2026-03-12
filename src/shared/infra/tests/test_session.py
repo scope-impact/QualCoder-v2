@@ -10,7 +10,7 @@ import threading
 
 import allure
 import pytest
-from sqlalchemy import Column, Integer, MetaData, String, Table, create_engine, text
+from sqlalchemy import create_engine, text
 from sqlalchemy.pool import SingletonThreadPool
 
 from src.shared.infra.session import Session
@@ -27,7 +27,9 @@ def engine():
     """Create an in-memory SQLite engine with a test table."""
     eng = create_engine("sqlite:///:memory:", echo=False, poolclass=SingletonThreadPool)
     with eng.connect() as conn:
-        conn.execute(text("CREATE TABLE test_items (id INTEGER PRIMARY KEY, name TEXT)"))
+        conn.execute(
+            text("CREATE TABLE test_items (id INTEGER PRIMARY KEY, name TEXT)")
+        )
         conn.commit()
     return eng
 
@@ -44,7 +46,9 @@ def session(engine):
 class TestSessionCreationAndConnection:
     """Session creation, engine exposure, and connection identity."""
 
-    @allure.title("Exposes engine, returns connection, and reuses same-thread connection")
+    @allure.title(
+        "Exposes engine, returns connection, and reuses same-thread connection"
+    )
     def test_engine_and_connection(self, session, engine):
         assert session.engine is engine
 
@@ -68,7 +72,9 @@ class TestSessionCommitAndRollback:
         )
         session.commit()
 
-        result = session.connection.execute(text("SELECT name FROM test_items WHERE id = 1"))
+        result = session.connection.execute(
+            text("SELECT name FROM test_items WHERE id = 1")
+        )
         assert result.fetchone()[0] == "alpha"
 
         # Rollback discards
@@ -77,7 +83,9 @@ class TestSessionCommitAndRollback:
         )
         session.rollback()
 
-        result = session.connection.execute(text("SELECT count(*) FROM test_items WHERE id = 2"))
+        result = session.connection.execute(
+            text("SELECT count(*) FROM test_items WHERE id = 2")
+        )
         assert result.fetchone()[0] == 0
 
 

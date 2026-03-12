@@ -88,7 +88,9 @@ class TestMediaExtraction:
     """Tests for extracting media metadata."""
 
     @allure.title("Extracts metadata from MP3 and WAV files")
-    def test_extracts_audio_metadata(self, extractor: MediaExtractor, sample_mp3: Path, sample_wav: Path):
+    def test_extracts_audio_metadata(
+        self, extractor: MediaExtractor, sample_mp3: Path, sample_wav: Path
+    ):
         """Extracts duration, format, and metadata from audio files."""
         # MP3
         result = extractor.extract(sample_mp3)
@@ -119,7 +121,9 @@ class TestMediaExtraction:
             pytest.param("corrupted", None, id="corrupted"),
         ],
     )
-    def test_fails_for_invalid_files(self, extractor: MediaExtractor, tmp_path: Path, setup, error_check):
+    def test_fails_for_invalid_files(
+        self, extractor: MediaExtractor, tmp_path: Path, setup, error_check
+    ):
         import re
 
         if setup == "nonexistent":
@@ -211,7 +215,9 @@ class TestMediaExtractionResult:
 class TestSupportedFormats:
     """Tests for format support checking."""
 
-    @allure.title("Supports audio/video formats and rejects non-media (case-insensitive)")
+    @allure.title(
+        "Supports audio/video formats and rejects non-media (case-insensitive)"
+    )
     @pytest.mark.parametrize(
         "filename, expected",
         [
@@ -238,5 +244,7 @@ class TestSupportedFormats:
             pytest.param("audio.WaV", True, id="WaV-mixed"),
         ],
     )
-    def test_format_support(self, extractor: MediaExtractor, filename: str, expected: bool):
+    def test_format_support(
+        self, extractor: MediaExtractor, filename: str, expected: bool
+    ):
         assert extractor.supports(Path(filename)) == expected

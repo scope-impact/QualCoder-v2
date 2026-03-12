@@ -140,7 +140,6 @@ def batch_apply_codes(
         else:
             failed += 1
 
-
     # Build aggregated result
     batch_result = BatchApplyCodesResult(
         total=len(command.operations),

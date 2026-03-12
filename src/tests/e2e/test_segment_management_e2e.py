@@ -178,7 +178,9 @@ class TestOverlappingCodes:
 
     @allure.title("AC #2.1-2: Apply multiple codes to same and overlapping selections")
     @allure.severity(allure.severity_level.CRITICAL)
-    def test_apply_multiple_codes_to_overlapping_regions(self, coding_screen_with_overlaps):
+    def test_apply_multiple_codes_to_overlapping_regions(
+        self, coding_screen_with_overlaps
+    ):
         """User can apply multiple codes to same region and overlapping regions."""
         screen = coding_screen_with_overlaps
 
@@ -237,7 +239,9 @@ class TestSegmentHighlighting:
 
     @allure.title("AC #3.1-2: Navigate to segment and quick mark state tracking")
     @allure.severity(allure.severity_level.CRITICAL)
-    def test_navigate_to_segment_and_quick_mark_state(self, coding_screen_with_overlaps):
+    def test_navigate_to_segment_and_quick_mark_state(
+        self, coding_screen_with_overlaps
+    ):
         """Screen navigates to segments and tracks quick mark state based on selection."""
         screen = coding_screen_with_overlaps
 
@@ -277,9 +281,13 @@ class TestViewSegmentsForCode:
     Tests for segment listing by code.
     """
 
-    @allure.title("AC #4.1-2: Codes show segment counts and screen supports active code filtering")
+    @allure.title(
+        "AC #4.1-2: Codes show segment counts and screen supports active code filtering"
+    )
     @allure.severity(allure.severity_level.NORMAL)
-    def test_code_segment_counts_and_active_code_filter(self, coding_screen_with_overlaps, sample_data_with_overlaps):
+    def test_code_segment_counts_and_active_code_filter(
+        self, coding_screen_with_overlaps, sample_data_with_overlaps
+    ):
         """Codes show segment counts and screen can set active code for filtering."""
         # Verify segment counts in data
         codes = sample_data_with_overlaps.categories[0].codes
@@ -308,7 +316,9 @@ class TestSegmentMemos:
     Tests for segment-level memo functionality.
     """
 
-    @allure.title("AC #6.1-3: Dialog shows preview, code info, and user can enter memo text")
+    @allure.title(
+        "AC #6.1-3: Dialog shows preview, code info, and user can enter memo text"
+    )
     @allure.severity(allure.severity_level.CRITICAL)
     def test_dialog_shows_preview_and_enter_memo(self, segment_memo_dialog):
         """Segment memo dialog shows preview, code name, and user can enter memo text."""
@@ -326,7 +336,9 @@ class TestSegmentMemos:
             segment_memo_dialog.get_content() == "Important insight about this passage"
         )
 
-        attach_screenshot(segment_memo_dialog, "SegmentMemoDialog - Preview and Memo Text")
+        attach_screenshot(
+            segment_memo_dialog, "SegmentMemoDialog - Preview and Memo Text"
+        )
 
     @allure.title("AC #6.4-5: Save emits signal and content_changed fires on edit")
     @allure.severity(allure.severity_level.CRITICAL)

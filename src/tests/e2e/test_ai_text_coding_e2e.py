@@ -19,6 +19,7 @@ import pytest
 if TYPE_CHECKING:
     from pathlib import Path
 
+    from src.contexts.coding.interface.mcp_tools import CodingTools
     from src.shared.infra.app_context import AppContext
 
 pytestmark = [
@@ -357,7 +358,9 @@ class TestAgentSuggestCodesForText:
     As an AI Agent, I want to suggest codes for uncoded text so that I can help complete coding.
     """
 
-    @allure.title("AC #1+2: Agent can analyze uncoded text and suggest appropriate codes with confidence")
+    @allure.title(
+        "AC #1+2: Agent can analyze uncoded text and suggest appropriate codes with confidence"
+    )
     def test_ac1_ac2_ac3_analyze_and_suggest_codes(
         self,
         coding_tools: CodingTools,
@@ -605,7 +608,9 @@ class TestBatchCodingOperations:
 class TestAITextCodingIntegration:
     """Integration tests for AI-assisted text coding workflows."""
 
-    @allure.title("Complete workflow: Analyze -> Suggest -> Review -> Apply, and Reject -> Modify -> Approve")
+    @allure.title(
+        "Complete workflow: Analyze -> Suggest -> Review -> Apply, and Reject -> Modify -> Approve"
+    )
     def test_full_ai_coding_and_reject_modify_workflow(
         self,
         coding_tools: CodingTools,

@@ -67,7 +67,6 @@ def unlink_source_from_case(
     if case_repo:
         case_repo.unlink_source(case_id, source_id)
 
-
     event_bus.publish(event)
 
     logger.info(

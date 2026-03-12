@@ -18,7 +18,9 @@ pytestmark = [pytest.mark.unit]
 class TestCsvParser:
     """Tests for survey CSV parser."""
 
-    @allure.title("Parses CSV with headers, data, quoted fields, whitespace stripping, and name_column")
+    @allure.title(
+        "Parses CSV with headers, data, quoted fields, whitespace stripping, and name_column"
+    )
     def test_parse_csv_formats_and_name_column(self):
         """Parse CSV with various formats and name_column configuration."""
         from src.contexts.exchange.infra.csv_parser import parse_survey_csv

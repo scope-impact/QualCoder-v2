@@ -128,8 +128,6 @@ def import_rqda(
         rqda_id_to_source_name[rqda_source.id] = rqda_source.name
         sources_created += 1
 
-
-
     # 3. Create segments
     # Note: Direct persistence + event publishing (see import_refi_qda.py for rationale)
     segments_created = 0
@@ -160,8 +158,6 @@ def import_rqda(
             )
         )
         segments_created += 1
-
-
 
     # 4. Publish event
     event = RqdaImported.create(

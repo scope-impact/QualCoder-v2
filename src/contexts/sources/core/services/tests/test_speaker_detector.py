@@ -27,7 +27,9 @@ class TestSpeakerDetectorPatterns:
     def test_detects_speaker_patterns(self):
         """Should detect UPPERCASE, Title Case, and [Bracket] speaker patterns."""
         # Uppercase pattern
-        text_upper = "INTERVIEWER: Hello, how are you?\nPARTICIPANT: I'm doing well, thanks."
+        text_upper = (
+            "INTERVIEWER: Hello, how are you?\nPARTICIPANT: I'm doing well, thanks."
+        )
         speakers = SpeakerDetector(text_upper).detect_speakers()
         assert len(speakers) == 2
         names = [s.name for s in speakers]
@@ -43,7 +45,9 @@ class TestSpeakerDetectorPatterns:
         assert "Jane Doe" in names
 
         # Bracket pattern
-        text_bracket = "[Moderator] Welcome everyone.\n[Participant 1] Thanks for having me."
+        text_bracket = (
+            "[Moderator] Welcome everyone.\n[Participant 1] Thanks for having me."
+        )
         speakers = SpeakerDetector(text_bracket).detect_speakers()
         assert len(speakers) == 2
         names = [s.name for s in speakers]
@@ -133,7 +137,12 @@ class TestSpeakerDetectorEdgeCases:
     def test_empty_no_speakers_and_blank_lines(self):
         """Should handle empty text, no speaker markers, and blank lines."""
         assert SpeakerDetector("").detect_speakers() == []
-        assert SpeakerDetector("This is just regular text without any speaker markers.").detect_speakers() == []
+        assert (
+            SpeakerDetector(
+                "This is just regular text without any speaker markers."
+            ).detect_speakers()
+            == []
+        )
 
         text = "JOHN: First line.\n\nJANE: After blank line."
         assert len(SpeakerDetector(text).detect_speakers()) == 2

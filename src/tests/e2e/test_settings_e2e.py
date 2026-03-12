@@ -167,7 +167,9 @@ class TestThemeChanges:
     AC #1: Researcher can change UI theme (dark, light, colors).
     """
 
-    @allure.title("AC #1: Changing theme to dark persists to JSON file and emits signal")
+    @allure.title(
+        "AC #1: Changing theme to dark persists to JSON file and emits signal"
+    )
     def test_change_theme_to_dark_persists_and_emits_signal(
         self, settings_dialog, settings_viewmodel, settings_repo, qapp
     ):
@@ -241,7 +243,9 @@ class TestFontChanges:
             settings = settings_repo.load()
             assert settings.font.family == "Roboto"
 
-        attach_screenshot(settings_dialog, "SettingsDialog - Font Size and Family Changed")
+        attach_screenshot(
+            settings_dialog, "SettingsDialog - Font Size and Family Changed"
+        )
 
 
 # =============================================================================
@@ -327,7 +331,9 @@ class TestAVCodingChanges:
     AC #6: Researcher can configure speaker name format.
     """
 
-    @allure.title("AC #5-6: Changing timestamp and speaker format persists and previews correctly")
+    @allure.title(
+        "AC #5-6: Changing timestamp and speaker format persists and previews correctly"
+    )
     def test_change_timestamp_and_speaker_format_persists(
         self, settings_dialog, settings_repo
     ):
@@ -408,7 +414,9 @@ class TestDialogAcceptCancel:
     """E2E tests for dialog OK/Cancel behavior."""
 
     @allure.title("OK button accepts and Cancel button rejects the dialog")
-    def test_ok_accepts_and_cancel_rejects_dialog(self, qapp, colors, settings_viewmodel):
+    def test_ok_accepts_and_cancel_rejects_dialog(
+        self, qapp, colors, settings_viewmodel
+    ):
         """E2E: OK button accepts and Cancel button rejects the dialog."""
         from src.contexts.settings.presentation.dialogs import SettingsDialog
 

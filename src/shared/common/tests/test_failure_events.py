@@ -35,23 +35,29 @@ def _make_event(event_type: str = "CODE_NOT_CREATED/DUPLICATE_NAME") -> FailureE
 class TestFailureEventProperties:
     """Test property extraction from event_type."""
 
-    @allure.title("Extracts operation and reason from event_type with and without slash")
+    @allure.title(
+        "Extracts operation and reason from event_type with and without slash"
+    )
     @pytest.mark.parametrize(
         "event_type, expected_operation, expected_reason",
         [
             pytest.param(
                 "CODE_NOT_CREATED/DUPLICATE_NAME",
-                "CODE_NOT_CREATED", "DUPLICATE_NAME",
+                "CODE_NOT_CREATED",
+                "DUPLICATE_NAME",
                 id="with-slash",
             ),
             pytest.param(
                 "UNKNOWN_ERROR",
-                "UNKNOWN_ERROR", "",
+                "UNKNOWN_ERROR",
+                "",
                 id="no-slash",
             ),
         ],
     )
-    def test_operation_and_reason_extraction(self, event_type, expected_operation, expected_reason):
+    def test_operation_and_reason_extraction(
+        self, event_type, expected_operation, expected_reason
+    ):
         event = _make_event(event_type)
         assert event.operation == expected_operation
         assert event.reason == expected_reason

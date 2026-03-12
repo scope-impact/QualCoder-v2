@@ -91,13 +91,19 @@ class TestCodeSuggestionEvents:
 
         # Unique event IDs
         event2 = CodeSuggested.create(
-            suggestion_id=suggestion_id, name="Test", color=color,
-            rationale="Test rationale", contexts=(), confidence=0.5,
+            suggestion_id=suggestion_id,
+            name="Test",
+            color=color,
+            rationale="Test rationale",
+            contexts=(),
+            confidence=0.5,
             source_id=source_id,
         )
         assert event.event_id != event2.event_id
 
-    @allure.title("CodeSuggestionApproved and Rejected: modifications, reasons, defaults")
+    @allure.title(
+        "CodeSuggestionApproved and Rejected: modifications, reasons, defaults"
+    )
     def test_code_suggestion_approved_and_rejected(self):
         """Approved tracks modifications; Rejected stores reason with None default."""
         assert CodeSuggestionApproved.event_type == "coding.ai_code_suggestion_approved"
@@ -105,39 +111,51 @@ class TestCodeSuggestionEvents:
 
         # Approved: unmodified
         event = CodeSuggestionApproved.create(
-            suggestion_id=SuggestionId.new(), created_code_id=CodeId(value="42"),
-            original_name="Anxiety", final_name="Anxiety", modified=False,
+            suggestion_id=SuggestionId.new(),
+            created_code_id=CodeId(value="42"),
+            original_name="Anxiety",
+            final_name="Anxiety",
+            modified=False,
         )
         assert event.modified is False
 
         # Approved: modified
         event2 = CodeSuggestionApproved.create(
-            suggestion_id=SuggestionId.new(), created_code_id=CodeId(value="42"),
-            original_name="Anxiety", final_name="General Anxiety", modified=True,
+            suggestion_id=SuggestionId.new(),
+            created_code_id=CodeId(value="42"),
+            original_name="Anxiety",
+            final_name="General Anxiety",
+            modified=True,
         )
         assert event2.modified is True
 
         # Approved: default modified=False
         event3 = CodeSuggestionApproved.create(
-            suggestion_id=SuggestionId.new(), created_code_id=CodeId(value="42"),
-            original_name="Test", final_name="Test",
+            suggestion_id=SuggestionId.new(),
+            created_code_id=CodeId(value="42"),
+            original_name="Test",
+            final_name="Test",
         )
         assert event3.modified is False
 
         # Rejected: with reason, None, and default
         ev_r1 = CodeSuggestionRejected.create(
-            suggestion_id=SuggestionId.new(), name="Anxiety",
+            suggestion_id=SuggestionId.new(),
+            name="Anxiety",
             reason="Too broad for this analysis",
         )
         assert ev_r1.reason == "Too broad for this analysis"
 
         ev_r2 = CodeSuggestionRejected.create(
-            suggestion_id=SuggestionId.new(), name="Test", reason=None,
+            suggestion_id=SuggestionId.new(),
+            name="Test",
+            reason=None,
         )
         assert ev_r2.reason is None
 
         ev_r3 = CodeSuggestionRejected.create(
-            suggestion_id=SuggestionId.new(), name="Test",
+            suggestion_id=SuggestionId.new(),
+            name="Test",
         )
         assert ev_r3.reason is None
 
@@ -158,13 +176,18 @@ class TestDuplicateDetectionEvents:
         assert MergeSuggested.event_type == "coding.ai_merge_suggested"
 
         candidate = DuplicateCandidate(
-            code_a_id=CodeId(value="1"), code_a_name="Anxiety",
-            code_b_id=CodeId(value="2"), code_b_name="Anxiousness",
-            similarity=SimilarityScore(value=0.92), rationale="Both codes refer to worry",
+            code_a_id=CodeId(value="1"),
+            code_a_name="Anxiety",
+            code_b_id=CodeId(value="2"),
+            code_b_name="Anxiousness",
+            similarity=SimilarityScore(value=0.92),
+            rationale="Both codes refer to worry",
         )
         event = DuplicatesDetected.create(
-            detection_id=DetectionId.new(), candidates=(candidate,),
-            threshold=0.8, codes_analyzed=50,
+            detection_id=DetectionId.new(),
+            candidates=(candidate,),
+            threshold=0.8,
+            codes_analyzed=50,
         )
         assert len(event.candidates) == 1
         assert event.candidates[0].code_a_name == "Anxiety"
@@ -172,14 +195,19 @@ class TestDuplicateDetectionEvents:
 
         # Empty candidates
         event2 = DuplicatesDetected.create(
-            detection_id=DetectionId.new(), candidates=(), threshold=0.9, codes_analyzed=10,
+            detection_id=DetectionId.new(),
+            candidates=(),
+            threshold=0.9,
+            codes_analyzed=10,
         )
         assert len(event2.candidates) == 0
 
         # MergeSuggested
         merge_event = MergeSuggested.create(
-            source_code_id=CodeId(value="1"), source_code_name="Anxiety",
-            target_code_id=CodeId(value="2"), target_code_name="Worry",
+            source_code_id=CodeId(value="1"),
+            source_code_name="Anxiety",
+            target_code_id=CodeId(value="2"),
+            target_code_name="Worry",
             similarity=SimilarityScore(value=0.88),
             rationale="Both codes describe similar emotional states",
         )
@@ -189,29 +217,39 @@ class TestDuplicateDetectionEvents:
     @allure.title("MergeSuggestionApproved and Dismissed: segments, reasons, defaults")
     def test_merge_approved_and_dismissed(self):
         """Approved tracks segments moved; Dismissed stores reason with None default."""
-        assert MergeSuggestionApproved.event_type == "coding.ai_merge_suggestion_approved"
-        assert MergeSuggestionDismissed.event_type == "coding.ai_merge_suggestion_dismissed"
+        assert (
+            MergeSuggestionApproved.event_type == "coding.ai_merge_suggestion_approved"
+        )
+        assert (
+            MergeSuggestionDismissed.event_type
+            == "coding.ai_merge_suggestion_dismissed"
+        )
 
         event = MergeSuggestionApproved.create(
-            source_code_id=CodeId(value="1"), target_code_id=CodeId(value="2"),
+            source_code_id=CodeId(value="1"),
+            target_code_id=CodeId(value="2"),
             segments_moved=15,
         )
         assert event.segments_moved == 15
 
         # Dismissed with reason, None, and default
         ev1 = MergeSuggestionDismissed.create(
-            source_code_id=CodeId(value="1"), target_code_id=CodeId(value="2"),
+            source_code_id=CodeId(value="1"),
+            target_code_id=CodeId(value="2"),
             reason="Codes are conceptually different",
         )
         assert ev1.reason == "Codes are conceptually different"
 
         ev2 = MergeSuggestionDismissed.create(
-            source_code_id=CodeId(value="1"), target_code_id=CodeId(value="2"), reason=None,
+            source_code_id=CodeId(value="1"),
+            target_code_id=CodeId(value="2"),
+            reason=None,
         )
         assert ev2.reason is None
 
         ev3 = MergeSuggestionDismissed.create(
-            source_code_id=CodeId(value="1"), target_code_id=CodeId(value="2"),
+            source_code_id=CodeId(value="1"),
+            target_code_id=CodeId(value="2"),
         )
         assert ev3.reason is None
 
@@ -315,7 +353,9 @@ class TestDuplicateAndMergeFailureEvents:
         assert "not found" in ev5.message
 
         # MergeNotDismissed
-        ev6 = MergeNotDismissed.not_pending(CodeId(value="1"), CodeId(value="2"), "merged")
+        ev6 = MergeNotDismissed.not_pending(
+            CodeId(value="1"), CodeId(value="2"), "merged"
+        )
         assert ev6.event_type == "MERGE_NOT_DISMISSED/NOT_PENDING"
         assert ev6.status == "merged"
         assert "merged" in ev6.message

@@ -75,34 +75,49 @@ class TestDeriveUpdateCase:
         "case_id, name, existing_cases, expect_success, expected_reason",
         [
             pytest.param(
-                "1", "Participant A - Updated",
+                "1",
+                "Participant A - Updated",
                 (Case(id=CaseId(value="1"), name="Participant A"),),
-                True, None, id="rename",
+                True,
+                None,
+                id="rename",
             ),
             pytest.param(
-                "1", "Participant A",
+                "1",
+                "Participant A",
                 (Case(id=CaseId(value="1"), name="Participant A"),),
-                True, None, id="same-name",
+                True,
+                None,
+                id="same-name",
             ),
             pytest.param("999", "New Name", (), False, "NOT_FOUND", id="not-found"),
             pytest.param(
-                "1", "Participant B",
+                "1",
+                "Participant B",
                 (
                     Case(id=CaseId(value="1"), name="Participant A"),
                     Case(id=CaseId(value="2"), name="Participant B"),
                 ),
-                False, "DUPLICATE_NAME", id="duplicate-on-rename",
+                False,
+                "DUPLICATE_NAME",
+                id="duplicate-on-rename",
             ),
         ],
     )
-    def test_update_case(self, case_id, name, existing_cases, expect_success, expected_reason):
+    def test_update_case(
+        self, case_id, name, existing_cases, expect_success, expected_reason
+    ):
         from src.contexts.cases.core.derivers import derive_update_case
         from src.contexts.cases.core.events import CaseUpdated
         from src.contexts.cases.core.failure_events import CaseUpdateFailed
 
         state = CaseState(existing_cases=existing_cases)
         result = derive_update_case(
-            case_id=CaseId(value=case_id), name=name, description="desc", memo=None, state=state
+            case_id=CaseId(value=case_id),
+            name=name,
+            description="desc",
+            memo=None,
+            state=state,
         )
 
         if expect_success:
@@ -156,18 +171,58 @@ class TestDeriveSetCaseAttribute:
         "case_id, attr_name, attr_type, attr_value, has_case, expect_success, reason",
         [
             pytest.param("1", "age", "number", 25, True, True, None, id="valid"),
-            pytest.param("999", "age", "number", 25, False, False, "CASE_NOT_FOUND", id="case-not-found"),
-            pytest.param("1", "age", "unknown_type", 25, True, False, "INVALID_TYPE", id="invalid-type"),
-            pytest.param("1", "age", "number", "not-a-number", True, False, "INVALID_VALUE", id="invalid-value"),
-            pytest.param("1", "", "text", "value", True, False, "INVALID_NAME", id="empty-name"),
+            pytest.param(
+                "999",
+                "age",
+                "number",
+                25,
+                False,
+                False,
+                "CASE_NOT_FOUND",
+                id="case-not-found",
+            ),
+            pytest.param(
+                "1",
+                "age",
+                "unknown_type",
+                25,
+                True,
+                False,
+                "INVALID_TYPE",
+                id="invalid-type",
+            ),
+            pytest.param(
+                "1",
+                "age",
+                "number",
+                "not-a-number",
+                True,
+                False,
+                "INVALID_VALUE",
+                id="invalid-value",
+            ),
+            pytest.param(
+                "1", "", "text", "value", True, False, "INVALID_NAME", id="empty-name"
+            ),
         ],
     )
-    def test_set_case_attribute(self, case_id, attr_name, attr_type, attr_value, has_case, expect_success, reason):
+    def test_set_case_attribute(
+        self,
+        case_id,
+        attr_name,
+        attr_type,
+        attr_value,
+        has_case,
+        expect_success,
+        reason,
+    ):
         from src.contexts.cases.core.derivers import derive_set_case_attribute
         from src.contexts.cases.core.events import CaseAttributeSet
         from src.contexts.cases.core.failure_events import AttributeSetFailed
 
-        existing = (Case(id=CaseId(value="1"), name="Participant A"),) if has_case else ()
+        existing = (
+            (Case(id=CaseId(value="1"), name="Participant A"),) if has_case else ()
+        )
         state = CaseState(existing_cases=existing)
 
         result = derive_set_case_attribute(
@@ -200,13 +255,17 @@ class TestDeriveLinkUnlinkSource:
             pytest.param(
                 "1",
                 (Case(id=CaseId(value="1"), name="Participant A"),),
-                True, None, id="success",
+                True,
+                None,
+                id="success",
             ),
             pytest.param("999", (), False, "CASE_NOT_FOUND", id="case-not-found"),
             pytest.param(
                 "1",
                 (Case(id=CaseId(value="1"), name="Participant A", source_ids=("10",)),),
-                False, "ALREADY_LINKED", id="already-linked",
+                False,
+                "ALREADY_LINKED",
+                id="already-linked",
             ),
         ],
     )
@@ -235,17 +294,23 @@ class TestDeriveLinkUnlinkSource:
             pytest.param(
                 "1",
                 (Case(id=CaseId(value="1"), name="Participant A", source_ids=("10",)),),
-                True, None, id="success",
+                True,
+                None,
+                id="success",
             ),
             pytest.param("999", (), False, "CASE_NOT_FOUND", id="case-not-found"),
             pytest.param(
                 "1",
                 (Case(id=CaseId(value="1"), name="Participant A"),),
-                False, "NOT_LINKED", id="not-linked",
+                False,
+                "NOT_LINKED",
+                id="not-linked",
             ),
         ],
     )
-    def test_unlink_source_from_case(self, case_id, existing_cases, expect_success, reason):
+    def test_unlink_source_from_case(
+        self, case_id, existing_cases, expect_success, reason
+    ):
         from src.contexts.cases.core.derivers import derive_unlink_source_from_case
         from src.contexts.cases.core.events import SourceUnlinkedFromCase
         from src.contexts.cases.core.failure_events import SourceUnlinkFailed

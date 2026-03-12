@@ -49,7 +49,9 @@ from src.shared.core.validation import (
 class TestValidationResultHelpers:
     """Test is_valid and is_invalid helpers."""
 
-    @allure.title("is_valid returns True for success, is_invalid returns True for failure")
+    @allure.title(
+        "is_valid returns True for success, is_invalid returns True for failure"
+    )
     def test_is_valid_and_is_invalid(self):
         success = ValidationSuccess()
         failure = ValidationFailure(reason="error")
@@ -78,13 +80,16 @@ class TestIsNonEmptyString:
     """Test is_non_empty_string validator."""
 
     @allure.title("is_non_empty_string validates non-blank strings")
-    @pytest.mark.parametrize("value, expected", [
-        ("hello", True),
-        ("", False),
-        ("   ", False),
-        ("\t\n  ", False),
-        ("  hello  ", True),
-    ])
+    @pytest.mark.parametrize(
+        "value, expected",
+        [
+            ("hello", True),
+            ("", False),
+            ("   ", False),
+            ("\t\n  ", False),
+            ("  hello  ", True),
+        ],
+    )
     def test_is_non_empty_string(self, value, expected):
         assert is_non_empty_string(value) is expected
 
@@ -94,16 +99,19 @@ class TestIsWithinLength:
     """Test is_within_length validator."""
 
     @allure.title("is_within_length validates string length bounds")
-    @pytest.mark.parametrize("value, kwargs, expected", [
-        ("hello", {}, True),
-        ("a", {"min_len": 1}, True),
-        ("", {"min_len": 1}, False),
-        ("hello", {"max_len": 5}, True),
-        ("hello!", {"max_len": 5}, False),
-        ("", {"min_len": 0}, True),
-        (None, {"min_len": 0}, True),
-        (None, {"min_len": 1}, False),
-    ])
+    @pytest.mark.parametrize(
+        "value, kwargs, expected",
+        [
+            ("hello", {}, True),
+            ("a", {"min_len": 1}, True),
+            ("", {"min_len": 1}, False),
+            ("hello", {"max_len": 5}, True),
+            ("hello!", {"max_len": 5}, False),
+            ("", {"min_len": 0}, True),
+            (None, {"min_len": 0}, True),
+            (None, {"min_len": 1}, False),
+        ],
+    )
     def test_is_within_length(self, value, kwargs, expected):
         assert is_within_length(value, **kwargs) is expected
 
@@ -123,7 +131,9 @@ class TestIsUniqueInCollection:
     @allure.title("is_unique_in_collection supports key function and exclude")
     def test_with_key_and_exclude(self):
         items = [{"name": "alice"}, {"name": "bob"}]
-        key = lambda x: x["name"]
+
+        def key(x):
+            return x["name"]
 
         assert is_unique_in_collection({"name": "charlie"}, items, key=key) is True
         assert is_unique_in_collection({"name": "alice"}, items, key=key) is False
@@ -184,12 +194,15 @@ class TestIsValidRange:
     """Test is_valid_range validator."""
 
     @allure.title("is_valid_range validates start < end")
-    @pytest.mark.parametrize("start, end, expected", [
-        (0, 10, True),
-        (5, 5, False),
-        (10, 5, False),
-        (-10, -5, True),
-    ])
+    @pytest.mark.parametrize(
+        "start, end, expected",
+        [
+            (0, 10, True),
+            (5, 5, False),
+            (10, 5, False),
+            (-10, -5, True),
+        ],
+    )
     def test_is_valid_range(self, start, end, expected):
         assert is_valid_range(start, end) is expected
 
@@ -199,16 +212,19 @@ class TestIsWithinBounds:
     """Test is_within_bounds validator."""
 
     @allure.title("is_within_bounds validates range fits within length")
-    @pytest.mark.parametrize("start, end, length, expected", [
-        (0, 10, 20, True),
-        (0, 5, 10, True),
-        (5, 10, 10, True),
-        (-1, 5, 10, False),
-        (5, 11, 10, False),
-        (5, 5, 10, False),
-        (0, 1, 0, False),
-        (0, 0, 0, False),
-    ])
+    @pytest.mark.parametrize(
+        "start, end, length, expected",
+        [
+            (0, 10, 20, True),
+            (0, 5, 10, True),
+            (5, 10, 10, True),
+            (-1, 5, 10, False),
+            (5, 11, 10, False),
+            (5, 5, 10, False),
+            (0, 1, 0, False),
+            (0, 0, 0, False),
+        ],
+    )
     def test_is_within_bounds(self, start, end, length, expected):
         assert is_within_bounds(start, end, length=length) is expected
 
@@ -218,32 +234,41 @@ class TestNumericValidators:
     """Test is_positive, is_non_negative, is_in_range."""
 
     @allure.title("is_positive rejects zero and negative values")
-    @pytest.mark.parametrize("value, expected", [
-        (1, True),
-        (100, True),
-        (0, False),
-        (-1, False),
-    ])
+    @pytest.mark.parametrize(
+        "value, expected",
+        [
+            (1, True),
+            (100, True),
+            (0, False),
+            (-1, False),
+        ],
+    )
     def test_is_positive(self, value, expected):
         assert is_positive(value) is expected
 
     @allure.title("is_non_negative accepts zero and positive values")
-    @pytest.mark.parametrize("value, expected", [
-        (1, True),
-        (0, True),
-        (-1, False),
-    ])
+    @pytest.mark.parametrize(
+        "value, expected",
+        [
+            (1, True),
+            (0, True),
+            (-1, False),
+        ],
+    )
     def test_is_non_negative(self, value, expected):
         assert is_non_negative(value) is expected
 
     @allure.title("is_in_range validates value within min/max bounds")
-    @pytest.mark.parametrize("value, expected", [
-        (5, True),
-        (0, True),
-        (10, True),
-        (-1, False),
-        (11, False),
-    ])
+    @pytest.mark.parametrize(
+        "value, expected",
+        [
+            (5, True),
+            (0, True),
+            (10, True),
+            (-1, False),
+            (11, False),
+        ],
+    )
     def test_is_in_range(self, value, expected):
         assert is_in_range(value, min_val=0, max_val=10) is expected
 
@@ -253,18 +278,21 @@ class TestIsValidHexColor:
     """Test is_valid_hex_color validator."""
 
     @allure.title("is_valid_hex_color validates hex color format")
-    @pytest.mark.parametrize("value, expected", [
-        ("#FF0000", True),
-        ("#ff0000", True),
-        ("#Ff00Ab", True),
-        ("FF0000", False),
-        ("#F00", True),
-        ("#FF00000", False),
-        ("#GGGGGG", False),
-        ("#XY1234", False),
-        ("", False),
-        (None, False),
-    ])
+    @pytest.mark.parametrize(
+        "value, expected",
+        [
+            ("#FF0000", True),
+            ("#ff0000", True),
+            ("#Ff00Ab", True),
+            ("FF0000", False),
+            ("#F00", True),
+            ("#FF00000", False),
+            ("#GGGGGG", False),
+            ("#XY1234", False),
+            ("", False),
+            (None, False),
+        ],
+    )
     def test_is_valid_hex_color(self, value, expected):
         assert is_valid_hex_color(value) is expected
 
@@ -277,7 +305,9 @@ class TestIsAcyclicHierarchy:
     def test_valid_moves(self):
         # Moving to root is always safe
         assert (
-            is_acyclic_hierarchy(node_id=1, new_parent_id=None, get_parent=lambda _: None)
+            is_acyclic_hierarchy(
+                node_id=1, new_parent_id=None, get_parent=lambda _: None
+            )
             is True
         )
 
@@ -334,7 +364,9 @@ class TestCollectionValidators:
     @allure.title("all_exist and none_exist check collection membership")
     def test_all_exist_and_none_exist(self):
         existing = {1, 2, 3}
-        exists_fn = lambda x: x in existing
+
+        def exists_fn(x):
+            return x in existing
 
         # all_exist
         assert all_exist([1, 2, 3], exists_fn=lambda x: x in {1, 2, 3, 4, 5}) is True

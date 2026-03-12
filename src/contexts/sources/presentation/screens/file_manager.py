@@ -312,9 +312,7 @@ class FileManagerScreen(QWidget):
 
     def _on_batch_finished(self, imported: int, failed: int, imported_paths: list):
         """Handle batch import completion."""
-        logger.info(
-            "_on_batch_finished: %d imported, %d failed", imported, failed
-        )
+        logger.info("_on_batch_finished: %d imported, %d failed", imported, failed)
 
         # Clean up progress modal
         if self._import_progress:
@@ -362,9 +360,7 @@ class FileManagerScreen(QWidget):
             linked = 0
             with self._viewmodel.suppress_reloads():
                 for i, path in enumerate(file_paths):
-                    logger.debug(
-                        "_on_link_clicked: [%d/%d] %s", i + 1, total, path
-                    )
+                    logger.debug("_on_link_clicked: [%d/%d] %s", i + 1, total, path)
                     if self._viewmodel.add_source(path, origin="external"):
                         linked += 1
             logger.info("_on_link_clicked: linked %d/%d", linked, total)

@@ -20,8 +20,12 @@ pytestmark = [
 
 @allure.story("QC-039.06 Import Survey CSV")
 class TestImportSurveyCSV:
-    @allure.title("AC #1+#2: Import CSV creates cases with attributes and publishes event")
-    def test_import_csv_creates_cases_with_attributes_and_event(self, case_repo, event_bus, tmp_path):
+    @allure.title(
+        "AC #1+#2: Import CSV creates cases with attributes and publishes event"
+    )
+    def test_import_csv_creates_cases_with_attributes_and_event(
+        self, case_repo, event_bus, tmp_path
+    ):
         from src.contexts.exchange.core.commandHandlers.import_survey_csv import (
             import_survey_csv,
         )
@@ -112,7 +116,9 @@ class TestImportSurveyCSV:
 
         with allure.step("Verify failure with nonexistent file"):
             result = import_survey_csv(
-                command=ImportSurveyCSVCommand(source_path=str(tmp_path / "missing.csv")),
+                command=ImportSurveyCSVCommand(
+                    source_path=str(tmp_path / "missing.csv")
+                ),
                 case_repo=case_repo,
                 event_bus=event_bus,
             )

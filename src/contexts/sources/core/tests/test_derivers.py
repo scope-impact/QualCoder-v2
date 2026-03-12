@@ -143,7 +143,9 @@ class TestDeriveRemoveSource:
         ],
     )
     def test_remove_source(self, source_id, has_source, success):
-        existing = (_make_source("1", "interview.txt", code_count=5),) if has_source else ()
+        existing = (
+            (_make_source("1", "interview.txt", code_count=5),) if has_source else ()
+        )
         state = ProjectState(path_exists=lambda _: True, existing_sources=existing)
 
         result = derive_remove_source(source_id=SourceId(value=source_id), state=state)
@@ -171,7 +173,9 @@ class TestDeriveOpenSource:
         ],
     )
     def test_open_source(self, source_id, has_source, success):
-        existing = (_make_source("1", "interview.txt", SourceType.TEXT),) if has_source else ()
+        existing = (
+            (_make_source("1", "interview.txt", SourceType.TEXT),) if has_source else ()
+        )
         state = ProjectState(path_exists=lambda _: True, existing_sources=existing)
 
         result = derive_open_source(source_id=SourceId(value=source_id), state=state)
@@ -196,14 +200,28 @@ class TestDeriveUpdateSource:
         [
             pytest.param("1", True, "New memo", None, True, None, id="update-memo"),
             pytest.param("1", True, None, "coded", True, None, id="update-status"),
-            pytest.param("999", False, "New memo", None, False, "NOT_FOUND", id="not-found"),
-            pytest.param("1", True, None, "invalid_status", False, "INVALID_STATUS", id="invalid-status"),
+            pytest.param(
+                "999", False, "New memo", None, False, "NOT_FOUND", id="not-found"
+            ),
+            pytest.param(
+                "1",
+                True,
+                None,
+                "invalid_status",
+                False,
+                "INVALID_STATUS",
+                id="invalid-status",
+            ),
         ],
     )
-    def test_update_source(self, source_id, has_source, memo, status, expect_success, expected_reason):
+    def test_update_source(
+        self, source_id, has_source, memo, status, expect_success, expected_reason
+    ):
         existing = (
-            _make_source("1", "interview.txt", memo="Old memo", origin="Old origin"),
-        ) if has_source else ()
+            (_make_source("1", "interview.txt", memo="Old memo", origin="Old origin"),)
+            if has_source
+            else ()
+        )
         state = ProjectState(path_exists=lambda _: True, existing_sources=existing)
 
         result = derive_update_source(

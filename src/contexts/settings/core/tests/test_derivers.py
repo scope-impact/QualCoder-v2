@@ -37,7 +37,9 @@ pytestmark = [
 class TestDeriveThemeChange:
     """Tests for derive_theme_change deriver."""
 
-    @allure.title("Valid theme changes produce ThemeChanged, invalid produces SettingsNotChanged")
+    @allure.title(
+        "Valid theme changes produce ThemeChanged, invalid produces SettingsNotChanged"
+    )
     @pytest.mark.parametrize(
         "new_theme, expect_success",
         [
@@ -64,14 +66,18 @@ class TestDeriveThemeChange:
 class TestDeriveFontChange:
     """Tests for derive_font_change deriver."""
 
-    @allure.title("Valid font changes produce FontChanged, invalid produces SettingsNotChanged")
+    @allure.title(
+        "Valid font changes produce FontChanged, invalid produces SettingsNotChanged"
+    )
     @pytest.mark.parametrize(
         "family, size, expect_success, expected_reason",
         [
             pytest.param("Roboto", 16, True, None, id="valid"),
             pytest.param("Inter", 10, True, None, id="min-boundary"),
             pytest.param("Inter", 24, True, None, id="max-boundary"),
-            pytest.param("Comic Sans", 14, False, "INVALID_FONT_FAMILY", id="bad-family"),
+            pytest.param(
+                "Comic Sans", 14, False, "INVALID_FONT_FAMILY", id="bad-family"
+            ),
             pytest.param("Inter", 8, False, "INVALID_FONT_SIZE", id="size-too-small"),
             pytest.param("Inter", 30, False, "INVALID_FONT_SIZE", id="size-too-large"),
         ],
@@ -93,19 +99,25 @@ class TestDeriveFontChange:
 class TestDeriveLanguageChange:
     """Tests for derive_language_change deriver."""
 
-    @allure.title("Valid language code produces LanguageChanged, invalid produces SettingsNotChanged")
+    @allure.title(
+        "Valid language code produces LanguageChanged, invalid produces SettingsNotChanged"
+    )
     def test_language_change_valid_and_invalid(self):
         settings = UserSettings.default()
 
         # Valid change
-        result = derive_language_change(new_language_code="es", current_settings=settings)
+        result = derive_language_change(
+            new_language_code="es", current_settings=settings
+        )
         assert isinstance(result, LanguageChanged)
         assert result.old_language == "en"
         assert result.new_language == "es"
         assert result.language_name == "Español"
 
         # Invalid language code
-        result = derive_language_change(new_language_code="xx", current_settings=settings)
+        result = derive_language_change(
+            new_language_code="xx", current_settings=settings
+        )
         assert isinstance(result, SettingsNotChanged)
         assert result.reason == "INVALID_LANGUAGE"
         assert "xx" in result.message
@@ -128,7 +140,9 @@ class TestDeriveLanguageChange:
 class TestDeriveBackupConfigChange:
     """Tests for derive_backup_config_change deriver."""
 
-    @allure.title("Valid backup config produces BackupConfigChanged, invalid produces SettingsNotChanged")
+    @allure.title(
+        "Valid backup config produces BackupConfigChanged, invalid produces SettingsNotChanged"
+    )
     @pytest.mark.parametrize(
         "interval, max_b, backup_path, expect_success, expected_reason",
         [
@@ -136,13 +150,23 @@ class TestDeriveBackupConfigChange:
             pytest.param(30, 5, None, True, None, id="none-path"),
             pytest.param(5, 1, None, True, None, id="min-boundaries"),
             pytest.param(120, 20, None, True, None, id="max-boundaries"),
-            pytest.param(3, 5, None, False, "INVALID_BACKUP_INTERVAL", id="interval-too-small"),
-            pytest.param(150, 5, None, False, "INVALID_BACKUP_INTERVAL", id="interval-too-large"),
-            pytest.param(30, 0, None, False, "INVALID_MAX_BACKUPS", id="max-backups-too-small"),
-            pytest.param(30, 25, None, False, "INVALID_MAX_BACKUPS", id="max-backups-too-large"),
+            pytest.param(
+                3, 5, None, False, "INVALID_BACKUP_INTERVAL", id="interval-too-small"
+            ),
+            pytest.param(
+                150, 5, None, False, "INVALID_BACKUP_INTERVAL", id="interval-too-large"
+            ),
+            pytest.param(
+                30, 0, None, False, "INVALID_MAX_BACKUPS", id="max-backups-too-small"
+            ),
+            pytest.param(
+                30, 25, None, False, "INVALID_MAX_BACKUPS", id="max-backups-too-large"
+            ),
         ],
     )
-    def test_backup_config_change(self, interval, max_b, backup_path, expect_success, expected_reason):
+    def test_backup_config_change(
+        self, interval, max_b, backup_path, expect_success, expected_reason
+    ):
         settings = UserSettings.default()
         result = derive_backup_config_change(
             enabled=True,
@@ -196,7 +220,13 @@ class TestDeriveAVCodingConfigChange:
             assert result.timestamp_format == fmt
 
         # Various speaker formats with {n} placeholder
-        for fmt in ["Speaker {n}", "Participant {n}", "P{n}", "{n}", "Interviewee #{n}"]:
+        for fmt in [
+            "Speaker {n}",
+            "Participant {n}",
+            "P{n}",
+            "{n}",
+            "Interviewee #{n}",
+        ]:
             result = derive_av_coding_config_change(
                 timestamp_format="HH:MM:SS",
                 speaker_format=fmt,
@@ -213,11 +243,12 @@ class TestDeriveAVCodingConfigChange:
                 "YYYY-MM-DD", "Speaker {n}", "INVALID_TIMESTAMP_FORMAT", id="bad-ts"
             ),
             pytest.param(
-                "HH:MM:SS", "Speaker", "INVALID_SPEAKER_FORMAT", id="missing-placeholder"
+                "HH:MM:SS",
+                "Speaker",
+                "INVALID_SPEAKER_FORMAT",
+                id="missing-placeholder",
             ),
-            pytest.param(
-                "HH:MM:SS", "", "INVALID_SPEAKER_FORMAT", id="empty-speaker"
-            ),
+            pytest.param("HH:MM:SS", "", "INVALID_SPEAKER_FORMAT", id="empty-speaker"),
         ],
     )
     def test_fails_with_invalid_av_format(self, ts_fmt, spk_fmt, expected_reason):

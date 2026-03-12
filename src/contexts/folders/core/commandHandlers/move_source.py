@@ -98,7 +98,6 @@ def move_source_to_folder(
             updated_source = source.with_folder(event.new_folder_id)
             source_repo.save(updated_source)
 
-
     # Publish event
     event_bus.publish(event)
 

@@ -53,7 +53,9 @@ class EventWithType:
 class TestEventBusSubscription:
     """Test subscribe(), subscribe_type(), subscribe_all(), and unsubscribe()."""
 
-    @allure.title("subscribe returns active Subscription, deduplicates, and allows different handlers")
+    @allure.title(
+        "subscribe returns active Subscription, deduplicates, and allows different handlers"
+    )
     def test_subscribe_and_deduplication(self):
         bus = EventBus()
 
@@ -76,7 +78,9 @@ class TestEventBusSubscription:
         bus.subscribe("test.event", handler2)
         assert bus.handler_count("test.event") == 2
 
-    @allure.title("subscribe_type routes events by class, subscribe_all receives all types")
+    @allure.title(
+        "subscribe_type routes events by class, subscribe_all receives all types"
+    )
     def test_subscribe_type_and_subscribe_all(self):
         bus = EventBus()
         type_received = []
@@ -100,7 +104,9 @@ class TestEventBusSubscription:
         assert len(type_received) == 2
         assert len(all_received) == 2
 
-    @allure.title("unsubscribe removes handler, tolerates missing, and removes wildcard")
+    @allure.title(
+        "unsubscribe removes handler, tolerates missing, and removes wildcard"
+    )
     def test_unsubscribe(self):
         bus = EventBus()
 
@@ -125,7 +131,9 @@ class TestEventBusSubscription:
 class TestSubscriptionLifecycle:
     """Test Subscription.cancel() and context manager."""
 
-    @allure.title("cancel removes subscription, marks inactive, and works as context manager")
+    @allure.title(
+        "cancel removes subscription, marks inactive, and works as context manager"
+    )
     def test_cancel_and_context_manager(self):
         bus = EventBus()
         received = []
@@ -157,7 +165,9 @@ class TestSubscriptionLifecycle:
 class TestEventBusPublish:
     """Test publish() method."""
 
-    @allure.title("publish invokes type-specific, wildcard handlers and uses event_type attribute")
+    @allure.title(
+        "publish invokes type-specific, wildcard handlers and uses event_type attribute"
+    )
     def test_publish_routing_and_event_type_attribute(self):
         bus = EventBus()
         type_received = []
@@ -203,9 +213,7 @@ class TestEventBusPublish:
             warnings.simplefilter("always")
             bus.publish(SampleEvent(value="test"))
 
-            runtime_warnings = [
-                x for x in w if issubclass(x.category, RuntimeWarning)
-            ]
+            runtime_warnings = [x for x in w if issubclass(x.category, RuntimeWarning)]
             assert len(runtime_warnings) == 1
             assert "error" in str(runtime_warnings[0].message).lower()
 
@@ -216,7 +224,9 @@ class TestEventBusPublish:
 class TestEventBusClearAndIntrospection:
     """Test clear(), clear_for_handler(), event_types(), and handler_count()."""
 
-    @allure.title("clear removes all, clear_for_handler removes specific, introspection works")
+    @allure.title(
+        "clear removes all, clear_for_handler removes specific, introspection works"
+    )
     def test_clear_and_introspection(self):
         bus = EventBus()
 
@@ -265,7 +275,9 @@ class TestEventBusClearAndIntrospection:
 class TestEventBusTypeStringAndHistory:
     """Test type string generation and event history."""
 
-    @allure.title("type string generation, caching, history recording, trimming, and clearing")
+    @allure.title(
+        "type string generation, caching, history recording, trimming, and clearing"
+    )
     def test_type_string_and_history(self):
         bus = EventBus()
 
@@ -315,7 +327,9 @@ class TestEventBusTypeStringAndHistory:
 class TestEventBusThreadSafetyAndGlobal:
     """Thread safety and global singleton tests."""
 
-    @allure.title("concurrent subscribe/publish, self-removing handler, singleton and reset")
+    @allure.title(
+        "concurrent subscribe/publish, self-removing handler, singleton and reset"
+    )
     def test_thread_safety_and_global(self):
         # Concurrent subscribe and publish
         bus = EventBus()

@@ -33,10 +33,20 @@ class TestCaseNameInvariants:
             ("\t\n", False),
             ("a" * 101, False),
         ],
-        ids=["normal", "hyphenated", "underscored", "max-length",
-             "empty", "whitespace", "tabs-newlines", "too-long"],
+        ids=[
+            "normal",
+            "hyphenated",
+            "underscored",
+            "max-length",
+            "empty",
+            "whitespace",
+            "tabs-newlines",
+            "too-long",
+        ],
     )
-    @allure.title("Validates case names: accepts valid, rejects empty/whitespace/too-long")
+    @allure.title(
+        "Validates case names: accepts valid, rejects empty/whitespace/too-long"
+    )
     def test_validates_case_names(self, name, expected):
         """Normal alphanumeric names valid; empty, whitespace-only, and too-long rejected."""
         from src.contexts.cases.core.invariants import is_valid_case_name
@@ -96,7 +106,9 @@ class TestAttributeTypeAndNameInvariants:
         ],
         ids=["simple", "underscored", "capitalized", "empty", "whitespace", "too-long"],
     )
-    @allure.title("Validates attribute names: normal accepted, empty/whitespace/too-long rejected")
+    @allure.title(
+        "Validates attribute names: normal accepted, empty/whitespace/too-long rejected"
+    )
     def test_validates_attribute_names(self, name, expected):
         """Normal names valid; empty, whitespace-only, and too-long rejected."""
         from src.contexts.cases.core.invariants import is_valid_attribute_name
@@ -136,11 +148,25 @@ class TestAttributeValueInvariants:
             ("", "boolean", False),
         ],
         ids=[
-            "text-string", "text-empty",
-            "number-int", "number-float", "number-str", "number-non-numeric", "number-empty",
-            "date-valid", "date-valid-2", "date-invalid", "date-wrong-format", "date-empty",
-            "bool-true", "bool-false", "bool-str-true", "bool-str-false",
-            "bool-yes", "bool-int", "bool-empty",
+            "text-string",
+            "text-empty",
+            "number-int",
+            "number-float",
+            "number-str",
+            "number-non-numeric",
+            "number-empty",
+            "date-valid",
+            "date-valid-2",
+            "date-invalid",
+            "date-wrong-format",
+            "date-empty",
+            "bool-true",
+            "bool-false",
+            "bool-str-true",
+            "bool-str-false",
+            "bool-yes",
+            "bool-int",
+            "bool-empty",
         ],
     )
     @allure.title("Validates attribute values by type")

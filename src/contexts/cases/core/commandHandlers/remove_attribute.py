@@ -66,7 +66,6 @@ def remove_case_attribute(
     if case_repo:
         case_repo.delete_attribute(case_id, command.attr_name)
 
-
     event_bus.publish(event)
 
     logger.info(

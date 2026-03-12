@@ -74,7 +74,6 @@ def set_case_attribute(
         )
         case_repo.save_attribute(case_id, attr)
 
-
     event_bus.publish(event)
 
     logger.info(

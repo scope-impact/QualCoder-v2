@@ -8,7 +8,6 @@ from __future__ import annotations
 
 import allure
 import pytest
-from returns.result import Success
 
 from src.contexts.coding.infra.config import LLMConfig
 from src.contexts.coding.infra.llm_provider import (
@@ -24,7 +23,9 @@ from src.contexts.coding.infra.llm_provider import (
 class TestMockLLMProvider:
     """Tests for MockLLMProvider."""
 
-    @allure.title("complete/complete_json return sequences, defaults, record prompts, and reset")
+    @allure.title(
+        "complete/complete_json return sequences, defaults, record prompts, and reset"
+    )
     def test_complete_sequences_prompts_and_reset(self) -> None:
         provider = MockLLMProvider(
             responses=["First", "Second"],

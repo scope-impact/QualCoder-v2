@@ -98,7 +98,9 @@ class TestMockEmbeddingProvider:
 class TestEmbeddingConfig:
     """Tests for EmbeddingConfig."""
 
-    @allure.title("Factory methods: default, for_testing, for_openai, for_ollama, for_local")
+    @allure.title(
+        "Factory methods: default, for_testing, for_openai, for_ollama, for_local"
+    )
     def test_factory_methods(self) -> None:
         """All factory methods create configs with correct settings."""
         # Default

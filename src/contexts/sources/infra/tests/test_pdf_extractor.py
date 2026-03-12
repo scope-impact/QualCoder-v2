@@ -31,7 +31,9 @@ class TestPdfExtraction:
     """Tests for extracting text from PDF documents."""
 
     @allure.title("Supports .pdf but not other extensions; fails for nonexistent file")
-    def test_supports_and_fails_for_nonexistent(self, extractor: PdfExtractor, tmp_path: Path):
+    def test_supports_and_fails_for_nonexistent(
+        self, extractor: PdfExtractor, tmp_path: Path
+    ):
         """Supports .pdf extension; rejects non-PDF; fails for missing file."""
         assert extractor.supports(Path("document.pdf"))
         assert not extractor.supports(Path("document.txt"))

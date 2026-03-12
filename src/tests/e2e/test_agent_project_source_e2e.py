@@ -87,9 +87,7 @@ def folder_tools(app_context: AppContext):
 @allure.severity(allure.severity_level.CRITICAL)
 class TestAgentOpenCloseProject:
     @allure.title("AC #1+5: open/close project tools registered and redirect to UI")
-    def test_project_tools_redirect_to_ui(
-        self, project_tools, existing_project: Path
-    ):
+    def test_project_tools_redirect_to_ui(self, project_tools, existing_project: Path):
         with allure.step("Verify open_project tool schema"):
             schemas = project_tools.get_tool_schemas()
             tool_names = [s["name"] for s in schemas]
@@ -360,9 +358,7 @@ class TestAgentManageFolders:
         from src.shared.common.types import SourceId
 
         with allure.step("Create and delete empty folder"):
-            create_result = folder_tools.execute(
-                "create_folder", {"name": "To Delete"}
-            )
+            create_result = folder_tools.execute("create_folder", {"name": "To Delete"})
             assert isinstance(create_result, Success)
             folder_id = create_result.unwrap()["folder_id"]
 

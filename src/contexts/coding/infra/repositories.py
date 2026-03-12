@@ -113,7 +113,6 @@ class SQLiteCodeRepository:
                 {"name": code.name, "color": code.color.to_hex(), "memo": code.memo},
             )
 
-
     def delete(self, code_id: CodeId) -> None:
         """Delete a code by ID."""
         logger.debug("delete: %s", code_id.value)
@@ -121,7 +120,6 @@ class SQLiteCodeRepository:
         self._conn.execute(stmt)
         if self._outbox:
             self._outbox.write_delete("code", code_id.value)
-
 
     def exists(self, code_id: CodeId) -> bool:
         """Check if a code exists."""
@@ -237,7 +235,6 @@ class SQLiteCategoryRepository:
                 {"name": category.name, "memo": category.memo},
             )
 
-
     def delete(self, category_id: CategoryId) -> None:
         """Delete a category."""
         logger.debug("delete: %s", category_id.value)
@@ -245,7 +242,6 @@ class SQLiteCategoryRepository:
         self._conn.execute(stmt)
         if self._outbox:
             self._outbox.write_delete("category", category_id.value)
-
 
     def name_exists(self, name: str, exclude_id: CategoryId | None = None) -> bool:
         """Check if a category name is already taken."""
@@ -392,7 +388,6 @@ class SQLiteSegmentRepository:
                 },
             )
 
-
     def delete(self, segment_id: SegmentId) -> None:
         """Delete a segment by ID."""
         logger.debug("delete: %s", segment_id.value)
@@ -400,7 +395,6 @@ class SQLiteSegmentRepository:
         self._conn.execute(stmt)
         if self._outbox:
             self._outbox.write_delete("segment", segment_id.value)
-
 
     def delete_by_code(self, code_id: CodeId) -> int:
         """Delete all segments with a code, returns count deleted."""
@@ -469,7 +463,6 @@ class SQLiteSegmentRepository:
             .values(source_name=new_name)
         )
         self._conn.execute(stmt)
-
 
     def _row_to_segment(self, row) -> TextSegment:
         """

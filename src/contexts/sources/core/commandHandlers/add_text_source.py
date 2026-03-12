@@ -133,7 +133,6 @@ def add_text_source(
     if source_repo:
         source_repo.save(source)
 
-
     # Step 5: Publish event
     event_bus.publish(event)
 

@@ -40,7 +40,9 @@ IMPORT_XML = """\
 
 @allure.story("QC-039.02 Import REFI-QDA Project")
 class TestImportRefiQDA:
-    @allure.title("AC #1+#2+#3: Import QDPX creates codes, sources, and publishes event")
+    @allure.title(
+        "AC #1+#2+#3: Import QDPX creates codes, sources, and publishes event"
+    )
     def test_import_qdpx_full(
         self,
         source_repo,

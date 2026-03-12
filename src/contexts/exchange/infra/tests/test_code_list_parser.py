@@ -35,7 +35,9 @@ class TestCodeListParser:
         assert len(empty_result.codes) == 0
         assert len(empty_result.categories) == 0
 
-    @allure.title("Parses indented lists creating categories with references ({indent_type})")
+    @allure.title(
+        "Parses indented lists creating categories with references ({indent_type})"
+    )
     @pytest.mark.parametrize(
         "text",
         [

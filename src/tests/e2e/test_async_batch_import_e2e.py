@@ -82,7 +82,9 @@ class TestAsyncBatchImport:
     """Verify the async batch import replaces QThread ImportWorker."""
 
     @allure.title("AC #1+2: batch import persists files with correct progress signals")
-    def test_batch_import_persists_with_progress(self, viewmodel, source_repo, tmp_path):
+    def test_batch_import_persists_with_progress(
+        self, viewmodel, source_repo, tmp_path
+    ):
         """Import 5 text files, verify persistence, finished signal, and progress signals."""
         paths = _create_text_files(tmp_path / "batch", 5)
 
@@ -116,7 +118,9 @@ class TestAsyncBatchImport:
         currents = [p[0] for p in progress_args]
         assert currents == [1, 2, 3, 4, 5]
 
-    @allure.title("AC #3+4: duplicate filenames and unsupported types counted as failures")
+    @allure.title(
+        "AC #3+4: duplicate filenames and unsupported types counted as failures"
+    )
     def test_duplicate_and_unsupported_fail(self, viewmodel, source_repo, tmp_path):
         """Duplicate filenames and unsupported file types are counted as failures."""
         from src.contexts.projects.core.entities import Source, SourceType
@@ -159,7 +163,9 @@ class TestAsyncBatchImport:
         assert imported == 1
         assert failed == 1
 
-    @allure.title("AC #5+6: cancellation stops processing and events published per file")
+    @allure.title(
+        "AC #5+6: cancellation stops processing and events published per file"
+    )
     def test_cancellation_and_events(self, viewmodel, source_repo, event_bus, tmp_path):
         """Cancellation stops remaining files; events published for each imported file."""
         # Test events first (clean state)
@@ -186,7 +192,9 @@ class TestAsyncBatchImport:
         sources = source_repo.get_all()
         assert len(sources) < 13
 
-    @allure.title("AC #7+8: suppress_reloads active during import and ImportWorker removed")
+    @allure.title(
+        "AC #7+8: suppress_reloads active during import and ImportWorker removed"
+    )
     def test_suppress_reloads_and_worker_removed(self, viewmodel, tmp_path):
         """Single reload at end of batch import; old ImportWorker QThread deleted."""
         paths = _create_text_files(tmp_path / "suppress", 3)

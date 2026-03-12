@@ -27,7 +27,9 @@ from src.shared.common.types import CodeId, SourceId
 class TestValueObjects:
     """Tests for SimilarityScore, TextContext, and SuggestionId value objects."""
 
-    @allure.title("SimilarityScore: valid scores, properties, boundary, and invalid rejection")
+    @allure.title(
+        "SimilarityScore: valid scores, properties, boundary, and invalid rejection"
+    )
     def test_similarity_score_valid_invalid_and_properties(self):
         score = SimilarityScore(value=0.85)
         assert score.value == 0.85
@@ -48,7 +50,9 @@ class TestValueObjects:
         with pytest.raises(ValueError, match="between 0.0 and 1.0"):
             SimilarityScore(value=1.5)
 
-    @allure.title("TextContext: stores text/position, truncates preview, and SuggestionId uniqueness")
+    @allure.title(
+        "TextContext: stores text/position, truncates preview, and SuggestionId uniqueness"
+    )
     def test_text_context_and_suggestion_id(self):
         context = TextContext(
             text="This is some relevant text",
@@ -100,24 +104,32 @@ class TestCodeSuggestion:
         # Invalid confidence
         with pytest.raises(ValueError, match="between 0.0 and 1.0"):
             CodeSuggestion(
-                id=SuggestionId.new(), name="Test",
+                id=SuggestionId.new(),
+                name="Test",
                 color=Color(red=100, green=100, blue=100),
-                rationale="Test", confidence=1.5,
+                rationale="Test",
+                confidence=1.5,
             )
         # Invalid status
         with pytest.raises(ValueError, match="Invalid status"):
             CodeSuggestion(
-                id=SuggestionId.new(), name="Test",
+                id=SuggestionId.new(),
+                name="Test",
                 color=Color(red=100, green=100, blue=100),
-                rationale="Test", confidence=0.5, status="invalid",
+                rationale="Test",
+                confidence=0.5,
+                status="invalid",
             )
 
     @allure.title("with_status and with_name return new instances")
     def test_with_status_and_with_name(self):
         original = CodeSuggestion(
-            id=SuggestionId.new(), name="Original",
+            id=SuggestionId.new(),
+            name="Original",
             color=Color(red=100, green=100, blue=100),
-            rationale="Test", confidence=0.5, status="pending",
+            rationale="Test",
+            confidence=0.5,
+            status="pending",
         )
 
         approved = original.with_status("approved")
@@ -139,11 +151,14 @@ class TestAggregateEntities:
     @allure.title("DuplicateCandidate: properties, total_segments, and with_status")
     def test_duplicate_candidate(self):
         candidate = DuplicateCandidate(
-            code_a_id=CodeId(value="1"), code_a_name="Anxiety",
-            code_b_id=CodeId(value="2"), code_b_name="Anxiousness",
+            code_a_id=CodeId(value="1"),
+            code_a_name="Anxiety",
+            code_b_id=CodeId(value="2"),
+            code_b_name="Anxiousness",
             similarity=SimilarityScore(value=0.92),
             rationale="Both codes refer to feelings of worry",
-            code_a_segment_count=15, code_b_segment_count=8,
+            code_a_segment_count=15,
+            code_b_segment_count=8,
         )
         assert candidate.code_a_name == "Anxiety"
         assert candidate.similarity.value == 0.92
@@ -157,9 +172,11 @@ class TestAggregateEntities:
     @allure.title("SuggestionBatch and DuplicateDetectionResult: creation and counts")
     def test_batch_and_detection_result(self):
         suggestion = CodeSuggestion(
-            id=SuggestionId.new(), name="Test",
+            id=SuggestionId.new(),
+            name="Test",
             color=Color(red=100, green=100, blue=100),
-            rationale="Test", confidence=0.5,
+            rationale="Test",
+            confidence=0.5,
         )
         batch = SuggestionBatch(
             suggestions=(suggestion,),
@@ -170,7 +187,8 @@ class TestAggregateEntities:
         assert batch.pending_count == 1
 
         long_batch = SuggestionBatch(
-            suggestions=(), source_id=SourceId(value="1"),
+            suggestions=(),
+            source_id=SourceId(value="1"),
             text_analyzed="x" * 300,
         )
         assert len(long_batch.text_preview) == 200
@@ -178,13 +196,18 @@ class TestAggregateEntities:
 
         # DuplicateDetectionResult
         candidate = DuplicateCandidate(
-            code_a_id=CodeId(value="1"), code_a_name="A",
-            code_b_id=CodeId(value="2"), code_b_name="B",
-            similarity=SimilarityScore(value=0.85), rationale="Similar",
+            code_a_id=CodeId(value="1"),
+            code_a_name="A",
+            code_b_id=CodeId(value="2"),
+            code_b_name="B",
+            similarity=SimilarityScore(value=0.85),
+            rationale="Similar",
         )
         result = DuplicateDetectionResult(
-            id=DetectionId.new(), candidates=(candidate,),
-            threshold=0.8, codes_analyzed=10,
+            id=DetectionId.new(),
+            candidates=(candidate,),
+            threshold=0.8,
+            codes_analyzed=10,
         )
         assert result.candidate_count == 1
         assert result.threshold == 0.8

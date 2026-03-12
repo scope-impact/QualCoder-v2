@@ -19,6 +19,7 @@ import pytest
 if TYPE_CHECKING:
     from pathlib import Path
 
+    from src.contexts.coding.interface.mcp_tools import CodingTools
     from src.shared.infra.app_context import AppContext
 
 pytestmark = [
@@ -331,7 +332,9 @@ class TestAgentDetectDuplicateCodes:
                 assert "similarity" in candidate
                 assert candidate["similarity"] >= 70
 
-    @allure.title("AC #3-4: Detection considers names/usage and requires researcher approval")
+    @allure.title(
+        "AC #3-4: Detection considers names/usage and requires researcher approval"
+    )
     def test_ac3_ac4_rationale_and_approval(
         self,
         coding_tools: CodingTools,
@@ -575,7 +578,9 @@ class TestAgentListCodes:
     As an AI Agent, I want to list all codes so I can understand the coding scheme.
     """
 
-    @allure.title("AC #1-4: List all codes with required fields, memo, and empty project")
+    @allure.title(
+        "AC #1-4: List all codes with required fields, memo, and empty project"
+    )
     def test_list_codes_full(
         self,
         coding_tools: CodingTools,
@@ -635,7 +640,9 @@ class TestAgentCreateCode:
     As an AI Agent, I want to create codes directly so I can build the coding scheme.
     """
 
-    @allure.title("AC #1-3: Create code with name, color, and optional memo; verify persistence")
+    @allure.title(
+        "AC #1-3: Create code with name, color, and optional memo; verify persistence"
+    )
     def test_create_code_with_memo_and_persistence(
         self, coding_tools: CodingTools, app_context: AppContext, tmp_path: Path
     ):

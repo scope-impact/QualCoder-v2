@@ -96,15 +96,35 @@ class TestDeriveSuggestCode:
             ("Theme", "", 0.8, None, "INVALID_RATIONALE"),
             ("Resilience", "Valid rationale", 0.8, "Resilience", "DUPLICATE_NAME"),
             ("RESILIENCE", "Valid rationale", 0.8, "Resilience", "DUPLICATE_NAME"),
-            ("Theme", "Valid rationale for the suggestion", 1.5, None, "INVALID_CONFIDENCE"),
-            ("Theme", "Valid rationale for the suggestion", -0.1, None, "INVALID_CONFIDENCE"),
+            (
+                "Theme",
+                "Valid rationale for the suggestion",
+                1.5,
+                None,
+                "INVALID_CONFIDENCE",
+            ),
+            (
+                "Theme",
+                "Valid rationale for the suggestion",
+                -0.1,
+                None,
+                "INVALID_CONFIDENCE",
+            ),
         ],
-        ids=["empty-name", "whitespace-name", "empty-rationale",
-             "exact-duplicate", "case-insensitive-duplicate",
-             "confidence-too-high", "confidence-negative"],
+        ids=[
+            "empty-name",
+            "whitespace-name",
+            "empty-rationale",
+            "exact-duplicate",
+            "case-insensitive-duplicate",
+            "confidence-too-high",
+            "confidence-negative",
+        ],
     )
     @allure.title("Fails with invalid name, rationale, duplicate, or confidence")
-    def test_fails_with_invalid_inputs(self, name, rationale, confidence, existing_name, expected_reason):
+    def test_fails_with_invalid_inputs(
+        self, name, rationale, confidence, existing_name, expected_reason
+    ):
         """Should fail with SuggestionNotCreated for various invalid inputs."""
         from src.contexts.coding.core.ai_derivers import (
             AISuggestionState,
@@ -196,7 +216,9 @@ class TestDeriveApproveSuggestion:
         assert isinstance(result_color, CodeSuggestionApproved)
         assert result_color.modified is True
 
-    @allure.title("Fails when suggestion not found, not pending, duplicate or invalid name")
+    @allure.title(
+        "Fails when suggestion not found, not pending, duplicate or invalid name"
+    )
     def test_fails_when_not_found_not_pending_or_invalid_name(self):
         """Should fail when suggestion doesn't exist, is not pending, or has invalid final name."""
         from src.contexts.coding.core.ai_derivers import (
@@ -476,8 +498,12 @@ class TestDeriveSuggestMerge:
         from src.contexts.coding.core.entities import Code, Color
         from src.shared import CodeId
 
-        source_code = Code(id=CodeId(value="1"), name="Resilience", color=Color(255, 0, 0))
-        target_code = Code(id=CodeId(value="2"), name="Perseverance", color=Color(0, 255, 0))
+        source_code = Code(
+            id=CodeId(value="1"), name="Resilience", color=Color(255, 0, 0)
+        )
+        target_code = Code(
+            id=CodeId(value="2"), name="Perseverance", color=Color(0, 255, 0)
+        )
         state = AISuggestionState(existing_codes=(source_code, target_code))
 
         # Valid merge
@@ -549,8 +575,12 @@ class TestDeriveApproveMerge:
         from src.contexts.coding.core.entities import Code, Color
         from src.shared import CodeId
 
-        source_code = Code(id=CodeId(value="1"), name="Resilience", color=Color(255, 0, 0))
-        target_code = Code(id=CodeId(value="2"), name="Perseverance", color=Color(0, 255, 0))
+        source_code = Code(
+            id=CodeId(value="1"), name="Resilience", color=Color(255, 0, 0)
+        )
+        target_code = Code(
+            id=CodeId(value="2"), name="Perseverance", color=Color(0, 255, 0)
+        )
         state = AISuggestionState(existing_codes=(source_code, target_code))
 
         # Normal case
@@ -710,10 +740,19 @@ class TestValidateTextForAnalysis:
             ("Hello", 5, True, ""),
             ("Hello", 10, False, "at least 10 characters"),
         ],
-        ids=["valid", "too-short", "empty", "whitespace-only", "custom-min-pass", "custom-min-fail"],
+        ids=[
+            "valid",
+            "too-short",
+            "empty",
+            "whitespace-only",
+            "custom-min-pass",
+            "custom-min-fail",
+        ],
     )
     @allure.title("Validates text length with default and custom min_length")
-    def test_validates_text_length(self, text, min_length, expected_valid, error_fragment):
+    def test_validates_text_length(
+        self, text, min_length, expected_valid, error_fragment
+    ):
         """Should accept or reject text based on length requirements."""
         from src.contexts.coding.core.ai_derivers import validate_text_for_analysis
 

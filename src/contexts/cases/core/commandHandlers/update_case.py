@@ -71,7 +71,6 @@ def update_case(
     if case_repo:
         case_repo.save(updated_case)
 
-
     event_bus.publish(event)
 
     logger.info("Case updated: id=%s", command.case_id)

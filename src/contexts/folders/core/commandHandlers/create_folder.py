@@ -99,7 +99,6 @@ def create_folder(
     if folder_repo:
         folder_repo.save(folder)
 
-
     # Publish event
     event_bus.publish(event)
 

@@ -9,7 +9,6 @@ from __future__ import annotations
 from pathlib import Path
 
 import allure
-import pytest
 from returns.result import Failure, Success
 
 from src.shared.infra.lifecycle import ProjectLifecycle
@@ -21,7 +20,9 @@ from src.shared.infra.lifecycle import ProjectLifecycle
 class TestProjectLifecycleOpenClose:
     """Tests for initial state, open, and close operations."""
 
-    @allure.title("New lifecycle has no connection; open sets state; close resets state")
+    @allure.title(
+        "New lifecycle has no connection; open sets state; close resets state"
+    )
     def test_initial_open_and_close(self, tmp_path: Path) -> None:
         from sqlalchemy import text
 

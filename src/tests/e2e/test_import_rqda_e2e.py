@@ -37,7 +37,9 @@ def _seed_rqda_data(conn):
 
 @allure.story("QC-039.03 Import RQDA Project")
 class TestImportRQDA:
-    @allure.title("AC #1+#2+#3: Import RQDA creates codes, sources, and publishes event")
+    @allure.title(
+        "AC #1+#2+#3: Import RQDA creates codes, sources, and publishes event"
+    )
     def test_import_rqda_full(
         self,
         source_repo,

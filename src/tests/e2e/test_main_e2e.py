@@ -144,7 +144,9 @@ class TestSmokeStartup:
     Smoke tests for application startup without a project.
     """
 
-    @allure.title("App starts without project, shows project screen, and creates all screens")
+    @allure.title(
+        "App starts without project, shows project screen, and creates all screens"
+    )
     @allure.severity(allure.severity_level.CRITICAL)
     def test_app_startup_and_screens(self, fresh_app):
         """App starts without errors, shows project screen, and all screens are created."""
@@ -175,7 +177,9 @@ class TestSmokeStartup:
         attach_screenshot(fresh_app._shell, "MainWindow - Project Screen on Startup")
         DocScreenshot.capture(fresh_app._shell, "main-window-startup", max_width=1000)
 
-    @allure.title("File manager works without viewmodel and navigation works without project")
+    @allure.title(
+        "File manager works without viewmodel and navigation works without project"
+    )
     @allure.severity(allure.severity_level.NORMAL)
     def test_empty_state_navigation(self, fresh_app):
         """File manager shows empty state, and all screens can be navigated without project."""
@@ -204,7 +208,9 @@ class TestSmokeProjectLifecycle:
     Smoke tests for project create/open lifecycle.
     """
 
-    @allure.title("AC #2-3: Create project initializes contexts, wires viewmodels, and connects signals")
+    @allure.title(
+        "AC #2-3: Create project initializes contexts, wires viewmodels, and connects signals"
+    )
     @allure.severity(allure.severity_level.CRITICAL)
     def test_create_project_full_lifecycle(self, fresh_app):
         """Creating a project initializes contexts, wires viewmodels, and connects signal bridge."""

@@ -101,7 +101,16 @@ class TestColor:
             ("#fffffff", None, True),
             ("#ff", None, True),
         ],
-        ids=["red", "green", "blue", "no-hash", "shorthand-white", "shorthand-red", "too-long", "too-short"],
+        ids=[
+            "red",
+            "green",
+            "blue",
+            "no-hash",
+            "shorthand-white",
+            "shorthand-red",
+            "too-long",
+            "too-short",
+        ],
     )
     @allure.title("Creates color from hex string or rejects invalid hex")
     def test_from_hex_valid_and_invalid(self, hex_str, expected_rgb, should_fail):
@@ -276,7 +285,9 @@ class TestTimeRange:
 class TestCode:
     """Tests for Code entity."""
 
-    @allure.title("Creates code with defaults and returns updated copies via with_ methods")
+    @allure.title(
+        "Creates code with defaults and returns updated copies via with_ methods"
+    )
     def test_creates_with_defaults_and_with_methods(self):
         """Should create code with defaults and return new instances with updated fields."""
         from src.contexts.coding.core.entities import Code, Color
@@ -322,7 +333,9 @@ class TestCode:
 class TestCategory:
     """Tests for Category entity."""
 
-    @allure.title("Creates category with defaults and returns updated copies via with_ methods")
+    @allure.title(
+        "Creates category with defaults and returns updated copies via with_ methods"
+    )
     def test_creates_with_defaults_and_with_methods(self):
         """Should create category with defaults and return new instances with updated fields."""
         from src.contexts.coding.core.entities import Category
@@ -358,7 +371,9 @@ class TestCategory:
 class TestTextSegment:
     """Tests for TextSegment entity."""
 
-    @allure.title("Creates segment with defaults and returns updated copies via with_ methods")
+    @allure.title(
+        "Creates segment with defaults and returns updated copies via with_ methods"
+    )
     def test_creates_with_defaults_and_with_methods(self):
         """Should create segment with defaults and return new instances with updated fields."""
         from src.contexts.coding.core.entities import TextPosition, TextSegment

@@ -215,7 +215,6 @@ def import_file_source(
     if source_repo:
         source_repo.save(source)
 
-
     # Step 5: Publish SourceAdded event
     event = SourceAdded.create(
         source_id=source_id,

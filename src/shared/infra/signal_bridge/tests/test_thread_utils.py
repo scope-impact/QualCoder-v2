@@ -58,7 +58,9 @@ class TestIsMainThread:
 class TestThreadChecker:
     """Tests for ThreadChecker utility class."""
 
-    @allure.title("assert_main_thread passes on main, fails on background; assert_background_thread inverse")
+    @allure.title(
+        "assert_main_thread passes on main, fails on background; assert_background_thread inverse"
+    )
     def test_assert_main_and_background_thread(self) -> None:
         # Should not raise on main thread
         ThreadChecker.assert_main_thread()

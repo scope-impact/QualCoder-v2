@@ -481,7 +481,9 @@ class TestApplyCodeFullPath:
     Not via private attributes.
     """
 
-    @allure.title("Quick mark persists segment to database and emits signal bridge event")
+    @allure.title(
+        "Quick mark persists segment to database and emits signal bridge event"
+    )
     @allure.severity(allure.severity_level.CRITICAL)
     def test_quick_mark_persists_and_emits_signal(self, coding_screen_ready):
         """
@@ -744,7 +746,9 @@ class TestCreateCodeFullPath:
         # Screenshot showing the code in the panel
         attach_screenshot(shell, "CodingScreen - After Code Created")
 
-    @allure.title("Dialog closes after creation, cancel does not create, and duplicate name rejected")
+    @allure.title(
+        "Dialog closes after creation, cancel does not create, and duplicate name rejected"
+    )
     @allure.severity(allure.severity_level.NORMAL)
     def test_dialog_close_cancel_and_duplicate(self, coding_screen_ready):
         """

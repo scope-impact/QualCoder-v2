@@ -203,7 +203,9 @@ class TestColorPickerDialog:
         assert spy.count() >= 1
         assert spy.at(spy.count() - 1)[0] == "#AABBCC"
 
-        attach_screenshot(color_picker_dialog, "ColorPickerDialog - Custom Hex and Select")
+        attach_screenshot(
+            color_picker_dialog, "ColorPickerDialog - Custom Hex and Select"
+        )
 
 
 # =============================================================================
@@ -502,7 +504,9 @@ class TestCreateCategoryDialog:
             == "Category for interview themes"
         )
 
-        attach_screenshot(create_category_dialog, "CreateCategoryDialog - Parent and Memo")
+        attach_screenshot(
+            create_category_dialog, "CreateCategoryDialog - Parent and Memo"
+        )
 
     @allure.title("AC #2.6+2.8: Create button toggles and emits signal")
     @allure.severity(allure.severity_level.CRITICAL)
@@ -760,7 +764,9 @@ class TestCodeMemoDialog:
         QApplication.processEvents()
         assert len(signals) == 1
 
-    @allure.title("AC #4.5+4.6+4.7: Cancel, metadata display, and content changed signal")
+    @allure.title(
+        "AC #4.5+4.6+4.7: Cancel, metadata display, and content changed signal"
+    )
     @allure.severity(allure.severity_level.NORMAL)
     def test_cancel_metadata_and_content_changed(
         self, code_memo_dialog, code_memo_dialog_with_content

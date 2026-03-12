@@ -209,7 +209,9 @@ class TestToolDefinition:
         assert param.required is required
         assert param.default == expected_default
 
-    @allure.title("ToolDefinition to_schema returns MCP-compatible format with parameters")
+    @allure.title(
+        "ToolDefinition to_schema returns MCP-compatible format with parameters"
+    )
     def test_tool_definition_to_schema(self):
         tool = ToolDefinition(
             name="get_case",
@@ -423,9 +425,7 @@ class TestGetCaseTool:
         ],
         ids=["missing-case-id", "no-project", "case-not-found"],
     )
-    def test_get_case_errors(
-        self, context_fixture, args, expected_error_code, request
-    ):
+    def test_get_case_errors(self, context_fixture, args, expected_error_code, request):
         ctx = request.getfixturevalue(context_fixture)
         tools = CaseTools(ctx=ctx)
 
@@ -522,7 +522,9 @@ class TestSuggestCaseGroupingsTool:
         for g in groupings:
             assert g["attribute_basis"] == "gender"
 
-    @allure.title("suggest_case_groupings respects min_group_size and identifies ungrouped")
+    @allure.title(
+        "suggest_case_groupings respects min_group_size and identifies ungrouped"
+    )
     def test_suggest_groupings_min_size_and_ungrouped(self, context_with_cases):
         tools = CaseTools(ctx=context_with_cases)
 

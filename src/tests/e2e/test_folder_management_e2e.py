@@ -310,7 +310,9 @@ class TestDeleteFolder:
 @allure.story("QC-027.16 Move Source to Folder")
 @allure.severity(allure.severity_level.NORMAL)
 class TestMoveSourceToFolder:
-    @allure.title("AC #1+3+4: Move source to folder, publish event, and move back to root")
+    @allure.title(
+        "AC #1+3+4: Move source to folder, publish event, and move back to root"
+    )
     def test_move_source_to_folder_with_event_and_root(
         self, folder_repo, source_repo, event_bus, project_state
     ):
@@ -428,4 +430,3 @@ class TestFolderPolicies:
             s2 = source_repo.get_by_id(SourceId(value="701"))
             assert s1.folder_id is None
             assert s2.folder_id is None
-

@@ -139,7 +139,9 @@ class TestDetectSourceType:
             ("photo.JPG", SourceType.IMAGE),
         ],
     )
-    def test_unknown_and_case_insensitive(self, filename: str, expected: SourceType) -> None:
+    def test_unknown_and_case_insensitive(
+        self, filename: str, expected: SourceType
+    ) -> None:
         """Unknown extensions return UNKNOWN; detection is case-insensitive."""
         assert detect_source_type(Path(filename)) == expected
 

@@ -269,7 +269,9 @@ class TestRefiQdaRoundTrip:
 
 @allure.story("QC-039.02 Import REFI-QDA Project")
 class TestRefiQdaDeepImport:
-    @allure.title("Import REFI-QDA preserves segments, colors, categories, and source text")
+    @allure.title(
+        "Import REFI-QDA preserves segments, colors, categories, and source text"
+    )
     def test_import_preserves_all_aspects(
         self,
         source_repo,

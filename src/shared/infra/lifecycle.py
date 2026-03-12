@@ -20,14 +20,14 @@ from typing import TYPE_CHECKING
 
 from returns.result import Failure, Result, Success
 
+from src.shared.infra.session import Session
+
 logger = logging.getLogger("qualcoder.shared.lifecycle")
 
 if TYPE_CHECKING:
     from sqlalchemy import Connection, Engine
 
     from src.contexts.projects.core.entities import Project
-
-from src.shared.infra.session import Session
 
 
 class ProjectLifecycle:

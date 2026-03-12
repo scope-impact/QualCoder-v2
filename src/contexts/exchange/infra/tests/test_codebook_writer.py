@@ -41,7 +41,9 @@ class TestCodebookWriter:
     ):
         return Category(id=CategoryId.new(), name=name, memo=memo, parent_id=parent_id)
 
-    @allure.title("Writes basic codebook with codes, categories, and uncategorized section")
+    @allure.title(
+        "Writes basic codebook with codes, categories, and uncategorized section"
+    )
     def test_write_codebook_with_categories_and_uncategorized(self, tmp_path):
         from src.contexts.exchange.infra.codebook_writer import write_codebook
 
@@ -83,8 +85,10 @@ class TestCodebookWriter:
         # With memos
         with_memos_path = tmp_path / "with_memos.txt"
         write_codebook(
-            codes=codes, categories=[cat],
-            output_path=with_memos_path, include_memos=True,
+            codes=codes,
+            categories=[cat],
+            output_path=with_memos_path,
+            include_memos=True,
         )
         content_with = with_memos_path.read_text()
         assert "Happy feeling" in content_with
@@ -93,8 +97,10 @@ class TestCodebookWriter:
         # Without memos
         without_memos_path = tmp_path / "without_memos.txt"
         write_codebook(
-            codes=codes, categories=[],
-            output_path=without_memos_path, include_memos=False,
+            codes=codes,
+            categories=[],
+            output_path=without_memos_path,
+            include_memos=False,
         )
         content_without = without_memos_path.read_text()
         assert "Joy" in content_without

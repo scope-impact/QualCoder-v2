@@ -97,7 +97,9 @@ class TestSourceSyncHandlerLifecycle:
 class TestSourceRenamedHandling:
     """Tests for SourceRenamed event handling."""
 
-    @allure.title("SourceRenamed updates both contexts; safe with no contexts; handles errors")
+    @allure.title(
+        "SourceRenamed updates both contexts; safe with no contexts; handles errors"
+    )
     def test_source_renamed_scenarios(
         self,
         event_bus: EventBus,
@@ -196,6 +198,6 @@ class TestSourceRemovedAndStoppedHandling:
         mock_segment_repo.update_source_name.assert_not_called()
 
         # Never-started handler also ignores events
-        handler3 = SourceSyncHandler(event_bus, coding_context=mock_coding_context)
+        _handler3 = SourceSyncHandler(event_bus, coding_context=mock_coding_context)
         event_bus.publish(rename_event)
         mock_segment_repo.update_source_name.assert_not_called()

@@ -22,7 +22,9 @@ pytestmark = pytest.mark.e2e
 class TestAppShellSettingsButton:
     """Tests for settings button in AppShell."""
 
-    @allure.title("Settings button exists, is visible, emits signal, and can connect handler")
+    @allure.title(
+        "Settings button exists, is visible, emits signal, and can connect handler"
+    )
     def test_settings_button_exists_visible_emits_and_connects(self, qapp, colors):
         """AppShell has a visible settings button that emits settings_clicked and can be connected."""
         from PySide6.QtTest import QSignalSpy

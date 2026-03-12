@@ -129,7 +129,6 @@ class SQLiteSourceRepository:
                 {"name": src.name, "source_type": src.source_type.value},
             )
 
-
     def delete(self, source_id: SourceId) -> None:
         """Delete a source by ID."""
         logger.debug("delete: %s", source_id.value)
@@ -137,7 +136,6 @@ class SQLiteSourceRepository:
         self._conn.execute(stmt)
         if self._outbox:
             self._outbox.write_delete("source", source_id.value)
-
 
     def exists(self, source_id: SourceId) -> bool:
         """Check if a source exists."""
@@ -181,7 +179,6 @@ class SQLiteSourceRepository:
                 .values(folder_id=None)
             )
             self._conn.execute(stmt)
-    
 
         return count
 

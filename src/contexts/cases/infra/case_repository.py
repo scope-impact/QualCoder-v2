@@ -102,7 +102,6 @@ class SQLiteCaseRepository:
                 "case", case.id.value, {"name": case.name, "memo": case.memo}
             )
 
-
     def delete(self, case_id: CaseId) -> None:
         """Delete a case and its attributes/links."""
         logger.debug("delete: %s", case_id.value)
@@ -118,7 +117,6 @@ class SQLiteCaseRepository:
         self._conn.execute(delete(cas_case).where(cas_case.c.id == case_id.value))
         if self._outbox:
             self._outbox.write_delete("case", case_id.value)
-
 
     def exists(self, case_id: CaseId) -> bool:
         """Check if a case exists."""
@@ -173,7 +171,6 @@ class SQLiteCaseRepository:
             )
         )
 
-
     def save_attribute(self, case_id: CaseId, attribute: CaseAttribute) -> None:
         """Save a single case attribute."""
         # Delete existing attribute with same name
@@ -187,7 +184,6 @@ class SQLiteCaseRepository:
         values = self._attribute_to_values(case_id, attribute)
         self._conn.execute(cas_attribute.insert().values(**values))
 
-
     def unlink_source(self, case_id: CaseId, source_id: SourceId) -> None:
         """Unlink a source from a case."""
         self._conn.execute(
@@ -196,7 +192,6 @@ class SQLiteCaseRepository:
                 cas_source_link.c.source_id == source_id.value,
             )
         )
-
 
     def update_source_name(self, source_id: SourceId, new_name: str) -> None:
         """
@@ -209,7 +204,6 @@ class SQLiteCaseRepository:
             .where(cas_source_link.c.source_id == source_id.value)
             .values(source_name=new_name)
         )
-
 
     def get_source_ids(self, case_id: CaseId) -> list[str]:
         """Get list of source IDs linked to a case."""

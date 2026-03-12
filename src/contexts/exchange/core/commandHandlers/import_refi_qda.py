@@ -165,8 +165,6 @@ def import_refi_qda(
         guid_to_fulltext[parsed_source.guid] = parsed_source.fulltext
         sources_created += 1
 
-
-
     # 4. Create segments (codings)
     # Note: We persist directly rather than delegating to apply_code because
     # that handler runs overlap detection that would reject legitimate imported
@@ -202,8 +200,6 @@ def import_refi_qda(
             )
         )
         segments_created += 1
-
-
 
     # 5. Publish event
     event = RefiQdaImported.create(

@@ -137,12 +137,14 @@ def _import_files_sequentially(
         t0 = time.perf_counter()
         result = source_tools.execute("import_file_source", {"file_path": str(f)})
         elapsed = time.perf_counter() - t0
-        timings.append({
-            "file": f.name,
-            "elapsed_s": round(elapsed, 4),
-            "success": isinstance(result, Success),
-            "error": str(result.failure()) if isinstance(result, Failure) else None,
-        })
+        timings.append(
+            {
+                "file": f.name,
+                "elapsed_s": round(elapsed, 4),
+                "success": isinstance(result, Success),
+                "error": str(result.failure()) if isinstance(result, Failure) else None,
+            }
+        )
 
     total_s = time.perf_counter() - t_start
     return total_s, timings
@@ -163,7 +165,7 @@ def _attach_timing_report(total_s: float, timings: list[dict]) -> None:
     ]
     for t in timings:
         status = "ok" if t["success"] else f"FAIL: {t['error']}"
-        report_lines.append(f"  {t['file']}: {t['elapsed_s']*1000:.1f}ms ({status})")
+        report_lines.append(f"  {t['file']}: {t['elapsed_s'] * 1000:.1f}ms ({status})")
 
     allure.attach(
         "\n".join(report_lines),
@@ -182,7 +184,9 @@ def _attach_timing_report(total_s: float, timings: list[dict]) -> None:
 class TestMcpImportDocxHangs:
     """Reproduce: first DOCX import succeeds, second call hangs."""
 
-    @allure.title("BUG REPRO: sequential DOCX imports via MCP — second call should not hang")
+    @allure.title(
+        "BUG REPRO: sequential DOCX imports via MCP — second call should not hang"
+    )
     def test_sequential_docx_imports_do_not_hang(
         self, source_tools, open_project: Path, tmp_path: Path
     ):
@@ -204,7 +208,9 @@ class TestMcpImportDocxHangs:
                 f"{t['file']} took {t['elapsed_s']:.1f}s — potential hang"
             )
 
-    @allure.title("BUG REPRO: DOCX import via MCP server and signal bridge (full production path)")
+    @allure.title(
+        "BUG REPRO: DOCX import via MCP server and signal bridge (full production path)"
+    )
     def test_docx_import_via_mcp_server_with_signal_bridge(
         self, app_context: AppContext, tmp_path: Path
     ):
@@ -217,7 +223,9 @@ class TestMcpImportDocxHangs:
 
         # Setup project
         project_path = tmp_path / "mcp_bridge_test.qda"
-        result = app_context.create_project(name="MCP Bridge Test", path=str(project_path))
+        result = app_context.create_project(
+            name="MCP Bridge Test", path=str(project_path)
+        )
         assert result.is_success
 
         # Connect signal bridge (as main.py does)
@@ -248,12 +256,14 @@ class TestMcpImportDocxHangs:
                     )
                     elapsed = time.perf_counter() - t0
                     success = result.get("success", False)
-                    timings.append({
-                        "file": f.name,
-                        "elapsed_s": round(elapsed, 4),
-                        "success": success,
-                        "error": result.get("error") if not success else None,
-                    })
+                    timings.append(
+                        {
+                            "file": f.name,
+                            "elapsed_s": round(elapsed, 4),
+                            "success": success,
+                            "error": result.get("error") if not success else None,
+                        }
+                    )
 
                 total_s = sum(t["elapsed_s"] for t in timings)
 
@@ -265,7 +275,9 @@ class TestMcpImportDocxHangs:
                         f"{t['file']} took {t['elapsed_s']:.1f}s — potential hang"
                     )
 
-            with allure.step(f"Signal bridge emitted {signal_count['source_added']} source_added events"):
+            with allure.step(
+                f"Signal bridge emitted {signal_count['source_added']} source_added events"
+            ):
                 assert signal_count["source_added"] == 5, (
                     f"Expected 5 source_added signals, got {signal_count['source_added']}"
                 )
@@ -289,7 +301,9 @@ class TestBatchImportBaseline:
     ):
         with allure.step("Import 30 text files — should complete in <1s"):
             txt_files = _create_text_files(tmp_path / "fast", count=30, lines=500)
-            txt_total_s, txt_timings = _import_files_sequentially(source_tools, txt_files)
+            txt_total_s, txt_timings = _import_files_sequentially(
+                source_tools, txt_files
+            )
             _attach_timing_report(txt_total_s, txt_timings)
             for t in txt_timings:
                 assert t["success"], f"Failed: {t['file']}: {t['error']}"
@@ -298,8 +312,12 @@ class TestBatchImportBaseline:
             )
 
         with allure.step("Import 10 DOCX files — should complete in <10s"):
-            docx_files = _create_docx_files(tmp_path / "docx_perf", count=10, paragraphs=20)
-            docx_total_s, docx_timings = _import_files_sequentially(source_tools, docx_files)
+            docx_files = _create_docx_files(
+                tmp_path / "docx_perf", count=10, paragraphs=20
+            )
+            docx_total_s, docx_timings = _import_files_sequentially(
+                source_tools, docx_files
+            )
             _attach_timing_report(docx_total_s, docx_timings)
             for t in docx_timings:
                 assert t["success"], f"Failed: {t['file']}: {t['error']}"
@@ -314,7 +332,7 @@ class TestBatchImportBaseline:
         files = _create_text_files(tmp_path / "scaling", count=50, lines=50)
         total_s, timings = _import_files_sequentially(source_tools, files)
 
-        with allure.step(f"50 files in {total_s*1000:.0f}ms"):
+        with allure.step(f"50 files in {total_s * 1000:.0f}ms"):
             _attach_timing_report(total_s, timings)
             for t in timings:
                 assert t["success"], f"Failed: {t['file']}: {t['error']}"
@@ -326,8 +344,8 @@ class TestBatchImportBaseline:
 
         with allure.step(f"Slowdown: {slowdown:.1f}x (first 10 vs last 10)"):
             allure.attach(
-                f"first_10_avg_ms={first_10_avg*1000:.1f}\n"
-                f"last_10_avg_ms={last_10_avg*1000:.1f}\n"
+                f"first_10_avg_ms={first_10_avg * 1000:.1f}\n"
+                f"last_10_avg_ms={last_10_avg * 1000:.1f}\n"
                 f"slowdown_ratio={slowdown:.2f}x\n",
                 name="scaling_analysis",
                 attachment_type=allure.attachment_type.TEXT,

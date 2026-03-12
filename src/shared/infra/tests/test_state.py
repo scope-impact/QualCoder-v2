@@ -6,7 +6,6 @@ from pathlib import Path
 from unittest.mock import MagicMock
 
 import allure
-import pytest
 
 from src.shared.common.types import SourceId
 from src.shared.infra.state import ProjectState
@@ -18,7 +17,9 @@ from src.shared.infra.state import ProjectState
 class TestProjectStateDefaults:
     """Initial ProjectState should have sensible defaults."""
 
-    @allure.title("New state has defaults; is_project_open reflects project; clear resets transient state")
+    @allure.title(
+        "New state has defaults; is_project_open reflects project; clear resets transient state"
+    )
     def test_defaults_project_open_and_clear(self) -> None:
         state = ProjectState()
 
@@ -52,7 +53,9 @@ class TestProjectStateDefaults:
 class TestProjectStateRecentProjects:
     """Tests for ProjectState.add_to_recent() method."""
 
-    @allure.title("add_to_recent adds at front with timestamp, deduplicates, and limits to 10")
+    @allure.title(
+        "add_to_recent adds at front with timestamp, deduplicates, and limits to 10"
+    )
     def test_add_to_recent_ordering_dedup_and_limit(self) -> None:
         state = ProjectState()
 
@@ -81,7 +84,9 @@ class TestProjectStateRecentProjects:
         project.name = "Updated"
         state.add_to_recent(project)
 
-        dedup_entries = [p for p in state.recent_projects if p.path == Path("/test/dedup.qda")]
+        dedup_entries = [
+            p for p in state.recent_projects if p.path == Path("/test/dedup.qda")
+        ]
         assert len(dedup_entries) == 1
         assert dedup_entries[0].name == "Updated"
 

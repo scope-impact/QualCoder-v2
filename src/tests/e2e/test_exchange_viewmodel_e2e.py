@@ -53,7 +53,9 @@ def file_manager_screen(qapp, exchange_vm):
 @allure.story("QC-039 Exchange ViewModel")
 class TestExchangeViewModel:
     @allure.title("Export codebook succeeds and fails gracefully when no codes")
-    def test_export_codebook_success_and_failure(self, exchange_vm, code_repo, tmp_path):
+    def test_export_codebook_success_and_failure(
+        self, exchange_vm, code_repo, tmp_path
+    ):
         # Fail when no codes
         result = exchange_vm.export_codebook(str(tmp_path / "codebook.txt"))
         assert result is False
@@ -68,7 +70,9 @@ class TestExchangeViewModel:
         assert (tmp_path / "codebook.txt").exists()
 
     @allure.title("Import code list and CSV via ViewModel")
-    def test_import_code_list_and_csv(self, exchange_vm, code_repo, case_repo, tmp_path):
+    def test_import_code_list_and_csv(
+        self, exchange_vm, code_repo, case_repo, tmp_path
+    ):
         code_file = tmp_path / "codes.txt"
         code_file.write_text("Joy\nAnger\n")
         result = exchange_vm.import_code_list(str(code_file))
@@ -92,7 +96,9 @@ class TestExchangeViewModel:
 
 @allure.story("QC-039 FileManager Exchange Integration")
 class TestFileManagerExchangeIntegration:
-    @allure.title("FileManagerScreen wired with exchange VM and has import/export menus")
+    @allure.title(
+        "FileManagerScreen wired with exchange VM and has import/export menus"
+    )
     def test_screen_wiring_and_menus(self, file_manager_screen, exchange_vm):
         assert file_manager_screen._exchange_vm is exchange_vm
 
@@ -101,7 +107,9 @@ class TestFileManagerExchangeIntegration:
         # Import menu
         import_menu = toolbar._import_btn.menu()
         assert import_menu is not None
-        import_actions = [a.text() for a in import_menu.actions() if not a.isSeparator()]
+        import_actions = [
+            a.text() for a in import_menu.actions() if not a.isSeparator()
+        ]
         assert "Source Files..." in import_actions
         assert "Code List (.txt)..." in import_actions
         assert "Survey CSV (.csv)..." in import_actions
@@ -111,7 +119,9 @@ class TestFileManagerExchangeIntegration:
         # Export menu
         export_menu = toolbar._export_btn.menu()
         assert export_menu is not None
-        export_actions = [a.text() for a in export_menu.actions() if not a.isSeparator()]
+        export_actions = [
+            a.text() for a in export_menu.actions() if not a.isSeparator()
+        ]
         assert "Selected Sources..." in export_actions
         assert "Codebook (.txt)..." in export_actions
         assert "Coded HTML (.html)..." in export_actions

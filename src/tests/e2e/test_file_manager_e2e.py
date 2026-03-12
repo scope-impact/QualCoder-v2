@@ -421,9 +421,7 @@ class TestBulkAndEmptyStateActions:
         assert coding_spy.count() == 1
         assert coding_spy.at(0)[0] == "2"
 
-    def test_empty_state_buttons_emit_signals(
-        self, empty_file_manager_window, qapp
-    ):
+    def test_empty_state_buttons_emit_signals(self, empty_file_manager_window, qapp):
         """
         E2E: Import and Link buttons in empty state emit their signals.
         """

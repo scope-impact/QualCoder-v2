@@ -224,7 +224,9 @@ class TestDeleteFolder:
     """Tests for delete_folder command handler."""
 
     @allure.title("Deletes empty folder, publishes event, and removes from repo")
-    def test_deletes_empty_folder_success(self, project_state, sample_folder, event_bus):
+    def test_deletes_empty_folder_success(
+        self, project_state, sample_folder, event_bus
+    ):
         """Should delete an empty folder, publish FolderDeleted event, and remove from repo."""
         folder_repo = MockFolderRepository([sample_folder])
         source_repo = MockSourceRepository()
@@ -248,7 +250,13 @@ class TestDeleteFolder:
         assert folder_repo.get_by_id(sample_folder.id) is None
 
     @pytest.mark.parametrize(
-        ("scenario", "use_empty_state", "folder_exists", "has_sources", "expected_code_fragment"),
+        (
+            "scenario",
+            "use_empty_state",
+            "folder_exists",
+            "has_sources",
+            "expected_code_fragment",
+        ),
         [
             ("no_project", True, True, False, "NO_PROJECT"),
             ("not_found", False, False, False, "NOT_FOUND"),
@@ -599,7 +607,13 @@ class TestRenameFolder:
         assert result2.success is True
 
     @pytest.mark.parametrize(
-        ("use_empty_state", "folder_exists", "new_name", "duplicate", "expected_code_fragment"),
+        (
+            "use_empty_state",
+            "folder_exists",
+            "new_name",
+            "duplicate",
+            "expected_code_fragment",
+        ),
         [
             (True, True, "New Name", False, "NO_PROJECT"),
             (False, False, "New Name", False, "NOT_FOUND"),
@@ -607,7 +621,13 @@ class TestRenameFolder:
             (False, True, "   ", False, "INVALID_NAME"),
             (False, True, "Existing Folder", True, "DUPLICATE_NAME"),
         ],
-        ids=["no-project", "folder-not-found", "empty-name", "whitespace-name", "duplicate-name"],
+        ids=[
+            "no-project",
+            "folder-not-found",
+            "empty-name",
+            "whitespace-name",
+            "duplicate-name",
+        ],
     )
     @allure.title("Fails rename under various error conditions")
     def test_rename_fails(

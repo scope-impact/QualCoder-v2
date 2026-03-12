@@ -72,7 +72,9 @@ class TestExchangeTools:
         )
 
         with allure.step("Verify suggest_export_format"):
-            result = tools.execute("suggest_export_format", {"use_case": "share codebook"})
+            result = tools.execute(
+                "suggest_export_format", {"use_case": "share codebook"}
+            )
             assert result["success"] is True
             assert "format" in result["data"] or "formats" in result["data"]
 

@@ -127,7 +127,9 @@ class TestCloudSyncSettings:
 
         attach_screenshot(settings_dialog, "Settings - Cloud Sync Default Off")
 
-    @allure.title("AC #1+2: Enable cloud sync shows config and user can enter Convex URL")
+    @allure.title(
+        "AC #1+2: Enable cloud sync shows config and user can enter Convex URL"
+    )
     def test_enable_cloud_sync_and_enter_url(self, settings_dialog):
         """E2E: Enabling cloud sync shows config, user can enter URL."""
         with allure.step("Navigate to Database section"):

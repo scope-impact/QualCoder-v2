@@ -73,7 +73,9 @@ class TestImportTextDocument:
     As a Researcher, I want to import text documents so that I can analyze textual data.
     """
 
-    @allure.title("AC #1+2+3: Supported formats, text extraction, and source list display")
+    @allure.title(
+        "AC #1+2+3: Supported formats, text extraction, and source list display"
+    )
     def test_supported_formats_and_extraction(
         self, text_extractor, sample_files: SampleFiles
     ):
@@ -293,9 +295,7 @@ class TestImportAudioVideoFiles:
         attach_screenshot(player, "MediaPlayer - Duration Display")
 
     @allure.title("AC #4: Playback controls are available")
-    def test_playback_controls_available(
-        self, qapp, colors, sample_files: SampleFiles
-    ):
+    def test_playback_controls_available(self, qapp, colors, sample_files: SampleFiles):
         from src.shared.presentation.organisms import MediaPlayer
 
         with allure.step("Create MediaPlayer and load media"):
@@ -960,9 +960,7 @@ class TestAgentListSources:
             assert data["sources"][0]["type"] == "image"
 
     @allure.title("AC #3+4: Source metadata and coding status available")
-    def test_source_metadata_and_coding_status(
-        self, app_context, project_with_sources
-    ):
+    def test_source_metadata_and_coding_status(self, app_context, project_with_sources):
         from returns.result import Success
 
         from src.contexts.sources.interface.mcp_tools import SourceTools

@@ -161,7 +161,9 @@ class TestUserSettingsRepositorySave:
 class TestUserSettingsRepositorySubSettings:
     """Tests for individual settings get/set operations."""
 
-    @allure.title("Get and set individual sub-settings (theme, font, language, backup, av_coding)")
+    @allure.title(
+        "Get and set individual sub-settings (theme, font, language, backup, av_coding)"
+    )
     @pytest.mark.parametrize(
         "setting_type",
         [
@@ -297,7 +299,9 @@ class TestUserSettingsRepositoryRecentProjects:
         assert names.index("Newest") < names.index("Middle") < names.index("Oldest")
 
         # Enforce max limit (add 12 total, should keep only 10)
-        repo2 = UserSettingsRepository(config_path=temp_config_path.parent / "limit.json")
+        repo2 = UserSettingsRepository(
+            config_path=temp_config_path.parent / "limit.json"
+        )
         base_time = datetime(2024, 1, 1, tzinfo=UTC)
         for i in range(12):
             repo2.add_recent_project(
@@ -315,7 +319,9 @@ class TestUserSettingsRepositoryRecentProjects:
         assert "Project 1" not in project_names
         assert "Project 11" in project_names
 
-    @allure.title("Remove project, handle corrupted entries, and preserve settings on round trip")
+    @allure.title(
+        "Remove project, handle corrupted entries, and preserve settings on round trip"
+    )
     def test_remove_corrupted_entries_and_round_trip(self, temp_config_path):
         from src.contexts.projects.core import RecentProject
 
