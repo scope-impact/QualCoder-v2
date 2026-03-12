@@ -22,7 +22,6 @@ import pytest
 from PySide6.QtTest import QSignalSpy
 from PySide6.QtWidgets import QApplication
 
-from design_system import get_colors
 from src.contexts.coding.presentation.dialogs import CreateCodeDialog
 from src.contexts.coding.presentation.screens.text_coding import TextCodingScreen
 from src.shared.presentation.dto import (
@@ -55,12 +54,6 @@ pytestmark = [
 # =============================================================================
 # Fixtures
 # =============================================================================
-
-
-@pytest.fixture
-def colors():
-    """Get color palette for UI."""
-    return get_colors()
 
 
 @pytest.fixture

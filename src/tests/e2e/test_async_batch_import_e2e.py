@@ -205,10 +205,9 @@ class TestAsyncBatchImport:
                 ImportWorker,  # noqa: F401
             )
 
-    @allure.title("AC #9+10: is_importing property and concurrent call rejection")
-    def test_is_importing_and_rejects_concurrent(self, viewmodel, source_repo, tmp_path):
-        """is_importing reflects task state; concurrent imports are rejected."""
-        # Test is_importing property
+    @allure.title("AC #9: is_importing property reflects async task state")
+    def test_is_importing_property(self, viewmodel, tmp_path):
+        """is_importing is True during import and False after completion."""
         paths = _create_text_files(tmp_path / "importing", 2)
 
         was_importing = []
@@ -222,7 +221,9 @@ class TestAsyncBatchImport:
         assert any(was_importing)
         assert not viewmodel.is_importing
 
-        # Test concurrent rejection (need fresh viewmodel state)
+    @allure.title("AC #10: batch import rejects concurrent calls")
+    def test_rejects_concurrent_import(self, viewmodel, source_repo, tmp_path):
+        """Second import call while first is running is rejected."""
         paths1 = _create_text_files(tmp_path / "batch1", 3)
         paths2 = _create_text_files(tmp_path / "batch2", 3)
 
@@ -238,6 +239,6 @@ class TestAsyncBatchImport:
             loop.close()
             asyncio.set_event_loop(None)
 
-        # 2 from first test + 3 from batch1 = 5 (batch2 rejected)
+        # Only batch1 (3 files) imported — batch2 was rejected
         sources = source_repo.get_all()
-        assert len(sources) == 5
+        assert len(sources) == 3

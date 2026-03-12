@@ -132,6 +132,19 @@ def event_bus():
 
 
 # =============================================================================
+# MCP Tool Fixtures
+# =============================================================================
+
+
+@pytest.fixture
+def coding_tools(app_context):
+    """Create CodingTools instance bound to the test AppContext."""
+    from src.contexts.coding.interface.mcp_tools import CodingTools
+
+    return CodingTools(ctx=app_context)
+
+
+# =============================================================================
 # Repository Fixtures
 # =============================================================================
 

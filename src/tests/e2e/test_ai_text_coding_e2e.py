@@ -16,8 +16,6 @@ from typing import TYPE_CHECKING
 import allure
 import pytest
 
-from src.contexts.coding.interface.mcp_tools import CodingTools
-
 if TYPE_CHECKING:
     from pathlib import Path
 
@@ -163,12 +161,6 @@ def project_with_multiple_sources(app_context: AppContext, tmp_path: Path) -> Pa
         app_context.coding_context.code_repo.save(code)
 
     return project_path
-
-
-@pytest.fixture
-def coding_tools(app_context: AppContext) -> CodingTools:
-    """Create CodingTools instance bound to the test AppContext."""
-    return CodingTools(ctx=app_context)
 
 
 # =============================================================================
