@@ -4,7 +4,7 @@ Welcome to the QualCoder v2 architecture tutorial! This hands-on guide teaches y
 
 ## Prerequisites
 
-- Python 3.10+ familiarity
+- Python 3.11+ familiarity
 - Basic understanding of classes and dataclasses
 - No prior DDD or functional programming experience required
 
@@ -22,6 +22,8 @@ Work through these parts in order. Each builds on the previous.
 | [Part 5](./05-signal-bridge.md) | SignalBridge Payloads | Connect domain to PySide6 |
 | [Part 6](./06-testing.md) | Testing Without Mocks | Appreciate pure function testability |
 | [Part 7](./07-complete-flow.md) | Complete Flow Reference | Full diagram of Code creation |
+| [Part 8](./08-database-lifecycle.md) | Database Lifecycle | ProjectLifecycle, Session, thread-local connections |
+| [Part 9](./09-threading-model.md) | Threading Model | Signal marshalling, qasync, sync threads |
 
 ## Appendices
 
@@ -59,7 +61,8 @@ graph LR
         D --> E[Events]
     end
 
-    subgraph App ["Application"]
+    subgraph App ["Shared Infrastructure"]
+        CH[Command Handlers]
         EB[EventBus]
         SB[SignalBridge]
     end
@@ -68,7 +71,7 @@ graph LR
         W[Qt Widgets]
     end
 
-    E --> EB --> SB --> W
+    E --> CH --> EB --> SB --> W
 ```
 
 ## Key Files Reference
@@ -77,27 +80,40 @@ As you work through the tutorial, you'll reference these files:
 
 ```
 src/contexts/coding/core/
-├── invariants.py     # Pure validation functions
-├── derivers.py       # Event derivation logic
-├── events.py         # Domain event definitions
-├── failure_events.py # Failure event types
-├── entities.py       # Code, Category, Segment entities
+├── invariants.py         # Pure validation functions
+├── derivers.py           # Event derivation logic
+├── events.py             # Domain event definitions
+├── failure_events.py     # Failure event types
+├── entities.py           # Code, Category, Segment entities
+├── commandHandlers/      # Use cases (orchestrate deriver + persist + publish)
 └── tests/
     ├── test_invariants.py
     └── test_derivers.py
 
+src/contexts/coding/interface/
+└── signal_bridge.py      # CodingSignalBridge (context-specific)
+
 src/shared/common/
-├── types.py          # DomainEvent base, typed IDs
-└── operation_result.py # Success/Failure result pattern
+├── types.py              # DomainEvent base, typed IDs
+└── operation_result.py   # Success/Failure result pattern
 
 src/shared/core/
-└── validation.py     # Shared validation helpers
+└── validation.py         # Shared validation helpers
 
 src/shared/infra/
-├── event_bus.py      # Pub/sub for domain events
-└── signal_bridge/
-    ├── base.py       # BaseSignalBridge
-    └── payloads.py   # UI-friendly DTOs
+├── event_bus.py          # Pub/sub for domain events
+├── lifecycle.py          # ProjectLifecycle (DB connection management)
+├── session.py            # Thread-local Session wrapper
+├── signal_bridge/
+│   ├── base.py           # BaseSignalBridge (thread-safe emission)
+│   ├── payloads.py       # UI-friendly DTOs
+│   └── thread_utils.py   # is_main_thread(), ThreadChecker
+├── app_context/
+│   ├── context.py        # AppContext (composition root)
+│   ├── factory.py        # create_app_context()
+│   └── bounded_contexts.py # Context factories
+└── sync/
+    └── engine.py         # SyncEngine (background threads)
 ```
 
 ## After the Tutorial
@@ -108,6 +124,8 @@ You should be able to:
 2. Write a new invariant and its tests
 3. Modify a deriver to use new invariants
 4. Trace an event from deriver to UI
-5. Know where to look when adding new features
+5. Understand how database connections are managed per-thread
+6. Know which threading pattern to use for different scenarios
+7. Know where to look when adding new features
 
 Ready? Start with [Part 0: The Big Picture](./00-big-picture.md).

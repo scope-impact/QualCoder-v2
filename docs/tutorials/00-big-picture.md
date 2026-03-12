@@ -211,23 +211,23 @@ When a user clicks "Create Code":
 ```mermaid
 sequenceDiagram
     participant UI as UI Widget
-    participant C as Controller
+    participant CH as Command Handler
     participant D as Deriver
     participant R as Repository
     participant EB as EventBus
     participant SB as SignalBridge
     participant TV as TreeView
 
-    UI->>C: create_code("Theme A", color)
-    C->>R: get_all()
-    R-->>C: existing_codes
-    C->>D: derive_create_code(name, color, state)
+    UI->>CH: create_code("Theme A", color)
+    CH->>R: get_all()
+    R-->>CH: existing_codes
+    CH->>D: derive_create_code(name, color, state)
 
     Note over D: Validates using invariants:<br/>is_valid_code_name() ✓<br/>is_code_name_unique() ✓
 
-    D-->>C: CodeCreated event
-    C->>R: save(event)
-    C->>EB: publish(event)
+    D-->>CH: CodeCreated event
+    CH->>R: save(event)
+    CH->>EB: publish(event)
     EB->>SB: _on_code_created(event)
 
     Note over SB: Convert to payload
@@ -235,6 +235,8 @@ sequenceDiagram
     SB->>TV: code_created.emit(payload)
     TV->>TV: Update tree view
 ```
+
+> **Note:** In QualCoder v2, "Command Handlers" live in `src/contexts/{context}/core/commandHandlers/`. Each handler is a standalone function (not a class method) that orchestrates: build state → call deriver → persist → publish event.
 
 ## Next Steps
 

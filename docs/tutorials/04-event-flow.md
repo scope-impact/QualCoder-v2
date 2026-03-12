@@ -8,68 +8,63 @@ When a user creates a Code, the event travels through four layers:
 
 ```mermaid
 graph LR
-    A[Controller<br/><i>deriver</i>] -->|Domain Event| B[EventBus<br/><i>pub/sub</i>]
+    A[Command Handler<br/><i>orchestrates</i>] -->|Domain Event| B[EventBus<br/><i>pub/sub</i>]
     B -->|Subscribe| C[SignalBridge<br/><i>Qt signals</i>]
     C -->|Emit| D[UI<br/><i>widgets</i>]
 ```
 
 Let's trace each step.
 
-## Step 1: Controller Calls Deriver
+## Step 1: Command Handler Calls Deriver
 
-A Controller orchestrates the operation:
+A **command handler** orchestrates the operation. In QualCoder v2, command handlers are standalone functions in `src/contexts/coding/core/commandHandlers/`:
 
 ```python
-# In a hypothetical CodingController
-class CodingController:
-    def __init__(self, code_repo, event_bus):
-        self._code_repo = code_repo
-        self._event_bus = event_bus
+# src/contexts/coding/core/commandHandlers/create_code.py
+def create_code(
+    command: CreateCodeCommand,
+    code_repo: CodeRepository,
+    event_bus: EventBus,
+) -> CodeCreated | CodeNotCreated:
+    # 1. Build state from repositories
+    state = CodingState(
+        existing_codes=tuple(code_repo.get_all()),
+        existing_categories=tuple(code_repo.get_all_categories()),
+    )
 
-    def create_code(
-        self,
-        name: str,
-        color: Color,
-        priority: Optional[int] = None,
-    ) -> CodeCreated | Failure:
-        # 1. Build state from repositories
-        state = CodingState(
-            existing_codes=tuple(self._code_repo.get_all()),
-            existing_categories=tuple(self._category_repo.get_all()),
-        )
+    # 2. Call the pure deriver
+    result = derive_create_code(
+        name=command.name,
+        color=command.color,
+        memo=command.memo,
+        category_id=command.category_id,
+        priority=command.priority,
+        owner=command.owner,
+        state=state,
+    )
 
-        # 2. Call the pure deriver
-        result = derive_create_code(
-            name=name,
-            color=color,
-            memo=None,
-            category_id=None,
-            priority=priority,
-            owner="local",
-            state=state,
-        )
-
-        # 3. Handle failure
-        if isinstance(result, CodeNotCreated):
-            return result
-
-        # 4. Persist (side effect)
-        self._code_repo.save_from_event(result)
-
-        # 5. Publish event (side effect)
-        self._event_bus.publish(result)
-
+    # 3. Handle failure
+    if isinstance(result, CodeNotCreated):
         return result
+
+    # 4. Persist (side effect)
+    code_repo.save_from_event(result)
+
+    # 5. Publish event (side effect)
+    event_bus.publish(result)
+
+    return result
 ```
 
 Key points:
 - The **deriver is pure** - it just computes
-- The **controller handles side effects** - persistence, publishing
+- The **command handler handles side effects** - persistence, publishing
 - State is built **before** calling the deriver
+- Each command handler is a **standalone function**, not a class method
 
 ## Step 2: EventBus Receives and Routes
 
-Look at `src/application/event_bus.py`:
+Look at `src/shared/infra/event_bus.py`:
 
 ```python
 class EventBus:
@@ -91,14 +86,14 @@ The EventBus:
 3. Calls each handler synchronously
 
 Event type is derived from the class:
-- `CodeCreated` in module `src.domain.coding.events`
+- `CodeCreated` in module `src.contexts.coding.core.events`
 - Becomes `"coding.code_created"`
 
 ## Step 3: SignalBridge Receives Event
 
 The SignalBridge subscribes to domain events and converts them to Qt signals.
 
-From `src/application/signal_bridge/base.py`:
+From `src/shared/infra/signal_bridge/base.py`:
 
 ```python
 class BaseSignalBridge(QObject, ABC):
@@ -122,9 +117,10 @@ class BaseSignalBridge(QObject, ABC):
         self._emit_threadsafe(signal, payload)
 ```
 
-A context-specific bridge might look like:
+A context-specific bridge lives in `src/contexts/{context}/interface/signal_bridge.py`:
 
 ```python
+# src/contexts/coding/interface/signal_bridge.py
 class CodingSignalBridge(BaseSignalBridge):
     # Define Qt signals
     code_created = Signal(object)
@@ -214,7 +210,7 @@ Let's trace "Create Code with priority=3":
 sequenceDiagram
     participant User
     participant Button as Create Button
-    participant Ctrl as Controller
+    participant CH as Command Handler
     participant Repo as Repository
     participant Der as Deriver
     participant EB as EventBus
@@ -223,22 +219,22 @@ sequenceDiagram
     participant Activity as ActivityPanel
 
     User->>Button: Click "Create Code"
-    Button->>Ctrl: create_code("Theme A", color, priority=3)
+    Button->>CH: create_code(command, code_repo, event_bus)
 
-    Note over Ctrl,Repo: Build State
-    Ctrl->>Repo: get_all()
-    Repo-->>Ctrl: existing_codes
+    Note over CH,Repo: Build State
+    CH->>Repo: get_all()
+    Repo-->>CH: existing_codes
 
-    Note over Ctrl,Der: Pure Domain Logic
-    Ctrl->>Der: derive_create_code(...)
+    Note over CH,Der: Pure Domain Logic
+    CH->>Der: derive_create_code(...)
     Note over Der: is_valid_code_name() ✓<br/>is_code_name_unique() ✓<br/>is_valid_priority(3) ✓
-    Der-->>Ctrl: CodeCreated event
+    Der-->>CH: CodeCreated event
 
-    Note over Ctrl,Repo: Persist
-    Ctrl->>Repo: save_from_event(result)
+    Note over CH,Repo: Persist
+    CH->>Repo: save_from_event(result)
 
-    Note over Ctrl,Activity: Publish & React
-    Ctrl->>EB: publish(CodeCreated)
+    Note over CH,Activity: Publish & React
+    CH->>EB: publish(CodeCreated)
     EB->>SB: handler(event)
     Note over SB: Convert to payload
     SB->>Tree: code_created.emit(payload)
@@ -268,7 +264,7 @@ To observe this in practice, you could:
 
 Events flow through:
 
-1. **Controller** calls pure deriver, handles side effects
+1. **Command Handler** calls pure deriver, handles side effects
 2. **EventBus** routes events to subscribers
 3. **SignalBridge** converts events to UI payloads
 4. **Qt Signals** emit payloads thread-safely
