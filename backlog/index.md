@@ -4,8 +4,7 @@ Project backlog containing tasks, architecture decisions, and planning documents
 
 ## Contents
 
-- **[Tasks](tasks/)** — Feature specifications and implementation tasks
-- **[Decisions](decisions/)** — Architecture Decision Records (ADRs)
+- **[Tasks](tasks/index.md)** — Feature specifications and implementation tasks
 
 ## Tasks Overview
 

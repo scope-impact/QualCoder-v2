@@ -96,9 +96,9 @@ This file tracks which features have documentation and screenshots.
 
 | ID | Story | Doc Page | Screenshots | Status |
 |----|-------|----------|-------------|--------|
-| QC-034.01 | View Cases | [cases.md](user-manual/cases.md) | case-manager-empty.png, case-manager-list.png | :white_check_mark: |
-| QC-034.02 | Create Case | [cases.md](user-manual/cases.md) | - | :construction: |
-| QC-034.03 | Case Attributes | [cases.md](user-manual/cases.md) | - | :construction: |
+| QC-034.01 | View Cases | [user-manual](user-manual/index.md) | case-manager-empty.png, case-manager-list.png | :white_check_mark: |
+| QC-034.02 | Create Case | [user-manual](user-manual/index.md) | - | :construction: |
+| QC-034.03 | Case Attributes | [user-manual](user-manual/index.md) | - | :construction: |
 
 ### QC-039 Import Export Formats
 

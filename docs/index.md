@@ -42,7 +42,7 @@ graph TB
 | [Architecture](ARCHITECTURE.md) | C4 model, bounded contexts, data flow, design decisions |
 | [Tutorials](tutorials/README.md) | Hands-on fDDD onboarding through a practical example |
 | [Design System](api/index.md) | 180+ PySide6 components, tokens, and patterns |
-| [Design Documents](design/) | Detailed specs (Functional DDD, Agent Context) |
+| [Design Documents](design/FUNCTIONAL_DDD_DESIGN.md) | Detailed specs (Functional DDD, Agent Context) |
 
 ## Bounded Contexts
 
@@ -66,7 +66,7 @@ graph TB
 
 **Adding a feature?**
 
-1. Identify the [Bounded Context](ARCHITECTURE.md#9-bounded-contexts)
+1. Identify the [Bounded Context](ARCHITECTURE.md#10-bounded-contexts)
 2. Follow fDDD patterns: Invariants → Derivers → Events
 3. Use [Design System components](api/components/index.md) for UI
 
