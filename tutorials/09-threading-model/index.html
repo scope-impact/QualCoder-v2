@@ -10,13 +10,13 @@
       
       
       
-        <link rel="canonical" href="https://qualcoder.dev/docs/decisions/ADR-001-uuidv7-primary-keys/">
+        <link rel="canonical" href="https://qualcoder.dev/docs/tutorials/09-threading-model/">
       
       
-        <link rel="prev" href="../">
+        <link rel="prev" href="../08-database-lifecycle/">
       
       
-        <link rel="next" href="../ADR-002-sync-engine-pattern/">
+        <link rel="next" href="../appendices/A-common-patterns/">
       
       
         
@@ -27,7 +27,7 @@
     
     
       
-        <title>ADR-001 UUIDv7 Primary Keys - QualCoder v2</title>
+        <title>Threading Model - QualCoder v2</title>
       
     
     
@@ -78,7 +78,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#adr-001-uuidv7-as-primary-keys-for-all-entities" class="md-skip">
+        <a href="#part-9-threading-model" class="md-skip">
           Skip to content
         </a>
       
@@ -118,7 +118,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              ADR-001 UUIDv7 Primary Keys
+              Threading Model
             
           </span>
         </div>
@@ -911,8 +911,10 @@
                 
   
   
+    
   
   
+  
     
     
       
@@ -954,15 +956,15 @@
       
     
     
-    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_2" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_2" checked>
         
           
           <div class="md-nav__link md-nav__container">
-            <a href="../../tutorials/" class="md-nav__link ">
+            <a href="../" class="md-nav__link ">
               
   
   
@@ -986,7 +988,7 @@
             
           </div>
         
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_2_label" aria-expanded="false">
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_2_label" aria-expanded="true">
           <label class="md-nav__title" for="__nav_3_2">
             <span class="md-nav__icon md-icon"></span>
             
@@ -1006,7 +1008,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../tutorials/00-big-picture/" class="md-nav__link">
+      <a href="../00-big-picture/" class="md-nav__link">
         
   
   
@@ -1034,7 +1036,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../tutorials/01-first-invariant/" class="md-nav__link">
+      <a href="../01-first-invariant/" class="md-nav__link">
         
   
   
@@ -1062,7 +1064,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../tutorials/02-first-deriver/" class="md-nav__link">
+      <a href="../02-first-deriver/" class="md-nav__link">
         
   
   
@@ -1090,7 +1092,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../tutorials/03-result-type/" class="md-nav__link">
+      <a href="../03-result-type/" class="md-nav__link">
         
   
   
@@ -1118,7 +1120,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../tutorials/04-event-flow/" class="md-nav__link">
+      <a href="../04-event-flow/" class="md-nav__link">
         
   
   
@@ -1146,7 +1148,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../tutorials/05-signal-bridge/" class="md-nav__link">
+      <a href="../05-signal-bridge/" class="md-nav__link">
         
   
   
@@ -1174,7 +1176,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../tutorials/06-testing/" class="md-nav__link">
+      <a href="../06-testing/" class="md-nav__link">
         
   
   
@@ -1202,7 +1204,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../tutorials/07-complete-flow/" class="md-nav__link">
+      <a href="../07-complete-flow/" class="md-nav__link">
         
   
   
@@ -1230,7 +1232,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../tutorials/08-database-lifecycle/" class="md-nav__link">
+      <a href="../08-database-lifecycle/" class="md-nav__link">
         
   
   
@@ -1255,10 +1257,37 @@
                 
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="../../tutorials/09-threading-model/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Threading Model
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   
@@ -1274,6 +1303,136 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#three-thread-domains" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Three Thread Domains
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#pattern-1-unified-event-loop-qasync" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Pattern 1: Unified Event Loop (qasync)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#pattern-2-thread-safe-signal-emission" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Pattern 2: Thread-Safe Signal Emission
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#pattern-3-eventbus-with-rlock" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Pattern 3: EventBus with RLock
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#pattern-4-mcp-asyncioto_thread" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Pattern 4: MCP asyncio.to_thread
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#pattern-5-sync-engine-background-threads" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Pattern 5: Sync Engine Background Threads
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#pattern-6-qtimer-debouncing-no-threading" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Pattern 6: QTimer Debouncing (No Threading)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#thread-safety-utilities" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Thread Safety Utilities
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#summary" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Summary
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#rules" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Rules
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -1344,7 +1503,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../tutorials/appendices/A-common-patterns/" class="md-nav__link">
+      <a href="../appendices/A-common-patterns/" class="md-nav__link">
         
   
   
@@ -1372,7 +1531,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../tutorials/appendices/B-when-to-create/" class="md-nav__link">
+      <a href="../appendices/B-when-to-create/" class="md-nav__link">
         
   
   
@@ -1538,8 +1697,6 @@
                 
   
   
-    
-  
   
   
     
@@ -1565,15 +1722,15 @@
       
     
     
-    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_4" checked>
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_4" >
         
           
           <div class="md-nav__link md-nav__container">
-            <a href="../" class="md-nav__link ">
+            <a href="../../decisions/" class="md-nav__link ">
               
   
   
@@ -1597,7 +1754,7 @@
             
           </div>
         
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_4_label" aria-expanded="true">
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_4_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_3_4">
             <span class="md-nav__icon md-icon"></span>
             
@@ -1614,37 +1771,10 @@
                 
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    ADR-001 UUIDv7 Primary Keys
-  
-
-    
-  </span>
-  
-  
-
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../../decisions/ADR-001-uuidv7-primary-keys/" class="md-nav__link">
         
   
   
@@ -1660,237 +1790,6 @@
   
 
       </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#context" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Context
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Context">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#the-problem-we-are-solving" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        The problem we are solving
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#the-current-id-generation-is-broken" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        The current ID generation is broken
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#the-two-id-problem-is-the-root-cause-of-sync-complexity" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        The two-ID problem is the root cause of sync complexity
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#decision" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Decision
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Decision">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#why-uuidv7-specifically" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Why UUIDv7 specifically
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#why-not-keep-integers" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Why not keep integers
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#why-not-uuidv4" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Why not UUIDv4
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#consequences" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Consequences
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Consequences">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#positive" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Positive
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#negative-trade-offs" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Negative / Trade-offs
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#alternatives-considered" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Alternatives Considered
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Alternatives Considered">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#keep-integer-pks-improve-syncidmap" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Keep integer PKs + improve SyncIdMap
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#uuidv4-instead-of-uuidv7" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        UUIDv4 instead of UUIDv7
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#convex-issued-ids-as-the-canonical-id" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Convex-issued IDs as the canonical ID
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#implementation-plan" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Implementation Plan
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#references" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        References
-      
-    </span>
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
     </li>
   
 
@@ -1903,7 +1802,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../ADR-002-sync-engine-pattern/" class="md-nav__link">
+      <a href="../../decisions/ADR-002-sync-engine-pattern/" class="md-nav__link">
         
   
   
@@ -3387,199 +3286,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#context" class="md-nav__link">
+  <a href="#three-thread-domains" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Context
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Context">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#the-problem-we-are-solving" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        The problem we are solving
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#the-current-id-generation-is-broken" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        The current ID generation is broken
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#the-two-id-problem-is-the-root-cause-of-sync-complexity" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        The two-ID problem is the root cause of sync complexity
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#decision" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Decision
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Decision">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#why-uuidv7-specifically" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Why UUIDv7 specifically
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#why-not-keep-integers" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Why not keep integers
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#why-not-uuidv4" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Why not UUIDv4
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#consequences" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Consequences
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Consequences">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#positive" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Positive
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#negative-trade-offs" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Negative / Trade-offs
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#alternatives-considered" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Alternatives Considered
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Alternatives Considered">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#keep-integer-pks-improve-syncidmap" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Keep integer PKs + improve SyncIdMap
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#uuidv4-instead-of-uuidv7" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        UUIDv4 instead of UUIDv7
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#convex-issued-ids-as-the-canonical-id" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Convex-issued IDs as the canonical ID
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#implementation-plan" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Implementation Plan
+        Three Thread Domains
       
     </span>
   </a>
@@ -3587,10 +3297,98 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#references" class="md-nav__link">
+  <a href="#pattern-1-unified-event-loop-qasync" class="md-nav__link">
     <span class="md-ellipsis">
       
-        References
+        Pattern 1: Unified Event Loop (qasync)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#pattern-2-thread-safe-signal-emission" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Pattern 2: Thread-Safe Signal Emission
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#pattern-3-eventbus-with-rlock" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Pattern 3: EventBus with RLock
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#pattern-4-mcp-asyncioto_thread" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Pattern 4: MCP asyncio.to_thread
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#pattern-5-sync-engine-background-threads" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Pattern 5: Sync Engine Background Threads
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#pattern-6-qtimer-debouncing-no-threading" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Pattern 6: QTimer Debouncing (No Threading)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#thread-safety-utilities" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Thread Safety Utilities
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#summary" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Summary
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#rules" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Rules
       
     </span>
   </a>
@@ -3617,179 +3415,272 @@
   
 
 
-<h1 id="adr-001-uuidv7-as-primary-keys-for-all-entities">ADR-001: UUIDv7 as Primary Keys for All Entities<a class="headerlink" href="#adr-001-uuidv7-as-primary-keys-for-all-entities" title="Permanent link">&para;</a></h1>
-<p><strong>Status:</strong> Accepted
-<strong>Date:</strong> 2026-02-25
-<strong>Deciders:</strong> Sathish Narayanan
-<strong>Scope:</strong> All bounded contexts (<code>coding</code>, <code>sources</code>, <code>cases</code>, <code>folders</code>)</p>
-<hr />
-<h2 id="context">Context<a class="headerlink" href="#context" title="Permanent link">&para;</a></h2>
-<h3 id="the-problem-we-are-solving">The problem we are solving<a class="headerlink" href="#the-problem-we-are-solving" title="Permanent link">&para;</a></h3>
-<p>QualCoder stores data locally in SQLite (offline-first) and optionally syncs to Convex cloud. SQLite uses <strong>auto-increment integer</strong> primary keys. Convex uses <strong>opaque string</strong> document IDs. Keeping these two ID spaces in sync requires a mapping table (<code>sync_id_map</code>) with significant complexity:</p>
-<ol>
-<li>Every outbound sync must look up the Convex ID for each entity.</li>
-<li>Every inbound sync must translate Convex IDs back to local integer IDs.</li>
-<li>Foreign key references (e.g., <code>segment.code_id</code>) must also be translated, introducing ordering dependencies that cause "FK not mapped yet — deferring" errors.</li>
-<li>If the mapping table is lost or out of sync, the entire sync state is corrupted.</li>
-</ol>
-<h3 id="the-current-id-generation-is-broken">The current ID generation is broken<a class="headerlink" href="#the-current-id-generation-is-broken" title="Permanent link">&para;</a></h3>
-<p>The typed identifiers in <code>src/shared/common/types.py</code> use this pattern:</p>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nd">@classmethod</span>
-</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="k">def</span><span class="w"> </span><span class="nf">new</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">CodeId</span><span class="p">:</span>
-</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>    <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="n">uuid4</span><span class="p">()</span><span class="o">.</span><span class="n">int</span> <span class="o">%</span> <span class="mi">1_000_000</span><span class="p">))</span>
+<h1 id="part-9-threading-model">Part 9: Threading Model<a class="headerlink" href="#part-9-threading-model" title="Permanent link">&para;</a></h1>
+<p>How does QualCoder v2 handle concurrency between the Qt UI, MCP server, and cloud sync?</p>
+<h2 id="three-thread-domains">Three Thread Domains<a class="headerlink" href="#three-thread-domains" title="Permanent link">&para;</a></h2>
+<pre class="mermaid"><code>graph TB
+    subgraph Main ["Main Thread (Qt + asyncio)"]
+        QtLoop["Qt Event Loop"]
+        Asyncio["asyncio via qasync"]
+        EventBus["EventBus.publish()"]
+        SignalEmit["Signal.emit()"]
+        Timer["QTimer debouncing"]
+    end
+
+    subgraph MCP ["MCP Worker Threads"]
+        ToThread["asyncio.to_thread()"]
+        RepoRead["repo.get_all()"]
+        RepoWrite["repo.save()"]
+    end
+
+    subgraph Sync ["Sync Daemon Threads"]
+        Outbound["SyncEngine-Outbound"]
+        Inbound["SyncEngine-Sub-*"]
+        Reachability["ConvexReachabilityCheck"]
+    end
+
+    ToThread --&gt;|thread-local conn| RepoRead
+    RepoWrite --&gt;|commit| RepoRead
+    Outbound --&gt;|sync_db_lock| Inbound
+    MCP --&gt;|QMetaObject.invokeMethod| Main
+    Sync --&gt;|queue.Queue| Main</code></pre>
+<h2 id="pattern-1-unified-event-loop-qasync">Pattern 1: Unified Event Loop (qasync)<a class="headerlink" href="#pattern-1-unified-event-loop-qasync" title="Permanent link">&para;</a></h2>
+<p>QualCoder merges Qt and asyncio into one event loop using <code>qasync</code>:</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="c1"># src/main.py</span>
+</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="kn">import</span><span class="w"> </span><span class="nn">qasync</span>
+</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>
+</span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="k">class</span><span class="w"> </span><span class="nc">QualCoderApp</span><span class="p">:</span>
+</span><span id="__span-0-5"><a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+</span><span id="__span-0-6"><a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">_app</span> <span class="o">=</span> <span class="n">QApplication</span><span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">argv</span><span class="p">)</span>
+</span><span id="__span-0-7"><a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>        <span class="c1"># qasync merges Qt event loop with asyncio</span>
+</span><span id="__span-0-8"><a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>        <span class="c1"># MCP server runs as asyncio coroutine on the same loop</span>
 </span></code></pre></div>
-<p>This generates a random integer in the range <code>[0, 999_999]</code>. By the birthday paradox, a 50% collision probability is reached at approximately <strong>1,183 entities</strong> — well within the scale of a real research project. This is a latent correctness bug.</p>
-<h3 id="the-two-id-problem-is-the-root-cause-of-sync-complexity">The two-ID problem is the root cause of sync complexity<a class="headerlink" href="#the-two-id-problem-is-the-root-cause-of-sync-complexity" title="Permanent link">&para;</a></h3>
-<p>The <code>SyncEngine._translate_fk_ids()</code>, <code>SyncEngine._sync_to_convex()</code>, <code>SyncIdMap</code>, and all deferred-retry logic in the outbound sync loop exist solely to bridge integer local IDs and Convex string IDs. Eliminating the mismatch eliminates this entire layer.</p>
-<hr />
-<h2 id="decision">Decision<a class="headerlink" href="#decision" title="Permanent link">&para;</a></h2>
-<p><strong>Use UUIDv7 string values as primary keys for all entities across SQLite and Convex.</strong></p>
-<ul>
-<li>Local SQLite <code>id</code> columns change from <code>Integer</code> to <code>String(36)</code> (storing the UUID as a canonical hyphenated string).</li>
-<li>Typed identifiers (<code>CodeId</code>, <code>SegmentId</code>, <code>SourceId</code>, <code>CategoryId</code>, <code>CaseId</code>, <code>FolderId</code>) change their internal <code>value</code> from <code>int</code> to <code>str</code>.</li>
-<li>The Convex document <code>_id</code> field continues to be Convex's own ID; the UUID is stored as a separate <code>localId</code> field in Convex documents (or the mutation accepts the client UUID as the canonical record ID where Convex supports custom IDs).</li>
-<li>The <code>SyncIdMap</code> table and <code>id_map.py</code> module are <strong>deleted</strong> once migration is complete.</li>
-<li>The <code>FK_DEPENDENCIES</code> translation logic in <code>SyncEngine._translate_fk_ids()</code> is <strong>deleted</strong>.</li>
-</ul>
-<h3 id="why-uuidv7-specifically">Why UUIDv7 specifically<a class="headerlink" href="#why-uuidv7-specifically" title="Permanent link">&para;</a></h3>
+<p><strong>Why this matters:</strong>
+- The MCP server (aiohttp) runs on the same loop as Qt
+- No separate thread needed for HTTP handling
+- Tool calls still use <code>asyncio.to_thread()</code> for blocking DB operations</p>
+<h2 id="pattern-2-thread-safe-signal-emission">Pattern 2: Thread-Safe Signal Emission<a class="headerlink" href="#pattern-2-thread-safe-signal-emission" title="Permanent link">&para;</a></h2>
+<p>The most critical threading pattern. Background threads <strong>cannot</strong> call <code>Signal.emit()</code> directly - Qt requires signals to be emitted on the main thread.</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="c1"># src/shared/infra/signal_bridge/base.py</span>
+</span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="k">class</span><span class="w"> </span><span class="nc">BaseSignalBridge</span><span class="p">(</span><span class="n">QObject</span><span class="p">):</span>
+</span><span id="__span-1-3"><a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+</span><span id="__span-1-4"><a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">_emission_queue</span> <span class="o">=</span> <span class="n">queue</span><span class="o">.</span><span class="n">Queue</span><span class="p">()</span>  <span class="c1"># Thread-safe</span>
+</span><span id="__span-1-5"><a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>
+</span><span id="__span-1-6"><a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">_emit_threadsafe</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">signal</span><span class="p">,</span> <span class="n">payload</span><span class="p">):</span>
+</span><span id="__span-1-7"><a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>        <span class="k">if</span> <span class="n">is_main_thread</span><span class="p">():</span>
+</span><span id="__span-1-8"><a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>            <span class="n">signal</span><span class="o">.</span><span class="n">emit</span><span class="p">(</span><span class="n">payload</span><span class="p">)</span>  <span class="c1"># Direct emit</span>
+</span><span id="__span-1-9"><a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>        <span class="k">else</span><span class="p">:</span>
+</span><span id="__span-1-10"><a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a>            <span class="c1"># Queue the emission and schedule processing on main thread</span>
+</span><span id="__span-1-11"><a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a>            <span class="bp">self</span><span class="o">.</span><span class="n">_emission_queue</span><span class="o">.</span><span class="n">put</span><span class="p">((</span><span class="n">signal</span><span class="p">,</span> <span class="n">payload</span><span class="p">))</span>
+</span><span id="__span-1-12"><a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a>            <span class="n">QMetaObject</span><span class="o">.</span><span class="n">invokeMethod</span><span class="p">(</span>
+</span><span id="__span-1-13"><a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a>                <span class="bp">self</span><span class="p">,</span>
+</span><span id="__span-1-14"><a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a>                <span class="s2">&quot;_do_emit&quot;</span><span class="p">,</span>
+</span><span id="__span-1-15"><a id="__codelineno-1-15" name="__codelineno-1-15" href="#__codelineno-1-15"></a>                <span class="n">Qt</span><span class="o">.</span><span class="n">ConnectionType</span><span class="o">.</span><span class="n">QueuedConnection</span><span class="p">,</span>  <span class="c1"># Marshals to main thread</span>
+</span><span id="__span-1-16"><a id="__codelineno-1-16" name="__codelineno-1-16" href="#__codelineno-1-16"></a>            <span class="p">)</span>
+</span><span id="__span-1-17"><a id="__codelineno-1-17" name="__codelineno-1-17" href="#__codelineno-1-17"></a>
+</span><span id="__span-1-18"><a id="__codelineno-1-18" name="__codelineno-1-18" href="#__codelineno-1-18"></a>    <span class="nd">@Slot</span><span class="p">()</span>
+</span><span id="__span-1-19"><a id="__codelineno-1-19" name="__codelineno-1-19" href="#__codelineno-1-19"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">_do_emit</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+</span><span id="__span-1-20"><a id="__codelineno-1-20" name="__codelineno-1-20" href="#__codelineno-1-20"></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;Drains queue on main thread.&quot;&quot;&quot;</span>
+</span><span id="__span-1-21"><a id="__codelineno-1-21" name="__codelineno-1-21" href="#__codelineno-1-21"></a>        <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
+</span><span id="__span-1-22"><a id="__codelineno-1-22" name="__codelineno-1-22" href="#__codelineno-1-22"></a>            <span class="k">try</span><span class="p">:</span>
+</span><span id="__span-1-23"><a id="__codelineno-1-23" name="__codelineno-1-23" href="#__codelineno-1-23"></a>                <span class="n">signal</span><span class="p">,</span> <span class="n">payload</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_emission_queue</span><span class="o">.</span><span class="n">get_nowait</span><span class="p">()</span>
+</span><span id="__span-1-24"><a id="__codelineno-1-24" name="__codelineno-1-24" href="#__codelineno-1-24"></a>                <span class="n">signal</span><span class="o">.</span><span class="n">emit</span><span class="p">(</span><span class="n">payload</span><span class="p">)</span>  <span class="c1"># Safe: we&#39;re on main thread</span>
+</span><span id="__span-1-25"><a id="__codelineno-1-25" name="__codelineno-1-25" href="#__codelineno-1-25"></a>            <span class="k">except</span> <span class="n">queue</span><span class="o">.</span><span class="n">Empty</span><span class="p">:</span>
+</span><span id="__span-1-26"><a id="__codelineno-1-26" name="__codelineno-1-26" href="#__codelineno-1-26"></a>                <span class="k">break</span>
+</span></code></pre></div>
+<p>The flow:</p>
+<pre class="mermaid"><code>sequenceDiagram
+    participant Worker as MCP Worker Thread
+    participant Queue as queue.Queue
+    participant Qt as Qt Main Thread
+    participant Widget as UI Widget
+
+    Worker-&gt;&gt;Worker: repo.save() + event_bus.publish()
+    Worker-&gt;&gt;Queue: _emission_queue.put((signal, payload))
+    Worker-&gt;&gt;Qt: QMetaObject.invokeMethod("_do_emit", QueuedConnection)
+
+    Note over Qt: Qt event loop picks up queued call
+
+    Qt-&gt;&gt;Queue: get_nowait()
+    Queue--&gt;&gt;Qt: (signal, payload)
+    Qt-&gt;&gt;Widget: signal.emit(payload)
+    Widget-&gt;&gt;Widget: Update UI</code></pre>
+<h2 id="pattern-3-eventbus-with-rlock">Pattern 3: EventBus with RLock<a class="headerlink" href="#pattern-3-eventbus-with-rlock" title="Permanent link">&para;</a></h2>
+<p>The EventBus uses a reentrant lock and <strong>copies handler lists under lock, then invokes without lock</strong>:</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="c1"># src/shared/infra/event_bus.py</span>
+</span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="k">class</span><span class="w"> </span><span class="nc">EventBus</span><span class="p">:</span>
+</span><span id="__span-2-3"><a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+</span><span id="__span-2-4"><a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">_lock</span> <span class="o">=</span> <span class="n">RLock</span><span class="p">()</span>  <span class="c1"># Reentrant: same thread can re-acquire</span>
+</span><span id="__span-2-5"><a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">_handlers</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="n">Handler</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
+</span><span id="__span-2-6"><a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a>
+</span><span id="__span-2-7"><a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">subscribe</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">event_type</span><span class="p">,</span> <span class="n">handler</span><span class="p">):</span>
+</span><span id="__span-2-8"><a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a>        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_lock</span><span class="p">:</span>
+</span><span id="__span-2-9"><a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a>            <span class="bp">self</span><span class="o">.</span><span class="n">_handlers</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="n">event_type</span><span class="p">,</span> <span class="p">[])</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">handler</span><span class="p">)</span>
+</span><span id="__span-2-10"><a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a>
+</span><span id="__span-2-11"><a id="__codelineno-2-11" name="__codelineno-2-11" href="#__codelineno-2-11"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">publish</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">event</span><span class="p">):</span>
+</span><span id="__span-2-12"><a id="__codelineno-2-12" name="__codelineno-2-12" href="#__codelineno-2-12"></a>        <span class="c1"># Copy under lock</span>
+</span><span id="__span-2-13"><a id="__codelineno-2-13" name="__codelineno-2-13" href="#__codelineno-2-13"></a>        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_lock</span><span class="p">:</span>
+</span><span id="__span-2-14"><a id="__codelineno-2-14" name="__codelineno-2-14" href="#__codelineno-2-14"></a>            <span class="n">type_handlers</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_handlers</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">event_type</span><span class="p">,</span> <span class="p">[]))</span>
+</span><span id="__span-2-15"><a id="__codelineno-2-15" name="__codelineno-2-15" href="#__codelineno-2-15"></a>
+</span><span id="__span-2-16"><a id="__codelineno-2-16" name="__codelineno-2-16" href="#__codelineno-2-16"></a>        <span class="c1"># Invoke WITHOUT lock (prevents deadlock if handler subscribes)</span>
+</span><span id="__span-2-17"><a id="__codelineno-2-17" name="__codelineno-2-17" href="#__codelineno-2-17"></a>        <span class="k">for</span> <span class="n">handler</span> <span class="ow">in</span> <span class="n">type_handlers</span><span class="p">:</span>
+</span><span id="__span-2-18"><a id="__codelineno-2-18" name="__codelineno-2-18" href="#__codelineno-2-18"></a>            <span class="n">handler</span><span class="p">(</span><span class="n">event</span><span class="p">)</span>
+</span></code></pre></div>
+<p><strong>Why RLock?</strong> A handler might publish another event (reentrant), which needs to acquire the lock again on the same thread.</p>
+<p><strong>Why copy?</strong> If we held the lock during handler invocation, a handler that calls <code>subscribe()</code> would deadlock (even with RLock, if handler is on another thread).</p>
+<h2 id="pattern-4-mcp-asyncioto_thread">Pattern 4: MCP asyncio.to_thread<a class="headerlink" href="#pattern-4-mcp-asyncioto_thread" title="Permanent link">&para;</a></h2>
+<p>MCP tool calls run blocking DB operations in worker threads:</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="c1"># Conceptual flow in MCP server</span>
+</span><span id="__span-3-2"><a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">handle_tool_call</span><span class="p">(</span><span class="n">tool_name</span><span class="p">,</span> <span class="n">args</span><span class="p">):</span>
+</span><span id="__span-3-3"><a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>    <span class="c1"># asyncio.to_thread() runs in ThreadPoolExecutor</span>
+</span><span id="__span-3-4"><a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>    <span class="n">result</span> <span class="o">=</span> <span class="k">await</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">to_thread</span><span class="p">(</span>
+</span><span id="__span-3-5"><a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>        <span class="n">server</span><span class="o">.</span><span class="n">_execute_tool</span><span class="p">,</span> <span class="n">tool_name</span><span class="p">,</span> <span class="n">args</span><span class="p">,</span> <span class="kc">None</span>
+</span><span id="__span-3-6"><a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a>    <span class="p">)</span>
+</span><span id="__span-3-7"><a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a>    <span class="k">return</span> <span class="n">result</span>
+</span><span id="__span-3-8"><a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a>
+</span><span id="__span-3-9"><a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a><span class="c1"># Inside _execute_tool (runs in worker thread):</span>
+</span><span id="__span-3-10"><a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a><span class="k">def</span><span class="w"> </span><span class="nf">_execute_tool</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tool_name</span><span class="p">,</span> <span class="n">args</span><span class="p">,</span> <span class="n">context</span><span class="p">):</span>
+</span><span id="__span-3-11"><a id="__codelineno-3-11" name="__codelineno-3-11" href="#__codelineno-3-11"></a>    <span class="c1"># repo.get_all() → Session → thread-local connection</span>
+</span><span id="__span-3-12"><a id="__codelineno-3-12" name="__codelineno-3-12" href="#__codelineno-3-12"></a>    <span class="n">codes</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_ctx</span><span class="o">.</span><span class="n">coding_context</span><span class="o">.</span><span class="n">code_repo</span><span class="o">.</span><span class="n">get_all</span><span class="p">()</span>
+</span><span id="__span-3-13"><a id="__codelineno-3-13" name="__codelineno-3-13" href="#__codelineno-3-13"></a>    <span class="k">return</span> <span class="p">{</span><span class="s2">&quot;codes&quot;</span><span class="p">:</span> <span class="n">codes</span><span class="p">}</span>
+</span></code></pre></div>
+<p>Each worker thread gets its own SQLite connection via <code>SingletonThreadPool</code> (see <a href="../08-database-lifecycle/">Part 8</a>).</p>
+<h2 id="pattern-5-sync-engine-background-threads">Pattern 5: Sync Engine Background Threads<a class="headerlink" href="#pattern-5-sync-engine-background-threads" title="Permanent link">&para;</a></h2>
+<p>Cloud sync uses dedicated daemon threads:</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="c1"># src/shared/infra/sync/engine.py</span>
+</span><span id="__span-4-2"><a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="k">class</span><span class="w"> </span><span class="nc">SyncEngine</span><span class="p">:</span>
+</span><span id="__span-4-3"><a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">connection</span><span class="p">,</span> <span class="n">convex_client</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+</span><span id="__span-4-4"><a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">_outbound_queue</span> <span class="o">=</span> <span class="n">queue</span><span class="o">.</span><span class="n">Queue</span><span class="p">()</span>
+</span><span id="__span-4-5"><a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">_stop_event</span> <span class="o">=</span> <span class="n">threading</span><span class="o">.</span><span class="n">Event</span><span class="p">()</span>
+</span><span id="__span-4-6"><a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">_sync_db_lock</span> <span class="o">=</span> <span class="n">threading</span><span class="o">.</span><span class="n">Lock</span><span class="p">()</span>
+</span><span id="__span-4-7"><a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a>
+</span><span id="__span-4-8"><a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a>        <span class="c1"># Sync thread gets its own SQLite connection</span>
+</span><span id="__span-4-9"><a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">_sync_connection</span> <span class="o">=</span> <span class="n">connection</span><span class="o">.</span><span class="n">engine</span><span class="o">.</span><span class="n">connect</span><span class="p">()</span>
+</span><span id="__span-4-10"><a id="__codelineno-4-10" name="__codelineno-4-10" href="#__codelineno-4-10"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">_sync_connection</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">text</span><span class="p">(</span><span class="s2">&quot;PRAGMA busy_timeout = 5000&quot;</span><span class="p">))</span>
+</span><span id="__span-4-11"><a id="__codelineno-4-11" name="__codelineno-4-11" href="#__codelineno-4-11"></a>
+</span><span id="__span-4-12"><a id="__codelineno-4-12" name="__codelineno-4-12" href="#__codelineno-4-12"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">start</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+</span><span id="__span-4-13"><a id="__codelineno-4-13" name="__codelineno-4-13" href="#__codelineno-4-13"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">_outbound_thread</span> <span class="o">=</span> <span class="n">threading</span><span class="o">.</span><span class="n">Thread</span><span class="p">(</span>
+</span><span id="__span-4-14"><a id="__codelineno-4-14" name="__codelineno-4-14" href="#__codelineno-4-14"></a>            <span class="n">target</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_outbound_sync_loop</span><span class="p">,</span>
+</span><span id="__span-4-15"><a id="__codelineno-4-15" name="__codelineno-4-15" href="#__codelineno-4-15"></a>            <span class="n">daemon</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+</span><span id="__span-4-16"><a id="__codelineno-4-16" name="__codelineno-4-16" href="#__codelineno-4-16"></a>            <span class="n">name</span><span class="o">=</span><span class="s2">&quot;SyncEngine-Outbound&quot;</span><span class="p">,</span>
+</span><span id="__span-4-17"><a id="__codelineno-4-17" name="__codelineno-4-17" href="#__codelineno-4-17"></a>        <span class="p">)</span>
+</span><span id="__span-4-18"><a id="__codelineno-4-18" name="__codelineno-4-18" href="#__codelineno-4-18"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">_outbound_thread</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
+</span><span id="__span-4-19"><a id="__codelineno-4-19" name="__codelineno-4-19" href="#__codelineno-4-19"></a>
+</span><span id="__span-4-20"><a id="__codelineno-4-20" name="__codelineno-4-20" href="#__codelineno-4-20"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">_outbound_sync_loop</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+</span><span id="__span-4-21"><a id="__codelineno-4-21" name="__codelineno-4-21" href="#__codelineno-4-21"></a>        <span class="k">while</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_stop_event</span><span class="o">.</span><span class="n">is_set</span><span class="p">():</span>
+</span><span id="__span-4-22"><a id="__codelineno-4-22" name="__codelineno-4-22" href="#__codelineno-4-22"></a>            <span class="bp">self</span><span class="o">.</span><span class="n">_drain_sync_outbox</span><span class="p">()</span>
+</span><span id="__span-4-23"><a id="__codelineno-4-23" name="__codelineno-4-23" href="#__codelineno-4-23"></a>            <span class="bp">self</span><span class="o">.</span><span class="n">_stop_event</span><span class="o">.</span><span class="n">wait</span><span class="p">(</span><span class="n">timeout</span><span class="o">=</span><span class="mf">5.0</span><span class="p">)</span>  <span class="c1"># Clean shutdown support</span>
+</span></code></pre></div>
+<p><strong>Important:</strong> Subscription workers are <strong>module-level functions</strong>, not bound methods:</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="c1"># Module-level to avoid PyO3 GIL deadlocks with bound methods</span>
+</span><span id="__span-5-2"><a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="k">def</span><span class="w"> </span><span class="nf">_subscription_worker</span><span class="p">(</span><span class="n">convex_client_class</span><span class="p">,</span> <span class="n">url</span><span class="p">,</span> <span class="n">query</span><span class="p">,</span> <span class="n">entity_type</span><span class="p">,</span> <span class="o">...</span><span class="p">):</span>
+</span><span id="__span-5-3"><a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>    <span class="n">thread_client</span> <span class="o">=</span> <span class="n">convex_client_class</span><span class="p">(</span><span class="n">url</span><span class="p">)</span>  <span class="c1"># Each thread owns its client</span>
+</span><span id="__span-5-4"><a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a>    <span class="k">for</span> <span class="n">data</span> <span class="ow">in</span> <span class="n">thread_client</span><span class="o">.</span><span class="n">subscribe</span><span class="p">(</span><span class="n">query</span><span class="p">,</span> <span class="p">{}):</span>
+</span><span id="__span-5-5"><a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a>        <span class="k">for</span> <span class="n">callback</span> <span class="ow">in</span> <span class="n">listeners</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">entity_type</span><span class="p">,</span> <span class="p">[]):</span>
+</span><span id="__span-5-6"><a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a>            <span class="n">callback</span><span class="p">(</span><span class="s2">&quot;sync&quot;</span><span class="p">,</span> <span class="p">{</span><span class="s2">&quot;items&quot;</span><span class="p">:</span> <span class="n">data</span><span class="p">})</span>
+</span></code></pre></div>
+<h2 id="pattern-6-qtimer-debouncing-no-threading">Pattern 6: QTimer Debouncing (No Threading)<a class="headerlink" href="#pattern-6-qtimer-debouncing-no-threading" title="Permanent link">&para;</a></h2>
+<p>For events that arrive frequently (e.g., mutations for version control), use <code>QTimer</code> instead of threads:</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-6-1"><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="c1"># src/contexts/projects/infra/version_control_listener.py</span>
+</span><span id="__span-6-2"><a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="k">class</span><span class="w"> </span><span class="nc">VersionControlListener</span><span class="p">:</span>
+</span><span id="__span-6-3"><a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>    <span class="n">DEBOUNCE_MS</span> <span class="o">=</span> <span class="mi">500</span>
+</span><span id="__span-6-4"><a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a>
+</span><span id="__span-6-5"><a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a>    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">event_bus</span><span class="p">,</span> <span class="o">...</span><span class="p">):</span>
+</span><span id="__span-6-6"><a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">_pending_events</span> <span class="o">=</span> <span class="p">[]</span>
+</span><span id="__span-6-7"><a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">_timer</span> <span class="o">=</span> <span class="n">QTimer</span><span class="p">()</span>
+</span><span id="__span-6-8"><a id="__codelineno-6-8" name="__codelineno-6-8" href="#__codelineno-6-8"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">_timer</span><span class="o">.</span><span class="n">setSingleShot</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
+</span><span id="__span-6-9"><a id="__codelineno-6-9" name="__codelineno-6-9" href="#__codelineno-6-9"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">_timer</span><span class="o">.</span><span class="n">setInterval</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">DEBOUNCE_MS</span><span class="p">)</span>
+</span><span id="__span-6-10"><a id="__codelineno-6-10" name="__codelineno-6-10" href="#__codelineno-6-10"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">_timer</span><span class="o">.</span><span class="n">timeout</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_flush</span><span class="p">)</span>
+</span><span id="__span-6-11"><a id="__codelineno-6-11" name="__codelineno-6-11" href="#__codelineno-6-11"></a>
+</span><span id="__span-6-12"><a id="__codelineno-6-12" name="__codelineno-6-12" href="#__codelineno-6-12"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">_on_mutation</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">event</span><span class="p">):</span>
+</span><span id="__span-6-13"><a id="__codelineno-6-13" name="__codelineno-6-13" href="#__codelineno-6-13"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">_pending_events</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">event</span><span class="p">)</span>
+</span><span id="__span-6-14"><a id="__codelineno-6-14" name="__codelineno-6-14" href="#__codelineno-6-14"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">_timer</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>  <span class="c1"># Restarts on each event</span>
+</span><span id="__span-6-15"><a id="__codelineno-6-15" name="__codelineno-6-15" href="#__codelineno-6-15"></a>
+</span><span id="__span-6-16"><a id="__codelineno-6-16" name="__codelineno-6-16" href="#__codelineno-6-16"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">_flush</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+</span><span id="__span-6-17"><a id="__codelineno-6-17" name="__codelineno-6-17" href="#__codelineno-6-17"></a>        <span class="n">events</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_pending_events</span><span class="p">)</span>
+</span><span id="__span-6-18"><a id="__codelineno-6-18" name="__codelineno-6-18" href="#__codelineno-6-18"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">_pending_events</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
+</span><span id="__span-6-19"><a id="__codelineno-6-19" name="__codelineno-6-19" href="#__codelineno-6-19"></a>        <span class="n">auto_commit</span><span class="p">(</span><span class="o">...</span><span class="p">)</span>
+</span></code></pre></div>
+<p><strong>Why no threading?</strong> All events arrive on the main thread (via EventBus), so <code>QTimer</code> is simpler and correct.</p>
+<h2 id="thread-safety-utilities">Thread Safety Utilities<a class="headerlink" href="#thread-safety-utilities" title="Permanent link">&para;</a></h2>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-7-1"><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="c1"># src/shared/infra/signal_bridge/thread_utils.py</span>
+</span><span id="__span-7-2"><a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>
+</span><span id="__span-7-3"><a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="k">def</span><span class="w"> </span><span class="nf">is_main_thread</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+</span><span id="__span-7-4"><a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a>    <span class="n">app</span> <span class="o">=</span> <span class="n">QCoreApplication</span><span class="o">.</span><span class="n">instance</span><span class="p">()</span>
+</span><span id="__span-7-5"><a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a>    <span class="k">if</span> <span class="n">app</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="__span-7-6"><a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a>        <span class="k">return</span> <span class="n">QThread</span><span class="o">.</span><span class="n">currentThread</span><span class="p">()</span> <span class="o">==</span> <span class="n">app</span><span class="o">.</span><span class="n">thread</span><span class="p">()</span>
+</span><span id="__span-7-7"><a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a>    <span class="k">return</span> <span class="n">threading</span><span class="o">.</span><span class="n">current_thread</span><span class="p">()</span> <span class="ow">is</span> <span class="n">threading</span><span class="o">.</span><span class="n">main_thread</span><span class="p">()</span>
+</span><span id="__span-7-8"><a id="__codelineno-7-8" name="__codelineno-7-8" href="#__codelineno-7-8"></a>
+</span><span id="__span-7-9"><a id="__codelineno-7-9" name="__codelineno-7-9" href="#__codelineno-7-9"></a><span class="k">class</span><span class="w"> </span><span class="nc">ThreadChecker</span><span class="p">:</span>
+</span><span id="__span-7-10"><a id="__codelineno-7-10" name="__codelineno-7-10" href="#__codelineno-7-10"></a>    <span class="nd">@staticmethod</span>
+</span><span id="__span-7-11"><a id="__codelineno-7-11" name="__codelineno-7-11" href="#__codelineno-7-11"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">assert_main_thread</span><span class="p">(</span><span class="n">context</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">):</span>
+</span><span id="__span-7-12"><a id="__codelineno-7-12" name="__codelineno-7-12" href="#__codelineno-7-12"></a>        <span class="k">if</span> <span class="ow">not</span> <span class="n">is_main_thread</span><span class="p">():</span>
+</span><span id="__span-7-13"><a id="__codelineno-7-13" name="__codelineno-7-13" href="#__codelineno-7-13"></a>            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+</span><span id="__span-7-14"><a id="__codelineno-7-14" name="__codelineno-7-14" href="#__codelineno-7-14"></a>                <span class="sa">f</span><span class="s2">&quot;Expected main thread but on &#39;</span><span class="si">{</span><span class="n">get_current_thread_name</span><span class="p">()</span><span class="si">}</span><span class="s2">&#39;&quot;</span>
+</span><span id="__span-7-15"><a id="__codelineno-7-15" name="__codelineno-7-15" href="#__codelineno-7-15"></a>            <span class="p">)</span>
+</span></code></pre></div>
+<p>Use <code>ThreadChecker.assert_main_thread()</code> in code that must run on the UI thread (e.g., dialog creation).</p>
+<h2 id="summary">Summary<a class="headerlink" href="#summary" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
 <tr>
-<th>Property</th>
-<th>UUIDv4</th>
-<th>UUIDv7</th>
+<th>Pattern</th>
+<th>When to Use</th>
+<th>Key Mechanism</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td>Globally unique</td>
-<td>Yes</td>
-<td>Yes</td>
+<td><strong>qasync unified loop</strong></td>
+<td>Always (app startup)</td>
+<td>Merge Qt + asyncio</td>
 </tr>
 <tr>
-<td>Time-ordered</td>
-<td>No</td>
-<td>Yes — first 48 bits = millisecond timestamp</td>
+<td><strong>_emit_threadsafe</strong></td>
+<td>Signal emission from any thread</td>
+<td>queue.Queue + QMetaObject</td>
 </tr>
 <tr>
-<td>B-tree index friendly</td>
-<td>Poor (random, causes page splits)</td>
-<td>Good (monotonically increasing)</td>
+<td><strong>RLock + copy</strong></td>
+<td>EventBus publish/subscribe</td>
+<td>Copy under lock, invoke without</td>
 </tr>
 <tr>
-<td>Sortable by creation time</td>
-<td>No</td>
-<td>Yes</td>
+<td><strong>asyncio.to_thread</strong></td>
+<td>MCP tool DB operations</td>
+<td>ThreadPoolExecutor + thread-local conn</td>
 </tr>
 <tr>
-<td>Available in Python</td>
-<td><code>uuid.uuid4()</code></td>
-<td><code>uuid-utils</code> library (Rust-backed, fast)</td>
+<td><strong>Daemon threads</strong></td>
+<td>Cloud sync</td>
+<td>stop_event + queue.Queue</td>
+</tr>
+<tr>
+<td><strong>QTimer debounce</strong></td>
+<td>High-frequency main-thread events</td>
+<td>Single-shot timer restart</td>
+</tr>
+<tr>
+<td><strong>Module-level workers</strong></td>
+<td>Convex subscriptions</td>
+<td>Avoid PyO3 GIL deadlocks</td>
 </tr>
 </tbody>
 </table>
-<p>UUIDv7's time-ordering means SQLite B-tree indexes for the <code>id</code> column remain append-friendly, preserving the locality that makes integer auto-increment performant. Pure random UUIDv4 causes index fragmentation on every insert.</p>
-<h3 id="why-not-keep-integers">Why not keep integers<a class="headerlink" href="#why-not-keep-integers" title="Permanent link">&para;</a></h3>
-<ul>
-<li>Integer PKs require the mapping table, which is the source of the majority of sync complexity.</li>
-<li>The current <code>uuid4() % 1_000_000</code> hack is unsound; moving to UUIDv7 fixes correctness at the same time.</li>
-<li>Integers require server coordination for global uniqueness (e.g., Convex ID must be authoritative). UUIDv7 allows offline-first creation with no coordination.</li>
-</ul>
-<h3 id="why-not-uuidv4">Why not UUIDv4<a class="headerlink" href="#why-not-uuidv4" title="Permanent link">&para;</a></h3>
-<ul>
-<li>Index fragmentation degrades SQLite read performance on large projects.</li>
-<li>Not sortable by time, which breaks any "show me recently added codes" query that relies on ID ordering.</li>
-</ul>
+<h2 id="rules">Rules<a class="headerlink" href="#rules" title="Permanent link">&para;</a></h2>
+<ol>
+<li><strong>Never call <code>Signal.emit()</code> from a background thread</strong> - Use <code>_emit_threadsafe()</code></li>
+<li><strong>Never share SQLite connections across threads</strong> - Session handles this</li>
+<li><strong>Never hold locks during handler invocation</strong> - Copy list, release lock, then invoke</li>
+<li><strong>Use daemon threads for I/O</strong> - Clean shutdown via <code>stop_event</code></li>
+<li><strong>Prefer QTimer over threading</strong> for main-thread event batching</li>
+<li><strong>Use module-level functions</strong> for thread targets to avoid PyO3 issues</li>
+</ol>
 <hr />
-<h2 id="consequences">Consequences<a class="headerlink" href="#consequences" title="Permanent link">&para;</a></h2>
-<h3 id="positive">Positive<a class="headerlink" href="#positive" title="Permanent link">&para;</a></h3>
-<ul>
-<li><strong>Sync ID mapping eliminated.</strong> <code>SyncIdMap</code>, <code>FK_DEPENDENCIES</code>, <code>_translate_fk_ids</code>, deferred-retry FK logic — all deleted.</li>
-<li><strong>Offline entity creation is safe.</strong> A new code created offline is given its canonical global ID immediately, without needing a server round-trip.</li>
-<li><strong>Collision probability eliminated.</strong> UUIDv7 collision probability is negligible (2^122 random bits plus time component).</li>
-<li><strong>SQLite index performance preserved.</strong> Monotonically increasing IDs prevent B-tree fragmentation.</li>
-<li><strong>Simpler sync boundary.</strong> The outbound sync sends the entity's own UUID; the server stores it. No translation required.</li>
-</ul>
-<h3 id="negative-trade-offs">Negative / Trade-offs<a class="headerlink" href="#negative-trade-offs" title="Permanent link">&para;</a></h3>
-<ul>
-<li><strong>Migration required for existing <code>.qda</code> files.</strong> Projects created before this change have integer PKs. A one-time migration must convert all IDs and update all FK references. Existing files cannot be opened without running the migration.</li>
-<li><strong>String IDs are larger than integers</strong> — approximately 36 bytes vs 4-8 bytes per PK. At the scale of QualCoder projects (tens of thousands of segments at most), this is negligible.</li>
-<li><strong>Python dependency.</strong> Python's built-in <code>uuid</code> module gains <code>uuid7()</code> only in Python 3.13+. Until then, the <code>uuid-utils</code> library (<code>pip install uuid-utils</code>) provides a fast Rust-backed implementation with an identical API.</li>
-<li><strong>All 313 <code>.value</code> usages must change type</strong> — any code that compares <code>id.value</code> to an integer literal or passes it to a function expecting <code>int</code> will fail at type-check time. This is a one-time cost, caught by <code>mypy</code>.</li>
-<li><strong>Convex schema change.</strong> Convex documents currently use Convex's own <code>_id</code> as the authoritative ID. We add a <code>localId: v.string()</code> field (storing the UUIDv7) and use that for all cross-system references.</li>
-</ul>
-<hr />
-<h2 id="alternatives-considered">Alternatives Considered<a class="headerlink" href="#alternatives-considered" title="Permanent link">&para;</a></h2>
-<h3 id="keep-integer-pks-improve-syncidmap">Keep integer PKs + improve SyncIdMap<a class="headerlink" href="#keep-integer-pks-improve-syncidmap" title="Permanent link">&para;</a></h3>
-<p><strong>Rejected.</strong> The mapping table is inherently stateful and can desync. Adding a <code>localId TEXT UNIQUE</code> column to each table (PowerSync dual-ID pattern) solves offline creation but still requires FK translation. Complexity reduction is partial.</p>
-<h3 id="uuidv4-instead-of-uuidv7">UUIDv4 instead of UUIDv7<a class="headerlink" href="#uuidv4-instead-of-uuidv7" title="Permanent link">&para;</a></h3>
-<p><strong>Rejected.</strong> Same collision safety as UUIDv7 but loses time-ordering, causing SQLite B-tree fragmentation and removing natural sort-by-creation ordering.</p>
-<h3 id="convex-issued-ids-as-the-canonical-id">Convex-issued IDs as the canonical ID<a class="headerlink" href="#convex-issued-ids-as-the-canonical-id" title="Permanent link">&para;</a></h3>
-<p><strong>Rejected.</strong> This requires a network round-trip to create any entity, breaking offline-first operation entirely.</p>
-<hr />
-<h2 id="implementation-plan">Implementation Plan<a class="headerlink" href="#implementation-plan" title="Permanent link">&para;</a></h2>
-<p>Implementation plan has been completed and the planning document archived.</p>
-<p><strong>Summary of phases:</strong></p>
-<table>
-<thead>
-<tr>
-<th>Phase</th>
-<th>Scope</th>
-<th>Risk</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>0 — Dependency</td>
-<td>Add <code>uuid-utils</code> to <code>pyproject.toml</code></td>
-<td>Low</td>
-</tr>
-<tr>
-<td>1 — Typed IDs</td>
-<td>Change <code>value: int → str</code> in <code>types.py</code></td>
-<td>Medium (313 usages)</td>
-</tr>
-<tr>
-<td>2 — SQLite schemas</td>
-<td>Change <code>Integer</code> PKs to <code>String(36)</code></td>
-<td>Medium</td>
-</tr>
-<tr>
-<td>3 — Repositories</td>
-<td>Update all repo <code>save()</code>/<code>get_by_id()</code></td>
-<td>Medium</td>
-</tr>
-<tr>
-<td>4 — Sync layer</td>
-<td>Remove <code>SyncIdMap</code>, <code>_translate_fk_ids</code>, deferred-retry logic</td>
-<td>High</td>
-</tr>
-<tr>
-<td>5 — Convex schema</td>
-<td>Add <code>localId</code> field to all Convex tables</td>
-<td>Medium</td>
-</tr>
-<tr>
-<td>6 — DB migration</td>
-<td>Write SQLite migration for existing <code>.qda</code> files</td>
-<td>High</td>
-</tr>
-<tr>
-<td>7 — Tests</td>
-<td>Update all E2E fixtures and assertions</td>
-<td>Medium</td>
-</tr>
-</tbody>
-</table>
-<hr />
-<h2 id="references">References<a class="headerlink" href="#references" title="Permanent link">&para;</a></h2>
-<ul>
-<li><a href="https://www.rfc-editor.org/rfc/rfc9562">UUIDv7 RFC 9562</a></li>
-<li><a href="https://buildkite.com/resources/blog/goodbye-integers-hello-uuids/">Goodbye Sequential Integers, Hello UUIDv7 — Buildkite</a></li>
-<li><a href="https://pypi.org/project/uuid-utils/">uuid-utils Python library</a></li>
-<li><a href="https://docs.powersync.com/tutorials/client/data/sequential-id-mapping">PowerSync Sequential ID Mapping</a> — the problem we are solving by not needing this</li>
-<li><a href="https://blog.danlew.net/2017/03/09/the-two-id-problem/">The Two ID Problem — Dan Lew</a> — the root cause</li>
-</ul>
+<p><strong>Previous:</strong> <a href="../08-database-lifecycle/">Part 8: Database Connection Lifecycle</a></p>
+<p><strong>Appendices:</strong>
+- <a href="../appendices/A-common-patterns/">Appendix A: Common Patterns &amp; Recipes</a>
+- <a href="../appendices/B-when-to-create/">Appendix B: When to Create New Patterns</a></p>
 
 
 
