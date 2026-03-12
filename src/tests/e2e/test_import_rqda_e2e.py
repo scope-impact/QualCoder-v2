@@ -37,100 +37,10 @@ def _seed_rqda_data(conn):
 
 @allure.story("QC-039.03 Import RQDA Project")
 class TestImportRQDA:
-    @allure.title("AC #1: I can import an RQDA database")
-    def test_ac1_import_rqda(
-        self,
-        source_repo,
-        code_repo,
-        category_repo,
-        segment_repo,
-        event_bus,
-        tmp_path,
-        create_rqda_db,
-    ):
-        from src.contexts.exchange.core.commandHandlers.import_rqda import import_rqda
-        from src.contexts.exchange.core.commands import ImportRqdaCommand
-
-        conn, rqda_path = create_rqda_db(tmp_path / "project.rqda")
-        _seed_rqda_data(conn)
-
-        with allure.step("Import RQDA"):
-            result = import_rqda(
-                command=ImportRqdaCommand(source_path=str(rqda_path)),
-                source_repo=source_repo,
-                code_repo=code_repo,
-                category_repo=category_repo,
-                segment_repo=segment_repo,
-                event_bus=event_bus,
-            )
-
-        with allure.step("Verify success"):
-            assert result.is_success, f"Import failed: {result.error}"
-
-    @allure.title("AC #2: Import creates codes from RQDA")
-    def test_ac2_creates_codes(
-        self,
-        source_repo,
-        code_repo,
-        category_repo,
-        segment_repo,
-        event_bus,
-        tmp_path,
-        create_rqda_db,
-    ):
-        from src.contexts.exchange.core.commandHandlers.import_rqda import import_rqda
-        from src.contexts.exchange.core.commands import ImportRqdaCommand
-
-        conn, rqda_path = create_rqda_db(tmp_path / "project.rqda")
-        _seed_rqda_data(conn)
-
-        import_rqda(
-            command=ImportRqdaCommand(source_path=str(rqda_path)),
-            source_repo=source_repo,
-            code_repo=code_repo,
-            category_repo=category_repo,
-            segment_repo=segment_repo,
-            event_bus=event_bus,
-        )
-
-        with allure.step("Verify codes"):
-            codes = code_repo.get_all()
-            code_names = {c.name for c in codes}
-            assert "Positive" in code_names
-            assert "Learning" in code_names
-
-    @allure.title("AC #3: Import creates sources from RQDA")
-    def test_ac3_creates_sources(
-        self,
-        source_repo,
-        code_repo,
-        category_repo,
-        segment_repo,
-        event_bus,
-        tmp_path,
-        create_rqda_db,
-    ):
-        from src.contexts.exchange.core.commandHandlers.import_rqda import import_rqda
-        from src.contexts.exchange.core.commands import ImportRqdaCommand
-
-        conn, rqda_path = create_rqda_db(tmp_path / "project.rqda")
-        _seed_rqda_data(conn)
-
-        import_rqda(
-            command=ImportRqdaCommand(source_path=str(rqda_path)),
-            source_repo=source_repo,
-            code_repo=code_repo,
-            category_repo=category_repo,
-            segment_repo=segment_repo,
-            event_bus=event_bus,
-        )
-
-        with allure.step("Verify sources"):
-            sources = source_repo.get_all()
-            assert any(s.name == "interview.txt" for s in sources)
-
-    @allure.title("Import publishes RqdaImported event")
-    def test_publishes_event(
+    @allure.title(
+        "AC #1+#2+#3: Import RQDA creates codes, sources, and publishes event"
+    )
+    def test_import_rqda_full(
         self,
         source_repo,
         code_repo,
@@ -150,14 +60,28 @@ class TestImportRQDA:
         conn, rqda_path = create_rqda_db(tmp_path / "project.rqda")
         _seed_rqda_data(conn)
 
-        import_rqda(
-            command=ImportRqdaCommand(source_path=str(rqda_path)),
-            source_repo=source_repo,
-            code_repo=code_repo,
-            category_repo=category_repo,
-            segment_repo=segment_repo,
-            event_bus=event_bus,
-        )
+        with allure.step("Import RQDA"):
+            result = import_rqda(
+                command=ImportRqdaCommand(source_path=str(rqda_path)),
+                source_repo=source_repo,
+                code_repo=code_repo,
+                category_repo=category_repo,
+                segment_repo=segment_repo,
+                event_bus=event_bus,
+            )
+
+        with allure.step("Verify success"):
+            assert result.is_success, f"Import failed: {result.error}"
+
+        with allure.step("Verify codes"):
+            codes = code_repo.get_all()
+            code_names = {c.name for c in codes}
+            assert "Positive" in code_names
+            assert "Learning" in code_names
+
+        with allure.step("Verify sources"):
+            sources = source_repo.get_all()
+            assert any(s.name == "interview.txt" for s in sources)
 
         with allure.step("Verify event"):
             assert len(published) == 1

@@ -26,6 +26,7 @@ from src.shared.infra.state import ProjectState
 
 if TYPE_CHECKING:
     from src.shared.infra.event_bus import EventBus
+    from src.shared.infra.session import Session
 
 logger = logging.getLogger("qualcoder.sources.core")
 
@@ -36,6 +37,7 @@ def update_source(
     state: ProjectState,
     source_repo: SourceRepository | None,
     event_bus: EventBus,
+    session: Session | None = None,
 ) -> OperationResult:
     """
     Update source metadata (memo, origin, status).

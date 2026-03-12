@@ -8,10 +8,17 @@ Implements QC-027.01: Import Text Document
 
 from pathlib import Path
 
+import allure
 import pytest
 from returns.result import Failure, Success
 
 from src.contexts.sources.infra.text_extractor import ExtractionResult, TextExtractor
+
+pytestmark = [
+    pytest.mark.unit,
+    allure.epic("QualCoder v2"),
+    allure.feature("QC-027 Manage Sources"),
+]
 
 
 @pytest.fixture
@@ -20,120 +27,103 @@ def extractor() -> TextExtractor:
     return TextExtractor()
 
 
+@allure.story("QC-027.01 Import Text Document")
 class TestTextExtraction:
     """Tests for extracting text from documents."""
 
-    def test_extracts_txt_file(self, extractor: TextExtractor, tmp_path: Path):
-        """AC #2: Extracts text from .txt file."""
+    @allure.title(
+        "Extracts text preserving content, line breaks, unicode, and file size"
+    )
+    def test_extracts_text_with_formatting_and_metadata(
+        self, extractor: TextExtractor, tmp_path: Path
+    ):
+        """AC #2 & #4: Extracts text and preserves formatting."""
+        # Basic text extraction
         txt_file = tmp_path / "sample.txt"
         txt_file.write_text("Hello, World!\nThis is a test.", encoding="utf-8")
 
         result = extractor.extract(txt_file)
-
         assert isinstance(result, Success)
         data = result.unwrap()
         assert data.content == "Hello, World!\nThis is a test."
         assert data.file_size > 0
 
-    def test_preserves_line_breaks(self, extractor: TextExtractor, tmp_path: Path):
-        """AC #4: Preserves formatting - line breaks."""
-        txt_file = tmp_path / "multiline.txt"
+        # Preserves line breaks
+        multiline = tmp_path / "multiline.txt"
         content = "Line 1\n\nLine 3\nLine 4"
-        txt_file.write_text(content, encoding="utf-8")
+        multiline.write_text(content, encoding="utf-8")
 
-        result = extractor.extract(txt_file)
-
+        result = extractor.extract(multiline)
         assert isinstance(result, Success)
         assert result.unwrap().content == content
 
-    def test_handles_unicode(self, extractor: TextExtractor, tmp_path: Path):
-        """Handles Unicode characters correctly."""
-        txt_file = tmp_path / "unicode.txt"
-        content = "Hello 世界! Привет мир! 🎉"
-        txt_file.write_text(content, encoding="utf-8")
+        # Handles unicode
+        unicode_file = tmp_path / "unicode.txt"
+        unicode_content = "Hello 世界! Привет мир! 🎉"
+        unicode_file.write_text(unicode_content, encoding="utf-8")
 
-        result = extractor.extract(txt_file)
-
+        result = extractor.extract(unicode_file)
         assert isinstance(result, Success)
-        assert result.unwrap().content == content
+        assert result.unwrap().content == unicode_content
 
-    def test_returns_file_size(self, extractor: TextExtractor, tmp_path: Path):
-        """Returns correct file size."""
-        txt_file = tmp_path / "sized.txt"
-        content = "A" * 100
-        txt_file.write_text(content, encoding="utf-8")
+        # Returns correct file size
+        sized_file = tmp_path / "sized.txt"
+        sized_content = "A" * 100
+        sized_file.write_text(sized_content, encoding="utf-8")
 
-        result = extractor.extract(txt_file)
-
+        result = extractor.extract(sized_file)
         assert isinstance(result, Success)
         assert result.unwrap().file_size == 100
 
+    @allure.title("Fails for nonexistent file")
     def test_fails_for_nonexistent_file(self, extractor: TextExtractor, tmp_path: Path):
-        """Returns failure for non-existent file."""
         missing = tmp_path / "missing.txt"
-
         result = extractor.extract(missing)
-
         assert isinstance(result, Failure)
         assert "not found" in result.failure().lower()
 
+    @allure.title("Detects and handles different encodings")
     def test_detects_encoding(self, extractor: TextExtractor, tmp_path: Path):
-        """Detects and handles different encodings."""
         txt_file = tmp_path / "latin1.txt"
         content = "Café résumé"
         txt_file.write_bytes(content.encode("latin-1"))
 
         result = extractor.extract(txt_file)
-
-        # Should still extract even if encoding differs
         assert isinstance(result, Success)
-        # Content should be readable (may need encoding detection)
 
 
+@allure.story("QC-027.01 Import Text Document")
 class TestExtractionResult:
     """Tests for ExtractionResult data class."""
 
-    def test_has_required_fields(self):
-        """ExtractionResult has content and file_size."""
-        result = ExtractionResult(
-            content="test",
-            file_size=4,
-            encoding="utf-8",
-        )
-
+    @allure.title("Has required fields and encoding defaults correctly")
+    def test_fields_and_defaults(self):
+        result = ExtractionResult(content="test", file_size=4, encoding="utf-8")
         assert result.content == "test"
         assert result.file_size == 4
         assert result.encoding == "utf-8"
 
-    def test_encoding_is_optional(self):
-        """Encoding field has sensible default."""
-        result = ExtractionResult(
-            content="test",
-            file_size=4,
-        )
-
-        assert result.encoding is not None  # Should have default
+        # Encoding has sensible default
+        result_default = ExtractionResult(content="test", file_size=4)
+        assert result_default.encoding is not None
 
 
+@allure.story("QC-027.01 Import Text Document")
 class TestSupportedFormats:
     """Tests for format support checking."""
 
-    def test_supports_txt(self, extractor: TextExtractor):
-        """Supports .txt extension."""
-        assert extractor.supports(Path("doc.txt"))
-
-    def test_supports_docx(self, extractor: TextExtractor):
-        """Supports .docx extension."""
-        assert extractor.supports(Path("doc.docx"))
-
-    def test_supports_rtf(self, extractor: TextExtractor):
-        """Supports .rtf extension."""
-        assert extractor.supports(Path("doc.rtf"))
-
-    def test_does_not_support_pdf(self, extractor: TextExtractor):
-        """Does not support .pdf (separate handler)."""
-        assert not extractor.supports(Path("doc.pdf"))
-
-    def test_does_not_support_image(self, extractor: TextExtractor):
-        """Does not support image files."""
-        assert not extractor.supports(Path("image.png"))
+    @allure.title("Supports text formats and rejects non-text formats")
+    @pytest.mark.parametrize(
+        "filename, expected",
+        [
+            pytest.param("doc.txt", True, id="txt"),
+            pytest.param("doc.docx", True, id="docx"),
+            pytest.param("doc.rtf", True, id="rtf"),
+            pytest.param("doc.pdf", False, id="pdf"),
+            pytest.param("image.png", False, id="png"),
+        ],
+    )
+    def test_format_support(
+        self, extractor: TextExtractor, filename: str, expected: bool
+    ):
+        assert extractor.supports(Path(filename)) == expected

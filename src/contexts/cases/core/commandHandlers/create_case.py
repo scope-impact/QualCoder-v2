@@ -25,6 +25,7 @@ from src.shared.infra.state import ProjectState
 
 if TYPE_CHECKING:
     from src.shared.infra.event_bus import EventBus
+    from src.shared.infra.session import Session
 
 
 logger = logging.getLogger("qualcoder.cases.core")
@@ -36,6 +37,7 @@ def create_case(
     state: ProjectState,
     case_repo: CaseRepository | None,
     event_bus: EventBus,
+    session: Session | None = None,
 ) -> OperationResult:
     """Create a new case in the current project."""
     logger.debug("create_case: name=%s", command.name)

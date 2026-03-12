@@ -7,64 +7,62 @@ ChromaVectorStore requires chromadb and is tested via integration tests.
 
 from __future__ import annotations
 
+import allure
 import pytest
 from returns.result import Success
 
 from src.contexts.coding.infra.config import VectorStoreConfig
 from src.contexts.coding.infra.vector_store import MockVectorStore
 
+pytestmark = [
+    pytest.mark.unit,
+    allure.epic("QualCoder v2"),
+    allure.feature("QC-028 Code Management"),
+]
+
 # ============================================================
 # MockVectorStore Tests
 # ============================================================
 
 
+@allure.story("QC-028.10 Vector Store")
 class TestMockVectorStore:
     """Tests for MockVectorStore."""
 
-    def test_add_items(self) -> None:
-        """Can add items to the store."""
+    @allure.title("Add items with and without metadata, including empty lists")
+    def test_add_items_with_metadata_and_empty(self) -> None:
+        """Can add items, items with metadata, and empty lists."""
         store = MockVectorStore()
 
-        result = store.add(
-            ids=["1", "2"],
-            texts=["hello world", "goodbye world"],
-        )
-
+        # Add basic items
+        result = store.add(ids=["1", "2"], texts=["hello world", "goodbye world"])
         assert isinstance(result, Success)
         assert store.count() == 2
 
-    def test_add_with_metadata(self) -> None:
-        """Can add items with metadata."""
-        store = MockVectorStore()
-
-        result = store.add(
+        # Add with metadata
+        store2 = MockVectorStore()
+        result2 = store2.add(
             ids=["1"],
             texts=["test text"],
             metadata=[{"type": "code", "name": "anxiety"}],
         )
-
-        assert isinstance(result, Success)
-        items = store.get(["1"]).unwrap()
+        assert isinstance(result2, Success)
+        items = store2.get(["1"]).unwrap()
         assert items[0]["metadata"]["type"] == "code"
 
-    def test_add_empty_lists(self) -> None:
-        """Adding empty lists returns Success."""
-        store = MockVectorStore()
-        result = store.add(ids=[], texts=[])
+        # Add empty lists
+        store3 = MockVectorStore()
+        result3 = store3.add(ids=[], texts=[])
+        assert isinstance(result3, Success)
+        assert store3.count() == 0
 
-        assert isinstance(result, Success)
-        assert store.count() == 0
-
-    def test_query_returns_results(self) -> None:
-        """Query returns stored items."""
+    @allure.title("Query returns results from store and empty from empty store")
+    def test_query_results_and_empty(self) -> None:
+        """Query returns stored items; empty store returns empty list."""
         store = MockVectorStore()
-        store.add(
-            ids=["1", "2", "3"],
-            texts=["first", "second", "third"],
-        )
+        store.add(ids=["1", "2", "3"], texts=["first", "second", "third"])
 
         result = store.query(query_text="test", n_results=2)
-
         assert isinstance(result, Success)
         results = result.unwrap()
         assert len(results) == 2
@@ -72,37 +70,31 @@ class TestMockVectorStore:
         assert results[0]["text"] == "first"
         assert "distance" in results[0]
 
-    def test_query_empty_store(self) -> None:
-        """Query on empty store returns empty list."""
-        store = MockVectorStore()
-        result = store.query(query_text="test")
+        # Empty store
+        empty_store = MockVectorStore()
+        result2 = empty_store.query(query_text="test")
+        assert isinstance(result2, Success)
+        assert result2.unwrap() == []
 
-        assert isinstance(result, Success)
-        assert result.unwrap() == []
-
-    def test_delete_items(self) -> None:
-        """Can delete items by ID."""
+    @allure.title("Delete items by ID including nonexistent IDs")
+    def test_delete_items_and_nonexistent(self) -> None:
+        """Can delete items by ID; nonexistent IDs don't fail."""
         store = MockVectorStore()
         store.add(ids=["1", "2", "3"], texts=["a", "b", "c"])
 
         result = store.delete(["1", "3"])
-
         assert isinstance(result, Success)
         assert store.count() == 1
         assert store.get(["2"]).unwrap()[0]["text"] == "b"
 
-    def test_delete_nonexistent(self) -> None:
-        """Deleting nonexistent IDs doesn't fail."""
-        store = MockVectorStore()
-        store.add(ids=["1"], texts=["test"])
-
-        result = store.delete(["nonexistent"])
-
-        assert isinstance(result, Success)
+        # Nonexistent
+        result2 = store.delete(["nonexistent"])
+        assert isinstance(result2, Success)
         assert store.count() == 1
 
-    def test_get_items(self) -> None:
-        """Can get items by ID."""
+    @allure.title("Get items by ID including nonexistent IDs")
+    def test_get_items_and_nonexistent(self) -> None:
+        """Can get items by ID; nonexistent returns empty."""
         store = MockVectorStore()
         store.add(
             ids=["1", "2"],
@@ -111,7 +103,6 @@ class TestMockVectorStore:
         )
 
         result = store.get(["2"])
-
         assert isinstance(result, Success)
         items = result.unwrap()
         assert len(items) == 1
@@ -119,16 +110,14 @@ class TestMockVectorStore:
         assert items[0]["text"] == "second"
         assert items[0]["metadata"]["idx"] == 2
 
-    def test_get_nonexistent(self) -> None:
-        """Getting nonexistent IDs returns empty list."""
-        store = MockVectorStore()
-        result = store.get(["nonexistent"])
+        # Nonexistent
+        result2 = store.get(["nonexistent"])
+        assert isinstance(result2, Success)
+        assert result2.unwrap() == []
 
-        assert isinstance(result, Success)
-        assert result.unwrap() == []
-
-    def test_count(self) -> None:
-        """Count returns number of items."""
+    @allure.title("Count, clear, and upsert behavior")
+    def test_count_clear_and_upsert(self) -> None:
+        """Count tracks items; clear removes all; adding same ID updates."""
         store = MockVectorStore()
         assert store.count() == 0
 
@@ -138,16 +127,19 @@ class TestMockVectorStore:
         store.delete(["1"])
         assert store.count() == 2
 
-    def test_clear(self) -> None:
-        """Clear removes all items."""
-        store = MockVectorStore()
-        store.add(ids=["1", "2"], texts=["a", "b"])
-
+        # Clear
         result = store.clear()
-
         assert isinstance(result, Success)
         assert store.count() == 0
 
+        # Upsert
+        store.add(ids=["1"], texts=["original"])
+        store.add(ids=["1"], texts=["updated"])
+        result2 = store.get(["1"]).unwrap()
+        assert result2[0]["text"] == "updated"
+        assert store.count() == 1
+
+    @allure.title("Call counts track method invocations")
     def test_call_counts(self) -> None:
         """Call counts track method invocations."""
         store = MockVectorStore()
@@ -164,44 +156,36 @@ class TestMockVectorStore:
         assert counts["get"] == 1
         assert counts["delete"] == 1
 
-    def test_upsert_behavior(self) -> None:
-        """Adding same ID updates the item."""
-        store = MockVectorStore()
-        store.add(ids=["1"], texts=["original"])
-        store.add(ids=["1"], texts=["updated"])
-
-        result = store.get(["1"]).unwrap()
-        assert result[0]["text"] == "updated"
-        assert store.count() == 1
-
 
 # ============================================================
 # VectorStoreConfig Tests
 # ============================================================
 
 
+@allure.story("QC-028.10 Vector Store")
 class TestVectorStoreConfig:
     """Tests for VectorStoreConfig."""
 
-    def test_default_config(self) -> None:
-        """Default config uses in-memory storage."""
+    @allure.title("Default, for_testing, and for_project factory methods")
+    def test_factory_methods(self) -> None:
+        """Default uses in-memory; for_testing creates test config; for_project creates persistent config."""
+        # Default
         config = VectorStoreConfig()
         assert config.persist_directory is None
         assert config.collection_name == "qualcoder_codes"
         assert config.distance_metric == "cosine"
 
-    def test_for_testing(self) -> None:
-        """for_testing creates in-memory config."""
-        config = VectorStoreConfig.for_testing()
-        assert config.persist_directory is None
-        assert config.collection_name == "test_collection"
+        # for_testing
+        config_test = VectorStoreConfig.for_testing()
+        assert config_test.persist_directory is None
+        assert config_test.collection_name == "test_collection"
 
-    def test_for_project(self) -> None:
-        """for_project creates persistent config."""
-        config = VectorStoreConfig.for_project("/path/to/project", "my_codes")
-        assert config.persist_directory == "/path/to/project/.qualcoder/vectors"
-        assert config.collection_name == "my_codes"
+        # for_project
+        config_proj = VectorStoreConfig.for_project("/path/to/project", "my_codes")
+        assert config_proj.persist_directory == "/path/to/project/.qualcoder/vectors"
+        assert config_proj.collection_name == "my_codes"
 
+    @allure.title("Config is immutable (frozen dataclass)")
     def test_immutable(self) -> None:
         """Config is immutable (frozen dataclass)."""
         config = VectorStoreConfig()

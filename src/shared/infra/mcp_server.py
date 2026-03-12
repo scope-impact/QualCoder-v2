@@ -1,14 +1,15 @@
 """
 QualCoder v2 Embedded MCP Server
 
-Runs inside the QualCoder app, sharing AppContext and EventBus
-for real-time AI agent interaction.
+Runs on the unified qasync event loop (asyncio + Qt), sharing AppContext
+and EventBus for real-time AI agent interaction. No separate thread needed.
 
 Usage in main.py:
     from src.shared.infra.mcp_server import MCPServerManager
 
     self._mcp_server = MCPServerManager(ctx=self._ctx)
-    self._mcp_server.start()  # Starts on localhost:8765
+    # In run(), after creating the qasync loop:
+    loop.create_task(self._mcp_server.serve_async())
 
 Debug mode:
     self._mcp_server = MCPServerManager(ctx=self._ctx, debug=True)
@@ -17,21 +18,12 @@ Debug mode:
 
 from __future__ import annotations
 
-import asyncio
 import json
 import logging
 import os
-import queue
-import threading
 import time
 import uuid
-from collections.abc import Callable
-from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Any
-
-from PySide6.QtCore import QMetaObject, QObject, Qt, Slot
-
-from src.shared.infra.signal_bridge.thread_utils import is_main_thread
 
 if TYPE_CHECKING:
     from src.shared.infra.app_context import AppContext
@@ -60,92 +52,13 @@ class MCPLogAdapter(logging.LoggerAdapter):
         return msg, kwargs
 
 
-@dataclass
-class _ToolRequest:
-    """A request to execute tool logic on the main thread."""
-
-    fn: Callable[[], dict]
-    result: dict | None = None
-    exception: Exception | None = None
-    done_event: threading.Event = field(default_factory=threading.Event)
-
-
-class _MainThreadExecutor(QObject):
-    """Marshals callable execution to the Qt main thread.
-
-    Uses a thread-safe queue + QMetaObject.invokeMethod(QueuedConnection) to
-    schedule work on the main event loop, then blocks the caller until the
-    work completes via threading.Event.
-    """
-
-    _TIMEOUT_SECONDS = 30.0
-
-    def __init__(self, parent: QObject | None = None) -> None:
-        super().__init__(parent)
-        self._queue: queue.Queue[_ToolRequest] = queue.Queue()
-        self._log = logging.getLogger("qualcoder.mcp.executor")
-
-    def execute(self, fn: Callable[[], dict]) -> dict:
-        """Execute *fn* on the Qt main thread, blocking the caller until done.
-
-        If already on the main thread (e.g. in tests), runs directly.
-        """
-        if is_main_thread():
-            self._log.debug("Already on main thread, executing directly")
-            return fn()
-
-        request = _ToolRequest(fn=fn)
-        self._queue.put(request)
-        queue_size = self._queue.qsize()
-        self._log.debug(
-            "Queued request for main thread (thread=%s, queue_size=%d)",
-            threading.current_thread().name,
-            queue_size,
-        )
-        QMetaObject.invokeMethod(self, "_process", Qt.ConnectionType.QueuedConnection)
-        if not request.done_event.wait(timeout=self._TIMEOUT_SECONDS):
-            self._log.error(
-                "Main-thread execution timed out after %.1fs (thread=%s)",
-                self._TIMEOUT_SECONDS,
-                threading.current_thread().name,
-            )
-            raise TimeoutError(
-                f"Main-thread execution timed out after {self._TIMEOUT_SECONDS}s"
-            )
-        if request.exception is not None:
-            self._log.error(
-                "Main-thread execution raised: %s", request.exception, exc_info=True
-            )
-            raise request.exception
-        self._log.debug("Main-thread execution completed successfully")
-        assert request.result is not None  # noqa: S101
-        return request.result
-
-    @Slot()
-    def _process(self) -> None:
-        """Drain the queue on the main thread and execute each request."""
-        processed = 0
-        while True:
-            try:
-                request = self._queue.get_nowait()
-            except queue.Empty:
-                break
-            try:
-                request.result = request.fn()
-                processed += 1
-            except Exception as exc:
-                self._log.error(
-                    "Exception during main-thread execution: %s", exc, exc_info=True
-                )
-                request.exception = exc
-            finally:
-                request.done_event.set()
-        if processed:
-            self._log.debug("Processed %d queued request(s) on main thread", processed)
-
-
 class MCPServerManager:
-    """Manages embedded MCP HTTP server lifecycle."""
+    """Manages embedded MCP HTTP server lifecycle.
+
+    Designed to run on a qasync unified event loop — aiohttp and Qt share
+    the same loop, so tool calls execute directly on the main thread without
+    any cross-thread marshalling.
+    """
 
     DEFAULT_PORT = 8765
 
@@ -157,11 +70,10 @@ class MCPServerManager:
     ):
         self._ctx = ctx
         self._port = port
-        self._thread: threading.Thread | None = None
-        self._loop: asyncio.AbstractEventLoop | None = None
         self._running = False
+        self._stop_event: Any = None  # asyncio.Event, created in serve_async
         self._coding_tools: Any = None  # Cached CodingTools instance
-        self._executor: _MainThreadExecutor | None = None
+        self._runner: Any = None  # aiohttp AppRunner for cleanup
 
         # Debug mode: explicit param > MCP_DEBUG > QUALCODER_DEV > default False
         if debug is None:
@@ -200,50 +112,44 @@ class MCPServerManager:
             ),
         }
 
-    def start(self):
-        """Start MCP server in background thread."""
+    async def serve_async(self):
+        """Start the MCP server as a coroutine on the current (qasync) event loop.
+
+        This replaces the old start()/stop() thread-based approach.
+        aiohttp runs directly on the unified asyncio+Qt loop.
+        """
         if self._running:
             self._log.warning("Server already running")
             return
 
+        import asyncio
+
         self._running = True
+        self._stop_event = asyncio.Event()
         self._stats["start_time"] = time.time()
-        # Create executor on main thread so its QObject affinity is correct
-        self._executor = _MainThreadExecutor()
-        self._thread = threading.Thread(target=self._run_server, daemon=True)
-        self._thread.start()
-        self._log.info("Server starting on port %d (debug=%s)", self._port, self._debug)
-
-    def stop(self):
-        """Stop MCP server."""
-        if not self._running:
-            return
-
-        self._log.info("Server stopping...")
-        self._running = False
-        self._executor = None
-        # Don't force-stop the loop; _serve() checks _running every 100ms
-        # and exits gracefully, allowing run_until_complete to finish cleanly.
-        if self._thread:
-            self._thread.join(timeout=2.0)
-        self._log.info("Server stopped")
-
-    def _run_server(self):
-        """Run async server in background thread."""
-        self._log.debug(
-            "MCP server thread started (thread=%s)", threading.current_thread().name
+        self._log.info(
+            "Server starting on port %d (debug=%s, unified loop)",
+            self._port,
+            self._debug,
         )
-        self._loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(self._loop)
 
         try:
-            self._loop.run_until_complete(self._serve())
+            await self._serve()
         except Exception as e:
             self._log.exception("Server error: %s", e)
             self._stats["errors"] += 1
         finally:
-            self._loop.close()
-            self._log.debug("MCP server event loop closed")
+            self._running = False
+            self._stop_event = None
+
+    def stop(self):
+        """Signal the server to stop."""
+        if not self._running:
+            return
+        self._log.info("Server stopping...")
+        self._running = False
+        if self._stop_event:
+            self._stop_event.set()
 
     def _create_logging_middleware(self):
         """Create request/response logging middleware."""
@@ -312,17 +218,17 @@ class MCPServerManager:
         app.router.add_get("/debug/stats", self._handle_debug_stats)
         app.router.add_post("/debug/publish_event", self._handle_debug_publish)
 
-        runner = web.AppRunner(app)
-        await runner.setup()
-        site = web.TCPSite(runner, "localhost", self._port)
+        self._runner = web.AppRunner(app)
+        await self._runner.setup()
+        site = web.TCPSite(self._runner, "localhost", self._port)
         await site.start()
 
         self._log.info("Server ready at http://localhost:%d", self._port)
 
-        while self._running:
-            await asyncio.sleep(0.1)
+        await self._stop_event.wait()
 
-        await runner.cleanup()
+        await self._runner.cleanup()
+        self._runner = None
 
     # ── HTTP Handlers ──────────────────────────────────────────
 
@@ -356,7 +262,8 @@ class MCPServerManager:
         except Exception:
             args = {}
 
-        result = await self._run_tool_on_main_thread(tool_name, args, log)
+        # Tool executes directly — we're already on the main thread (qasync loop)
+        result = self._execute_tool(tool_name, args, log)
         return web.json_response(result, dumps=lambda o: json.dumps(o, default=str))
 
     async def _handle_jsonrpc(self, request: Any) -> Any:
@@ -401,7 +308,8 @@ class MCPServerManager:
         if method == "tools/call":
             tool_name = params.get("name")
             tool_args = params.get("arguments", {})
-            result = await self._run_tool_on_main_thread(tool_name, tool_args, log)
+            # Direct execution — already on the main thread
+            result = self._execute_tool(tool_name, tool_args, log)
             return _jsonrpc_ok(
                 {"content": [{"type": "text", "text": json.dumps(result, default=str)}]}
             )
@@ -470,11 +378,9 @@ class MCPServerManager:
                 "Publishing SegmentCoded event: source=%d code=%d", source_id, code_id
             )
 
-            def _publish() -> dict:
-                self._ctx.event_bus.publish(event)
-                return {"published": True, "source_id": source_id}
-
-            result = await self._run_on_main_thread(_publish)
+            # Direct execution — already on the main thread
+            self._ctx.event_bus.publish(event)
+            result = {"published": True, "source_id": source_id}
             log.info("Event published successfully")
 
             return web.json_response(result)
@@ -482,46 +388,6 @@ class MCPServerManager:
         except Exception as e:
             log.exception("Failed to publish debug event: %s", e)
             return web.json_response({"error": str(e)}, status=500)
-
-    # ── Main-Thread Marshalling ─────────────────────────────────
-
-    async def _run_tool_on_main_thread(
-        self,
-        tool_name: str,
-        args: dict,
-        log: MCPLogAdapter,
-    ) -> dict:
-        """Marshal tool execution to the Qt main thread without blocking asyncio.
-
-        Uses ``run_in_executor`` so the blocking ``_MainThreadExecutor.execute()``
-        call happens on a pool thread, keeping the asyncio event loop responsive.
-        """
-        executor = self._executor
-        if executor is None:
-            # Fallback: no executor (tests, or server not fully started)
-            log.debug("No executor — running tool %s directly (fallback)", tool_name)
-            return self._execute_tool(tool_name, args, log)
-
-        log.debug("Marshalling tool %s to main thread via run_in_executor", tool_name)
-        loop = asyncio.get_event_loop()
-        return await loop.run_in_executor(
-            None,  # default ThreadPoolExecutor
-            lambda: executor.execute(lambda: self._execute_tool(tool_name, args, log)),
-        )
-
-    async def _run_on_main_thread(self, fn: Callable[[], dict]) -> dict:
-        """Marshal an arbitrary callable to the main thread."""
-        executor = self._executor
-        if executor is None:
-            self._log.debug("No executor — running callable directly (fallback)")
-            return fn()
-
-        self._log.debug("Marshalling callable to main thread via run_in_executor")
-        loop = asyncio.get_event_loop()
-        return await loop.run_in_executor(
-            None,
-            lambda: executor.execute(fn),
-        )
 
     # ── Tool Execution ─────────────────────────────────────────
 
@@ -609,7 +475,10 @@ class MCPServerManager:
         arguments: dict,
         log: MCPLogAdapter | None = None,
     ) -> dict:
-        """Execute tool using shared AppContext with timing and logging."""
+        """Execute tool using shared AppContext with timing and logging.
+
+        Called directly on the main thread — no marshalling needed with qasync.
+        """
         from src.contexts.coding.interface.tool_definitions import ALL_TOOLS
 
         if log is None:
@@ -787,3 +656,7 @@ class _CodingToolsContextWrapper:
     @property
     def event_bus(self):
         return self._ctx.event_bus
+
+    @property
+    def session(self):
+        return self._ctx.session

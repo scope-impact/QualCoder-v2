@@ -13,10 +13,14 @@ from __future__ import annotations
 
 import contextlib
 import logging
+import threading
+from collections.abc import Callable
 from pathlib import Path
 from typing import TYPE_CHECKING
 
 from returns.result import Failure, Result, Success
+
+from src.shared.infra.session import Session
 
 logger = logging.getLogger("qualcoder.shared.lifecycle")
 
@@ -34,6 +38,7 @@ class ProjectLifecycle:
     - Open database connections for .qda files
     - Create new project databases with schema
     - Close connections cleanly
+    - Provide per-thread connections via connection_factory
 
     This class owns the SQLAlchemy engine and connection.
     """
@@ -42,12 +47,35 @@ class ProjectLifecycle:
         """Initialize the lifecycle manager."""
         self._engine: Engine | None = None
         self._connection: Connection | None = None
+        self._session: Session | None = None
         self._current_path: Path | None = None
+        self._thread_local: threading.local = threading.local()
+        self._connection_factory: Callable[[], Connection] | None = None
 
     @property
     def connection(self) -> Connection | None:
         """Get the current database connection."""
         return self._connection
+
+    @property
+    def engine(self) -> Engine | None:
+        """Get the current SQLAlchemy engine."""
+        return self._engine
+
+    @property
+    def session(self) -> Session | None:
+        """Get the current Session (project-scoped, thread-safe)."""
+        return self._session
+
+    @property
+    def connection_factory(self) -> Callable[[], Connection] | None:
+        """Get the per-thread connection factory.
+
+        Returns a callable that provides thread-local connections with
+        busy_timeout set. Same thread always gets the same connection.
+        None when no project is open.
+        """
+        return self._connection_factory
 
     @property
     def current_path(self) -> Path | None:
@@ -82,17 +110,43 @@ class ProjectLifecycle:
         self.close_database()
 
         try:
-            # Create engine and connection
+            from sqlalchemy.pool import SingletonThreadPool
+
+            # Create engine with SingletonThreadPool for safe multi-thread access.
+            # SingletonThreadPool gives each thread its own DBAPI connection,
+            # enabling MCP asyncio.to_thread() calls alongside Qt main thread.
             db_url = f"sqlite:///{path}"
-            self._engine = create_engine(db_url, echo=False)
+            self._engine = create_engine(
+                db_url, echo=False, poolclass=SingletonThreadPool
+            )
 
             # Enable automatic SQL query tracing
             from src.shared.infra.telemetry import instrument_sqlalchemy
 
             instrument_sqlalchemy(self._engine)
 
+            from sqlalchemy import text
+
+            # Enable WAL mode before creating connections.
+            # WAL allows concurrent readers + writer, eliminating most
+            # "database is locked" errors in multi-threaded access.
+            with self._engine.connect() as setup_conn:
+                setup_conn.execute(text("PRAGMA journal_mode=WAL"))
+                setup_conn.commit()
+
             self._connection = self._engine.connect()
             self._current_path = path
+
+            # Store main-thread connection in thread-local for the factory
+            self._thread_local.connection = self._connection
+            self._connection_factory = self._get_or_create_connection
+
+            # Session uses the same connection factory so session.commit()
+            # commits the same connection that repos use via the proxy.
+            self._session = Session(
+                self._engine,
+                connection_factory=self._get_or_create_connection,
+            )
 
             logger.info("Database opened: %s", path)
             return Success(self._connection)
@@ -151,15 +205,41 @@ class ProjectLifecycle:
             logger.info("Closing database: %s", self._current_path)
         self._cleanup()
 
+    def _get_or_create_connection(self) -> Connection:
+        """Return a thread-local connection, creating one if needed.
+
+        Each thread gets its own connection via SingletonThreadPool.
+        Worker-thread connections have busy_timeout set to avoid
+        immediate "database is locked" errors.
+        """
+        conn = getattr(self._thread_local, "connection", None)
+        if conn is not None:
+            return conn
+
+        from sqlalchemy import text
+
+        conn = self._engine.connect()
+        from src.shared.infra.session import SQLITE_BUSY_TIMEOUT_MS
+
+        conn.execute(text(f"PRAGMA busy_timeout = {SQLITE_BUSY_TIMEOUT_MS}"))
+        conn.commit()
+        self._thread_local.connection = conn
+        return conn
+
     def _cleanup(self) -> None:
         """Clean up connection and engine resources."""
+        # Clear the factory, session, and thread-local state
+        self._connection_factory = None
+        self._session = None
+        self._thread_local = threading.local()
+
         # Close connection
         if self._connection is not None:
             with contextlib.suppress(Exception):
                 self._connection.close()
             self._connection = None
 
-        # Dispose engine
+        # Dispose engine (also cleans up all pooled connections)
         if self._engine is not None:
             with contextlib.suppress(Exception):
                 self._engine.dispose()

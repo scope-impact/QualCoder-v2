@@ -40,6 +40,7 @@ from src.shared.infra.state import ProjectState
 
 if TYPE_CHECKING:
     from src.shared.infra.event_bus import EventBus
+    from src.shared.infra.session import Session
 
 logger = logging.getLogger("qualcoder.sources.core")
 
@@ -57,7 +58,7 @@ _TEXT_EXTRACTORS = {
 }
 
 
-def _extract_text(source_type: SourceType, file_path: Path) -> str | None:
+def extract_text(source_type: SourceType, file_path: Path) -> str | None:
     """Extract text content from a file if the source type supports it."""
     extractor_cls = _TEXT_EXTRACTORS.get(source_type)
     if extractor_cls is None:
@@ -77,6 +78,7 @@ def import_file_source(
     state: ProjectState,
     source_repo: SourceRepository | None,
     event_bus: EventBus,
+    session: Session | None = None,
 ) -> OperationResult:
     """
     Import a file-based source into the current project.
@@ -192,7 +194,7 @@ def import_file_source(
         )
 
     # Step 4: Extract text content for text/PDF sources
-    fulltext = _extract_text(source_type, file_path)
+    fulltext = extract_text(source_type, file_path)
 
     # Create Source entity
     source_id = SourceId.new()

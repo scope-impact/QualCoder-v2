@@ -21,14 +21,18 @@ pytestmark = [
 
 @allure.story("QC-039.07 Import Code List")
 class TestImportCodeList:
-    @allure.title("AC #1: I can import a flat code list from text")
-    def test_ac1_import_flat_code_list(
+    @allure.title("AC #1: Import flat code list and publish CodeListImported event")
+    def test_ac1_import_flat_code_list_with_event(
         self, code_repo, category_repo, segment_repo, event_bus, tmp_path
     ):
         from src.contexts.exchange.core.commandHandlers.import_code_list import (
             import_code_list,
         )
         from src.contexts.exchange.core.commands import ImportCodeListCommand
+        from src.contexts.exchange.core.events import CodeListImported
+
+        published = []
+        event_bus.subscribe("exchange.code_list_imported", published.append)
 
         code_list_file = tmp_path / "codes.txt"
         code_list_file.write_text("Joy\nAnger\nSadness\n")
@@ -52,8 +56,14 @@ class TestImportCodeList:
             assert "Anger" in code_names
             assert "Sadness" in code_names
 
-    @allure.title("AC #2: I can import codes with categories (indented)")
-    def test_ac2_import_with_categories(
+        with allure.step("Verify event"):
+            assert len(published) == 1
+            event = published[0]
+            assert isinstance(event, CodeListImported)
+            assert event.codes_created == 3
+
+    @allure.title("AC #2+#3: Import with categories and skip duplicates")
+    def test_ac2_ac3_categories_and_duplicates(
         self, code_repo, category_repo, segment_repo, event_bus, tmp_path
     ):
         from src.contexts.exchange.core.commandHandlers.import_code_list import (
@@ -61,16 +71,17 @@ class TestImportCodeList:
         )
         from src.contexts.exchange.core.commands import ImportCodeListCommand
 
-        code_list_file = tmp_path / "codes.txt"
-        code_list_file.write_text("Emotions\n  Joy\n  Anger\nActions\n  Helping\n")
+        with allure.step("Import indented code list with categories"):
+            code_list_file = tmp_path / "codes.txt"
+            code_list_file.write_text("Emotions\n  Joy\n  Anger\nActions\n  Helping\n")
 
-        import_code_list(
-            command=ImportCodeListCommand(source_path=str(code_list_file)),
-            code_repo=code_repo,
-            category_repo=category_repo,
-            segment_repo=segment_repo,
-            event_bus=event_bus,
-        )
+            import_code_list(
+                command=ImportCodeListCommand(source_path=str(code_list_file)),
+                code_repo=code_repo,
+                category_repo=category_repo,
+                segment_repo=segment_repo,
+                event_bus=event_bus,
+            )
 
         with allure.step("Verify categories created"):
             categories = category_repo.get_all()
@@ -84,76 +95,31 @@ class TestImportCodeList:
             joy = next(c for c in codes if c.name == "Joy")
             assert joy.category_id == emotions_cat.id
 
-    @allure.title("AC #3: Import skips duplicate code names")
-    def test_ac3_skips_duplicates(
-        self, code_repo, category_repo, segment_repo, event_bus, tmp_path
-    ):
-        from src.contexts.coding.core.entities import Code, Color
-        from src.contexts.exchange.core.commandHandlers.import_code_list import (
-            import_code_list,
-        )
-        from src.contexts.exchange.core.commands import ImportCodeListCommand
-        from src.shared.common.types import CodeId
+        with allure.step("Import again with duplicate — Joy should not be duplicated"):
+            # Pre-existing Joy code already exists from above import
+            code_list_file2 = tmp_path / "codes2.txt"
+            code_list_file2.write_text("Joy\nNewCode\n")
 
-        # Pre-existing code
-        existing = Code(id=CodeId.new(), name="Joy", color=Color.from_hex("#00FF00"))
-        code_repo.save(existing)
-
-        code_list_file = tmp_path / "codes.txt"
-        code_list_file.write_text("Joy\nAnger\n")
-
-        result = import_code_list(
-            command=ImportCodeListCommand(source_path=str(code_list_file)),
-            code_repo=code_repo,
-            category_repo=category_repo,
-            segment_repo=segment_repo,
-            event_bus=event_bus,
-        )
-
-        with allure.step("Verify still succeeds"):
+            result = import_code_list(
+                command=ImportCodeListCommand(source_path=str(code_list_file2)),
+                code_repo=code_repo,
+                category_repo=category_repo,
+                segment_repo=segment_repo,
+                event_bus=event_bus,
+            )
             assert result.is_success
 
         with allure.step("Verify no duplicate Joy"):
             codes = code_repo.get_all()
             joy_codes = [c for c in codes if c.name == "Joy"]
-            assert len(joy_codes) == 1  # original, not duplicated
+            assert len(joy_codes) == 1
 
-        with allure.step("Verify Anger was added"):
+        with allure.step("Verify NewCode was added"):
             code_names = {c.name for c in codes}
-            assert "Anger" in code_names
+            assert "NewCode" in code_names
 
-    @allure.title("Import publishes CodeListImported event")
-    def test_publishes_event(
-        self, code_repo, category_repo, segment_repo, event_bus, tmp_path
-    ):
-        from src.contexts.exchange.core.commandHandlers.import_code_list import (
-            import_code_list,
-        )
-        from src.contexts.exchange.core.commands import ImportCodeListCommand
-        from src.contexts.exchange.core.events import CodeListImported
-
-        published = []
-        event_bus.subscribe("exchange.code_list_imported", published.append)
-
-        code_list_file = tmp_path / "codes.txt"
-        code_list_file.write_text("Joy\nAnger\n")
-
-        import_code_list(
-            command=ImportCodeListCommand(source_path=str(code_list_file)),
-            code_repo=code_repo,
-            category_repo=category_repo,
-            segment_repo=segment_repo,
-            event_bus=event_bus,
-        )
-
-        with allure.step("Verify event"):
-            assert len(published) == 1
-            event = published[0]
-            assert isinstance(event, CodeListImported)
-            assert event.codes_created == 2
-
-    @allure.title("Import fails with empty file")
-    def test_fails_empty_file(
+    @allure.title("Import fails with empty or nonexistent file")
+    def test_fails_invalid_input(
         self, code_repo, category_repo, segment_repo, event_bus, tmp_path
     ):
         from src.contexts.exchange.core.commandHandlers.import_code_list import (
@@ -161,38 +127,29 @@ class TestImportCodeList:
         )
         from src.contexts.exchange.core.commands import ImportCodeListCommand
 
-        empty_file = tmp_path / "empty.txt"
-        empty_file.write_text("")
+        with allure.step("Verify failure with empty file"):
+            empty_file = tmp_path / "empty.txt"
+            empty_file.write_text("")
 
-        result = import_code_list(
-            command=ImportCodeListCommand(source_path=str(empty_file)),
-            code_repo=code_repo,
-            category_repo=category_repo,
-            segment_repo=segment_repo,
-            event_bus=event_bus,
-        )
-
-        with allure.step("Verify failure"):
+            result = import_code_list(
+                command=ImportCodeListCommand(source_path=str(empty_file)),
+                code_repo=code_repo,
+                category_repo=category_repo,
+                segment_repo=segment_repo,
+                event_bus=event_bus,
+            )
             assert result.is_failure
             assert result.error_code == "CODE_LIST_NOT_IMPORTED/EMPTY_LIST"
 
-    @allure.title("Import fails with nonexistent file")
-    def test_fails_nonexistent_file(
-        self, code_repo, category_repo, segment_repo, event_bus, tmp_path
-    ):
-        from src.contexts.exchange.core.commandHandlers.import_code_list import (
-            import_code_list,
-        )
-        from src.contexts.exchange.core.commands import ImportCodeListCommand
-
-        result = import_code_list(
-            command=ImportCodeListCommand(source_path=str(tmp_path / "missing.txt")),
-            code_repo=code_repo,
-            category_repo=category_repo,
-            segment_repo=segment_repo,
-            event_bus=event_bus,
-        )
-
-        with allure.step("Verify failure"):
+        with allure.step("Verify failure with nonexistent file"):
+            result = import_code_list(
+                command=ImportCodeListCommand(
+                    source_path=str(tmp_path / "missing.txt")
+                ),
+                code_repo=code_repo,
+                category_repo=category_repo,
+                segment_repo=segment_repo,
+                event_bus=event_bus,
+            )
             assert result.is_failure
             assert "FILE_NOT_FOUND" in result.error_code

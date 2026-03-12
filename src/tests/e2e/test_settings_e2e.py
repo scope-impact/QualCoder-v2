@@ -115,14 +115,14 @@ def settings_dialog(qapp, colors, settings_viewmodel):
 # =============================================================================
 
 
-@allure.story("Settings Dialog Defaults")
+@allure.story("QC-038.06 Settings Dialog Defaults")
 @allure.severity(allure.severity_level.NORMAL)
 class TestSettingsDialogDefaults:
     """E2E tests for Settings Dialog default values."""
 
-    @allure.title("Dialog opens with light theme selected by default")
-    def test_dialog_opens_with_default_theme(self, settings_dialog):
-        """E2E: Dialog displays light theme selected by default."""
+    @allure.title("Dialog opens with default theme, font size, and language")
+    def test_dialog_opens_with_defaults(self, settings_dialog):
+        """E2E: Dialog displays correct defaults for theme, font size, and language."""
         with allure.step("Find theme buttons in dialog"):
             theme_buttons = [
                 btn
@@ -142,22 +142,16 @@ class TestSettingsDialogDefaults:
             assert light_btn is not None
             assert light_btn.isChecked()
 
-        attach_screenshot(settings_dialog, "SettingsDialog - Default Theme")
-
-    @allure.title("Dialog opens with font size 14 by default")
-    def test_dialog_opens_with_default_font_size(self, settings_dialog):
-        """E2E: Dialog displays font size 14 by default."""
         with allure.step("Verify font slider default value"):
             assert settings_dialog._font_slider.value() == 14
 
         with allure.step("Verify font size label shows 14px"):
             assert "14px" in settings_dialog._font_size_label.text()
 
-    @allure.title("Dialog opens with English selected by default")
-    def test_dialog_opens_with_default_language(self, settings_dialog):
-        """E2E: Dialog displays English selected by default."""
         with allure.step("Verify language combo shows English"):
             assert settings_dialog._language_combo.currentData() == "en"
+
+        attach_screenshot(settings_dialog, "SettingsDialog - Defaults")
 
 
 # =============================================================================
@@ -173,11 +167,18 @@ class TestThemeChanges:
     AC #1: Researcher can change UI theme (dark, light, colors).
     """
 
-    @allure.title("AC #1: Changing theme to dark persists to JSON file")
-    def test_change_theme_to_dark_persists_to_file(
-        self, settings_dialog, settings_viewmodel, settings_repo
+    @allure.title(
+        "AC #1: Changing theme to dark persists to JSON file and emits signal"
+    )
+    def test_change_theme_to_dark_persists_and_emits_signal(
+        self, settings_dialog, settings_viewmodel, settings_repo, qapp
     ):
-        """E2E: Changing theme via UI persists to JSON file."""
+        """E2E: Changing theme via UI persists to JSON file and emits settings_changed signal."""
+        from PySide6.QtTest import QSignalSpy
+
+        with allure.step("Set up signal spy"):
+            spy = QSignalSpy(settings_dialog.settings_changed)
+
         with allure.step("Find dark theme button in dialog"):
             theme_buttons = [
                 btn
@@ -197,31 +198,10 @@ class TestThemeChanges:
             settings = settings_repo.load()
             assert settings.theme.name == "dark"
 
-        attach_screenshot(settings_dialog, "SettingsDialog - Dark Theme")
-
-    @allure.title("AC #1: Changing theme emits settings_changed signal")
-    def test_change_theme_emits_settings_changed_signal(self, settings_dialog, qapp):
-        """E2E: Changing theme emits settings_changed signal for reactive updates."""
-        from PySide6.QtTest import QSignalSpy
-
-        with allure.step("Set up signal spy"):
-            spy = QSignalSpy(settings_dialog.settings_changed)
-
-        with allure.step("Find and click dark theme button"):
-            theme_buttons = [
-                btn
-                for btn in settings_dialog.findChildren(QPushButton)
-                if btn.property("theme_value") is not None
-            ]
-            dark_btn = next(
-                (btn for btn in theme_buttons if btn.property("theme_value") == "dark"),
-                None,
-            )
-            dark_btn.click()
-            QApplication.processEvents()
-
         with allure.step("Verify signal emitted"):
             assert spy.count() >= 1
+
+        attach_screenshot(settings_dialog, "SettingsDialog - Dark Theme")
 
 
 # =============================================================================
@@ -237,11 +217,11 @@ class TestFontChanges:
     AC #2: Researcher can configure font size and family.
     """
 
-    @allure.title("AC #2: Changing font size via slider persists to JSON file")
-    def test_change_font_size_via_slider_persists_to_file(
+    @allure.title("AC #2: Changing font size and family persists to JSON file")
+    def test_change_font_size_and_family_persists_to_file(
         self, settings_dialog, settings_repo
     ):
-        """E2E: Changing font size via slider persists to JSON file."""
+        """E2E: Changing font size via slider and family via combo persists to JSON file."""
         with allure.step("Change font size to 18 via slider"):
             settings_dialog._font_slider.setValue(18)
             QApplication.processEvents()
@@ -250,13 +230,6 @@ class TestFontChanges:
             settings = settings_repo.load()
             assert settings.font.size == 18
 
-        attach_screenshot(settings_dialog, "SettingsDialog - Font Size Changed")
-
-    @allure.title("AC #2: Changing font family via combo persists to JSON file")
-    def test_change_font_family_via_combo_persists_to_file(
-        self, settings_dialog, settings_repo
-    ):
-        """E2E: Changing font family via combo box persists to JSON file."""
         with allure.step("Find Roboto in combo box"):
             combo = settings_dialog._font_combo
             roboto_index = combo.findData("Roboto")
@@ -269,6 +242,10 @@ class TestFontChanges:
         with allure.step("Verify font family persisted to repository"):
             settings = settings_repo.load()
             assert settings.font.family == "Roboto"
+
+        attach_screenshot(
+            settings_dialog, "SettingsDialog - Font Size and Family Changed"
+        )
 
 
 # =============================================================================
@@ -318,11 +295,11 @@ class TestBackupChanges:
     AC #4: Researcher can configure automatic backups.
     """
 
-    @allure.title("AC #4: Enabling backup via checkbox persists to JSON file")
-    def test_enable_backup_via_checkbox_persists_to_file(
+    @allure.title("AC #4: Enabling backup and changing interval persists to JSON file")
+    def test_enable_backup_and_change_interval_persists_to_file(
         self, settings_dialog, settings_repo
     ):
-        """E2E: Enabling backup via checkbox persists to JSON file."""
+        """E2E: Enabling backup via checkbox and changing interval persists to JSON file."""
         with allure.step("Enable backup checkbox"):
             settings_dialog._backup_enabled.setChecked(True)
             QApplication.processEvents()
@@ -330,14 +307,6 @@ class TestBackupChanges:
         with allure.step("Verify backup enabled in repository"):
             settings = settings_repo.load()
             assert settings.backup.enabled is True
-
-    @allure.title("AC #4: Changing backup interval via spinbox persists to JSON file")
-    def test_change_backup_interval_via_spinbox_persists_to_file(
-        self, settings_dialog, settings_repo
-    ):
-        """E2E: Changing backup interval via spinbox persists to JSON file."""
-        with allure.step("Enable backup first"):
-            settings_dialog._backup_enabled.setChecked(True)
 
         with allure.step("Change backup interval to 60 minutes"):
             settings_dialog._backup_interval.setValue(60)
@@ -362,11 +331,13 @@ class TestAVCodingChanges:
     AC #6: Researcher can configure speaker name format.
     """
 
-    @allure.title("AC #5: Changing timestamp format via combo persists to JSON file")
-    def test_change_timestamp_format_via_combo_persists_to_file(
+    @allure.title(
+        "AC #5-6: Changing timestamp and speaker format persists and previews correctly"
+    )
+    def test_change_timestamp_and_speaker_format_persists(
         self, settings_dialog, settings_repo
     ):
-        """E2E: Changing timestamp format via combo box persists to JSON file."""
+        """E2E: Changing timestamp format, speaker format, and verifying preview updates."""
         with allure.step("Find MM:SS format in combo"):
             combo = settings_dialog._timestamp_combo
             mm_ss_index = combo.findData("MM:SS")
@@ -380,11 +351,6 @@ class TestAVCodingChanges:
             settings = settings_repo.load()
             assert settings.av_coding.timestamp_format == "MM:SS"
 
-    @allure.title("AC #6: Changing speaker format via input persists to JSON file")
-    def test_change_speaker_format_via_input_persists_to_file(
-        self, settings_dialog, settings_repo
-    ):
-        """E2E: Changing speaker format via text input persists to JSON file."""
         with allure.step("Enter custom speaker format"):
             settings_dialog._speaker_format.setText("Participant {n}")
             QApplication.processEvents()
@@ -393,14 +359,9 @@ class TestAVCodingChanges:
             settings = settings_repo.load()
             assert settings.av_coding.speaker_format == "Participant {n}"
 
-    @allure.title("AC #6: Speaker preview updates reactively on format change")
-    def test_speaker_preview_updates_on_format_change(self, settings_dialog):
-        """E2E: Speaker preview updates reactively when format changes."""
-        with allure.step("Enter short speaker format"):
+        with allure.step("Change speaker format and verify preview updates"):
             settings_dialog._speaker_format.setText("P{n}")
             QApplication.processEvents()
-
-        with allure.step("Verify preview shows formatted names"):
             preview_text = settings_dialog._speaker_preview.text()
             assert "P1" in preview_text
             assert "P2" in preview_text
@@ -411,7 +372,7 @@ class TestAVCodingChanges:
 # =============================================================================
 
 
-@allure.story("Dialog Navigation")
+@allure.story("QC-038.07 Dialog Navigation")
 @allure.severity(allure.severity_level.NORMAL)
 class TestDialogNavigation:
     """E2E tests for dialog sidebar navigation."""
@@ -447,20 +408,20 @@ class TestDialogNavigation:
 # =============================================================================
 
 
-@allure.story("Dialog Accept/Cancel")
+@allure.story("QC-038.08 Dialog Accept/Cancel")
 @allure.severity(allure.severity_level.NORMAL)
 class TestDialogAcceptCancel:
     """E2E tests for dialog OK/Cancel behavior."""
 
-    @allure.title("OK button accepts the dialog")
-    def test_ok_button_accepts_dialog(self, qapp, colors, settings_viewmodel):
-        """E2E: OK button accepts the dialog with Accepted result code."""
+    @allure.title("OK button accepts and Cancel button rejects the dialog")
+    def test_ok_accepts_and_cancel_rejects_dialog(
+        self, qapp, colors, settings_viewmodel
+    ):
+        """E2E: OK button accepts and Cancel button rejects the dialog."""
         from src.contexts.settings.presentation.dialogs import SettingsDialog
 
-        with allure.step("Create settings dialog"):
+        with allure.step("Create settings dialog and verify OK button exists"):
             dialog = SettingsDialog(viewmodel=settings_viewmodel, colors=colors)
-
-        with allure.step("Verify OK button exists"):
             ok_buttons = [
                 btn for btn in dialog.findChildren(QPushButton) if btn.text() == "OK"
             ]
@@ -475,22 +436,15 @@ class TestDialogAcceptCancel:
             assert dialog.result() == QDialog.DialogCode.Accepted
             dialog.close()
 
-    @allure.title("Cancel button rejects the dialog")
-    def test_cancel_button_rejects_dialog(self, qapp, colors, settings_viewmodel):
-        """E2E: Cancel button rejects the dialog with Rejected result code."""
-        from src.contexts.settings.presentation.dialogs import SettingsDialog
-
-        with allure.step("Create and show settings dialog"):
-            dialog = SettingsDialog(viewmodel=settings_viewmodel, colors=colors)
-            dialog.show()
+        with allure.step("Create new dialog, show, and reject"):
+            dialog2 = SettingsDialog(viewmodel=settings_viewmodel, colors=colors)
+            dialog2.show()
             QApplication.processEvents()
-
-        with allure.step("Reject dialog"):
-            dialog.reject()
+            dialog2.reject()
 
         with allure.step("Verify dialog result is Rejected"):
-            assert dialog.result() == QDialog.DialogCode.Rejected
-            dialog.close()
+            assert dialog2.result() == QDialog.DialogCode.Rejected
+            dialog2.close()
 
 
 # =============================================================================
@@ -666,14 +620,15 @@ class TestUIApplication:
     Tests that theme and font changes are applied to the application.
     """
 
-    @allure.title("Theme change applies to AppShell and updates colors")
-    def test_theme_change_applies_to_ui(self, qapp, temp_config_path):
+    @allure.title("Theme and font changes apply to AppShell and QApplication")
+    def test_theme_and_font_changes_apply_to_ui(self, qapp, temp_config_path):
         """
-        E2E: Changing theme actually changes the UI colors.
+        E2E: Changing theme and font actually changes the UI.
 
         Verifies:
         1. AppShell starts with light theme colors
         2. After apply_theme('dark'), colors change to dark palette
+        3. After apply_font(), app font changes
         """
         from design_system import get_colors, get_theme
         from src.shared.presentation.templates import AppShell
@@ -692,31 +647,9 @@ class TestUIApplication:
 
         with allure.step("Verify colors changed to dark theme"):
             dark_colors = get_theme("dark")
-            # After applying theme, global get_colors() returns dark
             current_colors = get_colors()
             assert current_colors.background == dark_colors.background
             assert shell._colors.background == dark_colors.background
-
-        with allure.step("Cleanup"):
-            shell.close()
-
-    @allure.title("Font change applies to QApplication")
-    def test_font_change_applies_to_ui(self, qapp):
-        """
-        E2E: Changing font actually changes the application font.
-
-        Verifies:
-        1. Get initial app font
-        2. After apply_font(), app font changes
-        """
-        from design_system import get_colors
-        from src.shared.presentation.templates import AppShell
-
-        with allure.step("Create AppShell"):
-            shell = AppShell(colors=get_colors())
-
-        with allure.step("Get initial font"):
-            _ = qapp.font()  # Just verify we can get the font
 
         with allure.step("Apply Roboto font at size 18"):
             shell.apply_font("Roboto", 18)
@@ -730,66 +663,15 @@ class TestUIApplication:
         with allure.step("Cleanup"):
             shell.close()
 
-    @allure.title("load_and_apply_settings restores theme and font from JSON")
-    def test_load_and_apply_settings_from_repository(self, qapp, temp_config_path):
+    @allure.title("load_and_apply_settings restores theme/font and live update works")
+    def test_load_apply_settings_and_live_update(self, qapp, temp_config_path):
         """
-        E2E: Settings loaded from repository are applied to UI at startup.
+        E2E: Settings loaded from repository are applied at startup,
+        and changing theme in open dialog immediately updates AppShell.
 
-        Verifies complete flow:
-        1. Save dark theme + custom font to JSON
-        2. Create new AppShell
-        3. Call load_and_apply_settings()
-        4. Verify theme and font applied
-        """
-        from design_system import get_colors, get_theme
-        from src.contexts.settings.infra import UserSettingsRepository
-        from src.shared.presentation.templates import AppShell
-
-        with allure.step("Save dark theme and Roboto 16px to JSON"):
-            repo = UserSettingsRepository(config_path=temp_config_path)
-            settings = repo.load()
-            # Modify settings
-            settings = settings.with_theme(settings.theme.with_name("dark"))
-            settings = settings.with_font(
-                settings.font.with_family("Roboto").with_size(16)
-            )
-            repo.save(settings)
-
-        with allure.step("Verify settings saved"):
-            saved = repo.load()
-            assert saved.theme.name == "dark"
-            assert saved.font.family == "Roboto"
-            assert saved.font.size == 16
-
-        with allure.step("Create new AppShell and load settings"):
-            shell = AppShell(colors=get_colors())
-            shell.load_and_apply_settings(repo)
-            QApplication.processEvents()
-
-        with allure.step("Verify dark theme applied"):
-            dark_colors = get_theme("dark")
-            current_colors = get_colors()
-            assert current_colors.background == dark_colors.background
-
-        with allure.step("Verify font applied"):
-            app_font = qapp.font()
-            assert app_font.family() == "Roboto"
-            assert app_font.pointSize() == 16
-
-        with allure.step("Cleanup"):
-            shell.close()
-
-    @allure.title("Live settings update: theme changes while dialog is open")
-    def test_live_settings_update_theme(self, qapp, temp_config_path):
-        """
-        E2E: Changing theme in open dialog immediately updates AppShell.
-
-        This tests the full wired flow:
-        1. AppShell with settings_changed connected
-        2. User changes theme in dialog
-        3. settings_changed signal fires
-        4. AppShell.apply_theme() is called
-        5. UI colors change immediately
+        Verifies:
+        1. Save dark theme + custom font to JSON, load_and_apply_settings restores them
+        2. Live update: dialog theme change immediately updates AppShell
         """
         from design_system import get_colors, get_theme
         from src.contexts.settings.infra import UserSettingsRepository
@@ -799,18 +681,48 @@ class TestUIApplication:
         from src.shared.presentation.services.settings_service import SettingsService
         from src.shared.presentation.templates import AppShell
 
+        # --- Part 1: load_and_apply_settings restores from JSON ---
+
+        with allure.step("Save dark theme and Roboto 16px to JSON"):
+            repo = UserSettingsRepository(config_path=temp_config_path)
+            settings = repo.load()
+            settings = settings.with_theme(settings.theme.with_name("dark"))
+            settings = settings.with_font(
+                settings.font.with_family("Roboto").with_size(16)
+            )
+            repo.save(settings)
+
+        with allure.step("Create new AppShell and load settings"):
+            shell = AppShell(colors=get_colors())
+            shell.load_and_apply_settings(repo)
+            QApplication.processEvents()
+
+        with allure.step("Verify dark theme and font applied"):
+            dark_colors = get_theme("dark")
+            current_colors = get_colors()
+            assert current_colors.background == dark_colors.background
+            app_font = qapp.font()
+            assert app_font.family() == "Roboto"
+            assert app_font.pointSize() == 16
+
+        with allure.step("Cleanup first shell"):
+            shell.close()
+
+        # --- Part 2: Live settings update while dialog is open ---
+
         with allure.step("Create AppShell with light theme"):
             light_colors = get_theme("light")
             shell = AppShell(colors=light_colors)
-            repo = UserSettingsRepository(config_path=temp_config_path)
-            shell.load_and_apply_settings(repo)
-
-        with allure.step("Verify initial theme is light"):
-            assert shell._colors.background == light_colors.background
+            repo2 = UserSettingsRepository(config_path=temp_config_path)
+            # Reset to light theme for this part
+            settings = repo2.load()
+            settings = settings.with_theme(settings.theme.with_name("light"))
+            repo2.save(settings)
+            shell.load_and_apply_settings(repo2)
 
         with allure.step("Open settings dialog (non-blocking for test)"):
             event_bus = EventBus()
-            settings_service = SettingsService(repo, event_bus=event_bus)
+            settings_service = SettingsService(repo2, event_bus=event_bus)
             viewmodel = SettingsViewModel(settings_provider=settings_service)
             dialog = SettingsDialog(
                 viewmodel=viewmodel,
@@ -818,12 +730,11 @@ class TestUIApplication:
                 parent=shell,
             )
 
-            # Wire up the same way AppShell.open_settings_dialog does
             def on_settings_changed():
-                settings = repo.load()
-                if settings.theme.name in ("light", "dark"):
-                    shell.apply_theme(settings.theme.name)
-                shell.apply_font(settings.font.family, settings.font.size)
+                s = repo2.load()
+                if s.theme.name in ("light", "dark"):
+                    shell.apply_theme(s.theme.name)
+                shell.apply_font(s.font.family, s.font.size)
 
             dialog.settings_changed.connect(on_settings_changed)
             dialog.show()

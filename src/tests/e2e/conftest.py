@@ -132,6 +132,19 @@ def event_bus():
 
 
 # =============================================================================
+# MCP Tool Fixtures
+# =============================================================================
+
+
+@pytest.fixture
+def coding_tools(app_context):
+    """Create CodingTools instance bound to the test AppContext."""
+    from src.contexts.coding.interface.mcp_tools import CodingTools
+
+    return CodingTools(ctx=app_context)
+
+
+# =============================================================================
 # Repository Fixtures
 # =============================================================================
 
@@ -407,6 +420,10 @@ def seeded_app(wired_app):
     ctx.coding_context.code_repo.save(code1)
     ctx.coding_context.code_repo.save(code2)
     ctx.coding_context.code_repo.save(code3)
+
+    # Repos no longer auto-commit; commit seeded data
+    if ctx.session:
+        ctx.session.commit()
 
     # Process events to ensure UI is updated
     QApplication.processEvents()

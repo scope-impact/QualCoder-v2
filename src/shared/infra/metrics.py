@@ -138,10 +138,14 @@ project_open = _meter.create_up_down_counter(
 def metered_command(command_name: str) -> Callable[[Callable[P, R]], Callable[P, R]]:
     """Decorator that records command metrics (count, duration, failures).
 
+    Also auto-commits the ``session`` keyword argument (if provided) when
+    the handler returns a successful ``OperationResult``.  This eliminates
+    the need for each handler to contain ``if session: session.commit()``.
+
     Example::
 
         @metered_command("create_code")
-        def create_code(command, code_repo, event_bus) -> OperationResult:
+        def create_code(command, code_repo, event_bus, *, session=None) -> OperationResult:
             ...
     """
 
@@ -152,8 +156,13 @@ def metered_command(command_name: str) -> Callable[[Callable[P, R]], Callable[P,
             try:
                 result = func(*args, **kwargs)
                 attrs = {"command": command_name}
-                if hasattr(result, "is_success") and not result.is_success:
-                    command_failures.add(1, attrs)
+                if hasattr(result, "is_success"):
+                    if result.is_success:
+                        session = kwargs.get("session")
+                        if session:
+                            session.commit()
+                    else:
+                        command_failures.add(1, attrs)
                 command_total.add(1, attrs)
                 return result
             except Exception:

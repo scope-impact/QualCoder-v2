@@ -22,6 +22,7 @@ from src.contexts.exchange.core.events import CodeListImported
 from src.contexts.exchange.core.failure_events import ImportFailed
 from src.contexts.exchange.infra.code_list_parser import parse_code_list
 from src.shared.common.operation_result import OperationResult
+from src.shared.infra.metrics import metered_command
 
 if TYPE_CHECKING:
     from src.contexts.coding.core.commandHandlers._state import (
@@ -30,16 +31,19 @@ if TYPE_CHECKING:
         SegmentRepository,
     )
     from src.shared.infra.event_bus import EventBus
+    from src.shared.infra.session import Session
 
 logger = logging.getLogger("qualcoder.exchange.core")
 
 
+@metered_command("import_code_list")
 def import_code_list(
     command: ImportCodeListCommand,
     code_repo: CodeRepository,
     category_repo: CategoryRepository,
     segment_repo: SegmentRepository,
     event_bus: EventBus,
+    session: Session | None = None,
 ) -> OperationResult:
     """
     Import codes from a plain-text code list.
@@ -86,6 +90,7 @@ def import_code_list(
                 category_repo=category_repo,
                 segment_repo=segment_repo,
                 event_bus=event_bus,
+                session=session,
             )
             if cat_result.is_success:
                 category_name_to_id[parsed_cat.name] = cat_result.data.id.value
@@ -113,6 +118,7 @@ def import_code_list(
             category_repo=category_repo,
             segment_repo=segment_repo,
             event_bus=event_bus,
+            session=session,
         )
 
         if result.is_success:

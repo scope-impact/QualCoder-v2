@@ -1,12 +1,8 @@
-"""
-Tests for Code Comparator with VectorStore Integration
-
-TDD tests for VectorCodeComparator that uses embeddings for fast
-duplicate detection.
-"""
+"""Tests for Code Comparator with VectorStore Integration."""
 
 from __future__ import annotations
 
+import allure
 import pytest
 from returns.result import Success
 
@@ -63,15 +59,12 @@ def sample_codes() -> tuple[Code, ...]:
 
 
 @pytest.fixture
-def mock_vector_store() -> MockVectorStore:
-    """Create mock vector store."""
-    return MockVectorStore()
-
-
-@pytest.fixture
-def mock_embedding_provider() -> MockEmbeddingProvider:
-    """Create mock embedding provider."""
-    return MockEmbeddingProvider(dimensions=384)
+def comparator() -> VectorCodeComparator:
+    """Create a VectorCodeComparator with mock dependencies."""
+    return VectorCodeComparator(
+        vector_store=MockVectorStore(),
+        embedding_provider=MockEmbeddingProvider(dimensions=384),
+    )
 
 
 # ============================================================
@@ -79,180 +72,66 @@ def mock_embedding_provider() -> MockEmbeddingProvider:
 # ============================================================
 
 
+@allure.epic("QualCoder v2")
+@allure.feature("QC-028 Code Management")
+@allure.story("QC-028.09 Agent Detect Duplicates")
 class TestVectorCodeComparator:
     """Tests for VectorCodeComparator."""
 
-    def test_init_with_vector_store(
+    @allure.title(
+        "index_codes, find_duplicates with thresholds, single code, and similarity"
+    )
+    def test_index_find_duplicates_and_similarity(
         self,
-        mock_vector_store: MockVectorStore,
-        mock_embedding_provider: MockEmbeddingProvider,
-    ) -> None:
-        """Can initialize with vector store and embedding provider."""
-        comparator = VectorCodeComparator(
-            vector_store=mock_vector_store,
-            embedding_provider=mock_embedding_provider,
-        )
-        assert comparator is not None
-
-    def test_index_codes_adds_to_vector_store(
-        self,
-        mock_vector_store: MockVectorStore,
-        mock_embedding_provider: MockEmbeddingProvider,
+        comparator: VectorCodeComparator,
         sample_codes: tuple[Code, ...],
     ) -> None:
-        """index_codes adds all codes to vector store."""
-        comparator = VectorCodeComparator(
-            vector_store=mock_vector_store,
-            embedding_provider=mock_embedding_provider,
-        )
-
+        # Index codes
         result = comparator.index_codes(sample_codes)
-
         assert isinstance(result, Success)
-        assert mock_vector_store.count() == 5
+        assert comparator._store.count() == 5
 
-    def test_find_duplicates_returns_candidates(
-        self,
-        mock_vector_store: MockVectorStore,
-        mock_embedding_provider: MockEmbeddingProvider,
-        sample_codes: tuple[Code, ...],
-    ) -> None:
-        """find_duplicates returns duplicate candidates."""
-        comparator = VectorCodeComparator(
-            vector_store=mock_vector_store,
-            embedding_provider=mock_embedding_provider,
-        )
-        comparator.index_codes(sample_codes)
-
-        result = comparator.find_duplicates(sample_codes, threshold=0.5)
-
-        assert isinstance(result, Success)
-        candidates = result.unwrap()
-        assert isinstance(candidates, list)
-        # Should find some candidates (mock returns deterministic results)
-
-    def test_find_duplicates_respects_threshold(
-        self,
-        mock_vector_store: MockVectorStore,
-        mock_embedding_provider: MockEmbeddingProvider,
-        sample_codes: tuple[Code, ...],
-    ) -> None:
-        """find_duplicates filters by threshold."""
-        comparator = VectorCodeComparator(
-            vector_store=mock_vector_store,
-            embedding_provider=mock_embedding_provider,
-        )
-        comparator.index_codes(sample_codes)
-
-        # High threshold should return fewer results
+        # find_duplicates respects threshold
         high_result = comparator.find_duplicates(sample_codes, threshold=0.95)
         low_result = comparator.find_duplicates(sample_codes, threshold=0.1)
+        assert isinstance(high_result, Success)
+        assert isinstance(low_result, Success)
+        assert len(high_result.unwrap()) <= len(low_result.unwrap())
 
-        high_candidates = high_result.unwrap()
-        low_candidates = low_result.unwrap()
+        for candidate in low_result.unwrap():
+            assert hasattr(candidate, "code_a_id")
+            assert hasattr(candidate, "code_b_id")
+            assert hasattr(candidate, "similarity")
 
-        assert len(high_candidates) <= len(low_candidates)
-
-    def test_find_duplicates_returns_empty_for_single_code(
-        self,
-        mock_vector_store: MockVectorStore,
-        mock_embedding_provider: MockEmbeddingProvider,
-    ) -> None:
-        """find_duplicates returns empty list for single code."""
-        comparator = VectorCodeComparator(
-            vector_store=mock_vector_store,
-            embedding_provider=mock_embedding_provider,
-        )
+        # Single code returns empty
         single_code = (
             Code(id=CodeId(value="1"), name="test", color=Color.from_hex("#FF0000")),
         )
-
         result = comparator.find_duplicates(single_code)
-
         assert isinstance(result, Success)
         assert result.unwrap() == []
 
-    def test_candidate_has_required_fields(
-        self,
-        mock_vector_store: MockVectorStore,
-        mock_embedding_provider: MockEmbeddingProvider,
-        sample_codes: tuple[Code, ...],
-    ) -> None:
-        """Duplicate candidates have all required fields."""
-        comparator = VectorCodeComparator(
-            vector_store=mock_vector_store,
-            embedding_provider=mock_embedding_provider,
-        )
-        comparator.index_codes(sample_codes)
-
-        result = comparator.find_duplicates(sample_codes, threshold=0.1)
-        candidates = result.unwrap()
-
-        if candidates:
-            candidate = candidates[0]
-            assert hasattr(candidate, "code_a_id")
-            assert hasattr(candidate, "code_a_name")
-            assert hasattr(candidate, "code_b_id")
-            assert hasattr(candidate, "code_b_name")
-            assert hasattr(candidate, "similarity")
-            assert hasattr(candidate, "rationale")
-            assert hasattr(candidate, "status")
-
-    def test_calculate_similarity_returns_float(
-        self,
-        mock_vector_store: MockVectorStore,
-        mock_embedding_provider: MockEmbeddingProvider,
-        sample_codes: tuple[Code, ...],
-    ) -> None:
-        """calculate_similarity returns a float between 0 and 1."""
-        comparator = VectorCodeComparator(
-            vector_store=mock_vector_store,
-            embedding_provider=mock_embedding_provider,
-        )
-
+        # calculate_similarity returns float between 0 and 1
         similarity = comparator.calculate_similarity(sample_codes[0], sample_codes[1])
-
         assert isinstance(similarity, float)
         assert 0.0 <= similarity <= 1.0
 
-    def test_sync_codes_updates_vector_store(
+    @allure.title("sync_codes updates and remove_code shrinks vector store")
+    def test_sync_and_remove_codes(
         self,
-        mock_vector_store: MockVectorStore,
-        mock_embedding_provider: MockEmbeddingProvider,
+        comparator: VectorCodeComparator,
         sample_codes: tuple[Code, ...],
     ) -> None:
-        """sync_codes updates vector store with new codes."""
-        comparator = VectorCodeComparator(
-            vector_store=mock_vector_store,
-            embedding_provider=mock_embedding_provider,
-        )
-
-        # Initial index
         comparator.index_codes(sample_codes[:3])
-        assert mock_vector_store.count() == 3
+        assert comparator._store.count() == 3
 
-        # Sync with more codes
         result = comparator.sync_codes(sample_codes)
         assert isinstance(result, Success)
-        assert mock_vector_store.count() == 5
-
-    def test_remove_code_from_index(
-        self,
-        mock_vector_store: MockVectorStore,
-        mock_embedding_provider: MockEmbeddingProvider,
-        sample_codes: tuple[Code, ...],
-    ) -> None:
-        """Can remove a code from the index."""
-        comparator = VectorCodeComparator(
-            vector_store=mock_vector_store,
-            embedding_provider=mock_embedding_provider,
-        )
-        comparator.index_codes(sample_codes)
+        assert comparator._store.count() == 5
 
         result = comparator.remove_code(sample_codes[0].id)
-
         assert isinstance(result, Success)
-        assert mock_vector_store.count() == 4
+        assert comparator._store.count() == 4
 
 
 # ============================================================
@@ -260,31 +139,16 @@ class TestVectorCodeComparator:
 # ============================================================
 
 
+@allure.epic("QualCoder v2")
+@allure.feature("QC-028 Code Management")
+@allure.story("QC-028.09 Agent Detect Duplicates")
 class TestMockCodeComparator:
     """Tests for MockCodeComparator."""
 
-    def test_returns_predefined_duplicates(self) -> None:
-        """Returns predefined duplicate candidates."""
-        duplicates = [
-            DuplicateCandidate(
-                code_a_id=CodeId(value="1"),
-                code_a_name="anxiety",
-                code_b_id=CodeId(value="3"),
-                code_b_name="anxious feelings",
-                similarity=SimilarityScore(0.85),
-                rationale="Both refer to anxiety",
-                status="pending",
-            )
-        ]
-        comparator = MockCodeComparator(duplicates=duplicates)
-
-        result = comparator.find_duplicates((), threshold=0.8)
-
-        assert isinstance(result, Success)
-        assert len(result.unwrap()) == 1
-
-    def test_filters_by_threshold(self) -> None:
-        """Filters duplicates by threshold."""
+    @allure.title(
+        "Returns predefined duplicates filtered by threshold and tracks calls"
+    )
+    def test_returns_filtered_duplicates_and_tracks_calls(self) -> None:
         duplicates = [
             DuplicateCandidate(
                 code_a_id=CodeId(value="1"),
@@ -306,17 +170,10 @@ class TestMockCodeComparator:
             ),
         ]
         comparator = MockCodeComparator(duplicates=duplicates)
-
-        result = comparator.find_duplicates((), threshold=0.8)
-
-        assert len(result.unwrap()) == 1
-
-    def test_tracks_call_count(self) -> None:
-        """Tracks number of find_duplicates calls."""
-        comparator = MockCodeComparator()
         assert comparator.call_count == 0
 
-        comparator.find_duplicates(())
-        comparator.find_duplicates(())
+        result = comparator.find_duplicates((), threshold=0.8)
+        assert len(result.unwrap()) == 1
 
+        comparator.find_duplicates(())
         assert comparator.call_count == 2

@@ -1,5 +1,5 @@
-site_name: QualCoder v2 Developer Guide
-site_description: Developer documentation for QualCoder v2 - architecture, tutorials, and component library
+site_name: QualCoder v2
+site_description: Documentation for QualCoder v2 — qualitative data analysis with AI
 site_url: https://qualcoder.dev/docs
 
 repo_url: https://github.com/scope-impact/qualcoder-v2
@@ -28,8 +28,8 @@ theme:
     - navigation.tabs
     - navigation.tabs.sticky
     - navigation.sections
-    - navigation.expand
     - navigation.indexes
+    - navigation.top
     - toc.follow
     - search.suggest
     - search.highlight
@@ -66,31 +66,51 @@ markdown_extensions:
 nav:
   - Home: index.md
 
-  - User Manual:
+  # ── Tab 1: User Guide ────────────────────────────────────────────
+  - User Guide:
       - user-manual/index.md
       - Getting Started: user-manual/getting-started.md
       - Managing Sources: user-manual/sources.md
       - Managing Codes: user-manual/codes.md
       - Coding Text: user-manual/coding.md
       - AI Features: user-manual/ai-features.md
+      - Settings: user-manual/settings.md
+      - Import & Export: user-manual/exchange.md
+      - Observability: user-manual/observability.md
+      - Version Control: user-manual/version-control.md
+      - MCP Setup: user-manual/mcp-setup.md
+      - MCP API Reference: api/mcp-api.md
 
-  - Architecture:
-      - Overview: ARCHITECTURE.md
+  # ── Tab 2: Developer Guide ───────────────────────────────────────
+  - Developer Guide:
+      - Architecture: ARCHITECTURE.md
+      - Tutorials:
+          - tutorials/README.md
+          - The Big Picture: tutorials/00-big-picture.md
+          - Your First Invariant: tutorials/01-first-invariant.md
+          - Your First Deriver: tutorials/02-first-deriver.md
+          - The Result Type: tutorials/03-result-type.md
+          - Events Flow Through: tutorials/04-event-flow.md
+          - SignalBridge Payloads: tutorials/05-signal-bridge.md
+          - Testing Without Mocks: tutorials/06-testing.md
+          - Complete Flow Reference: tutorials/07-complete-flow.md
+          - Database Lifecycle: tutorials/08-database-lifecycle.md
+          - Threading Model: tutorials/09-threading-model.md
+          - Appendices:
+              - Common Patterns: tutorials/appendices/A-common-patterns.md
+              - When to Create: tutorials/appendices/B-when-to-create.md
+      - Design Documents:
+          - Functional DDD: design/FUNCTIONAL_DDD_DESIGN.md
+          - Agent Context: design/AGENT_CONTEXT_DESIGN.md
+      - Decisions:
+          - decisions/README.md
+          - ADR-001 UUIDv7 Primary Keys: decisions/ADR-001-uuidv7-primary-keys.md
+          - ADR-002 Sync Engine Pattern: decisions/ADR-002-sync-engine-pattern.md
+      - Test Coverage:
+          - Test Reports: test-reports/index.md
+          - Doc Coverage Matrix: DOC_COVERAGE.md
 
-  - Tutorials:
-      - tutorials/README.md
-      - The Big Picture: tutorials/00-big-picture.md
-      - Your First Invariant: tutorials/01-first-invariant.md
-      - Your First Deriver: tutorials/02-first-deriver.md
-      - The Result Type: tutorials/03-result-type.md
-      - Events Flow Through: tutorials/04-event-flow.md
-      - SignalBridge Payloads: tutorials/05-signal-bridge.md
-      - Testing Without Mocks: tutorials/06-testing.md
-      - Complete Flow Reference: tutorials/07-complete-flow.md
-      - Appendices:
-          - Common Patterns: tutorials/appendices/A-common-patterns.md
-          - When to Create: tutorials/appendices/B-when-to-create.md
-
+  # ── Tab 3: Design System ─────────────────────────────────────────
   - Design System:
       - api/index.md
       - Getting Started:
@@ -129,52 +149,10 @@ nav:
           - Module Index: api/reference/modules.md
           - Dependencies: api/reference/dependencies.md
 
-  - Design Documents:
-      - Functional DDD: design/FUNCTIONAL_DDD_DESIGN.md
-      - Agent Context: design/AGENT_CONTEXT_DESIGN.md
-
+  # ── Tab 4: Backlog ───────────────────────────────────────────────
   - Backlog:
       - backlog/index.md
-      - Restructure Plan: backlog/BACKLOG_RESTRUCTURE.md
-      - Dependencies: backlog/DEPENDENCY_ANALYSIS.md
-      - Decisions:
-          - backlog/decisions/decision-001 design-system-visualization-libraries.md
-          - backlog/decisions/decision-002 library-alternatives-analysis.md
-          - backlog/decisions/decision-003 localization-framework.md
-          - backlog/decisions/decision-004 design-system-visualization-libraries.md
-          - backlog/decisions/decision-005 mcp-transport-http-over-stdio.md
-      - Tasks:
-          - backlog/tasks/index.md
-          - backlog/tasks/qc-026 - Open-Navigate-Project.md
-          - backlog/tasks/qc-027 - Manage-Sources.md
-          - backlog/tasks/qc-028 - Manage-Codes.md
-          - backlog/tasks/qc-029 - Apply-Codes-to-Text.md
-          - backlog/tasks/qc-030 - Apply-Codes-to-Images.md
-          - backlog/tasks/qc-031 - Apply-Codes-to-Audio-Video.md
-          - backlog/tasks/qc-032 - Auto-Code.md
-          - backlog/tasks/qc-033 - Search-and-Find.md
-          - backlog/tasks/qc-034 - Manage-Cases.md
-          - backlog/tasks/qc-035 - Generate-Reports.md
-          - backlog/tasks/qc-036 - Collaborate.md
-          - backlog/tasks/qc-037 - Chat-with-Agent.md
-          - backlog/tasks/qc-038 - Settings-and-Preferences.md
-          - backlog/tasks/qc-039 - Import-Export-Formats.md
-          - backlog/tasks/qc-040 - Data-Privacy.md
-          - backlog/tasks/qc-041 - References-and-Bibliography.md
-          - backlog/tasks/qc-042 - Apply-Codes-to-PDF.md
-          - backlog/tasks/qc-043 - Journals-and-Memos.md
-          - backlog/tasks/qc-044 - Visualizations.md
-          - backlog/tasks/qc-045 - Complete-Coding-Context.md
-          - backlog/tasks/qc-046 - Remove-premature-v1→v2-migration-code.md
-
-  - AI Plans (Historical):
-      - ai/README.md
-
-  - Archive (Historical):
-      - archive/README.md
-
-  - Test Reports:
-      - test-reports/index.md
+      - backlog/tasks/index.md
 
 extra:
   version:

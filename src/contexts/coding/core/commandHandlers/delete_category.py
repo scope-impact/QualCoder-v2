@@ -26,6 +26,7 @@ from src.shared.infra.metrics import metered_command
 
 if TYPE_CHECKING:
     from src.shared.infra.event_bus import EventBus
+    from src.shared.infra.session import Session
 
 logger = logging.getLogger("qualcoder.coding.core")
 
@@ -37,6 +38,7 @@ def delete_category(
     category_repo: CategoryRepository,
     segment_repo: SegmentRepository,
     event_bus: EventBus,
+    session: Session | None = None,
 ) -> OperationResult:
     """
     Delete a code category.
@@ -70,18 +72,14 @@ def delete_category(
 
     event: CategoryDeleted = result
 
-    # Atomic: handle orphaned codes + delete category in one transaction
-    from src.shared.infra.unit_of_work import UnitOfWork
-
-    with UnitOfWork(category_repo._conn) as uow:
-        if command.orphan_strategy == "move_to_parent":
-            category = category_repo.get_by_id(category_id)
-            parent_id = category.parent_id if category else None
-            for code in code_repo.get_by_category(category_id):
-                updated_code = code.with_category(parent_id)
-                code_repo.save(updated_code)
-        category_repo.delete(category_id)
-        uow.commit()
+    # Handle orphaned codes + delete category, then commit via session
+    if command.orphan_strategy == "move_to_parent":
+        category = category_repo.get_by_id(category_id)
+        parent_id = category.parent_id if category else None
+        for code in code_repo.get_by_category(category_id):
+            updated_code = code.with_category(parent_id)
+            code_repo.save(updated_code)
+    category_repo.delete(category_id)
 
     event_bus.publish(event)
 

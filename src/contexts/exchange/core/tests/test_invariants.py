@@ -1,36 +1,34 @@
 """
-Exchange Context: Invariant Tests (TDD - RED phase)
+Exchange Context: Invariant Tests
 
 Tests for pure validation functions in the exchange domain.
 """
 
 from __future__ import annotations
 
+import allure
+import pytest
 
+pytestmark = [pytest.mark.unit]
+
+
+@allure.epic("QualCoder v2")
+@allure.feature("QC-039 Import Export Formats")
+@allure.story("QC-036.07 Export Invariants")
 class TestCodebookExportInvariants:
     """Invariants for codebook export validation."""
 
-    def test_can_export_codebook_with_codes(self):
+    @allure.title("can_export_codebook: True with codes, False without")
+    def test_can_export_codebook(self):
         from src.contexts.exchange.core.invariants import can_export_codebook
 
         assert can_export_codebook(code_count=5) is True
-
-    def test_cannot_export_codebook_with_no_codes(self):
-        from src.contexts.exchange.core.invariants import can_export_codebook
-
         assert can_export_codebook(code_count=0) is False
 
-    def test_is_valid_output_path_with_valid_path(self, tmp_path):
+    @allure.title("is_valid_output_path: valid path, empty string, nonexistent parent")
+    def test_is_valid_output_path(self, tmp_path):
         from src.contexts.exchange.core.invariants import is_valid_output_path
 
         assert is_valid_output_path(str(tmp_path / "codebook.txt")) is True
-
-    def test_is_valid_output_path_with_empty_string(self):
-        from src.contexts.exchange.core.invariants import is_valid_output_path
-
         assert is_valid_output_path("") is False
-
-    def test_is_valid_output_path_with_nonexistent_parent(self):
-        from src.contexts.exchange.core.invariants import is_valid_output_path
-
         assert is_valid_output_path("/nonexistent/deep/path/file.txt") is False

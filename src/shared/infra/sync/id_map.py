@@ -81,6 +81,8 @@ class SyncIdMap:
             rows = self._conn.execute(
                 text("SELECT entity_type, local_id, convex_id FROM sync_id_map")
             ).fetchall()
+            # Release SHARED lock so the main connection can write
+            self._conn.commit()
 
         for entity_type, local_id, convex_id in rows:
             self._local_to_convex[(entity_type, local_id)] = convex_id

@@ -20,13 +20,14 @@ from src.contexts.sources.core.commandHandlers._state import (
     SourceRepository,
     build_domain_state,
 )
-from src.contexts.sources.core.commandHandlers.import_file_source import _extract_text
+from src.contexts.sources.core.commandHandlers.import_file_source import extract_text
 from src.shared.common.operation_result import OperationResult
 from src.shared.infra.metrics import metered_command
 from src.shared.infra.state import ProjectState
 
 if TYPE_CHECKING:
     from src.shared.infra.event_bus import EventBus
+    from src.shared.infra.session import Session
 
 logger = logging.getLogger("qualcoder.sources.core")
 
@@ -37,6 +38,7 @@ def add_source(
     state: ProjectState,
     source_repo: SourceRepository | None,
     event_bus: EventBus,
+    session: Session | None = None,
 ) -> OperationResult:
     """
     Add a source file to the current project.
@@ -92,7 +94,7 @@ def add_source(
     event: SourceAdded = result
 
     # Step 3: Extract text content for text/PDF sources
-    fulltext = _extract_text(event.source_type, event.file_path)
+    fulltext = extract_text(event.source_type, event.file_path)
     file_size = event.file_size
 
     # Create source entity

@@ -20,12 +20,20 @@ pytestmark = [
 
 @allure.story("QC-039.06 Import Survey CSV")
 class TestImportSurveyCSV:
-    @allure.title("AC #1: I can import CSV creating cases with attributes")
-    def test_ac1_import_csv_creates_cases(self, case_repo, event_bus, tmp_path):
+    @allure.title(
+        "AC #1+#2: Import CSV creates cases with attributes and publishes event"
+    )
+    def test_import_csv_creates_cases_with_attributes_and_event(
+        self, case_repo, event_bus, tmp_path
+    ):
         from src.contexts.exchange.core.commandHandlers.import_survey_csv import (
             import_survey_csv,
         )
         from src.contexts.exchange.core.commands import ImportSurveyCSVCommand
+        from src.contexts.exchange.core.events import SurveyCSVImported
+
+        published = []
+        event_bus.subscribe("exchange.survey_csv_imported", published.append)
 
         csv_file = tmp_path / "survey.csv"
         csv_file.write_text("Name,Age,Gender\nAlice,30,F\nBob,25,M\n")
@@ -46,22 +54,6 @@ class TestImportSurveyCSV:
             assert "Alice" in case_names
             assert "Bob" in case_names
 
-    @allure.title("AC #2: Cases have attributes from CSV columns")
-    def test_ac2_cases_have_attributes(self, case_repo, event_bus, tmp_path):
-        from src.contexts.exchange.core.commandHandlers.import_survey_csv import (
-            import_survey_csv,
-        )
-        from src.contexts.exchange.core.commands import ImportSurveyCSVCommand
-
-        csv_file = tmp_path / "survey.csv"
-        csv_file.write_text("Name,Age,Gender\nAlice,30,F\n")
-
-        import_survey_csv(
-            command=ImportSurveyCSVCommand(source_path=str(csv_file)),
-            case_repo=case_repo,
-            event_bus=event_bus,
-        )
-
         with allure.step("Verify attributes"):
             alice = case_repo.get_by_name("Alice")
             assert alice is not None
@@ -71,6 +63,12 @@ class TestImportSurveyCSV:
             gender_attr = alice.get_attribute("Gender")
             assert gender_attr is not None
             assert gender_attr.value == "F"
+
+        with allure.step("Verify event"):
+            assert len(published) == 1
+            event = published[0]
+            assert isinstance(event, SurveyCSVImported)
+            assert event.cases_created == 2
 
     @allure.title("AC #3: Import uses custom name column")
     def test_ac3_custom_name_column(self, case_repo, event_bus, tmp_path):
@@ -97,65 +95,32 @@ class TestImportSurveyCSV:
             assert "Alice" in case_names
             assert "Bob" in case_names
 
-    @allure.title("Import publishes SurveyCSVImported event")
-    def test_publishes_event(self, case_repo, event_bus, tmp_path):
-        from src.contexts.exchange.core.commandHandlers.import_survey_csv import (
-            import_survey_csv,
-        )
-        from src.contexts.exchange.core.commands import ImportSurveyCSVCommand
-        from src.contexts.exchange.core.events import SurveyCSVImported
-
-        published = []
-        event_bus.subscribe("exchange.survey_csv_imported", published.append)
-
-        csv_file = tmp_path / "survey.csv"
-        csv_file.write_text("Name,Age\nAlice,30\nBob,25\n")
-
-        import_survey_csv(
-            command=ImportSurveyCSVCommand(source_path=str(csv_file)),
-            case_repo=case_repo,
-            event_bus=event_bus,
-        )
-
-        with allure.step("Verify event"):
-            assert len(published) == 1
-            event = published[0]
-            assert isinstance(event, SurveyCSVImported)
-            assert event.cases_created == 2
-
-    @allure.title("Import fails with empty CSV")
-    def test_fails_empty_csv(self, case_repo, event_bus, tmp_path):
+    @allure.title("Import fails with empty CSV or nonexistent file")
+    def test_fails_invalid_input(self, case_repo, event_bus, tmp_path):
         from src.contexts.exchange.core.commandHandlers.import_survey_csv import (
             import_survey_csv,
         )
         from src.contexts.exchange.core.commands import ImportSurveyCSVCommand
 
-        csv_file = tmp_path / "empty.csv"
-        csv_file.write_text("")
+        with allure.step("Verify failure with empty CSV"):
+            csv_file = tmp_path / "empty.csv"
+            csv_file.write_text("")
 
-        result = import_survey_csv(
-            command=ImportSurveyCSVCommand(source_path=str(csv_file)),
-            case_repo=case_repo,
-            event_bus=event_bus,
-        )
-
-        with allure.step("Verify failure"):
+            result = import_survey_csv(
+                command=ImportSurveyCSVCommand(source_path=str(csv_file)),
+                case_repo=case_repo,
+                event_bus=event_bus,
+            )
             assert result.is_failure
             assert "EMPTY" in result.error_code
 
-    @allure.title("Import fails with nonexistent file")
-    def test_fails_nonexistent_file(self, case_repo, event_bus, tmp_path):
-        from src.contexts.exchange.core.commandHandlers.import_survey_csv import (
-            import_survey_csv,
-        )
-        from src.contexts.exchange.core.commands import ImportSurveyCSVCommand
-
-        result = import_survey_csv(
-            command=ImportSurveyCSVCommand(source_path=str(tmp_path / "missing.csv")),
-            case_repo=case_repo,
-            event_bus=event_bus,
-        )
-
-        with allure.step("Verify failure"):
+        with allure.step("Verify failure with nonexistent file"):
+            result = import_survey_csv(
+                command=ImportSurveyCSVCommand(
+                    source_path=str(tmp_path / "missing.csv")
+                ),
+                case_repo=case_repo,
+                event_bus=event_bus,
+            )
             assert result.is_failure
             assert "FILE_NOT_FOUND" in result.error_code

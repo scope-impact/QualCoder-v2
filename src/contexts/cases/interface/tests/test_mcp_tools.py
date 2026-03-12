@@ -41,7 +41,7 @@ if TYPE_CHECKING:
 pytestmark = [
     pytest.mark.unit,
     allure.epic("QualCoder v2"),
-    allure.feature("Cases MCP Tools"),
+    allure.feature("QC-034 Manage Cases"),
 ]
 
 
@@ -181,56 +181,38 @@ def context_with_cases(mock_project, mock_case_repo_with_cases):
 # =============================================================================
 
 
-@allure.story("Tool Schema Generation")
+@allure.story("QC-034.10 Tool Schema Generation")
 @allure.severity(allure.severity_level.CRITICAL)
 class TestToolDefinition:
-    @allure.title("ToolParameter stores parameter metadata")
-    def test_tool_parameter_stores_metadata(self):
+    @allure.title("ToolParameter stores metadata with required and optional fields")
+    @pytest.mark.parametrize(
+        "name, type_, required, default, expected_default",
+        [
+            ("case_id", "string", True, None, None),
+            ("limit", "integer", False, 10, 10),
+        ],
+        ids=["required-param", "optional-param-with-default"],
+    )
+    def test_tool_parameter_stores_metadata(
+        self, name, type_, required, default, expected_default
+    ):
         param = ToolParameter(
-            name="case_id",
-            type="string",
-            description="ID of the case",
-            required=True,
-            default=None,
+            name=name,
+            type=type_,
+            description=f"Description for {name}",
+            required=required,
+            default=default,
         )
 
-        assert param.name == "case_id"
-        assert param.type == "string"
-        assert param.description == "ID of the case"
-        assert param.required is True
-        assert param.default is None
+        assert param.name == name
+        assert param.type == type_
+        assert param.required is required
+        assert param.default == expected_default
 
-    @allure.title("ToolParameter optional parameters have defaults")
-    def test_tool_parameter_optional_defaults(self):
-        param = ToolParameter(
-            name="limit",
-            type="integer",
-            description="Max results",
-            required=False,
-            default=10,
-        )
-
-        assert param.required is False
-        assert param.default == 10
-
-    @allure.title("ToolDefinition to_schema returns MCP-compatible format")
-    def test_tool_definition_to_schema_basic(self):
-        tool = ToolDefinition(
-            name="test_tool",
-            description="A test tool",
-            parameters=(),
-        )
-
-        schema = tool.to_schema()
-
-        assert schema["name"] == "test_tool"
-        assert schema["description"] == "A test tool"
-        assert schema["inputSchema"]["type"] == "object"
-        assert schema["inputSchema"]["properties"] == {}
-        assert schema["inputSchema"]["required"] == []
-
-    @allure.title("ToolDefinition to_schema includes parameters")
-    def test_tool_definition_to_schema_with_parameters(self):
+    @allure.title(
+        "ToolDefinition to_schema returns MCP-compatible format with parameters"
+    )
+    def test_tool_definition_to_schema(self):
         tool = ToolDefinition(
             name="get_case",
             description="Get a case by ID",
@@ -253,54 +235,54 @@ class TestToolDefinition:
 
         schema = tool.to_schema()
 
+        assert schema["name"] == "get_case"
+        assert schema["description"] == "Get a case by ID"
+        assert schema["inputSchema"]["type"] == "object"
+
+        # Required param
         assert "case_id" in schema["inputSchema"]["properties"]
         assert schema["inputSchema"]["properties"]["case_id"]["type"] == "string"
         assert "case_id" in schema["inputSchema"]["required"]
 
+        # Optional param with default
         assert "include_sources" in schema["inputSchema"]["properties"]
         assert schema["inputSchema"]["properties"]["include_sources"]["default"] is True
         assert "include_sources" not in schema["inputSchema"]["required"]
 
 
-@allure.story("Tool Schema Generation")
+@allure.story("QC-034.10 Tool Schema Generation")
 @allure.severity(allure.severity_level.CRITICAL)
 class TestPredefinedToolSchemas:
-    @allure.title("list_cases tool has correct schema")
-    def test_list_cases_tool_schema(self):
-        schema = list_cases_tool.to_schema()
+    @allure.title("Predefined tool has correct schema")
+    @pytest.mark.parametrize(
+        "tool, expected_name, required_params, optional_params",
+        [
+            (list_cases_tool, "list_cases", [], []),
+            (get_case_tool, "get_case", ["case_id"], []),
+            (
+                suggest_case_groupings_tool,
+                "suggest_case_groupings",
+                [],
+                ["attribute_names", "min_group_size"],
+            ),
+            (compare_cases_tool, "compare_cases", ["case_ids"], []),
+        ],
+        ids=["list_cases", "get_case", "suggest_case_groupings", "compare_cases"],
+    )
+    def test_tool_schema(self, tool, expected_name, required_params, optional_params):
+        schema = tool.to_schema()
 
-        assert schema["name"] == "list_cases"
-        assert "List all cases" in schema["description"]
-        assert schema["inputSchema"]["required"] == []
+        assert schema["name"] == expected_name
+        for param in required_params:
+            assert param in schema["inputSchema"]["properties"]
+            assert param in schema["inputSchema"]["required"]
+        for param in optional_params:
+            assert param in schema["inputSchema"]["properties"]
+            assert param not in schema["inputSchema"]["required"]
 
-    @allure.title("get_case tool has correct schema with case_id parameter")
-    def test_get_case_tool_schema(self):
-        schema = get_case_tool.to_schema()
-
-        assert schema["name"] == "get_case"
-        assert "case_id" in schema["inputSchema"]["properties"]
-        assert schema["inputSchema"]["properties"]["case_id"]["type"] == "string"
-        assert "case_id" in schema["inputSchema"]["required"]
-
-    @allure.title("suggest_case_groupings tool has correct schema")
-    def test_suggest_case_groupings_tool_schema(self):
-        schema = suggest_case_groupings_tool.to_schema()
-
-        assert schema["name"] == "suggest_case_groupings"
-        assert "attribute_names" in schema["inputSchema"]["properties"]
-        assert "min_group_size" in schema["inputSchema"]["properties"]
-        # Both are optional
-        assert "attribute_names" not in schema["inputSchema"]["required"]
-        assert "min_group_size" not in schema["inputSchema"]["required"]
-
-    @allure.title("compare_cases tool has correct schema with required case_ids")
-    def test_compare_cases_tool_schema(self):
-        schema = compare_cases_tool.to_schema()
-
-        assert schema["name"] == "compare_cases"
-        assert "case_ids" in schema["inputSchema"]["properties"]
-        assert schema["inputSchema"]["properties"]["case_ids"]["type"] == "array"
-        assert "case_ids" in schema["inputSchema"]["required"]
+        # compare_cases has array type for case_ids
+        if expected_name == "compare_cases":
+            assert schema["inputSchema"]["properties"]["case_ids"]["type"] == "array"
 
 
 # =============================================================================
@@ -308,40 +290,25 @@ class TestPredefinedToolSchemas:
 # =============================================================================
 
 
-@allure.story("CaseTools Initialization")
+@allure.story("QC-034.10 Tool Schema Generation")
 @allure.severity(allure.severity_level.CRITICAL)
 class TestCaseToolsInitialization:
-    @allure.title("CaseTools initializes with context")
-    def test_init_with_context(self, context_no_project):
+    @allure.title("CaseTools initializes and exposes tool schemas and names")
+    def test_init_and_tool_listing(self, context_no_project):
         tools = CaseTools(ctx=context_no_project)
 
         assert tools._ctx is context_no_project
 
-    @allure.title("get_tool_schemas returns all tool schemas")
-    def test_get_tool_schemas(self, context_no_project):
-        tools = CaseTools(ctx=context_no_project)
-
         schemas = tools.get_tool_schemas()
-
         assert len(schemas) == 4
         names = [s["name"] for s in schemas]
-        assert "list_cases" in names
-        assert "get_case" in names
-        assert "suggest_case_groupings" in names
-        assert "compare_cases" in names
-
-    @allure.title("get_tool_names returns list of tool names")
-    def test_get_tool_names(self, context_no_project):
-        tools = CaseTools(ctx=context_no_project)
-
-        names = tools.get_tool_names()
-
-        assert names == [
+        assert names == tools.get_tool_names()
+        assert set(names) == {
             "list_cases",
             "get_case",
             "suggest_case_groupings",
             "compare_cases",
-        ]
+        }
 
 
 # =============================================================================
@@ -349,7 +316,7 @@ class TestCaseToolsInitialization:
 # =============================================================================
 
 
-@allure.story("Tool Execution Dispatch")
+@allure.story("QC-034.11 Tool Execution")
 @allure.severity(allure.severity_level.CRITICAL)
 class TestExecuteDispatch:
     @allure.title("execute returns error for unknown tool")
@@ -398,7 +365,7 @@ class TestExecuteDispatch:
 # =============================================================================
 
 
-@allure.story("list_cases Tool")
+@allure.story("QC-034.11 Tool Execution")
 @allure.severity(allure.severity_level.CRITICAL)
 class TestListCasesTool:
     @allure.title("list_cases fails when no project open")
@@ -411,17 +378,7 @@ class TestListCasesTool:
         assert "NO_PROJECT" in result["error_code"]
         assert "Open a project" in result["suggestions"][0]
 
-    @allure.title("list_cases returns empty list when no cases exist")
-    def test_list_cases_empty(self, context_with_project):
-        tools = CaseTools(ctx=context_with_project)
-
-        result = tools.execute("list_cases", {})
-
-        assert result["success"] is True
-        assert result["data"]["total_count"] == 0
-        assert result["data"]["cases"] == []
-
-    @allure.title("list_cases returns all cases with summary info")
+    @allure.title("list_cases returns cases with summary info")
     def test_list_cases_with_cases(self, context_with_cases):
         tools = CaseTools(ctx=context_with_cases)
 
@@ -439,43 +396,45 @@ class TestListCasesTool:
         assert case_a["attribute_count"] == 2
         assert case_a["source_count"] == 2
 
+    @allure.title("list_cases returns empty list when no cases exist")
+    def test_list_cases_empty(self, context_with_project):
+        tools = CaseTools(ctx=context_with_project)
+
+        result = tools.execute("list_cases", {})
+
+        assert result["success"] is True
+        assert result["data"]["total_count"] == 0
+        assert result["data"]["cases"] == []
+
 
 # =============================================================================
 # get_case Tool Tests
 # =============================================================================
 
 
-@allure.story("get_case Tool")
+@allure.story("QC-034.11 Tool Execution")
 @allure.severity(allure.severity_level.CRITICAL)
 class TestGetCaseTool:
-    @allure.title("get_case fails when case_id missing")
-    def test_get_case_missing_param(self, context_with_project):
-        tools = CaseTools(ctx=context_with_project)
+    @allure.title("get_case fails with validation errors")
+    @pytest.mark.parametrize(
+        "context_fixture, args, expected_error_code",
+        [
+            ("context_with_project", {}, "MISSING_PARAM"),
+            ("context_no_project", {"case_id": 1}, "NO_PROJECT"),
+            ("context_with_project", {"case_id": 999}, "NOT_FOUND"),
+        ],
+        ids=["missing-case-id", "no-project", "case-not-found"],
+    )
+    def test_get_case_errors(self, context_fixture, args, expected_error_code, request):
+        ctx = request.getfixturevalue(context_fixture)
+        tools = CaseTools(ctx=ctx)
 
-        result = tools.execute("get_case", {})
-
-        assert result["success"] is False
-        assert "MISSING_PARAM" in result["error_code"]
-
-    @allure.title("get_case fails when no project open")
-    def test_get_case_no_project(self, context_no_project):
-        tools = CaseTools(ctx=context_no_project)
-
-        result = tools.execute("get_case", {"case_id": 1})
-
-        assert result["success"] is False
-        assert "NO_PROJECT" in result["error_code"]
-
-    @allure.title("get_case fails when case not found")
-    def test_get_case_not_found(self, context_with_project):
-        tools = CaseTools(ctx=context_with_project)
-
-        result = tools.execute("get_case", {"case_id": 999})
+        result = tools.execute("get_case", args)
 
         assert result["success"] is False
-        assert "NOT_FOUND" in result["error_code"]
+        assert expected_error_code in result["error_code"]
 
-    @allure.title("get_case returns case details on success")
+    @allure.title("get_case returns full case details with attributes on success")
     def test_get_case_success(self, context_with_cases):
         tools = CaseTools(ctx=context_with_cases)
 
@@ -491,13 +450,8 @@ class TestGetCaseTool:
         assert data["source_count"] == 2
         assert data["source_ids"] == ["10", "11"]
 
-    @allure.title("get_case returns attributes with type and value")
-    def test_get_case_attributes(self, context_with_cases):
-        tools = CaseTools(ctx=context_with_cases)
-
-        result = tools.execute("get_case", {"case_id": 1})
-
-        attrs = result["data"]["attributes"]
+        # Check attribute details
+        attrs = data["attributes"]
         age_attr = next(a for a in attrs if a["name"] == "age")
         assert age_attr["type"] == "number"
         assert age_attr["value"] == 25
@@ -512,23 +466,18 @@ class TestGetCaseTool:
 # =============================================================================
 
 
-@allure.story("suggest_case_groupings Tool")
+@allure.story("QC-034.12 AI Case Groupings")
 @allure.severity(allure.severity_level.NORMAL)
 class TestSuggestCaseGroupingsTool:
-    @allure.title("suggest_case_groupings returns empty when no cases_context")
-    def test_suggest_groupings_no_cases_context(self, context_no_project):
-        tools = CaseTools(ctx=context_no_project)
-
-        # When no cases_context, returns empty groupings (no error)
-        result = tools.execute("suggest_case_groupings", {})
-
-        assert result["success"] is True
-        assert result["data"]["groupings"] == []
-        assert result["data"]["total_cases_analyzed"] == 0
-
-    @allure.title("suggest_case_groupings returns empty when no cases")
-    def test_suggest_groupings_no_cases(self, context_with_project):
-        tools = CaseTools(ctx=context_with_project)
+    @allure.title("suggest_case_groupings returns empty when no cases available")
+    @pytest.mark.parametrize(
+        "context_fixture",
+        ["context_no_project", "context_with_project"],
+        ids=["no-cases-context", "empty-repo"],
+    )
+    def test_suggest_groupings_empty(self, context_fixture, request):
+        ctx = request.getfixturevalue(context_fixture)
+        tools = CaseTools(ctx=ctx)
 
         result = tools.execute("suggest_case_groupings", {})
 
@@ -573,8 +522,10 @@ class TestSuggestCaseGroupingsTool:
         for g in groupings:
             assert g["attribute_basis"] == "gender"
 
-    @allure.title("suggest_case_groupings respects min_group_size")
-    def test_suggest_groupings_min_size(self, context_with_cases):
+    @allure.title(
+        "suggest_case_groupings respects min_group_size and identifies ungrouped"
+    )
+    def test_suggest_groupings_min_size_and_ungrouped(self, context_with_cases):
         tools = CaseTools(ctx=context_with_cases)
 
         # With min_group_size=3, no groups should form (max is 2 for any value)
@@ -583,15 +534,11 @@ class TestSuggestCaseGroupingsTool:
         assert result["success"] is True
         assert result["data"]["groupings"] == []
 
-    @allure.title("suggest_case_groupings identifies ungrouped cases")
-    def test_suggest_groupings_ungrouped(self, context_with_cases):
-        tools = CaseTools(ctx=context_with_cases)
-
         # With high min_group_size, all cases should be ungrouped
-        result = tools.execute("suggest_case_groupings", {"min_group_size": 10})
+        result_high = tools.execute("suggest_case_groupings", {"min_group_size": 10})
 
-        assert result["success"] is True
-        ungrouped = result["data"]["ungrouped_case_ids"]
+        assert result_high["success"] is True
+        ungrouped = result_high["data"]["ungrouped_case_ids"]
         assert len(ungrouped) == 3
 
 
@@ -600,50 +547,36 @@ class TestSuggestCaseGroupingsTool:
 # =============================================================================
 
 
-@allure.story("compare_cases Tool")
+@allure.story("QC-034.13 Compare Cases")
 @allure.severity(allure.severity_level.NORMAL)
 class TestCompareCasesTool:
-    @allure.title("compare_cases fails when case_ids missing")
-    def test_compare_cases_missing_param(self, context_with_project):
-        tools = CaseTools(ctx=context_with_project)
+    @allure.title("compare_cases fails with validation errors")
+    @pytest.mark.parametrize(
+        "context_fixture, args, expected_error_code",
+        [
+            ("context_with_project", {}, "MISSING_PARAM"),
+            ("context_with_project", {"case_ids": [1]}, "INSUFFICIENT_CASES"),
+            ("context_no_project", {"case_ids": [1, 2]}, "CASE_NOT_FOUND"),
+            ("context_with_cases", {"case_ids": [1, 999]}, "CASE_NOT_FOUND"),
+        ],
+        ids=["missing-param", "insufficient-cases", "no-project", "case-not-found"],
+    )
+    def test_compare_cases_errors(
+        self, context_fixture, args, expected_error_code, request
+    ):
+        ctx = request.getfixturevalue(context_fixture)
+        tools = CaseTools(ctx=ctx)
 
-        result = tools.execute("compare_cases", {})
-
-        assert result["success"] is False
-        assert "MISSING_PARAM" in result["error_code"]
-
-    @allure.title("compare_cases fails with less than 2 cases")
-    def test_compare_cases_insufficient_cases(self, context_with_project):
-        tools = CaseTools(ctx=context_with_project)
-
-        result = tools.execute("compare_cases", {"case_ids": [1]})
-
-        assert result["success"] is False
-        assert "INSUFFICIENT_CASES" in result["error_code"]
-
-    @allure.title("compare_cases fails when no project open")
-    def test_compare_cases_no_project(self, context_no_project):
-        tools = CaseTools(ctx=context_no_project)
-
-        result = tools.execute("compare_cases", {"case_ids": [1, 2]})
-
-        # When no project, get_case fails with NO_PROJECT, which causes compare to fail
-        assert result["success"] is False
-        assert "CASE_NOT_FOUND" in result["error_code"]
-
-    @allure.title("compare_cases fails when case not found")
-    def test_compare_cases_case_not_found(self, context_with_cases):
-        tools = CaseTools(ctx=context_with_cases)
-
-        result = tools.execute("compare_cases", {"case_ids": [1, 999]})
+        result = tools.execute("compare_cases", args)
 
         assert result["success"] is False
-        assert "CASE_NOT_FOUND" in result["error_code"]
+        assert expected_error_code in result["error_code"]
 
-    @allure.title("compare_cases returns comparison data on success")
+    @allure.title("compare_cases returns comparison data with analysis summary")
     def test_compare_cases_success(self, context_with_cases):
         tools = CaseTools(ctx=context_with_cases)
 
+        # Two-case comparison
         result = tools.execute("compare_cases", {"case_ids": [1, 2]})
 
         assert result["success"] is True
@@ -652,32 +585,29 @@ class TestCompareCasesTool:
         assert "common_codes" in data
         assert "analysis_summary" in data
 
-        # Check case comparison entries
         case_1 = next(c for c in data["cases"] if c["case_id"] == "1")
         assert case_1["case_name"] == "Participant A"
 
-    @allure.title("compare_cases includes analysis summary")
-    def test_compare_cases_summary(self, context_with_cases):
-        tools = CaseTools(ctx=context_with_cases)
+        # Three-case comparison with summary content
+        result_3 = tools.execute("compare_cases", {"case_ids": [1, 2, 3]})
 
-        result = tools.execute("compare_cases", {"case_ids": [1, 2, 3]})
-
-        assert result["success"] is True
-        summary = result["data"]["analysis_summary"]
+        assert result_3["success"] is True
+        summary = result_3["data"]["analysis_summary"]
         assert "3 cases" in summary
         assert "Participant A" in summary
 
 
 # =============================================================================
-# Edge Cases and Integration
+# Edge Cases
 # =============================================================================
 
 
-@allure.story("Edge Cases")
+@allure.story("QC-034.11 Tool Execution")
 @allure.severity(allure.severity_level.NORMAL)
 class TestEdgeCases:
-    @allure.title("Tools work with None cases_context")
-    def test_none_cases_context(self, mock_project):
+    @allure.title("Tools handle None cases_context and string case_id")
+    def test_none_context_and_string_id(self, mock_project, context_with_cases):
+        # None cases_context returns empty list
         ctx = MockCaseToolsContext(
             state=MockProjectState(project=mock_project),
             cases_context=None,
@@ -686,19 +616,16 @@ class TestEdgeCases:
 
         result = tools.execute("list_cases", {})
 
-        # Should return empty list when cases_context is None
         assert result["success"] is True
         assert result["data"]["total_count"] == 0
 
-    @allure.title("get_case handles string case_id")
-    def test_get_case_string_id(self, context_with_cases):
-        tools = CaseTools(ctx=context_with_cases)
+        # String case_id is handled correctly
+        tools2 = CaseTools(ctx=context_with_cases)
 
-        # case_id should be converted to int
-        result = tools.execute("get_case", {"case_id": "1"})
+        result2 = tools2.execute("get_case", {"case_id": "1"})
 
-        assert result["success"] is True
-        assert result["data"]["case_id"] == "1"
+        assert result2["success"] is True
+        assert result2["data"]["case_id"] == "1"
 
     @allure.title("suggest_case_groupings handles None min_group_size")
     def test_suggest_groupings_none_min_size(self, context_with_cases):

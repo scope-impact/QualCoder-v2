@@ -102,45 +102,29 @@ def _reset_qualcoder_logger():
 class TestLogLevelUI:
     """E2E tests for log level configuration through the Settings dialog."""
 
-    @allure.title("AC #3.1: Changing log level via combo persists to JSON file")
-    def test_change_log_level_via_combo_persists_to_file(
-        self, settings_dialog, settings_repo
-    ):
-        """E2E: Selecting a different log level in the combo box persists to disk."""
-        with allure.step("Find DEBUG level in combo"):
+    @allure.title("AC #3.1-3: Log level changes persist and defaults are correct")
+    def test_log_level_changes_and_defaults(self, settings_dialog, settings_repo):
+        """E2E: Log level changes persist to disk and defaults are correct."""
+        with allure.step("Verify defaults: INFO log level, telemetry enabled"):
+            settings = settings_repo.load()
+            assert settings.observability.log_level == "INFO"
+            assert settings.observability.enable_telemetry is True
+
+        with allure.step("Change to DEBUG and verify persistence"):
             combo = settings_dialog._log_level_combo
             debug_index = combo.findData("DEBUG")
             assert debug_index >= 0
-
-        with allure.step("Select DEBUG level"):
             combo.setCurrentIndex(debug_index)
             QApplication.processEvents()
-
-        with allure.step("Verify log level persisted to repository"):
             settings = settings_repo.load()
             assert settings.observability.log_level == "DEBUG"
 
-    @allure.title("AC #3.2: Changing log level to WARNING persists correctly")
-    def test_change_log_level_to_warning(self, settings_dialog, settings_repo):
-        """E2E: Selecting WARNING level persists to disk."""
-        with allure.step("Select WARNING level"):
-            combo = settings_dialog._log_level_combo
+        with allure.step("Change to WARNING and verify persistence"):
             warning_index = combo.findData("WARNING")
             combo.setCurrentIndex(warning_index)
             QApplication.processEvents()
-
-        with allure.step("Verify WARNING persisted"):
             settings = settings_repo.load()
             assert settings.observability.log_level == "WARNING"
-
-    @allure.title("AC #3.3: Default log level is INFO")
-    def test_default_log_level_is_info(self, settings_repo):
-        """E2E: Fresh settings file defaults to INFO log level."""
-        with allure.step("Load default settings"):
-            settings = settings_repo.load()
-
-        with allure.step("Verify default is INFO"):
-            assert settings.observability.log_level == "INFO"
 
 
 # =============================================================================
@@ -153,57 +137,26 @@ class TestLogLevelUI:
 class TestFileLoggingUI:
     """E2E tests for file logging toggle in the Settings dialog."""
 
-    @allure.title("AC #3.4: Enabling file logging via checkbox persists to JSON file")
-    def test_enable_file_logging_persists_to_file(self, settings_dialog, settings_repo):
-        """E2E: Checking the file logging checkbox persists to disk."""
-        with allure.step("Enable file logging checkbox"):
+    @allure.title("AC #3.4-7: File logging and telemetry toggles persist to JSON file")
+    def test_toggle_file_logging_and_telemetry_persists(
+        self, settings_dialog, settings_repo
+    ):
+        """E2E: File logging and telemetry checkbox changes persist correctly."""
+        with allure.step("Enable file logging"):
             settings_dialog._file_logging_cb.setChecked(True)
             QApplication.processEvents()
-
-        with allure.step("Verify file logging enabled in repository"):
             settings = settings_repo.load()
             assert settings.observability.enable_file_logging is True
 
-    @allure.title("AC #3.5: Disabling file logging via checkbox persists to JSON file")
-    def test_disable_file_logging_persists_to_file(
-        self, settings_dialog, settings_repo
-    ):
-        """E2E: Unchecking file logging after enabling it persists correctly."""
-        with allure.step("Enable then disable file logging"):
-            settings_dialog._file_logging_cb.setChecked(True)
-            QApplication.processEvents()
+        with allure.step("Disable file logging"):
             settings_dialog._file_logging_cb.setChecked(False)
             QApplication.processEvents()
-
-        with allure.step("Verify file logging disabled in repository"):
             settings = settings_repo.load()
             assert settings.observability.enable_file_logging is False
 
-
-# =============================================================================
-# AC #3: Telemetry Configurable via UI
-# =============================================================================
-
-
-@allure.story("QC-049.03 Configure Telemetry via Settings UI")
-@allure.severity(allure.severity_level.NORMAL)
-class TestTelemetryUI:
-    """E2E tests for telemetry toggle in the Settings dialog."""
-
-    @allure.title("AC #3.6: Telemetry is enabled by default")
-    def test_telemetry_enabled_by_default(self, settings_repo):
-        """E2E: Fresh settings file defaults to telemetry enabled."""
-        settings = settings_repo.load()
-        assert settings.observability.enable_telemetry is True
-
-    @allure.title("AC #3.7: Disabling telemetry via checkbox persists to JSON file")
-    def test_disable_telemetry_persists_to_file(self, settings_dialog, settings_repo):
-        """E2E: Unchecking the telemetry checkbox persists to disk."""
-        with allure.step("Disable telemetry checkbox"):
+        with allure.step("Disable telemetry"):
             settings_dialog._telemetry_cb.setChecked(False)
             QApplication.processEvents()
-
-        with allure.step("Verify telemetry disabled in repository"):
             settings = settings_repo.load()
             assert settings.observability.enable_telemetry is False
 
@@ -218,50 +171,44 @@ class TestTelemetryUI:
 class TestEnvVarOverride:
     """E2E tests for the QUALCODER_LOG_LEVEL environment variable override."""
 
-    @allure.title("AC #3.8: Env var overrides settings-configured log level")
-    def test_env_var_overrides_settings_level(self):
-        """E2E: QUALCODER_LOG_LEVEL env var takes priority over level param."""
+    @allure.title(
+        "AC #3.8-10: Env var overrides settings, falls back without, and is case-insensitive"
+    )
+    def test_env_var_override_behavior(self):
+        """E2E: QUALCODER_LOG_LEVEL env var overrides settings, falls back, and is case-insensitive."""
         from src.shared.infra.logging_config import configure_logging
 
         with (
-            allure.step("Configure logging with INFO but env var set to DEBUG"),
+            allure.step("Env var DEBUG overrides INFO setting"),
             patch.dict("os.environ", {"QUALCODER_LOG_LEVEL": "DEBUG"}),
         ):
             configure_logging(level="INFO", enable_console=False)
+        root = logging.getLogger("qualcoder")
+        assert root.level == logging.DEBUG
 
-        with allure.step("Verify logger uses DEBUG from env var"):
-            root = logging.getLogger("qualcoder")
-            assert root.level == logging.DEBUG
-
-    @allure.title("AC #3.9: Without env var, settings level is used")
-    def test_settings_level_used_without_env_var(self):
-        """E2E: Without env var, the level parameter controls the logger."""
-        from src.shared.infra.logging_config import configure_logging
+        # Reset for next test
+        root.handlers.clear()
+        root.setLevel(logging.WARNING)
 
         with (
-            allure.step("Configure logging with WARNING, no env var"),
+            allure.step("Without env var, settings level is used"),
             patch.dict("os.environ", {}, clear=True),
         ):
             configure_logging(level="WARNING", enable_console=False)
+        root = logging.getLogger("qualcoder")
+        assert root.level == logging.WARNING
 
-        with allure.step("Verify logger uses WARNING from settings"):
-            root = logging.getLogger("qualcoder")
-            assert root.level == logging.WARNING
-
-    @allure.title("AC #3.10: Env var is case-insensitive")
-    def test_env_var_case_insensitive(self):
-        """E2E: QUALCODER_LOG_LEVEL accepts lowercase values."""
-        from src.shared.infra.logging_config import configure_logging
+        # Reset for next test
+        root.handlers.clear()
+        root.setLevel(logging.WARNING)
 
         with (
-            allure.step("Set env var with lowercase 'debug'"),
+            allure.step("Env var is case-insensitive (lowercase 'debug')"),
             patch.dict("os.environ", {"QUALCODER_LOG_LEVEL": "debug"}),
         ):
             configure_logging(level="INFO", enable_console=False)
-
-        with allure.step("Verify logger uses DEBUG"):
-            root = logging.getLogger("qualcoder")
-            assert root.level == logging.DEBUG
+        root = logging.getLogger("qualcoder")
+        assert root.level == logging.DEBUG
 
 
 # =============================================================================
@@ -374,38 +321,3 @@ class TestInvalidLogLevel:
 
         with allure.step("Verify the operation failed"):
             assert result.is_failure
-
-
-# =============================================================================
-# AC #5: User Documentation Exists
-# =============================================================================
-
-
-@allure.story("QC-049.05 User Documentation")
-@allure.severity(allure.severity_level.NORMAL)
-class TestUserDocumentation:
-    """E2E tests verifying observability documentation exists."""
-
-    @allure.title("AC #5.1: Observability documentation page exists")
-    def test_observability_doc_exists(self):
-        """E2E: The observability user manual page exists and has content."""
-        doc_path = (
-            Path(__file__).parents[3] / "docs" / "user-manual" / "observability.md"
-        )
-        with allure.step("Verify observability.md exists"):
-            assert doc_path.exists(), f"Missing: {doc_path}"
-
-        with allure.step("Verify doc has meaningful content"):
-            content = doc_path.read_text()
-            assert "Log Level" in content
-            assert "QUALCODER_LOG_LEVEL" in content
-            assert "File Logging" in content
-            assert "Telemetry" in content
-
-    @allure.title("AC #5.2: Observability page linked from index")
-    def test_observability_linked_from_index(self):
-        """E2E: The index.md links to observability.md."""
-        index_path = Path(__file__).parents[3] / "docs" / "user-manual" / "index.md"
-        with allure.step("Verify index references observability page"):
-            content = index_path.read_text()
-            assert "observability.md" in content

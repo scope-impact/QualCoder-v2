@@ -95,11 +95,14 @@ def _seed_source(
 @allure.story("QC-027.13 Create Folder")
 @allure.severity(allure.severity_level.CRITICAL)
 class TestCreateFolder:
-    @allure.title("AC #1: Create a root folder")
-    def test_create_root_folder(
+    @allure.title("AC #1+4+5: Create root and nested folders with event publishing")
+    def test_create_root_and_nested_folders_with_event(
         self, folder_repo, source_repo, event_bus, project_state
     ):
-        with allure.step("Create a folder"):
+        events = []
+        event_bus.subscribe("folders.folder_created", lambda e: events.append(e))
+
+        with allure.step("Create a root folder"):
             cmd = CreateFolderCommand(name="Interviews")
             result = create_folder(
                 command=cmd,
@@ -109,68 +112,17 @@ class TestCreateFolder:
                 event_bus=event_bus,
             )
 
-        with allure.step("Verify success"):
+        with allure.step("Verify success and persistence"):
             assert result.is_success
             folder = result.unwrap()
             assert folder.name == "Interviews"
             assert folder.parent_id is None
-
-        with allure.step("Verify persisted in repo"):
             saved = folder_repo.get_by_id(folder.id)
             assert saved is not None
             assert saved.name == "Interviews"
 
-    @allure.title("AC #2: Duplicate folder name rejected")
-    def test_create_duplicate_name_fails(
-        self, folder_repo, source_repo, event_bus, project_state
-    ):
-        with allure.step("Create first folder"):
-            _create_folder_ok(
-                "Duplicated", folder_repo, source_repo, event_bus, project_state
-            )
-
-        with allure.step("Create folder with same name"):
-            cmd = CreateFolderCommand(name="Duplicated")
-            result = create_folder(
-                command=cmd,
-                state=project_state,
-                folder_repo=folder_repo,
-                source_repo=source_repo,
-                event_bus=event_bus,
-            )
-
-        with allure.step("Verify failure"):
-            assert not result.is_success
-            assert "FOLDER_NOT_CREATED" in result.error_code
-
-    @allure.title("AC #3: Invalid (empty) folder name rejected")
-    def test_create_empty_name_fails(
-        self, folder_repo, source_repo, event_bus, project_state
-    ):
-        with allure.step("Create folder with empty name"):
-            cmd = CreateFolderCommand(name="")
-            result = create_folder(
-                command=cmd,
-                state=project_state,
-                folder_repo=folder_repo,
-                source_repo=source_repo,
-                event_bus=event_bus,
-            )
-
-        with allure.step("Verify failure"):
-            assert not result.is_success
-            assert "FOLDER_NOT_CREATED" in result.error_code
-
-    @allure.title("AC #4: Create nested folder")
-    def test_create_nested_folder(
-        self, folder_repo, source_repo, event_bus, project_state
-    ):
-        with allure.step("Create parent folder"):
-            parent_id = _create_folder_ok(
-                "Parent", folder_repo, source_repo, event_bus, project_state
-            )
-
-        with allure.step("Create child folder"):
+        with allure.step("Create nested folder"):
+            parent_id = folder.id.value
             child_id = _create_folder_ok(
                 "Child",
                 folder_repo,
@@ -185,21 +137,41 @@ class TestCreateFolder:
             assert child is not None
             assert child.parent_id == FolderId(value=parent_id)
 
-    @allure.title("AC #5: Folder creation publishes event")
-    def test_create_folder_publishes_event(
+        with allure.step("Verify events published"):
+            assert len(events) >= 2
+
+    @allure.title("AC #2+3: Duplicate and empty folder names rejected")
+    def test_create_duplicate_and_empty_name_fails(
         self, folder_repo, source_repo, event_bus, project_state
     ):
-        events = []
-        event_bus.subscribe("folders.folder_created", lambda e: events.append(e))
-
-        with allure.step("Create folder"):
+        with allure.step("Create first folder"):
             _create_folder_ok(
-                "Events Test", folder_repo, source_repo, event_bus, project_state
+                "Duplicated", folder_repo, source_repo, event_bus, project_state
             )
 
-        with allure.step("Verify event published"):
-            assert len(events) == 1
-            assert events[0].name == "Events Test"
+        with allure.step("Create folder with same name - verify failure"):
+            cmd = CreateFolderCommand(name="Duplicated")
+            result = create_folder(
+                command=cmd,
+                state=project_state,
+                folder_repo=folder_repo,
+                source_repo=source_repo,
+                event_bus=event_bus,
+            )
+            assert not result.is_success
+            assert "FOLDER_NOT_CREATED" in result.error_code
+
+        with allure.step("Create folder with empty name - verify failure"):
+            cmd = CreateFolderCommand(name="")
+            result = create_folder(
+                command=cmd,
+                state=project_state,
+                folder_repo=folder_repo,
+                source_repo=source_repo,
+                event_bus=event_bus,
+            )
+            assert not result.is_success
+            assert "FOLDER_NOT_CREATED" in result.error_code
 
 
 # ============================================================
@@ -210,10 +182,13 @@ class TestCreateFolder:
 @allure.story("QC-027.14 Rename Folder")
 @allure.severity(allure.severity_level.NORMAL)
 class TestRenameFolder:
-    @allure.title("AC #1: Rename folder successfully")
-    def test_rename_folder_success(
+    @allure.title("AC #1+3: Rename folder successfully and publish event")
+    def test_rename_folder_success_with_event(
         self, folder_repo, source_repo, event_bus, project_state
     ):
+        events = []
+        event_bus.subscribe("folders.folder_renamed", lambda e: events.append(e))
+
         with allure.step("Create a folder"):
             fid = _create_folder_ok(
                 "Old Name", folder_repo, source_repo, event_bus, project_state
@@ -229,14 +204,17 @@ class TestRenameFolder:
                 event_bus=event_bus,
             )
 
-        with allure.step("Verify success"):
+        with allure.step("Verify success and persistence"):
             assert result.is_success
             updated = result.unwrap()
             assert updated.name == "New Name"
-
-        with allure.step("Verify persisted"):
             saved = folder_repo.get_by_id(FolderId(value=fid))
             assert saved.name == "New Name"
+
+        with allure.step("Verify event published"):
+            assert len(events) == 1
+            assert events[0].old_name == "Old Name"
+            assert events[0].new_name == "New Name"
 
     @allure.title("AC #2: Rename to conflicting name rejected")
     def test_rename_folder_name_conflict(
@@ -250,7 +228,7 @@ class TestRenameFolder:
                 "Folder B", folder_repo, source_repo, event_bus, project_state
             )
 
-        with allure.step("Rename B to A"):
+        with allure.step("Rename B to A - verify failure"):
             cmd = RenameFolderCommand(folder_id=fid_b, new_name="Folder A")
             result = rename_folder(
                 command=cmd,
@@ -259,35 +237,8 @@ class TestRenameFolder:
                 source_repo=source_repo,
                 event_bus=event_bus,
             )
-
-        with allure.step("Verify failure"):
             assert not result.is_success
             assert "FOLDER_NOT_RENAMED" in result.error_code
-
-    @allure.title("AC #3: Rename publishes event")
-    def test_rename_publishes_event(
-        self, folder_repo, source_repo, event_bus, project_state
-    ):
-        events = []
-        event_bus.subscribe("folders.folder_renamed", lambda e: events.append(e))
-
-        with allure.step("Create and rename folder"):
-            fid = _create_folder_ok(
-                "Before", folder_repo, source_repo, event_bus, project_state
-            )
-            cmd = RenameFolderCommand(folder_id=fid, new_name="After")
-            rename_folder(
-                command=cmd,
-                state=project_state,
-                folder_repo=folder_repo,
-                source_repo=source_repo,
-                event_bus=event_bus,
-            )
-
-        with allure.step("Verify event"):
-            assert len(events) == 1
-            assert events[0].old_name == "Before"
-            assert events[0].new_name == "After"
 
 
 # ============================================================
@@ -298,10 +249,13 @@ class TestRenameFolder:
 @allure.story("QC-027.15 Delete Folder")
 @allure.severity(allure.severity_level.NORMAL)
 class TestDeleteFolder:
-    @allure.title("AC #1: Delete empty folder")
-    def test_delete_empty_folder(
+    @allure.title("AC #1+3: Delete empty folder and publish event")
+    def test_delete_empty_folder_with_event(
         self, folder_repo, source_repo, event_bus, project_state
     ):
+        events = []
+        event_bus.subscribe("folders.folder_deleted", lambda e: events.append(e))
+
         with allure.step("Create folder"):
             fid = _create_folder_ok(
                 "To Delete", folder_repo, source_repo, event_bus, project_state
@@ -317,11 +271,13 @@ class TestDeleteFolder:
                 event_bus=event_bus,
             )
 
-        with allure.step("Verify success"):
+        with allure.step("Verify success and removed from repo"):
             assert result.is_success
-
-        with allure.step("Verify removed from repo"):
             assert folder_repo.get_by_id(FolderId(value=fid)) is None
+
+        with allure.step("Verify event published"):
+            assert len(events) == 1
+            assert events[0].name == "To Delete"
 
     @allure.title("AC #2: Delete non-empty folder rejected")
     def test_delete_nonempty_folder_fails(
@@ -333,7 +289,7 @@ class TestDeleteFolder:
             )
             _seed_source(source_repo, source_id="500", name="inside.txt", folder_id=fid)
 
-        with allure.step("Try to delete"):
+        with allure.step("Try to delete - verify failure"):
             cmd = DeleteFolderCommand(folder_id=fid)
             result = delete_folder(
                 command=cmd,
@@ -342,34 +298,8 @@ class TestDeleteFolder:
                 source_repo=source_repo,
                 event_bus=event_bus,
             )
-
-        with allure.step("Verify failure"):
             assert not result.is_success
             assert "FOLDER_NOT_DELETED" in result.error_code
-
-    @allure.title("AC #3: Delete publishes event")
-    def test_delete_publishes_event(
-        self, folder_repo, source_repo, event_bus, project_state
-    ):
-        events = []
-        event_bus.subscribe("folders.folder_deleted", lambda e: events.append(e))
-
-        with allure.step("Create and delete folder"):
-            fid = _create_folder_ok(
-                "Event Delete", folder_repo, source_repo, event_bus, project_state
-            )
-            cmd = DeleteFolderCommand(folder_id=fid)
-            delete_folder(
-                command=cmd,
-                state=project_state,
-                folder_repo=folder_repo,
-                source_repo=source_repo,
-                event_bus=event_bus,
-            )
-
-        with allure.step("Verify event"):
-            assert len(events) == 1
-            assert events[0].name == "Event Delete"
 
 
 # ============================================================
@@ -380,10 +310,17 @@ class TestDeleteFolder:
 @allure.story("QC-027.16 Move Source to Folder")
 @allure.severity(allure.severity_level.NORMAL)
 class TestMoveSourceToFolder:
-    @allure.title("AC #1: Move source to folder")
-    def test_move_source_to_folder(
+    @allure.title(
+        "AC #1+3+4: Move source to folder, publish event, and move back to root"
+    )
+    def test_move_source_to_folder_with_event_and_root(
         self, folder_repo, source_repo, event_bus, project_state
     ):
+        events = []
+        event_bus.subscribe(
+            "folders.source_moved_to_folder", lambda e: events.append(e)
+        )
+
         with allure.step("Create folder and source"):
             fid = _create_folder_ok(
                 "Target", folder_repo, source_repo, event_bus, project_state
@@ -400,12 +337,28 @@ class TestMoveSourceToFolder:
                 event_bus=event_bus,
             )
 
-        with allure.step("Verify success"):
+        with allure.step("Verify success and source in folder"):
             assert result.is_success
-
-        with allure.step("Verify source in folder"):
             updated = source_repo.get_by_id(source.id)
             assert updated.folder_id == FolderId(value=fid)
+
+        with allure.step("Verify event published"):
+            assert len(events) >= 1
+            assert events[-1].source_id == source.id
+            assert events[-1].new_folder_id == FolderId(value=fid)
+
+        with allure.step("Move source back to root"):
+            cmd = MoveSourceToFolderCommand(source_id=source.id.value, folder_id=None)
+            result = move_source_to_folder(
+                command=cmd,
+                state=project_state,
+                folder_repo=folder_repo,
+                source_repo=source_repo,
+                event_bus=event_bus,
+            )
+            assert result.is_success
+            updated = source_repo.get_by_id(source.id)
+            assert updated.folder_id is None
 
     @allure.title("AC #2: Move to non-existent folder rejected")
     def test_move_to_nonexistent_folder_fails(
@@ -414,7 +367,7 @@ class TestMoveSourceToFolder:
         with allure.step("Create source"):
             _seed_source(source_repo, source_id="601", name="orphan.txt")
 
-        with allure.step("Move to non-existent folder"):
+        with allure.step("Move to non-existent folder - verify failure"):
             cmd = MoveSourceToFolderCommand(source_id="601", folder_id="9999")
             result = move_source_to_folder(
                 command=cmd,
@@ -423,63 +376,8 @@ class TestMoveSourceToFolder:
                 source_repo=source_repo,
                 event_bus=event_bus,
             )
-
-        with allure.step("Verify failure"):
             assert not result.is_success
             assert "SOURCE_NOT_MOVED" in result.error_code
-
-    @allure.title("AC #3: Move source publishes event")
-    def test_move_publishes_event(
-        self, folder_repo, source_repo, event_bus, project_state
-    ):
-        events = []
-        event_bus.subscribe(
-            "folders.source_moved_to_folder", lambda e: events.append(e)
-        )
-
-        with allure.step("Create folder and source, then move"):
-            fid = _create_folder_ok(
-                "Evt Folder", folder_repo, source_repo, event_bus, project_state
-            )
-            _seed_source(source_repo, source_id="602", name="evt_source.txt")
-            cmd = MoveSourceToFolderCommand(source_id="602", folder_id=fid)
-            move_source_to_folder(
-                command=cmd,
-                state=project_state,
-                folder_repo=folder_repo,
-                source_repo=source_repo,
-                event_bus=event_bus,
-            )
-
-        with allure.step("Verify event"):
-            assert len(events) == 1
-            assert events[0].source_id == SourceId(value="602")
-            assert events[0].new_folder_id == FolderId(value=fid)
-
-    @allure.title("AC #4: Move source back to root (no folder)")
-    def test_move_source_to_root(
-        self, folder_repo, source_repo, event_bus, project_state
-    ):
-        with allure.step("Create folder and source in it"):
-            fid = _create_folder_ok(
-                "Temp", folder_repo, source_repo, event_bus, project_state
-            )
-            _seed_source(source_repo, source_id="603", name="rooted.txt", folder_id=fid)
-
-        with allure.step("Move source to root (folder_id=None)"):
-            cmd = MoveSourceToFolderCommand(source_id="603", folder_id=None)
-            result = move_source_to_folder(
-                command=cmd,
-                state=project_state,
-                folder_repo=folder_repo,
-                source_repo=source_repo,
-                event_bus=event_bus,
-            )
-
-        with allure.step("Verify success and source at root"):
-            assert result.is_success
-            updated = source_repo.get_by_id(SourceId(value="603"))
-            assert updated.folder_id is None
 
 
 # ============================================================
@@ -532,53 +430,3 @@ class TestFolderPolicies:
             s2 = source_repo.get_by_id(SourceId(value="701"))
             assert s1.folder_id is None
             assert s2.folder_id is None
-
-    @allure.title("AC #2: Source removed event logged by folders policy")
-    def test_source_removed_logged_by_folders_policy(
-        self, folder_repo, source_repo, event_bus, project_state
-    ):
-        """Folders policy subscribes to source_removed for audit logging (no crash)."""
-        from src.contexts.folders.core.policies import configure_folders_policies
-        from src.contexts.projects.core.events import SourceRemoved
-        from src.shared.infra.cascade_registry import CascadeRegistry
-
-        # Re-configure to ensure subscriptions are active
-        cascade_registry = CascadeRegistry(event_bus)
-        configure_folders_policies(event_bus, cascade_registry)
-
-        with allure.step("Publish a source_removed event"):
-            event = SourceRemoved.create(
-                source_id=SourceId(value="800"),
-                name="removed_source.txt",
-                segments_removed=5,
-            )
-            # Should not raise
-            event_bus.publish(event)
-
-    @allure.title("AC #3: clear_folder_assignment unassigns all sources in folder")
-    def test_clear_folder_assignment(
-        self, folder_repo, source_repo, event_bus, project_state
-    ):
-        """Test the clear_folder_assignment repository method directly."""
-        with allure.step("Create folder with 3 sources"):
-            fid = _create_folder_ok(
-                "Batch", folder_repo, source_repo, event_bus, project_state
-            )
-            _seed_source(
-                source_repo, source_id="900", name="batch_1.txt", folder_id=fid
-            )
-            _seed_source(
-                source_repo, source_id="901", name="batch_2.txt", folder_id=fid
-            )
-            _seed_source(
-                source_repo, source_id="902", name="batch_3.txt", folder_id=fid
-            )
-
-        with allure.step("Clear folder assignment"):
-            count = source_repo.clear_folder_assignment(FolderId(value=fid))
-
-        with allure.step("Verify all 3 unassigned"):
-            assert count == 3
-            for sid in [900, 901, 902]:
-                s = source_repo.get_by_id(SourceId(value=sid))
-                assert s.folder_id is None

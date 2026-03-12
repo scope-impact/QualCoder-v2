@@ -23,6 +23,7 @@ from src.contexts.projects.core.events import SourceAdded
 from src.contexts.sources.core.entities import Source, SourceType
 from src.shared.common.operation_result import OperationResult
 from src.shared.common.types import CodeId, SegmentId, SourceId
+from src.shared.infra.metrics import metered_command
 
 if TYPE_CHECKING:
     from src.contexts.coding.core.commandHandlers._state import (
@@ -32,10 +33,12 @@ if TYPE_CHECKING:
     )
     from src.contexts.sources.core.commandHandlers._state import SourceRepository
     from src.shared.infra.event_bus import EventBus
+    from src.shared.infra.session import Session
 
 logger = logging.getLogger("qualcoder.exchange.core")
 
 
+@metered_command("import_rqda")
 def import_rqda(
     command: ImportRqdaCommand,
     source_repo: SourceRepository,
@@ -43,6 +46,7 @@ def import_rqda(
     category_repo: CategoryRepository,
     segment_repo: SegmentRepository,
     event_bus: EventBus,
+    session: Session | None = None,
 ) -> OperationResult:
     """
     Import an RQDA project from a SQLite database.
@@ -86,6 +90,7 @@ def import_rqda(
             category_repo=category_repo,
             segment_repo=segment_repo,
             event_bus=event_bus,
+            session=session,
         )
 
         if result.is_success:

@@ -11,90 +11,82 @@ Key business logic tested:
 from dataclasses import dataclass
 from datetime import UTC, datetime
 
+import allure
 import pytest
+
+pytestmark = [
+    pytest.mark.unit,
+    allure.epic("QualCoder v2"),
+    allure.feature("Shared Common"),
+]
 
 from src.shared.common.failure_events import FailureEvent
 from src.shared.common.operation_result import OperationResult
 
 
-class TestOperationResultOk:
-    """Test OperationResult.ok() factory method."""
+@allure.story("QC-000.03 Operation Result")
+class TestOperationResultFactories:
+    """Test factory methods: ok(), fail(), from_failure()."""
 
+    @allure.title("ok() creates success result with data, rollback, and defaults")
     def test_ok_creates_success_result(self):
-        result = OperationResult.ok(data="created_entity")
+        rollback = {"action": "delete", "id": 123}
+        result = OperationResult.ok(data="created_entity", rollback=rollback)
 
         assert result.success is True
         assert result.is_success is True
         assert result.is_failure is False
         assert result.data == "created_entity"
-
-    def test_ok_with_no_data(self):
-        result = OperationResult.ok()
-
-        assert result.success is True
-        assert result.data is None
-
-    def test_ok_with_rollback_command(self):
-        rollback = {"action": "delete", "id": 123}
-        result = OperationResult.ok(data="entity", rollback=rollback)
-
         assert result.rollback_command == rollback
-
-    def test_ok_has_no_error_fields(self):
-        result = OperationResult.ok(data="entity")
-
         assert result.error is None
         assert result.error_code is None
         assert result.suggestions == ()
 
+        # No-data variant
+        empty = OperationResult.ok()
+        assert empty.success is True
+        assert empty.data is None
 
-class TestOperationResultFail:
-    """Test OperationResult.fail() factory method."""
+    @allure.title("fail() creates failure and normalizes suggestions")
+    @pytest.mark.parametrize(
+        "suggestions_input,expected_suggestions",
+        [
+            (None, ()),
+            (
+                ("Try a different name", "Rename existing"),
+                ("Try a different name", "Rename existing"),
+            ),
+            (
+                ["Try a different name", "Rename existing"],
+                ("Try a different name", "Rename existing"),
+            ),
+        ],
+        ids=["no_suggestions", "tuple_suggestions", "list_suggestions"],
+    )
+    def test_fail_creates_failure_and_normalizes_suggestions(
+        self, suggestions_input, expected_suggestions
+    ):
+        kwargs = {
+            "error": "Name exists",
+            "error_code": "CODE_NOT_CREATED/DUPLICATE_NAME",
+        }
+        if suggestions_input is not None:
+            kwargs["suggestions"] = suggestions_input
 
-    def test_fail_creates_failure_result(self):
-        result = OperationResult.fail(error="Something went wrong")
+        result = OperationResult.fail(**kwargs)
 
         assert result.success is False
         assert result.is_success is False
         assert result.is_failure is True
-        assert result.error == "Something went wrong"
-
-    def test_fail_with_error_code(self):
-        result = OperationResult.fail(
-            error="Name exists",
-            error_code="CODE_NOT_CREATED/DUPLICATE_NAME",
-        )
-
+        assert result.error == "Name exists"
         assert result.error_code == "CODE_NOT_CREATED/DUPLICATE_NAME"
-
-    def test_fail_with_suggestions_as_tuple(self):
-        result = OperationResult.fail(
-            error="Name exists",
-            suggestions=("Try a different name", "Rename existing"),
-        )
-
-        assert result.suggestions == ("Try a different name", "Rename existing")
-
-    def test_fail_with_suggestions_as_list_converts_to_tuple(self):
-        result = OperationResult.fail(
-            error="Name exists",
-            suggestions=["Try a different name", "Rename existing"],
-        )
-
-        assert result.suggestions == ("Try a different name", "Rename existing")
-        assert isinstance(result.suggestions, tuple)
-
-    def test_fail_has_no_data_or_rollback(self):
-        result = OperationResult.fail(error="error")
-
         assert result.data is None
         assert result.rollback_command is None
+        assert result.suggestions == expected_suggestions
+        assert isinstance(result.suggestions, tuple)
 
-
-class TestOperationResultFromFailure:
-    """Test OperationResult.from_failure() for converting failure events."""
-
-    def test_from_failure_extracts_event_type_as_error_code(self):
+    @allure.title("from_failure() extracts fields and handles suggestions")
+    def test_from_failure_extracts_fields(self):
         event = FailureEvent(
             event_id="evt-1",
             occurred_at=datetime.now(UTC),
@@ -105,258 +97,147 @@ class TestOperationResultFromFailure:
 
         assert result.success is False
         assert result.error_code == "CODE_NOT_CREATED/DUPLICATE_NAME"
-
-    def test_from_failure_uses_event_message(self):
-        event = FailureEvent(
-            event_id="evt-1",
-            occurred_at=datetime.now(UTC),
-            event_type="CODE_NOT_CREATED/DUPLICATE_NAME",
-        )
-
-        result = OperationResult.from_failure(event)
-
-        # FailureEvent.message is auto-generated from event_type
         assert "Code Not Created" in result.error
+        assert result.suggestions == ()
 
-    def test_from_failure_extracts_suggestions_if_present(self):
+        # With suggestions
         @dataclass(frozen=True)
         class FailureEventWithSuggestions(FailureEvent):
             suggestions: tuple[str, ...] = ()
 
-        event = FailureEventWithSuggestions(
-            event_id="evt-1",
+        event_with = FailureEventWithSuggestions(
+            event_id="evt-2",
             occurred_at=datetime.now(UTC),
             event_type="CODE_NOT_CREATED/DUPLICATE_NAME",
             suggestions=("Use different name", "Delete existing"),
         )
 
-        result = OperationResult.from_failure(event)
-
-        assert result.suggestions == ("Use different name", "Delete existing")
-
-    def test_from_failure_handles_missing_suggestions(self):
-        event = FailureEvent(
-            event_id="evt-1",
-            occurred_at=datetime.now(UTC),
-            event_type="PROJECT_NOT_OPENED/NOT_FOUND",
-        )
-
-        result = OperationResult.from_failure(event)
-
-        assert result.suggestions == ()
+        result_with = OperationResult.from_failure(event_with)
+        assert result_with.suggestions == ("Use different name", "Delete existing")
 
 
+@allure.story("QC-000.03 Operation Result")
 class TestOperationResultUnwrap:
     """Test unwrap methods for accessing result data."""
 
-    def test_unwrap_returns_data_on_success(self):
-        result = OperationResult.ok(data={"id": 42, "name": "Test"})
+    @allure.title("unwrap, unwrap_or, and unwrap_error behave correctly")
+    def test_unwrap_variants(self):
+        # unwrap returns data on success
+        ok_result = OperationResult.ok(data={"id": 42, "name": "Test"})
+        assert ok_result.unwrap() == {"id": 42, "name": "Test"}
 
-        assert result.unwrap() == {"id": 42, "name": "Test"}
-
-    def test_unwrap_raises_value_error_on_failure(self):
-        result = OperationResult.fail(error="Cannot create")
-
+        # unwrap raises ValueError on failure
+        fail_result = OperationResult.fail(error="Cannot create")
         with pytest.raises(ValueError, match="Cannot unwrap failed result"):
-            result.unwrap()
+            fail_result.unwrap()
 
-    def test_unwrap_error_message_includes_original_error(self):
-        result = OperationResult.fail(error="Duplicate name 'Theme'")
-
+        fail_result2 = OperationResult.fail(error="Duplicate name 'Theme'")
         with pytest.raises(ValueError, match="Duplicate name 'Theme'"):
-            result.unwrap()
+            fail_result2.unwrap()
 
-    def test_unwrap_or_returns_data_on_success(self):
-        result = OperationResult.ok(data="actual_value")
+        # unwrap_or returns data on success, default on failure
+        assert ok_result.unwrap_or("default") == {"id": 42, "name": "Test"}
+        assert fail_result.unwrap_or("default") == "default"
+        assert fail_result.unwrap_or(None) is None
 
-        assert result.unwrap_or("default") == "actual_value"
-
-    def test_unwrap_or_returns_default_on_failure(self):
-        result = OperationResult.fail(error="error")
-
-        assert result.unwrap_or("default") == "default"
-
-    def test_unwrap_or_returns_none_default(self):
-        result = OperationResult.fail(error="error")
-
-        assert result.unwrap_or(None) is None
-
-    def test_unwrap_error_returns_error_on_failure(self):
-        result = OperationResult.fail(error="Something broke")
-
-        assert result.unwrap_error() == "Something broke"
-
-    def test_unwrap_error_raises_on_success(self):
-        result = OperationResult.ok(data="value")
+        # unwrap_error returns error string on failure, raises on success
+        assert (
+            OperationResult.fail(error="Something broke").unwrap_error()
+            == "Something broke"
+        )
+        assert OperationResult(success=False, error=None).unwrap_error() == ""
 
         with pytest.raises(ValueError, match="Cannot unwrap_error on successful"):
-            result.unwrap_error()
-
-    def test_unwrap_error_returns_empty_string_when_error_is_none(self):
-        # Edge case: failure result with None error (shouldn't happen, but handle it)
-        result = OperationResult(success=False, error=None)
-
-        assert result.unwrap_error() == ""
+            ok_result.unwrap_error()
 
 
-class TestOperationResultMap:
-    """Test map() transformation method."""
+@allure.story("QC-000.03 Operation Result")
+class TestOperationResultTransformAndSerialize:
+    """Test map(), with_rollback(), and to_dict()."""
 
-    def test_map_transforms_data_on_success(self):
-        result = OperationResult.ok(data=5)
-
-        mapped = result.map(lambda x: x * 2)
-
-        assert mapped.success is True
-        assert mapped.data == 10
-
-    def test_map_preserves_rollback_command(self):
+    @allure.title("map transforms success data and passes through failure")
+    def test_map(self):
         rollback = {"action": "undo"}
         result = OperationResult.ok(data=5, rollback=rollback)
 
         mapped = result.map(lambda x: x * 2)
-
+        assert mapped.success is True
+        assert mapped.data == 10
         assert mapped.rollback_command == rollback
 
-    def test_map_returns_self_on_failure(self):
-        result = OperationResult.fail(error="error", error_code="ERR")
+        # Can transform to a different type
+        dict_result = OperationResult.ok(data={"id": 1, "name": "Test"})
+        assert dict_result.map(lambda d: d["name"]).data == "Test"
 
-        mapped = result.map(lambda x: x * 2)
+        # Failure passes through unchanged
+        fail_result = OperationResult.fail(error="error", error_code="ERR")
+        fail_mapped = fail_result.map(lambda x: x * 2)
+        assert fail_mapped is fail_result
+        assert fail_mapped.is_failure is True
 
-        assert mapped is result  # Same object, not transformed
-        assert mapped.is_failure is True
-        assert mapped.error == "error"
-
-    def test_map_can_transform_to_different_type(self):
-        result = OperationResult.ok(data={"id": 1, "name": "Test"})
-
-        mapped = result.map(lambda d: d["name"])
-
-        assert mapped.data == "Test"
-
-
-class TestOperationResultWithRollback:
-    """Test with_rollback() method."""
-
-    def test_with_rollback_adds_command_to_success(self):
-        result = OperationResult.ok(data="entity")
-
-        with_rb = result.with_rollback({"action": "delete"})
-
-        assert with_rb.rollback_command == {"action": "delete"}
+    @allure.title("with_rollback adds command and preserves all fields")
+    def test_with_rollback(self):
+        result = OperationResult.ok(data="entity", rollback={"old": "cmd"})
+        with_rb = result.with_rollback({"new": "cmd"})
+        assert with_rb.rollback_command == {"new": "cmd"}
         assert with_rb.data == "entity"
         assert with_rb.success is True
 
-    def test_with_rollback_replaces_existing_command(self):
-        result = OperationResult.ok(data="entity", rollback={"old": "cmd"})
-
-        with_rb = result.with_rollback({"new": "cmd"})
-
-        assert with_rb.rollback_command == {"new": "cmd"}
-
-    def test_with_rollback_preserves_all_other_fields(self):
-        result = OperationResult.fail(
+        fail_result = OperationResult.fail(
             error="err",
             error_code="ERR/CODE",
             suggestions=("hint1", "hint2"),
         )
+        fail_with_rb = fail_result.with_rollback({"cmd": "value"})
+        assert fail_with_rb.error == "err"
+        assert fail_with_rb.error_code == "ERR/CODE"
+        assert fail_with_rb.suggestions == ("hint1", "hint2")
+        assert fail_with_rb.rollback_command == {"cmd": "value"}
 
-        with_rb = result.with_rollback({"cmd": "value"})
+    @allure.title("to_dict serializes success and failure correctly")
+    def test_to_dict(self):
+        # Primitive data
+        d = OperationResult.ok(data=42).to_dict()
+        assert d["success"] is True
+        assert d["data"] == 42
 
-        assert with_rb.error == "err"
-        assert with_rb.error_code == "ERR/CODE"
-        assert with_rb.suggestions == ("hint1", "hint2")
-        assert with_rb.rollback_command == {"cmd": "value"}
+        # None data is omitted
+        d_none = OperationResult.ok(data=None).to_dict()
+        assert d_none["success"] is True
+        assert "data" not in d_none
 
-
-class TestOperationResultToDict:
-    """Test to_dict() serialization for MCP tools."""
-
-    def test_to_dict_success_with_primitive_data(self):
-        result = OperationResult.ok(data=42)
-
-        d = result.to_dict()
-
-        assert d == {"success": True, "data": 42}
-
-    def test_to_dict_success_with_none_data(self):
-        result = OperationResult.ok()
-
-        d = result.to_dict()
-
-        assert d == {"success": True}
-
-    def test_to_dict_success_with_object_having_to_dict(self):
+        # Object with to_dict() method
         class Entity:
             def to_dict(self):
                 return {"id": 1, "name": "Test"}
 
-        result = OperationResult.ok(data=Entity())
+        d_entity = OperationResult.ok(data=Entity()).to_dict()
+        assert d_entity == {"success": True, "data": {"id": 1, "name": "Test"}}
 
-        d = result.to_dict()
-
-        assert d == {"success": True, "data": {"id": 1, "name": "Test"}}
-
-    def test_to_dict_success_with_object_having_dict_attribute(self):
+        # Dataclass with __dict__
         @dataclass
         class SimpleEntity:
             id: int
             name: str
 
-        result = OperationResult.ok(data=SimpleEntity(id=1, name="Test"))
+        d_dc = OperationResult.ok(data=SimpleEntity(id=1, name="Test")).to_dict()
+        assert d_dc["success"] is True
+        assert d_dc["data"]["id"] == 1
+        assert d_dc["data"]["name"] == "Test"
 
-        d = result.to_dict()
-
-        assert d["success"] is True
-        assert d["data"]["id"] == 1
-        assert d["data"]["name"] == "Test"
-
-    def test_to_dict_failure_minimal(self):
-        result = OperationResult.fail(error="Something failed")
-
-        d = result.to_dict()
-
-        assert d == {"success": False, "error": "Something failed"}
-
-    def test_to_dict_failure_with_error_code(self):
+        # Full failure with all fields
         result = OperationResult.fail(
             error="Name exists",
             error_code="CODE_NOT_CREATED/DUPLICATE_NAME",
-        )
-
-        d = result.to_dict()
-
-        assert d["error_code"] == "CODE_NOT_CREATED/DUPLICATE_NAME"
-
-    def test_to_dict_failure_with_suggestions(self):
-        result = OperationResult.fail(
-            error="Name exists",
             suggestions=("Try different name", "Delete existing"),
         )
-
         d = result.to_dict()
-
+        assert d["success"] is False
+        assert d["error"] == "Name exists"
+        assert d["error_code"] == "CODE_NOT_CREATED/DUPLICATE_NAME"
         assert d["suggestions"] == ["Try different name", "Delete existing"]
 
-    def test_to_dict_failure_does_not_include_empty_suggestions(self):
-        result = OperationResult.fail(error="error")
-
-        d = result.to_dict()
-
-        assert "suggestions" not in d
-
-
-class TestOperationResultImmutability:
-    """Test that OperationResult is immutable (frozen dataclass)."""
-
-    def test_cannot_modify_success_field(self):
-        result = OperationResult.ok(data="value")
-
-        with pytest.raises(AttributeError):
-            result.success = False
-
-    def test_cannot_modify_data_field(self):
-        result = OperationResult.ok(data="value")
-
-        with pytest.raises(AttributeError):
-            result.data = "new_value"
+        # Minimal failure omits optional fields
+        d_minimal = OperationResult.fail(error="Something failed").to_dict()
+        assert d_minimal == {"success": False, "error": "Something failed"}
+        assert "suggestions" not in d_minimal

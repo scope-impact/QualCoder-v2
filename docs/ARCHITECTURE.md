@@ -116,9 +116,15 @@ graph TB
         SET[SETTINGS<br>Preferences<br>Theme, font, language]
     end
 
+    subgraph Generic Domain
+        EXC[EXCHANGE<br>Import/Export<br>REFI-QDA, CSV, Codebook]
+    end
+
     SRC -->|"SourceImported / DomainEvent"| COD
     CAS -->|"CaseLinked / DomainEvent"| COD
     FLD -->|"SourceMoved / DomainEvent"| SRC
+    EXC -->|"CodeListImported / DomainEvent"| COD
+    EXC -->|"SurveyCSVImported / DomainEvent"| CAS
 ```
 
 ### Bounded Context Summary
@@ -129,8 +135,9 @@ graph TB
 | **Sources** | Source, Folder | Import files, manage folders |
 | **Cases** | Case, CaseAttribute | Link sources, assign attributes |
 | **Projects** | Project | Open, close, manage lifecycle |
-| **Settings** | Settings | Configure preferences (theme, font, language) |
+| **Settings** | Theme, Font, Language, Backup, AVCoding, Observability, CloudSync | Configure preferences, cloud sync, observability |
 | **Folders** | Folder | Organize sources in folders |
+| **Exchange** | — (stateless) | Import/export codebooks, coded HTML, REFI-QDA, RQDA, CSV |
 
 ### Application Shell Components (C3)
 
@@ -139,7 +146,7 @@ graph LR
     subgraph Application Shell
         EB[EventBus]
         SB[SignalBridge]
-        CTRL[Controllers]
+        CTRL[Command Handlers]
         QRY[Queries]
     end
 
@@ -150,9 +157,9 @@ graph LR
 
 ---
 
-## 4. Functional Core / Imperative Shell
+## 4. Event System Architecture
 
-QualCoder v2 follows the **Functional Core / Imperative Shell** pattern:
+QualCoder v2 follows the **Functional Core / Imperative Shell** pattern with a layered event system that bridges domain logic to the UI.
 
 ```mermaid
 graph TB
@@ -163,13 +170,14 @@ graph TB
     end
 
     subgraph Imperative Shell - Side Effects
-        CTRL[Controllers]
+        CTRL[Command Handlers]
         REPO[Repositories]
         BUS[EventBus]
         SB[SignalBridge]
     end
 
     subgraph Presentation
+        VM[ViewModels]
         QT[Qt Widgets]
     end
 
@@ -179,10 +187,11 @@ graph TB
     CTRL -- "save() / SQL" --> REPO
     CTRL -- "publish(event)" --> BUS
     BUS -- "callback(event)" --> SB
-    SB -- "pyqtSignal.emit()" --> QT
+    SB -- "pyqtSignal.emit(Payload)" --> VM
+    VM -- "transformed data" --> QT
 ```
 
-### The 5 Building Blocks
+### 4.1 The 5 Building Blocks
 
 | Block | Layer | Purpose | Naming |
 |-------|-------|---------|--------|
@@ -190,9 +199,250 @@ graph TB
 | Derivers | Domain | Pure functions - "What happened?" | `derive_*` |
 | Events | Domain | Immutable records of changes | `*Created`, `*Deleted` |
 | EventBus | Application | Pub/sub event distribution | `subscribe`, `publish` |
-| SignalBridge | Application | Thread-safe domain to Qt bridge | `*_signal` |
+| SignalBridge | Application | Thread-safe domain-to-Qt bridge | `*_signal` |
+
+### 4.2 EventBus
+
+Thread-safe pub/sub system (`src/shared/infra/event_bus.py`) with RLock for concurrent access.
+
+**API:**
+
+| Method | Purpose |
+|--------|---------|
+| `subscribe(event_type, handler)` | Subscribe to specific event type string (e.g., `"coding.code_created"`) |
+| `subscribe_type(event_class, handler)` | Subscribe by event class (auto-derives type string) |
+| `subscribe_all(handler)` | Wildcard subscription — receives all published events |
+| `publish(event)` | Synchronous dispatch to all matching handlers |
+| `unsubscribe(event_type, handler)` | Remove a subscription |
+| `handler_count(event_type=None)` | Query active subscription counts |
+
+**Event Type Resolution:**
+- **Explicit** (preferred): Class-level `event_type: ClassVar[str] = "coding.code_created"`
+- **Auto-derived** (deprecated): `{module}.{class_name}` → `"coding.code_created"`
+- Types cached in `_type_cache` for performance
+
+**Key Properties:**
+- **Synchronous** — handlers run in the publishing thread before `publish()` returns
+- **Weak references** — subscriptions use `weakref.ref()` to prevent cycles; dead handlers auto-removed
+- **Error isolation** — handler exceptions are logged but don't prevent other handlers from executing
+- **Optional history** — circular buffer for event tracing (`history_size` parameter); query with `get_history()`
+- **Metrics** — integrates with OpenTelemetry: `events_published`, `event_handler_duration`, `event_handler_errors`
+
+### 4.3 SignalBridge
+
+Thread-safe bridge from domain events to Qt signals (`src/shared/infra/signal_bridge/`).
+
+```mermaid
+graph TB
+    subgraph "Background Thread"
+        CMD[Command Handler]
+        EB[EventBus]
+    end
+
+    subgraph "SignalBridge"
+        CONV[EventConverter]
+        QUEUE[Emission Queue]
+    end
+
+    subgraph "Main Thread (Qt)"
+        SIG[Qt Signal]
+        VM[ViewModel Slot]
+    end
+
+    CMD -- "publish(DomainEvent)" --> EB
+    EB -- "callback" --> CONV
+    CONV -- "DomainEvent → SignalPayload" --> QUEUE
+    QUEUE -- "QMetaObject.invokeMethod()" --> SIG
+    SIG -- "emit(payload)" --> VM
+```
+
+**BaseSignalBridge** — abstract base class for all bridges:
+
+| Feature | Details |
+|---------|---------|
+| **Singleton** | `Bridge.instance(event_bus)` creates once; `Bridge.instance()` returns existing |
+| **Converter registration** | `register_converter(event_type, converter, signal_name)` maps events to signals |
+| **Thread detection** | Main thread → emit directly; background thread → queue + `invokeMethod()` |
+| **Batch emission** | Queued emissions processed as a batch on main thread |
+| **Activity logging** | Every emission creates an `ActivityItem` for the activity feed |
+
+**EventConverter protocol** — transforms domain events into typed signal payloads:
+
+```python
+class CodeCreatedConverter(EventConverter[CodeCreated, CodePayload]):
+    def convert(self, event: CodeCreated) -> CodePayload:
+        return CodePayload(
+            event_type="code_created",
+            code_id=event.code_id.value,
+            name=event.name,
+            color=event.color,
+            timestamp=event.occurred_at,
+        )
+```
+
+**Implemented Signal Bridges:**
+
+| Bridge | Context | Location | Key Signals |
+|--------|---------|----------|-------------|
+| `CodingSignalBridge` | Coding | `src/contexts/coding/interface/signal_bridge.py` | code_created, code_renamed, code_deleted, codes_merged, segment_coded, segment_uncoded |
+| `CasesSignalBridge` | Cases | `src/contexts/cases/interface/signal_bridge.py` | case_created, case_updated, case_removed, source_linked, source_unlinked |
+| `ProjectSignalBridge` | Projects + Folders | `src/shared/infra/signal_bridge/projects.py` | project_opened, project_closed, source_added, source_removed, folder_created, snapshot_created |
+| `SyncSignalBridge` | Sync | `src/shared/infra/signal_bridge/sync.py` | sync_status_changed, sync_completed |
+| `SettingsSignalBridge` | Settings | `src/shared/infra/signal_bridge/settings.py` | settings_changed, cloud_sync_config_changed |
+
+### 4.4 Domain Events by Context
+
+**Coding** (`src/contexts/coding/core/events.py`):
+- `CodeCreated`, `CodeRenamed`, `CodeColorChanged`, `CodeMemoUpdated`, `CodeDeleted`, `CodesMerged`, `CodeMovedToCategory`
+- `CategoryCreated`, `CategoryRenamed`, `CategoryDeleted`
+- `SegmentCoded`, `SegmentUncoded`, `SegmentMemoUpdated`
+- `BatchCreated`, `BatchUndone`
+
+**Cases** (`src/contexts/cases/core/events.py`):
+- `CaseCreated`, `CaseUpdated`, `CaseRemoved`
+- `CaseAttributeSet`, `CaseAttributeRemoved`
+- `SourceLinkedToCase`, `SourceUnlinkedFromCase`
+
+**Projects** (`src/contexts/projects/core/events.py`):
+- `ProjectCreated`, `ProjectOpened`, `ProjectClosed`, `ProjectRenamed`
+- `SourceAdded`, `SourceRemoved`, `SourceRenamed`, `SourceOpened`, `SourceStatusChanged`
+- `ScreenChanged`, `NavigatedToSegment`
+
+**Folders** (`src/contexts/folders/core/events.py`):
+- `FolderCreated`, `FolderRenamed`, `FolderDeleted`, `SourceMovedToFolder`
+
+**Settings** (`src/contexts/settings/core/events.py`):
+- `ThemeChanged`, `FontChanged`, `LanguageChanged`
+- `BackupConfigChanged`, `AVCodingConfigChanged`, `ObservabilityConfigChanged`
+- `CloudSyncConfigChanged`, `CloudSyncEnabled`, `CloudSyncDisabled`
+
+**Exchange** (`src/contexts/exchange/core/events.py`):
+- `CodebookExported`, `CodedHTMLExported`, `RefiQdaExported`
+- `CodeListImported`, `SurveyCSVImported`, `RefiQdaImported`, `RqdaImported`
+
+**Version Control** (`src/contexts/projects/core/vcs_events.py`):
+- `VersionControlInitialized`, `SnapshotCreated`, `SnapshotRestored`
+- Decision events (internal): `AutoCommitDecided`, `RestoreDecided`, `InitializeDecided`
+
+**Sync** (`src/shared/core/sync/events.py`):
+- `SyncPullStarted`, `SyncPullCompleted`, `SyncPullFailed`, `RemoteChangesReceived`
+
+### 4.5 Failure Events
+
+Failure events follow a structured type format (`src/shared/common/failure_events.py`):
+
+```python
+@dataclass(frozen=True)
+class FailureEvent:
+    event_type: str   # "CODE_NOT_CREATED/DUPLICATE_NAME"
+    event_id: str
+    occurred_at: datetime
+```
+
+The `event_type` encodes both operation and reason separated by `/`:
+- `CODE_NOT_CREATED/INVALID_COLOR`
+- `SOURCE_NOT_ADDED/DUPLICATE_NAME`
+- `CASE_NOT_CREATED/EMPTY_NAME`
+
+Command handlers publish failures through the same EventBus, enabling policies and UI to react uniformly to both success and failure outcomes.
+
+### 4.6 Batch Import & Reload Suppression
+
+During bulk operations (e.g., multi-file import), ViewModels use a **suppress_reloads** depth counter to avoid O(n) UI refreshes:
+
+```python
+@contextlib.contextmanager
+def suppress_reloads(self):
+    self._suppress_reloads += 1
+    try:
+        yield
+    finally:
+        self._suppress_reloads = max(0, self._suppress_reloads - 1)
+        if self._suppress_reloads == 0:  # Only outermost exit emits
+            self.sources_changed.emit()
+            self.summary_changed.emit()
+```
+
+This supports nesting — inner contexts accumulate changes silently, and only the outermost exit triggers a single UI refresh.
 
 See [Onboarding Tutorials](./tutorials/README.md) for hands-on examples.
+
+### 4.7 Threading & Unified Event Loop
+
+QualCoder v2 uses **qasync** to run asyncio and Qt on a single unified event loop. This eliminates cross-thread marshalling between the MCP server and the Qt UI.
+
+```mermaid
+graph TB
+    subgraph "Single Process — One Event Loop (qasync)"
+        LOOP["qasync.QEventLoop"]
+
+        subgraph "Qt Events"
+            PAINT[Widget Repaint]
+            CLICK[Button Click]
+            SIGNAL[Signal Delivery]
+        end
+
+        subgraph "asyncio Coroutines"
+            MCP[MCP aiohttp Server]
+            BATCH[Batch Import Task]
+        end
+
+        subgraph "Thread Pool (run_in_executor)"
+            EXTRACT[Text Extraction — DOCX, PDF]
+            TOOL[MCP Tool Execution — DB Access]
+        end
+    end
+
+    LOOP --> PAINT
+    LOOP --> CLICK
+    LOOP --> SIGNAL
+    LOOP --> MCP
+    LOOP --> BATCH
+
+    BATCH -- "await run_in_executor()" --> EXTRACT
+    EXTRACT -- "returns to main thread" --> BATCH
+    MCP -- "await asyncio.to_thread()" --> TOOL
+    TOOL -- "returns to main thread" --> MCP
+```
+
+**Setup** (`main.py`):
+
+```python
+loop = qasync.QEventLoop(self._app)   # Wraps QApplication
+asyncio.set_event_loop(loop)
+
+with loop:
+    loop.create_task(self._mcp_server.serve_async())  # MCP as coroutine
+    loop.run_forever()                                 # Qt + asyncio interleaved
+```
+
+**Three execution contexts:**
+
+| Context | Runs On | Used For | Example |
+|---------|---------|----------|---------|
+| Qt events | Main thread | UI repaints, signal delivery, widget interaction | Button clicks, progress bar updates |
+| asyncio coroutines | Main thread | Orchestration, awaiting I/O | MCP request routing, batch import loop |
+| Thread pool | Worker thread | CPU-bound or blocking work | DOCX/PDF text extraction, DB queries from MCP tools |
+
+**Key pattern — async/await splitting:**
+
+```python
+# Main thread: validate (fast)
+source_type = detect_source_type(file_path)
+
+# Worker thread: extract text (slow, 5-30s for DOCX)
+fulltext = await loop.run_in_executor(None, extract_text, source_type, file_path)
+
+# Main thread again: persist and publish (thread-safe)
+self._source_repo.save(source)
+self._event_bus.publish(SourceAdded(...))
+```
+
+Each `await` yields control back to the event loop, so Qt processes repaints and clicks between files. The UI never freezes.
+
+**MCP tool execution** uses `asyncio.to_thread()` to run tool handlers on a worker thread. Repositories use a thread-local connection factory for DB access, and SignalBridge detects non-main-thread callers and queues signals via `QueuedConnection`.
+
+**Why not separate threads?** The previous architecture ran the MCP server in its own thread with a `_MainThreadExecutor` that marshalled calls to Qt via `QMetaObject.invokeMethod` + `threading.Event.wait(30s)`. This caused cascading timeouts when the main thread was busy with long-running imports. The unified loop eliminates this class of bugs entirely.
 
 ---
 
@@ -280,8 +530,8 @@ sequenceDiagram
 | UI Framework | PySide6 | Qt bindings, cross-platform, mature |
 | Database | SQLite | Embedded, portable projects, no server |
 | Vector Store | ChromaDB | Embedded, Python-native, simple API |
-| Event System | Custom EventBus | Need subscribe_all, history, type-based |
-| Result Type | Custom | Minimal (~50 lines), no dependency |
+| Event System | Custom EventBus | Thread-safe pub/sub with subscribe_all, history buffer, type-based routing, weak refs, metrics |
+| Result Type | Custom `OperationResult` + `returns` library | Command handlers use custom; MCP/infra uses `returns` |
 | Version Control | Git + sqlite-diffable | Cross-platform, human-readable diffs |
 | Cloud Sync | Convex | Real-time sync, TypeScript backend |
 
@@ -496,8 +746,9 @@ src/
 │   │   └── presentation/       # Context-specific UI
 │   ├── sources/                # Source file management
 │   ├── cases/                  # Case/participant management
-│   ├── projects/               # Project lifecycle
-│   ├── settings/               # User settings
+│   ├── projects/               # Project lifecycle + VCS
+│   ├── exchange/               # Import/export (REFI-QDA, CSV, codebook)
+│   ├── settings/               # User settings, cloud sync config
 │   └── folders/                # Folder organization
 │
 ├── shared/                     # Cross-cutting concerns
@@ -536,10 +787,11 @@ design_system/                  # Reusable UI components, tokens
 | Context | Purpose | Key Events | Integration Pattern |
 |---------|---------|------------|---------------------|
 | **Coding** | Apply semantic codes to data | CodeCreated, SegmentCoded | Core - others depend on it |
-| **Sources** | Manage documents, media | SourceImported, SourceDeleted | Open Host Service |
+| **Sources** | Manage documents, media | SourceAdded, SourceRemoved | Open Host Service |
 | **Cases** | Group and categorize | CaseCreated, SourceLinked | Conformist to Coding |
-| **Projects** | Lifecycle management | ProjectOpened, ProjectClosed | Anti-Corruption Layer |
-| **Settings** | User preferences | SettingsUpdated | Independent |
+| **Projects** | Lifecycle + version control | ProjectOpened, SnapshotCreated | Anti-Corruption Layer |
+| **Exchange** | Import/export projects and data | CodeListImported, RefiQdaExported | Generic — delegates to Coding, Cases, Sources |
+| **Settings** | User preferences, cloud sync | ThemeChanged, CloudSyncConfigChanged | Independent |
 | **Folders** | Folder organization | FolderCreated, SourceMoved | Supporting |
 
 ### Planned Contexts (Future)
@@ -548,9 +800,9 @@ design_system/                  # Reusable UI components, tokens
 |---------|---------|------------|---------------------|
 | Analysis | Generate insights | ReportGenerated | Subscribes to Coding events |
 | Collaboration | Multi-coder workflows | CoderSwitched, CodingsMerged | Published Language |
-| Export | Reports, charts | ReportExported | Downstream consumer |
 
 > **Note:** AI coding capabilities are integrated within the Coding context (`ai_entities.py`, `ai_derivers.py`, etc.) rather than as a separate AI Services context.
+> The previously planned Export context has been implemented as the Exchange bounded context.
 
 ---
 
@@ -569,9 +821,9 @@ design_system/                  # Reusable UI components, tokens
 
 | Component | Why Custom | Alternative |
 |-----------|------------|-------------|
-| EventBus | Need subscribe_all, history | Blinker, PyPubSub |
-| SignalBridge | No library for domain to Qt threading | None available |
-| Result Type | Minimal, no dependency | returns library |
+| EventBus | Thread-safe, subscribe_all, history buffer, weak refs, metrics | Blinker, PyPubSub |
+| SignalBridge | Thread-safe domain-to-Qt bridge with converter pattern, batch emission | None available |
+| Result Type | Custom `OperationResult` for command handlers; `returns` library for MCP/infra | Either alone |
 
 ---
 
@@ -606,4 +858,4 @@ Start with the [Onboarding Tutorial](./tutorials/README.md) - a progressive guid
 
 ---
 
-*Architecture documentation for QualCoder v2. Last updated: 2026-01.*
+*Architecture documentation for QualCoder v2. Last updated: 2026-03.*

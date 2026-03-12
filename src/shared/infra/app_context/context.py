@@ -87,7 +87,8 @@ class AppContext:
     # Optional Convex client for cloud backend
     convex_client: ConvexClientWrapper | None = None
 
-    # Optional sync engine for SQLite-Convex sync
+    # Cloud sync infrastructure (SyncContext owns Convex client + SyncEngine)
+    _sync_ctx: Any = field(default=None, init=False, repr=False)
     _sync_engine: Any = field(default=None, init=False, repr=False)
 
     # VCS auto-commit listener (enabled per-project)
@@ -102,6 +103,11 @@ class AppContext:
 
     # Internal state
     _started: bool = field(default=False, init=False, repr=False)
+
+    @property
+    def session(self):
+        """Get the current Session (project-scoped, thread-safe). None if no project open."""
+        return self.lifecycle.session
 
     # =========================================================================
     # Lifecycle Methods
@@ -225,6 +231,11 @@ class AppContext:
         """
         from src.contexts.projects.core.commandHandlers import close_project
 
+        # Stop SyncEngine BEFORE closing the database — the sync engine holds
+        # its own SQLite connection; if we dispose the engine first the orphaned
+        # sync thread keeps the file locked and the next open_project hangs.
+        self._clear_contexts()
+
         result = close_project(
             lifecycle=self.lifecycle,
             state=self.state,
@@ -235,9 +246,6 @@ class AppContext:
             from src.shared.infra.metrics import project_open
 
             project_open.add(-1)
-
-        # Clear bounded contexts
-        self._clear_contexts()
 
         return result
 
@@ -259,58 +267,45 @@ class AppContext:
         Returns:
             Dict of context name to context object
         """
-        # Determine backend type from settings
-        # SQLite is always primary; Convex is optional cloud sync
+        # Initialize cloud sync infrastructure (Convex client + SyncEngine)
+        from .sync_context import SyncContext
+
         backend_config = self.settings_repo.get_backend_config()
         backend_type = BackendType.SQLITE  # Always SQLite as primary
 
-        # Initialize Convex client and SyncEngine if cloud sync is enabled
-        sync_engine = None
-        if backend_config.uses_convex and self.convex_client is None:
-            from src.shared.infra.convex import ConvexClientWrapper
+        self._sync_ctx = SyncContext.create(connection, backend_config)
+        self.convex_client = self._sync_ctx.convex_client
+        self._sync_engine = self._sync_ctx.sync_engine
+        sync_engine = self._sync_engine
 
-            try:
-                self.convex_client = ConvexClientWrapper(backend_config.convex_url)
-                logger.info(
-                    f"Connected to Convex for cloud sync: {backend_config.convex_url}"
-                )
-            except Exception as e:
-                logger.warning(f"Failed to connect to Convex (sync disabled): {e}")
-                # Continue without cloud sync - SQLite works offline
-                self.convex_client = None
-
-        # Create SyncEngine BEFORE contexts so repos can use it
-        if backend_config.uses_convex and self.convex_client:
-            from src.shared.infra.sync import SyncEngine
-
-            self._sync_engine = SyncEngine(connection, self.convex_client)
-            sync_engine = self._sync_engine
-            logger.info("SyncEngine created for SQLite-Convex cloud sync")
+        # Session provides thread-local connections so repos work from
+        # both the Qt main thread and MCP worker threads (asyncio.to_thread).
+        session = self.lifecycle.session
 
         # Create contexts with sync support
         self.sources_context = SourcesContext.create(
-            connection=connection,
+            connection=session,
             convex_client=self.convex_client,
             backend_type=backend_type,
             sync_engine=sync_engine,
             event_bus=self.event_bus,
         )
         self.coding_context = CodingContext.create(
-            connection=connection,
+            connection=session,
             convex_client=self.convex_client,
             backend_type=backend_type,
             sync_engine=sync_engine,
             event_bus=self.event_bus,
         )
         self.cases_context = CasesContext.create(
-            connection=connection,
+            connection=session,
             convex_client=self.convex_client,
             backend_type=backend_type,
             sync_engine=sync_engine,
             event_bus=self.event_bus,
         )
         self.folders_context = FoldersContext.create(
-            connection=connection,
+            connection=session,
             convex_client=self.convex_client,
             backend_type=backend_type,
             sync_engine=sync_engine,
@@ -318,16 +313,14 @@ class AppContext:
         )
         # ProjectsContext always uses SQLite for local project file management
         self.projects_context = ProjectsContext.create(
-            connection=connection,
+            connection=session,
             _convex_client=self.convex_client,
             _backend_type=BackendType.SQLITE,
             project_path=project_path,
         )
 
         # Start sync engine after contexts are created
-        if self._sync_engine is not None:
-            self._sync_engine.start()
-            logger.info("SyncEngine started")
+        self._sync_ctx.start()
 
         # Enable VCS auto-commit listener if adapters are available
         if (
@@ -378,14 +371,10 @@ class AppContext:
         self.projects_context = None
         self.folders_context = None
 
-        # Stop sync engine if running
-        if self._sync_engine is not None:
-            self._sync_engine.stop()
+        # Stop sync infrastructure (engine + Convex client)
+        if hasattr(self, "_sync_ctx") and self._sync_ctx is not None:
+            self._sync_ctx.stop()
             self._sync_engine = None
-
-        # Close Convex client if open
-        if self.convex_client is not None:
-            self.convex_client.close()
             self.convex_client = None
 
         logger.debug("Cleared bounded contexts")

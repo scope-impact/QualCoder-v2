@@ -27,6 +27,7 @@ from src.shared.infra.state import ProjectState
 
 if TYPE_CHECKING:
     from src.shared.infra.event_bus import EventBus
+    from src.shared.infra.session import Session
 
 
 logger = logging.getLogger("qualcoder.folders.core")
@@ -39,6 +40,7 @@ def create_folder(
     folder_repo: FolderRepository | None,
     source_repo: SourceRepository | None,
     event_bus: EventBus,
+    session: Session | None = None,
 ) -> OperationResult:
     """
     Create a new folder in the current project.

@@ -393,4 +393,4 @@ def restore_snapshot(ref: str) -> SnapshotRestored:
 - [Using sqlite-diffable as a Python module](https://blog.pesky.moe/posts/2024-07-06-sqlite-diffable/)
 - [Simon Willison on tracking data in Git](https://fedi.simonwillison.net/@simon/109331617858051125)
 - [Tracking SQLite Database Changes in Git (HN)](https://news.ycombinator.com/item?id=38110286)
-- Related task: [QC-047 - SQLite Database Version Control](../tasks/qc-047%20-%20SQLite-Database-Version-Control.md)
+- Related task: [QC-048 - SQLite Database Version Control](../tasks/qc-048%20-%20SQLite-Database-Version-Control.md)

@@ -6,9 +6,14 @@ Tests for pure predicate functions that validate business rules for Coding.
 
 from __future__ import annotations
 
+import allure
 import pytest
 
-pytestmark = pytest.mark.unit
+pytestmark = [
+    pytest.mark.unit,
+    allure.epic("QualCoder v2"),
+    allure.feature("QC-028 Code Management"),
+]
 
 
 # ============================================================
@@ -16,106 +21,75 @@ pytestmark = pytest.mark.unit
 # ============================================================
 
 
-class TestIsValidCodeName:
-    """Tests for is_valid_code_name invariant."""
+@allure.story("QC-028.01 Code Name Validation")
+class TestCodeNameInvariants:
+    """Tests for is_valid_code_name and is_code_name_unique invariants."""
 
-    def test_accepts_normal_string(self):
-        """Normal alphanumeric names should be valid."""
+    @pytest.mark.parametrize(
+        "name, expected",
+        [
+            ("Theme", True),
+            ("Emerging-Pattern", True),
+            ("Code_With_Numbers_123", True),
+            ("a" * 100, True),
+            ("", False),
+            ("   ", False),
+            ("\t\n", False),
+            ("a" * 101, False),
+        ],
+    )
+    @allure.title(
+        "Validates code names: accepts valid, rejects empty/whitespace/too-long"
+    )
+    def test_validates_code_names(self, name, expected):
+        """Valid names are accepted; empty, whitespace-only, and too-long names are rejected."""
         from src.contexts.coding.core.invariants import is_valid_code_name
 
-        assert is_valid_code_name("Theme") is True
-        assert is_valid_code_name("Emerging-Pattern") is True
-        assert is_valid_code_name("Code_With_Numbers_123") is True
+        assert is_valid_code_name(name) is expected
 
-    def test_rejects_empty_string(self):
-        """Empty string should be invalid."""
-        from src.contexts.coding.core.invariants import is_valid_code_name
-
-        assert is_valid_code_name("") is False
-
-    def test_rejects_whitespace_only(self):
-        """Whitespace-only strings should be invalid."""
-        from src.contexts.coding.core.invariants import is_valid_code_name
-
-        assert is_valid_code_name("   ") is False
-        assert is_valid_code_name("\t\n") is False
-
-    def test_rejects_too_long(self):
-        """Names exceeding 100 characters should be invalid."""
-        from src.contexts.coding.core.invariants import is_valid_code_name
-
-        long_name = "a" * 101
-        assert is_valid_code_name(long_name) is False
-
-    def test_accepts_max_length(self):
-        """Names at exactly 100 characters should be valid."""
-        from src.contexts.coding.core.invariants import is_valid_code_name
-
-        max_name = "a" * 100
-        assert is_valid_code_name(max_name) is True
-
-
-class TestIsCodeNameUnique:
-    """Tests for is_code_name_unique invariant."""
-
-    def test_unique_in_empty_project(self):
-        """Any name is unique in a project with no codes."""
+    @allure.title("Checks uniqueness case-insensitively and excludes self on rename")
+    def test_uniqueness_and_self_exclusion(self):
+        """Detects duplicates case-insensitively; excludes the code being renamed."""
+        from src.contexts.coding.core.entities import Code, Color
         from src.contexts.coding.core.invariants import is_code_name_unique
+        from src.shared import CodeId
 
         assert is_code_name_unique("Theme", []) is True
-
-    def test_detects_duplicate(self):
-        """Duplicate names should be detected (case-insensitive)."""
-        from src.contexts.coding.core.entities import Code, Color
-        from src.contexts.coding.core.invariants import is_code_name_unique
-        from src.shared import CodeId
-
-        existing = [Code(id=CodeId(value="1"), name="Theme", color=Color(255, 0, 0))]
-
-        assert is_code_name_unique("Theme", existing) is False
-        assert is_code_name_unique("theme", existing) is False
-        assert is_code_name_unique("THEME", existing) is False
-        assert is_code_name_unique("Different", existing) is True
-
-    def test_excludes_self_on_rename(self):
-        """Should exclude the code being renamed."""
-        from src.contexts.coding.core.entities import Code, Color
-        from src.contexts.coding.core.invariants import is_code_name_unique
-        from src.shared import CodeId
 
         existing = [
             Code(id=CodeId(value="1"), name="Theme", color=Color(255, 0, 0)),
             Code(id=CodeId(value="2"), name="Pattern", color=Color(0, 255, 0)),
         ]
 
-        # Same name is allowed when it's the same code (rename to same name)
+        assert is_code_name_unique("Theme", existing) is False
+        assert is_code_name_unique("theme", existing) is False
+        assert is_code_name_unique("THEME", existing) is False
+        assert is_code_name_unique("Different", existing) is True
+
+        # Exclude self on rename
         assert (
             is_code_name_unique("Theme", existing, exclude_code_id=CodeId(value="1"))
             is True
         )
-        # But not if another code has that name
         assert (
             is_code_name_unique("Pattern", existing, exclude_code_id=CodeId(value="1"))
             is False
         )
 
 
-class TestCanCodeBeDeleted:
-    """Tests for can_code_be_deleted invariant."""
+@allure.story("QC-028.01 Code Deletion and Merge")
+class TestCodeDeletionAndMerge:
+    """Tests for can_code_be_deleted and are_codes_mergeable invariants."""
 
-    def test_allows_deletion_without_segments(self):
-        """Code without segments can be deleted."""
+    @allure.title("Deletion rules: no segments ok, with segments blocked unless forced")
+    def test_deletion_rules(self):
+        """Code without segments can be deleted; with segments blocked unless forced."""
+        from src.contexts.coding.core.entities import TextPosition, TextSegment
         from src.contexts.coding.core.invariants import can_code_be_deleted
-        from src.shared import CodeId
+        from src.shared import CodeId, SegmentId, SourceId
 
         assert can_code_be_deleted(CodeId(value="1"), []) is True
 
-    def test_prevents_deletion_with_segments(self):
-        """Code with segments cannot be deleted by default."""
-        from src.contexts.coding.core.entities import TextPosition, TextSegment
-        from src.contexts.coding.core.invariants import can_code_be_deleted
-        from src.shared import CodeId, SegmentId, SourceId
-
         segments = [
             TextSegment(
                 id=SegmentId(value="1"),
@@ -125,36 +99,17 @@ class TestCanCodeBeDeleted:
                 selected_text="test text",
             )
         ]
-
         assert can_code_be_deleted(CodeId(value="1"), segments) is False
-
-    def test_allows_deletion_with_segments_when_forced(self):
-        """Code with segments can be deleted when allow_with_segments=True."""
-        from src.contexts.coding.core.entities import TextPosition, TextSegment
-        from src.contexts.coding.core.invariants import can_code_be_deleted
-        from src.shared import CodeId, SegmentId, SourceId
-
-        segments = [
-            TextSegment(
-                id=SegmentId(value="1"),
-                source_id=SourceId(value="1"),
-                code_id=CodeId(value="1"),
-                position=TextPosition(start=0, end=10),
-                selected_text="test text",
-            )
-        ]
-
         assert (
             can_code_be_deleted(CodeId(value="1"), segments, allow_with_segments=True)
             is True
         )
 
-
-class TestAreCodesMergeable:
-    """Tests for are_codes_mergeable invariant."""
-
-    def test_allows_merge_of_different_codes(self):
-        """Two different existing codes can be merged."""
+    @allure.title(
+        "Merge rules: allows different existing codes, prevents invalid merges"
+    )
+    def test_merge_rules(self):
+        """Two different existing codes can merge; self-merge and missing codes prevented."""
         from src.contexts.coding.core.invariants import are_codes_mergeable
         from src.shared import CodeId
 
@@ -165,45 +120,26 @@ class TestAreCodesMergeable:
             are_codes_mergeable(CodeId(value="1"), CodeId(value="2"), code_exists)
             is True
         )
-
-    def test_prevents_merge_with_self(self):
-        """Cannot merge a code with itself."""
-        from src.contexts.coding.core.invariants import are_codes_mergeable
-        from src.shared import CodeId
-
-        def code_exists(code_id: CodeId) -> bool:
-            return code_id.value == "1"
-
         assert (
             are_codes_mergeable(CodeId(value="1"), CodeId(value="1"), code_exists)
             is False
-        )
+        )  # self
 
-    def test_prevents_merge_when_source_not_found(self):
-        """Cannot merge if source code doesn't exist."""
-        from src.contexts.coding.core.invariants import are_codes_mergeable
-        from src.shared import CodeId
-
-        def code_exists(code_id: CodeId) -> bool:
+        def only_target(code_id: CodeId) -> bool:
             return code_id.value == "2"
 
         assert (
-            are_codes_mergeable(CodeId(value="1"), CodeId(value="2"), code_exists)
+            are_codes_mergeable(CodeId(value="1"), CodeId(value="2"), only_target)
             is False
-        )
+        )  # source missing
 
-    def test_prevents_merge_when_target_not_found(self):
-        """Cannot merge if target code doesn't exist."""
-        from src.contexts.coding.core.invariants import are_codes_mergeable
-        from src.shared import CodeId
-
-        def code_exists(code_id: CodeId) -> bool:
+        def only_source(code_id: CodeId) -> bool:
             return code_id.value == "1"
 
         assert (
-            are_codes_mergeable(CodeId(value="1"), CodeId(value="2"), code_exists)
+            are_codes_mergeable(CodeId(value="1"), CodeId(value="2"), only_source)
             is False
-        )
+        )  # target missing
 
 
 # ============================================================
@@ -211,68 +147,47 @@ class TestAreCodesMergeable:
 # ============================================================
 
 
-class TestIsValidCategoryName:
-    """Tests for is_valid_category_name invariant."""
+@allure.story("QC-028.02 Category Validation")
+class TestCategoryInvariants:
+    """Tests for category name, uniqueness, hierarchy, and deletion invariants."""
 
-    def test_accepts_normal_string(self):
-        """Normal alphanumeric names should be valid."""
+    @pytest.mark.parametrize(
+        "name, expected",
+        [
+            ("Themes", True),
+            ("Sub-Category", True),
+            ("a" * 100, True),
+            ("", False),
+            ("   ", False),
+            ("a" * 101, False),
+        ],
+    )
+    @allure.title("Validates category names")
+    def test_validates_category_names(self, name, expected):
+        """Valid names accepted; empty, whitespace-only, and too-long rejected."""
         from src.contexts.coding.core.invariants import is_valid_category_name
 
-        assert is_valid_category_name("Themes") is True
-        assert is_valid_category_name("Sub-Category") is True
+        assert is_valid_category_name(name) is expected
 
-    def test_rejects_empty_string(self):
-        """Empty string should be invalid."""
-        from src.contexts.coding.core.invariants import is_valid_category_name
-
-        assert is_valid_category_name("") is False
-
-    def test_rejects_whitespace_only(self):
-        """Whitespace-only strings should be invalid."""
-        from src.contexts.coding.core.invariants import is_valid_category_name
-
-        assert is_valid_category_name("   ") is False
-
-    def test_rejects_too_long(self):
-        """Names exceeding 100 characters should be invalid."""
-        from src.contexts.coding.core.invariants import is_valid_category_name
-
-        assert is_valid_category_name("a" * 101) is False
-
-    def test_accepts_max_length(self):
-        """Names at exactly 100 characters should be valid."""
-        from src.contexts.coding.core.invariants import is_valid_category_name
-
-        assert is_valid_category_name("a" * 100) is True
-
-
-class TestIsCategoryNameUnique:
-    """Tests for is_category_name_unique invariant."""
-
-    def test_unique_in_empty_project(self):
-        """Any name is unique with no categories."""
-        from src.contexts.coding.core.invariants import is_category_name_unique
-
-        assert is_category_name_unique("Themes", []) is True
-
-    def test_detects_duplicate(self):
-        """Duplicate names should be detected (case-insensitive)."""
+    @allure.title("Checks category name uniqueness case-insensitively")
+    def test_category_name_uniqueness(self):
+        """Any name unique with no categories; duplicates detected case-insensitively."""
         from src.contexts.coding.core.entities import Category
         from src.contexts.coding.core.invariants import is_category_name_unique
         from src.shared import CategoryId
 
-        existing = [Category(id=CategoryId(value="1"), name="Themes")]
+        assert is_category_name_unique("Themes", []) is True
 
+        existing = [Category(id=CategoryId(value="1"), name="Themes")]
         assert is_category_name_unique("Themes", existing) is False
         assert is_category_name_unique("themes", existing) is False
         assert is_category_name_unique("Patterns", existing) is True
 
-
-class TestIsCategoryHierarchyValid:
-    """Tests for is_category_hierarchy_valid invariant."""
-
-    def test_allows_move_to_root(self):
-        """Moving to root (None parent) is always valid."""
+    @allure.title(
+        "Validates hierarchy: root ok, self-parent blocked, valid parent allowed"
+    )
+    def test_hierarchy_rules(self):
+        """Move to root is valid; self-parent is invalid; valid parent is allowed."""
         from src.contexts.coding.core.entities import Category
         from src.contexts.coding.core.invariants import is_category_hierarchy_valid
         from src.shared import CategoryId
@@ -287,33 +202,12 @@ class TestIsCategoryHierarchyValid:
         assert (
             is_category_hierarchy_valid(CategoryId(value="2"), None, categories) is True
         )
-
-    def test_prevents_self_parent(self):
-        """Cannot be your own parent."""
-        from src.contexts.coding.core.entities import Category
-        from src.contexts.coding.core.invariants import is_category_hierarchy_valid
-        from src.shared import CategoryId
-
-        categories = [Category(id=CategoryId(value="1"), name="Category")]
-
         assert (
             is_category_hierarchy_valid(
                 CategoryId(value="1"), CategoryId(value="1"), categories
             )
             is False
         )
-
-    def test_allows_valid_parent(self):
-        """Valid parent relationship should be allowed."""
-        from src.contexts.coding.core.entities import Category
-        from src.contexts.coding.core.invariants import is_category_hierarchy_valid
-        from src.shared import CategoryId
-
-        categories = [
-            Category(id=CategoryId(value="1"), name="Parent"),
-            Category(id=CategoryId(value="2"), name="Child"),
-        ]
-
         assert (
             is_category_hierarchy_valid(
                 CategoryId(value="2"), CategoryId(value="1"), categories
@@ -321,22 +215,14 @@ class TestIsCategoryHierarchyValid:
             is True
         )
 
-
-class TestCanCategoryBeDeleted:
-    """Tests for can_category_be_deleted invariant."""
-
-    def test_allows_deletion_of_empty_category(self):
-        """Category without codes or children can be deleted."""
-        from src.contexts.coding.core.invariants import can_category_be_deleted
-        from src.shared import CategoryId
-
-        assert can_category_be_deleted(CategoryId(value="1"), [], []) is True
-
-    def test_prevents_deletion_with_codes(self):
-        """Category with codes cannot be deleted by default."""
-        from src.contexts.coding.core.entities import Code, Color
+    @allure.title("Deletion rules: empty ok, codes block, children block unless forced")
+    def test_deletion_rules(self):
+        """Category without codes/children can be deleted; codes/children block unless forced."""
+        from src.contexts.coding.core.entities import Category, Code, Color
         from src.contexts.coding.core.invariants import can_category_be_deleted
         from src.shared import CategoryId, CodeId
+
+        assert can_category_be_deleted(CategoryId(value="1"), [], []) is True
 
         codes = [
             Code(
@@ -346,38 +232,17 @@ class TestCanCategoryBeDeleted:
                 category_id=CategoryId(value="1"),
             )
         ]
-
         assert can_category_be_deleted(CategoryId(value="1"), codes, []) is False
 
-    def test_prevents_deletion_with_children(self):
-        """Category with child categories cannot be deleted by default."""
-        from src.contexts.coding.core.entities import Category
-        from src.contexts.coding.core.invariants import can_category_be_deleted
-        from src.shared import CategoryId
-
-        categories = [
+        children = [
             Category(
                 id=CategoryId(value="2"), name="Child", parent_id=CategoryId(value="1")
             )
         ]
-
-        assert can_category_be_deleted(CategoryId(value="1"), [], categories) is False
-
-    def test_allows_deletion_with_children_when_forced(self):
-        """Category with children can be deleted when allow_with_children=True."""
-        from src.contexts.coding.core.entities import Category
-        from src.contexts.coding.core.invariants import can_category_be_deleted
-        from src.shared import CategoryId
-
-        categories = [
-            Category(
-                id=CategoryId(value="2"), name="Child", parent_id=CategoryId(value="1")
-            )
-        ]
-
+        assert can_category_be_deleted(CategoryId(value="1"), [], children) is False
         assert (
             can_category_be_deleted(
-                CategoryId(value="1"), [], categories, allow_with_children=True
+                CategoryId(value="1"), [], children, allow_with_children=True
             )
             is True
         )
@@ -388,123 +253,85 @@ class TestCanCategoryBeDeleted:
 # ============================================================
 
 
-class TestIsValidTextPosition:
-    """Tests for is_valid_text_position invariant."""
+@allure.story("QC-029.01 Segment Position Validation")
+class TestSegmentPositionInvariants:
+    """Tests for position, region, time range, and importance validation."""
 
-    def test_accepts_valid_position(self):
-        """Valid positions within source bounds should be accepted."""
+    @pytest.mark.parametrize(
+        "start, end, source_length, expected",
+        [
+            (0, 10, 100, True),
+            (90, 100, 100, True),
+            (90, 110, 100, False),
+        ],
+    )
+    @allure.title("Validates text positions within source bounds")
+    def test_validates_text_positions(self, start, end, source_length, expected):
+        """Positions within bounds accepted; beyond bounds rejected."""
         from src.contexts.coding.core.entities import TextPosition
         from src.contexts.coding.core.invariants import is_valid_text_position
 
-        position = TextPosition(start=0, end=10)
-        assert is_valid_text_position(position, source_length=100) is True
+        position = TextPosition(start=start, end=end)
+        assert is_valid_text_position(position, source_length=source_length) is expected
 
-    def test_accepts_position_at_end(self):
-        """Position at exact end of source should be accepted."""
-        from src.contexts.coding.core.entities import TextPosition
-        from src.contexts.coding.core.invariants import is_valid_text_position
-
-        position = TextPosition(start=90, end=100)
-        assert is_valid_text_position(position, source_length=100) is True
-
-    def test_rejects_position_beyond_end(self):
-        """Position beyond source length should be rejected."""
-        from src.contexts.coding.core.entities import TextPosition
-        from src.contexts.coding.core.invariants import is_valid_text_position
-
-        position = TextPosition(start=90, end=110)
-        assert is_valid_text_position(position, source_length=100) is False
-
-
-class TestIsValidImageRegion:
-    """Tests for is_valid_image_region invariant."""
-
-    def test_accepts_valid_region(self):
-        """Valid region within image bounds should be accepted."""
+    @pytest.mark.parametrize(
+        "x, y, width, height, expected",
+        [
+            (0, 0, 50, 50, True),
+            (50, 50, 50, 50, True),
+            (80, 0, 50, 50, False),
+            (0, 80, 50, 50, False),
+        ],
+    )
+    @allure.title("Validates image regions within image bounds")
+    def test_validates_image_regions(self, x, y, width, height, expected):
+        """Regions within bounds accepted; beyond width or height rejected."""
         from src.contexts.coding.core.entities import ImageRegion
         from src.contexts.coding.core.invariants import is_valid_image_region
 
-        region = ImageRegion(x=0, y=0, width=50, height=50)
-        assert is_valid_image_region(region, image_width=100, image_height=100) is True
+        region = ImageRegion(x=x, y=y, width=width, height=height)
+        assert (
+            is_valid_image_region(region, image_width=100, image_height=100) is expected
+        )
 
-    def test_accepts_region_at_bounds(self):
-        """Region exactly at image bounds should be accepted."""
-        from src.contexts.coding.core.entities import ImageRegion
-        from src.contexts.coding.core.invariants import is_valid_image_region
-
-        region = ImageRegion(x=50, y=50, width=50, height=50)
-        assert is_valid_image_region(region, image_width=100, image_height=100) is True
-
-    def test_rejects_region_beyond_width(self):
-        """Region extending beyond image width should be rejected."""
-        from src.contexts.coding.core.entities import ImageRegion
-        from src.contexts.coding.core.invariants import is_valid_image_region
-
-        region = ImageRegion(x=80, y=0, width=50, height=50)
-        assert is_valid_image_region(region, image_width=100, image_height=100) is False
-
-    def test_rejects_region_beyond_height(self):
-        """Region extending beyond image height should be rejected."""
-        from src.contexts.coding.core.entities import ImageRegion
-        from src.contexts.coding.core.invariants import is_valid_image_region
-
-        region = ImageRegion(x=0, y=80, width=50, height=50)
-        assert is_valid_image_region(region, image_width=100, image_height=100) is False
-
-
-class TestIsValidTimeRange:
-    """Tests for is_valid_time_range invariant."""
-
-    def test_accepts_valid_range(self):
-        """Valid time range within duration should be accepted."""
+    @pytest.mark.parametrize(
+        "start_ms, end_ms, duration_ms, expected",
+        [
+            (0, 5000, 10000, True),
+            (5000, 10000, 10000, True),
+            (5000, 15000, 10000, False),
+        ],
+    )
+    @allure.title("Validates time ranges within media duration")
+    def test_validates_time_ranges(self, start_ms, end_ms, duration_ms, expected):
+        """Ranges within duration accepted; beyond duration rejected."""
         from src.contexts.coding.core.entities import TimeRange
         from src.contexts.coding.core.invariants import is_valid_time_range
 
-        time_range = TimeRange(start_ms=0, end_ms=5000)
-        assert is_valid_time_range(time_range, duration_ms=10000) is True
+        time_range = TimeRange(start_ms=start_ms, end_ms=end_ms)
+        assert is_valid_time_range(time_range, duration_ms=duration_ms) is expected
 
-    def test_accepts_range_at_duration(self):
-        """Range ending at exact duration should be accepted."""
-        from src.contexts.coding.core.entities import TimeRange
-        from src.contexts.coding.core.invariants import is_valid_time_range
-
-        time_range = TimeRange(start_ms=5000, end_ms=10000)
-        assert is_valid_time_range(time_range, duration_ms=10000) is True
-
-    def test_rejects_range_beyond_duration(self):
-        """Range extending beyond duration should be rejected."""
-        from src.contexts.coding.core.entities import TimeRange
-        from src.contexts.coding.core.invariants import is_valid_time_range
-
-        time_range = TimeRange(start_ms=5000, end_ms=15000)
-        assert is_valid_time_range(time_range, duration_ms=10000) is False
-
-
-class TestIsValidImportance:
-    """Tests for is_valid_importance invariant."""
-
-    def test_accepts_valid_values(self):
-        """Valid importance values (0, 1, 2) should be accepted."""
+    @pytest.mark.parametrize(
+        "value, expected",
+        [(0, True), (1, True), (2, True), (-1, False), (3, False), (100, False)],
+    )
+    @allure.title("Validates importance values 0-2")
+    def test_validates_importance(self, value, expected):
+        """Values 0-2 accepted; others rejected."""
         from src.contexts.coding.core.invariants import is_valid_importance
 
-        assert is_valid_importance(0) is True
-        assert is_valid_importance(1) is True
-        assert is_valid_importance(2) is True
-
-    def test_rejects_invalid_values(self):
-        """Invalid importance values should be rejected."""
-        from src.contexts.coding.core.invariants import is_valid_importance
-
-        assert is_valid_importance(-1) is False
-        assert is_valid_importance(3) is False
-        assert is_valid_importance(100) is False
+        assert is_valid_importance(value) is expected
 
 
-class TestDoesSegmentOverlap:
+@allure.story("QC-029.01 Segment Overlap Detection")
+class TestSegmentOverlap:
     """Tests for does_segment_overlap invariant."""
 
-    def test_detects_overlap(self):
-        """Should detect overlapping segments with same code."""
+    @allure.title(
+        "Detects overlap with same code; no overlap with different code or adjacent"
+    )
+    def test_overlap_detection(self):
+        """Detects overlap with same code; no overlap with different code or adjacent."""
         from src.contexts.coding.core.entities import TextPosition, TextSegment
         from src.contexts.coding.core.invariants import does_segment_overlap
         from src.shared import CodeId, SegmentId, SourceId
@@ -519,47 +346,24 @@ class TestDoesSegmentOverlap:
             )
         ]
 
-        new_position = TextPosition(start=15, end=25)
-        assert does_segment_overlap(new_position, existing, CodeId(value="1")) is True
-
-    def test_no_overlap_with_different_code(self):
-        """Should not detect overlap with different code."""
-        from src.contexts.coding.core.entities import TextPosition, TextSegment
-        from src.contexts.coding.core.invariants import does_segment_overlap
-        from src.shared import CodeId, SegmentId, SourceId
-
-        existing = [
-            TextSegment(
-                id=SegmentId(value="1"),
-                source_id=SourceId(value="1"),
-                code_id=CodeId(value="1"),
-                position=TextPosition(start=10, end=20),
-                selected_text="test",
+        assert (
+            does_segment_overlap(
+                TextPosition(start=15, end=25), existing, CodeId(value="1")
             )
-        ]
-
-        new_position = TextPosition(start=15, end=25)
-        # Different code ID
-        assert does_segment_overlap(new_position, existing, CodeId(value="2")) is False
-
-    def test_no_overlap_when_adjacent(self):
-        """Adjacent segments should not overlap."""
-        from src.contexts.coding.core.entities import TextPosition, TextSegment
-        from src.contexts.coding.core.invariants import does_segment_overlap
-        from src.shared import CodeId, SegmentId, SourceId
-
-        existing = [
-            TextSegment(
-                id=SegmentId(value="1"),
-                source_id=SourceId(value="1"),
-                code_id=CodeId(value="1"),
-                position=TextPosition(start=10, end=20),
-                selected_text="test",
+            is True
+        )
+        assert (
+            does_segment_overlap(
+                TextPosition(start=15, end=25), existing, CodeId(value="2")
             )
-        ]
-
-        new_position = TextPosition(start=20, end=30)
-        assert does_segment_overlap(new_position, existing, CodeId(value="1")) is False
+            is False
+        )
+        assert (
+            does_segment_overlap(
+                TextPosition(start=20, end=30), existing, CodeId(value="1")
+            )
+            is False
+        )
 
 
 # ============================================================
@@ -567,56 +371,42 @@ class TestDoesSegmentOverlap:
 # ============================================================
 
 
-class TestDoesCodeExist:
-    """Tests for does_code_exist invariant."""
+@allure.story("QC-028.01 Cross-Entity Existence and Counting")
+class TestCrossEntityInvariants:
+    """Tests for does_code_exist, does_category_exist, count_segments_for_code, count_codes_in_category."""
 
-    def test_finds_existing_code(self):
-        """Should find code that exists."""
-        from src.contexts.coding.core.entities import Code, Color
-        from src.contexts.coding.core.invariants import does_code_exist
-        from src.shared import CodeId
+    @allure.title("Checks code and category existence")
+    def test_entity_existence(self):
+        """Finds existing code/category; returns False for missing."""
+        from src.contexts.coding.core.entities import Category, Code, Color
+        from src.contexts.coding.core.invariants import (
+            does_category_exist,
+            does_code_exist,
+        )
+        from src.shared import CategoryId, CodeId
 
         codes = [Code(id=CodeId(value="1"), name="Theme", color=Color(255, 0, 0))]
-
         assert does_code_exist(CodeId(value="1"), codes) is True
-
-    def test_returns_false_for_missing_code(self):
-        """Should return False for non-existent code."""
-        from src.contexts.coding.core.invariants import does_code_exist
-        from src.shared import CodeId
-
-        assert does_code_exist(CodeId(value="999"), []) is False
-
-
-class TestDoesCategoryExist:
-    """Tests for does_category_exist invariant."""
-
-    def test_finds_existing_category(self):
-        """Should find category that exists."""
-        from src.contexts.coding.core.entities import Category
-        from src.contexts.coding.core.invariants import does_category_exist
-        from src.shared import CategoryId
+        assert does_code_exist(CodeId(value="999"), codes) is False
 
         categories = [Category(id=CategoryId(value="1"), name="Themes")]
-
         assert does_category_exist(CategoryId(value="1"), categories) is True
+        assert does_category_exist(CategoryId(value="999"), categories) is False
 
-    def test_returns_false_for_missing_category(self):
-        """Should return False for non-existent category."""
-        from src.contexts.coding.core.invariants import does_category_exist
-        from src.shared import CategoryId
-
-        assert does_category_exist(CategoryId(value="999"), []) is False
-
-
-class TestCountSegmentsForCode:
-    """Tests for count_segments_for_code invariant."""
-
-    def test_counts_segments(self):
-        """Should count segments for a code."""
-        from src.contexts.coding.core.entities import TextPosition, TextSegment
-        from src.contexts.coding.core.invariants import count_segments_for_code
-        from src.shared import CodeId, SegmentId, SourceId
+    @allure.title("Counts segments for code and codes in category")
+    def test_counting(self):
+        """Should count segments for a code and codes in a category."""
+        from src.contexts.coding.core.entities import (
+            Code,
+            Color,
+            TextPosition,
+            TextSegment,
+        )
+        from src.contexts.coding.core.invariants import (
+            count_codes_in_category,
+            count_segments_for_code,
+        )
+        from src.shared import CategoryId, CodeId, SegmentId, SourceId
 
         segments = [
             TextSegment(
@@ -641,20 +431,9 @@ class TestCountSegmentsForCode:
                 selected_text="test3",
             ),
         ]
-
         assert count_segments_for_code(CodeId(value="1"), segments) == 2
         assert count_segments_for_code(CodeId(value="2"), segments) == 1
         assert count_segments_for_code(CodeId(value="3"), segments) == 0
-
-
-class TestCountCodesInCategory:
-    """Tests for count_codes_in_category invariant."""
-
-    def test_counts_codes(self):
-        """Should count codes in a category."""
-        from src.contexts.coding.core.entities import Code, Color
-        from src.contexts.coding.core.invariants import count_codes_in_category
-        from src.shared import CategoryId, CodeId
 
         codes = [
             Code(
@@ -676,7 +455,6 @@ class TestCountCodesInCategory:
                 category_id=CategoryId(value="2"),
             ),
         ]
-
         assert count_codes_in_category(CategoryId(value="1"), codes) == 2
         assert count_codes_in_category(CategoryId(value="2"), codes) == 1
         assert count_codes_in_category(CategoryId(value="3"), codes) == 0

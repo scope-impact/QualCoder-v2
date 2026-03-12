@@ -19,18 +19,22 @@ from src.contexts.exchange.core.failure_events import ImportFailed
 from src.contexts.exchange.infra.csv_parser import parse_survey_csv
 from src.shared import CaseId
 from src.shared.common.operation_result import OperationResult
+from src.shared.infra.metrics import metered_command
 
 if TYPE_CHECKING:
     from src.contexts.cases.core.commandHandlers._state import CaseRepository
     from src.shared.infra.event_bus import EventBus
+    from src.shared.infra.session import Session
 
 logger = logging.getLogger("qualcoder.exchange.core")
 
 
+@metered_command("import_survey_csv")
 def import_survey_csv(
     command: ImportSurveyCSVCommand,
     case_repo: CaseRepository,
     event_bus: EventBus,
+    session: Session | None = None,
 ) -> OperationResult:
     """
     Import survey data from a CSV file.

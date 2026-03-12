@@ -55,7 +55,7 @@ def qapp():
 # =============================================================================
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def colors():
     """
     Get the design system color palette.

@@ -26,6 +26,7 @@ from src.shared.infra.metrics import metered_command
 
 if TYPE_CHECKING:
     from src.shared.infra.event_bus import EventBus
+    from src.shared.infra.session import Session
 
 logger = logging.getLogger("qualcoder.coding.core")
 
@@ -37,6 +38,7 @@ def merge_codes(
     category_repo: CategoryRepository,
     segment_repo: SegmentRepository,
     event_bus: EventBus,
+    session: Session | None = None,
 ) -> OperationResult:
     """
     Merge source code into target code.
@@ -75,13 +77,9 @@ def merge_codes(
 
     event: CodesMerged = result
 
-    # Atomic: reassign segments + delete source code in one transaction
-    from src.shared.infra.unit_of_work import UnitOfWork
-
-    with UnitOfWork(code_repo._conn) as uow:
-        segment_repo.reassign_code(source_code_id, target_code_id)
-        code_repo.delete(source_code_id)
-        uow.commit()
+    # Reassign segments + delete source code, then commit via session
+    segment_repo.reassign_code(source_code_id, target_code_id)
+    code_repo.delete(source_code_id)
 
     event_bus.publish(event)
 

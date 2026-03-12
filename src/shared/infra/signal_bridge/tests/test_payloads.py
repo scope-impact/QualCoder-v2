@@ -1,7 +1,8 @@
 """Tests for Signal Bridge payloads."""
 
-from datetime import UTC, datetime
+from datetime import datetime
 
+import allure
 import pytest
 
 from src.shared.infra.signal_bridge.payloads import (
@@ -10,12 +11,19 @@ from src.shared.infra.signal_bridge.payloads import (
     SignalPayload,
 )
 
+pytestmark = [
+    pytest.mark.unit,
+    allure.epic("QualCoder v2"),
+    allure.feature("Shared Infrastructure"),
+]
 
+
+@allure.story("QC-000.02 Signal Bridge Payloads")
 class TestActivityStatus:
     """Tests for ActivityStatus enum."""
 
+    @allure.title("All status values exist with correct string values")
     def test_status_values(self) -> None:
-        """Verify all status values exist."""
         assert ActivityStatus.COMPLETED.value == "completed"
         assert ActivityStatus.PENDING.value == "pending"
         assert ActivityStatus.QUEUED.value == "queued"
@@ -23,12 +31,17 @@ class TestActivityStatus:
         assert ActivityStatus.FAILED.value == "failed"
 
 
+@allure.story("QC-000.02 Signal Bridge Payloads")
 class TestSignalPayload:
     """Tests for SignalPayload base type."""
 
-    def test_create_payload(self) -> None:
-        """Test creating a signal payload."""
+    @allure.title(
+        "Creates payload, is immutable, and from_event handles local/AI sessions"
+    )
+    def test_create_immutability_and_from_event(self) -> None:
         ts = datetime(2026, 1, 29, 12, 0, 0)
+
+        # Create payload with all fields
         payload = SignalPayload(
             timestamp=ts,
             session_id="local",
@@ -40,44 +53,34 @@ class TestSignalPayload:
         assert payload.is_ai_action is False
         assert payload.event_type == "coding.code_created"
 
-    def test_payload_immutability(self) -> None:
-        """Test that payload is immutable."""
-        payload = SignalPayload(
-            timestamp=datetime.now(UTC),
-            session_id="local",
-            is_ai_action=False,
-            event_type="test",
-        )
-        with pytest.raises(AttributeError):  # FrozenInstanceError
+        # Immutability
+        with pytest.raises(AttributeError):
             payload.session_id = "modified"  # type: ignore
 
-    def test_from_event_local_session(self) -> None:
-        """Test from_event with local session."""
-        ts = datetime(2026, 1, 29, 12, 0, 0)
-        payload = SignalPayload.from_event(
+        # from_event with local session
+        local_payload = SignalPayload.from_event(
             event_type="coding.code_created",
             occurred_at=ts,
         )
-        assert payload.session_id == "local"
-        assert payload.is_ai_action is False
+        assert local_payload.session_id == "local"
+        assert local_payload.is_ai_action is False
 
-    def test_from_event_ai_session(self) -> None:
-        """Test from_event with AI session."""
-        ts = datetime(2026, 1, 29, 12, 0, 0)
-        payload = SignalPayload.from_event(
+        # from_event with AI session
+        ai_payload = SignalPayload.from_event(
             event_type="coding.code_created",
             occurred_at=ts,
             session_id="claude-session-123",
         )
-        assert payload.session_id == "claude-session-123"
-        assert payload.is_ai_action is True
+        assert ai_payload.session_id == "claude-session-123"
+        assert ai_payload.is_ai_action is True
 
 
+@allure.story("QC-000.02 Signal Bridge Payloads")
 class TestActivityItem:
     """Tests for ActivityItem type."""
 
+    @allure.title("Creates activity item with all fields and defaults")
     def test_create_activity_item(self) -> None:
-        """Test creating an activity item."""
         ts = datetime(2026, 1, 29, 12, 0, 0)
         item = ActivityItem(
             timestamp=ts,
@@ -98,48 +101,48 @@ class TestActivityItem:
         assert item.is_ai_action is False
         assert item.metadata == {}
 
-    def test_completed_factory(self) -> None:
-        """Test ActivityItem.completed factory method."""
-        item = ActivityItem.completed(
+    @allure.title(
+        "Factory methods (completed, pending, failed) set correct status and metadata"
+    )
+    def test_factory_methods(self) -> None:
+        # completed
+        completed = ActivityItem.completed(
             description="Created code",
             context="coding",
             entity_type="code",
             entity_id="456",
         )
-        assert item.status == ActivityStatus.COMPLETED
-        assert item.description == "Created code"
-        assert item.context == "coding"
-        assert item.is_ai_action is False
+        assert completed.status == ActivityStatus.COMPLETED
+        assert completed.description == "Created code"
+        assert completed.context == "coding"
+        assert completed.is_ai_action is False
 
-    def test_pending_factory(self) -> None:
-        """Test ActivityItem.pending factory method."""
-        item = ActivityItem.pending(
+        # pending with AI session
+        pending = ActivityItem.pending(
             description="Waiting for approval",
             context="coding",
             entity_type="code",
             session_id="ai-session",
         )
-        assert item.status == ActivityStatus.PENDING
-        assert item.is_ai_action is True
+        assert pending.status == ActivityStatus.PENDING
+        assert pending.is_ai_action is True
 
-    def test_failed_factory(self) -> None:
-        """Test ActivityItem.failed factory method."""
-        item = ActivityItem.failed(
+        # failed with error metadata
+        failed = ActivityItem.failed(
             description="Failed to create code",
             context="coding",
             entity_type="code",
             error="Name already exists",
         )
-        assert item.status == ActivityStatus.FAILED
-        assert item.metadata["error"] == "Name already exists"
+        assert failed.status == ActivityStatus.FAILED
+        assert failed.metadata["error"] == "Name already exists"
 
-    def test_activity_with_metadata(self) -> None:
-        """Test activity item with additional metadata."""
-        item = ActivityItem.completed(
+        # completed with extra metadata
+        with_meta = ActivityItem.completed(
             description="Created code",
             context="coding",
             entity_type="code",
             metadata={"color": "#FF0000", "category": "Emotions"},
         )
-        assert item.metadata["color"] == "#FF0000"
-        assert item.metadata["category"] == "Emotions"
+        assert with_meta.metadata["color"] == "#FF0000"
+        assert with_meta.metadata["category"] == "Emotions"

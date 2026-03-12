@@ -6,10 +6,12 @@ Run with: uv run python -m src.main
 
 from __future__ import annotations
 
+import asyncio
 import os
 import sys
 from pathlib import Path
 
+import qasync
 from PySide6.QtWidgets import QApplication, QMessageBox
 
 from design_system import get_colors
@@ -85,9 +87,8 @@ class QualCoderApp:
         self._coding_signal_bridge.start()
         self._sync_signal_bridge = SyncSignalBridge.instance(self._ctx.event_bus)
         self._sync_signal_bridge.start()
-        # Start embedded MCP server for AI agent access
+        # MCP server — started as asyncio task in run() on the unified loop
         self._mcp_server = MCPServerManager(ctx=self._ctx)
-        self._mcp_server.start()
         self._shell: AppShell | None = None
         self._screens: dict = {}
 
@@ -232,6 +233,7 @@ class QualCoderApp:
                 else None
             ),
             signal_bridge=self._project_signal_bridge,
+            session=self._ctx.session,
         )
         self._screens["files"].set_viewmodel(file_manager_viewmodel)
 
@@ -254,6 +256,7 @@ class QualCoderApp:
             source_repo=self._ctx.sources_context.source_repo,
             case_repo=self._ctx.cases_context.case_repo,
             event_bus=self._ctx.event_bus,
+            session=self._ctx.session,
         )
         exchange_viewmodel = ExchangeViewModel(coordinator=exchange_coordinator)
         self._screens["files"].set_exchange_viewmodel(exchange_viewmodel)
@@ -265,6 +268,7 @@ class QualCoderApp:
                 category_repo=self._ctx.coding_context.category_repo,
                 segment_repo=self._ctx.coding_context.segment_repo,
                 event_bus=self._ctx.event_bus,
+                session=self._ctx.session,
             )
             text_coding_viewmodel = TextCodingViewModel(
                 controller=coding_coordinator,
@@ -414,7 +418,7 @@ class QualCoderApp:
         self._ctx.stop()
 
     def run(self) -> int:
-        """Run the application."""
+        """Run the application with unified asyncio + Qt event loop via qasync."""
         self._ctx.start()
         self._setup_shell()
         self._shell.show()
@@ -422,7 +426,17 @@ class QualCoderApp:
         # Ensure cleanup happens regardless of how app closes
         self._app.aboutToQuit.connect(self._cleanup)
 
-        return self._app.exec()
+        # Create unified event loop: asyncio coroutines and Qt events
+        # share a single loop — no need for a separate MCP server thread.
+        loop = qasync.QEventLoop(self._app)
+        asyncio.set_event_loop(loop)
+
+        with loop:
+            # Start MCP server as an asyncio task on the unified loop
+            loop.create_task(self._mcp_server.serve_async())
+            loop.run_forever()
+
+        return 0
 
 
 def main():

@@ -111,6 +111,7 @@ def handle_batch_apply_codes(
         category_repo=ctx.category_repo,
         segment_repo=ctx.segment_repo,
         event_bus=ctx.event_bus,
+        session=ctx.session,
     )
 
     if result.is_success and result.data:
@@ -211,6 +212,7 @@ def handle_delete_segment(
         category_repo=ctx.category_repo,
         segment_repo=ctx.segment_repo,
         event_bus=ctx.event_bus,
+        session=ctx.session,
     )
 
     if result.is_success:
@@ -251,6 +253,7 @@ def handle_create_code(
         category_repo=ctx.category_repo,
         segment_repo=ctx.segment_repo,
         event_bus=ctx.event_bus,
+        session=ctx.session,
     )
 
     if result.is_success and result.data:

@@ -24,6 +24,7 @@ from src.shared.common.operation_result import OperationResult
 
 if TYPE_CHECKING:
     from src.shared.infra.event_bus import EventBus
+    from src.shared.infra.session import Session
 
 
 class ExchangeCoordinator:
@@ -45,6 +46,7 @@ class ExchangeCoordinator:
         source_repo,
         case_repo,
         event_bus: EventBus,
+        session: Session | None = None,
     ) -> None:
         self._code_repo = code_repo
         self._category_repo = category_repo
@@ -52,6 +54,7 @@ class ExchangeCoordinator:
         self._source_repo = source_repo
         self._case_repo = case_repo
         self._event_bus = event_bus
+        self._session = session
 
     # =========================================================================
     # Export Commands
@@ -115,6 +118,7 @@ class ExchangeCoordinator:
             category_repo=self._category_repo,
             segment_repo=self._segment_repo,
             event_bus=self._event_bus,
+            session=self._session,
         )
 
     def import_survey_csv(self, command: ImportSurveyCSVCommand) -> OperationResult:
@@ -127,6 +131,7 @@ class ExchangeCoordinator:
             command=command,
             case_repo=self._case_repo,
             event_bus=self._event_bus,
+            session=self._session,
         )
 
     def import_refi_qda(self, command: ImportRefiQdaCommand) -> OperationResult:
@@ -142,6 +147,7 @@ class ExchangeCoordinator:
             category_repo=self._category_repo,
             segment_repo=self._segment_repo,
             event_bus=self._event_bus,
+            session=self._session,
         )
 
     def import_rqda(self, command: ImportRqdaCommand) -> OperationResult:
@@ -155,4 +161,5 @@ class ExchangeCoordinator:
             category_repo=self._category_repo,
             segment_repo=self._segment_repo,
             event_bus=self._event_bus,
+            session=self._session,
         )

@@ -37,7 +37,6 @@ import json
 import logging
 import queue
 import threading
-import time
 from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
@@ -218,7 +217,7 @@ class SyncEngine:
         # Threading
         self._outbound_thread: threading.Thread | None = None
         self._subscription_threads: list[threading.Thread] = []
-        self._running = False
+        self._stop_event = threading.Event()
         self._lock = threading.Lock()
 
         # Dedicated connection for sync infrastructure (sync_queue, sync_id_map tables).
@@ -288,6 +287,8 @@ class SyncEngine:
                     )
                 )
                 rows = result.fetchall()
+                # Release SHARED lock so other connections can write
+                self._sync_connection.commit()
 
             for row in rows:
                 change = SyncChange(
@@ -370,10 +371,10 @@ class SyncEngine:
 
     def start(self) -> None:
         """Start the sync engine."""
-        if self._running:
-            return
+        if self._outbound_thread is not None and self._outbound_thread.is_alive():
+            return  # already running
 
-        self._running = True
+        self._stop_event.clear()
         self._state.status = SyncStatus.OFFLINE
 
         # Load any pending changes from previous session
@@ -408,14 +409,14 @@ class SyncEngine:
             self._outbound_thread is not None,
             len(self._subscription_threads),
         )
-        self._running = False
+        self._stop_event.set()
 
         # Wait for threads to finish
         if self._outbound_thread and self._outbound_thread.is_alive():
             logger.debug("Joining outbound sync thread...")
-            self._outbound_thread.join(timeout=2.0)
+            self._outbound_thread.join(timeout=5.0)
             if self._outbound_thread.is_alive():
-                logger.warning("Outbound sync thread did not stop within 2s timeout")
+                logger.warning("Outbound sync thread did not stop within 5s timeout")
             else:
                 logger.debug("Outbound sync thread joined")
 
@@ -585,11 +586,12 @@ class SyncEngine:
         """Background thread: drains sync_outbox and pushes each row to Convex."""
         logger.info("[SyncEngine-Outbound] Outbound sync loop started")
         try:
-            while self._running:
+            while not self._stop_event.is_set():
                 try:
                     self._drain_legacy_queue()
                     self._drain_sync_outbox()
-                    time.sleep(5.0)
+                    # Use event wait instead of sleep so stop() can wake us immediately
+                    self._stop_event.wait(timeout=5.0)
                 except Exception as e:
                     logger.exception(f"Error in outbound sync loop: {e}")
         finally:
@@ -632,6 +634,8 @@ class SyncEngine:
                     )
                 )
                 rows = result.fetchall()
+                # Release SHARED lock so other connections can write
+                self._sync_connection.commit()
 
             if not rows:
                 return

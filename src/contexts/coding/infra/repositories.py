@@ -112,7 +112,6 @@ class SQLiteCodeRepository:
                 code.id.value,
                 {"name": code.name, "color": code.color.to_hex(), "memo": code.memo},
             )
-        self._conn.commit()
 
     def delete(self, code_id: CodeId) -> None:
         """Delete a code by ID."""
@@ -121,7 +120,6 @@ class SQLiteCodeRepository:
         self._conn.execute(stmt)
         if self._outbox:
             self._outbox.write_delete("code", code_id.value)
-        self._conn.commit()
 
     def exists(self, code_id: CodeId) -> bool:
         """Check if a code exists."""
@@ -236,7 +234,6 @@ class SQLiteCategoryRepository:
                 category.id.value,
                 {"name": category.name, "memo": category.memo},
             )
-        self._conn.commit()
 
     def delete(self, category_id: CategoryId) -> None:
         """Delete a category."""
@@ -245,7 +242,6 @@ class SQLiteCategoryRepository:
         self._conn.execute(stmt)
         if self._outbox:
             self._outbox.write_delete("category", category_id.value)
-        self._conn.commit()
 
     def name_exists(self, name: str, exclude_id: CategoryId | None = None) -> bool:
         """Check if a category name is already taken."""
@@ -391,7 +387,6 @@ class SQLiteSegmentRepository:
                     "important": segment.importance,
                 },
             )
-        self._conn.commit()
 
     def delete(self, segment_id: SegmentId) -> None:
         """Delete a segment by ID."""
@@ -400,7 +395,6 @@ class SQLiteSegmentRepository:
         self._conn.execute(stmt)
         if self._outbox:
             self._outbox.write_delete("segment", segment_id.value)
-        self._conn.commit()
 
     def delete_by_code(self, code_id: CodeId) -> int:
         """Delete all segments with a code, returns count deleted."""
@@ -408,7 +402,7 @@ class SQLiteSegmentRepository:
         logger.debug("delete_by_code: %s (count=%d)", code_id.value, count)
         stmt = delete(code_text).where(code_text.c.cid == code_id.value)
         self._conn.execute(stmt)
-        self._conn.commit()
+
         return count
 
     def delete_by_source(self, source_id: SourceId) -> int:
@@ -417,7 +411,7 @@ class SQLiteSegmentRepository:
         logger.debug("delete_by_source: %s (count=%d)", source_id.value, count)
         stmt = delete(code_text).where(code_text.c.fid == source_id.value)
         self._conn.execute(stmt)
-        self._conn.commit()
+
         return count
 
     def count_by_code(self, code_id: CodeId) -> int:
@@ -454,7 +448,7 @@ class SQLiteSegmentRepository:
             .values(cid=to_code_id.value)
         )
         self._conn.execute(stmt)
-        self._conn.commit()
+
         return count
 
     def update_source_name(self, source_id: SourceId, new_name: str) -> None:
@@ -469,7 +463,6 @@ class SQLiteSegmentRepository:
             .values(source_name=new_name)
         )
         self._conn.execute(stmt)
-        self._conn.commit()
 
     def _row_to_segment(self, row) -> TextSegment:
         """
