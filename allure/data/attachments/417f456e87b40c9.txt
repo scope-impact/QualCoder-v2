@@ -1,0 +1,3 @@
+ERROR    qualcoder.projects.core:auto_commit.py:61 auto_commit: skipped reason=NOT_INITIALIZED
+ERROR    src.contexts.projects.infra.version_control_listener:version_control_listener.py:163 VCS auto-commit failed: Version control not initialized [AUTO_COMMIT_SKIPPED/NOT_INITIALIZED]
+ERROR    qualcoder.projects.core:close_project.py:52 close_project: no project is currently open

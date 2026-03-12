@@ -1,0 +1,5 @@
+ERROR    qualcoder.sources.core:add_text_source.py:94 add_text_source: duplicate source name=unique_doc.txt
+ERROR    qualcoder.sources.core:add_text_source.py:75 add_text_source: source name is empty
+ERROR    qualcoder.sources.core:add_text_source.py:84 add_text_source: source content is empty
+ERROR    qualcoder.projects.core:auto_commit.py:61 auto_commit: skipped reason=NOT_INITIALIZED
+ERROR    src.contexts.projects.infra.version_control_listener:version_control_listener.py:163 VCS auto-commit failed: Version control not initialized [AUTO_COMMIT_SKIPPED/NOT_INITIALIZED]

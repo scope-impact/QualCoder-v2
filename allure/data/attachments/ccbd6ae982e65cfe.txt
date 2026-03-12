@@ -1,0 +1,1 @@
+ERROR    qualcoder.projects.core:create_project.py:98 create_project: DB creation failed for path=/tmp/pytest-of-runner/pytest-0/popen-gw1/test_create_fails_and_empty0/existing_project.qda, error=Database file already exists: /tmp/pytest-of-runner/pytest-0/popen-gw1/test_create_fails_and_empty0/existing_project.qda

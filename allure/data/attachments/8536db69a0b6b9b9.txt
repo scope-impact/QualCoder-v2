@@ -1,0 +1,2 @@
+ERROR    qualcoder.folders.core:create_folder.py:82 create_folder: failed — DUPLICATE_NAME
+ERROR    qualcoder.folders.core:create_folder.py:82 create_folder: failed — INVALID_NAME

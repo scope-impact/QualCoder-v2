@@ -1,0 +1,2 @@
+ERROR    qualcoder.coding.core:change_code_color.py:84 change_code_color failed: CODE_NOT_UPDATED/NOT_FOUND
+ERROR    qualcoder.coding.core:change_code_color.py:69 change_code_color failed: invalid color not-a-color

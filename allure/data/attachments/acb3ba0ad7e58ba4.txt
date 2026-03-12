@@ -1,0 +1,10 @@
+Total: 0.044s for 5 files
+Average: 8.7ms per file
+Max: 10.4ms single file
+
+Per-file breakdown:
+  interview_000.docx: 7.8ms (ok)
+  interview_001.docx: 7.6ms (ok)
+  interview_002.docx: 7.6ms (ok)
+  interview_003.docx: 10.2ms (ok)
+  interview_004.docx: 10.4ms (ok)
