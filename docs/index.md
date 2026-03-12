@@ -6,41 +6,12 @@ A desktop qualitative data analysis (QDA) tool that helps researchers apply sema
 
 ## Choose Your Path
 
-<div class="grid cards" markdown>
-
--   :material-book-open-variant:{ .lg .middle } **I'm a Researcher**
-
-    ---
-
-    Learn how to use QualCoder for your research projects.
-
-    [:octicons-arrow-right-24: User Guide](user-manual/index.md)
-
--   :material-code-braces:{ .lg .middle } **I'm a Developer**
-
-    ---
-
-    Understand the architecture and contribute code.
-
-    [:octicons-arrow-right-24: Developer Guide](ARCHITECTURE.md)
-
--   :material-robot:{ .lg .middle } **I'm an AI Agent**
-
-    ---
-
-    Connect via MCP to automate coding tasks.
-
-    [:octicons-arrow-right-24: MCP API Reference](api/mcp-api.md)
-
--   :material-palette-swatch:{ .lg .middle } **Design System**
-
-    ---
-
-    Browse 180+ reusable PySide6 components.
-
-    [:octicons-arrow-right-24: Component Library](api/index.md)
-
-</div>
+| | Path | Description |
+|---|------|-------------|
+| **Researcher** | [User Guide](user-manual/index.md) | Learn how to use QualCoder for your research projects |
+| **Developer** | [Developer Guide](ARCHITECTURE.md) | Understand the architecture and contribute code |
+| **AI Agent** | [MCP API Reference](api/mcp-api.md) | Connect via MCP to automate coding tasks |
+| **Designer** | [Design System](api/index.md) | Browse 180+ reusable PySide6 components |
 
 ---
 
