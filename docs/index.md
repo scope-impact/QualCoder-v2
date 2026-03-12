@@ -1,89 +1,113 @@
-# QualCoder v2 Developer Guide
+# QualCoder v2
 
-Welcome to the QualCoder v2 developer documentation.
+A desktop qualitative data analysis (QDA) tool that helps researchers apply semantic codes to text, audio, video, images, and PDFs — with built-in AI assistance.
 
-## What is QualCoder v2?
+---
 
-QualCoder v2 is a desktop qualitative data analysis (QDA) tool for researchers. It enables applying semantic codes to research data (text, audio, video, images, PDFs) and generating insights through analysis.
+## Choose Your Path
 
-## System Overview
+<div class="grid cards" markdown>
 
-```mermaid
-graph TB
-    Researcher([Researcher]) -->|Mouse/Keyboard| QC
-    Agent([AI Agent]) -->|MCP Protocol| QC
+-   :material-book-open-variant:{ .lg .middle } **I'm a Researcher**
 
-    subgraph QC[QualCoder v2]
-        UI[Desktop UI<br/>PySide6]
-        Domain[Domain Core<br/>Pure Python]
-        App[Application Shell<br/>EventBus + SignalBridge]
-    end
+    ---
 
-    QC -->|Chat API| LLM([LLM Provider<br/>OpenAI / Anthropic / Ollama])
-    QC -->|File I/O| FS[(File System)]
-    QC -->|SQLite| DB[(Project Database)]
-```
+    Learn how to use QualCoder for your research projects.
 
-**Actors:**
+    [:octicons-arrow-right-24: User Guide](user-manual/index.md)
 
-- **Researcher** — Qualitative researcher applying codes to research data
-- **AI Agent** — Automated agent (Claude Code, Gemini CLI) suggesting codes and generating insights
+-   :material-code-braces:{ .lg .middle } **I'm a Developer**
 
-**External Systems:**
+    ---
 
-- **LLM Provider** — AI service for code suggestions and analysis
-- **File System** — Local storage for project files and media
-- **Project Database** — SQLite database for codes, segments, and metadata
+    Understand the architecture and contribute code.
 
-## Documentation
+    [:octicons-arrow-right-24: Developer Guide](ARCHITECTURE.md)
 
-| Section | Description |
+-   :material-robot:{ .lg .middle } **I'm an AI Agent**
+
+    ---
+
+    Connect via MCP to automate coding tasks.
+
+    [:octicons-arrow-right-24: MCP API Reference](api/mcp-api.md)
+
+-   :material-palette-swatch:{ .lg .middle } **Design System**
+
+    ---
+
+    Browse 180+ reusable PySide6 components.
+
+    [:octicons-arrow-right-24: Component Library](api/index.md)
+
+</div>
+
+---
+
+## What Can QualCoder Do?
+
+| Feature | Description |
 |---------|-------------|
-| [Architecture](ARCHITECTURE.md) | C4 model, bounded contexts, data flow, design decisions |
-| [Tutorials](tutorials/README.md) | Hands-on fDDD onboarding through a practical example |
-| [Design System](api/index.md) | 180+ PySide6 components, tokens, and patterns |
-| [Design Documents](design/FUNCTIONAL_DDD_DESIGN.md) | Detailed specs (Functional DDD, Agent Context) |
+| **Manage Sources** | Import text, PDF, image, audio, and video files |
+| **Apply Codes** | Create codes and apply them to text selections, image regions, or time ranges |
+| **Organize Cases** | Group sources by participant, site, or any category |
+| **AI Assistance** | Get code suggestions, detect duplicates, and auto-code with AI |
+| **Import & Export** | REFI-QDA, RQDA, codebooks, HTML, and CSV formats |
+| **MCP Integration** | AI agents can read, code, and analyze your data via the MCP protocol |
 
-## Bounded Contexts
-
-| Context | Purpose |
-|---------|---------|
-| **Coding** | Apply semantic codes to data (includes AI suggestions) |
-| **Sources** | Manage documents, audio, video files |
-| **Cases** | Group and categorize by participant |
-| **Projects** | Project lifecycle management |
-| **Settings** | User preferences (theme, font, language) |
-| **Folders** | Organize sources in folders |
-| **Exchange** | Import/export and data interchange (RQDA, roundtrip) |
+---
 
 ## Quick Start
 
-**New to the project?**
+=== "Researcher"
 
-1. Read the [Architecture Overview](ARCHITECTURE.md)
-2. Complete the [Onboarding Tutorial](tutorials/README.md)
-3. Explore the [Design System](api/index.md)
+    1. [Install QualCoder](user-manual/getting-started.md)
+    2. Create or open a project
+    3. [Import your sources](user-manual/sources.md) (text, PDF, media)
+    4. [Create codes](user-manual/codes.md) and start coding
+    5. [Set up AI features](user-manual/ai-features.md) for suggestions
 
-**Adding a feature?**
+=== "Developer"
 
-1. Identify the [Bounded Context](ARCHITECTURE.md#10-bounded-contexts)
-2. Follow fDDD patterns: Invariants → Derivers → Events
-3. Use [Design System components](api/components/index.md) for UI
+    1. Read the [Architecture Overview](ARCHITECTURE.md)
+    2. Complete the [Onboarding Tutorial](tutorials/README.md)
+    3. Follow fDDD patterns: Invariants → Derivers → Events
+    4. Use [Design System components](api/components/index.md) for UI
 
-## Technology Stack
+=== "AI Agent"
 
-| Layer | Technology |
-|-------|------------|
-| UI | PySide6 (Qt 6) |
-| Database | SQLite (local), Convex (cloud sync) |
-| AI | OpenAI / Anthropic / Ollama |
-| Icons | qtawesome (mdi6) |
-| Charts | pyqtgraph |
-| Observability | OpenTelemetry |
+    1. [Set up MCP connection](user-manual/mcp-setup.md)
+    2. Browse the [MCP API Reference](api/mcp-api.md)
+    3. Use tools like `list_codes`, `apply_code`, `suggest_codes`
 
-## Building the Docs
+---
 
-```bash
-uv sync --group docs
-uv run mkdocs serve
+## How It Works
+
+```mermaid
+graph LR
+    R([Researcher]) -->|UI| App
+    A([AI Agent]) -->|MCP| App
+
+    App --> Sources[Manage Sources]
+    App --> Codes[Apply Codes]
+    App --> Cases[Organize Cases]
+    App --> Exchange[Import & Export]
+
+    Sources --> DB[(Project Database)]
+    Codes --> DB
+    Cases --> DB
 ```
+
+Both researchers and AI agents work with the same data through different interfaces — every change by either actor is immediately visible to the other.
+
+---
+
+## Technology
+
+| | |
+|---|---|
+| **Desktop UI** | PySide6 (Qt 6) |
+| **Database** | SQLite (local-first) |
+| **AI Providers** | OpenAI, Anthropic, Ollama |
+| **Agent Protocol** | MCP (Model Context Protocol) |
