@@ -27,3 +27,4 @@ All feature specifications and implementation tasks for QualCoder v2.
 | QC-044 | [Visualizations](qc-044%20-%20Visualizations.md) |
 | QC-045 | [Complete Coding Context](qc-045%20-%20Complete-Coding-Context.md) |
 | QC-046 | [Remove Migration Code](qc-046%20-%20Remove-premature-v1%E2%86%92v2-migration-code.md) |
+| QC-050 | [Agent Code Management MCP Tools](qc-050%20-%20Agent-Code-Management-MCP-Tools.md) |
