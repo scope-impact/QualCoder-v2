@@ -37,8 +37,8 @@ import allure
 import pytest
 
 if TYPE_CHECKING:
-    from src.contexts.coding.interface.mcp_tools import CodingTools
     from src.shared.infra.app_context import AppContext
+    from src.tests.e2e.conftest import MCPClient
 
 pytestmark = [
     pytest.mark.e2e,
@@ -263,7 +263,7 @@ class TestPhase2ApplyPublishedCodes:
     @allure.title("AC #2.1: Create codes from published codebook and apply to real passages")
     def test_apply_published_codes_to_real_data(
         self,
-        coding_tools: CodingTools,
+        mcp_server: MCPClient,
         app_context: AppContext,
         review_project: dict,
     ):
@@ -274,7 +274,7 @@ class TestPhase2ApplyPublishedCodes:
         with allure.step("Create codes from published codebook"):
             codes = {}
             for name, info in PUBLISHED_CODEBOOK.items():
-                result = coding_tools.execute(
+                result = mcp_server.execute(
                     "create_code",
                     {"name": name, "color": info["color"], "memo": info["memo"]},
                 )
@@ -290,7 +290,7 @@ class TestPhase2ApplyPublishedCodes:
                 "Reading a description and saying the change is trying to "
                 "troubleshoot some behaviour they do not understand",
             )
-            coding_tools.execute("batch_apply_codes", {"operations": [{
+            mcp_server.execute("batch_apply_codes", {"operations": [{
                 "code_id": codes["Context building"],
                 "source_id": p5r1["id"],
                 "start_position": s, "end_position": e,
@@ -302,7 +302,7 @@ class TestPhase2ApplyPublishedCodes:
                 p5r1["text"],
                 "Goes to the CI summary tab",
             )
-            coding_tools.execute("batch_apply_codes", {"operations": [{
+            mcp_server.execute("batch_apply_codes", {"operations": [{
                 "code_id": codes["Testing"],
                 "source_id": p5r1["id"],
                 "start_position": s, "end_position": e,
@@ -314,7 +314,7 @@ class TestPhase2ApplyPublishedCodes:
                 p5r1["text"],
                 "overusing lazy loading",
             )
-            coding_tools.execute("batch_apply_codes", {"operations": [{
+            mcp_server.execute("batch_apply_codes", {"operations": [{
                 "code_id": codes["Knowledge base"],
                 "source_id": p5r1["id"],
                 "start_position": s, "end_position": e,
@@ -327,7 +327,7 @@ class TestPhase2ApplyPublishedCodes:
                 p5r2["text"],
                 "Also wants to understand whether the new state makes sense",
             )
-            coding_tools.execute("batch_apply_codes", {"operations": [{
+            mcp_server.execute("batch_apply_codes", {"operations": [{
                 "code_id": codes["Mental Model"],
                 "source_id": p5r2["id"],
                 "start_position": s, "end_position": e,
@@ -339,7 +339,7 @@ class TestPhase2ApplyPublishedCodes:
                 p5r2["text"],
                 "documentation definitely needs",
             )
-            coding_tools.execute("batch_apply_codes", {"operations": [{
+            mcp_server.execute("batch_apply_codes", {"operations": [{
                 "code_id": codes["Information Sources"],
                 "source_id": p5r2["id"],
                 "start_position": s, "end_position": e,
@@ -352,7 +352,7 @@ class TestPhase2ApplyPublishedCodes:
                 p9r1["text"],
                 "gives up and accepts the changes",
             )
-            coding_tools.execute("batch_apply_codes", {"operations": [{
+            mcp_server.execute("batch_apply_codes", {"operations": [{
                 "code_id": codes["Decision"],
                 "source_id": p9r1["id"],
                 "start_position": s, "end_position": e,
@@ -364,7 +364,7 @@ class TestPhase2ApplyPublishedCodes:
                 p9r1["text"],
                 "reviewer does not understand it so checks it out",
             )
-            coding_tools.execute("batch_apply_codes", {"operations": [{
+            mcp_server.execute("batch_apply_codes", {"operations": [{
                 "code_id": codes["Comprehension scope"],
                 "source_id": p9r1["id"],
                 "start_position": s, "end_position": e,
@@ -376,7 +376,7 @@ class TestPhase2ApplyPublishedCodes:
                 p9r1["text"],
                 "already has a local version of the branch",
             )
-            coding_tools.execute("batch_apply_codes", {"operations": [{
+            mcp_server.execute("batch_apply_codes", {"operations": [{
                 "code_id": codes["Discussion management"],
                 "source_id": p9r1["id"],
                 "start_position": s, "end_position": e,
@@ -386,7 +386,7 @@ class TestPhase2ApplyPublishedCodes:
         with allure.step("Verify 8 segments created across 3 transcripts"):
             total = 0
             for name, info in sources.items():
-                seg = coding_tools.execute(
+                seg = mcp_server.execute(
                     "list_segments_for_source",
                     {"source_id": info["id"]},
                 )
@@ -395,7 +395,7 @@ class TestPhase2ApplyPublishedCodes:
             assert total == 8, f"Expected 8 segments, got {total}"
 
         with allure.step("Verify all 8 published codes are in the codebook"):
-            all_codes = coding_tools.execute("list_codes", {})
+            all_codes = mcp_server.execute("list_codes", {})
             assert all_codes["success"]
             code_names = {c["name"] for c in all_codes["data"]}
             for name in PUBLISHED_CODEBOOK:
@@ -417,7 +417,7 @@ class TestPhase3to5ThemeHierarchy:
     @allure.title("AC #3-5: Full theme development with published codebook")
     def test_theme_development_with_published_codes(
         self,
-        coding_tools: CodingTools,
+        mcp_server: MCPClient,
         app_context: AppContext,
         review_project: dict,
     ):
@@ -428,7 +428,7 @@ class TestPhase3to5ThemeHierarchy:
         with allure.step("Create codes from published codebook"):
             codes = {}
             for name, info in PUBLISHED_CODEBOOK.items():
-                r = coding_tools.execute(
+                r = mcp_server.execute(
                     "create_code",
                     {"name": name, "color": info["color"], "memo": info["memo"]},
                 )
@@ -457,7 +457,7 @@ class TestPhase3to5ThemeHierarchy:
                 "source_id": p9r1["id"],
                 "start_position": s, "end_position": e,
             })
-            result = coding_tools.execute(
+            result = mcp_server.execute(
                 "batch_apply_codes", {"operations": ops}
             )
             assert result["success"]
@@ -466,7 +466,7 @@ class TestPhase3to5ThemeHierarchy:
         with allure.step("Phase 3: Create published thematic categories"):
             categories = {}
             for cat_name, info in PUBLISHED_CATEGORIES.items():
-                r = coding_tools.execute(
+                r = mcp_server.execute(
                     "create_category",
                     {"name": cat_name, "memo": info["memo"]},
                 )
@@ -489,7 +489,7 @@ class TestPhase3to5ThemeHierarchy:
                 (codes["Information Sources"], categories["Review Context"]),
             ]
             for code_id, cat_id in moves:
-                r = coding_tools.execute(
+                r = mcp_server.execute(
                     "move_code_to_category",
                     {"code_id": code_id, "category_id": cat_id},
                 )
@@ -499,7 +499,7 @@ class TestPhase3to5ThemeHierarchy:
         with allure.step("Phase 4: Merge 'Discussion management' into 'Context building'"):
             # In the published codebook, discussion management is closely related
             # to context building (both involve managing information flow)
-            merge_result = coding_tools.execute(
+            merge_result = mcp_server.execute(
                 "merge_codes",
                 {
                     "source_code_id": codes["Discussion management"],
@@ -509,14 +509,14 @@ class TestPhase3to5ThemeHierarchy:
             assert merge_result["success"]
 
             # Verify source code deleted
-            deleted = coding_tools.execute(
+            deleted = mcp_server.execute(
                 "get_code", {"code_id": codes["Discussion management"]}
             )
             assert not deleted["success"]
 
         # --- Phase 5: Rename for analytical precision ---
         with allure.step("Phase 5: Rename code using published model terminology"):
-            rename_result = coding_tools.execute(
+            rename_result = mcp_server.execute(
                 "rename_code",
                 {
                     "code_id": codes["Context building"],
@@ -540,19 +540,19 @@ class TestPhase3to5ThemeHierarchy:
                 "EVIDENCE: 22 files, 94 references (context building) + "
                 "6 files, 12 references (discussion management) in original."
             )
-            coding_tools.execute(
+            mcp_server.execute(
                 "update_code_memo",
                 {"code_id": codes["Context building"], "memo": memo},
             )
 
         # --- Verify final state ---
         with allure.step("Verify final codebook: 7 codes, 3 categories"):
-            all_codes = coding_tools.execute("list_codes", {})
+            all_codes = mcp_server.execute("list_codes", {})
             assert all_codes["success"]
             # Started with 8, merged 1 = 7
             assert len(all_codes["data"]) == 7
 
-            all_cats = coding_tools.execute("list_categories", {})
+            all_cats = mcp_server.execute("list_categories", {})
             assert all_cats["success"]
             assert len(all_cats["data"]) == 3
             cat_names = {c["name"] for c in all_cats["data"]}
@@ -569,7 +569,7 @@ class TestPhase3to5ThemeHierarchy:
             assert process_cat["code_count"] == 3
 
         with allure.step("Verify renamed code has theme definition memo"):
-            detail = coding_tools.execute(
+            detail = mcp_server.execute(
                 "get_code", {"code_id": codes["Context building"]}
             )
             assert detail["success"]
@@ -593,7 +593,7 @@ class TestPhase6FullValidatedWorkflow:
     @allure.title("AC #6.1: End-to-end validated replication with audit trail")
     def test_full_validated_replication(
         self,
-        coding_tools: CodingTools,
+        mcp_server: MCPClient,
         app_context: AppContext,
         review_project: dict,
     ):
@@ -616,7 +616,7 @@ class TestPhase6FullValidatedWorkflow:
                 ("Mental Model", "#FF7043"),
                 ("Information Sources", "#5C6BC0"),
             ]:
-                r = coding_tools.execute(
+                r = mcp_server.execute(
                     "create_code", {"name": name, "color": color}
                 )
                 assert r["success"]
@@ -648,7 +648,7 @@ class TestPhase6FullValidatedWorkflow:
                     "end_position": e,
                 })
 
-            result = coding_tools.execute(
+            result = mcp_server.execute(
                 "batch_apply_codes", {"operations": ops}
             )
             assert result["success"]
@@ -656,12 +656,12 @@ class TestPhase6FullValidatedWorkflow:
 
         # ---- Create published theme categories ----
         with allure.step("Create published thematic categories"):
-            cat_process = coding_tools.execute(
+            cat_process = mcp_server.execute(
                 "create_category", {"name": "Code Review Process"}
             )
             assert cat_process["success"]
 
-            cat_cognition = coding_tools.execute(
+            cat_cognition = mcp_server.execute(
                 "create_category", {"name": "Reviewer Cognition"}
             )
             assert cat_cognition["success"]
@@ -669,7 +669,7 @@ class TestPhase6FullValidatedWorkflow:
         # ---- Organize codes ----
         with allure.step("Organize codes into published themes"):
             for code_name in ["Context building", "Decision", "Testing"]:
-                coding_tools.execute(
+                mcp_server.execute(
                     "move_code_to_category",
                     {
                         "code_id": code_ids[code_name],
@@ -677,7 +677,7 @@ class TestPhase6FullValidatedWorkflow:
                     },
                 )
             for code_name in ["Mental Model", "Information Sources"]:
-                coding_tools.execute(
+                mcp_server.execute(
                     "move_code_to_category",
                     {
                         "code_id": code_ids[code_name],
@@ -687,18 +687,18 @@ class TestPhase6FullValidatedWorkflow:
 
         # ---- Verify final state ----
         with allure.step("Verify final codebook"):
-            codes = coding_tools.execute("list_codes", {})
+            codes = mcp_server.execute("list_codes", {})
             assert codes["success"]
             assert len(codes["data"]) == 5
 
-            cats = coding_tools.execute("list_categories", {})
+            cats = mcp_server.execute("list_categories", {})
             assert cats["success"]
             assert len(cats["data"]) == 2
 
         with allure.step("Verify segment coverage"):
             total = 0
             for info in sources.values():
-                seg = coding_tools.execute(
+                seg = mcp_server.execute(
                     "list_segments_for_source",
                     {"source_id": info["id"]},
                 )

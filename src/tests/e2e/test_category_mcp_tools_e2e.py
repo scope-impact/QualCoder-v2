@@ -5,18 +5,22 @@ Tests the MCP handler layer for: rename_code, update_code_memo,
 create_category, move_code_to_category, merge_codes, delete_code,
 list_categories.
 
-All tests use the CodingTools.execute() interface (same path an AI agent uses).
+All tests use the MCP server dispatch pipeline (same path an AI agent uses).
 """
 
 from __future__ import annotations
 
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 import allure
 import pytest
 
-from src.contexts.coding.interface.mcp_tools import CodingTools
 from src.shared.infra.app_context import AppContext
+from src.shared.infra.mcp_server import MCPServerManager
+
+if TYPE_CHECKING:
+    from src.tests.e2e.conftest import MCPClient
 
 
 @pytest.fixture
@@ -28,7 +32,9 @@ def project_with_codes(app_context: AppContext, tmp_path: Path) -> dict:
     result = app_context.open_project(str(project_path))
     assert result.is_success
 
-    tools = CodingTools(ctx=app_context)
+    from src.tests.e2e.conftest import MCPClient
+
+    tools = MCPClient(MCPServerManager(ctx=app_context, debug=True))
 
     # Create test codes
     code1 = tools.execute("create_code", {"name": "Anxiety", "color": "#FF0000"})
@@ -316,8 +322,8 @@ class TestToolRegistration:
     def test_tools_registered_and_response_format(self, project_with_codes):
         tools = project_with_codes["tools"]
 
-        # Verify all new tools are registered
-        tool_names = tools.get_tool_names()
+        # Verify all new tools are registered via MCP server
+        tool_names = tools.list_tools()
         expected = [
             "rename_code",
             "update_code_memo",

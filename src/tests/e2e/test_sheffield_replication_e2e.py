@@ -34,8 +34,8 @@ import allure
 import pytest
 
 if TYPE_CHECKING:
-    from src.contexts.coding.interface.mcp_tools import CodingTools
     from src.shared.infra.app_context import AppContext
+    from src.tests.e2e.conftest import MCPClient
 
 pytestmark = [
     pytest.mark.e2e,
@@ -169,7 +169,7 @@ class TestPhase2CodeRealData:
     @allure.title("AC #2.1: Create codes and apply to real transcript passages")
     def test_code_real_passages(
         self,
-        coding_tools: CodingTools,
+        mcp_server: MCPClient,
         app_context: AppContext,
         sheffield_project: dict,
     ):
@@ -193,7 +193,7 @@ class TestPhase2CodeRealData:
 
             codes = {}
             for name, color, memo in code_defs:
-                result = coding_tools.execute(
+                result = mcp_server.execute(
                     "create_code",
                     {"name": name, "color": color, "memo": memo},
                 )
@@ -209,7 +209,7 @@ class TestPhase2CodeRealData:
                 ana["text"],
                 "what makes it also difficult to make it open"
             )
-            coding_tools.execute("batch_apply_codes", {"operations": [{
+            mcp_server.execute("batch_apply_codes", {"operations": [{
                 "code_id": codes["Data sharing willingness"],
                 "source_id": ana["id"],
                 "start_position": s, "end_position": e,
@@ -223,7 +223,7 @@ class TestPhase2CodeRealData:
                 david["text"],
                 "share my analysis"
             )
-            coding_tools.execute("batch_apply_codes", {"operations": [{
+            mcp_server.execute("batch_apply_codes", {"operations": [{
                 "code_id": codes["Participant protection"],
                 "source_id": david["id"],
                 "start_position": s, "end_position": e,
@@ -236,7 +236,7 @@ class TestPhase2CodeRealData:
                 if "Atlas Ti" in david["text"]
                 else "pen and paper"
             )
-            coding_tools.execute("batch_apply_codes", {"operations": [{
+            mcp_server.execute("batch_apply_codes", {"operations": [{
                 "code_id": codes["Research software tools"],
                 "source_id": david["id"],
                 "start_position": s, "end_position": e,
@@ -252,7 +252,7 @@ class TestPhase2CodeRealData:
                 if "I used Nvivo" in jessica["text"]
                 else "Nvivo"
             )
-            coding_tools.execute("batch_apply_codes", {"operations": [{
+            mcp_server.execute("batch_apply_codes", {"operations": [{
                 "code_id": codes["Research software tools"],
                 "source_id": jessica["id"],
                 "start_position": s, "end_position": e,
@@ -265,7 +265,7 @@ class TestPhase2CodeRealData:
                 if "should have thought more about the ethics" in jessica["text"]
                 else "ethics"
             )
-            coding_tools.execute("batch_apply_codes", {"operations": [{
+            mcp_server.execute("batch_apply_codes", {"operations": [{
                 "code_id": codes["Ethical tensions"],
                 "source_id": jessica["id"],
                 "start_position": s, "end_position": e,
@@ -274,7 +274,7 @@ class TestPhase2CodeRealData:
         with allure.step("Verify segments created across transcripts"):
             total = 0
             for name, info in sources.items():
-                seg = coding_tools.execute(
+                seg = mcp_server.execute(
                     "list_segments_for_source",
                     {"source_id": info["id"]},
                 )
@@ -286,7 +286,7 @@ class TestPhase2CodeRealData:
     @allure.title("AC #2.2: Create in vivo codes from real participant language")
     def test_in_vivo_codes_from_real_speech(
         self,
-        coding_tools: CodingTools,
+        mcp_server: MCPClient,
         app_context: AppContext,
         sheffield_project: dict,
     ):
@@ -296,7 +296,7 @@ class TestPhase2CodeRealData:
         with allure.step("Create in vivo codes from real speech"):
             # Ana's actual words about craft-based analysis
             ana_text = sources["Ana"]["text"]
-            in_vivo_result = coding_tools.execute(
+            in_vivo_result = mcp_server.execute(
                 "create_code",
                 {
                     "name": "my analysis are much more craft",
@@ -309,7 +309,7 @@ class TestPhase2CodeRealData:
 
             # Apply to the actual passage
             s, e = _find_segment(ana_text, "my analysis are much more craft")
-            result = coding_tools.execute("batch_apply_codes", {"operations": [{
+            result = mcp_server.execute("batch_apply_codes", {"operations": [{
                 "code_id": craft_id,
                 "source_id": sources["Ana"]["id"],
                 "start_position": s, "end_position": e,
@@ -319,7 +319,7 @@ class TestPhase2CodeRealData:
         with allure.step("Create in vivo code from David's speech"):
             david_text = sources["David"]["text"]
             # David's words about participant welfare
-            iv2 = coding_tools.execute(
+            iv2 = mcp_server.execute(
                 "create_code",
                 {
                     "name": "they do come first",
@@ -330,7 +330,7 @@ class TestPhase2CodeRealData:
             assert iv2["success"]
 
             s, e = _find_segment(david_text, "do come first")
-            result = coding_tools.execute("batch_apply_codes", {"operations": [{
+            result = mcp_server.execute("batch_apply_codes", {"operations": [{
                 "code_id": iv2["data"]["code_id"],
                 "source_id": sources["David"]["id"],
                 "start_position": s, "end_position": e,
@@ -355,7 +355,7 @@ class TestPhase3to5DevelopThemes:
     @allure.title("AC #3-5: Full theme development workflow on real data")
     def test_theme_development_workflow(
         self,
-        coding_tools: CodingTools,
+        mcp_server: MCPClient,
         app_context: AppContext,
         sheffield_project: dict,
     ):
@@ -373,7 +373,7 @@ class TestPhase3to5DevelopThemes:
                 ("Trust in repositories", "#9C27B0"),
                 ("Anonymization challenges", "#795548"),
             ]:
-                r = coding_tools.execute(
+                r = mcp_server.execute(
                     "create_code", {"name": name, "color": color}
                 )
                 assert r["success"]
@@ -422,14 +422,14 @@ class TestPhase3to5DevelopThemes:
                 "start_position": s, "end_position": e,
             })
 
-            result = coding_tools.execute(
+            result = mcp_server.execute(
                 "batch_apply_codes", {"operations": ops}
             )
             assert result["success"]
 
         # --- Phase 3: Create thematic categories ---
         with allure.step("Phase 3: Create candidate themes via MCP"):
-            cat_openness = coding_tools.execute(
+            cat_openness = mcp_server.execute(
                 "create_category",
                 {
                     "name": "Navigating Openness in Qualitative Research",
@@ -439,7 +439,7 @@ class TestPhase3to5DevelopThemes:
             assert cat_openness["success"]
             openness_id = cat_openness["data"]["category_id"]
 
-            cat_ethics = coding_tools.execute(
+            cat_ethics = mcp_server.execute(
                 "create_category",
                 {
                     "name": "Ethical Stewardship of Participant Data",
@@ -449,7 +449,7 @@ class TestPhase3to5DevelopThemes:
             assert cat_ethics["success"]
             ethics_id = cat_ethics["data"]["category_id"]
 
-            cat_infra = coding_tools.execute(
+            cat_infra = mcp_server.execute(
                 "create_category",
                 {
                     "name": "Infrastructures of Trust",
@@ -470,7 +470,7 @@ class TestPhase3to5DevelopThemes:
                 (code_ids["Trust in repositories"], infra_id),
             ]
             for cid, catid in moves:
-                r = coding_tools.execute(
+                r = mcp_server.execute(
                     "move_code_to_category",
                     {"code_id": cid, "category_id": catid},
                 )
@@ -478,7 +478,7 @@ class TestPhase3to5DevelopThemes:
 
         # --- Phase 4: Merge overlapping codes ---
         with allure.step("Phase 4: Merge 'Open research barriers' into 'Trust in repositories'"):
-            merge_result = coding_tools.execute(
+            merge_result = mcp_server.execute(
                 "merge_codes",
                 {
                     "source_code_id": code_ids["Open research barriers"],
@@ -489,14 +489,14 @@ class TestPhase3to5DevelopThemes:
             assert merge_result["data"]["segments_moved"] >= 0
 
             # Verify source code deleted
-            get_deleted = coding_tools.execute(
+            get_deleted = mcp_server.execute(
                 "get_code", {"code_id": code_ids["Open research barriers"]}
             )
             assert not get_deleted["success"]
 
         # --- Phase 5: Rename and define themes ---
         with allure.step("Phase 5: Rename code for analytical precision via MCP"):
-            rename_result = coding_tools.execute(
+            rename_result = mcp_server.execute(
                 "rename_code",
                 {
                     "code_id": code_ids["Trust in repositories"],
@@ -518,7 +518,7 @@ class TestPhase3to5DevelopThemes:
                 "prerequisite for sharing; Ana uses Open Science Framework\n"
                 "proactively from copyleft background."
             )
-            memo_result = coding_tools.execute(
+            memo_result = mcp_server.execute(
                 "update_code_memo",
                 {"code_id": code_ids["Trust in repositories"], "memo": memo},
             )
@@ -526,12 +526,12 @@ class TestPhase3to5DevelopThemes:
 
         # --- Verify final state ---
         with allure.step("Verify final codebook state via MCP"):
-            codes = coding_tools.execute("list_codes", {})
+            codes = mcp_server.execute("list_codes", {})
             assert codes["success"]
             # Started with 6, merged 1 away = 5 remaining
             assert len(codes["data"]) == 5
 
-            categories = coding_tools.execute("list_categories", {})
+            categories = mcp_server.execute("list_categories", {})
             assert categories["success"]
             assert len(categories["data"]) == 3
             cat_names = {c["name"] for c in categories["data"]}
@@ -540,7 +540,7 @@ class TestPhase3to5DevelopThemes:
             assert "Infrastructures of Trust" in cat_names
 
         with allure.step("Verify renamed code has memo with theme definition"):
-            detail = coding_tools.execute(
+            detail = mcp_server.execute(
                 "get_code",
                 {"code_id": code_ids["Trust in repositories"]},
             )
@@ -565,7 +565,7 @@ class TestPhase6FullWorkflowRealData:
     @allure.title("AC #6.1: Complete TA workflow on real data with audit trail")
     def test_full_workflow_real_data(
         self,
-        coding_tools: CodingTools,
+        mcp_server: MCPClient,
         app_context: AppContext,
         sheffield_project: dict,
     ):
@@ -588,7 +588,7 @@ class TestPhase6FullWorkflowRealData:
                 ("Software preferences", "#2196F3"),
                 ("Participant voice", "#FF9800"),
             ]:
-                r = coding_tools.execute(
+                r = mcp_server.execute(
                     "create_code", {"name": name, "color": color}
                 )
                 assert r["success"]
@@ -632,7 +632,7 @@ class TestPhase6FullWorkflowRealData:
                 "start_position": s, "end_position": e,
             })
 
-            result = coding_tools.execute(
+            result = mcp_server.execute(
                 "batch_apply_codes", {"operations": ops}
             )
             assert result["success"]
@@ -640,41 +640,41 @@ class TestPhase6FullWorkflowRealData:
 
         # ---- Phase 3: Create categories ----
         with allure.step("Phase 3: Create thematic categories"):
-            cat1 = coding_tools.execute(
+            cat1 = mcp_server.execute(
                 "create_category",
                 {"name": "Cultures of Openness"},
             )
             assert cat1["success"]
 
-            cat2 = coding_tools.execute(
+            cat2 = mcp_server.execute(
                 "create_category",
                 {"name": "Ethics and Responsibility"},
             )
             assert cat2["success"]
 
         with allure.step("Phase 3: Organize codes"):
-            coding_tools.execute(
+            mcp_server.execute(
                 "move_code_to_category",
                 {
                     "code_id": code_ids["Open data practices"],
                     "category_id": cat1["data"]["category_id"],
                 },
             )
-            coding_tools.execute(
+            mcp_server.execute(
                 "move_code_to_category",
                 {
                     "code_id": code_ids["Software preferences"],
                     "category_id": cat1["data"]["category_id"],
                 },
             )
-            coding_tools.execute(
+            mcp_server.execute(
                 "move_code_to_category",
                 {
                     "code_id": code_ids["Ethical dilemmas"],
                     "category_id": cat2["data"]["category_id"],
                 },
             )
-            coding_tools.execute(
+            mcp_server.execute(
                 "move_code_to_category",
                 {
                     "code_id": code_ids["Participant voice"],
@@ -684,7 +684,7 @@ class TestPhase6FullWorkflowRealData:
 
         # ---- Phase 4-5: Delete unused code ----
         with allure.step("Phase 4: Delete unused 'Participant voice' code"):
-            del_result = coding_tools.execute(
+            del_result = mcp_server.execute(
                 "delete_code",
                 {"code_id": code_ids["Participant voice"]},
             )
@@ -693,7 +693,7 @@ class TestPhase6FullWorkflowRealData:
 
         # ---- Phase 6: Verify ----
         with allure.step("Phase 6: Verify final codebook"):
-            final_codes = coding_tools.execute("list_codes", {})
+            final_codes = mcp_server.execute("list_codes", {})
             assert final_codes["success"]
             assert len(final_codes["data"]) == 3
             code_names = {c["name"] for c in final_codes["data"]}
@@ -701,14 +701,14 @@ class TestPhase6FullWorkflowRealData:
             assert "Ethical dilemmas" in code_names
             assert "Software preferences" in code_names
 
-            final_cats = coding_tools.execute("list_categories", {})
+            final_cats = mcp_server.execute("list_categories", {})
             assert final_cats["success"]
             assert len(final_cats["data"]) == 2
 
         with allure.step("Phase 6: Verify segment coverage on real data"):
             total_segments = 0
             for name, info in sources.items():
-                seg = coding_tools.execute(
+                seg = mcp_server.execute(
                     "list_segments_for_source",
                     {"source_id": info["id"]},
                 )

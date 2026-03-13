@@ -28,8 +28,8 @@ import allure
 import pytest
 
 if TYPE_CHECKING:
-    from src.contexts.coding.interface.mcp_tools import CodingTools
     from src.shared.infra.app_context import AppContext
+    from src.tests.e2e.conftest import MCPClient
 
 pytestmark = [
     pytest.mark.e2e,
@@ -233,7 +233,7 @@ class TestPhase2InitialCodingMCP:
     @allure.title("AC #2.1: Create descriptive codes via MCP create_code tool")
     def test_create_descriptive_codes_via_mcp(
         self,
-        coding_tools: CodingTools,
+        mcp_server: MCPClient,
         app_context: AppContext,
         study_project: dict,
     ):
@@ -249,7 +249,7 @@ class TestPhase2InitialCodingMCP:
         created_codes = []
         with allure.step("Create 5 descriptive codes via MCP"):
             for name, color, memo in code_defs:
-                result = coding_tools.execute(
+                result = mcp_server.execute(
                     "create_code",
                     {"name": name, "color": color, "memo": memo},
                 )
@@ -257,7 +257,7 @@ class TestPhase2InitialCodingMCP:
                 created_codes.append(result["data"])
 
         with allure.step("Verify codes via list_codes MCP tool"):
-            list_result = coding_tools.execute("list_codes", {})
+            list_result = mcp_server.execute("list_codes", {})
             assert list_result["success"] is True
             codes = list_result["data"]
             code_names = {c["name"] for c in codes}
@@ -267,7 +267,7 @@ class TestPhase2InitialCodingMCP:
     @allure.title("AC #2.2: Create in vivo codes from participant language")
     def test_create_in_vivo_codes_via_mcp(
         self,
-        coding_tools: CodingTools,
+        mcp_server: MCPClient,
         app_context: AppContext,
         study_project: dict,
     ):
@@ -282,14 +282,14 @@ class TestPhase2InitialCodingMCP:
 
         with allure.step("Create 5 in vivo codes via MCP"):
             for name, color, memo in in_vivo_codes:
-                result = coding_tools.execute(
+                result = mcp_server.execute(
                     "create_code",
                     {"name": name, "color": color, "memo": memo},
                 )
                 assert result["success"] is True
 
         with allure.step("Verify in vivo codes in codebook"):
-            list_result = coding_tools.execute("list_codes", {})
+            list_result = mcp_server.execute("list_codes", {})
             codes = list_result["data"]
             in_vivo_names = {c[0] for c in in_vivo_codes}
             found = {c["name"] for c in codes if c["name"] in in_vivo_names}
@@ -298,7 +298,7 @@ class TestPhase2InitialCodingMCP:
     @allure.title("AC #2.3: Apply codes to segments via MCP batch_apply_codes")
     def test_apply_codes_to_segments_via_mcp(
         self,
-        coding_tools: CodingTools,
+        mcp_server: MCPClient,
         app_context: AppContext,
         study_project: dict,
     ):
@@ -309,21 +309,21 @@ class TestPhase2InitialCodingMCP:
         sarah_id = sarah["id"]
 
         with allure.step("Create codes for this test"):
-            tech_result = coding_tools.execute(
+            tech_result = mcp_server.execute(
                 "create_code",
                 {"name": "Technology barriers", "color": "#E53935",
                  "memo": "Tech access issues"},
             )
             tech_id = tech_result["data"]["code_id"]
 
-            flex_result = coding_tools.execute(
+            flex_result = mcp_server.execute(
                 "create_code",
                 {"name": "Flexibility benefits", "color": "#43A047",
                  "memo": "Self-paced learning"},
             )
             flex_id = flex_result["data"]["code_id"]
 
-            iso_result = coding_tools.execute(
+            iso_result = mcp_server.execute(
                 "create_code",
                 {"name": "Social isolation", "color": "#1E88E5",
                  "memo": "Missing peers"},
@@ -348,7 +348,7 @@ class TestPhase2InitialCodingMCP:
                 "I really missed the social aspect.",
             )
 
-            result = coding_tools.execute(
+            result = mcp_server.execute(
                 "batch_apply_codes",
                 {
                     "operations": [
@@ -382,7 +382,7 @@ class TestPhase2InitialCodingMCP:
             assert data["all_succeeded"] is True
 
         with allure.step("Verify segments via list_segments_for_source"):
-            seg_result = coding_tools.execute(
+            seg_result = mcp_server.execute(
                 "list_segments_for_source",
                 {"source_id": sarah_id},
             )
@@ -393,7 +393,7 @@ class TestPhase2InitialCodingMCP:
     @allure.title("AC #2.4: Simultaneous coding - multiple codes per segment")
     def test_simultaneous_coding_via_mcp(
         self,
-        coding_tools: CodingTools,
+        mcp_server: MCPClient,
         app_context: AppContext,
         study_project: dict,
     ):
@@ -406,12 +406,12 @@ class TestPhase2InitialCodingMCP:
         maria_id = maria["id"]
 
         with allure.step("Create two codes"):
-            acc = coding_tools.execute(
+            acc = mcp_server.execute(
                 "create_code",
                 {"name": "Accessibility gains", "color": "#7CB342",
                  "memo": "Benefits for diverse learners"},
             )
-            emp = coding_tools.execute(
+            emp = mcp_server.execute(
                 "create_code",
                 {"name": "Student empowerment", "color": "#FFD54F",
                  "memo": "Gaining confidence, finding voice"},
@@ -426,7 +426,7 @@ class TestPhase2InitialCodingMCP:
             )
             start, end = _find_segment(maria_text, phrase)
 
-            result = coding_tools.execute(
+            result = mcp_server.execute(
                 "batch_apply_codes",
                 {
                     "operations": [
@@ -449,7 +449,7 @@ class TestPhase2InitialCodingMCP:
             assert result["data"]["succeeded"] == 2
 
         with allure.step("Verify two different codes on same text range"):
-            seg_result = coding_tools.execute(
+            seg_result = mcp_server.execute(
                 "list_segments_for_source",
                 {"source_id": maria_id},
             )
@@ -462,7 +462,7 @@ class TestPhase2InitialCodingMCP:
     @allure.title("AC #2.5: Cross-transcript coding via MCP (constant comparison)")
     def test_cross_transcript_coding_via_mcp(
         self,
-        coding_tools: CodingTools,
+        mcp_server: MCPClient,
         app_context: AppContext,
         study_project: dict,
     ):
@@ -470,7 +470,7 @@ class TestPhase2InitialCodingMCP:
         sources = study_project["sources"]
 
         with allure.step("Create mental health code"):
-            mh = coding_tools.execute(
+            mh = mcp_server.execute(
                 "create_code",
                 {"name": "Mental health impact", "color": "#D81B60",
                  "memo": "Anxiety, burnout, emotional wellbeing"},
@@ -516,7 +516,7 @@ class TestPhase2InitialCodingMCP:
                 "end_position": a_end,
             })
 
-            result = coding_tools.execute(
+            result = mcp_server.execute(
                 "batch_apply_codes",
                 {"operations": operations},
             )
@@ -526,7 +526,7 @@ class TestPhase2InitialCodingMCP:
         with allure.step("Verify code spans 3 different sources"):
             source_ids_with_code = set()
             for name, info in sources.items():
-                seg_result = coding_tools.execute(
+                seg_result = mcp_server.execute(
                     "list_segments_for_source",
                     {"source_id": info["id"]},
                 )
@@ -555,7 +555,7 @@ class TestPhase3SearchingForThemes:
     @allure.title("AC #3.1: Create thematic categories and organize codes")
     def test_create_themes_and_organize_codes(
         self,
-        coding_tools: CodingTools,
+        mcp_server: MCPClient,
         app_context: AppContext,
         study_project: dict,
     ):
@@ -569,7 +569,7 @@ class TestPhase3SearchingForThemes:
                 ("Mental health", "#D81B60"),
                 ("Digital equity", "#00897B"),
             ]:
-                result = coding_tools.execute(
+                result = mcp_server.execute(
                     "create_code",
                     {"name": name, "color": color},
                 )
@@ -577,7 +577,7 @@ class TestPhase3SearchingForThemes:
                 codes[name] = result["data"]["code_id"]
 
         with allure.step("Create 3 thematic categories via MCP"):
-            cat_digital = coding_tools.execute(
+            cat_digital = mcp_server.execute(
                 "create_category",
                 {
                     "name": "Navigating the Digital Transition",
@@ -587,7 +587,7 @@ class TestPhase3SearchingForThemes:
             assert cat_digital["success"] is True
             digital_id = cat_digital["data"]["category_id"]
 
-            cat_paradox = coding_tools.execute(
+            cat_paradox = mcp_server.execute(
                 "create_category",
                 {
                     "name": "The Flexibility-Isolation Paradox",
@@ -597,7 +597,7 @@ class TestPhase3SearchingForThemes:
             assert cat_paradox["success"] is True
             paradox_id = cat_paradox["data"]["category_id"]
 
-            cat_wellbeing = coding_tools.execute(
+            cat_wellbeing = mcp_server.execute(
                 "create_category",
                 {
                     "name": "Wellbeing Under Pressure",
@@ -615,24 +615,24 @@ class TestPhase3SearchingForThemes:
                 (codes["Mental health"], cat_wellbeing["data"]["category_id"]),
             ]
             for code_id, category_id in moves:
-                result = coding_tools.execute(
+                result = mcp_server.execute(
                     "move_code_to_category",
                     {"code_id": code_id, "category_id": category_id},
                 )
                 assert result["success"] is True
 
         with allure.step("Verify codes are grouped via MCP get_code"):
-            flex_detail = coding_tools.execute(
+            flex_detail = mcp_server.execute(
                 "get_code", {"code_id": codes["Flexibility benefits"]}
             )
-            iso_detail = coding_tools.execute(
+            iso_detail = mcp_server.execute(
                 "get_code", {"code_id": codes["Social isolation"]}
             )
             assert flex_detail["data"]["category_id"] == iso_detail["data"]["category_id"]
             assert flex_detail["data"]["category_id"] == paradox_id
 
         with allure.step("Verify category list via MCP"):
-            cats = coding_tools.execute("list_categories", {})
+            cats = mcp_server.execute("list_categories", {})
             assert cats["success"] is True
             assert len(cats["data"]) == 3
 
@@ -654,7 +654,7 @@ class TestPhase4And5ReviewingDefiningThemes:
     @allure.title("AC #4.1: Merge overlapping codes (Focused Coding)")
     def test_merge_overlapping_codes(
         self,
-        coding_tools: CodingTools,
+        mcp_server: MCPClient,
         app_context: AppContext,
         study_project: dict,
     ):
@@ -664,11 +664,11 @@ class TestPhase4And5ReviewingDefiningThemes:
         james = sources["participant_02_james.txt"]
 
         with allure.step("Create two overlapping codes via MCP"):
-            r1 = coding_tools.execute(
+            r1 = mcp_server.execute(
                 "create_code",
                 {"name": "Technology barriers", "color": "#E53935"},
             )
-            r2 = coding_tools.execute(
+            r2 = mcp_server.execute(
                 "create_code",
                 {"name": "Tech frustration", "color": "#C62828"},
             )
@@ -685,7 +685,7 @@ class TestPhase4And5ReviewingDefiningThemes:
                 "The proctoring software felt invasive",
             )
 
-            coding_tools.execute(
+            mcp_server.execute(
                 "batch_apply_codes",
                 {
                     "operations": [
@@ -706,7 +706,7 @@ class TestPhase4And5ReviewingDefiningThemes:
             )
 
         with allure.step("Merge via MCP merge_codes"):
-            result = coding_tools.execute(
+            result = mcp_server.execute(
                 "merge_codes",
                 {
                     "source_code_id": frustration_id,
@@ -718,13 +718,13 @@ class TestPhase4And5ReviewingDefiningThemes:
 
         with allure.step("Verify merged: source code deleted, target has all segments"):
             # Source code should be gone
-            deleted = coding_tools.execute(
+            deleted = mcp_server.execute(
                 "get_code", {"code_id": frustration_id}
             )
             assert deleted["success"] is False
 
             # List all codes - only barriers should remain
-            all_codes = coding_tools.execute("list_codes", {})
+            all_codes = mcp_server.execute("list_codes", {})
             code_ids = {c["id"] for c in all_codes["data"]}
             assert barriers_id in code_ids
             assert frustration_id not in code_ids
@@ -732,20 +732,20 @@ class TestPhase4And5ReviewingDefiningThemes:
     @allure.title("AC #5.1: Rename code and write analytical memo")
     def test_rename_and_write_memo(
         self,
-        coding_tools: CodingTools,
+        mcp_server: MCPClient,
         app_context: AppContext,
         study_project: dict,
     ):
         """Rename a code and update its memo with a theme definition."""
         with allure.step("Create initial code via MCP"):
-            r = coding_tools.execute(
+            r = mcp_server.execute(
                 "create_code",
                 {"name": "Tech issues", "color": "#E53935", "memo": "Initial code"},
             )
             code_id = r["data"]["code_id"]
 
         with allure.step("Rename to analytically precise label via MCP"):
-            result = coding_tools.execute(
+            result = mcp_server.execute(
                 "rename_code",
                 {"code_id": code_id, "new_name": "Digital literacy gap"},
             )
@@ -764,14 +764,14 @@ class TestPhase4And5ReviewingDefiningThemes:
                 "BOUNDARY: Does NOT include broader digital equity concerns "
                 "(infrastructure access) — those belong to 'Digital Divide'."
             )
-            result = coding_tools.execute(
+            result = mcp_server.execute(
                 "update_code_memo",
                 {"code_id": code_id, "memo": memo_text},
             )
             assert result["success"] is True
 
         with allure.step("Verify via MCP get_code"):
-            detail = coding_tools.execute("get_code", {"code_id": code_id})
+            detail = mcp_server.execute("get_code", {"code_id": code_id})
             assert detail["success"] is True
             assert detail["data"]["name"] == "Digital literacy gap"
             assert "DEFINITION:" in detail["data"]["memo"]
@@ -794,7 +794,7 @@ class TestPhase6FullWorkflow:
     @allure.title("AC #6.1: Complete thematic analysis via MCP tools")
     def test_full_thematic_analysis_workflow(
         self,
-        coding_tools: CodingTools,
+        mcp_server: MCPClient,
         app_context: AppContext,
         study_project: dict,
     ):
@@ -815,7 +815,7 @@ class TestPhase6FullWorkflow:
                 ("Self-growth", "#FF9800"),
                 ("Inequity", "#00897B"),
             ]:
-                r = coding_tools.execute(
+                r = mcp_server.execute(
                     "create_code", {"name": name, "color": color}
                 )
                 assert r["success"] is True
@@ -887,7 +887,7 @@ class TestPhase6FullWorkflow:
                 "end_position": e,
             })
 
-            result = coding_tools.execute(
+            result = mcp_server.execute(
                 "batch_apply_codes", {"operations": operations}
             )
             assert result["success"] is True
@@ -895,21 +895,21 @@ class TestPhase6FullWorkflow:
 
         # ---- Phase 3: Create categories and organize via MCP ----
         with allure.step("Phase 3: Create thematic categories via MCP"):
-            cat_struggle = coding_tools.execute(
+            cat_struggle = mcp_server.execute(
                 "create_category",
                 {"name": "Struggle and Adaptation", "memo": "How students navigated challenges"},
             )
             assert cat_struggle["success"] is True
             struggle_id = cat_struggle["data"]["category_id"]
 
-            cat_connection = coding_tools.execute(
+            cat_connection = mcp_server.execute(
                 "create_category",
                 {"name": "Connection and Isolation", "memo": "Social dimension of online learning"},
             )
             assert cat_connection["success"] is True
             connection_id = cat_connection["data"]["category_id"]
 
-            cat_justice = coding_tools.execute(
+            cat_justice = mcp_server.execute(
                 "create_category",
                 {"name": "Educational Justice", "memo": "Equity and access concerns"},
             )
@@ -925,7 +925,7 @@ class TestPhase6FullWorkflow:
                 (code_ids["Inequity"], justice_id),
             ]
             for cid, catid in org:
-                r = coding_tools.execute(
+                r = mcp_server.execute(
                     "move_code_to_category",
                     {"code_id": cid, "category_id": catid},
                 )
@@ -933,7 +933,7 @@ class TestPhase6FullWorkflow:
 
         # ---- Phase 6: Verify final state ----
         with allure.step("Phase 6: Verify final codebook via MCP"):
-            list_result = coding_tools.execute("list_codes", {})
+            list_result = mcp_server.execute("list_codes", {})
             assert list_result["success"] is True
             final_codes = list_result["data"]
             assert len(final_codes) == 5
@@ -946,7 +946,7 @@ class TestPhase6FullWorkflow:
             total_segments = 0
             sources_with_segments = 0
             for name, info in sources.items():
-                seg_result = coding_tools.execute(
+                seg_result = mcp_server.execute(
                     "list_segments_for_source",
                     {"source_id": info["id"]},
                 )

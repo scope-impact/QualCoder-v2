@@ -144,6 +144,59 @@ def coding_tools(app_context):
     return CodingTools(ctx=app_context)
 
 
+class MCPClient:
+    """Test client that routes all tool calls through the MCP server dispatch.
+
+    Uses ``MCPServerManager._execute_tool()`` — the exact same code path as
+    HTTP ``POST /tools/{name}`` — but without the HTTP transport layer.  This
+    tests the full MCP dispatch: tool routing, context wrapping, error
+    handling, and metrics, while keeping tests fast and thread-safe (SQLite
+    in-memory databases are single-threaded).
+
+    Provides the same ``execute()`` API as ``CodingTools`` for drop-in use.
+    """
+
+    def __init__(self, mcp_server):
+        self._mcp = mcp_server
+
+    def execute(self, tool_name: str, arguments: dict) -> dict:
+        """Execute a tool through the MCP server dispatch pipeline."""
+        return self._mcp._execute_tool(tool_name, arguments)
+
+    def list_tools(self) -> list[str]:
+        """List all registered tool names (from the MCP server)."""
+        schemas = self._mcp._get_tool_schemas()
+        return [t["name"] for t in schemas]
+
+
+@pytest.fixture
+def mcp_server(app_context):
+    """Start the MCP server and return an MCPClient for tool execution.
+
+    Creates a real ``MCPServerManager`` bound to the test ``AppContext``,
+    verifies the server can list tools, then yields an ``MCPClient`` that
+    routes all calls through the MCP dispatch pipeline.
+
+    Usage in tests is identical to ``coding_tools``::
+
+        def test_something(mcp_server):
+            result = mcp_server.execute("create_code", {"name": "X", "color": "#FF0000"})
+            assert result["success"]
+    """
+    from src.shared.infra.mcp_server import MCPServerManager
+
+    server = MCPServerManager(ctx=app_context, debug=True)
+    client = MCPClient(server)
+
+    # Verify the MCP server is functional
+    tools = client.list_tools()
+    assert len(tools) > 0, "MCP server has no tools registered"
+    assert "create_code" in tools, "MCP server missing coding tools"
+    assert "list_codes" in tools, "MCP server missing coding tools"
+
+    return client
+
+
 # =============================================================================
 # Repository Fixtures
 # =============================================================================
