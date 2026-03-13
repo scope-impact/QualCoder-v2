@@ -1,0 +1,44 @@
+REVIEW TYPE AND GOAL
+
+CONTEXT
+- PR comes as a request from a customer so there is some urgency to it.
+- Allows users to access extra information about the server
+- Author is a project lead, very experienced, a lot of expertise in the area
+
+
+TRANSCRIPT
+- Firstly goes to Jira from the PR description.
+- The issue is clear and well written so that’s good.
+- They also see the issue also exists in the product team
+- In the product issue there is also a linked customer involvement. They do not investigate it further because they already know it is coming from the customer request.
+- Interestingly tests are in a different PR. They already knew that because they saw the PR first. Generally, tests are in the same repository as the code they are testing. The author and reviewer already had a back and forth discussion in the test PR about why the tests are done in that way - historical reasons and then a small extension to an existing test suite.
+- Both, the Jira issue and the test PR are linked in the PR description.
+- Goes to the File tab.
+- The change touches one class that they know well. If they wouldn’t know it so well they might send the review to someone else.
+- It’s a situation when one process spawns another process. The class is in charge of creating the command that 
+- First the author adds a new value that can be handled by an expression resolver. Second hunk - one line code cleanup to a newer version of the language. That’s a good thing to do and then they get rid of all the unnecessary code.
+- Last hunk has the other “interesting” bit - actual change in logic.
+- They switch to IDE to understand and see the logic fully.
+- They always have the IDE for this project open because it is a ver common project.
+- Often they pull the PR and look at the new code in the IDE, but sometimes, like now , it is enough to have a look at the old code in the IDE.
+- Scrolls for a while a bit confused in the IDE, then realises they are in a wrong project.
+- Opens the correct project. Looks through how the class is initialised. 
+- Goes back to GitHub, looks at the number of the LOC that was changed and goes back to the IDE.
+- Explains from memory what are the classes and methods around the changed LOC. Then says line by line what was happening. Explains that the author removed a pointless point of code that was not needed.
+- Says they saw the tests in the previous commit so they can just approve.
+- Approves and submits the review.
+- Code reviews don’t mean for them it passes tests, the merging is independent of code review. However, they confirm that the code passes and it’s like a separate thing.
+- They look at the CI/CD integration in the code review discussion. So they see that the common CI passes, it did not break anything that exists. The author also ran some custom jobs as the tests are in a different repo.
+- They do not want to check the further jobs now as their screen is very slow but once they check that, they will add a label “Ready for merge” or they might just merge it.
+- They could merge it themselves but the screen is drawing very slow because of the zoom meeting.
+
+GENERAL STRATEGY
+- Just top to bottom, using IDE to see broader context of the changed code. Switched to IDE when the context checking was needed.
+
+UNDERSTANDING
+- Did not reach a full understanding. His goal was to check that it was doing what it is supposed to be doing rather than having a deep understanding as he would need to do a lot of research.
+
+NOTES
+- The author sometimes reads too much in what the reviewers say so they have to be a bit careful what they write. The person doesn’t take it personally but they are very conscientious and might react too much.
+- They are a subject matter expert and then the author is the expert for the technology area.
+- It it were a user-controllable behaviour introducing change, then they would have much more complex process - feature analysis including feature team, quality people, documentation people. In that case he could do the review but he would not have the responsibility to merge

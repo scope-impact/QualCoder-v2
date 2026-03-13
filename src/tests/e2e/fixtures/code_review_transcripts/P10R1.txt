@@ -1,0 +1,143 @@
+REVIEW TYPE AND GOAL
+
+
+CONTEXT
+- Want to allow users to pay order directly on their page using Stripe
+- A bit complicated PR - a second attempt by a second person because the first PR failed
+
+
+TRANSCRIPT
+- It’s a PR just for the backend of the task. The reviewer starts by reading the description.
+- The PR description lists tables and fields added to the DB.
+- The reviewer is not sure why one of the tables is needed.
+- It adds an endpoint which seems to be a group of end points as it has 3 sub items which make sense.
+- Sees in the description there is a wrapper for the API so it seems the API is a bit confusing so they have their own way to handle it.
+- Then there is some data validation.
+- The author in the PR description also specifies that it is only a start and only one event is captured. Recommends to review commit by commit.
+- The PR is going on for a month and they are now in the stage when they just want to merge it so there is a bit of a pressure to merge it almost as is. SO what they want is to merge it in terms of functionality but still be picky enough in terms of code quality. The functionality can still add in future PRs but the code quality should be standard.
+- There are also 2 linked issues that are being closed. So the reviewer wants to check those.
+- The GitHub UI also suggests two more issues that can be closed if the PR is merged. The reviewer opens them both plus the issues linked in the PR description in new tabs. Finds out they are the same 2 issues by hovering over the links in the Conversation tab. Closes the duplicated tabs.
+- Switches to one of the issues. Wants to understand what is happening there. Usually would not read the discussion and only the Issue description but since the author of the issue creates always tickets without a description the reviewer will go just with the Issue title.
+- Switches to the other issue tab. Reads also the title. It is a sub requirement to also capture the billing address during the checkout process.
+- The 2 issues are tracked by the same parent issue which is a feature [opens the feature]. The feature contains acceptance criteria but there is no specific acceptance criteria for the lower issues. So just needs to go and see what is in the PR.
+- Scrolls through the conversation. Can see that all the CI checks passed.
+- Scrolls to the top of conversation to look at other reviews that are already there.
+- One of the reviewers asks what happens if the stripe works bt a db command fails and how the errors would behave. The reviewer makes a note to their todo list [external text document] that they want to check the comment on atomic transactions which would be the solution to their question as ten are basically asking if the transaction is atomic or not and whether it bounces back as if nothing happened.
+- The next comment of the reviewer suggests as a nit to split an inline comment into two lines. The reviewer says that it’s really nitpicking.
+- Goes to the Files tab.
+- The reviewer wants to have a fast glance at everything that has changes. Looks at the outline on the left bar. The deployment changed, the tests changed quite a bit, some migrations and some requirement which is interesting. And then the API - says it’s quite a lot of changes actually.
+- Then goes to see the commits. Switches to Commits tab.
+- Firstly, the author added some stripe packages to requirements, then some API keys for dev environment.
+- The reviewer makes a todo note if they need some keys for production and staging environments.
+- Then, there is a commit to add db migrations for the stripe integration. The reviewer says t makes sense as they are creating many tables.
+- Then, they have a new field to the status table.
+- Then, all the endpoints
+- And finally a commit for the tests.
+- The reviewer concludes to start commit by commit.
+- The first commit is very short. It only adds the stripe to requirements and the type stripe.
+- The reviewer says the stripe makes sense but writes a todo note to check the type stripe as they are not sure why is it needed.
+- The next commit is for API keys. 2 files changed for the deployment and configuration.
+- The config is unexpected. The two lines setting the keys are OK, but the reviewer is surprised the change is also adding a frontend url which is expected to already be present somewhere.
+- Uses the “…” button to View the file and searches for the urls they have there. Uses the Search function to find ‘http” in the file.
+- Sees that there is also the frontend url but also allowed domains. Writes a todo note on why do they need the frontend url.
+- The reviewer does not plan to turn all the todo notes into a conversation on the PR as they might get clarified in the review but the reviewer already sees that there is a duplication between the frontend url and the allowed domains that are sharing a value. So the reviewer s thinking whether they cannot just use the allowed domains or combine them somehow.
+- Returns back to the off and looks again at the first file. The deployment only includes values for dev environment.
+- Makes a todo note saying they should doo the values file also for the production and staging.
+- The two values in deployment are mapped between the deployment and config files. The review scrolls between the 2 files to point at each other.
+- It [the code or PR] doesn’t say if the key references are already on one password or not. SO the reviewer wants to ask that. One of the keys is the value that their application will read but they want to understand how do they get the value of the password on their cluster. [Writes a todo note.]
+- Moves on to the next Commit on adding db migrations.
+- Before looking at the migrations themselves wants to check the models. Switches to the file containing the models [lastt in the bar on the left].
+- they include a string [import from a library], then they have changes in 1, 2, 3, 4 tables [counting while scrolling the file]
+- Reads the commit description, goes through the bullet points, reading they are adding 2 tables, adding some columns to another one and the reviewer has no idea what is happening to the last table that is being modified as the commit message does not mention anything.
+- The reviewer copies the commit message to their todo text file to have it side by side with the code.
+- Goes through the fields of the first table. The table has a key which is their internal customer id which is OK.
+- Then they have a stripe id… the reviewer thinks what s the meaning of the id. Then realises it is just a string. The field is confusing because it uses a mapped_column function. So the reviewer was thinking if it needs some other mapped table but then they understood it is like that just because of the type of the field. But that doesn’t matter that much as it is a technical thing and the reviewer is now checking mostly whether it makes sense.
+- Then the last field goes to another table which is mentioned in another field before. Which looks good.
+- Then there is a change in another table. The reviewer says that the GitHub diff is not the bast [probably because it is not apparent that the change is in a different table]
+- Then there is the user table which contains basically the same stuff as the first table.
+- Compares if the fields are correctly mapped. Looks good.
+- Marks down in the text file they checked the 2 tables
+- It’s already in a way a complex change so the reviewer will already need some help to understand what they did.
+- The next table the reviewer doesn’t want to check at the moment so moves on to the next table.
+- Goes through the columns and their types. The price is an int.
+- Adds their first comment as they are not sure if they want an int or a float. The reviewer doesn’t know but guesses that float would be better. The comment asks whether an int is what they want.
+- The currency is a string and the reviewer sees no validation for the field. The reviewer doesn’t know f they care about the validation.
+- Adds a comment asking wether they care about validating currency or if it is handled by stripe.
+- Then there is the description for the product and the licence type [checks the type].
+- The reviewer is not sure what is that particular type. Through a rigt click, opens the file with the type definition.
+- Returns to the diff. Uses the search function to find where is the licence type used. A location is in the context of a hunk, the reviewer expands it. Concludes that it just means the type needs to be one of a given list of licenses.
+- The table then looks good.
+- Then starts to think about the license order which is just below in the white part of the hunk. Then realises they actually did not change anything in the order which shouldn’t be true because in the commit message it says that they do change it.
+- Scrolls a bit up. Uses the search function to look for the licence order. Skps through few locations. Concludes licenses now have only one product associated with them. Which is interesting.
+- Writes a todo note that licenses now have one product. And another if it a 1 …n relatonship.
+- Then the order has a status which is an enum and that’s OK.
+- Still within the product field, the reviewer adds a comment to add a back populating with the order from the licence order.
+- Returns to the order status table that the reviewer skipped before.
+- Finds a typo in the docstring. Adds a comment with a snippet suggesting a change.
+- Still in the docstrng, the reviewer says they do not like “not yet implemented” notes because then it will be implemented and the note will remain were ti was.
+- The docstring states the meaning of each different status. The reviewer reads the description and adds a comment with a suggestion to adjust the naming to be more specific on how the order was closed.
+- Adds another comment to the closed status implementation to check their previous comment.
+- The reviewer also doesn’t know whether the list of statuses is exhaustive. Puts a todo note in the text file.
+- Scrolls down reminding what they already checked.
+- The reviewer checked everything. Says they dd a thorough review now and want to do a step back again trying to understand if they understood.
+- Starts scrolling up remembering what the PR description said. Realised they did not check the migrations. Decides to check them later as they should reflect the tables anyway.
+- They create a license product to  store [something]. That makes sense.
+- It says a table recreates a stripe customer table. Finds the table by scrolling within the diff.
+- Says they are not sure why do they need that table at all and don’t store it directly in their db.
+- Adds a comment  asking whether they really need a separate table for it and what is the advantage over having the information on their user.
+- The reviewer wants to understand why the author did it in this way and what benefit of that implementation the author sees. Maybe there is a reason the reviewer is not aware of so they can be convinced.
+- Then they have the 2 new fields in the licence order and the order always has a product.
+- Adds a comment asking whether the relationship is 1..n or if the order can have exactly only one product.
+- That is also something that does not make sense to the reviewer as they think they can have multiple products in one order.
+- Continues to check the product. It has no connection to the order whatsoever which is OK.
+- Reviewer remembers on the commit it was also saying there is an initial list of products. Scrolls totally to the top - first file.
+- Looking at the products, the reviewer sees that the price int already includes the cents. Scrolls down to delete their comment about int vs. float. It makes sense. The reviewer could have checked the stripe documentation on how they handle prices themself but it is the first tine they are using the library so they do not exactly know.
+- The reviewer still has one todo comment they did not address. The reviewer doesn’t know where s the list of statuses coming from.
+- Scrolls down to find the order status and adds a comment asking that and if it is all of the statuses. The reviewer wants to get some more information on that as they cannot fully understand the business logic without some more explanation. The reviewer understands why they have the order status because they want to display it to their sales team. It is important for the reviewer that those statuses make sense as they should be aligned with the user flows and maybe also with some internal processes in their team, so they want to understand the pipeline and how do they change from one to another. Edits the comment to ask what is the pipeline. The pipeline is actually not documented anywhere so the commit messages are not overly useful in that sense because they are very descriptive as the code. Rather than the commit listing what was changed, the reviewer would like to know what is happening and what is the purpose. The reviewer can guess what is the purpose of the order status, but it is not explicit and nothing can guarantee that it is the same purpose as the author had given it. So the reviewer does not know if there is a status missing or if they want to integrate with the platform used by the sales team, if there is something that would be beneficial for them to understand like an in-between status.
+- Moves on to check the migrations, scrolls a bit lower.
+- checks few declared variables in the beginning, the contents are OK
+- They create an enum which is the same like the order status, then they create a product, checks the list of the created columns. Everything except exceptions is required which makes sense.
+- Then there is the licence type which again is an enum. The reviewer does not like this because this enum is most definitely not new so they now have a duplication of code. Scrolls through the commit searching.
+- Opens the GitHub page of the project. Uses the GitHub search field to find files using enums in a similar context. Realizes that that is apparently how it is done in the code base. Deciides to allow it because the reviewer does not want to challenge too much in the given moment. The reviewer might just mention it later in an in person conversation with the author saying they should find a better way to do it because the reviewer doesn’t like it hardcoded in that place. Now, the reviewer found out this is how it is in the code base so they do not want to create unnecessary confusion now and focus on what matters more.
+- Checks the next table that is being created. The reviewer stops a bit to understand what would the cascade on the delete do. So if they delete a customer in that table, the user in another one is also deleted which makes sense.
+- The reviewer is not sure whether they will need an index that is being created. Thinks for a while. Then says it actually makes sense.
+- Checks the other created column. Returns to have a look at the order status enum which is being used. Then goes through how they populate the next column and relate it to the other tables. It makes sense. And on the delete of the product they do not delete the order which is also correct.
+- Checks what do they drop on downgrade for columns.
+- Makes a note to the text file that they were just skimming through the migrations and they might have another look there but they are starting to be tired of that commit.
+- Uses the Next button to go to the next commit. The commit message says it adds a status to newly created licence orders.
+- Scrolls through the commit. Thinks they already did this in the models and now they are doing the same on the end points.
+- They are changing a root when creating a new license.
+- The reviewer expands more context on top of the changed line of code several times. Comments that the function is already horrible to look at as it is 60 lines of code.
+- Clicks on a line in the white context which has an inline comment stating a TODO.
+- The reviewer comments the change in the file as that they create the order and the added code sets a product id and gives it a status In progress.
+- The reviewer says “OK.” When they understood. The order always needs just one product so it doesnt make sense. Then the reviewer questions whether the function is creating a new license for the user or what is even the new license. Scrolls to the beginning of the function. Finds out the new license order is coming from a form and it actually is an order. Says it is a very bad naming.
+- Walks through the fact that the order asks for a product id which is populated from some other source and then the status is set to in progress.
+- The reviewer says that this showcases that the statuses are important as for them when something is created, the status is New and not really In Progress.
+- Since they have a pipeline that picks up that order and processes it, the reviewer thinks that probably it would be better to create it as new and put it as “In progress” once it is picked up by their pipeline. Like so it wold be much easier to understand when did it fail if something happens.
+- Adds a comment proposing the sggested scenario and asking the author what do they think.
+- Then goes to check schemas. It makes sense what fields are required. Checks it against the definition of the class.
+- Then when they make an order it optionally might have a status. The reviewer thinks it is probably optional as the old orders do not have a status.
+- Alternatively they could add a default status. The reviewer would like the status not to be optional. The reviewer does not see why because even on old orders they can change it.
+- Adds a comment if they could make the status not optional.
+- The review is still very long and the reviewer needs to leave.
+- The reviewer is going to continue commit by commit trying to understand what does it actually do as it is still not totally clear from looking at the commit messages. The commit messages say what changed but not what is the behaviour now. So the reviewer wants to understand the behaviour. This will come when the reviewer sees all of the code
+
+
+GENERAL STRATEGY
+- Commit by commit, top to bottom, returning back and forth to check details of implementation
+
+INTERVIEW
+I:  So then just let me have one tiny question because most of the comments, you go, let's say, top to bottom and then you might jump back to some things that you wanted to check again. But then in one of the commits you were like quite selective in - OK so now I will look at one table because it looks separated and then I will go
+somewhere else . How did you create that order?
+
+P10: So I guess I quickly while scrolling and looked at relationships in between tables and I just tried to start in the simplest possible one. So I basically tried to find the dependency tree. So what is the one table
+that is not connected to anything else so that I can understand what it does. It's a little bit of functionality. And then from that I understand - OK, how do others use it basically. And for me again this is an
+indication that this could be a separate commit. Just so that I understand, OK,
+this is what you have to look at. But again it's a huge change. It's like 600 new lines and it's
+code that has been here for over a month. So yeah, it's a bit more difficult.
+So what I would do for the next time is continue with these commits. And then after I'm done with
+every commit, I look at all the changes and I take a bit of a step back and I just stare at it
+and I look at my notes and I see, OK, let me see if I understood everything. Could I have missed something?
+And then I wrap up the conversations. I look if is there any conversation I didn't, is there any conversation I added but I can actually delete already? And then I think, OK, what do I do when I click this button [Submit reveiw]?
+What do I write here [review message]? And what is like, do I just make
+a comment? Do I approve? I guess I will not approve this one. Or do I request changes? And if so, how explicit am I?

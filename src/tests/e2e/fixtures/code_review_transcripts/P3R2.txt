@@ -1,0 +1,111 @@
+REVIEW TYPE AND GOAL
+First time review
+
+CONTEXT
+- Enhancement
+- There is around 6-7 people in the project that have the ability to merge. So if they see somebody of those already done the review they might not even look at it - maybe if they are curious or they think it could benefit from second pair of eyes.
+- Since the technology lead is the author, they are just going to do it because they want it to move forward.
+
+TRANSCRIPT
+- Checks the GH PR, reads the description which gives the expected enhancement to a functionality
+- Switches to the linked Jira issue - the description is not very deep and does not tell much, they kind of understand it though.
+- The description says the change is part of a certain component which helps the reviewer to better imagine what the description means
+- Says the old behaviour could be interruptive to the user so it makes sense to change that
+- Goes to a linked product issue tracker issue - sees that the issue was created by a person from a specific project and it contains much more of information - interestingly the issue says the related component is a documentation so it treats the issue as something to document rather than something to fix. But then in the upstream project the author actually fixes it
+- Goes to the file by file view on GitHub. Scrolls totally to the bottom to have an overview. Says it is a significantly more complex change.
+- Adds a parameter to the GitHub link to hide whitespace. It is helpful to have a simpler view of the changes by not being blocks of white space.
+- Then realises they would rather switch back to the original view to have better imagination about what is happening.
+- Says there is a huge pile of stuff removed and then a huge pile added and it looks to them like it is the same stuff.
+- Scrolls back to the top of the page and starts reviewing.
+- Hides the white space again
+- They see the author added some new capabilities (variables)..
+- Laughs that when they hid all the white space, the change in that file comes down to one line that adds a condition.
+- From experience they know what is happening in the code and what it does. The change looks straight forward.
+- Scrolls back up to have a look at the capabilities layer
+- Then goes to the next file - the new class that handles adding the connector. Says the class extends an abstract upper class.
+- Goes to IDE to open the abstract class implementation
+- Downloads the sources from the IDE. Leaves it open but does not want to focus on it too much now.
+- Goes back to GitHub and says what are the individual methods doing
+- One of the methods is related to runtime so they wonder whether the class should be executing stuff in a certain time
+- Has a look at how the method is implemented - if the server is booting they do not want to execute - it is “interesting”. They say they probably understand why is it there but should double check. They think there is other code that handles when things are booting.
+- “This is what it should do…” - looks through the logic of what happens when the runtime is an issue
+- Writes a comment asking whether the first condition in thee runtime method could be handled in the method that decides whether runtime is an issue and not part of the execution. The logic is for them in the wrong spot. It is not a big deal but that method does not get executed if the previous one returns false.
+- The rest of the logic seems fine.
+- Writes a comment if the following override method is needed as it only calls the method from the abstract class so it has the same effect.
+- Scrolls through the next file. Then goes back to the top and writes a comment to make the package protected. It is again not a big deal, they are “a bit anal”.
+- All the fields in the class are final, that’s good.
+- They trust the author on this. If it would be somebody junior they would take more care to check whether everything is alright. The author is experienced and it is just passing parameters.
+- Then, there is a longer method with logic that starts the service. There is some passing of the data in the beginning.
+- Then there is an alternative scenario which does basically the same thing
+- There is a case that requires complex configuration - if it wouldn’t be the specific author, they would definitely check if all the things make sense, but now it is more an area of trust and how much his the reviewer willing to dig into all the details.
+- The author is experiences, knows what they are doing, wrote good code, commented on it, explaining why it is - so they got much more sense of “OK, they are not doing anything wrong”
+- Next is a utility class. Searches on the page where is the new class used which takes him all the way back to the handler method. - Identified the bulk of the change in this utility class.
+- The author creates the object that can be on the server and uses the correct idiom, so that’s good.
+- Sees the switch statement - notes that there are several types of connectors.
+- The first case loads the data…
+- Then another case…
+- Uses the commenting function to put a note to self to check later proper value resolution without adding the review comment
+- Adds a “Nit: “ comment on suggesting to shorten a more verbose code
+- Gets concerned they entered the comment on the wrong line. Tries to copy and enter on the correct line. It opens a new comment under the existing one so realises it was correct already.
+- Next process is socket binding.
+- Adds a comment that the code indentation is off.
+- Adds another “Nt: “ comment that breaking line on “,” is better
+- Adds the same comment on a lower line of code
+- He uses the “Nit: “ format of the comment to acknowledge that they are being picky and to be more polite about it
+- If it would be someone junior, they might not use the “Nit: “ because they would be more in the mindset of shaping the junior to write the code as they want them to. The reviewer knows the author for a long time and he knows that wen he uses the “Nit: “ the author is going to fix it. By using the “Nit: “ They ar also acknowledging that the relationship exists and they are acknowledging the author’s experience and they do not want to be on the author’s neck
+- If the change would be ready to approve they would not enter the Nitpicking comments. But since they are comments to be fixed, they will also enter the nits.
+- Acknowledging the “nit” is something that is part of the culture of the project - a way to respect each other, they are all senior and hardworking and experienced, but on the other hand why not making the code better
+- They see the same issue repeatedly, so they are not going to enter more of the same comment agin and again
+- The saw some deletions in the tests that were not clear. Then realises that the goal of the change was not to need to reload in some context and that the deletion removes the reloading expectation from the tests so it makes sense as a part of the change. So removing the reloading from the test is actually testing the current functionality.
+- A change in the tests does not make any sense to the reviewer. Enters a comment asking why is the new variable needed. The variable is created but it is not used anywhere so it seems not needed. Maybe the author forgot to do something or there is no reason for it to be in the code.
+- Finished going through all the files. Now they understand what it is all about. They are slowly scrolling back up. Stop to check the Note to self. Now they got the sense of the overall change so they have a better idea about the things they might want to come back to.
+- There are some things they wanted to check but did not make a note of those.
+- Scrolls totally up and checks the added capabilities.
+- They are going to change how they are doing the review. Opens the terminal to pull the change.
+- Opens IDE to refresh it.
+- The IDE highlights one of the new capabilities is never used. Goes back to GitHub and writes a comment about it. From experience they know this author has a tendency for this type of stuff so it is good to keep an eye on it.
+- It does not seem like a big issue as the unused variable is not related to the main goal of the change.
+- Scrolls down, finds another class they would like to see in the IDE. Checks some used methods implementation. Says they thought they knew what it did and it was correct but they are double checking. One of the methods is checking whether something was installed or not.
+- He stops to think. Says thinking about code review in IDE is hard. Tried to enter a review comment in the IDE. Laughs they are using a wrong tool.
+- Adds a comment on GitHub to ask so that they don’t need to think too hard - Asks what happens in a certain uncovered condition.
+- Checks in IDE a method to get parameters. Firstly checks a parameter by parameter. Then searches where the method is used. Realises it is an established method used all over the place so decides not to dig into it more.
+- Checks the issue from note to self they made on GitHub - has an aha moment and wants to have a substantial comment on that. It’s a pretty big thing.
+- Adds a comment on GitHub that the used var is actually a node from elsewhere and it should not be used directly in operations on runtime. Proposes a different variable to use as well.
+- Adds another comment to that method to use a different method - a model rather than an operation.
+- Adds the same comment a bit lower.
+- Says that normally they would not try to add comments in the IDE as they would be using multiple screens rather than sharing one screen on the zoom call.
+- Finishes reviewing the core method and says: “This is as far as I wanna go”. They found some nitpicking but also some substantial things so that is the amount of effort they want to put in it as the author will have to draft new stuff and there will be another round of the review and they will do another doublecheck. They did the basic stuff they want to look at. They do not understand Rust that much so they are not going to waste all of the authors time to rewrite things too much. They will have another chance to look again at it and think about tit.
+- Wants to submit the review with Request changes and 14 comments, but realises they want to double check. Finds a comment not added with “What does this do”? Realises they wanted to check it but decides to skip that and cancels the comment.
+- Scrolling through, trying to find if there is anything left.
+- Nothing left so submits the review.
+
+GENERAL STRATEGY
+Scrolls through the whole review, gets the nitpicks, then comes back to the more difficult part to review, like logic etc. Switches between reviewing a file and scrolling back to double-check, when needs more context, switches to IDE. 
+
+NOTES
+- When the code is under the code ownership and responsibility of the author, it colours their expectation on the code quality - they expect it is probably correct and the code quality is better, they don’t need to check the formatting and code style. They also have less tendency to reach to other people less. If someone else would author the code, they would expect the project lead to do the review themselves.
+- Issues that do not relate to the change and are not doing anything at this point are something that should be fixed.
+- It does not scare them that there was a variable unrelated to the purpose of the change. Their concern is that the author introduced a variable but it was never used. Maybe the author forgot to do something but they do not think so because the purpose of the change is something else. The author probably introduced it during his work and then they changed their mind. Maybe the author wanted to do something broader and thought they would use this thing and then realised it is outside of the scope. That seems like the most likely scenario. Having that thing would make sense in the broader context,  but it’s not part of the problem they were trying to solve.
+- Another context, but they do not think it applies here - if the variable would be introduced as part of the broader context would be part of the customer facing maintenance branch so they are far more concerned about it and then they would suggest to separate the contribution to a different piece of work. The author should focus on fixing the bug that they are addressing and then do the other work separately. That would be just if it is someone internal, otherwise if there is a contribution from the community they would not care about their maintenance branch. But that does not come up very often.
+- The way of putting comments when they know something is wrong but write only an understanding question is dependent a lot on the receiver of the comment. They work with the author for a long time. They know it’s wrong, they don’t want to spend the time and go check and they have confidence from past experience that the author will fix it just by asking that question.
+- They definitely often ask for changes but subtly. They are a group of people working together for a very long time and there is no urgency in this situation so there is no pressure to move.
+- They do this a lot, but also when they are in a hurry or not in the mood they do it less.
+- Even if the colleagues would be fine with them being more brusk, it would wear over time. SO whenever they can be polite they try to do that. It looks better.
+- Also, they are a leader in this whole organisation so they are modelling the behaviour. SO they want to showcase the polite way to interact. Maybe no-one else will see this PR and the author is a long standing member part of their culture, so they do not need this modelling behaviour. But it would be if someone else would see it.
+- Sometimes they pull the PR first to the IDE and start the review that way. Typically, they don’t do that because it takes more effort. You have to switch much more between the GitHub and the IDE and it disrupts the whole working environment.
+- Typically starts to first use the GitHub itself and then jump away from that at some point.
+- Typically does not try to run the code, there is testing for that. But they did not focus on testing in this one that much other than the fact that the author was doing something.
+-   The IDE is much more efficient for going through the code than scrolling up and down. You can search for relationships and all that kind of stuff. Once they realise that is what they are going to be doing, that’s when they get the IDE.
+- The IDE said in this one that the variable is not used just by looking at the variable. They might never thought that otherwise. You can do searches and see which things are being used… Once it starts to be that kind of stuff than they tend to go to the IDE.
+- They also use it when they want to see closer the related code, other classes and what they are doing, make sure they are right about how things work.
+- The limit to the depth of the review is dependent a lot on the people. This author works on this project for a long time, but they are things to look out for. The last issue they were checking is a very significant thing architecturally. It was probably fine, but it was potential future bug. They made sure they knew what was the data and where was it coming from, but in general they do not need to worry with this author whether they made simple trivial code mistakes. With someone junior they would be more careful.
+- Their culture in testing is not the best. They just checked the tests. If they would come back to this review they would probably check the tests more, make sure it is being tested.
+- When they look at tests it is more like - are there tests, do they seem to be covering the cases? There are certain things they keep an eye on in test cases like making sure they work fine and don’t use things incorrectly. They are things over time that do cause problems or don’t.
+- It is an important part of the review that they have the experience knowledge ready to pick the issues when they see them. They do a lot of code review and have done them for a long time and most people they work with have been doing this for a long time too so when there is the knowledge, it gets far more efficient.
+- When there are contributions from more junior people or that are not done by the in-house colleagues they have to be much more careful, consider more how to express things not to make people sad and not allow stuff you don’t want just to be nice. It’s harder. You want to encourage people to contribute to OSS. You also don’t have the lasting relationship with them. SO you need to be encouraging. They don’t need to be encouraging to the author of this PR.
+- Obviously if you are encouraging, keep a good relationship and behave nicely to people it works for everyone, but if you encourage the volunteers they contribute to the project.
+- Even people that are in-house or don’t work for the company can contribute outside of their scope and you want to be encouraging people to do so. So you want to have that in mind when you approach the review. You don’t want people to feel embarrassed or bad about their work. There is much more thanks.
+- For example when they submitted this review, they did not even comment, just sent the request changes.
+- The encouraging content is normally in the overall review comment. Sometimes they also comment that something is a good idea or that they like it.
+- Another thing they do with anybody which we could see in the first review - if there is an opportunity to be educative, they try to be educative. If something useful can be achieved with a low amount of effort… That’s probably wy someone recommended them as doing good code reviews.
+- In some other review they showed the author a technique for writing tests that will be generally useful for years. It was a bit off topic, but educational. So they try to do that. It helps people to understand the overall culture of the project and it is a huge project so there is a lot of pieces of knowledge that can be disseminated. So if you do that it is encouraging to people because they feel they are progressing. You are not just fixing things, they are actually getting a benefit out of that process and they are learning. 

@@ -1,0 +1,97 @@
+P1R1
+
+REVIEW TYPE AND GOAL
+- Re-review of a code that was already reviewed
+- To see how the author responded to their comments
+
+CONTEXT
+- Project/PR open for around 1 month
+- First bigger contribution of the dev
+
+TRANSCRIPT
+- Checks the original commit
+- Reminding himself of the history of the PR, his own comments
+- Tries to understand the pushed commit by comparing to the previous state, switches to the compare tab window
+- Goes to check previous comments
+- At the bottom of the history, they identified the commit with the biggest bulk of changes by opening it in a new tab.
+- Started going through the code to find a space related to one of his comments from the previous review.
+- The author addressed his comments but the requested documentation was not containing enough of explanation. Reviewer asks if the explanation is documented somewhere else. They ask to document in the discussion where the explanation is located.
+- Resolves a well addressed comment.
+- Double-checks in the code if the comments marked by the author as resolved are actually resolved.
+- While checking, they comment that the author should remember not to put debug statements in committed code
+- Comes back to the discussion history and checks the applied changes comment by comment
+- Tries to scroll several times through the code to figure out whether a comment was addressed.
+- Uses a search function to find the location of the code in question
+- Replies in the discussion that they would appreciate if there would be a note on how the comment was addressed (even though the comment was marked as resolved)
+- When sees that the comment was addressed in the stated way and the code seems to address it, then they mark comment as resolved.
+- Skimms through all the code from top to bottom without the comments
+- Asks to add an explicit statement of the used abbreviation in the doctoring of a class
+- A comment that was not marked as resolved seems to be solved in the code. The reviewer asks to make a further note to address all the similar issues (address all todos) in a follow up actions. Marks the comment as resolved.
+- Marks another addre3ssed comment as resolved after viewing the code to see whether the authors claim was implemented.
+- Finished reviewing whether comments were addressed.
+- Starts a full new review of the code file by file.
+- Marks as viewed when the code looks OK.
+- Asks to order imports alphabetically
+- Asks to write a more detailed documentation
+- Mentions they will not comment on a very minor issue
+- Slows down to review logic in a for loop
+- Looks at what is the author doing with a variable and finds it after the loop
+- Looking if there are some issues in the logic or memory
+- Asks for more detailed documentation
+- Compliments a nice check for an edge case
+- Asks for more detailed doctoring on how to use the class
+- Scrolls to check if a part of the code was a copy paste
+- P{points at layering issue in the comment. Asks the author to write a more abstract description that does not have assumptions about how the class is used by upper layers and says how is it OK to use the more specific examples
+- Writes a comment in the code where the code reflects the assumptions about how the upper layer will use the class.
+- Suggests a different type of artefact that the code should be using.
+- Points at ambiguity in how those artefacts are used. Suggests to improve the code and docs to reflect that.
+- Goes to explore the code base to check implication from available data sources
+- Scrolls through the file top to bottom, adds one more comment at the end to improve doc strings
+- Marks several files they went through as viewed.
+- Asks to document parameters.
+- Asks to improve class and variable naming to include more specific name
+- Asks to write comments in code in imperative style
+- Automatically marks binary zip files as viewed
+- Pays attention to code quality and whether the task is complete
+- They are satisfied that some issues are addressed in the code
+- Asks to use capital case for SQL keywords throughout the whole contribution and limit them to the line length
+- Finishes the review with requesting changes as there are too many changes that the author will need to make.
+- In the message to finish the review, compliments the author on great progress and says the code needs minor improvements, there are more tests needed. Specifies which files need more tests. Finishes with saying ‘well done’.
+- Did not submit the finish review yet. Scrolls through the page bottom-up, marking all files as viewed, stopping at comments.
+- With all the files collapsed and marked as viewed, points mouse at 13/13 files viewed and submits the review.
+
+AFTER THE REVIEW
+- They will have a meeting with the author. If they would not have the study they would probably not pressure themselves to finish he review fully on time before the meeting.
+
+GENERAL STRATEGY
+- Comment by comment they check in the code whether the comments were addressed
+- File by file, they mark when the file is viewed and reviewed to track progress.
+- The process was typical for the projects where they do code review. Then they have other projects where they do not care about doing code reviews or having production quality code. Other scenarios could be to review projects where there is a lot of legacy code.
+- Typically they go through the code looking at the correct implementation of elements, security issues, formatting issues, resolution of previously made comments and improvement of the person who wrote the code.
+- They aimed to teach the author to write production ready code
+- Mentoring students and novices who want to participate in OSS projects is one of the specific goals of the project
+- They think about what he comments on and mentors on on a general level. If they see some issues repeatedly then they might think about how to help the author to improve in a specific area
+- Comments when they see an issue that needs fixing or needs more explanation. When it’s asking for improvement, expects change in the code rather than answering a comment.
+- 90% expects to see an action on the code
+- Might also write a comment when sees something particularly nice
+- Code quality is absolutely an inherent part of accepting a pull request
+
+FINISHING A REVIEW
+- when went through all the comments that they made previously, saw all the files, has no pending notes if they made some
+
+UNDERSTANDING
+- Does not reach a full understanding - often sees just smells of issues so they comment on them
+ With the hope that either the author or the reviewer can reach the full understanding of the issue with this additional help.
+- Does not have time to reach that level of understanding.
+- Together with unit tests and criticality of the software this level of understanding is enough. If that would be a nuclear reactor they would try to understand more fully.
+- Full understanding would be an overkill for this context
+
+NOTES
+- Most of the comments are about documentation and code quality
+- Always starts with an appreciative please, thanks etc., very polite questions. Repeatedly starts writing the comment and then goes back to add the polite formulation
+- Comments on having the Hawthorn effect of being observed. It might make them more thorough, but interested in the same things. They might have skipped some things because of the pressure but they are not sure.
+- Before writing a comment they stop to think for a while.
+- Keeps several opened tabs - the file by file, commit comparison, discussion and project page
+- The review had a strong mentoring focus - mentions of “this is something that I want the author to learn.’
+- Talks about the full code comprehension as something that is hopefully covered by the full team author + reviewers rather than the individual reviewer comprehending all of the code.
+- In this review made one note for testing, then another note that it’s not so badP6

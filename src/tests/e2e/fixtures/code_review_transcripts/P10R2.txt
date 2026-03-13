@@ -1,0 +1,74 @@
+REVIEW TYPE AND GOAL
+- First review
+
+CONTEXT
+- Removing a back button on a web UI
+- Already briefly saw the PR and knows one comment that they will have to make
+- Itt’s a front-end review and they do not have many people to review that so the reviewer is also part of the review
+
+TRANSCRIPT
+- Reads the title which indicates the PR removes a back button. It is interesting to the reviewer as they have no idea why do they want to do this. At least there is a linked issue in the PR description.
+- Opens the link to the issue. The reviewer recognises the issue. It is a bug that happens when the user does not want to finish the order on their web app and  uses the back button and gets stuck/redirected in a wrong part of the web app even though the reviewer thinks that it is maybe even an OK behaviour.
+- “For some reason” the issue has a comment from a senior frontend engineer [scrolls down in the Conversation] to just remove the back button so they want to fix it by not even having the back button.
+- So the PR author is a junior guy acting on the recommendation of the senior developer.
+- The reviewer doesn’t much like the process as the comment of the senior developer should be rather captured in the PBI as something they want to do. This was not discussed. So for the reviewer the acceptance criteria now is a bit tricky. This can lead to conflicts because now the reviewer has to discuss in the PR both, how the code matches what the senior dev said but also what the senior dev had said. [The senior dev have already approved the review.]
+- The reviewer actually thinks it is not a nice solution but chooses to ignore that as it at least solves the problem in “A” way but it doesn’t solve the problem in the way it should.
+- They had a button which was already there [points att thee left diff]. The button actually did not change [pointing at the right diff], but there is yet another level of stack and a condition has changed - so they only render the button if the order is not finished and the user moved to the second step in the order process.
+- The condition is actually the only thing that changed, the stack doesn’t matter.
+- There is anyway an issue in the button implementation as there is another condition specifying what happens when the step in the order is 0, but the step is never 0. This was already in the original code.
+- Adds a comment saying that the step is never 0 and they can simplify the code. Starts writing a question if they use the rest of the condition elsewhere but then fixes it to read to remove the rest of the condition.
+- This is going to be the only comment the reviewer wants to make. The reviewer repeats to themselves that the button is removed when the step in the order is the first one and there is just an outdated condition which will never happen in the new scenario.
+- Submits the review as Request changes with no review message.
+
+GENERAL STRATEGY
+- Read PR tittle, description, issue, code top to bottom
+
+INTERVIEW
+I: So I will have some questions in general and then maybe some still from the review that you gave me last time, if that's OK. So one thing is that you say - OK, so I will let this go even though I don't really agree that we are even supposed to be doing this. Why do you let it go?
+
+P10: Because of this [scrolling through the list of review requests].  I have too many pull requests to review. The process is not super clear right now so the process was not followed and I feel like if I would add this comment now it would be too much on discussing the process and “you should have done it like this” instead of focusing on what actually matters and in the end I don't necessarily agree that this is a better solution, but it still somehow solves the problem and it doesn't add a technical debt or anything like that.
+
+I: OK. So it's not like an issue that you would need to like create some follow up or…
+
+P10|: No.
+
+I: OK. The other thing is that like here, you basically had no description of the PR apart from the link to the issue, right? But also in the last review tthere was a mistake in the description. How does it change the review process for you if the description is either missing or is faulty?
+
+P10: Well, in this case it didn't change much because the change was quite small, but it still took me a while to understand exactly what is happening and why and where was this discussed, et cetera. So what's changes is that I'm just much faster,
+much more efficient when the descriptions are there and I know exactly what to look for and what to evaluate against. And here I was even like what is the active step and why are we now looking if it's bigger than 0, because it was not described anywhere.
+
+I: So that's actually something that is distinctive in your process because you have very explicitly stated normally the acceptance criteria. How does that work in the review? How do you work with the acceptance criteria in the review?
+
+P10: So for this case I don't need to test anything. Because we have CI, I don't even need to check out the code directly and  compare if the behavior is actually what the expected behavior is. Arguably I should still do that, but this one is such a small one that I didn't bother. But when the acceptance criteria is explicitly defined, then I look at the code, then I run the code and I just make sure that it actually matches whatever is there. And I either have to run the code or I look at the tests and see if the tests match what is written in the acceptance criteria.
+
+I: So you would expect that basically you will define the acceptance criteria before people write the code, and then the tests are somehow like reflective of those requirements.
+
+P10: Yes.
+
+I: Last two things. In the last review you mentioned that you have like notes that you write during the review. How do you use these notes? Where do you have them? What do you do?
+
+P10: So as I go through the PR, whenever I notice something that I don't want to forget, but I also don't want to focus on straight away, I just write a note. When it's something that I still don't understand but I might in the future, so it's not necessarily a comment, then I write a note. Because I very often ask why questions on the PRs and sometimes the why becomes clearer as I do the code review. So the notes are basically action points for me so I don't forget to follow up on them. And it can either be - oh check that this doesn't introduce a bug or it can be like make a comment about this in case it is not solved later on for example. So I use it as a sort of  - when I finish with the in-depth code review and I want to give the general feedback on the on the review - so not the individual comments on the on the code, but the general comments, then I use these notes.
+
+I: OK. Is that something related to the size of the review?
+
+P10: Yes, the bigger the review, the more need I have for this. For the for this one I didn't even open my notes.
+
+I: Do you have them like in a text file or do you have them?
+
+P10: In my screen. Right now you cannot see it, I’m not sharing it, but I have a terminal open on the side and the text editor, but it's empty. It's nothing in there.
+
+I: OK, so the last thing is that in the last review there was a note or there was a mention in the PR description which was like - oh, it could be good to start from Class X I think. “I recommend reviewing per commit.” Yes, that was it. How do you find these like recommendations on how to navigate the review? Do you find it useful?
+
+P10: Yeah, it's useful. It's very useful.
+
+I: So it's something that you would for sure follow.
+
+P10: Yes, I would at least give it a try without even thinking about it.
+
+I: Is it common?
+
+P10: I think [name] is the only person in the team that does this because we have a very good collaboration. So we really understand each other in the process. I am trying to make the tea move towards this mindset of actually use git properly. Each change is a logical change that makes sense. It's like a story you are telling, a bit like a story. I did this, then I did that,, then I added this, then I added that. Now it all works. And so there are a few things. So arguably it could all be the same commit. And actually at the end of the PR it very often becomes only one commit. But let's say you are introducing a new feature and it requires you to change the database schema, it requires you to change the routes, it requires you to change the migrations, it requires you to change some tests, for example. All of this, each of them individually are very small, but when you just throw them at the reviewer all at once, it's very overwhelming. So it's quite nice to be presented with - hey look, in this commit I only look at the models. So I only change the database schema here. And because we know that we wanted to introduce that users now have a building address as well, then this is what the schema does. It
+adds a field building address. Then the next commit could be something like - we change the routes. We have now a new
+route where our users can actually add the building address for example. And then let's say like the
+third commit is - actually now I test that these things work well. So it's adding tests. And what I would do then is probably just squash these three - because it's still like a one logical thing that works together in isolation and one doesn't work without the others. Like it doesn't make any sense to introduce the database schema without any changes to the logic of the code, right? Like then it's sitting there for no good reason, but still for the review it helps really a lot. So I guess it's a little bit
+like a a checklist in a way, like first check that this makes sense, then check that this makes sense. Yeah. And one thing I always do anyway after reviewing on a per commit basis is that I still do then much smoother, but I still do overall pass again because there are things that you also can only really understand once you have them all at the same time. So yes, this helps a lot in decreasing the cognitive overload I think.

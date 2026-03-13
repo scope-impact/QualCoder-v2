@@ -1,0 +1,33 @@
+REVIEW TYPE AND GOAL
+ - Small addition to the code base
+
+CONTEXT
+- Adding container sampling to the project
+- This project uses automatic code formatting which takes away some issues they would otherwise focus on. Also uses a linter that can catch minor mistakes. So they don’t need to pay attention to many things they would need to focus on in the past.
+
+TRANSCRIPT
+- First checks the PR title if it’s written correctly in the imperative mode etc.
+- Looking at the description. The way the sampling defaults is different than in other data source, but the reviewer and author discussed it and they are happy with it.
+- Then checks commits. They would not like to see multiple commits in the history for this.
+- Views the code in the commit tab directly.
+- Identifies potential duplication. However, then realises that the line was already existing in both places. Therefore, they did not attempt to improve it further or search for better solution.
+- Identifies a typo in a #comment in the code.
+- Complements an early exit on a loop as a nice approach.
+- Wonders what is happening and why a parameter is passed in the place it is rather than in the constructor but leaves it without further comment or action.
+- Proposes to improve a #comment formulation.
+- Complements a readable and complete description of a function. Adds a comment to improve the docstring wording - the current one implied a tuple is something callable, while the reviewer suggests to talk about what the tuple’s elements return.
+- Adds another comment to the same docstring about the param not being a ‘callable’ but a ‘tuple of callables’. 
+- Adds the same comment to the next hunk where the docstring shares the same issue.
+- Says that when they find an issue, they have to put in their mind where else could such an issue appear.
+- Finds a piece of logic that seems correct but could be written better as a list comprehension and become a one line.
+- Adds a comment to suggest to consider using the list comprehension.
+- Goes back to his previous comment on the docstring and edits the comment to contain a positive comment appreciating the quality of the docstring.
+- Says he assumes the tests are doing what they are supposed to be doing and that they look OK. They mostly want to verify that tests have been added.
+- Finishes review as ‘Request changes’. Writes “Good work!” And that only minor changes are needed. Submits the review.
+
+GENERAL STRATEGY
+- Looks at the commit tab - top to bottom
+- The change(s) are often discussed in a previous meeting if the author has some questions or challenges. Then, they have a shared understanding of an agreed implementation. That makes the review easier - they know that they are going to review a contribution going in a specific direction and not a wrong direction. They also feel it would be unfair to require a different direction from the author in the review.
+- Consistency in the code base is re-assuring. In the case of the potentially duplicated code, they say that it is important to build on solid foundation in the software and then you can rely on it and not try to optimise within the code review itself.
+- Focuses on documentation quality and parts with logic. The rest rather skimms.
+

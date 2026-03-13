@@ -1,0 +1,238 @@
+REVIEW TYPE AND GOAL
+- Integrating stripe payment first review to sell licenses for their product
+
+CONTEXT
+- 
+
+TRANSCRIPT
+- Reads the title
+- It is a big review and the author is already working on it for a month.
+- There is also a lot of conversation (48 comments)
+- Unfortunately there is no PR description or issue link in the PR description.
+- Notices that the author added the link in the conversation as a comment.
+- Follows the link to a new browser tab.
+- Wants to see what is in the issue discussion for an update. The reviewer was part of creating that issue so they know what is happening there and skip to the conversation.
+- There are no updates anyway for 3 weeks (sees by the date on the first comment. It might be a mistake as the conversation continues and there are more comments from few days ago. The comments only ask to break down the issue into tasks as it is a very broad issue.)
+- Goes back to the PR and the Commits tab.
+- There is 50 commits which makes the reviewer unhappy.
+- Scrolls slowly down the list of commits until the end. Says they will just review the whole code.
+- If there would be less commits the reviewer would go commit by commit as it is 500 LOC change using commits to get the logic of the change one step at a time is useful as reviewing 500 lines of code is very exhausting. So the reviewer knows that one review will not be enough. So they will review today and in couple of days they will review it again.
+- Would expect maybe 5 commits - 1 for the DB changes, another for API changes, another for testing… so you can easily change the topic while still being in the same context.
+- Goes back to the Conversation - says there is a lot of reading there.
+- The first comment is already outdated and it just ensures that API keys in the code are not the actual keys but they are for testing according to the auhotr’s reply so that’s OK.
+- Then sees a comment from themselves and suddenly remembers thatchy actually made a review and comment on the PR when it was still small - 3 weeks ago. It was about a column in the DB that they did not agree with. Doesn’t remember the author’s answer but thinks they talked about it in person since then. Reads through the answer to the comment trying to justify its existence. The reviewer thinks the author kept it but wants to confirm in the code when they look through it.
+- A comment about the same topic from the current reviewer.
+- Then a question asking about the currency column whether they are going to support multiple currencies as they currently use only euros on the page. The autor said they will discuss with the sales and the reviewer thinks the author did it already.
+- Then the reviewer was warning about a potential issue but did not get an answer.
+- Then the reviewer recommended to use a keyword instead of the current implementation of the argument but thinks that the author did not update it.
+- Reads through further comments and says there is a lot of outdated comments there.
+- Then the reviewer suggested to create a separate directory for the checkout and the author agreed but then based on a comment from another reviewer asking whether the files were moved it seemed that it did not happen. The reviewer wants to check that.
+- Then the reviewer commented that they think they will not support different quantities than 1. The implementation specified the field with  a default as 1. The author clarified the field is mandatory.  The reviewer says they think the value will always be one so they could just set it.
+- There is comment about another field that the reviewer thinks they will not use at all.
+- Then the reviewer suggested to use ENUM instead of a string and the author agreed.
+- Then the reviewer commented to include a response code in a failure message and says that the code is still very new so it has a lot of failures.
+- Continues going through the review comments from their past review.
+- The reviewer proposed to return a URL instead of redirecting the user. The author did not agreee at the time in the response. Then they spoke in person and the author agreed with them. The comment shows as outdated so the reviewer wants to see if that changed.
+- Then the old review comments from P8 end.
+- The team lead was complaining about the high amount of commits in another comment and the author said they will rebase. The reviewer thinks the author did not do it.
+- Then there are more recent reviews from 4 days ago which is what the reviewer was looking for.
+- Another reviewer asks why there is a max limit for the number of products. That is a good question. The reviewer gives a thumbs up.
+- Then the other reviewer asks the reviewer whether the user can be None. It is a good question and the reviewer needs to check that later.
+- The other reviewer has some further questions that the reviewer agrees with and adds a thumbs up.
+- The other reviewer asks whether it is right that their URL has an empty space. The reviewer says they are concatenating but cannot see an empty space so asks the reviewer where is it. Also does not understand why they are concatenating so says they are wondering why they are doing it.
+- Then the other reviewer asks about what is a parameter. The reviewer thinks they know but have to check later as well.
+- There’s a question from the other reviewer on what happens when an if statements is false. The reviewer thinks the answer is in the code actually but needs to check it.
+- The other reviewer also points to a series of hard coded values. The reviewer agrees it’s weird. Does not further react to the comments.
+- The other reviewer asked what is an acronym used in a variable and asks whether they can omit acronyms unless they are very common. The reviewer replies saying what it means and that they commonly use it throughout the codebase.
+- There is another great question from the other reviewer and an appreciative comment on the use of enums.
+- The other reviewer also raises attention to a commented out piece of code and asks whether it is going to be used. The reviewer gives a thumbs up.
+- The last comment from the other reviewer asks about a purpose of a piece of change and the reviewer also does not know it.
+- That is the end of the conversation so the reviewer is in sync to do their own review now.
+- Adds the author to the review assignees like in P8R1.
+- The reviewer already saw all the commits so just goes straight to the Files tab.
+- The reviewer just wants to review top to bottom unless they see something to step into.
+- The first changed file makes sense. It will work only if they already have a password. Adds a comment to make sure that that is the scenario and asks a question to clarify wether that is the case.
+- Then there are 2 test files. The reviewer likes to review tests at the end so they collapse the files for the moment.
+- Next is the provision file that runs when they start the application to add some static data to the DB. Checks the added fields. Says they are currently supporting only one of the created entries but it does not hurt to have the other ones there.
+- The rest looks OK to the reviewer. Marks the file as Viewed and collapses it.
+- Then there are the migration files. The reviewer sees that there are 3 migration files and they do not like that as a practice so they are going to comment on it.
+- Since this is a big PR, the reviewer needs to start making a TODO list not to forget about things they want to do. Opens a text editor in a split window and enters a note on squashing migrations and leaves it there for now.
+- The naming of a table is not the best but it reflects the company’s terminology so the reviewer will leave it.
+- The table contains the currency field that was already discussed before so the reviewer also wants to see later what is happening with it.
+- Otherwise the fields, types and values look OK.
+- The approach used on delete makes the reviewer think. Adds a comment saying they are not sure about the approach used. Says they want to see if it will start a discussion. Asks the opinion of other reviewers by tagging their names.
+- The downgrades look alright but they are also very unlikely for them to be used anyway but OK.
+- The next file has the reviewer’s previous comment on use of customer ID. The author defended their position and the code stayed the same. The reviewer is still of the same opinion but wants to check the rest of the code if the implementation makes any sense in the current form. Adds it to the TODO list whether to remove the ID field.
+- There is a comment from the other reviewer on why is a piece of change there. The reviewer already previously gave a thumbs up. Also doesn’t know. Thinks it could bee from an automation. Adds a further reply that they agree with the other reviewer and asks whether anyone has an idea about what is happening there.
+- The next line of code is actually what they wanted to do in that spot.
+- However, there is another instance of surprisingly passing a string instead of an enum.
+- Adds a comment pointing that out.
+- Reading further the reviewer realises what the cryptic peace of code is doing - it deals with a change of type but the purpose is not clear. Goes bak to add a further reply to that conversation asking for why the types are changing.
+- Then there is a package update which the reviewer expected to see so just marks the file as viewed and collapses it.
+- Then there is a configuration that makes perfect sense. Marks the file as viewed saying they will just “approve it”.
+- Then there is a series of methods to get users and their IDs. The reviewer says it is confusing. They are not sure if one get method is needed at all. Wants to check the code if it is used. Then they are also not sure what is the difference between some arguments. Walks through the code to create a better understanding of the story.
+- Agrees with the other reviewer who asks about a vague type of an argument as the reviewer believes the service they are using provides them a specific type to use.
+- Sees an opportunity to simplify the code. Adds a comment suggesting that the code can be done with the attached snippet. Continues the comment with saying that it seems it is not needed to have a separate function for what it is doing and that there is the id that they are discussing whether to keep in the DB.
+- Then moves on to the models and presentation of the database. The author created there a new class for order status which makes sense. The content looks OK for the first try.
+- In the next class sees that the reviewer asked t replace a hardcoded string with a keyword argument and sees that the author did not change it. Adds a reply to the conversation that they are keeping their previous comment.
+- Then the commented out piece of code comes that also has a comment from the other reviewer. Remembers that this issue exists and moved on.
+- The author defined several new fields for the table in the DB one of which the reviewer asked to include in the previous revision. The reviewer Adds a comment why are they using a string instead of an enum as that is not what they usually do.
+- In another class, marks their own comment as resolved as it is irrelevant now.
+- Checks the table structure in detail and says it is OK.
+- In the next file sees exactly what they expected there to see so there is nothing to check. Marks as viewed, collapses the file and moves on.
+- Adds a comment asking a clarification about which ID from their system is meant by the product id field. For now it is string but it would not have the expected validation so it is not the best one.
+- Next hunk had a comment about moving some schemas in a different directory. The other reviewer was asking whether they were moved and now the reviewer notices they were actually not moved. Adds a comment saying they were not moved and they are keeping the comment.
+- Then there was a discussion on whether they are supporting different quantities. The reviewer understands the reply of the author. Then looks at the name of the class and concludes it is probably related to a certain part of the service they are using. Decides to check where is the class used. Uses the search function and looks for the usage. Finds several instances but also a different definition of the same class.
+- Goes back to the original definition they were just checking and comments if what they see is correct but it looks that they have a duplicated code and instead of moving the definitions, they were just copied to a new file.
+- The reviewer is getting a REFRESH button in the UI. Says “OMG” that the author is probably pushing code right now.
+- Then sees they agreed that the author will remove a field but it did not happen yet. Adds a comment to say they are keeping the comment.
+- Then there is init file, created with 0 lines, so there is nothing to see. Marks as viewed, moves on.
+- There is a limit on how many products a getter returns. The other reviewer was asking why the limit exists. The reviewer adds a comment on adding pagination if the limit exists.
+- The reviewer also sees that there is an endpoint visible to anybody which they think is not a good idea. Adds a comment saying that the endpoint is public and asking whether the team wants it like that. Explains in words that otherwise anyone could see their list of products without even logging in which doesn’t seem like a good idea.
+- In the next function, the other reviewer asks the reviewer whether the user can be None in their context.
+- The reviewer needs to check that in the code. Copies the variable name, switches to the IDE and finds the relevant file.
+- Searches for the function to get current user. Firstly is not sure whether that is the correct one but then realises it is and sees that None is a possible return.
+- Returns back to GitHub. Replies to the other reviewer that it is possible and that None means the user is not logged in.
+- Reads through the piece of logic with the new information about the meaning of None as a user. It makes sense.
+- Really hopes that they are not doing what the docstring says - which is redirecting the users to the service provider page. But this the reviewer also commented in other place so moves on.
+- Wonders if a field can be a dependency. Adds a comment asking the author.
+- Check a condition and raised error which make sense.
+- The next part of code is a bit weird implementation but lets it go.
+- Then there is a variable using a letters and numbers code. The reviewer wants to check where is it coming from by searching the name - it is in the schemas.
+- Comes back to the original space. The other reviewer was asking about a reason of a variable name that was not clear. The reviewer already gave a thumbs up when reading through the discussion. Now, starts writing a reply comment but the decides to leave it just at agreeing with the other reviewer.
+- The reviewer agrees with what the author was implementing there but does not fully agree with the way it is implemented. Wants to find get more information on it. Continues reading the code and tells the story of the execution and conditions that lead to the execution.
+- The reviewer had a comment before if they could omit using their service provider API. The author replied it could eb possible but his way of firstly querying their own DB is faster. The reviewer replies with an explanation of why the other approach could be better as it is an infrequent scenario and adds an unnecessary column to their database. Alternatively, proposes a solution of creating a new table containing just the existing links.
+- Then there is a place in which the author uses the function that the reviewer found as not needed. Hopefully the author will remove it. Adds a comment that the function can be removed.
+- Adds a comment proposing to hard code the license quantity to 1 as they do not support any other case.
+- There is a longer piece of a schema specification which the reviewer would need to try to really review it but does not intend to do it now as there is still so much work to do on the code.
+- Reads a name of a method verifying signatures from stripe. Assumes it is probably from web hook which then confirms by a keyword in the function. By looking at t they say it is probably just a code cop[ied from the stripe.
+- Then there is an equation from the other reviewer in a piece of logic asking what happens if the if statement conditioned by an event is false. The reviewer replies it is a good question and asks what other types of events there are. The reviewer says it would be good to just have there an inline comment to know what are the other events in the context.
+- Then finds a piece of code that can fail as they are not sure what is the internal implementation of stripe. It should go into a try block. Adds a comment asking what happens if the script fails.
+- Finds another piece of code that is a bit weirdly implemented. Adds a comment asking whether there is a better way to implement it and what is the structure of the stripe object.
+- Reads through another piece of logic. The reviewer is surprised as the implementation is not as it was agreed - the row was supposed to be created together with some other event while now it is created only after some conditions are fulfilled. Adds a comment asking if that is the case and reminding what they discussed.
+- The function is hard to understand and the logic does not follow what was discussed so the reviewer is a bit unhappy with it.
+- Returns to add a comment to the first line of the function saying it needs some work - to add inline comments and error handling.
+- Continues reviewing. The next function uses the previous function and it’s the one that stripe is actually calling.
+- Finally, there are the schemas in the new directory. The reviewer is happy to see the file but there is a lot of duplicated code. Adds a comment saying that and pointing to the file where there are the duplicates.
+- The first class in the file incorrectly uses a string for an ID type. Adds a comment to suggest the correct id type to use.
+- The next function already has the correct id type in the code.
+- Then, the author sets a new class for an Addon. The reviewer adds a comment asking whether the class is used to save static data because it seems like it. Continues writing that it does not seem like the best approach but then deletes it and decides to keep just the question. The reviewer thinks schemas are not the place to do what the author is doing so wants to wait for what they say.
+- The last bit is OK.
+- Then realises that there is actually a URL object that can be used in the last bit. Adds a comment to signify that and that they used it before as well.
+- The reviewer reached the end of the PR.
+- Says it is a really huge PR and they can see there is still a lot to be done so they are not going to locally test it or anything until they have way less open comments. The reviewer made 28 comments just in this review.
+- Writes a review message sayingg there are still some things to work on and that they should really follow the discussed approach when session is created. + They can squash the migrations (an item on the TODO list) + they should discuss about the location of customer ids (another TODO item, no items left) as one of them might not be needed.
+- Deletes the list of todos in the side by side text editor
+- Submits the review as Request changes.
+- Scrolls through the Conversation and sees that the author is making changes just now. 
+- Feels pretty tired so will not check anything more.
+- Just wants to confirm something - Goes to Files tab.
+- Returns back to the Conversation and edits the review message to say squashing commits to follow a logic order would be very helpful for reviewing the PR.
+- Goes to Files tab to check whether they still agree with everything as sometimes their opinion changes once they see everything. Starts scrolling top to bottom.
+- Realises they did not review tests. Decides not to do it as the PR is far from being done. The reviewer sees the author did not do many tests anyway and it will need a lot more.
+- Continues scrolling and reading the comments in the code. Says the other reviewer saved them a lot of work as they left some very good comments.
+- Marks a comment as resolved.
+- Realizes a probable answer to a question of the other reviewer so replies with an answer. Then does not submit and delete as it might be wrong.
+- Finishes scrolling to the bottom of the change.
+- [during the interview the reviewer finds a conversation where the other reviewer already replied so they give a thumbs up to the other reviewer’s reply]
+
+GENERAL STRATEGY
+- Gather context from the discussion to be up to date
+- Goes top to bottom through all the changes
+- Uses TODO list to keep track of open issues and IDE to search for context when needed.
+
+INTERVIEW
+P8: Okay, I'm fairly happy with this review because I was able to finish it without losing focus. And I feel like there's a lot of for him to work on. So I'm hoping to see great improvements on the next
+turn of the review that I do on this code.
+
+I:  Okay, so it's you, the other reviewer, the team lead and the author that will be involved in this whole PR.
+
+P8: yes, that's that's correct.
+
+I: There is a huge amount of comments already. What does it say about the PR when there is so many comments? That it's big? That it's I don't know low quality, that it's something interesting in the team. What does it mean?
+
+P8: In this case it’s because it's big and also because it wasn't clear for the author how to do this. So the code changed a lot since the beginning of the pull request. So there's still lot of comments from the first, let's say version and it's been changing a lot. And there's not lot of recycling, so I still have my comments here, and I just saw like 3 of them that I could close. And it’s not common to have this big pull request on some other comments. I mean, if it was clear, from the beginning, how to do this, the author would implement everything and just open the pull request and be confident that it was done and that it was working. And then it also wouldn’t have so many comments. But he opened the pull request to get some feedback about what he's doing while it was still very immature code. Let's let's say. So there was a lot to be said. Now it's still not ready for production.
+
+I: So what will happen to the PR now? What do you foresee as a future?
+
+P8: So now I'm expecting the author to answer my and [other reviewer’s name] comments and if that's it, some discussions will probably begin and I'll be acting on those those discussions. New code will come in, and I'm expecting the author to ask for a review and I'll do the same thing again pretty much.
+
+I: Okay. Do you think there will be like another round after that?
+
+P8: For sure. I'm actually expecting 2 more rounds.
+
+I:  What do you normally like comment on? Because I did not notice that you would like really find a defect, for example, or something that wouldn't work.
+
+P8:  So I'm not at this point looking for defects because the logic itself right now is not correct. Probably only at the end when I'm confident that the code is following a logic that we discussed I'll test it locally and find some defects on it. I think the only one I found was that end point that was public. I can consider that a defect. But other than that it is mostly database changes on the users of Stripe API.
+
+I:  So is it like an improvement of the code or?
+
+P8: It's a new feature pretty much
+
+I: I mean the things that you are commenting on now. It's not requesting new features. Right? That's more like does this make sense? Is this a potential risk? Do I understand it? Right?
+
+P8: Yeah.
+
+I: When it's this potential risk scenario? Is it something that you perceive as a risk, or that, you know is risky and you are more like polite?
+
+P8: So I’ll call this one [pointing at a comment] a risk for example. Because this means that if the license product is deleted the license order will be deleted as well. I think we will not want that even if we stop selling a product. We don't want our order to be deleted because we want to click that history.
+
+I: So sometimes you don't explain all of that reasoning in the comments. It was like you hint something and then you probably expect the other reviewers to understand that.
+
+P8: Yeah, actually, yeah. I'm confident that they will understand.
+
+I: You do is this that you like build up that for example, when you didn't work with them for such a long time that you would have said more?
+
+P8: Yeah. I guess that we are in the point where I know that. In the beginning I was much more verbose. [looks through their comments] ] Yeah, here's also, I don't give a lot of context - it’s a string, I was expecting enum. Simply because we use it in the code base so why are you using string now?
+
+I: So another thing that you did a few times is that you like reminded - this comment is still here, that was the “keeping the comments”. Right?
+
+P8: Yeah. So I'm not closing this this comment, this thread yet.
+
+I: Yeah. So when you write a comment do you expect, like a reply, an action to all of them?
+
+P8: If the code changed, I don't expect an answer. Like if the author agrees and the code changes, I'll just resolve conversation. I put the comments on those that the code is the same and nothing happened.
+
+I: Hmm! Is this scenario that is happening - that you would comment but then there would be basically no response to that.
+
+P8:  Yeah, sometimes I don't get a response, but the code changes. Sometimes I just get a thumbs up saying, I agree with you. And eventually when I'm gravy one again, it's already fixed. I think I'll only get the answers when the comment wasn't clear or if there's a discussion starting that goes to the style of the person, I guess. Sometimes the answer on every comment just to say “Okay”.
+
+I: When do you actually reply to other reviewers because you did it, maybe 2 times that some one said something and then you still either added on top or…
+
+P8: Yeah. So I'm pretty much starting a discussion. For example, the other reviewer said: why the limit? And I said: “If we are having a limit, please add pagination”. Because I understand that you put the limit so that it doesn't deliver so many products but it also means that if you have over 20 products they won’t be shown. So I can understand this idea. But it is not fully done.
+The other reviewer already answered 5 min ago saying to avoid magic numbers, which is also is a good point. So i'll give him a thumbs up.
+
+I: Another thing was that you are quite fast in like how you read the code, you did not stop that much. So what are the points when you need to investigate a bit more. Or, what is easy for you, and what is harder for you in that sense.
+
+P8: So I'll start by saying that most of the functions are really small and that involves logic. I mean most of them are schema and model changes. So I think there are only 2 main functions in here, which is this big one
+and this one also. Yeah, I was quite fast because, honestly, I know that this won't be my last review. So I won't really look into that much detail until it's a clean code. But there's still a lot of comments on this function, a lot of fixes. So  the final result will be really, really different. So I don't really want to put too much for effort on making sure that it's perfect. I know that the author is running code for his local testing. I know that I'll run it locally as well. But yeah, it's far from a final result.
+
+I: So the maybe the last area I would enter is the to-dos. So is it common that you do this to do lists for the reviews?
+
+P8: Only if it is too big. Always it is a big one. This one I was not even at half andI was already thinking that I want to write this on the final comment. So I kind of felt like I needed to do the list. SoI knew what to check when when I was done.
+
+I: But so then some things you write to the to do, and then some things you go and you check it immediately. There was this question where the other reviewer tagged you. So then you immediately went, and you checked it, and then you came back to the review. So what are the things that you go to immediately and break the flow. And what do you put in the todo?
+
+P8: So the question was really easy and I knew exactly where on the call I can find an answer for that. So I felt that it was okay for me to to interrupt because I was also wondering the same. It was a good question.  And I got the answer really fast. Yeah, if it is something more than dev [environment], if it was something that I had to look for 5, 10 min on a call. I'll for sure write it to the to the list and do it at the end of the review.
+
+I: I will ask the same question as before. Did you reach a full understanding of this change?
+
+P8: So it depends on what you mean by the question, because I fully understand what he's trying to do and what the code is doing. But I know fully understand some of the decisions he made, especially on types of the data or some some things on the database changes. So that's it. Sorry if that doesn't answer your question.
+
+I: No it raises more questions. It's a good thing to think about. Do you have some priorities for the review, or some something that you wanted to focus on?
+
+P8: Yeah. So I know that I had a talk with the author on Wednesday. We used the whiteboard to discuss how this would work, because he was not sure about the logic of how to do this.
+And we were pretty happy with the results. So we spent like half an hour on the whiteboard, and we agreed pretty much everything. So I wanted to see if the the same logic was on this code which, unfortunately, it was not.
+But my comments were pretty much based on following that logic.
+
+I: Okay. So you had already pre-agreed how this will be implemented. You just didn’t know how exactly they did it. But this is something that you also mentioned a bit with the first review that you already had some imagination from the meeting, and about what you'll see there. Is this helpful?
+
+P8: It's extremely helpful. And it's something that we are trying to do more often where the developer actually has a talk with the reviewer before-hand just to get in context. Usually the main questions that arise to you are already answered. So we kinda know what to expect on the code review.
+
+I: So when do you know that the review is done?
+
+P8: When there are no comments open. Well, if I get into the dev mode if there are tests to cover the new content that was introduced. No discussions open pretty much. And every reviewer already approved it. And it's following a good commit structure. And I think that's it from it.
+
+I: And so today for you was it like - Now, I'm forced because there's so many commits to go through everything top down and then you got to the bottom and you were like: Okay, this is enough. I gave enough feedback and the author has enough to work on.
+
+P8: Yeah, I think there's such thing as too much feedback. Especially because then you probably have feedback that stops being relevant because some other changes were made or something like that. And so if the pull request is too big, I'll do different fronts and catch first the obvious stuff, then the less obvious, and then really facts and stuff like that?
