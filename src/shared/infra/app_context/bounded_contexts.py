@@ -234,9 +234,7 @@ class _NullS3Scanner:
 class _NullDvcGateway:
     """Null object for DvcGateway when project path is not available."""
 
-    from dataclasses import dataclass as _dc
-
-    @_dc(frozen=True)
+    @dataclass(frozen=True)
     class _Result:
         success: bool = False
         message: str = "DVC not available — no project path"

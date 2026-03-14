@@ -208,12 +208,15 @@ class DataStoreViewModel:
             return pull_result
 
         local_path = pull_result.data
+        if not local_path:
+            self._last_error = "Pull succeeded but returned no local path"
+            return pull_result
 
         # Step 2: Auto-import into sources
         import_result = import_file_source(
             command=ImportFileSourceCommand(file_path=local_path, origin="s3"),
             state=self._state,
-            source_repo=self._source_repo,
+            source_repo=self._source_repo,  # type: ignore[arg-type]
             event_bus=self._event_bus,
             session=self._session,
         )

@@ -61,11 +61,12 @@ def push_export(
     try:
         add_result = dvc_gateway.add(command.local_path)
         if not add_result.success:
-            raise RuntimeError(f"dvc add failed: {add_result.stderr}")
+            raise RuntimeError(f"dvc add failed: {add_result.message}")
 
+        assert store is not None  # guaranteed by derive_push_export success
         push_result = dvc_gateway.push(remote=store.dvc_remote_name)
         if not push_result.success:
-            raise RuntimeError(f"dvc push failed: {push_result.stderr}")
+            raise RuntimeError(f"dvc push failed: {push_result.message}")
     except Exception:
         logger.exception("push_export: dvc push failed for %s", command.destination_key)
         failure = ExportNotPushed.upload_failed(command.destination_key)

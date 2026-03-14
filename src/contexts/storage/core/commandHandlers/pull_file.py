@@ -59,9 +59,10 @@ def pull_file(
     event: FilePulled = result
 
     try:
+        assert store is not None  # guaranteed by derive_pull_file success
         pull_result = dvc_gateway.pull(remote=store.dvc_remote_name)
         if not pull_result.success:
-            raise RuntimeError(f"dvc pull failed: {pull_result.stderr}")
+            raise RuntimeError(f"dvc pull failed: {pull_result.message}")
     except Exception:
         logger.exception("pull_file: dvc pull failed for %s", command.key)
         failure = FileNotPulled.download_failed(command.key)

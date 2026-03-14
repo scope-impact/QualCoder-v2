@@ -44,13 +44,14 @@ def scan_store(
     state = StorageState(configured_store=store)
 
     if store is None:
-        result = derive_scan_store(
+        failure = derive_scan_store(
             discovered_files=(),
             prefix=command.prefix,
             state=state,
         )
-        event_bus.publish(result)
-        return OperationResult.from_failure(result)
+        assert isinstance(failure, FailureEvent)
+        event_bus.publish(failure)
+        return OperationResult.from_failure(failure)
 
     files = s3_scanner.list_files(
         bucket=store.bucket_name,

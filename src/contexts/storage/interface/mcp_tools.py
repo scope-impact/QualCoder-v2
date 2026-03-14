@@ -267,6 +267,8 @@ class StorageTools:
             return Failure(result.error or "Failed to configure data store")
 
         store = result.data
+        if store is None:
+            return Failure("Configure succeeded but returned no store data")
         return Success(
             {
                 "store_id": store.id.value,
@@ -299,7 +301,7 @@ class StorageTools:
         if result.is_failure:
             return Failure(result.error or "Failed to scan data store")
 
-        files = result.data
+        files = result.data or []
         return Success(
             {
                 "file_count": len(files),

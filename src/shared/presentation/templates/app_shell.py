@@ -19,6 +19,8 @@ Structure (Modern Layout - QC-047):
 └─────────────────────────────────────────────────────────┘
 """
 
+from __future__ import annotations
+
 from typing import Protocol, runtime_checkable
 
 from PySide6.QtCore import Qt, Signal
@@ -203,8 +205,8 @@ class UnifiedNavBar(QFrame):
     def __init__(self, colors: ColorPalette, parent=None):
         super().__init__(parent)
         self._colors = colors
-        self._buttons = {}
-        self._active_id = None
+        self._buttons: dict[str, QPushButton] = {}
+        self._active_id: str | None = None
 
         self.setFixedHeight(48)
         self.setStyleSheet(f"""
@@ -344,10 +346,10 @@ class AppShell(QMainWindow):
     menu_clicked = Signal(str)  # Legacy alias for navigation_clicked
     settings_clicked = Signal()  # settings button clicked
 
-    def __init__(self, colors: ColorPalette = None, parent=None):
+    def __init__(self, colors: ColorPalette | None = None, parent=None):
         super().__init__(parent)
         self._colors = colors or get_colors()
-        self._current_screen = None
+        self._current_screen: ScreenProtocol | None = None
         self._project_name = "Untitled"
 
         self._setup_ui()

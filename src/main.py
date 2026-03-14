@@ -143,7 +143,7 @@ class QualCoderApp:
 
     def _on_menu_click(self, menu_id: str):
         """Handle menu item clicks."""
-        if menu_id in self._screens:
+        if menu_id in self._screens and self._shell is not None:
             self._shell.set_screen(self._screens[menu_id])
             self._shell.set_active_menu(menu_id)
 
@@ -385,8 +385,9 @@ class QualCoderApp:
                 )
                 self._screens["coding"].set_current_source(source_id)
 
-        self._shell.set_screen(self._screens["coding"])
-        self._shell.set_active_menu("coding")
+        if self._shell is not None:
+            self._shell.set_screen(self._screens["coding"])
+            self._shell.set_active_menu("coding")
 
     def _cleanup(self):
         """Clean up resources on app exit."""
@@ -397,6 +398,7 @@ class QualCoderApp:
         """Run the application with unified asyncio + Qt event loop via qasync."""
         self._ctx.start()
         self._setup_shell()
+        assert self._shell is not None
         self._shell.show()
 
         # Ensure cleanup happens regardless of how app closes
