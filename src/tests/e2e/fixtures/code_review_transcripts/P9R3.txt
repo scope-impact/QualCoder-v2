@@ -1,0 +1,109 @@
+REVIEW TYPE AND GOAL
+- First review of a larger change implementing usage of a new testing library
+
+CONTEXT
+- a change of logic - not business but experimentation logic
+- implementing a new library for program analytics and A/B experiments etc.
+- they use the experiments both on homepage and product but want to start at the hhomepage 
+
+
+TRANSCRIPT
+- Does not know if the author already added stuff to show how to use it so the reviewer needs to check that. But if the author did it, it’s relevant.
+- there is the link to the preview app from the bot comment in the Conversation available
+- Scrolls through the Conversation.Sees that another reviewer has already done the review [Requested changes]
+- Also knows there was some conversation yesterday in the team on whether to put some code here or there in the code base - they have some internal modules and sub repositories and they were talking about that.
+- The reviewer firstly wants to check the Files and then if it is needed go through the conversation and check if everything works.
+- Goes to the Files tab. The review has 56 files so it is a bit bigger.
+- If you have a good developer and business logic code, sometimes you go commit by commit [opens the Commits tab] and the reviewer likes to do that and then they see the story of how the developer worked on it but it is not something they would strictly enforce. This author is not really doing it and it is not a good commit game so the reviewer just needs to check everything.
+- Goes back to the Files tab.
+- Again, the reviewer will scroll through the change and get rid of the small things and less interesting things and then they will get back to the interesting saucy bits.
+- This is part of the code base the reviewer knows about.
+- They are changing the logic and library and they already know where everything is and how it works.
+- So the reviewer sees that the author is just reimplementing the old code in the new world of the librar but it’s still supposed to follow the same structure.
+- So the first two files are just making a field more generic and reusing it wherever it was used previously so it is in a way just a rename and then the reviewer will check how it was implemented.
+- Market the first 2 files as Viewed and collapses them.
+- Then there is some context so the reviewer wants to get back to it later.
+- Then there is a big file so they will get back to it later.
+- Then the author its merging 2 old flags into 1, the more generic one. So it is also OK and not really interesting. Marks as Viewed and collapses.
+- The author changed some names of the feature flags [when a feature is implemented but it is behind the feature flag so only some users can see it]
+ And based on the flag they either show or don’t show the feature.
+- The next three files are just flag renames. Marks as Viewed and collapses.
+- Then a full file is removed which was the old provider that the author merged with the other one. It’s just removed - Marks as Viewed and collapses even without loading the diff.
+- They have 2 entry points in the code base - the provider is wrapping something and then providing it to the components so expects to see a similar implementation as in one of the files that have been already Viewed. Opens the viewed file. Confirms their thoughts and all is good. Marks as Viewed and collapses.
+- Several other files are just a rename of a flag. Marks as Viewed and collapses.
+- Then there is a test that has been removed. The reviewer doesn’t like removing tests but wants to get back to it later.
+- Another test removed. Realises those are actually not tests but in the old world they had to intercept something to enable the testing. Now they can remove it. The reviewer likes it a lot so wants to praise the author.
+- Adds a comment saying that they love they don’t need the 2 files anymore.
+- Sometimes it’s also good to add some positive stuff.
+- Sees another intercept in a new file but it’s much cleaner than the old ones.
+- The reviewer is done with the testing world. Narks the 3 testing related files as Viewed and collapses them.
+- Marks another test was viewed.
+- Another file contains some added logic and exports. The reviewer wants to get back to it.
+- Then there is the handler, also wants to get back to it.
+- Then they are getting rid of a field - not interesting. Marks as Viewed and collapses.
+- Rename several times. Marks as Viewed and collapses.
+- There is a removed logo. Wants to get back to it.
+- Change in a key. Marks as Viewed and collapses.
+- Understands something will not be done with the provider anymore. “I see”. Opens other reviewer’s comment in the file. Reads the conversation where also author replied and wants to get back to it.
+- Then there is the part of the code base where they render stuff for the server. It usually has som special needs for them to take care of. Tat’s why the other reviewer asked the author to have a look into it.
+- So the author removed all the stuff from the old world to provide to servers for rendering. [Goes through several files that the reviewer left for later. Marks as Viewed and collapses. Also the following file.] The reviewer accepts that the author did it but they should also make sure whether it works as it should.
+- Adds a comment to the conversation asking the author whether they already looked into it and tested the server rendering stuff or if it is acceptable not to support it. Unresolved the conversation. Wants to open the conversation again so that they can have a closure. Also wants to test it when the review of the code is finished.
+- Removed old file. Marks as Viewed and collapses.
+- Again a file related to the rendering. Marks as Viewed and collapses.
+- New API to provide the feature flags. 2 files. Marks as Viewed and collapses.
+- New API keys. Marks as Viewed and collapses.
+- Passing of the keys around, all good. Marks as Viewed and collapses.
+- configuration file. Contains discussion on the placement of the code which is resolved. The reviewer expands to see the conversation. Collapses again. All good. Marks as Viewed and collapses.
+- Then there is the new implementation so will get back to it later.
+- New API, will get back to it later.
+- Few more old files removed. Marks as Viewed and collapses without loading the diffs.
+- New names of the feature flags, all good. Marks as Viewed and collapses.
+- Changed comments. Marks as Viewed and collapses.
+- There is a bunch of new libraries. The reviewer is surprised with their amount. Checks them more closely. Says it is interesting they have so many of them. Lists which is server side, client side. Marks as Viewed and collapses.
+- The author also changed the readme and added context which is good. Marks as Viewed and collapses.
+- Last is a new yarn.lock file. Marks as Viewed and collapses without loading the diff.
+- The first stage is done and there is 8 files left for the reviewer to check.
+- Scrolls back up and starts top to bottom again.
+- the first file is the experiment context. They provide some parameters to the experiment provider and the reviewer does not like that the type of these arguments is set as any. Searches with the Find function for where is the experiment provider defined and used. Finds an unexpected place where it is used. Examines the definition. Says “Interesting”. Looks through the files top to bottom again.
+- Doesn’t like a require function used in the second file.
+- Adds a comment asking why the require is used and if there is no way to import it and initialise separately.
+- So there are already 2 things the reviewer does not like. Comes back to the first one saying they will get rid of easy stuff to comment on the code adding a comment to the first file asking whether the “any” type is the best option. That children should be React component or JSX element. For writing which types of values are possible needs to find the flags used. Finds the relevant file. Then adds the value to their comment and asks the author to confirm.
+- Still wants to add another comment to the first file and separate the one the issue into a comment on flags and values. The reviewer is not sure if they want to comment both at the same file but leave the file expanded for the time being. Leaves it for the final review as it is more structural stuff.
+- Adds a comment in the second file if they should move debugging to the staging environment. Says debugging should not be in the production.
+- The next file contains the implementation of the experiment provider which sends the flags to all the places which the reviewer already checked and were renamed.
+- Looks through it for a while, finds a file passed that they expected to see passed. Decides to hide the white space using the settings button above the diff. It made the reviewer lose track of the file. After some scrolling finds it again and says it actually really looked like there was a lot of change but in the end it is just 2 lines and the rest was moved right. SO it’s just providing values of the flags in the end.
+- The other reviewer commented on using the “any” type in a different place. The reviewer adds a reply in the conversation they also do not like the usage of the any type.
+- Checks the return value which is an acronym variable. Specifies that they should have a different variable returned with a type specification and that it can be done in the return ro provide a default value.
+- Checks if the place of the activity is the correct one and is satisfied.
+- Also adds a comment saying they are adding one more comment there as the fetching of the flags is pretty hardcoded in the open. Suggests extracting it so that it can also be used in the app and other parts. The author is adding the flags to the landing page without using them yet which originally the reviewer was not sure. They want to save it for the final comment and start writing bullet points in the review message. Writes there that the experiment should be split and that the author should add an example of using the flags on the landing page.
+- Then there is the implementation of the API for the flags. Opens the resolved conversation and collapses again. The reviewer is thinking about the security of the code in the next file. They use it for both - authorised and not authorised users but the reviewer thinks its OK.
+- Then checks the flagging provider. Compares the place where the flags are created with the place where they are used. Adds a comment asking if they shouldn’t pass an empty {} if the API returns null. Instead of passing the null.
+- Searches in the function for fetch flags. Then finds it and reads for a while. Marks as Viewed and collapses.
+- Then there is a check against another API. All looks OK. Marks as Viewed and collapses.
+- Another file is OK. Marks as Viewed and collapses.
+- Checks the last expanded file.
+- Tries to understand what the getAll Flags function does - builds a story where they fetch, check and… The types are better than in the function above.
+- The reviewer would write it differently but it’s OK as it is.
+- Needs to run but wants to submit the review as request changes and then have a thorough testing session by himself and as a team and either wirte the feedback in the review message or talk about it in person.
+
+GENERAL STRATEGY
+- Top down getting rid of simple files to review. The top down to check the more substantial files. Navigating around to understand what do functions and fields do and where they have impact.
+- Will test later.
+
+INTERVIEW
+I: Who is the author? Is it like a colleague or a junior person?
+
+P9: They are senior and they are in our team. He has this style of moving fast, and maybe not necessarily spending too much time in the code base, which sometimes it's okay, sometimes it's not. This is like 50 50. So I will write something here about that [pointing at the review message], or I will talk to him about this. So this will not be the final review, because I still need to test it. But I will already submit this as a comment. And we can move on because we have to test it together. Create a testing session. More people will test it. And stuff like that.
+
+I:  It looks like you knew the code very well, that you had very good imagination about how the code looked like before? Is it like some part of the code base that you have a lot of familiarity with?
+
+P9: Yeah. Wherever I was working with it it was familiar and where I wasn’t it was like - I already see that this was just a rename so it was easy.
+
+I: The last thing is - when you are commenting do you always comment on stuff that you expect an action on? Is everything that you comment an issue that should be fixed?
+
+P9: Good question. Here I know that this review is not the final one so I’m more starting a conversation, and I expect the author to either follow up or whatever. If this is either about to be closed, or I don't want them to touch it, I just say need or not blocking, or anything up to you. But here I actually all of that I want him to at least consider or give me some answer in the in the comment.
+
+I: Is there anything that you could write in a review that wouldn't be a thing that could or should be fixed? Like you have that appreciative comments.
+
+P9: Like on the landing page right? Like something we don't really need to fix, because it's almost not important. And it's more important to ship the landing page because it's not part. It's not security is not performance. We are a startup, and some of the parts that we do just need fast, not so good. But if it was actually very bad, then I would want them to change. But if it's just literally one more “optimize this svg file”… I want him to actually do it next time better. But here it will probably go away in a couple of weeks. Because we have a new idea. We we will put new picture there. Someone wants another color there. So yeah, this is something that kind of rotates a lot.
+

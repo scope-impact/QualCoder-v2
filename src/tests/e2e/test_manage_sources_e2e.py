@@ -367,7 +367,7 @@ class TestImportAudioVideoFiles:
 # =============================================================================
 
 
-@allure.story("QC-027.05 Organize Sources into Folders")
+@allure.story("QC-027.05 Organize Sources")
 @allure.severity(allure.severity_level.NORMAL)
 class TestOrganizeSources:
     """
@@ -587,7 +587,7 @@ class TestDeleteSource:
 # =============================================================================
 
 
-@allure.story("QC-027 Integration Workflows")
+@allure.story("QC-027 Manage Sources")
 @allure.severity(allure.severity_level.CRITICAL)
 class TestSourceManagementIntegration:
     """Integration tests for complete source management workflows."""
@@ -733,7 +733,7 @@ class TestSourceManagementIntegration:
 # =============================================================================
 
 
-@allure.story("QC-027 MediaPlayer UI Controls")
+@allure.story("QC-027 Manage Sources")
 @allure.severity(allure.severity_level.NORMAL)
 class TestMediaPlayerUIControls:
     """E2E tests for MediaPlayer UI button/slider interactions."""
@@ -799,7 +799,7 @@ class TestMediaPlayerUIControls:
             assert position >= 0
 
 
-@allure.story("QC-027 ImageViewer UI Controls")
+@allure.story("QC-027 Manage Sources")
 @allure.severity(allure.severity_level.NORMAL)
 class TestImageViewerUIControls:
     """E2E tests for ImageViewer UI button interactions."""
@@ -874,7 +874,7 @@ class TestImageViewerUIControls:
 # =============================================================================
 
 
-@allure.story("QC-027.08 Agent List Sources")
+@allure.story("QC-027.08 List Sources")
 @allure.severity(allure.severity_level.CRITICAL)
 class TestAgentListSources:
     """
@@ -989,7 +989,7 @@ class TestAgentListSources:
 # =============================================================================
 
 
-@allure.story("QC-027.09 Agent Read Source Content")
+@allure.story("QC-027.09 Read Source Content")
 @allure.severity(allure.severity_level.CRITICAL)
 class TestAgentReadSourceContent:
     """
@@ -1090,7 +1090,7 @@ class TestAgentReadSourceContent:
 # =============================================================================
 
 
-@allure.story("QC-027.10 Agent Extract Source Metadata")
+@allure.story("QC-027.10 Extract Source Metadata")
 @allure.severity(allure.severity_level.NORMAL)
 class TestAgentExtractMetadata:
     """

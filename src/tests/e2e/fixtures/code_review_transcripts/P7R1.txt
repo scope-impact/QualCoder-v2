@@ -1,0 +1,90 @@
+REVIEW TYPE AND GOAL
+First review of a PR that is cross-team. Wants to ensure the change heads in the imagined direction for the component.
+
+TRANSCRIPT
+- Goes to Phabricator which is the tool they use for code review.
+- Sees the title, the files that are being touched and some meta data like reviewers and then the history of the change.
+- Sees that their colleague is the author of the change.
+- The reviewer added themself as a reviewer earlier today as they noticed the change go by on their email where a colleague was touching a piece of the code base - a migration tool for data between browsers on which the reviewer and their team worked on quite recently and the reviewer wants to check if the current change works correctly towards the direction they are heading with the tool.
+- The reviewer was a tech lead for the migration tool.
+- Shows in their browser how the migration tool looks and works in the setting of the browser.
+- The tool was designed to be possible to use and be implemented in various contexts - like from the settings of the browser. However, what the change and colleague is caring about is a context of a landing page for new users after installation of the browser — importing data from other browsers is part of the process. The colleague is working on the onboarding part while the reviewer was working on the migration tool so this change is an overlap of their responsibilities and interests. To solve the issue they had while implementing the migration tool into the onboarding process requires the author to make change to the migration tool itself. That is why the reviewer wants to see it and to check they are in agreement of  the changes to be made both for the onboarding UI and the migration code tool itself.
+- Firstly tries to understand the problem or the issue that is being addressed.
+- The PR title begins with the issue tracking number. The reviewer clicks it to follow a link to their issue tracker. Usually the review is separated from the issue tracking.
+- The issue tracker opens in a new tab. The reviewer goes there.
+- Sees that the summary of the commit message matches the summary of the bug/issue so it seems like the main thing the author is fixing. Sometimes these 2 can be different as sometimes the author describes what is the fix rather than what they are fixing.
+- Scrolls down to the first comment on the issue where the original bug is being described.
+- There is a really nice bug file from one of their QA people saying which versions the bug was found in, tested platforms, preconditions, steps to reproduce the bug and some more fields.
+- The reviewer reads the steps to reproduce - needs to open the welcome page and navigate to the migration tool.
+- Next field states the expected result which would be that all import options would be visible by dragging the scroll bar
+- The actual result (also a field in the bug file) is that not all the available imports are visible
+- The big file also says it is not a regression and it started with the implementation of another issue (on hover reads that it was the embedding of the migration tool into the onboarding).
+- There is also a screen recording attached. The reviewer watches it. Understands that the person in the video has a big list of browsers to import from and when the dropdown is displayed below the bar, they cannot scroll to see all of them as the list reaches below the visible boundary of the window.
+- Then the reviewer goes to familiarise themself with the conversation that already took place.
+- Reads a comment saying that the bug reproduces only for new profiles and not for upgrades or other scenarios.
+- Another few comments are the author and bots linking issues to their internal Jira - they have a public facing OSS bug reporting tool but also an internal issue tracker on Jira which mirrors the public one.
+- The author was asking the QA person to share their window resolution. To the author is seemed a problem of the decision for when the drop down menu is displayed below or above the bar. The author is curious about what resolution and height are casein the menu to display above when there is more space below.
+- The QA person added more information on several tested resolutions and displays and puts forward it is reproducible mainly when someone has many profiles.
+- The reviewer highlights that it is reproducible when having multiple profiles.
+- This conversation happened 11 days ago.
+- The reviewer has the impression that the author cracked the issue and now there is a patch from 1 day ago.
+- Goes back to the PR overview.
+- Sees that the author is changing a file in the migration tool itself and two style sheets for the onboarding. Or rather just one as the other one is generated from the first one.
+- Scrolls down the history. Reads the comment there.
+- The author specifies it seems to fix the issue and adds a screenshot. Also adds an explanation about it not being an issue in calculating space but rather that the dropdown was not visible. Says that the patch sets a max height similar to some other import page.
+- The reviewer looks at the attached screenshot.
+- Now wants to see what did the author actually do.
+- Scrolls to the end of the discussion where the off starts (there are no tabs in Phabricator)
+- Seem like what she did to the migration tool itself is that she exposed a component of it to the css. The author is exposing it using parts and calling it a panel list. Which seems like an appropriate name as she is exposing the drop down itself.
+- Then the css from the onboarding page can use that part and sets a max height for it in pixels.
+- The reviewer thinks that the exposure of that part is reasonable, but is wondering where is the number for the max height coming from like from manual tuning until we fond something that looked good.
+- The reviewer wants to implement the patch locally and see if the result looks good.
+- Switches to the local terminal. Runs the browser build.
+- The reviewer understands the code well.
+- Wants to check the patch implemented mostly because it is something very visual in the onboarding and it’s important for the user retention of users downloading the browser for the first time. So they need it to be really really crisp. Wants to do very very due diligence here and doesn’t want to be someone who just rubber stamps and slips through and then the onboarding flow gets damaged and it hurts user retention.
+- The reviewer tries to have high diligence in all the reviews they do bt this one is very important because of the high impact on the user retention.
+- Goes to the browser. Wants to firstly reproduce the issue without having the patch applied yet.
+- Opens the browser settings and the data import tool. 
+- Currently, their browser has 9 items to import from. Doesn’t know if it is enough to reproduce the issues.
+- Opens the onboarding page as instructed in the bug file and as it is, it is not enough to reproduce the issue. Shrinks the window. Then the drop down is displayed above the bar and not everything is visible.
+- The reviewer laughs a bit and says it is an interesting bug as they calculate the size of the dropdown and if it doesn’t fit, they flip it to the top and hope it fits but it is not scrollable.
+- It is interesting because when they open the migration tool in the settings and shrink the window, it is scrollable and works fine [goes to the settings to demonstrate]. SO it’s strange that it doesn’t work in the onboarding as it should be the same code.
+- The fact it is not scrollable is really interesting as it is the same code in both places. So the reviewer is very curious about why it is behaving differently. And the author’s approach was to add a max height. That could be the correct move but the reviewer is curious about some rules that are applied to that thing.
+- Opens the page’s html inspector in browser developer tools to compare with the rules that are used in the settings.
+- The reviewer wants to manually keep the drop down open if they will manage to check what is applied.
+- They are trying to fully understand the bug and how the author solved it.
+- Finds the panel-list in the inspector and writes a command to stay-open.
+- Goes to check the styles of it. Sees that they say the overflow- is auto and the max height is 100%.
+- The author’s solution was to change the max height to something static - 300px. Manually writes it in. It causes the scroll bar to appear but it is somewhat awkward because the menu stayed above the bar and the reviewer cannot see all the options anyway. Open the menu again, checked that safari and chrome are there but when the window is shrank they cannot get to them all. So even though it is scrollable, the reviewer is concerned.
+- Goes to apply the patch in the local terminal having doubts it will work well even with the patch applied.
+- Applies the patch locally using a specific command which receives the patch ID and does all the work.
+- Looks again in Phabricator at the code. Says they think that what the author is doing in the code is fairly straightforward. The reviewer is still curious about the magic number the author introduced as the max height.
+- The overall approach seems OK but the reviewer is afraid it is not covering all the basis.
+- The reviewer now goes into the testing and debugging mode.
+- With the patch applied, opens the terminal again.
+- Uses the same window shape and size as when the reviewer was reproducing the bug and solution and it is indeed scrollable but it is not possible to reach all the options and the Manu is above the bar.
+- Now the reviewer wonders what is the ideal solution. It is similar to what the author has because when it flips to the top, the menu seems to overflow. So the ideal would be to stay opening below the bar, reach the end of the window and then become scrollable. The reviewer doesn’t know how to do that exactly.
+- The reviewer could try to work with the author in the background but for now they are just raising a concern in the review.
+- Goes to the Phabricator. Adds a comment to the history after the diff. Specifies action as Request Changes.
+- Writes to thank the author they looked at that. Always likes to thank the authors as they put a lot of effort in it. Continues saying they applied and tested the patch and still have some questions (lists them below). Where did the static value come from (was it manual tuning?) Says they are noticing that with limited vertical space the issue persists even with the patch applied when th panel list flips over to the top. [Goes to the browser to take a screen shot]. Says to notice that at the screenshot they are scrolled as high as possible but cannot see the highest item. Ideally the list would continue open below but would limit itself to the limited vertical space below. It should notice that it reached limits and not overflow over the viewport which is what the reviewer thinks is happening. That might be something that needs to be fixed in the panel list itself.
+- Tries to make a better screenshot also showing the scrollbar but fails. Adjusts the review comment to express they are scrolled as high as possible but could not produce the exact screenshot.
+- Realises they could disable the hiding scrollbars to show the issue. Recognises that they are sweating a lot about the scrollbar but thinks it is important to show exactly what do they mean.
+- Goes to the general settings on their machine, use the search function to identify where to disable the hiding scrollbars. Chooses to always show scrollbars.
+- Goes to the browser. Makes a new screenshot that also shows the scrollbar.
+- In Phabricator, updates their review comment with the new screenshot.
+- Submits the review.
+- Goes back to the settings of their machine and disables the Always show scrollbars.
+
+GENERAL STRATEGY
+- Reads issue tracking and the discussion
+- Reads the description of the PR, views the files, history and discussion. Views the code. Reproduces the bug, tests in the local environment. Applies the patch. Tests in the local environment.
+
+INTERVIEW
+
+I: So the next steps on this one is you send the review, and you expect that you will really go and meet with the author, or there's just a conversation there.
+
+P7: I think now a conversation will begin. Like we have to determine whether or not… it's possible that author’s patch solves the cases that we care about because QA fied the bug over here, and it's possible that there are certain screen resolutions that we're trying to solve for that they care about for about welcome page, and that there might be screen resolutions that they don't care about, and for my screenshot here the screen might be so vertically squished that they go: Yeah, things are gonna be broken. Everything's gonna be broken. We don't support whenever things are that short. And so I may have identified a degenerate case, in which case she might push back and say: It doesn't matter, but this solves it for the cases that we care about, in which case I'd go: Okay, let's talk a little bit more about that 300 pixels, where that came from - just for document historical documentation purposes. And then I would approve the patch in that case. But in the event that this is something that we care about - these short, short windows - then I want to identify… like there's still a problem here, even though the scroll bar… and like this might be because the 300 pixel static value, I think, is is kind of related to this, because it's that's how high we are extending past the extent of this panelist is going to be 300 pixels, probably ending right around here [showing at the screenshot]. And if we'd shortened that to something like 150 pixels. I suspect, that that would look better, but it also wouldn't look great whenever you have a tall window, so I there might be something that we can do that's more adaptable, based on the size of the viewport, like a calculation - a ratio based on the available viewport area. I think that’s what I'm thinking of. Or like figuring out how much space is above and how much space is below, figuring out the largest amount like which one is the bigger one, and then placing the panel there and locking its vertical size to the available space.
+
+I: So you expect the discussion. But maybe not a long one.
+
+P7: Yeah, exactly. Yeah, yeah. I don't think this is going to be a long discussion, and some of it might happen here in Phabricator. It might also occur that the author pokes me in matrix or slack. We have a couple of different communication channels. We’ll bat it back and forth. We'll see if we can kind of negotiate what we both think is the correct solution, and then she'll probably continue to proceed with it.

@@ -149,7 +149,7 @@ def project_with_uncoded_content(app_context: AppContext, tmp_path: Path) -> Pat
 # =============================================================================
 
 
-@allure.story("QC-028.07 Agent Suggest New Code")
+@allure.story("QC-028.07 Suggest New Code")
 @allure.severity(allure.severity_level.CRITICAL)
 class TestAgentSuggestNewCode:
     """
@@ -291,7 +291,7 @@ class TestAgentSuggestNewCode:
 # =============================================================================
 
 
-@allure.story("QC-028.08 Agent Detect Duplicate Codes")
+@allure.story("QC-028.08 Detect Duplicate Codes")
 @allure.severity(allure.severity_level.CRITICAL)
 class TestAgentDetectDuplicateCodes:
     """
@@ -414,7 +414,7 @@ class TestAgentDetectDuplicateCodes:
 # =============================================================================
 
 
-@allure.story("QC-028 AI Code Management Integration")
+@allure.story("QC-028 Manage Codes")
 @allure.severity(allure.severity_level.CRITICAL)
 class TestAICodeManagementIntegration:
     """Integration tests for AI code management workflows."""
@@ -514,7 +514,7 @@ class TestAICodeManagementIntegration:
 # =============================================================================
 
 
-@allure.story("QC-028 AI Tools Schema Validation")
+@allure.story("QC-028 Manage Codes")
 @allure.severity(allure.severity_level.NORMAL)
 class TestAIToolsSchema:
     """Tests to verify MCP tool schemas are correctly defined."""
@@ -566,15 +566,15 @@ class TestAIToolsSchema:
 
 
 # =============================================================================
-# QC-028.07: Agent List All Codes
+# QC-028.06: List All Codes
 # =============================================================================
 
 
-@allure.story("QC-028.07 Agent List All Codes")
+@allure.story("QC-028.06 List All Codes")
 @allure.severity(allure.severity_level.CRITICAL)
 class TestAgentListCodes:
     """
-    QC-028.07: Agent List All Codes
+    QC-028.06: List All Codes
     As an AI Agent, I want to list all codes so I can understand the coding scheme.
     """
 
@@ -628,15 +628,15 @@ class TestAgentListCodes:
 
 
 # =============================================================================
-# QC-028.10: Agent Create Code
+# QC-028.01: Create New Code
 # =============================================================================
 
 
-@allure.story("QC-028.10 Agent Create Code")
+@allure.story("QC-028.01 Create New Code")
 @allure.severity(allure.severity_level.CRITICAL)
 class TestAgentCreateCode:
     """
-    QC-028.10: Agent Create Code
+    QC-028.01: Create New Code
     As an AI Agent, I want to create codes directly so I can build the coding scheme.
     """
 

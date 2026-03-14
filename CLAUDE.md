@@ -10,6 +10,7 @@ Detailed conventions are in `.claude/skills/`:
 | `backlog` | Task management with DDD structure | Creating/editing tasks |
 | `c4-architecture` | System architecture diagrams | Understanding codebase structure |
 | `docs-updater` | Documentation & screenshots | After tests pass, updating docs |
+| `qualitative-coding` | QDA methodology reference | Implementing coding features, AI-assisted analysis, UX decisions |
 
 ---
 

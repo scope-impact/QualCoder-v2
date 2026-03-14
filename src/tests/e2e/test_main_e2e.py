@@ -132,7 +132,7 @@ def app_instance(qapp, colors):
 # =============================================================================
 
 
-@allure.story("QC-026 Open & Navigate Project")
+@allure.story("QC-026 Open Navigate Project")
 class TestSmokeStartup:
     """
     Smoke tests for application startup without a project.
@@ -363,7 +363,7 @@ class TestNavigationAndScreens:
         assert hasattr(files_screen, "_page")
 
 
-@allure.story("QC-026 Open & Navigate Project")
+@allure.story("QC-026 Open Navigate Project")
 class TestSettingsIntegration:
     """Tests that settings button works in the full app."""
 
@@ -396,7 +396,7 @@ class TestSettingsIntegration:
             dialogs_opened[0].close()
 
 
-@allure.story("QC-026 Open & Navigate Project")
+@allure.story("QC-026 Open Navigate Project")
 class TestFullUserJourney:
     """Tests complete user workflows through the app."""
 

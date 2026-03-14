@@ -169,7 +169,7 @@ def project_with_multiple_sources(app_context: AppContext, tmp_path: Path) -> Pa
 # =============================================================================
 
 
-@allure.story("QC-029.07 Agent Apply Code to Text Range")
+@allure.story("QC-029.07 Apply Code to Text Range")
 @allure.severity(allure.severity_level.CRITICAL)
 class TestAgentApplyCodeToTextRange:
     """
@@ -350,7 +350,7 @@ class TestAgentApplyCodeToTextRange:
 # =============================================================================
 
 
-@allure.story("QC-029.08 Agent Suggest Codes for Text")
+@allure.story("QC-029.08 Suggest Codes for Text")
 @allure.severity(allure.severity_level.CRITICAL)
 class TestAgentSuggestCodesForText:
     """
@@ -501,7 +501,7 @@ class TestAgentSuggestCodesForText:
 # =============================================================================
 
 
-@allure.story("QC-029 Batch Coding Operations")
+@allure.story("QC-029 Apply Codes to Text")
 @allure.severity(allure.severity_level.CRITICAL)
 class TestBatchCodingOperations:
     """Tests for batch coding across multiple sources."""
@@ -603,7 +603,7 @@ class TestBatchCodingOperations:
 # =============================================================================
 
 
-@allure.story("QC-029 AI Text Coding Integration")
+@allure.story("QC-029 Apply Codes to Text")
 @allure.severity(allure.severity_level.CRITICAL)
 class TestAITextCodingIntegration:
     """Integration tests for AI-assisted text coding workflows."""
@@ -704,7 +704,7 @@ class TestAITextCodingIntegration:
 # =============================================================================
 
 
-@allure.story("QC-029 AI Coding Tools Schema Validation")
+@allure.story("QC-029 Apply Codes to Text")
 @allure.severity(allure.severity_level.NORMAL)
 class TestAICodingToolsSchema:
     """Tests to verify MCP tool schemas are correctly defined."""

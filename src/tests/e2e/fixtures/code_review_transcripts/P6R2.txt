@@ -1,0 +1,96 @@
+REVIEW TYPE AND GOAL
+- First review of a junior dev contribution to the CLI test suite
+
+TRANSCRIPT
+- Reads the title of the PR.
+- Follows the ticket/issue link in description to open in a new tab. Both their reviews have only the issue link in the PR description.
+- The reviewer was the one who created the ticket.
+- When the reviewer wrote the ticket they fully understand what is meant by it and why did they create it even if the description is not exhaustive. However, the ticket is 2 months old so they do not fully remember anymore.
+- The project has a component library and also a static website that uses the component library to provide information about something. They have around 30 40 sites like that. The idea was to add a command on their command line tool that when a unit will be run, it will generate anend-to-end test - start the browser, open a specific page, take a snapshot (an image), go to the second page, click a button, take a screenshot again.
+- They want to see whether if they update their component library, something on the page visually breaks.
+- Re-reads the issue, reminds step by step that the test should run the command, use a specific library makes snapshots on all the pages. They also want to execute this test on all their landing pages. Then, it should add that test on the CI of the mentioned projects.
+- On top of the Overview there is a link to the PR. The reviewer follows the link and opens it in a new tab.
+- Then the reviewer sees there are some  discussion comments so wants to see those first.
+- The first comment from the author contains a description and example of how to use the command tool. The reviewer sees that they need to run the command with a specific url of where to run the website
+- It also says what are the pages of the static website. That’s a good intro for the reviewer.
+- Goes to the Commits tab where there are 3 commits.
+- Reads the commit messages.
+- Sees that the author first created the init, then generated chabgelogs, the third message the reviewer doesn’t understand very well but just wants to see it in the code then.
+- Goes to the Changes tab.
+- When the PR is huge, then the reviewer looks commit by commit to see how the code changes through time. But at the simpler reviews like this one, they just go see the diff.
+- The reviewer firstly hovers with the mouse through the list of affected files.
+- Sees that the author added a folder with a script that does something very generic - initialises the testing. So let’s see what that means.
+- Then there is a file with projects that lists all their static websites, the related gitlab repo and a file path of the package.json file in there. The author probably needs that to generate the tests based on that directory.
+- Then there is their CLI app which is a plug-in they created for their CLI. The author there says (in code) that if you run the first version of the command with —init, which in the authors code is the “case test” with —init, then the test finds the current directory. The directory she puts is a directory that exists everywhere the same as they implemented it like that because of a library they use. Then, the script also asks whether there was a parameter to get help. In which case it would offer the description of the command as presented in the Overview comment. The reviewer goes to check the comment in the Overview.
+- Goes back to the implementation logic. Checks the parsing of the arguments and it is wrong. There is a usual way to handle arguments in commands.
+- Goes to the Overview and adds a comment at the end of it saying that the usual way to add arguments in a CLI tool is: [code snippet].
+- The reviewer saw that the formatting in the comment from the author was a bit strange and then in the logic implementation and initialization the author needed to parse by the equal sign but the reviewer never needed that. So there is a better way to do it. Then the reviewer realized that the formatting of the author is not correct because it needs a space. Then the argument is in position 2 and the value of it in position 3.
+- Goes to the implementation in the Changes tab. 
+- Returns back to the unsubmitted comment and submits it. That is a more generic comment so the reviewer “cannot” leave it inside the code. Then realises by looking at the code that there is a LOC which would be good to hold that comment.
+- Deletes the comment from the Overview tab. Copies it into a comment within the file.
+- Finishes checking the logic.
+- At the end of the logic, the author runs the function to generate the test. The reviewer wants to check what does the command do and if it makes any sense and it indeed generates the test as the name suggests so it can stand as it is.
+- The generate test function accepts two arguments. That makes the reviewer relize that the preceding script creates a variable that is never used. The variable is created and accepted as a CLI argument but then goes nowhere in that logic block.
+- Adds a comment saying the variable is not used anywhere.
+- Wants to follow the function generate test and see how it is defined. Searches for the name. Firstly sees the beginning of the file where the function is and does not know what the first file does (seems to validate list of pages by the title)
+- Continues to see the generate test function
+- The author creates a function traverse folder which returns a test file. That makes no sense as the expected return would be a directory. Firstly wants to see how is the test file generated which happens through the generate test function.
+- Goes to the generate test function.
+- The beginning looks OK, then comments that the variable names are wrong.
+- Skips to the end of the function to check how the output of the file is generated. Says: “Uff there is a lot of wrong naming.” Says that you know the code is bad when you cannot read and understand it directly. The traverse folder would be expected to traverse a directory, but it does not do that. Or it does it but also other things and generates the test. So the whole part needs a refactoring.
+- The reviewer will still put some comments but also call the author who is also a junior developer. Part of the review process is to train the junior developers.
+- Adds a comment saying that the traverse folder function should not return a generated test.
+- The reviewer wants to leave comments but the main review will happen on the call. They will look at the code together. The reviewer wants to teach the author that when you use a name it should do exactly what it says and let’s see how would you change this. The reviewer would let the author to write it on their own and it would be a live review process rather than asynchronous. So the reviewer can understand what is the author’s process of thought that make the author do the wrong things in the code.
+
+GENERAL STRATEGY
+- Sees issue, sees commit titles, understands the files and what they probably contain, then goes to understand the main logic of the created command following the definition of used functions. 
+
+INTERVIEW
+P6: There's a difficulty in being more senior and doing code reviews to junior developers in terms of - they usually mess things up. So I usually have to tell them, okay, this is wrong, this is wrong. For me, it's bad vibe, like I don't like it. I don't like to always tell someone that.  So yes, it's a bit difficult in terms of psychology, on the dynamics of the thing. You have to be friendly, but also pretty professional. And do all this and not make developers feel bad, or be afraid of making mistakes.
+
+I: So how do you deal with it?
+
+P6: I try to be as friendly as possible. I try to train them and to always tell them that it's really normal to to make mistakes. That's how you progress. And the most important for me is the tone of speaking, to make a joke, to be friendly generally. To ask people about their lives. It's not just professional. It is a way for me to feel good about telling people too many times that there’s a mistake, there's a mistake there… you know.
+And I think it works. Because if it didn't. I would see in all these years I would see probably their productivity going down. But it's not. They still like what they do. They have motivation to do it. So I guess I am doing a good job or not making them feel bad about making mistakes. Probably we should ask them. 
+
+I: So a specific way here would be that you write less and shorter comments in the review itself. And you just have all the talking in person where you can create the nice atmosphere to share that feedback.
+
+P6: Exactly. These comments are public. So it's not just that I see them, and they see them. The whole team sees these comments. So when you see, that there are many mistakes stop writing and get in a call with them. Because it also makes them feel more bad when they know that they have made mistakes but the whole thing is: You have made a mistake here and made a mistake here.
+
+I: So you’re basically trying to also minimize the amount of criticism that you expose like publicly.
+
+P6: Yes.
+
+I: Is it actually minimize? Because, I didn't have before the feeling that you would think about how many comments you do right?
+
+P6: I think that when you see… You have spent like 2 weeks writing a feature. Okay?And you have written like, I don't know 200 lines of code. The feeling you get when you're seeing on the 200 lines of code 30 comments is worse than when you see 5 points. The first feeling I think is without thinking. It's just see, okay, how many? You see the number. And you are overwhelmed. So I made many mistakes. I think it's easier to make less comments and to discuss other things privately and in a cool where So in a comment I cannot tell a person that: [Name], you are doing really good and you're moving faster. And you learn really fast. I cannot tell this in a comment.
+But these are needed. You need tell people this stuff. So they have the energy to resolve and to move on. 
+
+I:  So these are both reviews basically from junior people. Do you do reviews differently  when it's with colleagues that are, for example, in these 10 people that are the core developers there.
+
+P6: Yes. Normally when I do a code review for my manager, for example, who has, like 15 years of experience and most of the times, I find no mistakes. But when I find mistakes it's not something really important. So there are no conflicts there. And also I know that the person that has this many years of experience will not feel bad about themself or put less energy to do stuff because they got a review. You know. It's easier there. But it's also - usually the code is more complex.
+
+I: Do you focus on different things then. If you, for example, do a review for your manager? Do you also start with looking at the namings, for example? Because that seems like something that junior people are much more likely to have in some odd way. 
+
+P6: Yes. With my manager it's another thing, because for example, my manager likes to use smaller words and cut words. This is a style of code. It's not wrong because it's readable. But, for example, I would write for a function that creates a Boolean value the whole word. I would write “make boolean”. My manager doesn't. He doesn't write “make”. He writes “MK BLN” for example. I’ts readable. Okay, it's a style of coding. It doesn't really matter. And so, when there are conflicts in terms of things that are not really important, but that it's about how you concatenate the name - for a junior developer if they do that I will tell him “No”. I would enforce my style of code in a junior developer, but I would not enforce my style of code in senior developer.
+
+I: Do you think that the junior people, for example, reflect on this? That you know, like they are required to have a different style than the higher manager, or something like this, so that there is inconsistency between what you expect from them, basically, and what they can see in the code base.
+
+P6: They will not. Most code that my manager writes the junior developers would never come across it. So it's either another project. Or it's in parts of the code that are really complex. And usually the junior developers does not see that. But the main point of enforcing a style is, mostly In terms of that you have to follow specific rules. If you don't have specific rules because you are a junior developer I will help you create them, and probably I will tell you that my rules are the better. The best rules. Because I like reading my code, for example [laughs].
+
+I: I think I would need to slowly wrap up so I will just go a bit back to the review that you are doing now. So far you have been doing more like an overview. Right? You just went like top to bottom, basically what what is displaying there. So you are getting, let's say, an overview of what is happening. And then, do you know what would be your next steps? Because you are nearly at the end. Yeah.
+
+P6: For example, in this one, the next step is to get in a call with [name] and discuss on how we name things, and how you could break the code better. And ask for their opinion after we have discussed, and what are the problematic parts of the code. I would tell you: Okay, try to write the code on how it should be. And then we'll discuss again. The next step after this (I would leave here alone to do it) when  I get that, okay, they got the point we would stop the call. She would continue on refactoring the code. Then she would ask me again for a review. If everything is nice and correct I would download the code. I would pull the specific rounds and I would try to run it. This would generate the test. Then I would try to run the test. See if everything goes well. And after this I would merge the code.
+
+I: So at this point you are going to have the call. But are you still going to, for example, comment more things before you have to call, or you will just let it be?
+
+P6: No. Because the problem here is repeating. The problem here is names. Also she has an issue on some specific specific function. It does a thing that should not be done in this specific function. And this is repeated. So the comments would be - You do this again, and you do this again. So there's no point in writing more comments.
+The the problem here is that they probably haven’t understood how we name and how we create functions. So the next step is - let's have a call to understand how we name and where we'll put things in a function, what things we put in a function I would give them the big idea I would ask them: Okay, what would you change? No, there's no point on making more comments right now because it's a repeating pattern of a repeating mistake.
+
+I: So if I would describe this review for myself, it's like, you've got an overview and you found issues that are substantial enough to stop  the process and take it to an in person review.
+
+P6: Yes.
+
+I: Perfect. Then I'm happy. Do you have any last comments? Something interesting you realize about how you do reviews that would be good to know?
+
+P6: My main experience on the review process is that it can be damaging in the psychology of a person. So it should be done with consideration of the feelings of the person that you are doing the review to. It’s not just a technical process. It also has a human aspect. Especially if the person doesn't have a lot of experience the whole point of being in a team is to find ways to make it more interesting for people. If you always tell a person that you do, it is wrong. You do this wrong, he will lose his interest at some point.

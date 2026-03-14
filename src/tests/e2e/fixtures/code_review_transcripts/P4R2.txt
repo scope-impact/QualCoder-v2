@@ -1,0 +1,138 @@
+REVIEW TYPE AND GOAL
+- First review of a draft PR
+
+CONTEXT
+- It is one issue, but there are 3 different Jira links in the description so the developer is trying to resolve 3 different problems in it.
+- In general they do not review draft PRs. Usually the devs open draft PRs when they are still working on the Jira. However, they can suggest changes.
+
+TRANSCRIPT
+- Looks at the description, comments on the 3 linked Jira issues
+- Notices it is a draft PR so they need to take in mind it is not complete
+- The description also states that the CI/CD is meant to fail to highlight the issues that they are trying to resolve
+- Starts with opening the Jiras to understand what is going to be modified here.
+- Looks at the first Jira and looks at the description to understand what is the author trying to achieve there. They more or less understand the description because they know the test.
+- Gets information on what is supposed to change, what behaviours should be observed and how does the implementation more or less look like, what problem is it solving.
+- Goes to Conversation, checks again the number of the Jira issue, goes to Commits
+- They are going to review issue by issue/commit by commit. It is great because it chunks the review and they don’t need to review everything in one go.
+- The commits are ordered chronologically, so the commit related to the issue at hand is a third one.
+- Opens the commit and finds out they were looking at a wrong one. Checks for the correct number and finds they need to open the last commit on the list.
+- First scrolls through all the commit checking all the changes - it is just one class modified which is the test.
+- Goes through the changes from the top trying to understand what is the author doing.
+- There is new field so first always checks the privacy of these fields
+- This is a test case so they are more relaxed so it is not affecting the behaviour of the property itself. But in general checks if the property is open or if can be private. Because the more private, the better [not understandable] and it’s better for the future maintenance. This field is private access so they don’t need to worry about anyone who is accessing to the field. This is the property mentioned in the Jira that validates the inputs.
+- Then the author is adding more variables to the test with a new assert.
+- It’s well done because the author also added a message to explain the failing test.
+- Extends the hunk to see where the variables used by the test are initialised so the asserts are OK.
+- Identifies the first code change that is changing some looping logic, so they stop to see what is there. First has to understand what the code was doing before.
+- First, wants to understand what the piece of code was doing before and checks the left diff - looping through an asset. Uses the context of the changed lines to understand the iterated data structure and the loop.
+- Then, looks at the right diff - the author made a new method. The method is also using a function in the params that the reviewer identified in the left diff. Then copies the method name to figure out what it the new method doing. Uses the find method in the PR.
+- Scrolls downwards and notices the method is used several times. Then, finds the definition.
+- The function does the needed iteration through a given set and tests whether the given function can be applied to all the elements. The reviewer concludes the left diff does the same thing as was the previous code doing.
+- The new method is more or less OK, but there is a better way to join strings so improvements can be suggested.
+- The reviewer knows the method can be improved for the reliability of the code.
+- Switches to a new tab of the browser and searches to find how to join a list with a comma separator in their version of Java. Improves the keywords and searches again. Opens StackOverflow but says they don’t want to use it so they go back to the search results and open a documentation page.
+- Finds there exactly the use case that they’re trying to improve - it is possible to iterate a collection and directly joining the elements with a chosen separator
+- Wants to firstly play a bit before making the suggestion to the author to figure out if the suggestion would be a correct one.
+- Plays a bit with 2 collections to modify a piece of code and goes back to GitHub.
+- Enters a comment suggesting to use the identified function to improve readability of the code in the PR. Followed by a snippet.
+- Uses the Grammarly integration to fix a typo in the comment they are writing.
+- Returns back to the place where the new method was used the first time. Repeats what is the output of the method and concludes it is used OK.
+- Checks the next change. Where the right diff threw a new exception while the right diff appends messages to a newly declared variable 2 hunks above which looks fine.
+- Continues to review top-to-bottom.
+- In another new method, finds another possible simplification.
+- Comments by asking what does the author think about replacing their implementation with a different function. Then adds the reason which would be reducing memory consumption.
+- Looks into another changed condition - the author is using the same condition, then uses the new method we checked before which is doing more or less what the left diff was doing. Thinks about what is stored in the variable declared on the right diff and returns to check the left diff. Understand that the left diff was finding the unused elements. That is now on the right side within the usage of the new method. Checks that an equivalent line is present on the left and right diff. Then, the author checks whether that list is empty and appends the error message to the newly created string for that purpose. Which is the same as the author already done before.
+- Then, if validating inputs is enabled, the author validates several scenarios of when there are unused or unreferenced models reported by the algorithm, that they are indeed not used or referenced.
+- In the first case, confirms through search and scrolling on the page what do the used variables represent as they already forgot. Part of the conditioned block was already used before so concludes it probably works fine.
+- Checks the //comment of the next case to understand what it is supposed to do. Identifies the relevant data structures in the condition that represent the goal. Finds that the raised error message and the conditioned block work again the same.
+- Repeats for the third case.
+- If any exceptions were raised, the code will fail.
+- Finishes scrolling down through the definition of the new method.
+- Scrolls back up and says that they don’t see anything else on that commit. It looks good. It is quite difficult to understand the changes but does not see anything else to comment.
+- Knows the author so trusts on other developers. Also sees that it is a test case so will approve the PR if the test passes.
+- When asked if reached a full understanding, says that gets the general sense of it. The reason is that does not need to go too deeply in this PR - it is a test case, it comes from an experience developer, does not affect the server behaviour itself and it’s a draft. So now it is just a general review if there are any specific points to improve until the final PR is done.
+-  The drafts are not necessary to be reviewed as deep.
+- Understands the purpose of the changes but does not need to go too deeply as it comes from an experienced developer. So trusts other developers.
+- Also it’s a test case. It is not directly related to the areas the reviewer is leading. It would be different if it would be a person they would not know their knowledge of the project. Then has to go more deeply. Then would test, clone the PR to a local fork, play a bit with the test to understand what is it doing and check if everything is OK.
+- When the PR comes from experienced developers, there is a percent of trust. So trusts that the author is doing what they want to do.
+- Reviewed and did not see anything really wrong on this commit. Added some improvements that can be done.
+- Goes back to the PR description. Opens the next issue in Jira.
+- The Jira description is not too clear and unspecific - the current state of the test methods “need an update on what are the expected modules”.
+- Does not understand very well the description.
+- Adds a comment on Jira that the description is not too clear and asks the author to elaborate more.
+- Checks the issue number in the PR description. Finds the related commits in the Commits tab - there are 2 and opens the first one. The first one only updates the docstring so the reviewer says that there is nothing to add to that one.
+- Goes back to the list of commits and opens the other one.
+- It makes some changes to the list of modules the test verifies but at this point the reviewer does not understand the reason why. Needs to find out more about the reasons for that change because it is not clear why some modules are removed and others are added.
+- Could apply the rule that it is a known developer who knows what they are doing or can play more with the test case to understand what is it doing and that would take more time.
+- Could go to play with the test case to understand what is it doing on the background. However, does not have much informations. This is a draft PR, so does not have to spend a lot of time now because the PR is not finished. So when the PR is finished, the reviewer needs to play more with it to understand better the reason. Before understanding the reason, should wait for approving. Anyway would never approve a draft PR because it is in progress.
+- Returns to the Conversation and PR description. Opens the third issue in Jira and reads the description.
+- The description says the tests do not detect circular references of modules and provides an example of modules when that happens.
+- Finds the last remaining commit to review that is related to the issue number.
+- First wants to understand better what is the author doing. Assumes they want to identify circular references.
+- Extends some hunks to see more of the context and understand ;logic preceding the newly added else if block.
+- “They could do the changes … [points in a lower changed nested loop with an if]
+- The author put the condition from the loop outside of the main while
+- The purpose of it is not clear. So the reviewer opens the project in the IDE.
+- Comes back to the Github to check the line number. Then checks which loop was put out of the main while loop. Then, looks again at the newly added else if block trying to understand the code itself. Says to themselves what do the variables and data structures carry. Again, it is hard to understand it by just looking at the changes.
+- By just looking doesn’t see anything obvious like formatting issues or a code improvement. Again, the reviewer should take the test and play a bit more with it to understand what the author is doing. The reviewer understands what is the intention bt does not have enough of knowledge of the test case to review it. In those cases, the reviewer has to play more deeply to understand if there are some corner cases etc. That would require more time to launch the test locally and understand the intention of the change.
+- Goes back to the conversation. Says it is a draft, not a critical area with this PR. Checks the Jira issues again to see the priority (Major) and notices there is another linked issue.
+- Also in general, the reviewer cannot do a deep review for each PR every day. So they book some time during morning to do some PR reviews. If cannot finish during the morning, just does other tasks and comes back the next day to play more.
+- Submits comments.
+
+GENERAL STRATEGY
+- Goes issue by issue, commit by commit, then jumps when needs more information on the meaning of used or declined data structures and methods.
+
+NOTES
+- The relationship of the author and the reviewer is important for the reviews. The author is the project lead so they know that it will not have many problems or even that there are no problems with that code. Because they know it is a senior that knows very well the project. When the authors are coming from the community and are not very familiar with the code itself you have to do a deeper review. Also, if there are people that you don’t know maybe you need to comment more carefully or allow the people to be comfortable with their contribution. If they know the author is an experienced in-house developer they can comment differently than when it is a new developer contributing to the project. They would need to explain better, give or provide more information about what they are suggeting because they don’t know what is the experience of the author.
+- You have to know who is the author and if it is a known author, the discussion is different rather than with a person who never contributed to the project. Even when you are suggesting something, you have to add more information to why you are suggesting that change.
+
+INTERVIEW
+I: There are 3 issues in the description is, and that at least, I mean, they feel like really unrelated. Is this something normal for pull request? Is this something you would like to change? Is this something related to the draft?
+
+P4: In general, if there are 3 Jira’s in the PR, they are generally somehow related to each other. We can actually review the Jira’s itself. They are linked together the [issue number] is related with the [issue number] and this one is also related to the other one. So somehow they are related. And sometimes when there are similar changes for a common area it could be fine to to have different Jira’s in the same pull request. Yeah, sometimes it happens. It's not very often. The reason here, I guess… Sometimes the developer wants to avoid conflicts between modifying the same changes into different PRs. Because, sometimes there are common changes, and if they are in different PRs, once one thing is merged the other will conflict. So something is better to create everything in a single PR and avoid those conflicts.
+
+I: What does it mean for you for the review, if there is multiple issues. How does it affect the review for you? If there are multiple Jiras referenced.
+
+P4: It’s easier if I focus only on one Jira. Yeah, you have to check only one - a specific intention or change. If the more Jiras, you have more difficulties, because you have to not only understand each of the Jiras, you have to understand the relationship between them.
+
+I: You wrote the few comments, also on the Jira. You always write questions rather than requests, you know, or statements. Does it have some meaning for you that you will formulate it in that way?
+
+P4: On the Jira I was just commenting that the description is not too clear. So it's important to have. Maybe it's a a personal problem not having this description today. But it's not too clear to be honest. So it is better to ask to have clear descriptions because again, this change is now. But maybe you have to check again. Why this change was done in the future. Maybe in 2 years to have to check. Of course we are talking here for this case again, this is not very strict, because this casedoes not really affect the server behaviour. If this change affects to the server behavior, in general, we are more strict about that. For example, the Jiras should have a good description, so anyone can go to the Jira and understand
+what is happening there. I read it and I didn't understand it well.
+Probably tomorrow, when I get back to the test maybe I learn more about this test case, and maybe I understand better the Jira.
+But in general it's good to have good Jira descriptions, because in 2 years (it depends of the nature of the project) but in this project, I see myself checking Jiras from 2 years ago and what was the reason for this change? I can get all the information in the Jira. In the pull request, I cannot get this sort of information.
+
+I: I'm not already a bit changing topic. But is it important for you to understand reasons for all the changes in the pull request, so that you are like willing to merge, or at least give, the decision?
+
+P4: In this argument. It it came also who is creating the request. I can tell from the developer. So I don't need to understand every detail of the put request. However, here there are some changes that I don't understand at all very well. So, before giving my approval, I would like to understand better what the test is doing to get a more general idea of the of the changes. It's not as strictly necessary to me to understand each reason but in this case, for example, I would like to understand a bit more. I don't know how to to define what is the limit of go or not go in this case. I need to have a sense of what the change are doing in general sense. Right now, I only understand generally the first commit.
+I have to check why and the reasons of the others.
+
+
+I: Coming to the process itself. I will tell you a bit how I perceived it, and you can like a bit confirm for me if I look at this correctly.
+So you start with the description, and then you see it like issue by issue. And that means going also to the related commits. Like issue, then commits, and then you start, let's say, going top down, unless you find some dependency that requires a deeper understanding to understand the point where you are, then that's the only point, basically, where you jump to other places in the code. Then to come back and continue with the down reading.
+
+P4: Yes.
+
+I: Is it something like that I could say you do generally.
+
+P4: You have to also put in the picture the component that is affecting all the…, the change itself, the priorities, and so on… But in general yes, this is more or less my my process. I need to have a good sense that I understand the changes. I can do that because
+we prefer to have good changes instead of approve or merge, since that could affect in the future. So we have to be careful with the changes. For for pull requests that are quite difficult… This one, for example, is more or less. There are some changes, but there are even bigger pull requests.
+For those bigger pull requests that really require really good understanding of what are the changes you also have to trust on the developer.
+For example, if someone who is the component lead of security components is creating a a big pull request I don't need to really understand all the details, because I know he is the component lead. Otherwise it will take a lot of time for me to understand every small change.
+So you have to more or less play with those variables - the author, how big is the pull request…
+If the PR is really really big, I for example trust in the CI. I trust if all the tests are passed I understand that the changes that are being added are not affecting the current behaviour we are testing.
+Otherwise, it would be possible to go on each pull request understanding to the minimal that it changed
+
+I: It seems to me that, that the points where you pay the most attention is really understanding the reasons for the change. So the the description of the Pr. And the issues, and then on the other side, like the lowest level sort of when you are really in the logic and trying to understand it the on the deepest points.
+
+P4: Yeah, yeah.
+
+I: Do you have something else that you focus on like specifically, or a lot that requires a lot of attention?
+
+P4: We haven't commented about the CI. I trust a lot on the Ci as well. You have to check if the Ci is passing, of course. Nothing else. I prefer incremental small changes than big changes as well. This is much better, because you are integrating small changes.
+It is much better than the big changes because you are continuously checking. For example, if I merge one PR now I also have to pay attention about how the project itself is behaving regarding CI to understand if something that we have introduced is affecting to other components. And this is more or less… if all the agencies are paying back during the time, once the packet perial is done we release the current version.
+
+I: So I will have last question on my side. So this is a draft request. Immediately in the beginning you said that normally don't review those. But sometimes you can suggest improvements, basically. And that's what you did right. But so if this would be a normal pull request would you comment on something else?
+
+P4: No, it depends of what I can see in the PR itself. Just pay attention to the changes, see if that is anything relevant that… if something that could affected to other parts of the project for example. But now it's more or less - This is the process.
+

@@ -1,0 +1,45 @@
+REVIEW TYPE AND GOAL
+- First review of a junior developer responsible for CI/CD
+
+CONTEXT
+- The PR is something that the author mentioned on daily that they forgot to do.
+
+TRANSCRIPT
+- The reviewer reads the title and PR description
+- The reviewer sees that the PR description contains a warning with a visual signifier which warns that another PR should be merged first to avoid errors in the build. The reviewer finds the warning pretty cool.
+- Checks the PR that needs to be merged first in a new tab following the link from the PR description. The PR is already merged. The reviewer was also assigned there as a reviewer but the team lead have already seen it and merged it so it is OK.
+- Goes back to the PR Conversation. Reads the PR description beyond the warning itself. The reviewer gets information on which file contains the staging parameters and the API keys are already in their final location.
+- This PR was also already reviewed by the team lead so the reviewer wants to check what happened in the discussion.
+- In one of the comments the team lead compares two staging files between the dev and production environment and says they are the same so there is nothing to see there.
+- Then the team lead says to rebase and update a package so that tests can pass.
+- The reviewer is not sure about what is that team lead’s comment about but has read already that the package needs to be updated. So they will just test the team lead and move on.
+- Then the author said that the dev and production environment files are the same but in the future there could be a reason for those to be diffe4rent so it could be good to keep both of them. The reviewer agrees with it.
+- Switches to the Files tab. It is just one file for configuration, very standard.
+- Says there is nothing to see there specially if it is the same as in the other environment. It’s also probably easier.
+- Submits the review as an Approve and writes “LGTM” as the review message.
+- Assigns the author as assignee to the review as the reviewer noticed they are missing.
+- Adds a label “enhancement” to the PR.
+
+GENERAL STRATEGY
+- Read the description, read related content and changes, issues, check comments, went top down through the code.
+
+INTERVIEW
+I: From how it looked to me. It's like having a look whether there is not something obviously wrong.
+
+P8: It’s not really code, it’s just configurations. So I don't really have to go into depth and check if the logic is correct. So that's why it was much easier to review this.
+
+I: The values. You know that they are correct?
+
+P8: Yeah, yeah, it. It also gave me a lot of confidence that the team lead posted this [pointing at a comment in the Conversation] which means that we have a file that in the development one and the production one which is exactly the same file. So I know, that they are working for a long time already. So I’m very confident that this one will have no issues.
+
+I:  So you did not have that much of a need to check everything because you already know that it was OK.
+
+P8: Also based on previous review. Yeah.
+
+I: So are you normally putting at least a LGTM comment, or just a review? Or does it make sense for you to enter the comment in this type of review?
+
+P8: I usually have a comment. The LGTM is really the scenario where I have nothing to add. This is the case where it was already reviewed and I pretty much agree with everything. So go ahead and merge it very much.
+
+I:  Did you reach full understanding of all that was in the code or in the configuration.
+
+P8: That's a really good question, because I'm not an expert on this, because this is for deployment and the author is pretty much the only one working on that right now. And I do some some work on there but I honestly don't know everything that each one of the configurations mean. So I can't say that I fully understand it. But I have enough information to know that this is working. And it should be fine.

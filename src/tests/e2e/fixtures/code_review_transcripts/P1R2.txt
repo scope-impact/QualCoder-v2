@@ -1,0 +1,20 @@
+REVIEW TYPE AND GOAL
+- Self-assigned review in a related repository
+- Wanted to update on what is happening
+
+CONTEXT
+- They noticed that a repository that their tests are heavily using is changing docs and wanted to check what is happening
+
+TRANSCRIPT
+- Check description and follow the link to the referred documentation.
+- Comes back to the review platform to review the code itself.
+- In the first file they find nothing they have questions about so they will not waste time on reviewing it further.
+- Reads comments of others to see whether they have the same questions.
+- Noticed comments that address her questions, so did not perform any further actions.
+- Writes a comment with a clarifying question to find a justification from the author on why the code is written in a certain way. They understand what is happening but keep a potential doubt that they are missing something and so they rather ask a question.
+
+
+GENERAL STRATEGY
+Always starts with docs references, then start reading the code.
+Top to bottom
+Code that does not make sense is cross-referenced with the provided documentation. If the documentation is not there, then she will ask to create or improve it.

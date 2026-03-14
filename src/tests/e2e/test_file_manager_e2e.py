@@ -222,7 +222,7 @@ def temp_source_files():
 # =============================================================================
 
 
-@allure.story("QC-027.01 View Sources")
+@allure.story("QC-027 Manage Sources")
 class TestFileManagerDisplay:
     """E2E tests for File Manager display and initial state."""
 
@@ -263,7 +263,7 @@ class TestFileManagerDisplay:
         DocScreenshot.capture(window, "file-manager-empty", max_width=1000)
 
 
-@allure.story("QC-027.01 View Sources")
+@allure.story("QC-027 Manage Sources")
 class TestStatsRowFiltering:
     """E2E tests for filtering via stats row clicks."""
 
@@ -321,7 +321,7 @@ class TestStatsRowFiltering:
         assert audio_card.is_active()
 
 
-@allure.story("QC-027.02 Navigate Sources")
+@allure.story("QC-027 Manage Sources")
 class TestTableAndNavigationSignals:
     """E2E tests for table row selection and navigation signals."""
 
@@ -353,7 +353,7 @@ class TestTableAndNavigationSignals:
         assert nav_spy.at(0)[0] == "1"
 
 
-@allure.story("QC-027.03 Search and Filter")
+@allure.story("QC-027 Manage Sources")
 class TestToolbarAndSearch:
     """E2E tests for toolbar buttons and search functionality."""
 
@@ -392,7 +392,7 @@ class TestToolbarAndSearch:
         assert spy.at(0)[0] == "interview"
 
 
-@allure.story("QC-027.04 Bulk Actions")
+@allure.story("QC-027 Manage Sources")
 class TestBulkAndEmptyStateActions:
     """E2E tests for bulk actions and empty state interactions."""
 
@@ -439,7 +439,7 @@ class TestBulkAndEmptyStateActions:
         assert link_spy.count() == 1
 
 
-@allure.story("QC-027.05 Data Refresh")
+@allure.story("QC-027 Manage Sources")
 class TestDataRefreshAndStateManagement:
     """E2E tests for data refresh and state management operations."""
 
@@ -575,7 +575,7 @@ def file_manager_with_folders(
     window.close()
 
 
-@allure.story("QC-027.06 Folder Management")
+@allure.story("QC-027.05 Organize Sources")
 class TestFolderScreenshots:
     """Capture documentation screenshots for folder features."""
 

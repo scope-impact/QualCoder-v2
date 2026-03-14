@@ -4,7 +4,7 @@ QualCoder v2 uses [Allure](https://allurereport.org/) for comprehensive test rep
 
 ## Live Reports
 
-- **[Allure Test Report](https://scope-impact.github.io/qualcoder-v2/allure/)** - Interactive test results with history, trends, and detailed failure analysis.
+- **[Allure Test Report](https://scope-impact.github.io/QualCoder-v2/allure/)** - Interactive test results with history, trends, and detailed failure analysis.
 - **[Coverage Matrix](../DOC_COVERAGE.md)** - Documentation coverage tracking which features have docs and screenshots.
 
 ## Report Features

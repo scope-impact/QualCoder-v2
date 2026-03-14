@@ -76,7 +76,7 @@ def viewmodel(source_repo, folder_repo, case_repo, project_state, event_bus):
 # ---------------------------------------------------------------------------
 
 
-@allure.story("QC-027.16 Async Batch Import")
+@allure.story("QC-027.11 Import Folder Bulk Import")
 @allure.severity(allure.severity_level.CRITICAL)
 class TestAsyncBatchImport:
     """Verify the async batch import replaces QThread ImportWorker."""

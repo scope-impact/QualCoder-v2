@@ -131,14 +131,14 @@ def sample_suggestions():
 
 
 # =============================================================================
-# QC-028.03: Rename and Recolor Codes (Black-Box)
+# QC-028.03: Edit Code Properties (Black-Box)
 # =============================================================================
 
 
-@allure.story("QC-028.03 Rename and Recolor Codes")
+@allure.story("QC-028.03 Edit Code Properties")
 class TestColorPickerDialog:
     """
-    QC-028.03: Rename and Recolor Codes
+    QC-028.03: Edit Code Properties
     Test the ColorPickerDialog using black-box patterns.
     """
 
@@ -209,14 +209,14 @@ class TestColorPickerDialog:
 
 
 # =============================================================================
-# QC-028.05: Merge Duplicate Codes (Black-Box)
+# QC-028.04: Merge Codes (Black-Box)
 # =============================================================================
 
 
-@allure.story("QC-028.05 Merge Duplicate Codes")
+@allure.story("QC-028.04 Merge Codes")
 class TestDuplicateCodesDialog:
     """
-    QC-028.05: Merge Duplicate Codes
+    QC-028.04: Merge Codes
     Test the DuplicateCodesDialog using black-box patterns.
     """
 
@@ -288,14 +288,14 @@ class TestDuplicateCodesDialog:
 
 
 # =============================================================================
-# QC-028.08: Agent Suggest New Codes (Black-Box)
+# QC-028.07: Suggest New Code (Black-Box)
 # =============================================================================
 
 
-@allure.story("QC-028.08 Agent Suggest New Codes")
+@allure.story("QC-028.07 Suggest New Code")
 class TestCodeSuggestionDialog:
     """
-    QC-028.08: Agent Suggest New Codes
+    QC-028.07: Suggest New Code
     Test the CodeSuggestionDialog using black-box patterns.
     """
 
@@ -388,7 +388,7 @@ class TestCodeSuggestionDialog:
 # =============================================================================
 
 
-@allure.story("QC-028.05 Duplicate Pair Card")
+@allure.story("QC-028.08 Detect Duplicate Codes")
 class TestDuplicatePairCard:
     """Unit tests for DuplicatePairCard widget using black-box patterns."""
 
@@ -454,10 +454,10 @@ def create_category_dialog(qapp, colors):
     dialog.close()
 
 
-@allure.story("QC-028.02 Organize Codes into Categories")
+@allure.story("QC-028.02 Create Code Category")
 class TestCreateCategoryDialog:
     """
-    QC-028.02: Organize Codes into Categories
+    QC-028.02: Create Code Category
     Test the CreateCategoryDialog using black-box patterns.
     """
 
@@ -588,10 +588,10 @@ def delete_code_dialog_no_segments(qapp, colors):
     dialog.close()
 
 
-@allure.story("QC-028.06 Delete Codes")
+@allure.story("QC-028.05 Delete Code")
 class TestDeleteCodeDialog:
     """
-    QC-028.06: Delete Codes
+    QC-028.05: Delete Code
     Test the DeleteCodeDialog using black-box patterns.
     """
 
@@ -711,10 +711,10 @@ def code_memo_dialog_with_content(qapp, colors):
     dialog.close()
 
 
-@allure.story("QC-028.04 Add Memos to Codes")
+@allure.story("QC-028.03 Edit Code Properties")
 class TestCodeMemoDialog:
     """
-    QC-028.04: Researcher can add memos to codes
+    QC-028.03: Researcher can edit code properties (memos)
     Tests for code-level memo functionality.
     """
 

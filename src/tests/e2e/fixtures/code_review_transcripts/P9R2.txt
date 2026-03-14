@@ -1,0 +1,99 @@
+REVIEW TYPE AND GOAL
+- check whether a design was implemented in the UI of their website
+
+CONTEXT
+- Follow up design fixes that were documented on the prior week
+
+TRANSCRIPT
+- shows sigma that is open in his local environment. The review is about checking whether the design has been implemented.
+- It’s a couple of hundred lines of code but needs to just check small changes on the UI, so nothing super
+- Since it is just a UI thing, they want to first see how it looks.
+- In the Conversation tab under the description their bot provides a comment with several links - their review application, staging, logs…
+- The review application provides a link where the reviewer can directly open the webpage with the changes applied.
+- Follows the link to the new tab.
+- Also opens the current website on another tab. Shows what was supposed to change - eg. Colours of coursers in a video
+- Already sees a potential issue as the colour of a button did not change according to their expectation - opens Sigma to compare and sees the intended button is darker. Then by watching the video on the review app further they realise the colour changes only on hover so it is OK.
+- The reviewer wants to scroll through the Sigma and through the review app and then check the code. Does not expect the code to have issues.
+- Goes to GitHub and switches to the Files tab. Returns back to the review app.
+- The first part of the title and video change seems doing what it should - colours in the video
+- Then switches to Sigma and scrolls a bit down. They had some responsively issues so wants to try and resize the window.
+- Opens the dev tools on the browser in the review app and plays around with the window dimensions.  The window always looks nice so the issue was also fixed.
+- Switches to Figma. Checks another section of the webpage where 2 buttons were supposed to change the colour and a new visual with a gradient should be added.
+- Switches to the review app and checks it is all according to the design.
+- Checks Figma again. Remembers they also had some alignment issues in the mobile in the next section and a part of the picture was cut off on a small screen.
+- Returns to the review app where the screen is still resized and says that it is also already good.
+- Again checks the review app against Figma and sees they were replacing a logo for a newer one in another small video. The logo is replaced and the animations are working.
+- Again compares Sigma and the review app. Then remembers there is still one more part that was supposed to be changed. Says it is not in the review app.
+- Apart from this they seem good.
+- Finds there is another thing changed. Checks with Sigma. Realises something and says it is nice and they can just get it out of the way.
+- If it’s just a UI change, there is a lot of images and boring stuff.
+- Checks in the dev tool what are the icons.
+- Comes back to the Files tab and says when there are SVG icons, they are used to checking if they are minified because the SVG can be unusually big.
+- SScrolls down to 2 files showing the changed images. Collapses them as Viewed.
+- Scrolls further down and skips some files and Marks other 2 files as icons minified.
+- The reviewing of the SVG icons is done.
+- Further down there is another icon and the change in the file is rather large. The reviewer wants to check whether it is used somewhere in the codebase already.
+- Goes to the IDE and searches for the name. The icon is in automation, icons and icons, but visually just in that one place, so it is OK.
+- Goes back to the Files tab. Wants to test if they could make the icon smaller. Switches to the browser and opens a tool that helps to minimise SVG icons. The reviewer managed to make the icon 80% smaller which would help to improve how fast the webpage loads. They use that sag tool every time they put new icons on the webpage.
+- Goes back to the Files tab. Realises there ae some further filters on the icon so the code is good enough as it is but will leave a comment on that.
+- Adds a comment asking the author whether they used the tool to minimise sag icons starting the comment with “Non-blocking nit”
+- Another file is just exposing icons. Marks it as viewed and collapses it.
+- Then there is the usage of a library they use for these things, so just sees and collapses it, marks as viewed.
+- Then there are changes of the colour of the buttons, also marks as viewed, collapses.
+ -The reviewer is like this vastly getting rid of the small things.
+- Another file just renames a field.
+- Another file wants to keep for later.
+- Gets rid of other 2 files just changing colours.
+- Then adding a margin to an image. That is also all good.
+- Then the file removes an animation, the reviewer goes to check in the Figma and Review app how it looked and looks like.
+- Another colour change.
+- The reviewer finished the phase of factly getting rid of simple stuff and ends up with 19/28 files taken care of. Most of it was very small changes.
+- Now the reviewer wants to go top to bottom. The code is not complex.
+- The first file was changing the colour on hover. The reviewer also wants to check the Figma design against that. It is like in the design so cool.
+- Then there is some animation. Realises it is the animation removed from the other place four points above. Assesses it as good.
+- Then there is a bigger change in a file. It’s just something from a component extracted and then reused in a different place. Wants to quickly check if it makes sense. Sees some added outside click.
+- Sees a line that is different than the practice the author used - sing const instead of let.
+- Adds a comment saying “Nit:” and that if the author needs to use let, they can consider extracting it into a helper function and use const. But it’s also a non-blocking issue ss it is a frontend work and not super interesting.
+- If the code is frontend and it looks like it should, then they do not care that much about the quality of the code. It’s not that they would not care but they care about different things. So the components should look as they are supposed to, have the expected responsiveness, some of them are reusable. It should be written nicely, but it is not like business logic. The issue at hand is not really about performance just practice that they are following. The comment serves more to educate the author than to block the PR.
+- Marks as Viewed and collapses the file.
+- Sees a component defined and then scrolls around to find 2 places where the component is used.
+- Then has a realisation that a new part of the webpage with a menu on the main page is being created which they did not realise from the design.
+- They talked about the new menu and the reviewer thought it is a different task but the designer included it already in this design and now it is done which is nice. [Checks Sigma and the Review app.]
+- In the review app, notices that the drop down from the menu title is moving a bit so wants to comment on that. Names the items in the menu and says “Good”. Firstly wants to still check the code.
+- Still in the review app clicks through all the menus on the main webpage and is happy.
+- Goes to the Files tab. Doesn’t want to investigate where exactly the glitch happens but can give it a few seconds. Looks at the Viewed files related to using tat component.Does not find the place so wants to add it to the final review message.
+- Opens the submit review dialog and starts writing the review message saying they noticed when clicking on the menu item that the other items move a bit and they should fix that.
+- It is a small thing so the author can fix it right away. It will be very easy for the author to find were it is.
+- There is another tiny change just adding an item in the menu. Just marks as Viewed and collapses.
+- All is good. Finished Viewing all the files.
+- Goes to the Conversation. Wants to check whether everything in the CI passed.
+- The UI regression testing [opens the report in a new tab] is not passing. Since the author added new icons, they are all added in the CI so it is acceptable.
+- Comes back to the conversation. Now the CI is green and everything passes since the new icons were added.
+- Since there is the moving in the items on the menu bar, the reviewer will Request changes.
+- Adds to the review message “Great work” and that they didn’t realise they are doing the menu already. They are leaving 2 non-blocking comments, but they noticed there is the movement in the items which should be fixed.
+- Wants to add a comment on the issue containing adding the menu item so that the other issue gets merged automatically. Then notices the issue is already linked in the Conversation so closes all the review app and other tabs.
+
+GENERAL STRATEGY
+- Checks the design, compares it section by section to the applied patch in the browser. Then goes through the code. Firstly closes small and obvious stuff. Then more or less top to bottom looks through changes.
+
+INTERVIEW
+I: It was Figma, right? Where you had the expected design. How do you normally work with it?
+
+P9: With Figma in general or within reviews?
+
+I: Within the review. What did you do now? What are you looking at? How do you normally link Figma to the issues?
+
+P9: So we are using this linear. So it's usually in the ticket here in linear, right? So there is ticket. Just a little bit wider context - we did 2 weeks of work on this new landing page. So it's completely new, you know, new video, new animation, new content and stuff like that. We actually work only 2 weeks, even though it's just like a stupid thing like just some front end redesign. Because, first of all, first week, we were waiting for the video and stuff like that. But the second week everybody from the company had some opinion about some button here, but in there. This is too many illustrations. This is not enough. This is too many, you know, like this is a lot of blue - like 3 buttons. Where should you click? So we changed the button colors and stuff like this. So I already had enough context. And also the developer had enough context for all of these. So the ticket literally just said [the ticket author] is the designer - the comment literally said: check this out, make sure it's like one on one with these [points to the Figma design], and please talk to the designer. So we have a check box here [PR description checklist] saying: I have assigned the designer for review. This [name] guy is a designer. So he will also look into this visually.
+But the original developer just had this link [Figma design] and went through it like one to one. Before, If this was not just like small fixes but the whole new design then we talk about before implementation how to approach it, whether to just do one pull request, or multiple, what are the things that we will reuse in the code,… For example, this part here [points at the components in the interface] is also used on other pages, not just the homepage and stuff like that. And and yeah, that's it. Like, there is also this coding version in Figma that you can use to like extract some Css and stuff. But majority of these components, we already have them inside our component library, the app. And this is what these 2 items here that are automatically launched [points at the CI/CD checks], they are checking those components against our ground truth. So anything that is changed. We also see it here. And basically this story book, this is the basic components that we are using like the buttons and stuff. Of course, on landing page. Sometimes we change the button. So it’s not one to one. But yeah, basically, that's it.
+
+I: It looked like you have a very good recollection of what is the list of stuff that was supposed to be changed. Do you remember it from the meetings, or from the the PR description
+
+P9: So we already talked about it every day when we ship this new homepage, even though the original design was before implementation discussed with other designers, stakeholders, and other people. When we implemented it, more people from the company actually paid attention to it, because it's in front of them every day when they do something else. And even though this was previously discussed and agreed on the design then people came and be like: “Oh, yeah, we should do that” So we had like 15 or 20 ideas. What's to change? What should be better? What should be improved on. So I'm the manager. So I was going through all those individual feedback items, you know, and sorting - let's do this. Or, yeah, let's reply here or this is the reason why we went this way so I knew exactly what we wanna do. But if I wasn't then I would just check the design like next to each other. But we also have a designer. Right? So I'm more interested in the code and like the important things from design. And then the designer will go like: Oh, this one is little one pixel bigger radius or something like that. So that's for the designer.
+
+I: Last one. How do you know that you have finished? Do you have some lists of things that you wanted to check, or what is your criteria of being done with a review? This one.
+
+P9:  So even if we forgot one small thing, or even if something was not super perfect like this minification. Right? It's not super perfect. Again, it's just just the landing page, and it is more important to move on here than just dwell on it for days, and go back and forth all the time. So in this case it looks good. It's the main stuff - a lot of blue, some of the non working things from the responsive layout. And you know new illustration here and here. And this logo. So if this is done, then I'm good.
+
+I:  And in the in the PR page itself I guess you want to check everything. But do you have something to focus on?
+
+P9: So if it’s just front-end again, I'm looking for obvious violations of some of our standards that we use on front end. Or if there is some something weird, right? This is very small. So there was not nothing weird. But there could be something weird. Probably in this other [P9R3] there will be something weird. So if it's something weird, I need to investigate or check or stuff like that. But this one I'm pretty sure it's, okay. If we didn't have that moving of the Menu, then I would already merge it.

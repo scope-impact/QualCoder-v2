@@ -3,6 +3,7 @@
 from .auto_coding_tools import AUTO_CODING_TOOLS
 from .base import ToolDefinition, ToolParameter
 from .batch_tools import BATCH_TOOLS
+from .category_tools import CATEGORY_TOOLS
 from .coding_suggestion_tools import CODING_SUGGESTION_TOOLS
 from .core_tools import CORE_TOOLS
 from .duplicate_tools import DUPLICATE_TOOLS
@@ -23,6 +24,7 @@ ALL_TOOLS: dict[str, ToolDefinition] = _build_tool_dict(
     CODING_SUGGESTION_TOOLS,
     AUTO_CODING_TOOLS,
     BATCH_TOOLS,
+    CATEGORY_TOOLS,
 )
 
 __all__ = [

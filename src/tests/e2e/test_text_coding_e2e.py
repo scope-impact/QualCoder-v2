@@ -213,11 +213,11 @@ class TestCreateCodeDialog:
 
 
 # =============================================================================
-# QC-028.03: Code Selection (Black-Box)
+# QC-029.01: Select Text and Apply Code - Code Selection (Black-Box)
 # =============================================================================
 
 
-@allure.story("QC-028.03 Code Selection")
+@allure.story("QC-029.01 Select Text and Apply Code")
 class TestCodeSelectionUI:
     """Test selecting codes from the codes panel using black-box patterns."""
 
@@ -253,7 +253,7 @@ class TestCodeSelectionUI:
 # =============================================================================
 
 
-@allure.story("QC-029.01 Apply Code to Text")
+@allure.story("QC-029.01 Select Text and Apply Code")
 class TestApplyCodeUI:
     """Test selecting text and applying code using Q key (black-box)."""
 
@@ -309,7 +309,7 @@ class TestApplyCodeUI:
 # =============================================================================
 
 
-@allure.story("QC-029.05 Unmark")
+@allure.story("QC-029.05 Remove Coding")
 class TestUnmarkUI:
     """Test removing codes from text using black-box patterns."""
 
@@ -344,11 +344,11 @@ class TestUnmarkUI:
 
 
 # =============================================================================
-# QC-029.01: Recent Codes and Keyboard Shortcuts (Black-Box)
+# QC-029: Recent Codes and Keyboard Shortcuts (Black-Box)
 # =============================================================================
 
 
-@allure.story("QC-029.01 Recent Codes")
+@allure.story("QC-029 Apply Codes to Text")
 class TestRecentCodesAndShortcutsUI:
     """Test recent codes and keyboard shortcuts using black-box patterns."""
 
@@ -386,7 +386,7 @@ class TestRecentCodesAndShortcutsUI:
 # =============================================================================
 
 
-@allure.story("QC-028/QC-029 Integration")
+@allure.story("QC-029 Apply Codes to Text")
 class TestCodingWorkflowUI:
     """Integration test for complete coding workflow using black-box patterns."""
 
@@ -468,7 +468,7 @@ class TestCodingWorkflowUI:
 # =============================================================================
 
 
-@allure.story("QC-029 Full Application Path")
+@allure.story("QC-029 Apply Codes to Text")
 class TestApplyCodeFullPath:
     """
     E2E tests using full application path via main.py wiring.
@@ -601,7 +601,7 @@ class TestApplyCodeFullPath:
         assert active["name"] == first_code.name
 
 
-@allure.story("QC-029 Wiring Verification")
+@allure.story("QC-029 Apply Codes to Text")
 class TestWiringVerification:
     """
     Tests that verify the wiring from main.py is correct.
@@ -642,7 +642,7 @@ class TestWiringVerification:
 # =============================================================================
 
 
-@allure.story("QC-028.01 Create New Code Full Path")
+@allure.story("QC-028.01 Create New Code")
 class TestCreateCodeFullPath:
     """
     E2E tests for creating new codes through the full application path.

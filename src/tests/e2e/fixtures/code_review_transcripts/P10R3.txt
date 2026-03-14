@@ -1,0 +1,93 @@
+Some of thesREVIEW TYPE AND GOAL
+- First review of a package update
+ 
+CONTEXT
+- The reviewer also heard about this PR already and had discussed it with the author so they expected this review to come. They have a warning generated on their backend which are caused by a deprecated package.
+
+TRANSCRIPT
+- Reads the PR title and description. The warnings are interestingly not coming from the code they use but from the package itself. The fix was introduced in a linked commit from the package [opens it in a new tab]. The author considers it safe after some research to update several versions of the package.
+- Goes to the Commits tab. The commit in the PR has the same description as the PR.
+- Goes to the Files tab - the change is really just the dependency update to the newer version.
+- Goes to the tab with the fix commit which is a fix for the deprecation.
+- One removed line is visible. The reviewer highlights it few times, saying it is interesting. Then realises that there is a file before this one where the diff needs to be loaded as it modifies several hundreds lines of code.
+- The reviewer was a bit suspicious as the removal in the second file was just a removed assert in a test file but it was not showing the other file as ti is a really large change but it seems that it is changing the same thing everywhere [scrolling up from the modified test]
+- Goes back to the original PR’ss Conversation
+- The reviewer is not sure why another reviewer has approved the change as they were not requested as a reviewer.
+- The reviewer doesn’t like this because there is then too many reviewers and a mess, the extra reviewer also gets notifications if there are further changes plus their review becomes stale and it shows in the list of reviewers.
+- It doesn’t make much sense that a reviewer comes to give a LGTM review to a PR where they are not involved at all. The reviewer doesn’t know why the other one gave a review.
+- In each repository, they have a specified group of devs as code owners that get notified or is involved in the PRs of the repository in general. There his also a handle to automatically assign a review to the whole group of code owners. Normally each of the reviewers in that list normally requests a review from someone else which clearly did not happen here. However, it’s OK as it is a new process from the last week and they are still changing it.
+- The reviewer has one comment and they are not going to request changes or approve, but request more information.
+- The author in the PR description said that the fix was done in a version of the package, but they were using an older version and the author also says it is OK to update to the newest one. The reviewer is happy the author is confident, but would also like to understand why. The reviewer could also approve straight away but would still like some info.
+- Writes the Review message where they quote the authors explanation and says “Great” and ask whether they can also feel confident about it and what did change in between the versions.
+- Submits the review as Comment.
+
+GENERAL STRATEGY
+- Reads PR title and description, looks at the commits, the changed line of code, the related fix bottom up.
+
+INTERVIEW
+I: So one thing that I notice is that it's a bit joking. That the comment that you did like “Can I also feel confident about it”. Do do you have this more informal way to give feedback in the team?
+
+P10: I mean you can see this here as well [showing other comments in the PR]. So actually [thhe extra reviewer] was the last one to change this file and you can see here a lot of duplicated code, like duplicated entries on the dependency definition, right? So the author also made a  joke here. He commented on his own change saying instead of installing this version five times, we install it just once. And then the extra reviewer was like, “yeah, can we import it a bit more times? I feel like it could be beneficial”. So it's already a bit like circus. And then the author commented that, yeah, it's a bit weird.
+
+I: So it's like a relaxed atmosphere in this sense, at least for this review.
+
+P10: Yeah. Like, if I wouldn’t know the author and I would look here, I would feel like this is passive aggressive because it feels like he's a bit joking with the process. “Yeah, it's a bit ridiculous that we have to ask the leads for this”. But as I know him, I don't think that this is the case but it sounds a bit like. But it's relaxed in general, I think.
+
+I: So knowing the person basically helps you understand what tone they have.
+
+P10: If it would be the extra reviewer making this comment, I will send him a message on teams and ask him if everything's OK.
+
+I: So one thing you mentioned is that some PRs you've already heard about like this one and that you already spoke with the author about it. How much of context do you have before the review? And what role does it play?
+
+P10: It plays a huge role. It plays maybe even more of a role than commit descriptions and PR descriptions. So ideally in the way we operate, when you start to work on a feature, you discuss that with the team lead or the architect or the people that are actually going to review your code. This is kind of the consensus in our team. If you want to have a smoother code review, don't ask for feedback only in the code
+review. Have a pre alignment before you actually start working on the code. Otherwise it's like a big slap in the face. Like “here's some code, you have been served, now look at it”. And especially if the change is big, I'm going to be like “Hey, man. You should have at least talked
+to me before you actually even ventured so deeply”. This also feels like a huge waste of time or a huge risk, right? Like you don't discuss with anyone, you just follow your own ideas without talking with the team, and then you just send it for a discussion. That's not great. So I don't expect to have updates every day on everything what's happening, but I expect to have like at least one or two exchange points before the PR is up, depending on the complexity of the PR. Maybe even with screen sharing. Just to show yeah, this is more
+or less the solution I'm looking for. Or at least just explaining - I probably use this package because I saw it solves the problem well. And I know that in other places of the code we do it like this, but here like that.
+
+I: What is the benefit of when you have this pre-alignment?
+
+P10: I think there are two big fields. There are two big opinions maybe? There are people that think you should never look at the code before you do a pull request because it will contaminate your perspective. I think that's very inefficient unless the scope of the change is so clear and the change is not super complex. I think this just makes the code review very difficult. I agree that it might make the code better. So I agree that it might make the code reviewer think a bit more out-of-the-box and challenge for a bit better solutions. But we are also not trying to build a work of art. We are trying to build software that works for the people that use it. So there is a middle ground between just doing it fast and doing it pure. And for me the advantage is that like then we can focus on what really matters. Like sure we still want to care about code maintainability and when I do the code reviews I still think about that, but we still want to focus on all  the other normal things. But we already pre agreed on solutions so I don't need to challenge so much. It's more like does this match my expectation of what would happen or not. So it's much smoother.
+
+I: So basically, when you do a review, the ideal scenario is that you already know what is happening,…
+
+P10: Yes.
+
+I: you know how to evaluate it, where to start,…
+
+P10: Yes.
+
+I: And then you basically do the review just by looking whether the code fits your expectations about it.
+
+P10: The last part is very - you a bit underestimated it, but yes, to some extent.
+
+I: So what is the other extent?
+
+P10: It depends on what you mean “It fits my expectations” because fits my expectations meets not just like this is the solution I
+was looking for, but it also is meets my expectations in terms of code quality, code maintainability etcetera. So it sounded a bit like reductionist the way you said it, but if you include also all the rest in it, then yes, yeah, OK. But it's not just like I expected a for loop here and it is what is there.
+
+I: The expectation set for example, by the acceptance criteria, you know, not like your personal imagination about the implementation, even though maybe it could be as well. Another thing, so in the PR now there were some comments, but you did not really stop there or had a look at it or…
+
+P10: I read them. But it was this joke comments, so I ignored it.
+
+I: So there was not really like a content.
+P10: No, there wasn’t.
+I: The last thing I will ask is about going into the package code. From what I understand the author referenced there a PR that happened on the package directly. Was it for you to just have a look at it? Or what did you do with the other PR?
+P10: I didn't do much with the other PR other than confirm that this is actually described as fixing this issue and the reason why that was included was just for documentation purposes. So it was basically the author showing that it's fixed in this version.
+I: Is this supposed to be in the PR or is it supposed to be in the package documentation?
+P10: Yeah, it could have been, the author could have sent a link to the package documentation, to the release notes, but that particular package doesn't have very good release notes.
+I: Do you have some general approach to doing code reviews?
+P10: Yes, I think so. So to start at the beginning, I don't think the code review process starts when the PR is open. I think, at least in my team, the code review process in my opinion should start before the code is even written. So for me it's extremely extremely efficient to discuss the proposed solutions or have proposed solutions and have a pre alignment and that's already part of my approach as the team lead. Another part of the approach is to have a few exchanges before the code is there. Then there is the case when this was followed or the case when this was not followed. But in any case, when I see a PR for the first time, either I immediately recognize it and I'm like, oh, I actually, I already know about it. And sometimes I'm even a bit like happy and I immediately go here [opens the File tab on one of their PRs] and just have a look what's happening, which I sometimes do. Yeah, I just see this is gonna be complicated, or is this gonna be simple, right? And then basically I always start hitting the conversation, I always look at the commit description. I always look if there is a linked issue. If there is a linked issue, I sometimes open it, I sometimes don’t. It depends on whether I recognize it straight away and very rarely I actually look at the comments from the issue itself. And then it also depends if I look at the comments that I have here. Like this one has no comments [Showing conversation on the PR]. Sometimes they have comments. If there's just like one or two comments, I will definitely have a look at them. If it's a PR that looks a bit more like a beast like this one, I mean, I'm definitely not going to go through all of these before I do the review. I will just look at the first comment and maybe at the last comment or the last two comments and see if there's any call for actions on something that I should do. Yeah, so that's on the description. Then it depends. Sometimes I go straight to files change just to have the quick overview, or sometimes I start instead by the commits and then I go commit by commit. But even if I start by looking at the overview [Files tab], I always end up then clicking here anyway and going commit by commit.
+I: So you have a look whether it makes sense to go commit by commit.
+P10: Yeah, because very often it doesn't. With some specific people, it doesn't.
+I: Why?
+P10: Because they don't organize their commits in a meaningful way. If I have a quick example… [looking for another PR], like 33 commits, why would I go here commit by commit? This makes no sense because whatever this commit introduces, then I'm going to be like, “oh actually this is not right”, but then that's very likely something that was already captured and fixed in another commit later on. So at the end of this pull request we definitely squash this. Like you see: “remove unnecessary product”. But the product ID is only unnecessary because the author added it in this PR. So actually this commit is just noise and I hate that I have to look at it. I don't want to have to load in my memory that the author added a product ID only so that in the last commit the author removes it. So here I would much rather just look at the whole change because commit by commit tells me nothing. It's just chaos.
+I: So what do you do then? You just go mostly from top to bottom or?
+P10: How would I review this one? Yeah, I would firstly just scroll. I would look at what files have changed and I would try to find the starting point. What could be a starting point? Oh, I guess I was trying to find which API calls there are and then figure out if they connect with the back end. Yeah, for this one, like, I don't know. I have to find it. It could even be like if it's really complicated, it could even be just to get started something like this - I have here this enum, let me see when it's used. Why do we need this? Very often, then this will start to make sense to me what is actually the flow? So I would try to find what is the execution flow. What are the things that needed to be defined and when I they reused et cetera. But this is a very bad PR to review. Like right now I'm looking at this PR, I'm confused. I don't know what this is doing. It's doing checkout but it's very generic. It's like Stripe check out API calls. Oh, I guess I was trying to find which API calls there are and then figure out if they connect with the back end. Complex PRs I don't really have a good structure because it's impossible. There's no solution that would fit for every PR. Iit depends. It's case by case. Actually, here I probably could just call the author and try to do a peer review.
+I: We mentioned that you could for example use the title or the description to identify what is the main thing to check or the main purpose of the change. And then maybe try to find that.
+P10: Yes, it's a very bad PR. I open it precisely because it has 33 commits. And this has to be code review smell, especially I didn't review anything in here yet.
+I: When is the review done for you?
+P10: So then it takes a few iterations… Wait, you mean the code review process in general or my review in general?
+I: Like when you are doing a review and you are in the code, when do you stop? When it's enough?
+P10: Either when I feel like I have a good enough understanding that I can actually give a constructive review already. Either when I'm confident enough, yeah, OK, I can approve, I’ve checked everything that I can think of. Or when I'm like, yeah, I know for sure this is wrong, this needs to change, yeah, or when I'm like there is a few bits and pieces that need to change but it's even not worth continuing the review. Just address these changes first and then we'll talk again.
+I: So when you have few of these changes, it's like, OK, so now I know that I cannot accept it right away.
+P10: Yeah, so sometimes I even stop immediately. I'm not gonna accept it. I already know there are changes. Maybe I could, maybe it will be even more efficient to say all the changes at once, but not for me. So for me, it's also better to just get rid of it and go to do something else and let the people improve on what they have because not everyone has a very good kit hygiene. So you are going to request a change and then different things are going to be changed as well. So you are like, why do I bother?
