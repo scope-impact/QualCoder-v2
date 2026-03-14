@@ -55,9 +55,6 @@ class MockS3Scanner:
         content = self._file_contents.get(key, f"content of {key}")
         Path(local_path).write_text(content)
 
-    def sync_file(self, bucket, key, local_path):
-        self.download_file(bucket, key, local_path)
-        return True
 
 
 class MockImporter:

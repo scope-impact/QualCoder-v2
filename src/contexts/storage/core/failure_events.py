@@ -185,12 +185,3 @@ class ExportNotPushed(FailureEvent):
                 return f"Failed to upload to '{self.destination_key}' in S3"
             case _:
                 return super().message
-
-
-# ============================================================
-# Type Unions
-# ============================================================
-
-StorageFailureEvent = (
-    StoreNotConfigured | StoreNotScanned | FileNotPulled | ExportNotPushed
-)

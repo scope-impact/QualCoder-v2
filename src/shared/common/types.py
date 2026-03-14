@@ -77,17 +77,6 @@ class FolderId:
         return cls(value=new_uuid7())
 
 
-@dataclass(frozen=True)
-class StoreId:
-    """Typed identifier for DataStore entities."""
-
-    value: str
-
-    @classmethod
-    def new(cls) -> StoreId:
-        return cls(value=new_uuid7())
-
-
 # ============================================================
 # Result Type (Success | Failure)
 # ============================================================

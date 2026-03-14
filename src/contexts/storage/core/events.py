@@ -10,8 +10,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import ClassVar
 
-from src.contexts.storage.core.entities import RemoteFile
-from src.shared.common.types import DomainEvent, StoreId
+from src.contexts.storage.core.entities import RemoteFile, StoreId
+from src.shared.common.types import DomainEvent
 
 # ============================================================
 # Store Events
@@ -133,10 +133,3 @@ class ExportPushed(DomainEvent):
             local_path=local_path,
             destination_key=destination_key,
         )
-
-
-# ============================================================
-# Type Aliases (Published Language)
-# ============================================================
-
-StorageEvent = StoreConfigured | StoreScanned | FilePulled | ExportPushed

@@ -12,7 +12,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from src.contexts.storage.core.entities import DataStore, RemoteFile
+from src.contexts.storage.core.entities import DataStore, RemoteFile, StoreId
 from src.contexts.storage.core.events import (
     ExportPushed,
     FilePulled,
@@ -26,7 +26,6 @@ from src.contexts.storage.core.failure_events import (
     StoreNotScanned,
 )
 from src.contexts.storage.core.invariants import is_valid_s3_key, is_valid_store_config
-from src.shared.common.types import StoreId
 
 # ============================================================
 # State Container (Input to Derivers)
