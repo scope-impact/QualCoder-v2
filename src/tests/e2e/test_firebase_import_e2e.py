@@ -17,22 +17,6 @@ pytestmark = [
 ]
 
 
-def _make_tools(code_repo, category_repo, segment_repo, source_repo, case_repo, event_bus):
-    """Create ExchangeTools wired through ExchangeCoordinator."""
-    from src.contexts.exchange.interface.mcp_tools import ExchangeTools
-    from src.contexts.exchange.presentation.coordinator import ExchangeCoordinator
-
-    coordinator = ExchangeCoordinator(
-        code_repo=code_repo,
-        category_repo=category_repo,
-        segment_repo=segment_repo,
-        source_repo=source_repo,
-        case_repo=case_repo,
-        event_bus=event_bus,
-    )
-    return ExchangeTools(coordinator=coordinator)
-
-
 @allure.story("QC-051.02 Import Pre-Aggregated CSV with Type Inference")
 class TestCSVTypeInference:
     """AC #2 and #3: Import CSV with auto-detected attribute types."""
@@ -202,7 +186,7 @@ class TestCaseMerge:
 
         user1 = case_repo.get_by_name("user_001")
         sessions_attr = user1.get_attribute("sessions")
-        assert sessions_attr.value == "12" or sessions_attr.value == 12
+        assert sessions_attr.value == 12
 
 
 @allure.story("QC-051.04 Configurable ID Column")
@@ -248,17 +232,11 @@ class TestMCPFirebaseImport:
     @allure.title("AC #7: import_data with format=firebase_csv works via MCP")
     def test_mcp_import_firebase_csv(
         self,
-        code_repo,
-        category_repo,
-        segment_repo,
-        source_repo,
+        exchange_tools,
         case_repo,
-        event_bus,
         tmp_path,
     ):
-        tools = _make_tools(
-            code_repo, category_repo, segment_repo, source_repo, case_repo, event_bus
-        )
+        tools = exchange_tools
 
         csv_path = tmp_path / "firebase_profiles.csv"
         csv_path.write_text(
@@ -284,16 +262,9 @@ class TestMCPFirebaseImport:
     @allure.title("AC #7: import_data tool lists firebase_csv as supported format")
     def test_mcp_tool_schema_includes_firebase(
         self,
-        code_repo,
-        category_repo,
-        segment_repo,
-        source_repo,
-        case_repo,
-        event_bus,
+        exchange_tools,
     ):
-        tools = _make_tools(
-            code_repo, category_repo, segment_repo, source_repo, case_repo, event_bus
-        )
+        tools = exchange_tools
 
         schemas = tools.get_tool_schemas()
         import_tool = next(s for s in schemas if s["name"] == "import_data")

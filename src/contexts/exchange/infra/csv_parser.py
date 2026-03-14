@@ -85,7 +85,7 @@ def infer_attribute_type(values: list[str]) -> AttributeType:
     Empty strings are skipped. If all non-empty values match a type,
     that type is returned. Otherwise defaults to TEXT.
     """
-    non_empty = [v for v in values if v.strip()]
+    non_empty = [v for v in values if v]
     if not non_empty:
         return AttributeType.TEXT
 

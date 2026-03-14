@@ -582,6 +582,23 @@ def coding_screen_ready(seeded_app):
 
 
 @pytest.fixture
+def exchange_tools(code_repo, category_repo, segment_repo, source_repo, case_repo, event_bus):
+    """Create ExchangeTools wired through ExchangeCoordinator."""
+    from src.contexts.exchange.interface.mcp_tools import ExchangeTools
+    from src.contexts.exchange.presentation.coordinator import ExchangeCoordinator
+
+    coordinator = ExchangeCoordinator(
+        code_repo=code_repo,
+        category_repo=category_repo,
+        segment_repo=segment_repo,
+        source_repo=source_repo,
+        case_repo=case_repo,
+        event_bus=event_bus,
+    )
+    return ExchangeTools(coordinator=coordinator)
+
+
+@pytest.fixture
 def make_qdpx():
     """Factory fixture for creating QDPX test archives."""
     import zipfile

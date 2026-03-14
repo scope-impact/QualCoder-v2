@@ -253,5 +253,5 @@ class ExchangeTools:
         return OperationResult.fail(
             error=f"Unknown import format: {fmt}",
             error_code="UNKNOWN_FORMAT",
-            suggestions=("Use one of: code_list, csv, refi_qda, rqda",),
+            suggestions=("Use one of: code_list, csv, firebase_csv, refi_qda, rqda",),
         ).to_dict()

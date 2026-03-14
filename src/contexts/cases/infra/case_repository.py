@@ -7,7 +7,7 @@ Implements the repository for Case entities using the cas_* tables.
 from __future__ import annotations
 
 import logging
-from datetime import UTC, datetime
+from datetime import UTC, date, datetime
 from typing import TYPE_CHECKING
 
 from sqlalchemy import delete, func, select, update
@@ -357,11 +357,13 @@ class SQLiteCaseRepository:
             case AttributeType.TEXT:
                 value_text = str(attr.value) if attr.value else None
             case AttributeType.NUMBER:
-                value_number = int(attr.value) if attr.value else None
+                if attr.value:
+                    num = float(attr.value)
+                    value_number = int(num) if num == int(num) else num
+                else:
+                    value_number = None
             case AttributeType.DATE:
                 if isinstance(attr.value, str):
-                    from datetime import date
-
                     try:
                         value_date = date.fromisoformat(attr.value)
                     except ValueError:

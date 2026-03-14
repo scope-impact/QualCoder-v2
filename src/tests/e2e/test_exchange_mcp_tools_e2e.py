@@ -19,10 +19,10 @@ pytestmark = [
 ]
 
 
-def _make_tools(
+def _make_tools_with_overrides(
     code_repo, category_repo, segment_repo, source_repo, case_repo, event_bus
 ):
-    """Create ExchangeTools wired through ExchangeCoordinator."""
+    """Create ExchangeTools with custom repo overrides (e.g., case_repo=None)."""
     from src.contexts.exchange.interface.mcp_tools import ExchangeTools
     from src.contexts.exchange.presentation.coordinator import ExchangeCoordinator
 
@@ -67,7 +67,7 @@ class TestExchangeTools:
         code = Code(id=CodeId.new(), name="Joy", color=Color.from_hex("#00FF00"))
         code_repo.save(code)
 
-        tools = _make_tools(
+        tools = _make_tools_with_overrides(
             code_repo, category_repo, segment_repo, source_repo, None, event_bus
         )
 
@@ -96,7 +96,7 @@ class TestExchangeTools:
         source_repo,
         event_bus,
     ):
-        tools = _make_tools(
+        tools = _make_tools_with_overrides(
             code_repo, category_repo, segment_repo, source_repo, None, event_bus
         )
 
