@@ -143,13 +143,17 @@ class TestPhase1ImportRealTranscripts:
 
         with allure.step("Verify transcripts contain interview dialogue"):
             # Ana discusses copyleft culture and Open Science Framework
-            assert "Open Science framework" in sources["Ana"]["text"] or \
-                   "open" in sources["Ana"]["text"].lower()
+            assert (
+                "Open Science framework" in sources["Ana"]["text"]
+                or "open" in sources["Ana"]["text"].lower()
+            )
             # David discusses participant protection and data archives
             assert "participant" in sources["David"]["text"].lower()
             # Jessica discusses NVivo and research ethics
-            assert "Nvivo" in sources["Jessica"]["text"] or \
-                   "NVivo" in sources["Jessica"]["text"]
+            assert (
+                "Nvivo" in sources["Jessica"]["text"]
+                or "NVivo" in sources["Jessica"]["text"]
+            )
 
 
 # =============================================================================
@@ -179,16 +183,31 @@ class TestPhase2CodeRealData:
         # --- Create descriptive codes relevant to the study topic ---
         with allure.step("Create descriptive codes for open research themes"):
             code_defs = [
-                ("Data sharing willingness", "#4CAF50",
-                 "Researcher attitudes toward sharing qualitative data"),
-                ("Participant protection", "#F44336",
-                 "Concerns about anonymity, consent, and participant welfare"),
-                ("Research software tools", "#2196F3",
-                 "Use of QDA software: NVivo, Atlas.ti, manual analysis"),
-                ("Ethical tensions", "#FF9800",
-                 "Tension between openness and ethical obligations"),
-                ("Institutional barriers", "#9C27B0",
-                 "University policies, GDPR, repository access constraints"),
+                (
+                    "Data sharing willingness",
+                    "#4CAF50",
+                    "Researcher attitudes toward sharing qualitative data",
+                ),
+                (
+                    "Participant protection",
+                    "#F44336",
+                    "Concerns about anonymity, consent, and participant welfare",
+                ),
+                (
+                    "Research software tools",
+                    "#2196F3",
+                    "Use of QDA software: NVivo, Atlas.ti, manual analysis",
+                ),
+                (
+                    "Ethical tensions",
+                    "#FF9800",
+                    "Tension between openness and ethical obligations",
+                ),
+                (
+                    "Institutional barriers",
+                    "#9C27B0",
+                    "University policies, GDPR, repository access constraints",
+                ),
             ]
 
             codes = {}
@@ -206,41 +225,61 @@ class TestPhase2CodeRealData:
 
             # Ana on difficulty of making qualitative data open
             s, e = _find_segment(
-                ana["text"],
-                "what makes it also difficult to make it open"
+                ana["text"], "what makes it also difficult to make it open"
             )
-            mcp_server.execute("batch_apply_codes", {"operations": [{
-                "code_id": codes["Data sharing willingness"],
-                "source_id": ana["id"],
-                "start_position": s, "end_position": e,
-            }]})
+            mcp_server.execute(
+                "batch_apply_codes",
+                {
+                    "operations": [
+                        {
+                            "code_id": codes["Data sharing willingness"],
+                            "source_id": ana["id"],
+                            "start_position": s,
+                            "end_position": e,
+                        }
+                    ]
+                },
+            )
 
         with allure.step("Apply codes to David's transcript"):
             david = sources["David"]
 
             # David on sharing analysis vs protecting participants
-            s, e = _find_segment(
-                david["text"],
-                "share my analysis"
+            s, e = _find_segment(david["text"], "share my analysis")
+            mcp_server.execute(
+                "batch_apply_codes",
+                {
+                    "operations": [
+                        {
+                            "code_id": codes["Participant protection"],
+                            "source_id": david["id"],
+                            "start_position": s,
+                            "end_position": e,
+                        }
+                    ]
+                },
             )
-            mcp_server.execute("batch_apply_codes", {"operations": [{
-                "code_id": codes["Participant protection"],
-                "source_id": david["id"],
-                "start_position": s, "end_position": e,
-            }]})
 
             # David on not using QDA software
             s, e = _find_segment(
                 david["text"],
                 "I don't tend to use things like Atlas Ti"
                 if "Atlas Ti" in david["text"]
-                else "pen and paper"
+                else "pen and paper",
             )
-            mcp_server.execute("batch_apply_codes", {"operations": [{
-                "code_id": codes["Research software tools"],
-                "source_id": david["id"],
-                "start_position": s, "end_position": e,
-            }]})
+            mcp_server.execute(
+                "batch_apply_codes",
+                {
+                    "operations": [
+                        {
+                            "code_id": codes["Research software tools"],
+                            "source_id": david["id"],
+                            "start_position": s,
+                            "end_position": e,
+                        }
+                    ]
+                },
+            )
 
         with allure.step("Apply codes to Jessica's transcript"):
             jessica = sources["Jessica"]
@@ -248,32 +287,46 @@ class TestPhase2CodeRealData:
             # Jessica on using NVivo
             s, e = _find_segment(
                 jessica["text"],
-                "I used Nvivo"
-                if "I used Nvivo" in jessica["text"]
-                else "Nvivo"
+                "I used Nvivo" if "I used Nvivo" in jessica["text"] else "Nvivo",
             )
-            mcp_server.execute("batch_apply_codes", {"operations": [{
-                "code_id": codes["Research software tools"],
-                "source_id": jessica["id"],
-                "start_position": s, "end_position": e,
-            }]})
+            mcp_server.execute(
+                "batch_apply_codes",
+                {
+                    "operations": [
+                        {
+                            "code_id": codes["Research software tools"],
+                            "source_id": jessica["id"],
+                            "start_position": s,
+                            "end_position": e,
+                        }
+                    ]
+                },
+            )
 
             # Jessica on ethics concerns
             s, e = _find_segment(
                 jessica["text"],
                 "should have thought more about the ethics"
                 if "should have thought more about the ethics" in jessica["text"]
-                else "ethics"
+                else "ethics",
             )
-            mcp_server.execute("batch_apply_codes", {"operations": [{
-                "code_id": codes["Ethical tensions"],
-                "source_id": jessica["id"],
-                "start_position": s, "end_position": e,
-            }]})
+            mcp_server.execute(
+                "batch_apply_codes",
+                {
+                    "operations": [
+                        {
+                            "code_id": codes["Ethical tensions"],
+                            "source_id": jessica["id"],
+                            "start_position": s,
+                            "end_position": e,
+                        }
+                    ]
+                },
+            )
 
         with allure.step("Verify segments created across transcripts"):
             total = 0
-            for name, info in sources.items():
+            for _name, info in sources.items():
                 seg = mcp_server.execute(
                     "list_segments_for_source",
                     {"source_id": info["id"]},
@@ -309,11 +362,19 @@ class TestPhase2CodeRealData:
 
             # Apply to the actual passage
             s, e = _find_segment(ana_text, "my analysis are much more craft")
-            result = mcp_server.execute("batch_apply_codes", {"operations": [{
-                "code_id": craft_id,
-                "source_id": sources["Ana"]["id"],
-                "start_position": s, "end_position": e,
-            }]})
+            result = mcp_server.execute(
+                "batch_apply_codes",
+                {
+                    "operations": [
+                        {
+                            "code_id": craft_id,
+                            "source_id": sources["Ana"]["id"],
+                            "start_position": s,
+                            "end_position": e,
+                        }
+                    ]
+                },
+            )
             assert result["success"]
 
         with allure.step("Create in vivo code from David's speech"):
@@ -330,11 +391,19 @@ class TestPhase2CodeRealData:
             assert iv2["success"]
 
             s, e = _find_segment(david_text, "do come first")
-            result = mcp_server.execute("batch_apply_codes", {"operations": [{
-                "code_id": iv2["data"]["code_id"],
-                "source_id": sources["David"]["id"],
-                "start_position": s, "end_position": e,
-            }]})
+            result = mcp_server.execute(
+                "batch_apply_codes",
+                {
+                    "operations": [
+                        {
+                            "code_id": iv2["data"]["code_id"],
+                            "source_id": sources["David"]["id"],
+                            "start_position": s,
+                            "end_position": e,
+                        }
+                    ]
+                },
+            )
             assert result["success"]
 
 
@@ -373,9 +442,7 @@ class TestPhase3to5DevelopThemes:
                 ("Trust in repositories", "#9C27B0"),
                 ("Anonymization challenges", "#795548"),
             ]:
-                r = mcp_server.execute(
-                    "create_code", {"name": name, "color": color}
-                )
+                r = mcp_server.execute("create_code", {"name": name, "color": color})
                 assert r["success"]
                 code_ids[name] = r["data"]["code_id"]
 
@@ -386,45 +453,57 @@ class TestPhase3to5DevelopThemes:
             ops = []
 
             # Ana on openness
-            s, e = _find_segment(ana["text"], "what makes it also difficult to make it open")
-            ops.append({
-                "code_id": code_ids["Data sharing attitudes"],
-                "source_id": ana["id"],
-                "start_position": s, "end_position": e,
-            })
+            s, e = _find_segment(
+                ana["text"], "what makes it also difficult to make it open"
+            )
+            ops.append(
+                {
+                    "code_id": code_ids["Data sharing attitudes"],
+                    "source_id": ana["id"],
+                    "start_position": s,
+                    "end_position": e,
+                }
+            )
 
             # Ana on research philosophy
             s, e = _find_segment(ana["text"], "my analysis are much more craft")
-            ops.append({
-                "code_id": code_ids["Research philosophy"],
-                "source_id": ana["id"],
-                "start_position": s, "end_position": e,
-            })
+            ops.append(
+                {
+                    "code_id": code_ids["Research philosophy"],
+                    "source_id": ana["id"],
+                    "start_position": s,
+                    "end_position": e,
+                }
+            )
 
             # David on trust
             s, e = _find_segment(david["text"], "trust in the repository")
-            ops.append({
-                "code_id": code_ids["Trust in repositories"],
-                "source_id": david["id"],
-                "start_position": s, "end_position": e,
-            })
+            ops.append(
+                {
+                    "code_id": code_ids["Trust in repositories"],
+                    "source_id": david["id"],
+                    "start_position": s,
+                    "end_position": e,
+                }
+            )
 
             # David on consent
             s, e = _find_segment(
                 david["text"],
                 "when I get the consent from them"
                 if "when I get the consent from them" in david["text"]
-                else "consent"
+                else "consent",
             )
-            ops.append({
-                "code_id": code_ids["Participant consent"],
-                "source_id": david["id"],
-                "start_position": s, "end_position": e,
-            })
+            ops.append(
+                {
+                    "code_id": code_ids["Participant consent"],
+                    "source_id": david["id"],
+                    "start_position": s,
+                    "end_position": e,
+                }
+            )
 
-            result = mcp_server.execute(
-                "batch_apply_codes", {"operations": ops}
-            )
+            result = mcp_server.execute("batch_apply_codes", {"operations": ops})
             assert result["success"]
 
         # --- Phase 3: Create thematic categories ---
@@ -477,7 +556,9 @@ class TestPhase3to5DevelopThemes:
                 assert r["success"]
 
         # --- Phase 4: Merge overlapping codes ---
-        with allure.step("Phase 4: Merge 'Open research barriers' into 'Trust in repositories'"):
+        with allure.step(
+            "Phase 4: Merge 'Open research barriers' into 'Trust in repositories'"
+        ):
             merge_result = mcp_server.execute(
                 "merge_codes",
                 {
@@ -545,7 +626,9 @@ class TestPhase3to5DevelopThemes:
                 {"code_id": code_ids["Trust in repositories"]},
             )
             assert detail["success"]
-            assert detail["data"]["name"] == "Institutional trust and open infrastructure"
+            assert (
+                detail["data"]["name"] == "Institutional trust and open infrastructure"
+            )
             assert "DEFINITION:" in detail["data"]["memo"]
             assert "SCOPE:" in detail["data"]["memo"]
 
@@ -588,9 +671,7 @@ class TestPhase6FullWorkflowRealData:
                 ("Software preferences", "#2196F3"),
                 ("Participant voice", "#FF9800"),
             ]:
-                r = mcp_server.execute(
-                    "create_code", {"name": name, "color": color}
-                )
+                r = mcp_server.execute("create_code", {"name": name, "color": color})
                 assert r["success"]
                 code_ids[name] = r["data"]["code_id"]
 
@@ -603,38 +684,45 @@ class TestPhase6FullWorkflowRealData:
                 ana["text"],
                 "I wanted to have it on a platform, and I wanted to have it open from the beginning"
                 if "I wanted to have it on a platform" in ana["text"]
-                else "I wanted to have it open"
+                else "I wanted to have it open",
             )
-            ops.append({
-                "code_id": code_ids["Open data practices"],
-                "source_id": ana["id"],
-                "start_position": s, "end_position": e,
-            })
+            ops.append(
+                {
+                    "code_id": code_ids["Open data practices"],
+                    "source_id": ana["id"],
+                    "start_position": s,
+                    "end_position": e,
+                }
+            )
 
             # David on ethical dilemmas
             s, e = _find_segment(
                 david["text"],
                 "respecting the basis of consent"
                 if "respecting the basis of consent" in david["text"]
-                else "consent"
+                else "consent",
             )
-            ops.append({
-                "code_id": code_ids["Ethical dilemmas"],
-                "source_id": david["id"],
-                "start_position": s, "end_position": e,
-            })
+            ops.append(
+                {
+                    "code_id": code_ids["Ethical dilemmas"],
+                    "source_id": david["id"],
+                    "start_position": s,
+                    "end_position": e,
+                }
+            )
 
             # Jessica on software
             s, e = _find_segment(jessica["text"], "I used Nvivo")
-            ops.append({
-                "code_id": code_ids["Software preferences"],
-                "source_id": jessica["id"],
-                "start_position": s, "end_position": e,
-            })
-
-            result = mcp_server.execute(
-                "batch_apply_codes", {"operations": ops}
+            ops.append(
+                {
+                    "code_id": code_ids["Software preferences"],
+                    "source_id": jessica["id"],
+                    "start_position": s,
+                    "end_position": e,
+                }
             )
+
+            result = mcp_server.execute("batch_apply_codes", {"operations": ops})
             assert result["success"]
             assert result["data"]["succeeded"] == 3
 
@@ -707,7 +795,7 @@ class TestPhase6FullWorkflowRealData:
 
         with allure.step("Phase 6: Verify segment coverage on real data"):
             total_segments = 0
-            for name, info in sources.items():
+            for _name, info in sources.items():
                 seg = mcp_server.execute(
                     "list_segments_for_source",
                     {"source_id": info["id"]},

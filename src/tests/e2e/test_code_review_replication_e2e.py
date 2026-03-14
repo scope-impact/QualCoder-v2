@@ -260,7 +260,9 @@ class TestPhase2ApplyPublishedCodes:
     to the same transcripts they analyzed.
     """
 
-    @allure.title("AC #2.1: Create codes from published codebook and apply to real passages")
+    @allure.title(
+        "AC #2.1: Create codes from published codebook and apply to real passages"
+    )
     def test_apply_published_codes_to_real_data(
         self,
         mcp_server: MCPClient,
@@ -290,11 +292,19 @@ class TestPhase2ApplyPublishedCodes:
                 "Reading a description and saying the change is trying to "
                 "troubleshoot some behaviour they do not understand",
             )
-            mcp_server.execute("batch_apply_codes", {"operations": [{
-                "code_id": codes["Context building"],
-                "source_id": p5r1["id"],
-                "start_position": s, "end_position": e,
-            }]})
+            mcp_server.execute(
+                "batch_apply_codes",
+                {
+                    "operations": [
+                        {
+                            "code_id": codes["Context building"],
+                            "source_id": p5r1["id"],
+                            "start_position": s,
+                            "end_position": e,
+                        }
+                    ]
+                },
+            )
 
         with allure.step("Apply 'Testing' to P5R1 CI passage"):
             # P5R1: Reviewer checks failing CI
@@ -302,11 +312,19 @@ class TestPhase2ApplyPublishedCodes:
                 p5r1["text"],
                 "Goes to the CI summary tab",
             )
-            mcp_server.execute("batch_apply_codes", {"operations": [{
-                "code_id": codes["Testing"],
-                "source_id": p5r1["id"],
-                "start_position": s, "end_position": e,
-            }]})
+            mcp_server.execute(
+                "batch_apply_codes",
+                {
+                    "operations": [
+                        {
+                            "code_id": codes["Testing"],
+                            "source_id": p5r1["id"],
+                            "start_position": s,
+                            "end_position": e,
+                        }
+                    ]
+                },
+            )
 
         with allure.step("Apply 'Knowledge base' to P5R1 lazy loading insight"):
             # P5R1: Reviewer draws on prior knowledge
@@ -314,11 +332,19 @@ class TestPhase2ApplyPublishedCodes:
                 p5r1["text"],
                 "overusing lazy loading",
             )
-            mcp_server.execute("batch_apply_codes", {"operations": [{
-                "code_id": codes["Knowledge base"],
-                "source_id": p5r1["id"],
-                "start_position": s, "end_position": e,
-            }]})
+            mcp_server.execute(
+                "batch_apply_codes",
+                {
+                    "operations": [
+                        {
+                            "code_id": codes["Knowledge base"],
+                            "source_id": p5r1["id"],
+                            "start_position": s,
+                            "end_position": e,
+                        }
+                    ]
+                },
+            )
 
         with allure.step("Apply 'Mental Model' to P5R2 understanding passage"):
             p5r2 = sources["P5R2"]
@@ -327,11 +353,19 @@ class TestPhase2ApplyPublishedCodes:
                 p5r2["text"],
                 "Also wants to understand whether the new state makes sense",
             )
-            mcp_server.execute("batch_apply_codes", {"operations": [{
-                "code_id": codes["Mental Model"],
-                "source_id": p5r2["id"],
-                "start_position": s, "end_position": e,
-            }]})
+            mcp_server.execute(
+                "batch_apply_codes",
+                {
+                    "operations": [
+                        {
+                            "code_id": codes["Mental Model"],
+                            "source_id": p5r2["id"],
+                            "start_position": s,
+                            "end_position": e,
+                        }
+                    ]
+                },
+            )
 
         with allure.step("Apply 'Information Sources' to P5R2 documentation passage"):
             # P5R2: Documentation as information source
@@ -339,11 +373,19 @@ class TestPhase2ApplyPublishedCodes:
                 p5r2["text"],
                 "documentation definitely needs",
             )
-            mcp_server.execute("batch_apply_codes", {"operations": [{
-                "code_id": codes["Information Sources"],
-                "source_id": p5r2["id"],
-                "start_position": s, "end_position": e,
-            }]})
+            mcp_server.execute(
+                "batch_apply_codes",
+                {
+                    "operations": [
+                        {
+                            "code_id": codes["Information Sources"],
+                            "source_id": p5r2["id"],
+                            "start_position": s,
+                            "end_position": e,
+                        }
+                    ]
+                },
+            )
 
         with allure.step("Apply 'Decision' to P9R1 verdict passage"):
             p9r1 = sources["P9R1"]
@@ -352,11 +394,19 @@ class TestPhase2ApplyPublishedCodes:
                 p9r1["text"],
                 "gives up and accepts the changes",
             )
-            mcp_server.execute("batch_apply_codes", {"operations": [{
-                "code_id": codes["Decision"],
-                "source_id": p9r1["id"],
-                "start_position": s, "end_position": e,
-            }]})
+            mcp_server.execute(
+                "batch_apply_codes",
+                {
+                    "operations": [
+                        {
+                            "code_id": codes["Decision"],
+                            "source_id": p9r1["id"],
+                            "start_position": s,
+                            "end_position": e,
+                        }
+                    ]
+                },
+            )
 
         with allure.step("Apply 'Comprehension scope' to P9R1 understanding passage"):
             # P9R1: Reviewer's comprehension limited
@@ -364,11 +414,19 @@ class TestPhase2ApplyPublishedCodes:
                 p9r1["text"],
                 "reviewer does not understand it so checks it out",
             )
-            mcp_server.execute("batch_apply_codes", {"operations": [{
-                "code_id": codes["Comprehension scope"],
-                "source_id": p9r1["id"],
-                "start_position": s, "end_position": e,
-            }]})
+            mcp_server.execute(
+                "batch_apply_codes",
+                {
+                    "operations": [
+                        {
+                            "code_id": codes["Comprehension scope"],
+                            "source_id": p9r1["id"],
+                            "start_position": s,
+                            "end_position": e,
+                        }
+                    ]
+                },
+            )
 
         with allure.step("Apply 'Discussion management' to P9R1"):
             # P9R1: Reviewer manages discussion about the change
@@ -376,16 +434,24 @@ class TestPhase2ApplyPublishedCodes:
                 p9r1["text"],
                 "already has a local version of the branch",
             )
-            mcp_server.execute("batch_apply_codes", {"operations": [{
-                "code_id": codes["Discussion management"],
-                "source_id": p9r1["id"],
-                "start_position": s, "end_position": e,
-            }]})
+            mcp_server.execute(
+                "batch_apply_codes",
+                {
+                    "operations": [
+                        {
+                            "code_id": codes["Discussion management"],
+                            "source_id": p9r1["id"],
+                            "start_position": s,
+                            "end_position": e,
+                        }
+                    ]
+                },
+            )
 
         # --- Verify all codes applied across transcripts ---
         with allure.step("Verify 8 segments created across 3 transcripts"):
             total = 0
-            for name, info in sources.items():
+            for _name, info in sources.items():
                 seg = mcp_server.execute(
                     "list_segments_for_source",
                     {"source_id": info["id"]},
@@ -446,20 +512,24 @@ class TestPhase3to5ThemeHierarchy:
                 "Reading a description and saying the change is trying to "
                 "troubleshoot some behaviour they do not understand",
             )
-            ops.append({
-                "code_id": codes["Context building"],
-                "source_id": p5r1["id"],
-                "start_position": s, "end_position": e,
-            })
-            s, e = _find_segment(p9r1["text"], "gives up and accepts the changes")
-            ops.append({
-                "code_id": codes["Decision"],
-                "source_id": p9r1["id"],
-                "start_position": s, "end_position": e,
-            })
-            result = mcp_server.execute(
-                "batch_apply_codes", {"operations": ops}
+            ops.append(
+                {
+                    "code_id": codes["Context building"],
+                    "source_id": p5r1["id"],
+                    "start_position": s,
+                    "end_position": e,
+                }
             )
+            s, e = _find_segment(p9r1["text"], "gives up and accepts the changes")
+            ops.append(
+                {
+                    "code_id": codes["Decision"],
+                    "source_id": p9r1["id"],
+                    "start_position": s,
+                    "end_position": e,
+                }
+            )
+            result = mcp_server.execute("batch_apply_codes", {"operations": ops})
             assert result["success"]
 
         # --- Phase 3: Create thematic categories from published structure ---
@@ -496,7 +566,9 @@ class TestPhase3to5ThemeHierarchy:
                 assert r["success"]
 
         # --- Phase 4: Merge related codes ---
-        with allure.step("Phase 4: Merge 'Discussion management' into 'Context building'"):
+        with allure.step(
+            "Phase 4: Merge 'Discussion management' into 'Context building'"
+        ):
             # In the published codebook, discussion management is closely related
             # to context building (both involve managing information flow)
             merge_result = mcp_server.execute(
@@ -616,41 +688,59 @@ class TestPhase6FullValidatedWorkflow:
                 ("Mental Model", "#FF7043"),
                 ("Information Sources", "#5C6BC0"),
             ]:
-                r = mcp_server.execute(
-                    "create_code", {"name": name, "color": color}
-                )
+                r = mcp_server.execute("create_code", {"name": name, "color": color})
                 assert r["success"]
                 code_ids[name] = r["data"]["code_id"]
 
         # ---- Apply to real passages ----
         with allure.step("Apply codes to real transcript passages"):
             segment_defs = [
-                (code_ids["Context building"], p5r1["id"], p5r1["text"],
-                 "Reading a description and saying the change is trying to "
-                 "troubleshoot some behaviour they do not understand"),
-                (code_ids["Testing"], p5r1["id"], p5r1["text"],
-                 "Goes to the CI summary tab"),
-                (code_ids["Mental Model"], p5r2["id"], p5r2["text"],
-                 "Also wants to understand whether the new state makes sense"),
-                (code_ids["Decision"], p9r1["id"], p9r1["text"],
-                 "gives up and accepts the changes"),
-                (code_ids["Information Sources"], p5r2["id"], p5r2["text"],
-                 "documentation definitely needs"),
+                (
+                    code_ids["Context building"],
+                    p5r1["id"],
+                    p5r1["text"],
+                    "Reading a description and saying the change is trying to "
+                    "troubleshoot some behaviour they do not understand",
+                ),
+                (
+                    code_ids["Testing"],
+                    p5r1["id"],
+                    p5r1["text"],
+                    "Goes to the CI summary tab",
+                ),
+                (
+                    code_ids["Mental Model"],
+                    p5r2["id"],
+                    p5r2["text"],
+                    "Also wants to understand whether the new state makes sense",
+                ),
+                (
+                    code_ids["Decision"],
+                    p9r1["id"],
+                    p9r1["text"],
+                    "gives up and accepts the changes",
+                ),
+                (
+                    code_ids["Information Sources"],
+                    p5r2["id"],
+                    p5r2["text"],
+                    "documentation definitely needs",
+                ),
             ]
 
             ops = []
             for code_id, source_id, text, phrase in segment_defs:
                 s, e = _find_segment(text, phrase)
-                ops.append({
-                    "code_id": code_id,
-                    "source_id": source_id,
-                    "start_position": s,
-                    "end_position": e,
-                })
+                ops.append(
+                    {
+                        "code_id": code_id,
+                        "source_id": source_id,
+                        "start_position": s,
+                        "end_position": e,
+                    }
+                )
 
-            result = mcp_server.execute(
-                "batch_apply_codes", {"operations": ops}
-            )
+            result = mcp_server.execute("batch_apply_codes", {"operations": ops})
             assert result["success"]
             assert result["data"]["succeeded"] == 5
 

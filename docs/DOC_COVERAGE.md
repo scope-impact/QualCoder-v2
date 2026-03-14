@@ -18,8 +18,8 @@ This file tracks which features have documentation and screenshots.
 
 | ID | Story | Doc Page | Screenshots | Status |
 |----|-------|----------|-------------|--------|
-| QC-026.05 | Agent Query Project Context | [mcp-api.md](api/mcp-api.md) | - | :construction: |
-| QC-026.06 | Agent Navigate to Segment | [sources.md](user-manual/sources.md), [mcp-api.md](api/mcp-api.md) | - | :construction: |
+| QC-026.05 | Get Project Context | [mcp-api.md](api/mcp-api.md) | - | :construction: |
+| QC-026.06 | Navigate to Source | [sources.md](user-manual/sources.md), [mcp-api.md](api/mcp-api.md) | - | :construction: |
 | QC-026.07 | Agent Open/Close Project | [mcp-setup.md](user-manual/mcp-setup.md), [mcp-api.md](api/mcp-api.md) | - | :construction: |
 
 ### QC-027 Manage Sources
@@ -38,25 +38,25 @@ This file tracks which features have documentation and screenshots.
 | QC-027.14 | Agent Remove Source | [sources.md](user-manual/sources.md), [mcp-api.md](api/mcp-api.md) | - | :construction: |
 | QC-027.15 | Agent Import File Source | [sources.md](user-manual/sources.md), [mcp-api.md](api/mcp-api.md) | - | :construction: |
 
-### QC-027 Folder Management
+### QC-027.05 Organize Sources (Folder Management)
 
 | ID | Story | Doc Page | Screenshots | Status |
 |----|-------|----------|-------------|--------|
-| QC-027.13 | Create Folder | [sources.md](user-manual/sources.md), [mcp-api.md](api/mcp-api.md) | file-manager-with-folders.png | :white_check_mark: |
-| QC-027.14 | Rename Folder | [sources.md](user-manual/sources.md), [mcp-api.md](api/mcp-api.md) | file-manager-with-folders.png | :white_check_mark: |
-| QC-027.15 | Delete Folder | [sources.md](user-manual/sources.md), [mcp-api.md](api/mcp-api.md) | file-manager-with-folders.png | :white_check_mark: |
-| QC-027.16 | Move Source to Folder | [sources.md](user-manual/sources.md), [mcp-api.md](api/mcp-api.md) | file-manager-with-folders.png | :white_check_mark: |
-| QC-027.17 | Folder Policies | [sources.md](user-manual/sources.md), [mcp-api.md](api/mcp-api.md) | - | :construction: |
+| QC-027.05 | Create Folder | [sources.md](user-manual/sources.md), [mcp-api.md](api/mcp-api.md) | file-manager-with-folders.png | :white_check_mark: |
+| QC-027.05 | Rename Folder | [sources.md](user-manual/sources.md), [mcp-api.md](api/mcp-api.md) | file-manager-with-folders.png | :white_check_mark: |
+| QC-027.05 | Delete Folder | [sources.md](user-manual/sources.md), [mcp-api.md](api/mcp-api.md) | file-manager-with-folders.png | :white_check_mark: |
+| QC-027.05 | Move Source to Folder | [sources.md](user-manual/sources.md), [mcp-api.md](api/mcp-api.md) | file-manager-with-folders.png | :white_check_mark: |
+| QC-027.05 | Folder Policies | [sources.md](user-manual/sources.md), [mcp-api.md](api/mcp-api.md) | - | :construction: |
 
 ### QC-028 Manage Codes
 
 | ID | Story | Doc Page | Screenshots | Status |
 |----|-------|----------|-------------|--------|
 | QC-028.01 | Create New Code | [codes.md](user-manual/codes.md) | create-code-dialog.png | :white_check_mark: |
-| QC-028.02 | Delete Code | [codes.md](user-manual/codes.md) | delete-code-simple.png, delete-code-warning.png, delete-code-segments-checked.png | :white_check_mark: |
-| QC-028.03 | Color Picker | [codes.md](user-manual/codes.md) | color-picker-presets.png, color-picker-custom-hex.png, color-picker-selected.png | :white_check_mark: |
-| QC-028.04 | Create Category | [codes.md](user-manual/codes.md) | create-category-initial.png, create-category-name.png, create-category-parent.png, create-category-filled.png | :white_check_mark: |
-| QC-028.05 | Find Duplicate Codes | [codes.md](user-manual/codes.md) | duplicate-codes-empty.png, duplicate-codes-list.png, duplicate-codes-similarity.png | :white_check_mark: |
+| QC-028.02 | Create Code Category | [codes.md](user-manual/codes.md) | create-category-initial.png, create-category-name.png, create-category-parent.png, create-category-filled.png | :white_check_mark: |
+| QC-028.03 | Edit Code Properties | [codes.md](user-manual/codes.md) | color-picker-presets.png, color-picker-custom-hex.png, color-picker-selected.png | :white_check_mark: |
+| QC-028.04 | Merge Codes | [codes.md](user-manual/codes.md) | duplicate-codes-empty.png, duplicate-codes-list.png, duplicate-codes-similarity.png | :white_check_mark: |
+| QC-028.05 | Delete Code | [codes.md](user-manual/codes.md) | delete-code-simple.png, delete-code-warning.png, delete-code-segments-checked.png | :white_check_mark: |
 
 ### QC-050 Agent Code Management MCP Tools
 
@@ -71,26 +71,26 @@ This file tracks which features have documentation and screenshots.
 | QC-050.07 | list_categories MCP tool | [ai-features.md](user-manual/ai-features.md), [mcp-api.md](api/mcp-api.md) | - | :construction: |
 | QC-050.08 | Tool registration and response format | [mcp-api.md](api/mcp-api.md) | - | :construction: |
 
-### QC-029 Text Coding
+### QC-029 Apply Codes to Text
 
 | ID | Story | Doc Page | Screenshots | Status |
 |----|-------|----------|-------------|--------|
-| QC-029.01 | Quick Mark (Q key) | [coding.md](user-manual/coding.md) | coding-screen-with-codes.png | :white_check_mark: |
-| QC-029.02 | Create Code (N key) | [coding.md](user-manual/coding.md) | create-code-dialog.png | :white_check_mark: |
-| QC-029.03 | In-Vivo Coding (V key) | [coding.md](user-manual/coding.md) | - | :construction: |
-| QC-029.04 | Unmark (U key) | [coding.md](user-manual/coding.md) | - | :construction: |
-| QC-029.05 | Text Selection | [coding.md](user-manual/coding.md) | coding-screen-selected.png | :white_check_mark: |
-| QC-029.06 | Multiple Codes | [coding.md](user-manual/coding.md) | coding-multiple-codes.png | :white_check_mark: |
-| QC-029.07 | Segment Memos | [coding.md](user-manual/coding.md) | memos-panel.png | :white_check_mark: |
+| QC-029.01 | Select Text and Apply Code | [coding.md](user-manual/coding.md) | coding-screen-with-codes.png | :white_check_mark: |
+| QC-029.02 | Apply Multiple Codes | [coding.md](user-manual/coding.md) | coding-multiple-codes.png | :white_check_mark: |
+| QC-029.03 | View Coded Segments | [coding.md](user-manual/coding.md) | coding-screen-selected.png | :white_check_mark: |
+| QC-029.04 | View Segments for Code | [coding.md](user-manual/coding.md) | - | :construction: |
+| QC-029.05 | Remove Coding | [coding.md](user-manual/coding.md) | - | :construction: |
+| QC-029.06 | Add Segment Memo | [coding.md](user-manual/coding.md) | memos-panel.png | :white_check_mark: |
 
-### QC-028 AI Code Management (Agent Stories)
+### QC-028 Manage Codes (Agent Stories)
 
 | ID | Story | Doc Page | Screenshots | Status |
 |----|-------|----------|-------------|--------|
+| QC-028.06 | List All Codes | [mcp-api.md](api/mcp-api.md) | - | :construction: |
 | QC-028.07 | Suggest New Code | [ai-features.md](user-manual/ai-features.md), [mcp-api.md](api/mcp-api.md) | code-suggestions.png | :white_check_mark: |
 | QC-028.08 | Detect Duplicate Codes | [ai-features.md](user-manual/ai-features.md), [mcp-api.md](api/mcp-api.md) | duplicate-codes.png | :white_check_mark: |
 
-### QC-029 AI Text Coding (Agent Stories)
+### QC-029 Apply Codes to Text (Agent Stories)
 
 | ID | Story | Doc Page | Screenshots | Status |
 |----|-------|----------|-------------|--------|
@@ -105,13 +105,14 @@ This file tracks which features have documentation and screenshots.
 | QC-030.02 | Semantic Search | [ai-features.md](user-manual/ai-features.md) | - | :x: |
 | QC-030.03 | Auto-coding | [ai-features.md](user-manual/ai-features.md) | auto-code-pattern.png, auto-code-preview.png | :white_check_mark: |
 
-### QC-034 Cases
+### QC-034 Manage Cases
 
 | ID | Story | Doc Page | Screenshots | Status |
 |----|-------|----------|-------------|--------|
-| QC-034.01 | View Cases | [user-manual](user-manual/index.md) | case-manager-empty.png, case-manager-list.png | :white_check_mark: |
-| QC-034.02 | Create Case | [user-manual](user-manual/index.md) | - | :construction: |
-| QC-034.03 | Case Attributes | [user-manual](user-manual/index.md) | - | :construction: |
+| QC-034.01 | Create Case | [user-manual](user-manual/index.md) | - | :construction: |
+| QC-034.02 | Link Source to Case | [user-manual](user-manual/index.md) | - | :construction: |
+| QC-034.03 | Add Case Attributes | [user-manual](user-manual/index.md) | - | :construction: |
+| QC-034.04 | View Case Data | [user-manual](user-manual/index.md) | case-manager-empty.png, case-manager-list.png | :white_check_mark: |
 
 ### QC-039 Import Export Formats
 
@@ -122,7 +123,7 @@ This file tracks which features have documentation and screenshots.
 | QC-039.03 | Import RQDA Project | [exchange.md](user-manual/exchange.md), [mcp-api.md](api/mcp-api.md) | exchange-import-menu.png | :white_check_mark: |
 | QC-039.04 | Export Codebook | [exchange.md](user-manual/exchange.md), [mcp-api.md](api/mcp-api.md) | exchange-export-menu.png | :white_check_mark: |
 | QC-039.05 | Export Coded Text as HTML | [exchange.md](user-manual/exchange.md), [mcp-api.md](api/mcp-api.md) | exchange-export-menu.png | :white_check_mark: |
-| QC-039.06 | Import Survey CSV | [exchange.md](user-manual/exchange.md), [mcp-api.md](api/mcp-api.md) | exchange-import-menu.png | :white_check_mark: |
+| QC-039.06 | Import Survey Data | [exchange.md](user-manual/exchange.md), [mcp-api.md](api/mcp-api.md) | exchange-import-menu.png | :white_check_mark: |
 | QC-039.07 | Import Code List | [exchange.md](user-manual/exchange.md), [mcp-api.md](api/mcp-api.md) | exchange-import-menu.png | :white_check_mark: |
 
 ### QC-038 Settings

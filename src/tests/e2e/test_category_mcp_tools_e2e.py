@@ -23,7 +23,9 @@ if TYPE_CHECKING:
 
 
 @pytest.fixture
-def project_with_codes(mcp_server: MCPClient, app_context: AppContext, tmp_path: Path) -> dict:
+def project_with_codes(
+    mcp_server: MCPClient, app_context: AppContext, tmp_path: Path
+) -> dict:
     """Create a project with codes and a source for testing code management MCP tools."""
     project_path = tmp_path / "test_code_mgmt.qda"
     result = app_context.create_project("Code Mgmt Test", str(project_path))
@@ -36,7 +38,9 @@ def project_with_codes(mcp_server: MCPClient, app_context: AppContext, tmp_path:
     assert code1["success"]
     code2 = mcp_server.execute("create_code", {"name": "Stress", "color": "#FF5500"})
     assert code2["success"]
-    code3 = mcp_server.execute("create_code", {"name": "Resilience", "color": "#00FF00"})
+    code3 = mcp_server.execute(
+        "create_code", {"name": "Resilience", "color": "#00FF00"}
+    )
     assert code3["success"]
 
     # Import a source and apply a code to it
@@ -82,7 +86,6 @@ def project_with_codes(mcp_server: MCPClient, app_context: AppContext, tmp_path:
 class TestRenameCodeMCP:
     @allure.title("AC #1: rename_code renames and persists via get_code")
     def test_rename_code_success_and_persists(self, mcp_server, project_with_codes):
-
         code_id = project_with_codes["codes"]["anxiety"]["code_id"]
 
         result = mcp_server.execute(
@@ -100,8 +103,6 @@ class TestRenameCodeMCP:
 
     @allure.title("AC #1: rename_code errors for missing params or non-existent code")
     def test_rename_code_errors(self, mcp_server, project_with_codes):
-
-
         # Missing code_id
         result = mcp_server.execute("rename_code", {"new_name": "Something"})
         assert not result["success"]
@@ -118,7 +119,6 @@ class TestRenameCodeMCP:
 class TestUpdateCodeMemoMCP:
     @allure.title("AC #2: update_code_memo sets and clears memo, persists via get_code")
     def test_update_memo_lifecycle(self, mcp_server, project_with_codes):
-
         code_id = project_with_codes["codes"]["anxiety"]["code_id"]
 
         # Set memo
@@ -148,8 +148,6 @@ class TestUpdateCodeMemoMCP:
 class TestCreateCategoryMCP:
     @allure.title("AC #3: create_category with name, parent, memo, and error handling")
     def test_create_category(self, mcp_server, project_with_codes):
-
-
         # Basic creation
         result = mcp_server.execute("create_category", {"name": "Emotional Responses"})
         assert result["success"]
@@ -181,7 +179,6 @@ class TestCreateCategoryMCP:
 class TestMoveCodeToCategoryMCP:
     @allure.title("AC #4: move_code_to_category assigns, persists, and uncategorizes")
     def test_move_and_uncategorize(self, mcp_server, project_with_codes):
-
         code_id = project_with_codes["codes"]["anxiety"]["code_id"]
 
         # Create category and move code into it
@@ -210,7 +207,6 @@ class TestMoveCodeToCategoryMCP:
 class TestMergeCodesMCP:
     @allure.title("AC #5: merge_codes merges source into target, deletes source")
     def test_merge_codes(self, mcp_server, project_with_codes):
-
         source_id = project_with_codes["codes"]["anxiety"]["code_id"]
         target_id = project_with_codes["codes"]["stress"]["code_id"]
 
@@ -236,8 +232,6 @@ class TestMergeCodesMCP:
 
     @allure.title("AC #5: merge_codes returns error for missing params")
     def test_merge_missing_params(self, mcp_server, project_with_codes):
-
-
         result = mcp_server.execute("merge_codes", {"source_code_id": "abc"})
         assert not result["success"]
         assert "MISSING_PARAM" in result["error_code"]
@@ -247,8 +241,6 @@ class TestMergeCodesMCP:
 class TestDeleteCodeMCP:
     @allure.title("AC #6: delete_code removes code, with and without segments")
     def test_delete_code(self, mcp_server, project_with_codes):
-
-
         # Delete code without segments
         code_id = project_with_codes["codes"]["resilience"]["code_id"]
         result = mcp_server.execute("delete_code", {"code_id": code_id})
@@ -274,7 +266,6 @@ class TestDeleteCodeMCP:
 class TestListCategoriesMCP:
     @allure.title("AC #7: list_categories returns hierarchy with code counts")
     def test_list_categories(self, mcp_server, project_with_codes):
-
         code_id = project_with_codes["codes"]["anxiety"]["code_id"]
 
         # Initially empty
@@ -314,8 +305,6 @@ class TestListCategoriesMCP:
 class TestToolRegistration:
     @allure.title("AC #8,10: All tools registered and return OperationResult format")
     def test_tools_registered_and_response_format(self, mcp_server, project_with_codes):
-
-
         # Verify all new tools are registered via MCP server
         tool_names = mcp_server.list_tools()
         expected = [

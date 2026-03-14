@@ -206,7 +206,7 @@ class TestPhase1Familiarization:
         """All 5 participant interviews should be imported as text sources."""
         with allure.step("Verify all 5 transcripts are imported"):
             assert len(study_project["sources"]) == 5
-            for name, info in study_project["sources"].items():
+            for _name, info in study_project["sources"].items():
                 assert len(info["text"]) > 100
 
     @allure.title("AC #1.2: Verify transcript content is accessible")
@@ -242,11 +242,31 @@ class TestPhase2InitialCodingMCP:
     ):
         """Create codes via MCP tool, the way an AI agent would."""
         code_defs = [
-            ("Technology barriers", "#E53935", "Difficulties with tech tools, LMS, connectivity"),
-            ("Flexibility benefits", "#43A047", "Appreciation for self-paced, asynchronous learning"),
-            ("Social isolation", "#1E88E5", "Missing peer interaction, loneliness, disconnection"),
-            ("Self-discipline", "#FB8C00", "Self-regulation, time management, procrastination"),
-            ("Instructor quality", "#8E24AA", "Variation in teaching quality and engagement"),
+            (
+                "Technology barriers",
+                "#E53935",
+                "Difficulties with tech tools, LMS, connectivity",
+            ),
+            (
+                "Flexibility benefits",
+                "#43A047",
+                "Appreciation for self-paced, asynchronous learning",
+            ),
+            (
+                "Social isolation",
+                "#1E88E5",
+                "Missing peer interaction, loneliness, disconnection",
+            ),
+            (
+                "Self-discipline",
+                "#FB8C00",
+                "Self-regulation, time management, procrastination",
+            ),
+            (
+                "Instructor quality",
+                "#8E24AA",
+                "Variation in teaching quality and engagement",
+            ),
         ]
 
         created_codes = []
@@ -278,7 +298,11 @@ class TestPhase2InitialCodingMCP:
         in_vivo_codes = [
             ("mixed bag", "#FFB74D", "In vivo: Sarah's summary of her experience"),
             ("game-changer", "#AED581", "In vivo: Sarah on rewinding lectures"),
-            ("living in my classroom", "#EF9A9A", "In vivo: David on blurred boundaries"),
+            (
+                "living in my classroom",
+                "#EF9A9A",
+                "In vivo: David on blurred boundaries",
+            ),
             ("had a voice", "#81D4FA", "In vivo: Maria on discussion forums"),
             ("brain felt like mush", "#CE93D8", "In vivo: Aisha on screen fatigue"),
         ]
@@ -314,22 +338,31 @@ class TestPhase2InitialCodingMCP:
         with allure.step("Create codes for this test"):
             tech_result = mcp_server.execute(
                 "create_code",
-                {"name": "Technology barriers", "color": "#E53935",
-                 "memo": "Tech access issues"},
+                {
+                    "name": "Technology barriers",
+                    "color": "#E53935",
+                    "memo": "Tech access issues",
+                },
             )
             tech_id = tech_result["data"]["code_id"]
 
             flex_result = mcp_server.execute(
                 "create_code",
-                {"name": "Flexibility benefits", "color": "#43A047",
-                 "memo": "Self-paced learning"},
+                {
+                    "name": "Flexibility benefits",
+                    "color": "#43A047",
+                    "memo": "Self-paced learning",
+                },
             )
             flex_id = flex_result["data"]["code_id"]
 
             iso_result = mcp_server.execute(
                 "create_code",
-                {"name": "Social isolation", "color": "#1E88E5",
-                 "memo": "Missing peers"},
+                {
+                    "name": "Social isolation",
+                    "color": "#1E88E5",
+                    "memo": "Missing peers",
+                },
             )
             iso_id = iso_result["data"]["code_id"]
 
@@ -411,13 +444,19 @@ class TestPhase2InitialCodingMCP:
         with allure.step("Create two codes"):
             acc = mcp_server.execute(
                 "create_code",
-                {"name": "Accessibility gains", "color": "#7CB342",
-                 "memo": "Benefits for diverse learners"},
+                {
+                    "name": "Accessibility gains",
+                    "color": "#7CB342",
+                    "memo": "Benefits for diverse learners",
+                },
             )
             emp = mcp_server.execute(
                 "create_code",
-                {"name": "Student empowerment", "color": "#FFD54F",
-                 "memo": "Gaining confidence, finding voice"},
+                {
+                    "name": "Student empowerment",
+                    "color": "#FFD54F",
+                    "memo": "Gaining confidence, finding voice",
+                },
             )
             acc_id = acc["data"]["code_id"]
             emp_id = emp["data"]["code_id"]
@@ -475,8 +514,11 @@ class TestPhase2InitialCodingMCP:
         with allure.step("Create mental health code"):
             mh = mcp_server.execute(
                 "create_code",
-                {"name": "Mental health impact", "color": "#D81B60",
-                 "memo": "Anxiety, burnout, emotional wellbeing"},
+                {
+                    "name": "Mental health impact",
+                    "color": "#D81B60",
+                    "memo": "Anxiety, burnout, emotional wellbeing",
+                },
             )
             mh_id = mh["data"]["code_id"]
 
@@ -488,36 +530,40 @@ class TestPhase2InitialCodingMCP:
             s_start, s_end = _find_segment(
                 sarah_text, "feeling anxious about missing something important."
             )
-            operations.append({
-                "code_id": mh_id,
-                "source_id": sources["participant_01_sarah.txt"]["id"],
-                "start_position": s_start,
-                "end_position": s_end,
-            })
+            operations.append(
+                {
+                    "code_id": mh_id,
+                    "source_id": sources["participant_01_sarah.txt"]["id"],
+                    "start_position": s_start,
+                    "end_position": s_end,
+                }
+            )
 
             # David: isolated and unmotivated
             david_text = sources["participant_04_david.txt"]["text"]
             d_start, d_end = _find_segment(
                 david_text, "I felt isolated and unmotivated."
             )
-            operations.append({
-                "code_id": mh_id,
-                "source_id": sources["participant_04_david.txt"]["id"],
-                "start_position": d_start,
-                "end_position": d_end,
-            })
+            operations.append(
+                {
+                    "code_id": mh_id,
+                    "source_id": sources["participant_04_david.txt"]["id"],
+                    "start_position": d_start,
+                    "end_position": d_end,
+                }
+            )
 
             # Aisha: screen fatigue
             aisha_text = sources["participant_05_aisha.txt"]["text"]
-            a_start, a_end = _find_segment(
-                aisha_text, "my brain felt like mush."
+            a_start, a_end = _find_segment(aisha_text, "my brain felt like mush.")
+            operations.append(
+                {
+                    "code_id": mh_id,
+                    "source_id": sources["participant_05_aisha.txt"]["id"],
+                    "start_position": a_start,
+                    "end_position": a_end,
+                }
             )
-            operations.append({
-                "code_id": mh_id,
-                "source_id": sources["participant_05_aisha.txt"]["id"],
-                "start_position": a_start,
-                "end_position": a_end,
-            })
 
             result = mcp_server.execute(
                 "batch_apply_codes",
@@ -528,7 +574,7 @@ class TestPhase2InitialCodingMCP:
 
         with allure.step("Verify code spans 3 different sources"):
             source_ids_with_code = set()
-            for name, info in sources.items():
+            for _name, info in sources.items():
                 seg_result = mcp_server.execute(
                     "list_segments_for_source",
                     {"source_id": info["id"]},
@@ -631,7 +677,9 @@ class TestPhase3SearchingForThemes:
             iso_detail = mcp_server.execute(
                 "get_code", {"code_id": codes["Social isolation"]}
             )
-            assert flex_detail["data"]["category_id"] == iso_detail["data"]["category_id"]
+            assert (
+                flex_detail["data"]["category_id"] == iso_detail["data"]["category_id"]
+            )
             assert flex_detail["data"]["category_id"] == paradox_id
 
         with allure.step("Verify category list via MCP"):
@@ -721,9 +769,7 @@ class TestPhase4And5ReviewingDefiningThemes:
 
         with allure.step("Verify merged: source code deleted, target has all segments"):
             # Source code should be gone
-            deleted = mcp_server.execute(
-                "get_code", {"code_id": frustration_id}
-            )
+            deleted = mcp_server.execute("get_code", {"code_id": frustration_id})
             assert deleted["success"] is False
 
             # List all codes - only barriers should remain
@@ -818,9 +864,7 @@ class TestPhase6FullWorkflow:
                 ("Self-growth", "#FF9800"),
                 ("Inequity", "#00897B"),
             ]:
-                r = mcp_server.execute(
-                    "create_code", {"name": name, "color": color}
-                )
+                r = mcp_server.execute("create_code", {"name": name, "color": color})
                 assert r["success"] is True
                 code_ids[name] = r["data"]["code_id"]
 
@@ -835,12 +879,14 @@ class TestPhase6FullWorkflow:
 
             # Sarah: Overwhelm
             s, e = _find_segment(sarah_text, "I felt completely lost.")
-            operations.append({
-                "code_id": code_ids["Overwhelm"],
-                "source_id": sources["participant_01_sarah.txt"]["id"],
-                "start_position": s,
-                "end_position": e,
-            })
+            operations.append(
+                {
+                    "code_id": code_ids["Overwhelm"],
+                    "source_id": sources["participant_01_sarah.txt"]["id"],
+                    "start_position": s,
+                    "end_position": e,
+                }
+            )
 
             # James: Adaptation
             s, e = _find_segment(
@@ -848,51 +894,55 @@ class TestPhase6FullWorkflow:
                 "I had to create my own structure, like setting alarms and "
                 "blocking social media during study hours.",
             )
-            operations.append({
-                "code_id": code_ids["Adaptation"],
-                "source_id": sources["participant_02_james.txt"]["id"],
-                "start_position": s,
-                "end_position": e,
-            })
+            operations.append(
+                {
+                    "code_id": code_ids["Adaptation"],
+                    "source_id": sources["participant_02_james.txt"]["id"],
+                    "start_position": s,
+                    "end_position": e,
+                }
+            )
 
             # Maria: Inequity
             s, e = _find_segment(
                 maria_text,
                 "Not everyone has a home office or even a desk.",
             )
-            operations.append({
-                "code_id": code_ids["Inequity"],
-                "source_id": sources["participant_03_maria.txt"]["id"],
-                "start_position": s,
-                "end_position": e,
-            })
+            operations.append(
+                {
+                    "code_id": code_ids["Inequity"],
+                    "source_id": sources["participant_03_maria.txt"]["id"],
+                    "start_position": s,
+                    "end_position": e,
+                }
+            )
 
             # David: Loneliness
-            s, e = _find_segment(
-                david_text, "I felt isolated and unmotivated."
+            s, e = _find_segment(david_text, "I felt isolated and unmotivated.")
+            operations.append(
+                {
+                    "code_id": code_ids["Loneliness"],
+                    "source_id": sources["participant_04_david.txt"]["id"],
+                    "start_position": s,
+                    "end_position": e,
+                }
             )
-            operations.append({
-                "code_id": code_ids["Loneliness"],
-                "source_id": sources["participant_04_david.txt"]["id"],
-                "start_position": s,
-                "end_position": e,
-            })
 
             # David: Self-growth
             s, e = _find_segment(
                 david_text,
                 "I developed better time management skills out of necessity.",
             )
-            operations.append({
-                "code_id": code_ids["Self-growth"],
-                "source_id": sources["participant_04_david.txt"]["id"],
-                "start_position": s,
-                "end_position": e,
-            })
-
-            result = mcp_server.execute(
-                "batch_apply_codes", {"operations": operations}
+            operations.append(
+                {
+                    "code_id": code_ids["Self-growth"],
+                    "source_id": sources["participant_04_david.txt"]["id"],
+                    "start_position": s,
+                    "end_position": e,
+                }
             )
+
+            result = mcp_server.execute("batch_apply_codes", {"operations": operations})
             assert result["success"] is True
             assert result["data"]["succeeded"] == 5
 
@@ -900,14 +950,20 @@ class TestPhase6FullWorkflow:
         with allure.step("Phase 3: Create thematic categories via MCP"):
             cat_struggle = mcp_server.execute(
                 "create_category",
-                {"name": "Struggle and Adaptation", "memo": "How students navigated challenges"},
+                {
+                    "name": "Struggle and Adaptation",
+                    "memo": "How students navigated challenges",
+                },
             )
             assert cat_struggle["success"] is True
             struggle_id = cat_struggle["data"]["category_id"]
 
             cat_connection = mcp_server.execute(
                 "create_category",
-                {"name": "Connection and Isolation", "memo": "Social dimension of online learning"},
+                {
+                    "name": "Connection and Isolation",
+                    "memo": "Social dimension of online learning",
+                },
             )
             assert cat_connection["success"] is True
             connection_id = cat_connection["data"]["category_id"]
@@ -948,7 +1004,7 @@ class TestPhase6FullWorkflow:
         with allure.step("Phase 6: Verify segment coverage"):
             total_segments = 0
             sources_with_segments = 0
-            for name, info in sources.items():
+            for _name, info in sources.items():
                 seg_result = mcp_server.execute(
                     "list_segments_for_source",
                     {"source_id": info["id"]},
@@ -968,7 +1024,9 @@ class TestPhase6FullWorkflow:
             assert "coding.code_created" in event_types, "Missing code creation events"
             assert "coding.segment_coded" in event_types, "Missing coding events"
             assert "coding.category_created" in event_types, "Missing category events"
-            assert "coding.code_moved_to_category" in event_types, "Missing organization events"
+            assert "coding.code_moved_to_category" in event_types, (
+                "Missing organization events"
+            )
 
             # All 5 codes should have been created
             assert event_types.count("coding.code_created") == 5
