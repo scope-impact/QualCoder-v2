@@ -115,7 +115,7 @@ def settings_dialog(qapp, colors, settings_viewmodel):
 # =============================================================================
 
 
-@allure.story("QC-038.06 Settings Dialog Defaults")
+@allure.story("QC-038 Settings and Preferences")
 @allure.severity(allure.severity_level.NORMAL)
 class TestSettingsDialogDefaults:
     """E2E tests for Settings Dialog default values."""
@@ -372,7 +372,7 @@ class TestAVCodingChanges:
 # =============================================================================
 
 
-@allure.story("QC-038.07 Dialog Navigation")
+@allure.story("QC-038 Settings and Preferences")
 @allure.severity(allure.severity_level.NORMAL)
 class TestDialogNavigation:
     """E2E tests for dialog sidebar navigation."""
@@ -408,7 +408,7 @@ class TestDialogNavigation:
 # =============================================================================
 
 
-@allure.story("QC-038.08 Dialog Accept/Cancel")
+@allure.story("QC-038 Settings and Preferences")
 @allure.severity(allure.severity_level.NORMAL)
 class TestDialogAcceptCancel:
     """E2E tests for dialog OK/Cancel behavior."""
@@ -452,7 +452,7 @@ class TestDialogAcceptCancel:
 # =============================================================================
 
 
-@allure.story("QC-038 Integration")
+@allure.story("QC-038 Settings and Preferences")
 @allure.severity(allure.severity_level.CRITICAL)
 class TestFullRoundTrip:
     """
@@ -612,7 +612,7 @@ class TestFullRoundTrip:
 # =============================================================================
 
 
-@allure.story("QC-038 UI Application")
+@allure.story("QC-038 Settings and Preferences")
 @allure.severity(allure.severity_level.CRITICAL)
 class TestUIApplication:
     """

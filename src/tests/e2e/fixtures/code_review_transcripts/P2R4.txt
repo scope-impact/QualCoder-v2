@@ -1,0 +1,17 @@
+REVIEW TYPE AND GOAL
+- A short change adjusting documentation
+
+TRANSCRIPT
+- Fastly read the documentation change, verified that it is correct, readable and understandable
+ - Approved saying “Great, thanks!”
+
+
+GENERAL STRATEGY
+- Just has a look and approved
+- Does not have some levels of complexity for the review process. Does what needs to be done.
+
+
+NOTES
+- Looking at one-liner changes is nearly not needed. There is not many things that can go wrong in one line of code and the automated tools would have caught most of the issues already.
+- One-liners are mostly very obvious in what is going on. There could be a connection to an adjacent logic though.
+- Has different levels of attention in different types of projects. These depend on the criticality of the project.

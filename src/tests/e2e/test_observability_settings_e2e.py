@@ -97,7 +97,7 @@ def _reset_qualcoder_logger():
 # =============================================================================
 
 
-@allure.story("QC-049.03 Configure Log Level via Settings UI")
+@allure.story("QC-049 Observability Structured Logging and OTEL Metrics")
 @allure.severity(allure.severity_level.CRITICAL)
 class TestLogLevelUI:
     """E2E tests for log level configuration through the Settings dialog."""
@@ -132,7 +132,7 @@ class TestLogLevelUI:
 # =============================================================================
 
 
-@allure.story("QC-049.03 Configure File Logging via Settings UI")
+@allure.story("QC-049 Observability Structured Logging and OTEL Metrics")
 @allure.severity(allure.severity_level.NORMAL)
 class TestFileLoggingUI:
     """E2E tests for file logging toggle in the Settings dialog."""
@@ -166,7 +166,7 @@ class TestFileLoggingUI:
 # =============================================================================
 
 
-@allure.story("QC-049.03 QUALCODER_LOG_LEVEL Environment Variable Override")
+@allure.story("QC-049 Observability Structured Logging and OTEL Metrics")
 @allure.severity(allure.severity_level.CRITICAL)
 class TestEnvVarOverride:
     """E2E tests for the QUALCODER_LOG_LEVEL environment variable override."""
@@ -216,7 +216,7 @@ class TestEnvVarOverride:
 # =============================================================================
 
 
-@allure.story("QC-049.03 File Logging Writes to Disk")
+@allure.story("QC-049 Observability Structured Logging and OTEL Metrics")
 @allure.severity(allure.severity_level.NORMAL)
 class TestFileLoggingIntegration:
     """E2E tests for configure_logging with file output."""
@@ -249,7 +249,7 @@ class TestFileLoggingIntegration:
 # =============================================================================
 
 
-@allure.story("QC-049.03 Full Round-Trip Persistence")
+@allure.story("QC-049 Observability Structured Logging and OTEL Metrics")
 @allure.severity(allure.severity_level.CRITICAL)
 class TestObservabilityRoundTrip:
     """E2E tests for full round-trip: change in UI → persisted → reloaded in new dialog."""
@@ -304,7 +304,7 @@ class TestObservabilityRoundTrip:
 # =============================================================================
 
 
-@allure.story("QC-049.03 Invalid Log Level Rejection")
+@allure.story("QC-049 Observability Structured Logging and OTEL Metrics")
 @allure.severity(allure.severity_level.NORMAL)
 class TestInvalidLogLevel:
     """E2E tests for rejecting invalid log levels through the command handler."""

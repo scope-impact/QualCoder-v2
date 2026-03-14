@@ -169,7 +169,7 @@ def sample_memos():
 # =============================================================================
 
 
-@allure.story("QC-029.02 Multiple Codes Same Text")
+@allure.story("QC-029.02 Apply Multiple Codes")
 class TestOverlappingCodes:
     """
     QC-029.02: Researcher can apply multiple codes to same text
@@ -230,7 +230,7 @@ class TestOverlappingCodes:
 # =============================================================================
 
 
-@allure.story("QC-029.03 Coded Segments Highlighted")
+@allure.story("QC-029.03 View Coded Segments")
 class TestSegmentHighlighting:
     """
     QC-029.03: Researcher can see coded segments highlighted
@@ -309,7 +309,7 @@ class TestViewSegmentsForCode:
 # =============================================================================
 
 
-@allure.story("QC-029.06 Add Memos to Segments")
+@allure.story("QC-029.06 Add Segment Memo")
 class TestSegmentMemos:
     """
     QC-029.06: Researcher can add memos to segments
@@ -368,7 +368,7 @@ class TestSegmentMemos:
 # =============================================================================
 
 
-@allure.story("QC-029.06 Memos Panel")
+@allure.story("QC-029.06 Add Segment Memo")
 class TestMemosPanel:
     """Tests for the MemosPanel widget showing all memos."""
 

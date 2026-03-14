@@ -1,0 +1,61 @@
+P1R3
+
+REVIEW TYPE AND GOAL
+- Internal review of a new change
+
+CONTEXT
+- Modifying a method to add extra validation before every test
+- Most of the change was not on the test files but in utilities
+- Related documentation is not ready yet and will be reviewed after the test. Th person who wrote the test is going to review the docs.
+
+TRANSCRIPT
+- Reads the commit message
+- Starting to understand what new values could be expected from the tests
+- Switches to the code
+- Noticed an import from an outside repository which is normally not encouraged at all so it raises concerns for them.
+- Checks docstrings for explanation - they understood the reasoning but it is not a practice consistent with the rest of the code base and it needs an improvement.
+- Based on their detailed knowledge of the organisation of the code base they provide a feedback on how the inconsistency affects the tests reliability.
+- Notices a part where the code seems to be overly complicated and asks the developer about the need to use a certain argument.
+- Using their detailed knowledge of the code base they know that their test always start with a clean system while that code assumes to be affected by the previous test results. The comment is again written as a question aiming to understand the author’s reasoning even though the reviewer is sure about the wrongness of what was done but gives a space for potential doubt or misunderstanding. They expect that if the author intended a specific scenario where the implementation would be the correct one to go with, they will let it slide. Otherwise they will next time suggest to change the implementation.
+- Points out an inconsistency with the project code style - a missing empty line.
+- Finds a test that from their knowledge about the code base will nearly always pass and they do not like it. The author expects that they are testing out only the output of the function but the test should also rule out different reasons for failure.
+- They notice a comment from other reviewer they agree with but only comment on it with words without a further reaction
+- Some other comments they read and agree with they do not react to as if a previous comment is addressed, the following ones become irrelevant.
+
+GENERAL STRATEGY
+- Always starts with the commit message to see what to expect.
+- Usually does a top to bottom review.
+- When there is a complex change in the middle she might change it but today it was not needed because the changes in the tests were minor.
+- When there are complex changes in the tests, she needs to do a lot of back and forth between the files, specially in generally complex PRs. The frequent back and forth ensures that their understanding is still valid.
+- When the PR is almost ready she would also do a check if everything is OK.
+- A review is finished when she’s happy with all the changes or someone has defended that they are like that for a reason. Once all comments are resolved, they give the review +2 to indicate it’s ready on their side.
+- After the code review, the author or team needs to formally verify the code is working (not always) and than they can merge it. 
+- Firstly cleans up smaller reviews on her queue, then moves on to the bigger ones. Those take more time because of the need to do the back and forth., sometimes require a live environment to see what the test is doing, if it makes sense.
+- They do not know all the details of the code so sometimes they do not understand. So then they are looking at the python side and does not know the product side. Then they need to reach out to the lead or the author to understand if everything makes sense. That typically starts a conversation. They either get to a better code or better understanding and move on.
+- Either her or someone else from the team should understand fully and back the quality.
+- When they are not strong in some area they rely a lot on the leads to check if the test works from the feature standpoint. Then they do the python based review.
+- If they have a basic understanding, and it makes some sense, then they move on.
+- They have a lot of devs that have a very good understanding of their product and they become the next level of reviewers. They try to trust on them a lot and to encourage them to do the reviews and build the knowledge that moves them to the next level. This helps them tremendously because they know that other people are also looking and multiple people miss less issues.
+- Priority is that their repository is completely healthy, not breaking. If something is breaking their tests or gating jobs - those are a priority.
+- Whether you are changing a test file or a utility or a fixture that is used by everybody, everything will get equal attention.
+- When she knows a certain test output could not happen without a problem, she goes and checks the production code if some change did not enable new behaviour or if some default value did not change.
+- Tries not to clutter the conversation with agreeing comments not to create an impression of reviewers “ganging up”.
+- When they disagree with the comment, they join the discussion and be brief about the comment being valid or irrelevant.
+- Their comments differ when writing to a new/junior person and to the more senior ones. Junior person would receive more detailed information and explanation while a senior one would normally receive only a very short comment. More senior developers could see detailed comments as patronising.
+- Gradually they develop relationships with their colleagues and understand their personality, who prefers more explanatory comments even if more senior. This develops once they work longer in a place.
+- They review very fast because they have high knowledge of the code base and see all the changes made to it. They are also in the team for 2.5 years and are reviewing for some time. However, there are always surprising changes that are completely new which take longer.
+- If they see something, they will raise it always. But they do not necessarily stop the PR for it to be addressed. If something “does not make any sense” they will add a comment saying they are not holding that PR, but that there should be a follow up PR or a ticket to ensure the issue gets tracked. Unless it’s something groundbreaking they will not hold a PR.
+- Always expects an action following their comments.
+- Ensures that everybody who gave a comment gets an acknowledgement, otherwise the PR cannot be taken as it can discourage people from reviewing.
+- Typically give -1 to review that needs changes. -2 happens very rarely and normally does not reach them for review as the teams abandon it before sending to the tech lead.
+- They look at the verdicts of other people when they start a review but do not take it as a hard line.
+- Their work is blackbox testing. Only once she does not understand the behaviour of the test based on the requirements and description then she asks explanations on internal chat or goes to check the production code.
+- The main point of reference for their tests is the customer-facing documentation.
+- When the behaviour of the system does not match the customer-facing documentation they push on the production devs to clarify the documentation and support what is the expected behaviour.
+- They interface very closely with the production team - documentation, meetings, agile team - always know what changes are expected.
+- Production involved in the review of their tests and they are involved in the reviews for the documentation team.
+
+
+NOTE
+- Very fast reviewing speed and efficiency, availability of responses and issues
+- The bigger context in her head makes information retrieval from memory very efficient, no need to switch context and understand other artefacts to evaluate the one at hand.

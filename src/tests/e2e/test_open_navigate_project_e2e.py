@@ -195,7 +195,7 @@ class TestCreateNewProject:
             assert len(cases) == 0
 
 
-@allure.story("QC-026.03 View Sources List")
+@allure.story("QC-026.03 View Source List")
 @allure.severity(allure.severity_level.CRITICAL)
 class TestViewSourcesList:
     @allure.title("AC #1: Empty and populated sources list")
@@ -307,7 +307,7 @@ class TestViewSourcesList:
             assert app_context.state.current_source_id.value == "1"
 
 
-@allure.story("QC-026.04 Switch Screens/Views")
+@allure.story("QC-026.04 Switch Between Screens")
 @allure.severity(allure.severity_level.NORMAL)
 class TestSwitchScreens:
     @allure.title(
@@ -351,7 +351,7 @@ class TestSwitchScreens:
                 assert app_context.state.current_screen == screen
 
 
-@allure.story("QC-026.05 Agent Query Project Context")
+@allure.story("QC-026.05 Get Project Context")
 @allure.severity(allure.severity_level.CRITICAL)
 class TestAgentQueryContext:
     @allure.title("AC #5: Agent queries project context (open and closed)")
@@ -470,7 +470,7 @@ class TestAgentQueryContext:
             assert app_context.state.current_source_id.value == "1"
 
 
-@allure.story("QC-026.06 Agent Navigate to Segment")
+@allure.story("QC-026.06 Navigate to Source")
 @allure.severity(allure.severity_level.CRITICAL)
 class TestAgentNavigateToSegment:
     @allure.title("AC #6: Navigate tool schema, validation, and nonexistent source")
@@ -563,7 +563,7 @@ class TestAgentNavigateToSegment:
             assert data["suggested"]["language"] == "es"
 
 
-@allure.story("QC-026 Integration")
+@allure.story("QC-026 Open Navigate Project")
 @allure.severity(allure.severity_level.CRITICAL)
 class TestProjectWorkflowIntegration:
     @allure.title("Complete workflow: Create, open, add sources, query, close")

@@ -92,7 +92,7 @@ def _seed_source(
 # ============================================================
 
 
-@allure.story("QC-027.13 Create Folder")
+@allure.story("QC-027.05 Organize Sources")
 @allure.severity(allure.severity_level.CRITICAL)
 class TestCreateFolder:
     @allure.title("AC #1+4+5: Create root and nested folders with event publishing")
@@ -179,7 +179,7 @@ class TestCreateFolder:
 # ============================================================
 
 
-@allure.story("QC-027.14 Rename Folder")
+@allure.story("QC-027.05 Organize Sources")
 @allure.severity(allure.severity_level.NORMAL)
 class TestRenameFolder:
     @allure.title("AC #1+3: Rename folder successfully and publish event")
@@ -246,7 +246,7 @@ class TestRenameFolder:
 # ============================================================
 
 
-@allure.story("QC-027.15 Delete Folder")
+@allure.story("QC-027.05 Organize Sources")
 @allure.severity(allure.severity_level.NORMAL)
 class TestDeleteFolder:
     @allure.title("AC #1+3: Delete empty folder and publish event")
@@ -307,7 +307,7 @@ class TestDeleteFolder:
 # ============================================================
 
 
-@allure.story("QC-027.16 Move Source to Folder")
+@allure.story("QC-027.05 Organize Sources")
 @allure.severity(allure.severity_level.NORMAL)
 class TestMoveSourceToFolder:
     @allure.title(
@@ -385,7 +385,7 @@ class TestMoveSourceToFolder:
 # ============================================================
 
 
-@allure.story("QC-027.17 Folder Policies")
+@allure.story("QC-027.05 Organize Sources")
 @allure.severity(allure.severity_level.NORMAL)
 class TestFolderPolicies:
     @allure.title("AC #1: Folder deletion unassigns sources via policy")

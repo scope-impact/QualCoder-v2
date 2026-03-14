@@ -1,0 +1,78 @@
+REVIEW TYPE AND GOAL
+- Review of a draft to UI changes that include some system information
+
+CONTEXT
+
+
+TRANSCRIPT
+- The merge request is based on the ticket mentioned in the PR description.
+- Follows the link to view the issue. It is supposed to change the view of how their library is being used on the webpage. They want to show which version of their component library was a guide built on.
+- Goes back to the merge request. Scrolls down through the Overview where more information is added in a comment by the author. It includes a screenshot and bullet points on what was implemented and where to see it on the UI. The reviewer points the mouse at the spots where the expected data is shown.
+- Switches to the Commits tab. Usually the reviewer reads the commit messages first to understand what is going on.
+- Goes to the Changes tab to see the diffs and scrolls through.
+- Reminds the goal that they want to display the version of the library used in the guide.
+- First looks at the files that were created. The function has in the name”latesVersion” which makes the reviewer think whether they want the latest or the current version of the component library used in the guide.
+- Adds a comment to ask whether it should be a ‘currentVersion”. Just adds the comment immediately (vs starting a review).
+- The reviewer tries to ask things rather than say what is the “correct way” which can lead to less conflicts and be less patronising.
+- The reviewer’s opinion is the question asked.
+- The first think for the reviewer is to look through the names of stuff as names are important for someone to be able to understand the code. So the name of files, functions, variables…
+- Then looks at the structure of the code (scrolling up and down throughout speaking.)
+- For example the latestVersion file should follow the patterns they use for naming.
+- Switches to a new tab in the browser to search for change case in rpm. Opens the first result pointing to the nom documentation. Opens another link that lists how to import cases individually and finds that the reviewer wants the author to change from the snakeCase that they used to the paramCase.
+- Goes back to GitLab. Adds a comment saying that the file name should probably use paramCase instead of snakeCase. Again writes the comment a bit more liberal to allow discussion.
+- Then firstly wants to see the easy things in the code. Scrolls to the newly added file to show that they will not review the main added logic part yet.
+- The file below the main change is an easy one liner which also has an easy catch. So it calls a script and then another script but the first script is blocking so the next one will never run.
+- Also it calls a file with the wrong name as the author interchanged the file name with the function name.
+- Also sees that the file cannot be run because it needs more code to do it and generally it is not a good practice.
+- Adds a comment tat the script will never run as the first command is blocking. Also, there is no file named [the file name].
+- Then goes back to the newly added file which is the most difficult part to review. The reviewer goes line by line and notices a line which is probably wrong. The script tries to identify the current version of the library by using a package json file that exists in a module and then uses an embedded node.js method to get the mtime.
+- Switches to a bookmarked tab in the browser with a chatGPT and asks what does that function return.
+- While chatGPT is generating the answer, the reviewer asks what does the mtime field represent. Sometimes chatGPT gives wrong answers but it listed all the fields in the function including mtime which is the last time it was modified.
+- The reviewer concludes the code could be correct but would like to test it.
+- Thinks that the package version they have is at least two years old so if they run it in their system, the reviewer would expect the method shows at least 2 years behind.
+- Testing in the local terminal the mtime shows the reviewer that it is one year so it is completely wrong.
+- Adds a comment to the diff that the method does not seem to return the date when the package.jason was modified but when it was added on the specific hosts file tree. Tries to explain like that to the author why that method is the wrong one to use. Also wants to propose a method to use. The review knows that there is a changelog file in the code base that includes versions together with the date that was created. Suggests to the author that a better way to get the date of the release would be to get specific version of the UI from the dependencies of the guide and then look at the changelog.json to get the date of the release.
+- To review that part the reviewer understood from their experience how that method work on their real code base, saw that it doesn’t work and then knew what files contain the correct information. Then proposed a correct way on how to get that information.
+- Further in the logic sees a typo.
+- Adds a comment pointing to that typo.
+- Moves to a file above which uses that script which probably again uses a wrong name. Also thinks the last updated version that is returned is actually a date.
+- Adds a comment that the version contains a date and says that the name should probably contain date.
+- Sees that the script imports a function and then runs it.
+- Then the author adds a custom field inside a config which is not really meant to have that information. 
+- Adds a comment that the field should be top level and not inside of the config since the config is meant to host things about the theme.
+- Scrolls back up to the beginning of the file. Also can see that the function runs and returns the version and the date but then runs it again after the comment the reviewer just entered. So that is also wrong.
+- Adds a comment that since the function was already run at the top of the file, the author can use the return values directly. Reminds the faction should hold current version rather than the latest version.
+- That was the first stage of the review process - just look at the code, find as many things to change as possible. Who these issues are resolved. Then, the reviewer would download the code to the local environment and run it and check if everything behaves correctly and that’s it.
+
+GENERAL STRATEGY
+- Reads commit messages, checks naming, checks easily reviewable parts, checks the main part of the change harder to review. Does not submit a review, just comments.
+
+INTERVIEW
+
+I: So you are not necessarily like submitting a review with like request changes or reject or accept. You are like commenting until you are ready to run the code, and then you give some final review let's say. yeah.
+
+P6: Yes. Yes.
+
+I: So this is like a code list that you already know quite well, right?
+
+P6: Yes, yes, I am the main developer. I know all of our code base. It's a huge code base. But I've been here like 3 years and that was the main period of it. So now we have, like, 10 person team. But all of the code is in my hands.
+
+I: That the person that is submitting the code is who? Like a volunteer that is contributing. Is it the colleague? Is it junior or senior?
+
+P6: It's a colleague of mine in our team that has, like 3 4 years of experience. I have like 12.
+
+I: Okay.
+
+P6: He is here I think for a year and a half so he is still learning stuff.
+
+I: Is, is it like a common process that you have that you firstly, do some structural things about the code, the this like naming and structure, and then you do the easy stuff to move on to the more hard core?
+
+P6: Exactly. The first thing that I look is the names the names used in the code, the file names, the variable names, the function names. And if you do it correctly, you don't have to comment your code. For someone to understand it. They just understand it by reading the names of variables or the functions. So it's a really important for the function names to represent exactly what the the function does in the logic.
+
+I: Another thing I was wondering is how do you determine when to finish the review?
+
+P6: The review finishes when I don't have any more comments. So if I if this issues are fixed  and they're fixed correctly and I don't have any more points regarding the code. And I run the code and the code runs correctly. It does what it’s meant to do. The last thing for me to do is to approve the code. I hit this button [points at the approve button at the top of the page]. When I approve we call for a second reviewer to have a second paradise to to look at the code. And if the second reviewer approves and the test passes - you have to have built the CI mechanism to check for the usual stuff like that the code builds. Is the code listed well - are the indentation correctly and stuff like that. And if all these are ticked we mark the the merge request is ready and we merge it.
+
+I: Did you reach a full understanding of what the change did, what was happening there?
+
+P6: Yes, totally. I have to. If I see there is some point I cannot understand… It's not really usual but it happens, then I get in a call with the person that wrote the code. First I ask them to explain what the code does, and then I ask them to refactor the code, so somebody should not have to ask to understand the code. So I propose changes on how the code should be to be more understandable and not up to…

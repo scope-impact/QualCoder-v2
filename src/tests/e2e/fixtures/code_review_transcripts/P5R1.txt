@@ -1,0 +1,93 @@
+REVIEW TYPE AND GOAL
+- First review
+
+CONTEXT
+-Fully upstream community review
+- Long-standing project = clear guidelines and customs
+
+TRANSCRIPT
+- Reading a description and saying the change is trying to troubleshoot some behaviour they do not understand by adding more information to the system. They will fix it later.
+- First, notices that there is a -1 evaluation from a failing CI so goes to check what it means.
+- Goes to the CI summary tab. Sees that something in the CI itself is failing rather than the test itself so decides to ignore it for now as they will run the CI on the change at some point anyway.
+- While reading the PR description, thinks that they probably noticed in previous code reviews that they are overusing lazy loading and now they are trying to fix it.
+- Looking at the overview on the Files tab, the reviewer sees that there is one bigger change in a file that is probably used in the other files so starts there.
+- Immediately sees that there are 2 comments from other reviewers already. Skips them for now as the reviewer doesn’t want to be influenced by the comments for now and piling up on those. Firstly wants to understand what is happening and then read the comments later.
+- The change introduces a counter for the lazy loads on a specific object. The reviewer just from that imagines that the author probably counts the lazy loads per request and then logs it which is what is actually then written in the code.
+- Additionally the code implements also a record of which attributes are being loaded which would be useful for trying to fix the issue later and performing all the loads in the bulk.
+- When the lazy loads happen, it creates a warning that can be later read from the CI.
+- It wants to be generic, so they can attach the counter to all the objects in the system and it wants to look at the id of the object during the lazy load. It tries to be extractive on the type of ID in the code and catches cases when it doesn’t know the object id which looks a bit strange and smelly as a generic behaviour. The reviewer thinks there should be a more simple way to track or identify objects in the system. Doesn’t think it is responsibility of the object to supply its ID, so the reviewer wants to have a look into that.
+- Opens a draft comment to remind themself that it will work but it feels strange that the generic code tries to figuur out how to ID an object. The reviewer wants to get back to this and to understand if they can do it better.
+- It is just used in the logging so if they cannot find how to do it better it’s probably OK anyway.
+- Reads a longer in-line comment introducing a variable and concludes that is the place where they will store all the collected information from the counter.
+- The reviewer concludes that this is the core of the change which is going to be used by many many objects [pointing with mouse on the list of Files in the Files tab].
+- opens the first file with a small change - “yeah so it basically decorates the place where the objects are loaded.”
+- Lastly switches through the files to see all the wrapper implementation points.
+- Realises this is probably a selective list of objects that they are going to track or care about. So it is also a question why these are the ones they care about.
+- Looking at the list it looks like it’s either some major objects or the ones the author noticed are being loaded many times.
+- O pens the commit message and starts writing a comment as the reviewer did not notice it would be explained why these objects specifically are being decorated. Asks what is the reason for these objects being decorated and why not all of their objects and if it is expensive to do so.
+- This issue is probably a stopper so the reviewer already knows they will give a negative feedback to the PR because they want to get an answer to that. Then they could probably also decorate in single place rather than around all of the objects in different files.
+- One more bigger thing to test in the PR is the unit test case.
+- It tests that the decorater catches the lazy loads and if there is an excessive lazy load then it logs it.
+- For the first lazy load it will not log, for the second it will. That’s OK.
+-The next test is for checking the identity of the object if it knows how to identify it.
+- Goes to check what the others said in their reviews and comments and if it is related to his comments.
+- Reads the first review which is +1. Then extends the first comment in the conversation to read the author’s answer to it. It is a relevant comment but it was on Patch set 1 so the reviewer assumes it was already fixed as they are on Patch set 2.
+- Goes to check the diff between the patch sets using the terminal. Sees that the first Patch set was logging just the number of lazy loads and now it also logs the attributes so the comment is fixed.
+- Goes back to the conversation in his review. Looks at another comment from another reviewer which is also quite relevant but the reviewer says that if they resolve the issue the reviewer would expect that rating these log warnings is not going to affect the production code and the logging level will probably decrease.
+- Remembers that the reviewer had a tentative comment on the ID identification implementation. Goes back to the relevant file.
+- Based on the nit test case that was done for the behaviour [switches to the test file] when it is an instance object, they have one type of ID field, for service objects another bt if it is anything else they do not know.
+- Realises their base object doesn’t have a good stringification or other way to be identified well.
+- Goes back to the core file.
+- Decides to reformulate the tentative comment into a question for the author as the reviewer doesn’t have a good suggestion on how to do it. It is not easy to have a generic id for an object. They wold probably not change it here but the reviewer wants to trigger thinking on downsides if they are going to improve it later.
+- Adds a comment saying it feels strange but that the reviewer realises they don’t have a better way to ID objects. Maybe the issue can be later improved separately. The potential solution cold be to make all objects generate a good string representation.
+- While writing realises that the reviewer actually has a vision on how to implement the improvement but it would require much more work.
+- The reviewer also thinks most of their objects have some sort of id field.
+- Doesn’t want to delay this fix because of a potential improvement. Wants to at least express and improve it in the future. Has an idea on how to do it if the others agree.
+- Th review is done. Remembers that wants to give negative feedback because of the question that the reviewer has about why these specific objects. Opens the submit review. Gives a -1 as feedback. Then goes to write the review message - wants to express why is it a -1 and that it is not because of the improvement and the reviews wants just the question to be answered.
+- The reviewer likes it very much when they get feedback on their PRs to know why they are getting the -1. If there is 10 comments but the reviewer wants to have 5 of them fixed before giving a +1, then they want to know what are the most important issues. SO the reviewer tends to do the same thing.
+- Writes in the review message very directly that the -1 is based only on the question on the selection of the objects, otherwise the PR looks good.
+- The reviewer knows the author very well so there is no emphasis on being very positive or encouraging, the reviewer knows the author does not take negative feedback too seriously. If the reviewer wouldn’t know the person then they would also add something like “good work”, “please continue”, “I will come back and re-review it later”, “if you have questions, find me on irc” but this is not the case so the reviewer doesn’t want to overcomplicate and write too much.
+- Submits the review.
+- Looks at the remaining suff in the relation chain, the reviewer thinks that the author used a patch from there to create the warning logs and then the author is trying to avoid lazy loads in some other patches on top of that one. 
+- For now the reviewer can just leave it as they left negative feedback so the author will respond and they  will get a notification again and they will not forget about it.
+
+GENERAL STRATEGY
+- Read the description, avoid comments, find the core of the change, see where its used, see the tests.
+
+NOTES
+
+
+INTERVIEW
+I: Okay, I can have some questions now. So you say that you are not really like focusing on being like super encouraging and positive. But I mean the the feedback that you gave for the review was actually very positive.
+
+P5: yeah, I would say. Then I would be lot more focusing a lot more on encouragement if I see somebody newer or even not recognizing the name of the author. So I can be more positive than that, or more more encouraging than that. Still.
+
+I: So what's the role for you of being positive right now.
+
+171
+00:22:53.120 --> 00:23:07.630
+P5:  so right now, it just like keeping the good relationship up with them. Probably even that's part of being explicit what I am negative on. I don't count it as positive encouragement or something, it just being really explicit and helping the author to fix the thing that is relevant for me and not spending too much time on things that I noticed but I don't block really on this. For others like those who are new to the community… In the past, when I was new, the hardest thing for me was separating the negative feedback on my patches from the feeling of I being wrong. So I I just remember these, how how hard it is. So when I write code review, I try to be either as positive as possible, or if it's impossible, because that is like something really wrong in the proposal, then somehow trying to give the feedback very specifically on the code that is wrong and not trying to mention, like connecting it to the author itself. That's really something that messes the minds of people. Like when I create a code I know it's a bit like my baby, so like when I get negative feedback, I feel bad about it, but it shouldn't. It's just like how how we improve. So I tend to say to newcomers that as soon as they push the button to publish any kind of change that change is not theirs anymore. It's owned by the community already. So that's that's not just theirs. That helped me to like disconnect these 2 things, because as soon as you get the negative feedback and feel that you are wrong you become defensive. And that's stopping the actual progress on on the code improvement. Because then you, you try to defend your code instead of improving your code, which most of the time is not the right thing to do. Sometimes it is, sometimes the the reviewer is wrong, and you have to defend your your point, but but it's really easy to end up in in in a state of mind when you are just defending, because it's yours, not defending, because you think it's it's a good thing to do. So that's I'm trying to avoid in a code review.
+
+I: Okay. I want to ask you 2 more things, and then we can proceed just so that we move on. One thing is that when you already went to the changed files you said something like: Okay, so here is a lot of change lines - this is probably like the core of the change. Is this something that you like to commonly or regularly that you try to see? Let's say, the distribution of the change. Find where to start.
+
+P5: Yes, so I try to identify what part of the system is changed by by the actual review. Also, I try to separate out certain parts of the change, like I definitely ran to the test. In this case, the test change at the at the end of the the review. It depends. By looking at this, I saw that there is a single big change, a lot of smaller change, and the test change. So it was fairly simple. If this would be a complicated change I might start even with the test code. So that depends on the size and the distribution of the changes if it touches a lot of things in the system… And again, I would focus more on the commit message, seeing what is the intention here, maybe looking at some test cases to see what they try to solve. With this change before selecting where to start the the implementation review.
+
+It was very simple that it doesn't need. I mean, it was a single place where we really implemented things, so I don't have to follow like a code path or a call code chain in the system.
+If there would be such a change. We review, then, either I start from the top following the the code chain down to to the bottom of the system, or vice versa, start at the bottom, understanding what is the the lowest level change and then building up the knowledge through the code chain because starting in the middle is the hardest thing, because then, that you have to understand both sides of the that change the higher level and the lower level of it. So that's one thing I try to find first - where to start. And it was easy in this case, because it's concentrated in a single file. And it was in a file named base so I realized that this is probably a base class, and the rest is just the the the specific classes inheriting from that base class. So again, that's some common implementation that is now spreading to some some specific implementation places.
+
+Also a very common thing to see is that people create big patches. And then one of my com early comment will be “if it's possible please pick it up because I will suffer reading this through”. So that that's just hard. It was easy, because it's like less than 100 lines of code. So it's okay.
+
+I:  So you also mentioned something like that, you are going to now see if there are some comments relevant to what you have pointed out.
+
+P5: Yeah.
+
+I: So you have a look if there's already a discussion on what you also are mentioning. But how? What do the other comments may mean for you? If there are other comments, do you care about them at all? Or.
+
+P5: It again again depends. If it's a big change, a long series. And there is already discussion on the change. Then sometimes I start with reading the discussion, because maybe the discussion already explains to me that I shouldn't review it right now, because somebody already went deep into this, and my time is not even needed right now here. So that's one thing I would do. That also would be visible on, or the existing feedback on it. So it therefore would be like 2 people with negative feedback on this change, then I I will probably skip this and maybe get back later, when when they settle their discussions - like spending my time on things that are not progressing, because that's where I can help the most.
+But if there is like no like no negative feedback from others, and there is no long discussion. I saw that there was some discussion, but because it's fit in a single screen. How many back and forth on this. I didn't think this is already in deep discussion, back and forth. So I then I switched the mode, not really reading it, because then I will look at the same problems they are discussing, and that's maybe not that important than finding other aspects. Looking through this, I don't want to drive myself towards the same problems they are discussing. First, I want to understand the change, maybe have my own view on this, and then at the end, I really want to see if what I found is the same they are discussing, because I don't have to duplicate that comment. I just like read what they did. Maybe I add my view to it, if it is it missing there, or just like, say that I agree with, follow the sides of the discussions.
+And also I want to see what others see, because that's things I might miss. And I want to learn from that. And also, maybe they are discussing something that I have opinion about. I just didn't realize that I have an opinion about so that's the 2 modes. Again, it depends on the complexity of the things. There could be cases when  this seems like seem seems like a very small thing. But if I see like a bug report link here, or a feature specification link here [pointing at the PR description], then I might start with those. Why they are doing this. Is it a feature? If it's a feature I expect that I heard about this before, because there was a specification review feature specification review. I probably even if I know I haven't reviewed it, but I heard about it, but others reviewed it, and we approved it as a as a feature for this cycle. So so still, I would go there and load some context.
+
+I: You would hear about this in sprint plannings or?
+
+P5: Yes, so we have like in this project we have like half a year cycles for each major release. We have half a year to produce that, and, like the first half or first 2 thirds of the that half a year is where we focus on features. And the first half of that is when people can propose feature specifications that they want to work on during the half a year cycle. And like somewhere in the middle or 2 third of the the half a year, we we freeze the feature work. So we say, those feature specifications we uproot, for the cycle can progress, but those that we haven't yet. Then they should wait for the next cycle. So, and because we have, like around 10 reviewers who can approve feature specifications and I'm part of that group… It's less than 10 people now. It's like 5 people now. So it's very high chance that I at least saw or discussed some part of all those features we we have actually approved at the end. Bug fixes I tend to also just check if the bug is like describing what they want to solve, because that that tend to be a gap between the actual failure that was reported in a bug report and the fix that's fixing, maybe a more generic behavior to fix that bug, but also other things in the in the process so that can be relevant if there is a bug bug report attached.
+There could have been a bug report here, but we tend not to just generate paperwork for ourselves. So it was then noticed something. Then fixing something. So I won't ask for a bug report just for this.

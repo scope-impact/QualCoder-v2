@@ -127,7 +127,7 @@ def coding_screen(qapp, colors, sample_data):
 # =============================================================================
 
 
-@allure.story("QC-032.01 Search for Text Patterns")
+@allure.story("QC-032.01 Search Text Pattern")
 class TestPatternSearch:
     """
     QC-032.01: Researcher can search for text patterns
@@ -252,7 +252,7 @@ class TestMatchPreview:
 # =============================================================================
 
 
-@allure.story("QC-032.03 Apply to All Matches")
+@allure.story("QC-032.03 Apply Code to All Matches")
 class TestApplyToMatches:
     """
     QC-032.03: Researcher can apply code to all matches
@@ -396,7 +396,7 @@ class TestAutoCodeBySpeaker:
 # =============================================================================
 
 
-@allure.story("QC-032.06-08 Agent Batch Operations")
+@allure.story("QC-032.06 Find Similar Passages")
 class TestAgentBatchOperations:
     """
     QC-032.06-08: Agent batch coding features
@@ -440,7 +440,7 @@ class TestAgentBatchOperations:
 # =============================================================================
 
 
-@allure.story("QC-032 Integration")
+@allure.story("QC-032 Auto Code")
 class TestAutoCodeIntegration:
     """Integration tests for complete auto-code workflow."""
 

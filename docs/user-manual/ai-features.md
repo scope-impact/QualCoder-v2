@@ -96,6 +96,8 @@ QualCoder v2 supports AI agents (like Claude Code) working alongside human resea
 - **Organize sources** into folders (create, rename, delete folders; move sources)
 - **Remove sources** with a safe preview-then-confirm workflow
 - **Read and analyze** document content, suggest codes, and apply coding
+- **Manage codes** — rename codes, update memos, merge overlapping codes, delete irrelevant codes
+- **Organize themes** — create categories, move codes into categories, list category hierarchy
 
 ### Trust Levels
 
@@ -108,6 +110,22 @@ Agent tools operate at different trust levels for safety:
 | T3 (Suggest) | Agent proposes, researcher confirms | `add_text_source`, `remove_source` |
 
 Destructive operations like `remove_source` default to **preview mode** — the agent shows what would be affected before you approve the action.
+
+### Code Management Tools
+
+Agents can perform the full qualitative analysis workflow using these code management tools:
+
+| Tool | Purpose | Thematic Analysis Phase |
+|------|---------|------------------------|
+| `rename_code` | Rename a code | Phase 5: Defining Themes |
+| `update_code_memo` | Set/update code definitions | Phase 5: Defining Themes |
+| `create_category` | Create theme categories | Phase 3: Searching for Themes |
+| `move_code_to_category` | Organize codes under themes | Phase 3: Searching for Themes |
+| `merge_codes` | Consolidate overlapping codes | Phase 4: Reviewing Themes |
+| `delete_code` | Remove irrelevant codes | Phase 4: Reviewing Themes |
+| `list_categories` | View thematic structure | All phases |
+
+These tools delegate to domain command handlers, ensuring proper event publishing and UI refresh via SignalBridge.
 
 See [MCP Setup Guide](./mcp-setup.md) for configuration and the full list of available tools.
 

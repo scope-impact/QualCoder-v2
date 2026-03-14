@@ -97,7 +97,7 @@ def sync_status_button(qapp, colors):
 # =============================================================================
 
 
-@allure.story("QC-047.01 Cloud Sync Settings")
+@allure.story("QC-047 Cloud Sync with Convex")
 @allure.severity(allure.severity_level.CRITICAL)
 class TestCloudSyncSettings:
     """
@@ -197,7 +197,7 @@ class TestCloudSyncSettings:
 # =============================================================================
 
 
-@allure.story("QC-047.04 Sync Status Indicator")
+@allure.story("QC-047 Cloud Sync with Convex")
 @allure.severity(allure.severity_level.NORMAL)
 class TestSyncStatusButton:
     """
@@ -259,7 +259,7 @@ class TestSyncStatusButton:
 # =============================================================================
 
 
-@allure.story("QC-047.01 Cloud Sync Settings Persistence")
+@allure.story("QC-047 Cloud Sync with Convex")
 @allure.severity(allure.severity_level.CRITICAL)
 class TestCloudSyncPersistence:
     """

@@ -186,7 +186,7 @@ index abc1234..def5678 100644
 # =============================================================================
 
 
-@allure.story("QC-048.06 Version History UI")
+@allure.story("QC-048 SQLite Database Version Control")
 @allure.severity(allure.severity_level.CRITICAL)
 class TestVersionHistoryScreen:
     """
@@ -273,7 +273,7 @@ class TestVersionHistoryScreen:
 # =============================================================================
 
 
-@allure.story("QC-048.07 Diff Viewer Dialog")
+@allure.story("QC-048 SQLite Database Version Control")
 @allure.severity(allure.severity_level.CRITICAL)
 class TestDiffViewerDialog:
     """
@@ -341,7 +341,7 @@ class TestDiffViewerDialog:
 # =============================================================================
 
 
-@allure.story("QC-048.08 Restore Snapshot")
+@allure.story("QC-048 SQLite Database Version Control")
 @allure.severity(allure.severity_level.CRITICAL)
 class TestRestoreSnapshot:
     """
@@ -405,7 +405,7 @@ class TestRestoreSnapshot:
 # =============================================================================
 
 
-@allure.story("QC-048 Integration")
+@allure.story("QC-048 SQLite Database Version Control")
 @allure.severity(allure.severity_level.CRITICAL)
 class TestVersionControlIntegration:
     """Integration tests for complete VCS workflow."""
@@ -464,7 +464,7 @@ class TestVersionControlIntegration:
 # =============================================================================
 
 
-@allure.story("QC-048 Design System")
+@allure.story("QC-048 SQLite Database Version Control")
 @allure.severity(allure.severity_level.NORMAL)
 class TestDesignSystemIntegration:
     """Tests for design system token usage in VCS components."""

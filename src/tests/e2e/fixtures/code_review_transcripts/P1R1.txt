@@ -1,0 +1,24 @@
+REVIEW TYPE AND GOAL
+Subsequent review - see how previous comments were addressed
+Refactoring - improving variable naming
+
+CONTEXT
+- As a maintainer, she merges the code and finally approves only after the reviewers from individual teams already review and accept so her decision doesn’t matter until that happens. She might review the code first though.
+- That does not change the process of how she reviews the changes
+
+TRANSCRIPT
+- Checking change by change
+- Paying attention whether all that should have been changed was changed so that everything relevant is changed in 1 PR
+- Keeping in mind the understandability of the naming for people less involved with the code
+- Focusing in a targeted way on the names
+- Adding a comment 
+- Finishing going through all the changed lines
+
+
+GENERAL STRATEGY
+Checking description
+Top to bottom
+
+UNDERSTANDING
+Full
+Not really needed
