@@ -14,7 +14,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 from src.contexts.storage.core.commandHandlers._state import (
-    S3ScannerProtocol,
+    DvcGatewayProtocol,
     StoreRepository,
 )
 from src.contexts.storage.core.commands import ExportAndPushCommand
@@ -47,16 +47,16 @@ class ExportRequest:
 def export_and_push(
     command: ExportAndPushCommand,
     store_repo: StoreRepository,
-    s3_scanner: S3ScannerProtocol,
+    dvc_gateway: DvcGatewayProtocol,
     exporter: Callable[..., OperationResult],
     event_bus: EventBus,
 ) -> OperationResult:
     """
-    Export project data and push to S3.
+    Export project data and push to S3 via DVC.
 
     1. Validate store is configured and destination key is valid
     2. Run the exporter to produce a local file
-    3. Push the file to S3
+    3. dvc add + dvc push
     4. Publish ExportPushed event
     """
     logger.debug(
@@ -87,16 +87,18 @@ def export_and_push(
         logger.error("export_and_push: export step failed")
         return export_result
 
-    # 3. Upload to S3
+    # 3. Track with DVC and push to S3
     try:
-        s3_scanner.upload_file(
-            bucket=store.bucket_name,
-            key=command.destination_key,
-            local_path=str(staging_path),
-        )
+        add_result = dvc_gateway.add(str(staging_path))
+        if not add_result.success:
+            raise RuntimeError(f"dvc add failed: {add_result.message}")
+
+        push_result = dvc_gateway.push(remote=store.dvc_remote_name)
+        if not push_result.success:
+            raise RuntimeError(f"dvc push failed: {push_result.message}")
     except Exception:
         logger.exception(
-            "export_and_push: upload failed for %s", command.destination_key
+            "export_and_push: dvc push failed for %s", command.destination_key
         )
         failure = ExportNotPushed.upload_failed(command.destination_key)
         event_bus.publish(failure)
@@ -111,7 +113,7 @@ def export_and_push(
     event_bus.publish(event)
 
     logger.info(
-        "Exported %s and pushed to %s",
+        "Exported %s and pushed via DVC to %s",
         command.export_format,
         command.destination_key,
     )

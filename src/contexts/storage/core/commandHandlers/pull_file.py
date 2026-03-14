@@ -1,7 +1,7 @@
 """
 Pull File Use Case.
 
-Downloads a file from S3 into the local project.
+Pulls tracked data from S3 via DVC.
 """
 
 from __future__ import annotations
@@ -10,7 +10,7 @@ import logging
 from typing import TYPE_CHECKING
 
 from src.contexts.storage.core.commandHandlers._state import (
-    S3ScannerProtocol,
+    DvcGatewayProtocol,
     StoreRepository,
 )
 from src.contexts.storage.core.commands import PullFileCommand
@@ -29,15 +29,15 @@ logger = logging.getLogger("qualcoder.storage.core")
 def pull_file(
     command: PullFileCommand,
     store_repo: StoreRepository,
-    s3_scanner: S3ScannerProtocol,
+    dvc_gateway: DvcGatewayProtocol,
     event_bus: EventBus,
 ) -> OperationResult:
     """
-    Pull a file from S3 to local project.
+    Pull tracked data from S3 via DVC.
 
     1. Load store config
     2. Validate key (pure)
-    3. Download file (I/O)
+    3. dvc pull (I/O) — DVC handles sync/skip internally
     4. Publish event
     """
     logger.debug("pull_file: key=%s", command.key)
@@ -59,22 +59,17 @@ def pull_file(
     event: FilePulled = result
 
     try:
-        downloaded = s3_scanner.sync_file(
-            bucket=store.bucket_name,
-            key=command.key,
-            local_path=command.local_path,
-        )
+        pull_result = dvc_gateway.pull(remote=store.dvc_remote_name)
+        if not pull_result.success:
+            raise RuntimeError(f"dvc pull failed: {pull_result.stderr}")
     except Exception:
-        logger.exception("pull_file: sync failed for %s", command.key)
+        logger.exception("pull_file: dvc pull failed for %s", command.key)
         failure = FileNotPulled.download_failed(command.key)
         event_bus.publish(failure)
         return OperationResult.from_failure(failure)
 
     event_bus.publish(event)
 
-    if downloaded:
-        logger.info("File pulled: %s -> %s", command.key, command.local_path)
-    else:
-        logger.info("File already in sync: %s", command.key)
+    logger.info("File pulled via DVC: %s -> %s", command.key, command.local_path)
 
     return OperationResult.ok(data=command.local_path)

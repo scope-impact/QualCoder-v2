@@ -1,7 +1,7 @@
 """
 Push Export Use Case.
 
-Uploads a coded export from local project to S3.
+Tracks a coded export with DVC and pushes to S3 remote.
 """
 
 from __future__ import annotations
@@ -10,7 +10,7 @@ import logging
 from typing import TYPE_CHECKING
 
 from src.contexts.storage.core.commandHandlers._state import (
-    S3ScannerProtocol,
+    DvcGatewayProtocol,
     StoreRepository,
 )
 from src.contexts.storage.core.commands import PushExportCommand
@@ -29,15 +29,15 @@ logger = logging.getLogger("qualcoder.storage.core")
 def push_export(
     command: PushExportCommand,
     store_repo: StoreRepository,
-    s3_scanner: S3ScannerProtocol,
+    dvc_gateway: DvcGatewayProtocol,
     event_bus: EventBus,
 ) -> OperationResult:
     """
-    Push a coded export to S3.
+    Track a coded export with DVC and push to S3.
 
     1. Load store config
     2. Validate destination key (pure)
-    3. Upload file (I/O)
+    3. dvc add + dvc push (I/O)
     4. Publish event
     """
     logger.debug("push_export: %s -> %s", command.local_path, command.destination_key)
@@ -59,19 +59,21 @@ def push_export(
     event: ExportPushed = result
 
     try:
-        s3_scanner.upload_file(
-            bucket=store.bucket_name,
-            key=command.destination_key,
-            local_path=command.local_path,
-        )
+        add_result = dvc_gateway.add(command.local_path)
+        if not add_result.success:
+            raise RuntimeError(f"dvc add failed: {add_result.stderr}")
+
+        push_result = dvc_gateway.push(remote=store.dvc_remote_name)
+        if not push_result.success:
+            raise RuntimeError(f"dvc push failed: {push_result.stderr}")
     except Exception:
-        logger.exception("push_export: upload failed for %s", command.destination_key)
+        logger.exception("push_export: dvc push failed for %s", command.destination_key)
         failure = ExportNotPushed.upload_failed(command.destination_key)
         event_bus.publish(failure)
         return OperationResult.from_failure(failure)
 
     event_bus.publish(event)
 
-    logger.info("Export pushed: %s -> %s", command.local_path, command.destination_key)
+    logger.info("Export pushed via DVC: %s", command.local_path)
 
     return OperationResult.ok(data=command.destination_key)

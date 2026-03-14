@@ -1,7 +1,7 @@
 """
 Configure Store Use Case.
 
-Sets up an S3 bucket as the project's data store.
+Sets up an S3 bucket as the project's data store and configures DVC remote.
 """
 
 from __future__ import annotations
@@ -9,7 +9,10 @@ from __future__ import annotations
 import logging
 from typing import TYPE_CHECKING
 
-from src.contexts.storage.core.commandHandlers._state import StoreRepository
+from src.contexts.storage.core.commandHandlers._state import (
+    DvcGatewayProtocol,
+    StoreRepository,
+)
 from src.contexts.storage.core.commands import ConfigureStoreCommand
 from src.contexts.storage.core.derivers import StorageState, derive_configure_store
 from src.contexts.storage.core.entities import DataStore
@@ -26,14 +29,16 @@ logger = logging.getLogger("qualcoder.storage.core")
 def configure_store(
     command: ConfigureStoreCommand,
     store_repo: StoreRepository,
+    dvc_gateway: DvcGatewayProtocol,
     event_bus: EventBus,
 ) -> OperationResult:
     """
     Configure an S3 data store for the project.
 
     1. Validate config (pure)
-    2. Persist store config
-    3. Publish event
+    2. Initialize DVC and configure S3 remote
+    3. Persist store config
+    4. Publish event
     """
     logger.debug(
         "configure_store: bucket=%s, region=%s", command.bucket_name, command.region
@@ -56,6 +61,13 @@ def configure_store(
 
     event: StoreConfigured = result
 
+    # Initialize DVC (idempotent) and configure S3 remote
+    dvc_gateway.init()
+    s3_url = dvc_gateway.s3_url(command.bucket_name, command.prefix)
+    dvc_gateway.remote_add(command.dvc_remote_name, s3_url)
+    dvc_gateway.remote_modify(command.dvc_remote_name, "region", command.region)
+    dvc_gateway.remote_default(command.dvc_remote_name)
+
     store = DataStore(
         id=event.store_id,
         bucket_name=event.bucket_name,
@@ -67,6 +79,10 @@ def configure_store(
 
     event_bus.publish(event)
 
-    logger.info("Store configured: bucket=%s", store.bucket_name)
+    logger.info(
+        "Store configured: bucket=%s, dvc_remote=%s",
+        store.bucket_name,
+        command.dvc_remote_name,
+    )
 
     return OperationResult.ok(data=store)

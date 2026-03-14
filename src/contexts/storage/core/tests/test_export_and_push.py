@@ -1,7 +1,7 @@
 """
 Storage Context: Export-and-Push Command Handler Tests (TDD RED)
 
-Tests for exporting project data (QDPX/codebook/SQLite) and pushing to S3.
+Tests for exporting project data (QDPX/codebook/SQLite) and pushing via DVC.
 """
 
 from __future__ import annotations
@@ -10,6 +10,8 @@ from pathlib import Path
 
 import allure
 import pytest
+
+from src.contexts.storage.infra.dvc_gateway import DvcResult
 
 pytestmark = [
     pytest.mark.unit,
@@ -42,21 +44,31 @@ class MockStoreRepository:
         self._store = store
 
 
-class MockS3Scanner:
-    def __init__(self):
-        self.uploaded: list[tuple[str, str, str]] = []
+class MockDvcGateway:
+    """Mock DVC gateway for export-and-push tests."""
 
-    def upload_file(self, bucket, key, local_path):
-        self.uploaded.append((bucket, key, local_path))
+    def __init__(self, *, fail_on: str | None = None):
+        self.calls: list[str] = []
+        self._fail_on = fail_on
 
-    def list_files(self, bucket, prefix=""):
-        return []
+    def _result(self, op: str):
+        self.calls.append(op)
+        if self._fail_on == op:
+            return DvcResult(success=False, message=f"{op} failed")
+        return DvcResult(success=True, message=f"{op} ok")
 
-    def download_file(self, bucket, key, local_path):
-        pass
+    def add(self, path):
+        return self._result("add")
 
-    def sync_file(self, bucket, key, local_path):
-        return True
+    def push(self, remote=None):
+        return self._result("push")
+
+    def pull(self, remote=None):
+        return self._result("pull")
+
+    @staticmethod
+    def s3_url(bucket, prefix=""):
+        return f"s3://{bucket}/{prefix}" if prefix else f"s3://{bucket}"
 
 
 class MockExporter:
@@ -95,7 +107,7 @@ def _make_store():
 class TestExportAndPush:
     """Tests for export_and_push composite command handler."""
 
-    @allure.title("Export QDPX and push to S3 succeeds")
+    @allure.title("Export QDPX and push via DVC succeeds")
     def test_export_qdpx_and_push(self, tmp_path):
         from src.contexts.storage.core.commandHandlers.export_and_push import (
             export_and_push,
@@ -103,7 +115,7 @@ class TestExportAndPush:
         from src.contexts.storage.core.commands import ExportAndPushCommand
 
         store_repo = MockStoreRepository(store=_make_store())
-        scanner = MockS3Scanner()
+        dvc = MockDvcGateway()
         event_bus = MockEventBus()
         exporter = MockExporter(output_content="<qdpx>project</qdpx>")
 
@@ -116,17 +128,17 @@ class TestExportAndPush:
         result = export_and_push(
             command=command,
             store_repo=store_repo,
-            s3_scanner=scanner,
+            dvc_gateway=dvc,
             exporter=exporter,
             event_bus=event_bus,
         )
 
         assert result.success is True
-        assert len(scanner.uploaded) == 1
-        assert scanner.uploaded[0][1] == "exports/project.qdpx"
+        assert "add" in dvc.calls
+        assert "push" in dvc.calls
         assert len(event_bus.published) >= 1
 
-    @allure.title("Export codebook and push to S3 succeeds")
+    @allure.title("Export codebook and push via DVC succeeds")
     def test_export_codebook_and_push(self, tmp_path):
         from src.contexts.storage.core.commandHandlers.export_and_push import (
             export_and_push,
@@ -134,7 +146,7 @@ class TestExportAndPush:
         from src.contexts.storage.core.commands import ExportAndPushCommand
 
         store_repo = MockStoreRepository(store=_make_store())
-        scanner = MockS3Scanner()
+        dvc = MockDvcGateway()
         event_bus = MockEventBus()
         exporter = MockExporter(output_content="Theme: Engagement")
 
@@ -147,15 +159,15 @@ class TestExportAndPush:
         result = export_and_push(
             command=command,
             store_repo=store_repo,
-            s3_scanner=scanner,
+            dvc_gateway=dvc,
             exporter=exporter,
             event_bus=event_bus,
         )
 
         assert result.success is True
-        assert scanner.uploaded[0][1] == "exports/codebook.txt"
+        assert "add" in dvc.calls
 
-    @allure.title("Export SQLite snapshot and push to S3 succeeds")
+    @allure.title("Export SQLite snapshot and push via DVC succeeds")
     def test_export_sqlite_and_push(self, tmp_path):
         from src.contexts.storage.core.commandHandlers.export_and_push import (
             export_and_push,
@@ -163,7 +175,7 @@ class TestExportAndPush:
         from src.contexts.storage.core.commands import ExportAndPushCommand
 
         store_repo = MockStoreRepository(store=_make_store())
-        scanner = MockS3Scanner()
+        dvc = MockDvcGateway()
         event_bus = MockEventBus()
         exporter = MockExporter(output_content="SQLITE_BINARY_DATA")
 
@@ -176,13 +188,13 @@ class TestExportAndPush:
         result = export_and_push(
             command=command,
             store_repo=store_repo,
-            s3_scanner=scanner,
+            dvc_gateway=dvc,
             exporter=exporter,
             event_bus=event_bus,
         )
 
         assert result.success is True
-        assert "backups/project_2026-03-14.db" in scanner.uploaded[0][1]
+        assert "push" in dvc.calls
 
     @allure.title("Export and push without configured store fails")
     def test_export_and_push_no_store_fails(self, tmp_path):
@@ -192,7 +204,7 @@ class TestExportAndPush:
         from src.contexts.storage.core.commands import ExportAndPushCommand
 
         store_repo = MockStoreRepository()  # no store
-        scanner = MockS3Scanner()
+        dvc = MockDvcGateway()
         event_bus = MockEventBus()
         exporter = MockExporter()
 
@@ -205,14 +217,14 @@ class TestExportAndPush:
         result = export_and_push(
             command=command,
             store_repo=store_repo,
-            s3_scanner=scanner,
+            dvc_gateway=dvc,
             exporter=exporter,
             event_bus=event_bus,
         )
 
         assert result.success is False
         assert "NOT_CONFIGURED" in (result.error_code or "")
-        assert len(scanner.uploaded) == 0
+        assert len(dvc.calls) == 0
 
     @allure.title("Export and push with invalid destination key fails")
     def test_export_and_push_invalid_key_fails(self, tmp_path):
@@ -222,7 +234,7 @@ class TestExportAndPush:
         from src.contexts.storage.core.commands import ExportAndPushCommand
 
         store_repo = MockStoreRepository(store=_make_store())
-        scanner = MockS3Scanner()
+        dvc = MockDvcGateway()
         event_bus = MockEventBus()
         exporter = MockExporter()
 
@@ -235,13 +247,13 @@ class TestExportAndPush:
         result = export_and_push(
             command=command,
             store_repo=store_repo,
-            s3_scanner=scanner,
+            dvc_gateway=dvc,
             exporter=exporter,
             event_bus=event_bus,
         )
 
         assert result.success is False
-        assert len(scanner.uploaded) == 0
+        assert len(dvc.calls) == 0
 
     @allure.title("Export failure prevents push")
     def test_export_failure_prevents_push(self, tmp_path):
@@ -252,7 +264,7 @@ class TestExportAndPush:
         from src.shared.common.operation_result import OperationResult
 
         store_repo = MockStoreRepository(store=_make_store())
-        scanner = MockS3Scanner()
+        dvc = MockDvcGateway()
         event_bus = MockEventBus()
 
         def failing_exporter(command, **kwargs):
@@ -269,10 +281,10 @@ class TestExportAndPush:
         result = export_and_push(
             command=command,
             store_repo=store_repo,
-            s3_scanner=scanner,
+            dvc_gateway=dvc,
             exporter=failing_exporter,
             event_bus=event_bus,
         )
 
         assert result.success is False
-        assert len(scanner.uploaded) == 0
+        assert len(dvc.calls) == 0
