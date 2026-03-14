@@ -40,3 +40,26 @@ class PushExportCommand:
 
     local_path: str
     destination_key: str
+
+
+@dataclass(frozen=True)
+class ExportAndPushCommand:
+    """Command to export project data and push to S3.
+
+    Composite: runs an exporter (QDPX/codebook/SQLite) then pushes result.
+    """
+
+    export_format: str  # "qdpx" | "codebook" | "sqlite"
+    destination_key: str
+    local_staging_dir: str  # temp dir for staging the export
+
+
+@dataclass(frozen=True)
+class ScanAndImportCommand:
+    """Command to pull a file from S3 and auto-import by format.
+
+    Composite: pulls file, detects format, routes to correct importer.
+    """
+
+    key: str
+    local_staging_dir: str
