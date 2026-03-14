@@ -55,6 +55,22 @@ QualCoder MCP server at `http://localhost:8765`.
 
 **Nesting:** Pass `parent_id` to `create_folder` to nest folders. Omit for root-level.
 
+### Code Management (QC-050)
+
+| Tool | Description | Required Params | Optional Params |
+|------|-------------|-----------------|-----------------|
+| `rename_code` | Rename an existing code | `code_id`, `new_name` | - |
+| `update_code_memo` | Update or clear a code's memo | `code_id` | `memo` (null to clear) |
+| `create_category` | Create a category for organizing codes | `name` | `parent_id`, `memo` |
+| `move_code_to_category` | Move a code into a category | `code_id` | `category_id` (null to uncategorize) |
+| `merge_codes` | Merge source code into target code | `source_code_id`, `target_code_id` | - |
+| `delete_code` | Delete a code from the codebook | `code_id` | `delete_segments` (default false) |
+| `list_categories` | List all categories with hierarchy and code counts | - | - |
+
+**Merge behavior:** All segments from the source code are reassigned to the target code, then the source code is deleted.
+
+**Category hierarchy:** Pass `parent_id` to `create_category` to nest categories. Use `move_code_to_category` with `category_id=null` to uncategorize a code.
+
 ### AI Code Suggestions (QC-028.07, QC-028.08)
 
 All suggestions require researcher approval.
@@ -353,6 +369,228 @@ Get coded segments for a source.
 
 ---
 
+### Code Management Tools
+
+#### rename_code
+
+Rename an existing code.
+
+```json
+{
+  "name": "rename_code",
+  "inputSchema": {
+    "type": "object",
+    "properties": {
+      "code_id": {"type": "string", "description": "ID of the code to rename"},
+      "new_name": {"type": "string", "description": "New name for the code"}
+    },
+    "required": ["code_id", "new_name"]
+  }
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "code_id": "1",
+    "old_name": "Anxiety",
+    "new_name": "Performance Anxiety"
+  }
+}
+```
+
+#### update_code_memo
+
+Update or clear a code's memo (description/definition).
+
+```json
+{
+  "name": "update_code_memo",
+  "inputSchema": {
+    "type": "object",
+    "properties": {
+      "code_id": {"type": "string", "description": "ID of the code to update"},
+      "memo": {"type": "string", "description": "New memo text. Use null to clear."}
+    },
+    "required": ["code_id"]
+  }
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "code_id": "1",
+    "old_memo": null,
+    "new_memo": "Feelings of worry about performance outcomes"
+  }
+}
+```
+
+#### create_category
+
+Create a new category for organizing codes into themes.
+
+```json
+{
+  "name": "create_category",
+  "inputSchema": {
+    "type": "object",
+    "properties": {
+      "name": {"type": "string", "description": "Name of the new category"},
+      "parent_id": {"type": "string", "description": "Optional parent category ID for nesting"},
+      "memo": {"type": "string", "description": "Optional description/memo"}
+    },
+    "required": ["name"]
+  }
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "category_id": "cat-1",
+    "name": "Emotional Responses",
+    "parent_id": null,
+    "memo": "Codes related to emotional reactions"
+  }
+}
+```
+
+#### move_code_to_category
+
+Move a code into a category (or uncategorize it).
+
+```json
+{
+  "name": "move_code_to_category",
+  "inputSchema": {
+    "type": "object",
+    "properties": {
+      "code_id": {"type": "string", "description": "ID of the code to move"},
+      "category_id": {"type": "string", "description": "Target category ID, or null to uncategorize"}
+    },
+    "required": ["code_id"]
+  }
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "code_id": "1",
+    "old_category_id": null,
+    "new_category_id": "cat-1"
+  }
+}
+```
+
+#### merge_codes
+
+Merge source code into target code. All segments are reassigned, source is deleted.
+
+```json
+{
+  "name": "merge_codes",
+  "inputSchema": {
+    "type": "object",
+    "properties": {
+      "source_code_id": {"type": "string", "description": "ID of the code to merge FROM (will be deleted)"},
+      "target_code_id": {"type": "string", "description": "ID of the code to merge INTO (receives segments)"}
+    },
+    "required": ["source_code_id", "target_code_id"]
+  }
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "source_code_id": "2",
+    "target_code_id": "1",
+    "source_code_name": "Worry",
+    "target_code_name": "Anxiety",
+    "segments_moved": 8
+  }
+}
+```
+
+#### delete_code
+
+Delete a code from the codebook.
+
+```json
+{
+  "name": "delete_code",
+  "inputSchema": {
+    "type": "object",
+    "properties": {
+      "code_id": {"type": "string", "description": "ID of the code to delete"},
+      "delete_segments": {"type": "boolean", "description": "Also delete all segments for this code. Default: false."}
+    },
+    "required": ["code_id"]
+  }
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "code_id": "3",
+    "name": "Misc",
+    "segments_removed": 0,
+    "deleted": true
+  }
+}
+```
+
+#### list_categories
+
+List all categories with hierarchy and code counts.
+
+```json
+{
+  "name": "list_categories",
+  "inputSchema": {
+    "type": "object",
+    "properties": {},
+    "required": []
+  }
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": "cat-1",
+      "name": "Emotional Responses",
+      "parent_id": null,
+      "memo": "Codes related to emotional reactions",
+      "owner": null,
+      "created_at": "2026-01-15T10:30:00",
+      "code_count": 5
+    }
+  ]
+}
+```
+
+---
+
 ### Version Control Tools
 
 #### list_snapshots
@@ -602,6 +840,9 @@ curl -X POST http://localhost:8765/tools/list_codes \
 | `FOLDER_RENAME_FAILED` | Rename failed (duplicate name in parent) |
 | `SOURCE_IMPORT_FAILED` | File import failed (unsupported type or file not found) |
 | `SOURCE_DUPLICATE_NAME` | Source name already exists in project |
+| `CATEGORY_NOT_FOUND` | Invalid category_id |
+| `DUPLICATE_NAME` | Code or category name already exists |
+| `MERGE_SAME_CODE` | Cannot merge a code into itself |
 | `TOOL_NOT_FOUND` | Unknown tool |
 | `UNKNOWN_FORMAT` | Unrecognized import/export format |
 | `EXPORT_FAILED` | Export operation failed (no codes, invalid path, etc.) |

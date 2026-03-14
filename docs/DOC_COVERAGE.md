@@ -58,6 +58,19 @@ This file tracks which features have documentation and screenshots.
 | QC-028.04 | Create Category | [codes.md](user-manual/codes.md) | create-category-initial.png, create-category-name.png, create-category-parent.png, create-category-filled.png | :white_check_mark: |
 | QC-028.05 | Find Duplicate Codes | [codes.md](user-manual/codes.md) | duplicate-codes-empty.png, duplicate-codes-list.png, duplicate-codes-similarity.png | :white_check_mark: |
 
+### QC-050 Agent Code Management MCP Tools
+
+| ID | Story | Doc Page | Screenshots | Status |
+|----|-------|----------|-------------|--------|
+| QC-050.01 | rename_code MCP tool | [ai-features.md](user-manual/ai-features.md), [mcp-api.md](api/mcp-api.md) | - | :construction: |
+| QC-050.02 | update_code_memo MCP tool | [ai-features.md](user-manual/ai-features.md), [mcp-api.md](api/mcp-api.md) | - | :construction: |
+| QC-050.03 | create_category MCP tool | [ai-features.md](user-manual/ai-features.md), [mcp-api.md](api/mcp-api.md) | - | :construction: |
+| QC-050.04 | move_code_to_category MCP tool | [ai-features.md](user-manual/ai-features.md), [mcp-api.md](api/mcp-api.md) | - | :construction: |
+| QC-050.05 | merge_codes MCP tool | [ai-features.md](user-manual/ai-features.md), [mcp-api.md](api/mcp-api.md) | - | :construction: |
+| QC-050.06 | delete_code MCP tool | [ai-features.md](user-manual/ai-features.md), [mcp-api.md](api/mcp-api.md) | - | :construction: |
+| QC-050.07 | list_categories MCP tool | [ai-features.md](user-manual/ai-features.md), [mcp-api.md](api/mcp-api.md) | - | :construction: |
+| QC-050.08 | Tool registration and response format | [mcp-api.md](api/mcp-api.md) | - | :construction: |
+
 ### QC-029 Text Coding
 
 | ID | Story | Doc Page | Screenshots | Status |

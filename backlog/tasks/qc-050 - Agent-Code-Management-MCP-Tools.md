@@ -1,8 +1,8 @@
 ---
 id: QC-050
 title: Agent Code Management MCP Tools
-status: To Do
-assignee: []
+status: Done
+assignee: [@myself]
 created_date: '2026-03-13'
 updated_date: '2026-03-13'
 labels: [interface, coding, agent-tools, P1]
@@ -30,32 +30,32 @@ The command handlers already exist and are tested. Only the MCP `interface/handl
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 `rename_code` MCP tool: accepts `code_id` and `new_name`, delegates to `rename_code` command handler, returns updated code with old/new name
-- [ ] #2 `update_code_memo` MCP tool: accepts `code_id` and `memo`, delegates to `update_code_memo` handler, returns success with old/new memo
-- [ ] #3 `create_category` MCP tool: accepts `name`, optional `parent_id` and `memo`, delegates to `create_category` handler, returns category with ID
-- [ ] #4 `move_code_to_category` MCP tool: accepts `code_id` and `category_id` (nullable for uncategorize), delegates to handler, returns success
-- [ ] #5 `merge_codes` MCP tool: accepts `source_code_id` and `target_code_id`, delegates to `merge_codes` handler, returns merge result with reassigned segment count
-- [ ] #6 `delete_code` MCP tool: accepts `code_id` and optional `delete_segments` flag, delegates to `delete_code` handler, returns success/failure
-- [ ] #7 `list_categories` MCP tool: returns all categories with hierarchy (parent_id), code count per category
-- [ ] #8 All tools follow the existing pattern: handler in `interface/handlers/`, schema in `interface/tool_definitions/`, registered in `ALL_HANDLERS` and `ALL_TOOLS`
-- [ ] #9 All tools delegate to command handlers (never direct repo access) to ensure events are published and UI refreshes via SignalBridge
-- [ ] #10 All tools return `OperationResult.to_dict()` for consistent JSON responses
-- [ ] #11 E2E test `test_thematic_analysis_replication_e2e.py` updated to use MCP tools for ALL operations (no direct command handler calls)
-- [ ] #12 E2E test passes with `QT_QPA_PLATFORM=offscreen make test-all`
+- [x] #1 `rename_code` MCP tool: accepts `code_id` and `new_name`, delegates to `rename_code` command handler, returns updated code with old/new name
+- [x] #2 `update_code_memo` MCP tool: accepts `code_id` and `memo`, delegates to `update_code_memo` handler, returns success with old/new memo
+- [x] #3 `create_category` MCP tool: accepts `name`, optional `parent_id` and `memo`, delegates to `create_category` handler, returns category with ID
+- [x] #4 `move_code_to_category` MCP tool: accepts `code_id` and `category_id` (nullable for uncategorize), delegates to handler, returns success
+- [x] #5 `merge_codes` MCP tool: accepts `source_code_id` and `target_code_id`, delegates to `merge_codes` handler, returns merge result with reassigned segment count
+- [x] #6 `delete_code` MCP tool: accepts `code_id` and optional `delete_segments` flag, delegates to `delete_code` handler, returns success/failure
+- [x] #7 `list_categories` MCP tool: returns all categories with hierarchy (parent_id), code count per category
+- [x] #8 All tools follow the existing pattern: handler in `interface/handlers/`, schema in `interface/tool_definitions/`, registered in `ALL_HANDLERS` and `ALL_TOOLS`
+- [x] #9 All tools delegate to command handlers (never direct repo access) to ensure events are published and UI refreshes via SignalBridge
+- [x] #10 All tools return `OperationResult.to_dict()` for consistent JSON responses
+- [x] #11 E2E test `test_thematic_analysis_replication_e2e.py` updated to use MCP tools for ALL operations (no direct command handler calls)
+- [x] #12 E2E test passes with `QT_QPA_PLATFORM=offscreen make test-all`
 <!-- AC:END -->
 
 ## Subtasks
 
 | ID | Subtask | Status |
 |----|---------|--------|
-| QC-050.01 | Add `rename_code` MCP handler + schema | To Do |
-| QC-050.02 | Add `update_code_memo` MCP handler + schema | To Do |
-| QC-050.03 | Add `create_category` MCP handler + schema | To Do |
-| QC-050.04 | Add `move_code_to_category` MCP handler + schema | To Do |
-| QC-050.05 | Add `merge_codes` MCP handler + schema | To Do |
-| QC-050.06 | Add `delete_code` MCP handler + schema | To Do |
-| QC-050.07 | Add `list_categories` MCP handler + schema | To Do |
-| QC-050.08 | Update thematic analysis E2E test to use all MCP tools | To Do |
+| QC-050.01 | Add `rename_code` MCP handler + schema | Done |
+| QC-050.02 | Add `update_code_memo` MCP handler + schema | Done |
+| QC-050.03 | Add `create_category` MCP handler + schema | Done |
+| QC-050.04 | Add `move_code_to_category` MCP handler + schema | Done |
+| QC-050.05 | Add `merge_codes` MCP handler + schema | Done |
+| QC-050.06 | Add `delete_code` MCP handler + schema | Done |
+| QC-050.07 | Add `list_categories` MCP handler + schema | Done |
+| QC-050.08 | Update thematic analysis E2E test to use all MCP tools | Done |
 
 ## Implementation
 

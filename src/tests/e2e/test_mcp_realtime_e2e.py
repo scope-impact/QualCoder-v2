@@ -9,6 +9,7 @@ import asyncio
 import random
 from pathlib import Path
 
+import allure
 import httpx
 import pytest
 import qasync
@@ -94,6 +95,7 @@ async def _wait_for_server(mcp: MCPServerManager, port: int):
 
 
 @pytest.mark.e2e
+@allure.story("QC-050.08 Tool registration and response format")
 def test_mcp_server_info_tools_and_context(mcp_test_env):
     """Test MCP server responds, lists tools, and returns project context."""
     loop = mcp_test_env["loop"]
@@ -128,6 +130,7 @@ def test_mcp_server_info_tools_and_context(mcp_test_env):
 
 
 @pytest.mark.e2e
+@allure.story("QC-050.08 Tool registration and response format")
 def test_mcp_segment_coded_emits_signal(mcp_test_env, qapp):
     """Test that batch_apply_codes triggers segment_coded signal."""
     loop = mcp_test_env["loop"]
