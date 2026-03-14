@@ -31,14 +31,12 @@ def project_with_codes(mcp_server: MCPClient, app_context: AppContext, tmp_path:
     result = app_context.open_project(str(project_path))
     assert result.is_success
 
-    tools = mcp_server
-
     # Create test codes
-    code1 = tools.execute("create_code", {"name": "Anxiety", "color": "#FF0000"})
+    code1 = mcp_server.execute("create_code", {"name": "Anxiety", "color": "#FF0000"})
     assert code1["success"]
-    code2 = tools.execute("create_code", {"name": "Stress", "color": "#FF5500"})
+    code2 = mcp_server.execute("create_code", {"name": "Stress", "color": "#FF5500"})
     assert code2["success"]
-    code3 = tools.execute("create_code", {"name": "Resilience", "color": "#00FF00"})
+    code3 = mcp_server.execute("create_code", {"name": "Resilience", "color": "#00FF00"})
     assert code3["success"]
 
     # Import a source and apply a code to it
@@ -56,7 +54,7 @@ def project_with_codes(mcp_server: MCPClient, app_context: AppContext, tmp_path:
         app_context.session.commit()
 
     # Apply code1 to a segment
-    tools.execute(
+    mcp_server.execute(
         "batch_apply_codes",
         {
             "operations": [
@@ -71,7 +69,7 @@ def project_with_codes(mcp_server: MCPClient, app_context: AppContext, tmp_path:
     )
 
     return {
-        "tools": tools,
+        "tools": mcp_server,
         "codes": {
             "anxiety": code1["data"],
             "stress": code2["data"],

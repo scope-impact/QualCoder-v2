@@ -157,7 +157,6 @@ class MCPClient:
     def __init__(self, base_url: str):
         import httpx
 
-        self._base_url = base_url
         self._http = httpx.Client(base_url=base_url, timeout=30.0)
 
     def execute(self, tool_name: str, arguments: dict) -> dict:
@@ -184,6 +183,7 @@ class MCPClient:
 def _start_mcp_server_in_thread(mcp_server, port: int):
     """Start the MCP aiohttp server in a background thread with its own event loop."""
     import asyncio
+    import socket
     import threading
 
     loop = asyncio.new_event_loop()
@@ -194,13 +194,11 @@ def _start_mcp_server_in_thread(mcp_server, port: int):
 
         async def _serve_and_signal():
             # Start the server's internal serve coroutine
-            asyncio.get_event_loop().create_task(mcp_server.serve_async())
+            loop.create_task(mcp_server.serve_async())
             # Wait until the port is accepting connections
-            import socket
-
             for _ in range(100):
                 try:
-                    with socket.create_connection(("localhost", port), timeout=0.5):
+                    with socket.create_connection(("localhost", port), timeout=0.05):
                         ready.set()
                         return
                 except (ConnectionRefusedError, OSError):
