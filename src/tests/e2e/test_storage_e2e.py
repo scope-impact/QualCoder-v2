@@ -796,9 +796,7 @@ class TestImportFromS3DialogScreenshot:
 
             # Swap the _client on the existing S3Scanner that the ViewModel holds
             # This keeps the real S3Scanner.list_files code path intact
-            file_manager._data_store_vm._s3_scanner = S3Scanner(
-                client=screenshot_s3
-            )
+            file_manager._data_store_vm._s3_scanner = S3Scanner(client=screenshot_s3)
 
             # Re-enable the menu item now that store is configured
             file_manager._page.set_import_from_s3_enabled(True)
@@ -833,9 +831,7 @@ class TestImportFromS3DialogScreenshot:
 
         with allure.step("Capture screenshot for documentation"):
             attach_screenshot(dialog, "ImportFromS3Dialog - via Toolbar")
-            DocScreenshot.capture(
-                dialog, "import-from-s3-dialog", max_width=800
-            )
+            DocScreenshot.capture(dialog, "import-from-s3-dialog", max_width=800)
             dialog.close()
 
 
