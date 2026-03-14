@@ -9,13 +9,10 @@ Uses moto for S3 mock and a mock DVC gateway — no real AWS or DVC CLI.
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
-
 import allure
 import pytest
 from PySide6.QtWidgets import QApplication
 
-from src.contexts.storage.core.entities import RemoteFile
 from src.contexts.storage.infra.dvc_gateway import DvcResult
 from src.tests.e2e.helpers import attach_screenshot
 from src.tests.e2e.utils import DocScreenshot
@@ -716,67 +713,79 @@ class _NullStorageToolsContext:
 
 
 # =============================================================================
-# Screenshot E2E Tests — Full Wiring Verification
+# Screenshot E2E Tests — Full Wiring with Moto S3
 # =============================================================================
 
 
-def _sample_remote_files() -> list[RemoteFile]:
-    """Create realistic remote files for screenshot capture."""
-    now = datetime.now(tz=timezone.utc)
-    return [
-        RemoteFile(
-            key="project-alpha/raw/interview_001.txt",
-            size_bytes=2048,
-            last_modified=now,
-        ),
-        RemoteFile(
-            key="project-alpha/raw/interview_002.txt",
-            size_bytes=3072,
-            last_modified=now,
-        ),
-        RemoteFile(
-            key="project-alpha/raw/focus_group.mp3",
-            size_bytes=15_728_640,
-            last_modified=now,
-        ),
-        RemoteFile(
-            key="project-alpha/processed/profiles.csv",
-            size_bytes=4096,
-            last_modified=now,
-        ),
-    ]
+@pytest.fixture
+def screenshot_s3():
+    """Create mock S3 with realistic research files for screenshot capture."""
+    import boto3
+    from moto import mock_aws
+
+    with mock_aws():
+        s3 = boto3.client("s3", region_name="us-east-1")
+        s3.create_bucket(Bucket="qualcoder-research")
+
+        # Seed realistic research files
+        s3.put_object(
+            Bucket="qualcoder-research",
+            Key="project-alpha/raw/interview_001.txt",
+            Body=b"Researcher: Tell me about your experience.\nParticipant: ...",
+        )
+        s3.put_object(
+            Bucket="qualcoder-research",
+            Key="project-alpha/raw/interview_002.txt",
+            Body=b"Researcher: How did you feel?\nParticipant: ...",
+        )
+        s3.put_object(
+            Bucket="qualcoder-research",
+            Key="project-alpha/raw/focus_group.mp3",
+            Body=b"\x00" * 15_000,  # simulated audio
+        )
+        s3.put_object(
+            Bucket="qualcoder-research",
+            Key="project-alpha/processed/profiles.csv",
+            Body=b"participant_id,sessions\nu001,12\nu002,3",
+        )
+
+        yield s3
 
 
 @allure.story("QC-047.08 Import from S3 Dialog")
 class TestImportFromS3DialogScreenshot:
-    """Open Import from S3 dialog through the real wired app flow."""
+    """Open Import from S3 dialog through the real wired app flow with moto S3."""
 
     @allure.title("DOC: Import from S3 triggered from FileManager toolbar")
-    def test_import_from_s3_via_toolbar(self, wired_app):
-        """Click 'Import > From S3 Data Store...' in the real FileManager toolbar.
+    def test_import_from_s3_via_toolbar(self, wired_app, screenshot_s3):
+        """Full wired flow: configure store → swap scanner to moto S3
+        → click Import from S3 → dialog scans real (mocked) S3 bucket
+        → renders file table with status indicators.
 
-        Verifies the full wiring:
-        FileManagerScreen._data_store_vm is set → toolbar menu is enabled
-        → click opens ImportFromS3Dialog with real ViewModel.
+        Verifies:
+        - DataStoreViewModel is wired to FileManager
+        - S3Scanner.list_files goes through real code path with moto
+        - ImportFromS3Dialog renders files correctly
         """
         from unittest.mock import patch
 
         from src.contexts.storage.core.entities import DataStore, StoreId
+        from src.contexts.storage.infra.s3_scanner import S3Scanner
         from src.contexts.storage.presentation.dialogs.import_from_s3_dialog import (
             ImportFromS3Dialog,
         )
 
         app = wired_app["app"]
         file_manager = wired_app["screens"]["files"]
+        storage_ctx = wired_app["ctx"].storage_context
 
         with allure.step("Verify DataStoreViewModel is wired to FileManager"):
             assert file_manager._data_store_vm is not None, (
                 "DataStoreViewModel not wired — check main.py _wire_viewmodels()"
             )
 
-        with allure.step("Configure store so toolbar enables S3 import"):
+        with allure.step("Configure store and swap S3 client to moto"):
             # Configure a store via the real store_repo
-            store_repo = wired_app["ctx"].storage_context.store_repo
             store = DataStore(
                 id=StoreId.new(),
                 bucket_name="qualcoder-research",
@@ -784,48 +793,52 @@ class TestImportFromS3DialogScreenshot:
                 prefix="project-alpha/",
                 dvc_remote_name="origin",
             )
-            store_repo.save(store)
+            storage_ctx.store_repo.save(store)
+
+            # Swap the _client on the existing S3Scanner that the ViewModel holds
+            # This keeps the real S3Scanner.list_files code path intact
+            file_manager._data_store_vm._s3_scanner = S3Scanner(
+                client=screenshot_s3
+            )
 
             # Re-enable the menu item now that store is configured
             file_manager._page.set_import_from_s3_enabled(True)
             QApplication.processEvents()
 
-        with allure.step("Click Import from S3 and capture dialog"):
-            # Patch scan to return sample files instead of hitting real S3
-            sample_files = _sample_remote_files()
-            with patch.object(
-                file_manager._data_store_vm, "scan", return_value=sample_files
-            ), patch.object(
-                file_manager._data_store_vm,
-                "get_imported_filenames",
-                return_value={"interview_001.txt"},
-            ):
-                # Intercept exec() so the dialog doesn't block
-                dialogs_captured = []
-                original_exec = ImportFromS3Dialog.exec
+        with allure.step("Click Import from S3 — dialog scans moto S3"):
+            # Intercept exec() so the dialog doesn't block
+            dialogs_captured = []
 
-                def capture_exec(dialog_self):
-                    dialog_self.resize(650, 400)
-                    dialog_self.show()
-                    QApplication.processEvents()
-                    dialogs_captured.append(dialog_self)
-                    # Don't call original exec — non-blocking for test
+            def capture_exec(dialog_self):
+                dialog_self.resize(650, 400)
+                dialog_self.show()
+                QApplication.processEvents()
+                dialogs_captured.append(dialog_self)
 
-                with patch.object(ImportFromS3Dialog, "exec", capture_exec):
-                    # Trigger the real signal flow: toolbar → page → screen
-                    file_manager._on_import_from_s3_clicked()
-                    QApplication.processEvents()
+            with patch.object(ImportFromS3Dialog, "exec", capture_exec):
+                file_manager._on_import_from_s3_clicked()
+                QApplication.processEvents()
 
-                assert len(dialogs_captured) == 1, (
-                    "ImportFromS3Dialog was not opened — wiring broken"
-                )
+            assert len(dialogs_captured) == 1, (
+                "ImportFromS3Dialog was not opened — wiring broken"
+            )
 
-                dialog = dialogs_captured[0]
-                attach_screenshot(dialog, "ImportFromS3Dialog - via Toolbar")
-                DocScreenshot.capture(
-                    dialog, "import-from-s3-dialog", max_width=800
-                )
-                dialog.close()
+        with allure.step("Verify dialog shows files from moto S3"):
+            dialog = dialogs_captured[0]
+            row_count = dialog._table.rowCount()
+            assert row_count == 4, f"Expected 4 S3 files, got {row_count}"
+
+            # Verify status column shows "remote" for unchecked files
+            status_item = dialog._table.item(1, 2)
+            assert status_item is not None
+            assert status_item.text() in ("remote", "imported")
+
+        with allure.step("Capture screenshot for documentation"):
+            attach_screenshot(dialog, "ImportFromS3Dialog - via Toolbar")
+            DocScreenshot.capture(
+                dialog, "import-from-s3-dialog", max_width=800
+            )
+            dialog.close()
 
 
 @allure.story("QC-047.07 Settings Data Store Configuration")
@@ -840,10 +853,6 @@ class TestSettingsDataStoreScreenshot:
         _on_settings_clicked → DialogService.show_settings_dialog(data_store_vm=...)
         → SettingsDialog has Data Store section wired.
         """
-        from unittest.mock import patch
-
-        from src.contexts.settings.presentation.dialogs import SettingsDialog
-
         app = wired_app["app"]
 
         with allure.step("Open Settings dialog through real app flow"):
@@ -869,7 +878,6 @@ class TestSettingsDataStoreScreenshot:
             dialog._sidebar.setCurrentRow(5)
             QApplication.processEvents()
 
-            # Verify we're on the Data Store section
             assert dialog._content_stack.currentIndex() == 5
 
         with allure.step("Verify Data Store fields are wired"):
