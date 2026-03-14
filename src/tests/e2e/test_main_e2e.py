@@ -45,7 +45,6 @@ def fresh_app(qapp, colors):
     from src.main import QualCoderApp
     from src.shared.infra.app_context import create_app_context
     from src.shared.infra.signal_bridge.projects import ProjectSignalBridge
-    from src.shared.infra.signal_bridge.sync import SyncSignalBridge
     from src.shared.presentation.services import DialogService
 
     app = QualCoderApp.__new__(QualCoderApp)
@@ -57,8 +56,6 @@ def fresh_app(qapp, colors):
     app._project_signal_bridge.start()
     app._coding_signal_bridge = CodingSignalBridge.instance(app._ctx.event_bus)
     app._coding_signal_bridge.start()
-    app._sync_signal_bridge = SyncSignalBridge.instance(app._ctx.event_bus)
-    app._sync_signal_bridge.start()
     app._shell = None
     app._screens = {}
     app._current_project_path = None
@@ -89,7 +86,6 @@ def app_instance(qapp, colors):
         create_app_context,
     )
     from src.shared.infra.signal_bridge.projects import ProjectSignalBridge
-    from src.shared.infra.signal_bridge.sync import SyncSignalBridge
     from src.shared.presentation.services import DialogService
 
     app = QualCoderApp.__new__(QualCoderApp)
@@ -117,8 +113,6 @@ def app_instance(qapp, colors):
 
         app._project_signal_bridge = ProjectSignalBridge.instance(app._ctx.event_bus)
         app._project_signal_bridge.start()
-        app._sync_signal_bridge = SyncSignalBridge.instance(app._ctx.event_bus)
-        app._sync_signal_bridge.start()
         app._shell = None
         app._screens = {}
         app._current_project_path = None

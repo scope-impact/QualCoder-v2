@@ -60,8 +60,6 @@ class SettingsProvider(Protocol):
         enable_file_logging: bool,
         enable_telemetry: bool,
     ) -> OperationResult: ...
-    def set_cloud_sync_enabled(self, enabled: bool) -> OperationResult: ...
-    def set_convex_url(self, url: str | None) -> OperationResult: ...
 
 
 class SettingsViewModel:
@@ -114,8 +112,6 @@ class SettingsViewModel:
             backup_path=settings.backup.backup_path,
             timestamp_format=settings.av_coding.timestamp_format,
             speaker_format=settings.av_coding.speaker_format,
-            cloud_sync_enabled=settings.backend.cloud_sync_enabled,
-            convex_url=settings.backend.convex_url,
             log_level=settings.observability.log_level,
             enable_file_logging=settings.observability.enable_file_logging,
             enable_telemetry=settings.observability.enable_telemetry,
@@ -301,6 +297,47 @@ class SettingsViewModel:
         return result.is_success
 
     # =========================================================================
+    # Data Store (S3) — delegates to DataStoreViewModel when wired
+    # =========================================================================
+
+    def set_data_store_viewmodel(self, data_store_vm) -> None:
+        """Wire the DataStoreViewModel for S3 configuration."""
+        self._data_store_vm = data_store_vm
+
+    def get_data_store_config(self) -> dict | None:
+        """Get current data store configuration."""
+        if not hasattr(self, "_data_store_vm") or self._data_store_vm is None:
+            return None
+        return self._data_store_vm.get_config()
+
+    def configure_data_store(
+        self,
+        bucket_name: str,
+        region: str,
+        prefix: str = "",
+        dvc_remote_name: str = "origin",
+    ) -> bool:
+        """Configure the S3 data store."""
+        if not hasattr(self, "_data_store_vm") or self._data_store_vm is None:
+            return False
+        return self._data_store_vm.configure(
+            bucket_name, region, prefix, dvc_remote_name
+        )
+
+    def test_data_store_connection(self) -> bool:
+        """Test S3 connectivity."""
+        if not hasattr(self, "_data_store_vm") or self._data_store_vm is None:
+            return False
+        return self._data_store_vm.test_connection()
+
+    @property
+    def data_store_last_error(self) -> str | None:
+        """Get last data store error."""
+        if not hasattr(self, "_data_store_vm") or self._data_store_vm is None:
+            return None
+        return self._data_store_vm.last_error
+
+    # =========================================================================
     # Validation Helpers
     # =========================================================================
 
@@ -314,33 +351,3 @@ class SettingsViewModel:
             return format_str.replace("{n}", str(speaker_num))
         except Exception:
             return format_str
-
-    # =========================================================================
-    # Backend Actions
-    # =========================================================================
-
-    def set_cloud_sync_enabled(self, enabled: bool) -> bool:
-        """
-        Enable or disable cloud sync with Convex.
-
-        Args:
-            enabled: True to enable cloud sync, False to disable
-
-        Returns:
-            True if successful, False otherwise
-        """
-        result = self._provider.set_cloud_sync_enabled(enabled)
-        return result.is_success
-
-    def set_convex_url(self, url: str | None) -> bool:
-        """
-        Set the Convex deployment URL.
-
-        Args:
-            url: Convex deployment URL or None to clear
-
-        Returns:
-            True if successful, False otherwise
-        """
-        result = self._provider.set_convex_url(url)
-        return result.is_success

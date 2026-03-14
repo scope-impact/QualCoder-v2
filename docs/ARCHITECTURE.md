@@ -53,7 +53,6 @@ graph TD
 | C5 | Agent Context | Python / MCP Protocol | Exposes domain to AI agents via HTTP | API |
 | C6 | Vector Store | ChromaDB (embedded) | Stores embeddings for search | Database |
 | C7 | Version Control | Git + sqlite-diffable | Database history, snapshots, restore | Storage |
-| C8 | Cloud Sync | Convex (optional) | Real-time sync across devices | Cloud |
 
 ### Container Diagram
 
@@ -65,7 +64,6 @@ graph TB
         APP[Application Shell - EventBus + SignalBridge]
         AGENT[Agent Context - MCP Protocol]
         VCS[Version Control - Git + sqlite-diffable]
-        SYNC[Cloud Sync - Convex Client]
 
         UI -- "Command DTOs / Python" --> APP
         APP -- "Function calls / Python" --> DOMAIN
@@ -80,15 +78,10 @@ graph TB
         GIT[(Git Repository)]
     end
 
-    subgraph Cloud Storage
-        CONVEX[(Convex Backend)]
-    end
-
     APP -- "SQL / sqlite3" --> DB
     AGENT -- "Embeddings / Python API" --> VEC
     VCS -- "sqlite-diffable dump/load" --> DB
     VCS -- "git commit/checkout" --> GIT
-    SYNC -. "Optional HTTPS" .-> CONVEX
 
     LLM(LLM Provider)
     AGENT -- "Chat API / HTTPS" --> LLM
@@ -135,7 +128,7 @@ graph TB
 | **Sources** | Source, Folder | Import files, manage folders |
 | **Cases** | Case, CaseAttribute | Link sources, assign attributes |
 | **Projects** | Project | Open, close, manage lifecycle |
-| **Settings** | Theme, Font, Language, Backup, AVCoding, Observability, CloudSync | Configure preferences, cloud sync, observability |
+| **Settings** | Theme, Font, Language, Backup, AVCoding, Observability | Configure preferences, observability |
 | **Folders** | Folder | Organize sources in folders |
 | **Exchange** | — (stateless) | Import/export codebooks, coded HTML, REFI-QDA, RQDA, CSV |
 
@@ -287,8 +280,7 @@ class CodeCreatedConverter(EventConverter[CodeCreated, CodePayload]):
 | `CodingSignalBridge` | Coding | `src/contexts/coding/interface/signal_bridge.py` | code_created, code_renamed, code_deleted, codes_merged, segment_coded, segment_uncoded |
 | `CasesSignalBridge` | Cases | `src/contexts/cases/interface/signal_bridge.py` | case_created, case_updated, case_removed, source_linked, source_unlinked |
 | `ProjectSignalBridge` | Projects + Folders | `src/shared/infra/signal_bridge/projects.py` | project_opened, project_closed, source_added, source_removed, folder_created, snapshot_created |
-| `SyncSignalBridge` | Sync | `src/shared/infra/signal_bridge/sync.py` | sync_status_changed, sync_completed |
-| `SettingsSignalBridge` | Settings | `src/shared/infra/signal_bridge/settings.py` | settings_changed, cloud_sync_config_changed |
+| `SettingsSignalBridge` | Settings | `src/shared/infra/signal_bridge/settings.py` | settings_changed |
 
 ### 4.4 Domain Events by Context
 
@@ -314,7 +306,6 @@ class CodeCreatedConverter(EventConverter[CodeCreated, CodePayload]):
 **Settings** (`src/contexts/settings/core/events.py`):
 - `ThemeChanged`, `FontChanged`, `LanguageChanged`
 - `BackupConfigChanged`, `AVCodingConfigChanged`, `ObservabilityConfigChanged`
-- `CloudSyncConfigChanged`, `CloudSyncEnabled`, `CloudSyncDisabled`
 
 **Exchange** (`src/contexts/exchange/core/events.py`):
 - `CodebookExported`, `CodedHTMLExported`, `RefiQdaExported`
@@ -533,13 +524,12 @@ sequenceDiagram
 | Event System | Custom EventBus | Thread-safe pub/sub with subscribe_all, history buffer, type-based routing, weak refs, metrics |
 | Result Type | Custom `OperationResult` + `returns` library | Command handlers use custom; MCP/infra uses `returns` |
 | Version Control | Git + sqlite-diffable | Cross-platform, human-readable diffs |
-| Cloud Sync | Convex | Real-time sync, TypeScript backend |
 
 ---
 
 ## 7. Storage Architecture
 
-QualCoder v2 uses a layered storage architecture with SQLite as the primary database, optional Git-based version control, and optional cloud sync.
+QualCoder v2 uses a layered storage architecture with SQLite as the primary database and optional Git-based version control.
 
 ### Storage Layers
 
@@ -557,19 +547,12 @@ graph TB
             DIFF[sqlite-diffable]
             GIT[(Git Repository<br>.qualcoder-vcs/)]
         end
-
-        subgraph "Cloud Sync Layer"
-            SYNC[SyncEngine]
-            CONVEX[(Convex Backend)]
-        end
     end
 
     APP -- "SQL read/write" --> SQLITE
     APP -- "DomainEvents" --> VCS
     VCS -- "500ms debounce" --> DIFF
     DIFF -- "dump JSON" --> GIT
-    APP -- "Optional" --> SYNC
-    SYNC -. "HTTPS" .-> CONVEX
 ```
 
 ### 7.1 Primary Storage (SQLite)
@@ -659,46 +642,13 @@ sequenceDiagram
     Handler->>Bus: publish(SnapshotRestored)
 ```
 
-### 7.3 Cloud Sync (Convex - Optional)
-
-When enabled, changes sync in real-time to Convex cloud backend.
-
-| Aspect | Details |
-|--------|---------|
-| Protocol | HTTPS with Convex client |
-| Direction | Bidirectional sync |
-| Conflict Resolution | Last-write-wins with timestamps |
-| Offline Support | Queue changes, sync when online |
-
-**Configuration:**
-
-```python
-# In settings
-backend = BackendConfig(
-    cloud_sync_enabled=True,
-    convex_url="https://your-deployment.convex.cloud",
-    convex_project_id="project-123"
-)
-```
-
-**Sync Architecture:**
-
-```
-src/shared/infra/sync/
-├── engine.py              # SyncEngine orchestration
-├── synced_repositories.py # Repository wrappers with sync
-└── commandHandlers/       # Pull/push handlers
-```
-
-### 7.4 Storage Decision Matrix
+### 7.3 Storage Decision Matrix
 
 | Need | Solution |
 |------|----------|
 | Local-only project | SQLite only |
 | Version history & undo | Enable Git VCS |
-| Multi-device access | Enable Convex sync |
-| Team collaboration | Convex + shared project |
-| Offline work + sync later | Convex with queue |
+| Large file storage | S3 + DVC |
 
 ---
 
@@ -712,7 +662,6 @@ src/shared/infra/sync/
 | Project Database | SQLite file in project folder | User's file system |
 | Vector Store | ChromaDB files in project folder | User's file system |
 | Version Control | Git repository in project folder | User's file system |
-| Cloud Sync | Convex cloud backend | Cloud (optional) |
 | LLM Provider | Cloud API or local (Ollama) | External / Local |
 
 ### Distribution
@@ -748,7 +697,7 @@ src/
 │   ├── cases/                  # Case/participant management
 │   ├── projects/               # Project lifecycle + VCS
 │   ├── exchange/               # Import/export (REFI-QDA, CSV, codebook)
-│   ├── settings/               # User settings, cloud sync config
+│   ├── settings/               # User settings
 │   └── folders/                # Folder organization
 │
 ├── shared/                     # Cross-cutting concerns
@@ -791,7 +740,7 @@ design_system/                  # Reusable UI components, tokens
 | **Cases** | Group and categorize | CaseCreated, SourceLinked | Conformist to Coding |
 | **Projects** | Lifecycle + version control | ProjectOpened, SnapshotCreated | Anti-Corruption Layer |
 | **Exchange** | Import/export projects and data | CodeListImported, RefiQdaExported | Generic — delegates to Coding, Cases, Sources |
-| **Settings** | User preferences, cloud sync | ThemeChanged, CloudSyncConfigChanged | Independent |
+| **Settings** | User preferences | ThemeChanged | Independent |
 | **Folders** | Folder organization | FolderCreated, SourceMoved | Supporting |
 
 ### Planned Contexts (Future)

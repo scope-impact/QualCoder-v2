@@ -9,8 +9,6 @@ dependencies = [
     "pyside6>=6.5.0",
     # Database
     "sqlalchemy>=2.0",
-    # Convex cloud database client
-    "convex>=0.7.0",
     "python-dotenv>=1.0.0",
     # Image processing (MIT-CMU license)
     "pillow>=10.0",
@@ -60,6 +58,9 @@ dev = [
     "returns>=0.22",  # Result monad for domain layer
     "pytest-cov>=7.0.0",
     "httpx>=0.28.1",
+    "boto3>=1.35.0",
+    "dvc[s3]>=3.50.0",
+    "moto[s3]>=5.0.0",
 ]
 docs = [
     "mkdocs>=1.6",

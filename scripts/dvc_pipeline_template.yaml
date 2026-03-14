@@ -1,0 +1,68 @@
+# DVC Pipeline Template for QualCoder v2 Research Workflows
+#
+# Copy this file to your project directory as `dvc.yaml` and customize.
+# Each stage defines a step in your research data pipeline.
+#
+# Usage:
+#   dvc repro                    # Run all stages
+#   dvc repro aggregate-data     # Run a specific stage
+#   dvc push                     # Push tracked data to S3 remote
+#
+# See: https://dvc.org/doc/user-guide/pipelines
+
+stages:
+  # Stage 1: Aggregate raw data from Firebase/external sources
+  # Pulls profiles, responses, or analytics data into a local directory.
+  aggregate-data:
+    cmd: >
+      python -m src.contexts.storage.scripts.aggregate
+      --source firebase
+      --output data/raw/
+    deps:
+      - src/contexts/storage/scripts/aggregate.py
+    outs:
+      - data/raw/
+
+  # Stage 2: Import source profiles into QualCoder project
+  # Converts raw data files into QualCoder-compatible sources.
+  import-profiles:
+    cmd: >
+      python -m src.contexts.storage.scripts.import_profiles
+      --input data/raw/
+      --project ${PROJECT_PATH}
+    deps:
+      - data/raw/
+      - src/contexts/storage/scripts/import_profiles.py
+    outs:
+      - data/imported/
+
+  # Stage 3: Export coded results for analysis
+  # Exports coded segments, memos, and case attributes.
+  export-results:
+    cmd: >
+      python -m src.contexts.storage.scripts.export_results
+      --project ${PROJECT_PATH}
+      --format qdpx
+      --output data/exports/
+    deps:
+      - data/imported/
+      - src/contexts/storage/scripts/export_results.py
+    outs:
+      - data/exports/
+
+  # Stage 4: Triangulation analysis (optional)
+  # Cross-reference coded data with analytics for mixed-methods research.
+  triangulate:
+    cmd: >
+      python -m src.contexts.storage.scripts.triangulate
+      --coded data/exports/
+      --analytics data/raw/analytics.json
+      --output data/triangulated/
+    deps:
+      - data/exports/
+      - data/raw/analytics.json
+    outs:
+      - data/triangulated/
+    # metrics:
+    #   - data/triangulated/metrics.json:
+    #       cache: false

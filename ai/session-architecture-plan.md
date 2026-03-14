@@ -13,9 +13,9 @@ Three separate mechanisms solve overlapping concerns:
 | `UnitOfWork` | Monkey-patches `conn.commit` with no-op for multi-repo atomicity | Fragile, can't nest, repos don't know they're in a UoW |
 | Per-repo `commit()` | Every repo method calls `self._conn.commit()` | Command handler has no control over transaction boundary |
 
-Additionally, `_create_contexts()` is a 100-line method mixing network I/O, sync engine lifecycle, and bounded context wiring.
+Additionally, `_create_contexts()` is a large method mixing bounded context wiring concerns.
 
-## Solution: Session + SyncContext extraction
+## Solution: Session extraction
 
 ### Session class
 
@@ -138,32 +138,6 @@ class SQLiteCodeRepository:
 
 OutboxWriter already follows this pattern — it never commits. No changes needed there.
 
-### SyncContext extraction
-
-Pull sync wiring out of `_create_contexts` into its own bounded context.
-
-```python
-@dataclass
-class SyncContext:
-    """Cloud sync bounded context — optional."""
-    engine: SyncEngine
-
-    @classmethod
-    def create(
-        cls,
-        session: Session,
-        convex_client: ConvexClientWrapper,
-    ) -> SyncContext:
-        sync_engine = SyncEngine(session.connection, convex_client)
-        return cls(engine=sync_engine)
-
-    def start(self) -> None:
-        self.engine.start()
-
-    def stop(self) -> None:
-        self.engine.stop()
-```
-
 `_create_contexts` becomes clean domain wiring only:
 
 ```python
@@ -173,14 +147,6 @@ def _create_contexts(self, session, project_path):
     self.cases_context = CasesContext.create(session=session, ...)
     self.folders_context = FoldersContext.create(session=session, ...)
     self.projects_context = ProjectsContext.create(session=session, ...)
-```
-
-Sync wiring happens separately in `open_project`:
-
-```python
-if self._is_convex_reachable(url):
-    self.sync_context = SyncContext.create(session=session, convex_client=client)
-    self.sync_context.start()
 ```
 
 ### Enable WAL mode
@@ -194,7 +160,7 @@ with engine.connect() as conn:
     conn.commit()
 ```
 
-With WAL mode, the `commit()` after SELECT pattern (3 locations in sync code) becomes unnecessary. Readers no longer block writers.
+With WAL mode, readers no longer block writers.
 
 ## Comparison: UnitOfWork vs Session
 
@@ -247,22 +213,15 @@ Each step is independently shippable. Tests verify each step.
 - Delete `src/shared/infra/connection_provider.py`
 - Update `_create_contexts` to pass Session instead of proxy
 
-### Step 7: Extract SyncContext
-- New dataclass: `SyncContext` with `create()`, `start()`, `stop()`
-- Move Convex reachability check, client creation, SyncEngine wiring out of `_create_contexts`
-- `_create_contexts` becomes pure domain context wiring
-
 ## Files affected
 
 | File | Change |
 |------|--------|
 | `src/shared/infra/session.py` | **New** — Session class |
 | `src/shared/infra/lifecycle.py` | Creates Session instead of raw connection + factory |
-| `src/shared/infra/app_context/context.py` | Uses Session, extracts SyncContext |
+| `src/shared/infra/app_context/context.py` | Uses Session |
 | `src/shared/infra/app_context/bounded_contexts.py` | `create()` methods take Session instead of Connection |
 | `src/shared/infra/connection_provider.py` | **Deleted** |
 | `src/shared/infra/unit_of_work.py` | **Deleted** |
 | `src/contexts/*/infra/*_repository.py` | Receive Session, remove `commit()` calls |
 | `src/contexts/*/core/commandHandlers/*.py` | Add `session` param, call `session.commit()` |
-| `src/shared/infra/sync/engine.py` | Remove commit-after-SELECT (WAL makes it unnecessary) |
-| `src/shared/infra/sync/id_map.py` | Remove commit-after-SELECT |

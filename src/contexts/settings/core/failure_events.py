@@ -164,37 +164,4 @@ class SettingsNotChanged(FailureEvent):
                 return super().message
 
 
-@dataclass(frozen=True)
-class CloudSyncSettingsFailed:
-    """Cloud sync settings change failed."""
-
-    reason: str = ""
-    error_code: str = ""
-    suggestions: tuple[str, ...] = ()
-
-    @classmethod
-    def invalid_url(cls, url: str) -> CloudSyncSettingsFailed:
-        """Create failure for invalid Convex URL."""
-        return cls(
-            reason=f"Invalid Convex URL: '{url}'",
-            error_code="INVALID_CONVEX_URL",
-            suggestions=(
-                "Cloud: https://<project>.convex.cloud",
-                "Self-hosted: http://127.0.0.1:<port> or http://localhost:<port>",
-            ),
-        )
-
-    @classmethod
-    def url_required(cls) -> CloudSyncSettingsFailed:
-        """Create failure when trying to enable without URL."""
-        return cls(
-            reason="Convex URL is required to enable cloud sync",
-            error_code="URL_REQUIRED",
-            suggestions=(
-                "Configure the Convex URL first",
-                "Get your URL from convex.dev dashboard",
-            ),
-        )
-
-
-__all__ = ["CloudSyncSettingsFailed", "SettingsNotChanged"]
+__all__ = ["SettingsNotChanged"]

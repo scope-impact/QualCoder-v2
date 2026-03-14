@@ -134,6 +134,7 @@ class SettingsDialog(QDialog):
         self._content_stack.addWidget(self._create_backup_section())
         self._content_stack.addWidget(self._create_av_coding_section())
         self._content_stack.addWidget(self._create_database_section())
+        self._content_stack.addWidget(self._create_data_store_section())
         self._content_stack.addWidget(self._create_observability_section())
 
         # Sidebar navigation (created after content stack)
@@ -209,6 +210,7 @@ class SettingsDialog(QDialog):
             ("Backup", "mdi6.backup-restore"),
             ("AV Coding", "mdi6.video"),
             ("Database", "mdi6.database"),
+            ("Data Store", "mdi6.cloud-outline"),
             ("Observability", "mdi6.chart-line"),
         ]
 
@@ -579,99 +581,163 @@ class SettingsDialog(QDialog):
         """)
         layout.addWidget(primary_desc)
 
-        # Cloud sync section
-        sync_label = QLabel("Cloud Sync (Optional)")
-        sync_label.setStyleSheet(f"""
+        layout.addStretch()
+
+        return widget
+
+    def _create_data_store_section(self) -> QWidget:
+        """Create the Data Store (S3) settings section."""
+        widget = QWidget()
+        layout = QVBoxLayout(widget)
+        layout.setContentsMargins(SPACING.lg, SPACING.lg, SPACING.lg, SPACING.lg)
+        layout.setSpacing(SPACING.lg)
+
+        # Header
+        ds_label = QLabel("S3 Data Store Configuration")
+        ds_label.setStyleSheet(f"""
             color: {self._colors.text_primary};
             font-size: {TYPOGRAPHY.text_sm}px;
             font-weight: {TYPOGRAPHY.weight_semibold};
-            margin-top: {SPACING.md}px;
         """)
-        layout.addWidget(sync_label)
+        layout.addWidget(ds_label)
 
-        # Enable cloud sync checkbox
-        self._cloud_sync_enabled = QCheckBox("Enable cloud sync with Convex")
-        self._cloud_sync_enabled.setStyleSheet(f"""
-            QCheckBox {{
-                color: {self._colors.text_primary};
-                font-size: {TYPOGRAPHY.text_sm}px;
-                spacing: {SPACING.sm}px;
-            }}
-        """)
-        self._cloud_sync_enabled.stateChanged.connect(self._on_cloud_sync_changed)
-        layout.addWidget(self._cloud_sync_enabled)
-
-        # Description
         desc_label = QLabel(
-            "When enabled, changes sync to Convex cloud in real-time.\n"
-            "Enables collaboration and backup while keeping local data."
+            "Configure an S3 bucket as external data store for pulling "
+            "source files and pushing coded exports."
         )
+        desc_label.setWordWrap(True)
         desc_label.setStyleSheet(f"""
             color: {self._colors.text_secondary};
             font-size: {TYPOGRAPHY.text_xs}px;
         """)
         layout.addWidget(desc_label)
 
-        # Convex configuration (shown only when Convex is selected)
-        self._convex_config_frame = QFrame()
-        convex_layout = QVBoxLayout(self._convex_config_frame)
-        convex_layout.setContentsMargins(0, SPACING.md, 0, 0)
-        convex_layout.setSpacing(SPACING.sm)
+        # Bucket Name
+        bucket_frame = QFrame()
+        bucket_layout = QHBoxLayout(bucket_frame)
+        bucket_layout.setContentsMargins(0, 0, 0, 0)
+        bucket_layout.setSpacing(SPACING.sm)
 
-        convex_header = QLabel("Convex Configuration")
-        convex_header.setStyleSheet(f"""
-            color: {self._colors.text_primary};
-            font-size: {TYPOGRAPHY.text_sm}px;
-            font-weight: {TYPOGRAPHY.weight_semibold};
-            margin-top: {SPACING.md}px;
-        """)
-        convex_layout.addWidget(convex_header)
-
-        # Deployment URL
-        url_frame = QFrame()
-        url_layout = QHBoxLayout(url_frame)
-        url_layout.setContentsMargins(0, 0, 0, 0)
-        url_layout.setSpacing(SPACING.sm)
-
-        url_label = QLabel("Deployment URL:")
-        url_label.setStyleSheet(f"""
+        bucket_label = QLabel("Bucket Name:")
+        bucket_label.setStyleSheet(f"""
             color: {self._colors.text_secondary};
             font-size: {TYPOGRAPHY.text_sm}px;
         """)
-        url_layout.addWidget(url_label)
+        bucket_label.setFixedWidth(100)
+        bucket_layout.addWidget(bucket_label)
 
-        self._convex_url = QLineEdit()
-        self._convex_url.setPlaceholderText("https://your-project.convex.cloud")
-        self._convex_url.setStyleSheet(self._get_input_style())
-        self._convex_url.textChanged.connect(self._on_convex_url_changed)
-        url_layout.addWidget(self._convex_url, 1)
+        self._ds_bucket = QLineEdit()
+        self._ds_bucket.setPlaceholderText("my-research-bucket")
+        self._ds_bucket.setStyleSheet(self._get_input_style())
+        bucket_layout.addWidget(self._ds_bucket, 1)
 
-        convex_layout.addWidget(url_frame)
+        layout.addWidget(bucket_frame)
 
-        # Help text
-        help_label = QLabel(
-            "Get your deployment URL from the Convex dashboard at convex.dev"
-        )
-        help_label.setStyleSheet(f"""
+        # Region
+        region_frame = QFrame()
+        region_layout = QHBoxLayout(region_frame)
+        region_layout.setContentsMargins(0, 0, 0, 0)
+        region_layout.setSpacing(SPACING.sm)
+
+        region_label = QLabel("Region:")
+        region_label.setStyleSheet(f"""
+            color: {self._colors.text_secondary};
+            font-size: {TYPOGRAPHY.text_sm}px;
+        """)
+        region_label.setFixedWidth(100)
+        region_layout.addWidget(region_label)
+
+        self._ds_region = QComboBox()
+        self._ds_region.setStyleSheet(self._get_combo_style())
+        self._ds_region.setMinimumWidth(200)
+        regions = [
+            "us-east-1",
+            "us-east-2",
+            "us-west-1",
+            "us-west-2",
+            "eu-west-1",
+            "eu-west-2",
+            "eu-central-1",
+            "ap-southeast-1",
+            "ap-northeast-1",
+        ]
+        for r in regions:
+            self._ds_region.addItem(r, r)
+        region_layout.addWidget(self._ds_region)
+        region_layout.addStretch()
+
+        layout.addWidget(region_frame)
+
+        # Path Prefix
+        prefix_frame = QFrame()
+        prefix_layout = QHBoxLayout(prefix_frame)
+        prefix_layout.setContentsMargins(0, 0, 0, 0)
+        prefix_layout.setSpacing(SPACING.sm)
+
+        prefix_label = QLabel("Path Prefix:")
+        prefix_label.setStyleSheet(f"""
+            color: {self._colors.text_secondary};
+            font-size: {TYPOGRAPHY.text_sm}px;
+        """)
+        prefix_label.setFixedWidth(100)
+        prefix_layout.addWidget(prefix_label)
+
+        self._ds_prefix = QLineEdit()
+        self._ds_prefix.setPlaceholderText("project-alpha/")
+        self._ds_prefix.setStyleSheet(self._get_input_style())
+        prefix_layout.addWidget(self._ds_prefix, 1)
+
+        layout.addWidget(prefix_frame)
+
+        # DVC Remote Name
+        remote_frame = QFrame()
+        remote_layout = QHBoxLayout(remote_frame)
+        remote_layout.setContentsMargins(0, 0, 0, 0)
+        remote_layout.setSpacing(SPACING.sm)
+
+        remote_label = QLabel("DVC Remote:")
+        remote_label.setStyleSheet(f"""
+            color: {self._colors.text_secondary};
+            font-size: {TYPOGRAPHY.text_sm}px;
+        """)
+        remote_label.setFixedWidth(100)
+        remote_layout.addWidget(remote_label)
+
+        self._ds_remote = QLineEdit()
+        self._ds_remote.setPlaceholderText("origin")
+        self._ds_remote.setText("origin")
+        self._ds_remote.setStyleSheet(self._get_input_style())
+        remote_layout.addWidget(self._ds_remote, 1)
+
+        layout.addWidget(remote_frame)
+
+        # Test Connection + Status
+        test_frame = QFrame()
+        test_layout = QHBoxLayout(test_frame)
+        test_layout.setContentsMargins(0, 0, 0, 0)
+        test_layout.setSpacing(SPACING.md)
+
+        self._ds_test_btn = QPushButton("Test Connection")
+        self._ds_test_btn.setCursor(Qt.CursorShape.PointingHandCursor)
+        self._ds_test_btn.setStyleSheet(self._get_button_style())
+        self._ds_test_btn.clicked.connect(self._on_test_data_store)
+        test_layout.addWidget(self._ds_test_btn)
+
+        self._ds_save_btn = QPushButton("Save")
+        self._ds_save_btn.setCursor(Qt.CursorShape.PointingHandCursor)
+        self._ds_save_btn.setStyleSheet(self._get_primary_button_style())
+        self._ds_save_btn.clicked.connect(self._on_save_data_store)
+        test_layout.addWidget(self._ds_save_btn)
+
+        self._ds_status = QLabel("Not configured")
+        self._ds_status.setStyleSheet(f"""
             color: {self._colors.text_secondary};
             font-size: {TYPOGRAPHY.text_xs}px;
         """)
-        convex_layout.addWidget(help_label)
+        test_layout.addWidget(self._ds_status)
+        test_layout.addStretch()
 
-        layout.addWidget(self._convex_config_frame)
-        self._convex_config_frame.hide()  # Hidden by default
-
-        # Warning note
-        warning_label = QLabel(
-            "Note: Changing the database backend requires reopening the project."
-        )
-        warning_label.setStyleSheet(f"""
-            color: {self._colors.warning};
-            font-size: {TYPOGRAPHY.text_xs}px;
-            font-style: italic;
-            margin-top: {SPACING.md}px;
-        """)
-        layout.addWidget(warning_label)
+        layout.addWidget(test_frame)
 
         layout.addStretch()
 
@@ -855,13 +921,21 @@ class SettingsDialog(QDialog):
         self._file_logging_cb.blockSignals(False)
         self._telemetry_cb.blockSignals(False)
 
-        # Cloud sync
-        cloud_sync_enabled = getattr(settings, "cloud_sync_enabled", False)
-        self._cloud_sync_enabled.setChecked(cloud_sync_enabled)
-        self._convex_config_frame.setVisible(cloud_sync_enabled)
-        convex_url = getattr(settings, "convex_url", "")
-        if convex_url:
-            self._convex_url.setText(convex_url)
+        # Data Store (load from DataStoreViewModel if available)
+        if hasattr(self._viewmodel, "get_data_store_config"):
+            config = self._viewmodel.get_data_store_config()
+            if config:
+                self._ds_bucket.setText(config.get("bucket_name", ""))
+                region_idx = self._ds_region.findData(config.get("region", "us-east-1"))
+                if region_idx >= 0:
+                    self._ds_region.setCurrentIndex(region_idx)
+                self._ds_prefix.setText(config.get("prefix", ""))
+                self._ds_remote.setText(config.get("dvc_remote_name", "origin"))
+                self._ds_status.setText("Configured")
+                self._ds_status.setStyleSheet(f"""
+                    color: {self._colors.success};
+                    font-size: {TYPOGRAPHY.text_xs}px;
+                """)
 
     # =========================================================================
     # Event Handlers
@@ -954,18 +1028,6 @@ class SettingsDialog(QDialog):
         ]
         self._speaker_preview.setText(", ".join(previews))
 
-    def _on_cloud_sync_changed(self, _state: int) -> None:
-        """Handle cloud sync checkbox change."""
-        enabled = self._cloud_sync_enabled.isChecked()
-        self._convex_config_frame.setVisible(enabled)
-        self._viewmodel.set_cloud_sync_enabled(enabled)
-        self.settings_changed.emit()
-
-    def _on_convex_url_changed(self, url: str) -> None:
-        """Handle Convex URL change."""
-        self._viewmodel.set_convex_url(url if url else None)
-        self.settings_changed.emit()
-
     def _on_observability_changed(self, _value: int = 0) -> None:
         """Handle observability settings change."""
         log_level = self._log_level_combo.currentData() or "INFO"
@@ -975,6 +1037,66 @@ class SettingsDialog(QDialog):
             log_level, enable_file_logging, enable_telemetry
         )
         self.settings_changed.emit()
+
+    def _on_test_data_store(self) -> None:
+        """Handle test connection button for data store."""
+        if not hasattr(self._viewmodel, "test_data_store_connection"):
+            self._ds_status.setText("Not available (no project open)")
+            self._ds_status.setStyleSheet(f"""
+                color: {self._colors.warning};
+                font-size: {TYPOGRAPHY.text_xs}px;
+            """)
+            return
+
+        success = self._viewmodel.test_data_store_connection()
+        if success:
+            self._ds_status.setText("Connected")
+            self._ds_status.setStyleSheet(f"""
+                color: {self._colors.success};
+                font-size: {TYPOGRAPHY.text_xs}px;
+            """)
+        else:
+            error = self._viewmodel.data_store_last_error or "Connection failed"
+            self._ds_status.setText(error)
+            self._ds_status.setStyleSheet(f"""
+                color: {self._colors.error};
+                font-size: {TYPOGRAPHY.text_xs}px;
+            """)
+
+    def _on_save_data_store(self) -> None:
+        """Handle save button for data store configuration."""
+        if not hasattr(self._viewmodel, "configure_data_store"):
+            self._ds_status.setText("Not available (no project open)")
+            return
+
+        bucket = self._ds_bucket.text().strip()
+        region = self._ds_region.currentData() or "us-east-1"
+        prefix = self._ds_prefix.text().strip()
+        remote = self._ds_remote.text().strip() or "origin"
+
+        if not bucket:
+            self._ds_status.setText("Bucket name is required")
+            self._ds_status.setStyleSheet(f"""
+                color: {self._colors.error};
+                font-size: {TYPOGRAPHY.text_xs}px;
+            """)
+            return
+
+        success = self._viewmodel.configure_data_store(bucket, region, prefix, remote)
+        if success:
+            self._ds_status.setText("Configured")
+            self._ds_status.setStyleSheet(f"""
+                color: {self._colors.success};
+                font-size: {TYPOGRAPHY.text_xs}px;
+            """)
+            self.settings_changed.emit()
+        else:
+            error = self._viewmodel.data_store_last_error or "Configuration failed"
+            self._ds_status.setText(error)
+            self._ds_status.setStyleSheet(f"""
+                color: {self._colors.error};
+                font-size: {TYPOGRAPHY.text_xs}px;
+            """)
 
     def _on_ok(self) -> None:
         """Handle OK button click."""

@@ -15,7 +15,6 @@ from src.contexts.settings.core.commandHandlers import (
     change_theme,
     configure_av_coding,
     configure_backup,
-    configure_cloud_sync,
     configure_observability,
 )
 from src.contexts.settings.core.commands import (
@@ -24,7 +23,6 @@ from src.contexts.settings.core.commands import (
     ChangeThemeCommand,
     ConfigureAVCodingCommand,
     ConfigureBackupCommand,
-    ConfigureCloudSyncCommand,
     ConfigureObservabilityCommand,
 )
 from src.shared.common.operation_result import OperationResult
@@ -138,52 +136,6 @@ class SettingsService:
             enable_telemetry=enable_telemetry,
         )
         return configure_observability(
-            command=command,
-            settings_repo=self._settings_repo,
-            event_bus=self._event_bus,
-        )
-
-    def set_cloud_sync_enabled(self, enabled: bool) -> OperationResult:
-        """Enable or disable cloud sync with Convex."""
-        # Get current URL to preserve it when just toggling enabled
-        current_settings = self._settings_repo.load()
-        current_url = current_settings.backend.convex_url
-
-        command = ConfigureCloudSyncCommand(
-            enabled=enabled,
-            convex_url=current_url,
-        )
-        return configure_cloud_sync(
-            command=command,
-            settings_repo=self._settings_repo,
-            event_bus=self._event_bus,
-        )
-
-    def set_convex_url(self, url: str | None) -> OperationResult:
-        """Set the Convex deployment URL."""
-        # Get current enabled state to preserve it when just setting URL
-        current_settings = self._settings_repo.load()
-        current_enabled = current_settings.backend.cloud_sync_enabled
-
-        command = ConfigureCloudSyncCommand(
-            enabled=current_enabled,
-            convex_url=url,
-        )
-        return configure_cloud_sync(
-            command=command,
-            settings_repo=self._settings_repo,
-            event_bus=self._event_bus,
-        )
-
-    def configure_cloud_sync(
-        self, enabled: bool, convex_url: str | None
-    ) -> OperationResult:
-        """Configure cloud sync settings (enabled + URL together)."""
-        command = ConfigureCloudSyncCommand(
-            enabled=enabled,
-            convex_url=convex_url,
-        )
-        return configure_cloud_sync(
             command=command,
             settings_repo=self._settings_repo,
             event_bus=self._event_bus,

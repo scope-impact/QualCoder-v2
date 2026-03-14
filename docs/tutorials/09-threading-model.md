@@ -1,8 +1,8 @@
 # Part 9: Threading Model
 
-How does QualCoder v2 handle concurrency between the Qt UI, MCP server, and cloud sync?
+How does QualCoder v2 handle concurrency between the Qt UI and MCP server?
 
-## Three Thread Domains
+## Two Thread Domains
 
 ```mermaid
 graph TB
@@ -20,17 +20,9 @@ graph TB
         RepoWrite["repo.save()"]
     end
 
-    subgraph Sync ["Sync Daemon Threads"]
-        Outbound["SyncEngine-Outbound"]
-        Inbound["SyncEngine-Sub-*"]
-        Reachability["ConvexReachabilityCheck"]
-    end
-
     ToThread -->|thread-local conn| RepoRead
     RepoWrite -->|commit| RepoRead
-    Outbound -->|sync_db_lock| Inbound
     MCP -->|QMetaObject.invokeMethod| Main
-    Sync -->|queue.Queue| Main
 ```
 
 ## Pattern 1: Unified Event Loop (qasync)
@@ -158,48 +150,7 @@ def _execute_tool(self, tool_name, args, context):
 
 Each worker thread gets its own SQLite connection via `SingletonThreadPool` (see [Part 8](./08-database-lifecycle.md)).
 
-## Pattern 5: Sync Engine Background Threads
-
-Cloud sync uses dedicated daemon threads:
-
-```python
-# src/shared/infra/sync/engine.py
-class SyncEngine:
-    def __init__(self, connection, convex_client=None):
-        self._outbound_queue = queue.Queue()
-        self._stop_event = threading.Event()
-        self._sync_db_lock = threading.Lock()
-
-        # Sync thread gets its own SQLite connection
-        self._sync_connection = connection.engine.connect()
-        self._sync_connection.execute(text("PRAGMA busy_timeout = 5000"))
-
-    def start(self):
-        self._outbound_thread = threading.Thread(
-            target=self._outbound_sync_loop,
-            daemon=True,
-            name="SyncEngine-Outbound",
-        )
-        self._outbound_thread.start()
-
-    def _outbound_sync_loop(self):
-        while not self._stop_event.is_set():
-            self._drain_sync_outbox()
-            self._stop_event.wait(timeout=5.0)  # Clean shutdown support
-```
-
-**Important:** Subscription workers are **module-level functions**, not bound methods:
-
-```python
-# Module-level to avoid PyO3 GIL deadlocks with bound methods
-def _subscription_worker(convex_client_class, url, query, entity_type, ...):
-    thread_client = convex_client_class(url)  # Each thread owns its client
-    for data in thread_client.subscribe(query, {}):
-        for callback in listeners.get(entity_type, []):
-            callback("sync", {"items": data})
-```
-
-## Pattern 6: QTimer Debouncing (No Threading)
+## Pattern 5: QTimer Debouncing (No Threading)
 
 For events that arrive frequently (e.g., mutations for version control), use `QTimer` instead of threads:
 
@@ -257,9 +208,7 @@ Use `ThreadChecker.assert_main_thread()` in code that must run on the UI thread 
 | **_emit_threadsafe** | Signal emission from any thread | queue.Queue + QMetaObject |
 | **RLock + copy** | EventBus publish/subscribe | Copy under lock, invoke without |
 | **asyncio.to_thread** | MCP tool DB operations | ThreadPoolExecutor + thread-local conn |
-| **Daemon threads** | Cloud sync | stop_event + queue.Queue |
 | **QTimer debounce** | High-frequency main-thread events | Single-shot timer restart |
-| **Module-level workers** | Convex subscriptions | Avoid PyO3 GIL deadlocks |
 
 ## Rules
 

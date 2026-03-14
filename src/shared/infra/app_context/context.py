@@ -23,7 +23,6 @@ from src.shared.common.operation_result import OperationResult
 from src.shared.infra.cascade_registry import CascadeRegistry
 from src.shared.infra.event_bus import EventBus
 from src.shared.infra.lifecycle import ProjectLifecycle
-from src.shared.infra.repositories import BackendType
 from src.shared.infra.state import ProjectState
 
 from .bounded_contexts import (
@@ -32,6 +31,7 @@ from .bounded_contexts import (
     FoldersContext,
     ProjectsContext,
     SourcesContext,
+    StorageContext,
 )
 
 # Conditional imports for Qt (allows non-Qt tests to pass)
@@ -46,7 +46,6 @@ except ImportError:
 if TYPE_CHECKING:
     from src.contexts.settings.infra import UserSettingsRepository
     from src.shared.core.sync import SourceSyncHandler
-    from src.shared.infra.convex import ConvexClientWrapper
 
 logger = logging.getLogger(__name__)
 
@@ -84,13 +83,6 @@ class AppContext:
     # Optional Qt integration
     signal_bridge: ProjectSignalBridge | None = None
 
-    # Optional Convex client for cloud backend
-    convex_client: ConvexClientWrapper | None = None
-
-    # Cloud sync infrastructure (SyncContext owns Convex client + SyncEngine)
-    _sync_ctx: Any = field(default=None, init=False, repr=False)
-    _sync_engine: Any = field(default=None, init=False, repr=False)
-
     # VCS auto-commit listener (enabled per-project)
     _vcs_listener: Any = field(default=None, init=False, repr=False)
 
@@ -100,6 +92,7 @@ class AppContext:
     coding_context: CodingContext | None = None
     projects_context: ProjectsContext | None = None
     folders_context: FoldersContext | None = None
+    storage_context: StorageContext | None = None
 
     # Internal state
     _started: bool = field(default=False, init=False, repr=False)
@@ -231,9 +224,6 @@ class AppContext:
         """
         from src.contexts.projects.core.commandHandlers import close_project
 
-        # Stop SyncEngine BEFORE closing the database — the sync engine holds
-        # its own SQLite connection; if we dispose the engine first the orphaned
-        # sync thread keeps the file locked and the next open_project hangs.
         self._clear_contexts()
 
         result = close_project(
@@ -253,74 +243,38 @@ class AppContext:
     # Context Management (Internal)
     # =========================================================================
 
-    def _create_contexts(self, connection, project_path: str | None = None) -> dict:
+    def _create_contexts(
+        self, _connection: Any, project_path: str | None = None
+    ) -> dict:
         """
         Create bounded context objects for the open project.
 
         Called by open_project use case after connection is established.
-        Uses the configured backend type from settings.
 
         Args:
-            connection: SQLAlchemy Connection object
+            _connection: SQLAlchemy Connection (unused — Session provides thread-local conns)
             project_path: Path to the project file (for VCS adapter initialization)
 
         Returns:
             Dict of context name to context object
         """
-        # Initialize cloud sync infrastructure (Convex client + SyncEngine)
-        from .sync_context import SyncContext
-
-        backend_config = self.settings_repo.get_backend_config()
-        backend_type = BackendType.SQLITE  # Always SQLite as primary
-
-        self._sync_ctx = SyncContext.create(connection, backend_config)
-        self.convex_client = self._sync_ctx.convex_client
-        self._sync_engine = self._sync_ctx.sync_engine
-        sync_engine = self._sync_engine
-
         # Session provides thread-local connections so repos work from
         # both the Qt main thread and MCP worker threads (asyncio.to_thread).
         session = self.lifecycle.session
 
-        # Create contexts with sync support
-        self.sources_context = SourcesContext.create(
-            connection=session,
-            convex_client=self.convex_client,
-            backend_type=backend_type,
-            sync_engine=sync_engine,
-            event_bus=self.event_bus,
-        )
-        self.coding_context = CodingContext.create(
-            connection=session,
-            convex_client=self.convex_client,
-            backend_type=backend_type,
-            sync_engine=sync_engine,
-            event_bus=self.event_bus,
-        )
-        self.cases_context = CasesContext.create(
-            connection=session,
-            convex_client=self.convex_client,
-            backend_type=backend_type,
-            sync_engine=sync_engine,
-            event_bus=self.event_bus,
-        )
-        self.folders_context = FoldersContext.create(
-            connection=session,
-            convex_client=self.convex_client,
-            backend_type=backend_type,
-            sync_engine=sync_engine,
-            event_bus=self.event_bus,
-        )
-        # ProjectsContext always uses SQLite for local project file management
+        # Create contexts
+        self.sources_context = SourcesContext.create(connection=session)
+        self.coding_context = CodingContext.create(connection=session)
+        self.cases_context = CasesContext.create(connection=session)
+        self.folders_context = FoldersContext.create(connection=session)
         self.projects_context = ProjectsContext.create(
             connection=session,
-            _convex_client=self.convex_client,
-            _backend_type=BackendType.SQLITE,
             project_path=project_path,
         )
-
-        # Start sync engine after contexts are created
-        self._sync_ctx.start()
+        self.storage_context = StorageContext.create(
+            connection=session,
+            project_path=project_path,
+        )
 
         # Enable VCS auto-commit listener if adapters are available
         if (
@@ -344,10 +298,7 @@ class AppContext:
             self._vcs_listener.enable()
             logger.info("VCS auto-commit listener enabled")
 
-        sync_status = "enabled" if self._sync_engine else "disabled"
-        logger.debug(
-            f"Created bounded contexts for project (cloud sync: {sync_status})"
-        )
+        logger.debug("Created bounded contexts for project")
 
         return {
             "sources": self.sources_context,
@@ -355,6 +306,7 @@ class AppContext:
             "coding": self.coding_context,
             "folders": self.folders_context,
             "projects": self.projects_context,
+            "storage": self.storage_context,
         }
 
     def _clear_contexts(self) -> None:
@@ -370,12 +322,7 @@ class AppContext:
         self.coding_context = None
         self.projects_context = None
         self.folders_context = None
-
-        # Stop sync infrastructure (engine + Convex client)
-        if hasattr(self, "_sync_ctx") and self._sync_ctx is not None:
-            self._sync_ctx.stop()
-            self._sync_engine = None
-            self.convex_client = None
+        self.storage_context = None
 
         logger.debug("Cleared bounded contexts")
 
@@ -397,70 +344,3 @@ class AppContext:
     def has_project(self) -> bool:
         """Check if a project is currently open."""
         return self.state.project is not None
-
-    # =========================================================================
-    # Sync API (Public methods for MCP tools and UI)
-    # =========================================================================
-
-    def get_sync_engine(self):
-        """
-        Get the sync engine (public API).
-
-        Used by command handlers and MCP tools.
-
-        Returns:
-            SyncEngine if cloud sync is enabled, None otherwise.
-        """
-        return self._sync_engine
-
-    def get_sync_state(self):
-        """
-        Get current sync state (public API).
-
-        Used by MCP tools to query sync status without
-        accessing private attributes.
-
-        Returns:
-            SyncState if sync engine exists, None otherwise.
-        """
-        if self._sync_engine is None:
-            return None
-        return self._sync_engine.state
-
-    def is_cloud_sync_enabled(self) -> bool:
-        """
-        Check if cloud sync is enabled.
-
-        Returns:
-            True if cloud sync is configured and enabled.
-        """
-        backend_config = self.settings_repo.get_backend_config()
-        return backend_config.uses_convex
-
-    def trigger_sync_pull(self) -> OperationResult:
-        """
-        Trigger a cloud sync pull operation.
-
-        Delegates to the sync pull command handler.
-        Used by UI and MCP tools to initiate sync.
-
-        Returns:
-            OperationResult from the sync pull operation.
-        """
-        if not self.is_cloud_sync_enabled():
-            return OperationResult.fail(
-                error="Cloud sync is not enabled",
-                error_code="SYNC_DISABLED",
-            )
-
-        if self._sync_engine is None:
-            return OperationResult.fail(
-                error="Sync engine not initialized",
-                error_code="SYNC_NOT_READY",
-            )
-
-        from src.shared.core.sync import SyncPullCommand
-        from src.shared.infra.sync.commandHandlers import handle_sync_pull
-
-        cmd = SyncPullCommand()
-        return handle_sync_pull(cmd, self._sync_engine, self.event_bus)

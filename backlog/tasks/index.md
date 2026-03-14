@@ -27,4 +27,8 @@ All feature specifications and implementation tasks for QualCoder v2.
 | QC-044 | [Visualizations](qc-044%20-%20Visualizations.md) |
 | QC-045 | [Complete Coding Context](qc-045%20-%20Complete-Coding-Context.md) |
 | QC-046 | [Remove Migration Code](qc-046%20-%20Remove-premature-v1%E2%86%92v2-migration-code.md) |
-| QC-050 | [Agent Code Management MCP Tools](qc-050%20-%20Agent-Code-Management-MCP-Tools.md) |
+| QC-047 | [S3 Data Store with DVC Versioning](qc-047%20-%20S3-Data-Store-with-DVC-Versioning.md) |
+| QC-048 | [SQLite Database Version Control](qc-048%20-%20SQLite-Database-Version-Control.md) |
+| QC-049 | [Observability: Structured Logging and OTEL Metrics](qc-049%20-%20Observability-Structured-Logging-and-OTEL-Metrics.md) |
+| QC-050 | [Remove Convex Sync Infrastructure](qc-050%20-%20Remove-Convex-Sync-Infrastructure.md) |
+| QC-051 | [Firebase Analytics Import Pipeline](qc-051%20-%20Firebase-Analytics-Import-Pipeline.md) |

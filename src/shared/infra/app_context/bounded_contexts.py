@@ -3,15 +3,12 @@ Bounded Context Classes for QualCoder.
 
 These classes bundle repositories for each bounded context.
 They are created when a project is opened and cleared when it closes.
-Supports SQLite (primary) with optional Convex sync.
 """
 
 from __future__ import annotations
 
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any
-
-from src.shared.infra.repositories import BackendType
 
 if TYPE_CHECKING:
     from sqlalchemy import Connection
@@ -20,7 +17,6 @@ if TYPE_CHECKING:
     from src.contexts.projects.infra.settings_repository import (
         SQLiteProjectSettingsRepository,
     )
-    from src.shared.infra.convex import ConvexClientWrapper
     from src.shared.infra.repositories import (
         CaseRepositoryProtocol,
         CategoryRepositoryProtocol,
@@ -29,19 +25,6 @@ if TYPE_CHECKING:
         SegmentRepositoryProtocol,
         SourceRepositoryProtocol,
     )
-    from src.shared.infra.sync import SyncEngine
-    from src.shared.infra.sync.outbox import OutboxWriter
-
-
-def _create_outbox(
-    connection: Connection, sync_engine: SyncEngine | None
-) -> OutboxWriter | None:
-    """Create an OutboxWriter when cloud sync is enabled, otherwise None."""
-    if sync_engine is None:
-        return None
-    from src.shared.infra.sync.outbox import OutboxWriter
-
-    return OutboxWriter(connection)
 
 
 @dataclass
@@ -59,34 +42,17 @@ class SourcesContext:
     def create(
         cls,
         connection: Connection | None = None,
-        convex_client: ConvexClientWrapper | None = None,
-        backend_type: BackendType = BackendType.SQLITE,
-        sync_engine: SyncEngine | None = None,
-        event_bus: Any = None,  # noqa: ARG003
     ) -> SourcesContext:
         """Create a SourcesContext with all repositories."""
-        if backend_type == BackendType.CONVEX:
-            if convex_client is None:
-                raise ValueError("ConvexClientWrapper required for Convex backend")
-            from src.contexts.sources.infra.convex_repositories import (
-                ConvexSourceRepository,
-            )
+        if connection is None:
+            raise ValueError("Connection required")
+        from src.contexts.sources.infra.source_repository import (
+            SQLiteSourceRepository,
+        )
 
-            return cls(
-                source_repo=ConvexSourceRepository(convex_client),
-            )
-        else:
-            if connection is None:
-                raise ValueError("SQLAlchemy connection required for SQLite backend")
-            from src.contexts.sources.infra.source_repository import (
-                SQLiteSourceRepository,
-            )
-
-            return cls(
-                source_repo=SQLiteSourceRepository(
-                    connection, outbox=_create_outbox(connection, sync_engine)
-                ),
-            )
+        return cls(
+            source_repo=SQLiteSourceRepository(connection),
+        )
 
 
 @dataclass
@@ -104,34 +70,17 @@ class FoldersContext:
     def create(
         cls,
         connection: Connection | None = None,
-        convex_client: ConvexClientWrapper | None = None,
-        backend_type: BackendType = BackendType.SQLITE,
-        sync_engine: SyncEngine | None = None,
-        event_bus: Any = None,  # noqa: ARG003
     ) -> FoldersContext:
         """Create a FoldersContext with all repositories."""
-        if backend_type == BackendType.CONVEX:
-            if convex_client is None:
-                raise ValueError("ConvexClientWrapper required for Convex backend")
-            from src.contexts.sources.infra.convex_repositories import (
-                ConvexFolderRepository,
-            )
+        if connection is None:
+            raise ValueError("Connection required")
+        from src.contexts.folders.infra.folder_repository import (
+            SQLiteFolderRepository,
+        )
 
-            return cls(
-                folder_repo=ConvexFolderRepository(convex_client),
-            )
-        else:
-            if connection is None:
-                raise ValueError("SQLAlchemy connection required for SQLite backend")
-            from src.contexts.folders.infra.folder_repository import (
-                SQLiteFolderRepository,
-            )
-
-            return cls(
-                folder_repo=SQLiteFolderRepository(
-                    connection, outbox=_create_outbox(connection, sync_engine)
-                ),
-            )
+        return cls(
+            folder_repo=SQLiteFolderRepository(connection),
+        )
 
 
 @dataclass
@@ -149,28 +98,13 @@ class CasesContext:
     def create(
         cls,
         connection: Connection | None = None,
-        convex_client: ConvexClientWrapper | None = None,
-        backend_type: BackendType = BackendType.SQLITE,
-        sync_engine: SyncEngine | None = None,
-        event_bus: Any = None,  # noqa: ARG003
     ) -> CasesContext:
         """Create a CasesContext with all repositories."""
-        if backend_type == BackendType.CONVEX:
-            if convex_client is None:
-                raise ValueError("ConvexClientWrapper required for Convex backend")
-            from src.contexts.cases.infra.convex_repository import ConvexCaseRepository
+        if connection is None:
+            raise ValueError("Connection required")
+        from src.contexts.cases.infra.case_repository import SQLiteCaseRepository
 
-            return cls(case_repo=ConvexCaseRepository(convex_client))
-        else:
-            if connection is None:
-                raise ValueError("SQLAlchemy connection required for SQLite backend")
-            from src.contexts.cases.infra.case_repository import SQLiteCaseRepository
-
-            return cls(
-                case_repo=SQLiteCaseRepository(
-                    connection, outbox=_create_outbox(connection, sync_engine)
-                )
-            )
+        return cls(case_repo=SQLiteCaseRepository(connection))
 
 
 @dataclass
@@ -192,41 +126,149 @@ class CodingContext:
     def create(
         cls,
         connection: Connection | None = None,
-        convex_client: ConvexClientWrapper | None = None,
-        backend_type: BackendType = BackendType.SQLITE,
-        sync_engine: SyncEngine | None = None,
-        event_bus: Any = None,  # noqa: ARG003
     ) -> CodingContext:
         """Create a CodingContext with all repositories."""
-        if backend_type == BackendType.CONVEX:
-            if convex_client is None:
-                raise ValueError("ConvexClientWrapper required for Convex backend")
-            from src.contexts.coding.infra.convex_repositories import (
-                ConvexCategoryRepository,
-                ConvexCodeRepository,
-                ConvexSegmentRepository,
-            )
+        if connection is None:
+            raise ValueError("Connection required")
+        from src.contexts.coding.infra.repositories import (
+            SQLiteCategoryRepository,
+            SQLiteCodeRepository,
+            SQLiteSegmentRepository,
+        )
 
-            return cls(
-                code_repo=ConvexCodeRepository(convex_client),
-                category_repo=ConvexCategoryRepository(convex_client),
-                segment_repo=ConvexSegmentRepository(convex_client),
-            )
-        else:
-            if connection is None:
-                raise ValueError("SQLAlchemy connection required for SQLite backend")
-            from src.contexts.coding.infra.repositories import (
-                SQLiteCategoryRepository,
-                SQLiteCodeRepository,
-                SQLiteSegmentRepository,
-            )
+        return cls(
+            code_repo=SQLiteCodeRepository(connection),
+            category_repo=SQLiteCategoryRepository(connection),
+            segment_repo=SQLiteSegmentRepository(connection),
+        )
 
-            outbox = _create_outbox(connection, sync_engine)
-            return cls(
-                code_repo=SQLiteCodeRepository(connection, outbox=outbox),
-                category_repo=SQLiteCategoryRepository(connection, outbox=outbox),
-                segment_repo=SQLiteSegmentRepository(connection, outbox=outbox),
-            )
+
+@dataclass
+class StorageContext:
+    """
+    Storage bounded context - manages S3 data store and DVC versioning.
+
+    Provides access to:
+    - StoreRepository: Persistence for DataStore config
+    - S3Scanner: S3 file operations
+    - DvcGateway: DVC version control for data
+    """
+
+    store_repo: Any  # StoreRepository protocol
+    s3_scanner: Any  # S3ScannerProtocol
+    dvc_gateway: Any  # DvcGatewayProtocol
+
+    @classmethod
+    def create(
+        cls,
+        connection: Connection | None = None,
+        project_path: str | None = None,
+    ) -> StorageContext:
+        """Create a StorageContext with all repositories and gateways."""
+        if connection is None:
+            raise ValueError("Connection required")
+        from src.contexts.storage.infra.store_repository import SQLiteStoreRepository
+
+        store_repo = SQLiteStoreRepository(connection)
+
+        # Create S3 scanner (boto3 client created lazily on first use)
+        s3_scanner = _create_s3_scanner()
+
+        # Create DVC gateway (needs project working directory)
+        dvc_gateway = _create_dvc_gateway(project_path)
+
+        return cls(
+            store_repo=store_repo,
+            s3_scanner=s3_scanner,
+            dvc_gateway=dvc_gateway,
+        )
+
+
+def _create_s3_scanner() -> Any:
+    """Create an S3Scanner with a lazy boto3 client."""
+    try:
+        import boto3
+
+        client = boto3.client("s3")
+    except Exception:
+        # S3 not available (offline mode) — return a no-op scanner
+        client = None
+
+    if client is None:
+        return _NullS3Scanner()
+
+    from src.contexts.storage.infra.s3_scanner import S3Scanner
+
+    return S3Scanner(client)
+
+
+def _create_dvc_gateway(project_path: str | None) -> Any:
+    """Create a DvcGateway for the project directory."""
+    if project_path is None:
+        return _NullDvcGateway()
+
+    from pathlib import Path
+
+    from src.contexts.storage.infra.dvc_gateway import DvcGateway
+
+    return DvcGateway(str(Path(project_path).parent))
+
+
+class _NullS3Scanner:
+    """Null object for S3Scanner when boto3 is not available."""
+
+    def list_files(self, _bucket: str, _prefix: str = "") -> list:
+        return []
+
+    def download_file(self, _bucket: str, _key: str, _local_path: str) -> None:
+        raise RuntimeError(
+            "S3 not available — check AWS credentials and boto3 installation"
+        )
+
+    def upload_file(self, _bucket: str, _key: str, _local_path: str) -> None:
+        raise RuntimeError(
+            "S3 not available — check AWS credentials and boto3 installation"
+        )
+
+
+class _NullDvcGateway:
+    """Null object for DvcGateway when project path is not available."""
+
+    @dataclass(frozen=True)
+    class _Result:
+        success: bool = False
+        message: str = "DVC not available — no project path"
+        transferred: int = 0
+
+    def init(self):
+        return self._Result()
+
+    def remote_add(self, _name, _url):
+        return self._Result()
+
+    def remote_modify(self, _name, _key, _value):
+        return self._Result()
+
+    def remote_default(self, _name):
+        return self._Result()
+
+    def add(self, _path):
+        return self._Result()
+
+    def push(self, _remote=None):
+        return self._Result()
+
+    def pull(self, _remote=None):
+        return self._Result()
+
+    def status(self, _remote=None):
+        return self._Result()
+
+    @staticmethod
+    def s3_url(bucket, prefix=""):
+        if prefix:
+            return f"s3://{bucket}/{prefix.strip('/')}"
+        return f"s3://{bucket}"
 
 
 @dataclass
@@ -239,14 +281,10 @@ class ProjectsContext:
     - SettingsRepository: Project-level settings
     - GitAdapter: Git repository operations (for VCS)
     - DiffableAdapter: SQLite to JSON conversion (for VCS)
-
-    Note: ProjectsContext currently only supports SQLite backend as
-    project metadata is stored locally. For Convex backend, project
-    settings are stored in Convex via the prj_settings table.
     """
 
-    project_repo: SQLiteProjectRepository | Any  # SQLite or Convex
-    settings_repo: SQLiteProjectSettingsRepository | Any  # SQLite or Convex
+    project_repo: SQLiteProjectRepository | Any
+    settings_repo: SQLiteProjectSettingsRepository | Any
     git_adapter: Any | None = None  # GitRepositoryAdapter
     diffable_adapter: Any | None = None  # SqliteDiffableAdapter
 
@@ -254,13 +292,9 @@ class ProjectsContext:
     def create(
         cls,
         connection: Connection | None = None,
-        _convex_client: ConvexClientWrapper | None = None,  # Reserved for future use
-        _backend_type: BackendType = BackendType.SQLITE,  # Reserved for future use
         project_path: str | None = None,
     ) -> ProjectsContext:
         """Create a ProjectsContext with all repositories."""
-        # ProjectsContext always uses SQLite for local project file management
-        # but can use Convex for cloud project settings
         if connection is None:
             raise ValueError("SQLAlchemy connection required for project management")
 

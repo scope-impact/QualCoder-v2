@@ -7,7 +7,6 @@ must follow, enabling backend-agnostic code in the domain layer.
 
 from __future__ import annotations
 
-from enum import Enum
 from typing import TYPE_CHECKING, Protocol, runtime_checkable
 
 if TYPE_CHECKING:
@@ -22,13 +21,6 @@ if TYPE_CHECKING:
         SegmentId,
         SourceId,
     )
-
-
-class BackendType(str, Enum):
-    """Supported database backend types."""
-
-    SQLITE = "sqlite"
-    CONVEX = "convex"
 
 
 @runtime_checkable

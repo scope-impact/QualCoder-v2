@@ -100,31 +100,3 @@ def is_valid_backup_interval(interval: int) -> bool:
 def is_valid_max_backups(max_backups: int) -> bool:
     """Check if max backups is within valid range."""
     return MIN_MAX_BACKUPS <= max_backups <= MAX_MAX_BACKUPS
-
-
-# =============================================================================
-# Cloud Sync Validation
-# =============================================================================
-
-
-def is_valid_convex_url(url: str | None) -> bool:
-    """
-    Check if Convex URL is valid.
-
-    Accepts any http:// or https:// URL.
-    """
-    if not url:
-        return True  # Empty/None is valid (disabled state)
-    url = url.strip()
-    return url.startswith("http://") or url.startswith("https://")
-
-
-def can_enable_cloud_sync(url: str | None) -> bool:
-    """
-    Check if cloud sync can be enabled.
-
-    Requires a valid Convex URL to be configured.
-    """
-    if not url or not url.strip():
-        return False
-    return is_valid_convex_url(url)

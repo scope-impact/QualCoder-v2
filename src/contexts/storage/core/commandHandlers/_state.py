@@ -1,0 +1,46 @@
+"""
+Storage Context: Shared State and Protocol Definitions
+
+Defines repository and service Protocols used across command handlers.
+Follows the pattern from src/contexts/coding/core/commandHandlers/_state.py.
+"""
+
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, Protocol
+
+from src.contexts.storage.core.entities import DataStore, RemoteFile
+
+if TYPE_CHECKING:
+    from src.contexts.storage.infra.dvc_gateway import DvcResult
+
+
+class StoreRepository(Protocol):
+    """Protocol for data store configuration persistence."""
+
+    def get(self) -> DataStore | None: ...
+    def save(self, store: DataStore) -> None: ...
+
+
+class S3ScannerProtocol(Protocol):
+    """Protocol for S3 operations (list, download, upload, sync)."""
+
+    def list_files(self, bucket: str, prefix: str = "") -> list[RemoteFile]: ...
+    def download_file(self, bucket: str, key: str, local_path: str) -> None: ...
+    def upload_file(self, bucket: str, key: str, local_path: str) -> None: ...
+
+
+class DvcGatewayProtocol(Protocol):
+    """Protocol for DVC operations (version control for data)."""
+
+    def init(self) -> DvcResult: ...
+    def remote_add(self, name: str, url: str) -> DvcResult: ...
+    def remote_modify(self, name: str, key: str, value: str) -> DvcResult: ...
+    def remote_default(self, name: str) -> DvcResult: ...
+    def add(self, path: str) -> DvcResult: ...
+    def push(self, remote: str | None = None) -> DvcResult: ...
+    def pull(self, remote: str | None = None) -> DvcResult: ...
+    def status(self, remote: str | None = None) -> DvcResult: ...
+
+    @staticmethod
+    def s3_url(bucket: str, prefix: str = "") -> str: ...

@@ -7,7 +7,7 @@ and inherit from DomainEvent base class.
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import ClassVar
 
 from src.shared.common.types import DomainEvent
@@ -224,70 +224,4 @@ class ObservabilityConfigChanged(DomainEvent):
             log_level=log_level,
             enable_file_logging=enable_file_logging,
             enable_telemetry=enable_telemetry,
-        )
-
-
-# =============================================================================
-# Cloud Sync Events
-# =============================================================================
-
-
-@dataclass(frozen=True)
-class CloudSyncConfigChanged(DomainEvent):
-    """Emitted when cloud sync configuration is changed."""
-
-    event_type: str = field(default="settings.cloud_sync_config_changed", init=False)
-    old_enabled: bool = False
-    old_convex_url: str | None = None
-    enabled: bool = False
-    convex_url: str | None = None
-
-    @classmethod
-    def create(
-        cls,
-        old_enabled: bool,
-        old_convex_url: str | None,
-        enabled: bool,
-        convex_url: str | None,
-    ) -> CloudSyncConfigChanged:
-        """Factory method to create event with auto-generated metadata."""
-        return cls(
-            event_id=cls._generate_id(),
-            occurred_at=cls._now(),
-            old_enabled=old_enabled,
-            old_convex_url=old_convex_url,
-            enabled=enabled,
-            convex_url=convex_url,
-        )
-
-
-@dataclass(frozen=True)
-class CloudSyncEnabled(DomainEvent):
-    """Emitted when cloud sync is enabled."""
-
-    event_type: str = field(default="settings.cloud_sync_enabled", init=False)
-    convex_url: str = ""
-
-    @classmethod
-    def create(cls, convex_url: str) -> CloudSyncEnabled:
-        """Factory method to create event with auto-generated metadata."""
-        return cls(
-            event_id=cls._generate_id(),
-            occurred_at=cls._now(),
-            convex_url=convex_url,
-        )
-
-
-@dataclass(frozen=True)
-class CloudSyncDisabled(DomainEvent):
-    """Emitted when cloud sync is disabled."""
-
-    event_type: str = field(default="settings.cloud_sync_disabled", init=False)
-
-    @classmethod
-    def create(cls) -> CloudSyncDisabled:
-        """Factory method to create event with auto-generated metadata."""
-        return cls(
-            event_id=cls._generate_id(),
-            occurred_at=cls._now(),
         )

@@ -1,6 +1,6 @@
 # ADR-002: Transactional Outbox + Cursor Pull + LWW as Sync Engine Pattern
 
-**Status:** Accepted
+**Status:** Superseded — Convex sync infrastructure removed (QC-050). Storage now uses S3 + DVC.
 **Date:** 2026-02-25
 **Deciders:** Sathish Narayanan
 **Scope:** `shared/infra/sync/` — outbound push, inbound pull, conflict resolution
