@@ -192,7 +192,7 @@ def _find_segment(text: str, phrase: str) -> tuple[int, int]:
 # =============================================================================
 
 
-@allure.story("QC-RTA.01 Phase 1 - Familiarization with Data")
+@allure.story("QC-051.01 Phase 1 - Familiarization with Data")
 class TestPhase1Familiarization:
     """
     Braun & Clarke Phase 1: Familiarize yourself with the data.
@@ -224,7 +224,7 @@ class TestPhase1Familiarization:
 # =============================================================================
 
 
-@allure.story("QC-RTA.02 Phase 2 - Generating Initial Codes via MCP")
+@allure.story("QC-051.01 Phase 2 - Generating Initial Codes via MCP")
 class TestPhase2InitialCodingMCP:
     """
     Braun & Clarke Phase 2: Generate initial codes.
@@ -546,7 +546,7 @@ class TestPhase2InitialCodingMCP:
 # =============================================================================
 
 
-@allure.story("QC-RTA.03 Phase 3 - Searching for Themes")
+@allure.story("QC-051.01 Phase 3 - Searching for Themes")
 class TestPhase3SearchingForThemes:
     """
     Braun & Clarke Phase 3: Search for themes.
@@ -645,7 +645,7 @@ class TestPhase3SearchingForThemes:
 # =============================================================================
 
 
-@allure.story("QC-RTA.04-05 Phase 4-5 - Reviewing and Defining Themes")
+@allure.story("QC-051.01 Phase 4-5 - Reviewing and Defining Themes")
 class TestPhase4And5ReviewingDefiningThemes:
     """
     Braun & Clarke Phase 4-5: Review and define themes.
@@ -787,7 +787,7 @@ class TestPhase4And5ReviewingDefiningThemes:
 # =============================================================================
 
 
-@allure.story("QC-RTA.06 Phase 6 - Full Workflow and Audit Trail")
+@allure.story("QC-051.01 Phase 6 - Full Workflow and Audit Trail")
 class TestPhase6FullWorkflow:
     """
     Complete end-to-end thematic analysis demonstrating the full

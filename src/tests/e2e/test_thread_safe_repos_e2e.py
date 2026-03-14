@@ -43,7 +43,7 @@ def _open_project(app_context: AppContext, tmp_path: Path, name: str) -> Path:
 # ---------------------------------------------------------------------------
 
 
-@allure.story("QC-INF.01 SingletonThreadPool Connection Factory")
+@allure.story("QC-054.01 SingletonThreadPool Connection Factory")
 class TestConnectionFactory:
     @allure.title(
         "Engine uses SingletonThreadPool and factory returns same conn on same thread"
@@ -106,7 +106,7 @@ class TestConnectionFactory:
 # ---------------------------------------------------------------------------
 
 
-@allure.story("QC-INF.02 Repo Worker Thread Access")
+@allure.story("QC-054.02 Repo Worker Thread Access")
 class TestRepoWorkerThreadAccess:
     @allure.title("Worker and main threads can read each other's writes")
     def test_cross_thread_reads_and_writes(
@@ -171,7 +171,7 @@ class TestRepoWorkerThreadAccess:
 # ---------------------------------------------------------------------------
 
 
-@allure.story("QC-INF.03 Concurrent Repo Access Stress Test")
+@allure.story("QC-054.03 Concurrent Repo Access Stress Test")
 class TestConcurrentRepoAccess:
     @allure.title("MCP worker thread and UI main thread can access repos concurrently")
     def test_concurrent_read_write(self, app_context: AppContext, tmp_path: Path):
@@ -227,7 +227,7 @@ class TestConcurrentRepoAccess:
 # ---------------------------------------------------------------------------
 
 
-@allure.story("QC-INF.04 MCP asyncio.to_thread Integration")
+@allure.story("QC-054.04 MCP asyncio.to_thread Integration")
 class TestMcpAsyncToThread:
     @allure.title(
         "_execute_tool runs safely via asyncio.to_thread for reads and writes"
@@ -279,7 +279,7 @@ class TestMcpAsyncToThread:
 # ---------------------------------------------------------------------------
 
 
-@allure.story("QC-INF.05 Pool Cleanup on Project Close")
+@allure.story("QC-054.05 Pool Cleanup on Project Close")
 class TestPoolCleanup:
     @allure.title("Project close disposes engine and clears connection_factory")
     def test_close_cleans_up(self, app_context: AppContext, tmp_path: Path):

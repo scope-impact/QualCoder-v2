@@ -219,7 +219,7 @@ def review_project(app_context: AppContext, tmp_path: Path) -> dict:
 # =============================================================================
 
 
-@allure.story("QC-ICPC.01 Phase 1 - Import Code Review Transcripts")
+@allure.story("QC-051.03 ICPC Replication")
 class TestPhase1ImportTranscripts:
     """Import real observation transcripts from the ICPC replication package."""
 
@@ -250,7 +250,7 @@ class TestPhase1ImportTranscripts:
 # =============================================================================
 
 
-@allure.story("QC-ICPC.02 Phase 2 - Apply Published Codebook to Real Data")
+@allure.story("QC-051.03 ICPC Replication")
 class TestPhase2ApplyPublishedCodes:
     """
     Apply codes FROM the published codebook to real transcript passages.
@@ -407,7 +407,7 @@ class TestPhase2ApplyPublishedCodes:
 # =============================================================================
 
 
-@allure.story("QC-ICPC.03-05 Phase 3-5 - Build Published Theme Hierarchy")
+@allure.story("QC-051.03 ICPC Replication")
 class TestPhase3to5ThemeHierarchy:
     """
     Organize codes into the thematic structure from the published codebook,
@@ -583,7 +583,7 @@ class TestPhase3to5ThemeHierarchy:
 # =============================================================================
 
 
-@allure.story("QC-ICPC.06 Phase 6 - Full Validated Workflow")
+@allure.story("QC-051.03 ICPC Replication")
 class TestPhase6FullValidatedWorkflow:
     """
     Complete MCP-only workflow using published codebook on real transcripts,

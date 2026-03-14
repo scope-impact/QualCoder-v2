@@ -116,7 +116,7 @@ def _find_segment(text: str, phrase: str) -> tuple[int, int]:
 # =============================================================================
 
 
-@allure.story("QC-SHEF.01 Phase 1 - Import Sheffield Transcripts")
+@allure.story("QC-051.02 Sheffield Replication")
 class TestPhase1ImportRealTranscripts:
     """
     Braun & Clarke Phase 1: Familiarize yourself with the data.
@@ -157,7 +157,7 @@ class TestPhase1ImportRealTranscripts:
 # =============================================================================
 
 
-@allure.story("QC-SHEF.02 Phase 2 - Code Real Transcript Data")
+@allure.story("QC-051.02 Sheffield Replication")
 class TestPhase2CodeRealData:
     """
     Braun & Clarke Phase 2: Generate initial codes.
@@ -343,7 +343,7 @@ class TestPhase2CodeRealData:
 # =============================================================================
 
 
-@allure.story("QC-SHEF.03-05 Phase 3-5 - Develop Themes from Real Data")
+@allure.story("QC-051.02 Sheffield Replication")
 class TestPhase3to5DevelopThemes:
     """
     Braun & Clarke Phases 3-5: Search for themes, review, define and name.
@@ -555,7 +555,7 @@ class TestPhase3to5DevelopThemes:
 # =============================================================================
 
 
-@allure.story("QC-SHEF.06 Phase 6 - Full Workflow with Audit Trail")
+@allure.story("QC-051.02 Sheffield Replication")
 class TestPhase6FullWorkflowRealData:
     """
     Complete end-to-end thematic analysis on real Sheffield transcripts
