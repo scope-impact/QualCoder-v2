@@ -1,0 +1,1 @@
+ERROR    qualcoder.settings.infra:user_settings_repository.py:90 load: corrupted settings file /tmp/tmpqjfzks0c/settings.json

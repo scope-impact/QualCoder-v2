@@ -1,0 +1,7 @@
+ERROR    sqlalchemy.pool.impl.SingletonThreadPool:base.py:376 Exception closing connection <sqlite3.Connection object at 0x7f0f456356c0>
+Traceback (most recent call last):
+  File "/home/runner/work/QualCoder-v2/QualCoder-v2/.venv/lib/python3.11/site-packages/sqlalchemy/pool/base.py", line 374, in _close_connection
+    self._dialect.do_close(connection)
+  File "/home/runner/work/QualCoder-v2/QualCoder-v2/.venv/lib/python3.11/site-packages/sqlalchemy/engine/default.py", line 721, in do_close
+    dbapi_connection.close()
+sqlite3.ProgrammingError: SQLite objects created in a thread can only be used in that same thread. The object was created in thread id 139703501190848 and this is thread id 139704183768896.

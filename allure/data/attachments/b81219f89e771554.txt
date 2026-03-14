@@ -1,0 +1,1 @@
+ERROR    qualcoder.cases.core:create_case.py:55 create_case failed: CASE_NOT_CREATED/DUPLICATE_NAME

@@ -1,0 +1,32 @@
+INFO     qualcoder.mcp:mcp_server.py:130 Server starting on port 18383 (debug=True, unified loop)
+INFO     qualcoder.mcp:mcp_server.py:226 Server ready at http://localhost:18383
+DEBUG    qualcoder.mcp:mcp_server.py:171 GET /tools
+DEBUG    qualcoder.mcp:mcp_server.py:178 GET /tools -> 200 (2.2ms)
+DEBUG    qualcoder.mcp:mcp_server.py:171 POST /tools/create_code
+DEBUG    qualcoder.mcp:mcp_server.py:486 Tool call: create_code args={"name": "Anxiety", "color": "#FF0000"}
+DEBUG    qualcoder.mcp:mcp_server.py:531 Tool create_code completed: success=True (8.5ms)
+DEBUG    qualcoder.mcp:mcp_server.py:178 POST /tools/create_code -> 200 (9.0ms)
+DEBUG    qualcoder.mcp:mcp_server.py:171 POST /tools/create_code
+DEBUG    qualcoder.mcp:mcp_server.py:486 Tool call: create_code args={"name": "Stress", "color": "#FF5500"}
+DEBUG    qualcoder.mcp:mcp_server.py:531 Tool create_code completed: success=True (2.7ms)
+DEBUG    qualcoder.mcp:mcp_server.py:178 POST /tools/create_code -> 200 (3.0ms)
+DEBUG    qualcoder.mcp:mcp_server.py:171 POST /tools/create_code
+DEBUG    qualcoder.mcp:mcp_server.py:486 Tool call: create_code args={"name": "Resilience", "color": "#00FF00"}
+DEBUG    qualcoder.mcp:mcp_server.py:531 Tool create_code completed: success=True (2.5ms)
+DEBUG    qualcoder.mcp:mcp_server.py:178 POST /tools/create_code -> 200 (2.9ms)
+DEBUG    qualcoder.mcp:mcp_server.py:171 POST /tools/batch_apply_codes
+DEBUG    qualcoder.mcp:mcp_server.py:486 Tool call: batch_apply_codes args={"operations": [{"code_id": "019cede6-c41c-7b02-acff-d9490d53d2df", "source_id": "019cede6-c42b-7731-bf6d-e94ad58d623c", "start_position": 0, "end_position": 30}]}
+DEBUG    qualcoder.mcp:mcp_server.py:531 Tool batch_apply_codes completed: success=True (4.2ms)
+DEBUG    qualcoder.mcp:mcp_server.py:178 POST /tools/batch_apply_codes -> 200 (4.6ms)
+DEBUG    qualcoder.mcp:mcp_server.py:171 POST /tools/rename_code
+DEBUG    qualcoder.mcp:mcp_server.py:486 Tool call: rename_code args={"new_name": "Something"}
+DEBUG    qualcoder.mcp:mcp_server.py:531 Tool rename_code completed: success=False (0.1ms)
+DEBUG    qualcoder.mcp:mcp_server.py:178 POST /tools/rename_code -> 200 (0.4ms)
+DEBUG    qualcoder.mcp:mcp_server.py:171 POST /tools/rename_code
+DEBUG    qualcoder.mcp:mcp_server.py:486 Tool call: rename_code args={"code_id": "nonexistent", "new_name": "Something"}
+ERROR    qualcoder.coding.core:rename_code.py:71 rename_code failed: CODE_NOT_RENAMED/NOT_FOUND
+DEBUG    qualcoder.mcp:mcp_server.py:531 Tool rename_code completed: success=False (1.3ms)
+DEBUG    qualcoder.mcp:mcp_server.py:178 POST /tools/rename_code -> 200 (1.6ms)
+INFO     qualcoder.mcp:mcp_server.py:149 Server stopping...
+ERROR    qualcoder.projects.core:auto_commit.py:61 auto_commit: skipped reason=NOT_INITIALIZED
+ERROR    src.contexts.projects.infra.version_control_listener:version_control_listener.py:163 VCS auto-commit failed: Version control not initialized [AUTO_COMMIT_SKIPPED/NOT_INITIALIZED]

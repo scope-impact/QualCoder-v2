@@ -1,0 +1,115 @@
+INFO     qualcoder.mcp:mcp_server.py:130 Server starting on port 18468 (debug=True, unified loop)
+INFO     qualcoder.mcp:mcp_server.py:226 Server ready at http://localhost:18468
+DEBUG    qualcoder.mcp:mcp_server.py:171 GET /tools
+DEBUG    qualcoder.mcp:mcp_server.py:178 GET /tools -> 200 (1.9ms)
+DEBUG    qualcoder.mcp:mcp_server.py:171 POST /tools/create_code
+DEBUG    qualcoder.mcp:mcp_server.py:486 Tool call: create_code args={"name": "Context building", "color": "#1E88E5", "memo": "Published code: Reviewer builds context before inspecting changes. Includes: assigning review strategy, creating review goals, establishing sc...
+DEBUG    qualcoder.mcp:mcp_server.py:531 Tool create_code completed: success=True (5.8ms)
+DEBUG    qualcoder.mcp:mcp_server.py:178 POST /tools/create_code -> 200 (6.2ms)
+DEBUG    qualcoder.mcp:mcp_server.py:171 POST /tools/create_code
+DEBUG    qualcoder.mcp:mcp_server.py:486 Tool call: create_code args={"name": "Decision", "color": "#43A047", "memo": "Published code: Reviewer reaches a verdict on the change. Includes: checked everything in scope, giving final verdict (accept/comment/request changes)...
+DEBUG    qualcoder.mcp:mcp_server.py:531 Tool create_code completed: success=True (2.4ms)
+DEBUG    qualcoder.mcp:mcp_server.py:178 POST /tools/create_code -> 200 (2.7ms)
+DEBUG    qualcoder.mcp:mcp_server.py:171 POST /tools/create_code
+DEBUG    qualcoder.mcp:mcp_server.py:486 Tool call: create_code args={"name": "Testing", "color": "#FB8C00", "memo": "Published code: Reviewer engages with CI/CD or hands-on testing. Includes: CI/CD approval, interpreting fails, local environment testing, build testing...
+DEBUG    qualcoder.mcp:mcp_server.py:531 Tool create_code completed: success=True (2.4ms)
+DEBUG    qualcoder.mcp:mcp_server.py:178 POST /tools/create_code -> 200 (2.8ms)
+DEBUG    qualcoder.mcp:mcp_server.py:171 POST /tools/create_code
+DEBUG    qualcoder.mcp:mcp_server.py:486 Tool call: create_code args={"name": "Discussion management", "color": "#8E24AA", "memo": "Published code: Reviewer manages PR conversation threads. Includes: checking past activity, loading context from discussion, wrap-up of c...
+DEBUG    qualcoder.mcp:mcp_server.py:531 Tool create_code completed: success=True (2.5ms)
+DEBUG    qualcoder.mcp:mcp_server.py:178 POST /tools/create_code -> 200 (2.8ms)
+DEBUG    qualcoder.mcp:mcp_server.py:171 POST /tools/create_code
+DEBUG    qualcoder.mcp:mcp_server.py:486 Tool call: create_code args={"name": "Comprehension scope", "color": "#00897B", "memo": "Published code: Depth of reviewer's understanding of the change. Includes: full review, partial review, shallow review, focused/expertise-b...
+DEBUG    qualcoder.mcp:mcp_server.py:531 Tool create_code completed: success=True (2.7ms)
+DEBUG    qualcoder.mcp:mcp_server.py:178 POST /tools/create_code -> 200 (3.0ms)
+DEBUG    qualcoder.mcp:mcp_server.py:171 POST /tools/create_code
+DEBUG    qualcoder.mcp:mcp_server.py:486 Tool call: create_code args={"name": "Information Sources", "color": "#5C6BC0", "memo": "Published code: External artifacts consulted during review. Includes: code base, IDE, issue tracking, PR description, PR conversation, docu...
+DEBUG    qualcoder.mcp:mcp_server.py:531 Tool create_code completed: success=True (2.8ms)
+DEBUG    qualcoder.mcp:mcp_server.py:178 POST /tools/create_code -> 200 (3.1ms)
+DEBUG    qualcoder.mcp:mcp_server.py:171 POST /tools/create_code
+DEBUG    qualcoder.mcp:mcp_server.py:486 Tool call: create_code args={"name": "Knowledge base", "color": "#D81B60", "memo": "Published code: Prior knowledge the reviewer brings to the review. Includes: domain knowledge, programming standards, experience, mental model o...
+DEBUG    qualcoder.mcp:mcp_server.py:531 Tool create_code completed: success=True (2.5ms)
+DEBUG    qualcoder.mcp:mcp_server.py:178 POST /tools/create_code -> 200 (2.8ms)
+DEBUG    qualcoder.mcp:mcp_server.py:171 POST /tools/create_code
+DEBUG    qualcoder.mcp:mcp_server.py:486 Tool call: create_code args={"name": "Mental Model", "color": "#FF7043", "memo": "Published code: Cognitive models built and used during review. Includes: actual MM (implementation, specification, annotation), expected MM, ideal...
+DEBUG    qualcoder.mcp:mcp_server.py:531 Tool create_code completed: success=True (2.4ms)
+DEBUG    qualcoder.mcp:mcp_server.py:178 POST /tools/create_code -> 200 (2.7ms)
+DEBUG    qualcoder.mcp:mcp_server.py:171 POST /tools/batch_apply_codes
+DEBUG    qualcoder.mcp:mcp_server.py:486 Tool call: batch_apply_codes args={"operations": [{"code_id": "019cede6-cef4-77c1-a682-1f5e28ab6f1e", "source_id": "019cede6-cee8-75d1-b2a7-1302140aded9", "start_position": 147, "end_position": 254}, {"code_id": "019cede6-cef9-75d3-b5...
+DEBUG    qualcoder.mcp:mcp_server.py:531 Tool batch_apply_codes completed: success=True (5.7ms)
+DEBUG    qualcoder.mcp:mcp_server.py:178 POST /tools/batch_apply_codes -> 200 (6.0ms)
+DEBUG    qualcoder.mcp:mcp_server.py:171 POST /tools/create_category
+DEBUG    qualcoder.mcp:mcp_server.py:486 Tool call: create_category args={"name": "Code Review Process", "memo": "Published theme: The strategies and activities reviewers use to navigate and evaluate code changes. Contains: Chunking, Context building, Decision, Difficulty-...
+DEBUG    qualcoder.mcp:mcp_server.py:531 Tool create_category completed: success=True (3.4ms)
+DEBUG    qualcoder.mcp:mcp_server.py:178 POST /tools/create_category -> 200 (3.7ms)
+DEBUG    qualcoder.mcp:mcp_server.py:171 POST /tools/create_category
+DEBUG    qualcoder.mcp:mcp_server.py:486 Tool call: create_category args={"name": "Reviewer Cognition", "memo": "Published theme: Cognitive aspects of code review \u2014 what reviewers know, how they build understanding, and how deep they go. Contains: Comprehension scope,...
+DEBUG    qualcoder.mcp:mcp_server.py:531 Tool create_category completed: success=True (2.7ms)
+DEBUG    qualcoder.mcp:mcp_server.py:178 POST /tools/create_category -> 200 (3.0ms)
+DEBUG    qualcoder.mcp:mcp_server.py:171 POST /tools/create_category
+DEBUG    qualcoder.mcp:mcp_server.py:486 Tool call: create_category args={"name": "Review Context", "memo": "Published theme: External resources and contextual factors. Contains: Information Sources, Pre-context, Factors."}
+DEBUG    qualcoder.mcp:mcp_server.py:531 Tool create_category completed: success=True (2.6ms)
+DEBUG    qualcoder.mcp:mcp_server.py:178 POST /tools/create_category -> 200 (2.9ms)
+DEBUG    qualcoder.mcp:mcp_server.py:171 POST /tools/move_code_to_category
+DEBUG    qualcoder.mcp:mcp_server.py:486 Tool call: move_code_to_category args={"code_id": "019cede6-cef4-77c1-a682-1f5e28ab6f1e", "category_id": "019cede6-cf20-7992-9d12-4d50c193e9af"}
+DEBUG    qualcoder.mcp:mcp_server.py:531 Tool move_code_to_category completed: success=True (3.9ms)
+DEBUG    qualcoder.mcp:mcp_server.py:178 POST /tools/move_code_to_category -> 200 (4.2ms)
+DEBUG    qualcoder.mcp:mcp_server.py:171 POST /tools/move_code_to_category
+DEBUG    qualcoder.mcp:mcp_server.py:486 Tool call: move_code_to_category args={"code_id": "019cede6-cef9-75d3-b53f-ec85c6fc9da8", "category_id": "019cede6-cf20-7992-9d12-4d50c193e9af"}
+DEBUG    qualcoder.mcp:mcp_server.py:531 Tool move_code_to_category completed: success=True (3.1ms)
+DEBUG    qualcoder.mcp:mcp_server.py:178 POST /tools/move_code_to_category -> 200 (3.4ms)
+DEBUG    qualcoder.mcp:mcp_server.py:171 POST /tools/move_code_to_category
+DEBUG    qualcoder.mcp:mcp_server.py:486 Tool call: move_code_to_category args={"code_id": "019cede6-cefd-77b2-adcf-bc262e2468d5", "category_id": "019cede6-cf20-7992-9d12-4d50c193e9af"}
+DEBUG    qualcoder.mcp:mcp_server.py:531 Tool move_code_to_category completed: success=True (3.0ms)
+DEBUG    qualcoder.mcp:mcp_server.py:178 POST /tools/move_code_to_category -> 200 (3.3ms)
+DEBUG    qualcoder.mcp:mcp_server.py:171 POST /tools/move_code_to_category
+DEBUG    qualcoder.mcp:mcp_server.py:486 Tool call: move_code_to_category args={"code_id": "019cede6-cf02-7ff2-a8c3-813b17bafec1", "category_id": "019cede6-cf20-7992-9d12-4d50c193e9af"}
+DEBUG    qualcoder.mcp:mcp_server.py:531 Tool move_code_to_category completed: success=True (3.3ms)
+DEBUG    qualcoder.mcp:mcp_server.py:178 POST /tools/move_code_to_category -> 200 (3.7ms)
+DEBUG    qualcoder.mcp:mcp_server.py:171 POST /tools/move_code_to_category
+DEBUG    qualcoder.mcp:mcp_server.py:486 Tool call: move_code_to_category args={"code_id": "019cede6-cf06-7ad3-9ef0-ed7328aefb22", "category_id": "019cede6-cf25-7863-9d45-ae7e1270b25c"}
+DEBUG    qualcoder.mcp:mcp_server.py:531 Tool move_code_to_category completed: success=True (4.3ms)
+DEBUG    qualcoder.mcp:mcp_server.py:178 POST /tools/move_code_to_category -> 200 (4.7ms)
+DEBUG    qualcoder.mcp:mcp_server.py:171 POST /tools/move_code_to_category
+DEBUG    qualcoder.mcp:mcp_server.py:486 Tool call: move_code_to_category args={"code_id": "019cede6-cf0f-7422-bfa9-b8ca515bf556", "category_id": "019cede6-cf25-7863-9d45-ae7e1270b25c"}
+DEBUG    qualcoder.mcp:mcp_server.py:531 Tool move_code_to_category completed: success=True (3.0ms)
+DEBUG    qualcoder.mcp:mcp_server.py:178 POST /tools/move_code_to_category -> 200 (3.3ms)
+DEBUG    qualcoder.mcp:mcp_server.py:171 POST /tools/move_code_to_category
+DEBUG    qualcoder.mcp:mcp_server.py:486 Tool call: move_code_to_category args={"code_id": "019cede6-cf14-72d0-80dd-849fbcf12509", "category_id": "019cede6-cf25-7863-9d45-ae7e1270b25c"}
+DEBUG    qualcoder.mcp:mcp_server.py:531 Tool move_code_to_category completed: success=True (2.8ms)
+DEBUG    qualcoder.mcp:mcp_server.py:178 POST /tools/move_code_to_category -> 200 (3.1ms)
+DEBUG    qualcoder.mcp:mcp_server.py:171 POST /tools/move_code_to_category
+DEBUG    qualcoder.mcp:mcp_server.py:486 Tool call: move_code_to_category args={"code_id": "019cede6-cf0b-7712-9ed4-7918157353a3", "category_id": "019cede6-cf2a-7020-84d8-2054fc2f1354"}
+DEBUG    qualcoder.mcp:mcp_server.py:531 Tool move_code_to_category completed: success=True (3.0ms)
+DEBUG    qualcoder.mcp:mcp_server.py:178 POST /tools/move_code_to_category -> 200 (3.3ms)
+DEBUG    qualcoder.mcp:mcp_server.py:171 POST /tools/merge_codes
+DEBUG    qualcoder.mcp:mcp_server.py:486 Tool call: merge_codes args={"source_code_id": "019cede6-cf02-7ff2-a8c3-813b17bafec1", "target_code_id": "019cede6-cef4-77c1-a682-1f5e28ab6f1e"}
+DEBUG    qualcoder.mcp:mcp_server.py:531 Tool merge_codes completed: success=True (3.7ms)
+DEBUG    qualcoder.mcp:mcp_server.py:178 POST /tools/merge_codes -> 200 (4.0ms)
+DEBUG    qualcoder.mcp:mcp_server.py:171 POST /tools/get_code
+DEBUG    qualcoder.mcp:mcp_server.py:486 Tool call: get_code args={"code_id": "019cede6-cf02-7ff2-a8c3-813b17bafec1"}
+DEBUG    qualcoder.mcp:mcp_server.py:531 Tool get_code completed: success=False (0.6ms)
+DEBUG    qualcoder.mcp:mcp_server.py:178 POST /tools/get_code -> 200 (0.9ms)
+DEBUG    qualcoder.mcp:mcp_server.py:171 POST /tools/rename_code
+DEBUG    qualcoder.mcp:mcp_server.py:486 Tool call: rename_code args={"code_id": "019cede6-cef4-77c1-a682-1f5e28ab6f1e", "new_name": "Context building & discussion management"}
+DEBUG    qualcoder.mcp:mcp_server.py:531 Tool rename_code completed: success=True (2.8ms)
+DEBUG    qualcoder.mcp:mcp_server.py:178 POST /tools/rename_code -> 200 (3.1ms)
+DEBUG    qualcoder.mcp:mcp_server.py:171 POST /tools/update_code_memo
+DEBUG    qualcoder.mcp:mcp_server.py:486 Tool call: update_code_memo args={"code_id": "019cede6-cef4-77c1-a682-1f5e28ab6f1e", "memo": "THEME: Context Building & Discussion Management\n\nFROM PUBLISHED MODEL: The Code Review Comprehension Model (extension of Letovsky) identi...
+DEBUG    qualcoder.mcp:mcp_server.py:531 Tool update_code_memo completed: success=True (3.2ms)
+DEBUG    qualcoder.mcp:mcp_server.py:178 POST /tools/update_code_memo -> 200 (3.5ms)
+DEBUG    qualcoder.mcp:mcp_server.py:171 POST /tools/list_codes
+DEBUG    qualcoder.mcp:mcp_server.py:486 Tool call: list_codes args={}
+DEBUG    qualcoder.mcp:mcp_server.py:531 Tool list_codes completed: success=True (0.6ms)
+DEBUG    qualcoder.mcp:mcp_server.py:178 POST /tools/list_codes -> 200 (0.9ms)
+DEBUG    qualcoder.mcp:mcp_server.py:171 POST /tools/list_categories
+DEBUG    qualcoder.mcp:mcp_server.py:486 Tool call: list_categories args={}
+DEBUG    qualcoder.mcp:mcp_server.py:531 Tool list_categories completed: success=True (0.9ms)
+DEBUG    qualcoder.mcp:mcp_server.py:178 POST /tools/list_categories -> 200 (1.1ms)
+DEBUG    qualcoder.mcp:mcp_server.py:171 POST /tools/get_code
+DEBUG    qualcoder.mcp:mcp_server.py:486 Tool call: get_code args={"code_id": "019cede6-cef4-77c1-a682-1f5e28ab6f1e"}
+DEBUG    qualcoder.mcp:mcp_server.py:531 Tool get_code completed: success=True (0.5ms)
+DEBUG    qualcoder.mcp:mcp_server.py:178 POST /tools/get_code -> 200 (0.8ms)
+INFO     qualcoder.mcp:mcp_server.py:149 Server stopping...
+ERROR    qualcoder.projects.core:auto_commit.py:61 auto_commit: skipped reason=NOT_INITIALIZED
+ERROR    src.contexts.projects.infra.version_control_listener:version_control_listener.py:163 VCS auto-commit failed: Version control not initialized [AUTO_COMMIT_SKIPPED/NOT_INITIALIZED]

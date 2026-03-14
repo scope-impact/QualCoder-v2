@@ -1,0 +1,101 @@
+INFO     qualcoder.mcp:mcp_server.py:130 Server starting on port 18924 (debug=True, unified loop)
+INFO     qualcoder.mcp:mcp_server.py:226 Server ready at http://localhost:18924
+DEBUG    qualcoder.mcp:mcp_server.py:171 GET /tools
+DEBUG    qualcoder.mcp:mcp_server.py:178 GET /tools -> 200 (2.7ms)
+DEBUG    qualcoder.mcp:mcp_server.py:171 POST /tools/create_code
+DEBUG    qualcoder.mcp:mcp_server.py:486 Tool call: create_code args={"name": "Data sharing attitudes", "color": "#4CAF50"}
+DEBUG    qualcoder.mcp:mcp_server.py:531 Tool create_code completed: success=True (5.6ms)
+DEBUG    qualcoder.mcp:mcp_server.py:178 POST /tools/create_code -> 200 (6.0ms)
+DEBUG    qualcoder.mcp:mcp_server.py:171 POST /tools/create_code
+DEBUG    qualcoder.mcp:mcp_server.py:486 Tool call: create_code args={"name": "Open research barriers", "color": "#F44336"}
+DEBUG    qualcoder.mcp:mcp_server.py:531 Tool create_code completed: success=True (2.7ms)
+DEBUG    qualcoder.mcp:mcp_server.py:178 POST /tools/create_code -> 200 (3.0ms)
+DEBUG    qualcoder.mcp:mcp_server.py:171 POST /tools/create_code
+DEBUG    qualcoder.mcp:mcp_server.py:486 Tool call: create_code args={"name": "Participant consent", "color": "#FF9800"}
+DEBUG    qualcoder.mcp:mcp_server.py:531 Tool create_code completed: success=True (2.5ms)
+DEBUG    qualcoder.mcp:mcp_server.py:178 POST /tools/create_code -> 200 (2.8ms)
+DEBUG    qualcoder.mcp:mcp_server.py:171 POST /tools/create_code
+DEBUG    qualcoder.mcp:mcp_server.py:486 Tool call: create_code args={"name": "Research philosophy", "color": "#2196F3"}
+DEBUG    qualcoder.mcp:mcp_server.py:531 Tool create_code completed: success=True (3.3ms)
+DEBUG    qualcoder.mcp:mcp_server.py:178 POST /tools/create_code -> 200 (3.7ms)
+DEBUG    qualcoder.mcp:mcp_server.py:171 POST /tools/create_code
+DEBUG    qualcoder.mcp:mcp_server.py:486 Tool call: create_code args={"name": "Trust in repositories", "color": "#9C27B0"}
+DEBUG    qualcoder.mcp:mcp_server.py:531 Tool create_code completed: success=True (2.9ms)
+DEBUG    qualcoder.mcp:mcp_server.py:178 POST /tools/create_code -> 200 (3.4ms)
+DEBUG    qualcoder.mcp:mcp_server.py:171 POST /tools/create_code
+DEBUG    qualcoder.mcp:mcp_server.py:486 Tool call: create_code args={"name": "Anonymization challenges", "color": "#795548"}
+DEBUG    qualcoder.mcp:mcp_server.py:531 Tool create_code completed: success=True (3.2ms)
+DEBUG    qualcoder.mcp:mcp_server.py:178 POST /tools/create_code -> 200 (3.7ms)
+DEBUG    qualcoder.mcp:mcp_server.py:171 POST /tools/batch_apply_codes
+DEBUG    qualcoder.mcp:mcp_server.py:486 Tool call: batch_apply_codes args={"operations": [{"code_id": "019cede6-d345-7443-b49c-703a7d3eb80b", "source_id": "019cede6-d33a-7d71-b3ef-679968a39449", "start_position": 8420, "end_position": 8464}, {"code_id": "019cede6-d354-7821-...
+DEBUG    qualcoder.mcp:mcp_server.py:531 Tool batch_apply_codes completed: success=True (10.2ms)
+DEBUG    qualcoder.mcp:mcp_server.py:178 POST /tools/batch_apply_codes -> 200 (10.6ms)
+DEBUG    qualcoder.mcp:mcp_server.py:171 POST /tools/create_category
+DEBUG    qualcoder.mcp:mcp_server.py:486 Tool call: create_category args={"name": "Navigating Openness in Qualitative Research", "memo": "How researchers conceptualize and practice open data sharing"}
+DEBUG    qualcoder.mcp:mcp_server.py:531 Tool create_category completed: success=True (4.1ms)
+DEBUG    qualcoder.mcp:mcp_server.py:178 POST /tools/create_category -> 200 (4.4ms)
+DEBUG    qualcoder.mcp:mcp_server.py:171 POST /tools/create_category
+DEBUG    qualcoder.mcp:mcp_server.py:486 Tool call: create_category args={"name": "Ethical Stewardship of Participant Data", "memo": "Tensions between open science ideals and participant protection"}
+DEBUG    qualcoder.mcp:mcp_server.py:531 Tool create_category completed: success=True (3.1ms)
+DEBUG    qualcoder.mcp:mcp_server.py:178 POST /tools/create_category -> 200 (3.5ms)
+DEBUG    qualcoder.mcp:mcp_server.py:171 POST /tools/create_category
+DEBUG    qualcoder.mcp:mcp_server.py:486 Tool call: create_category args={"name": "Infrastructures of Trust", "memo": "Institutional systems, repositories, and policies shaping open practices"}
+DEBUG    qualcoder.mcp:mcp_server.py:531 Tool create_category completed: success=True (3.0ms)
+DEBUG    qualcoder.mcp:mcp_server.py:178 POST /tools/create_category -> 200 (3.4ms)
+DEBUG    qualcoder.mcp:mcp_server.py:171 POST /tools/move_code_to_category
+DEBUG    qualcoder.mcp:mcp_server.py:486 Tool call: move_code_to_category args={"code_id": "019cede6-d345-7443-b49c-703a7d3eb80b", "category_id": "019cede6-d371-7d32-a331-47e509689a7f"}
+DEBUG    qualcoder.mcp:mcp_server.py:531 Tool move_code_to_category completed: success=True (4.0ms)
+DEBUG    qualcoder.mcp:mcp_server.py:178 POST /tools/move_code_to_category -> 200 (4.4ms)
+DEBUG    qualcoder.mcp:mcp_server.py:171 POST /tools/move_code_to_category
+DEBUG    qualcoder.mcp:mcp_server.py:486 Tool call: move_code_to_category args={"code_id": "019cede6-d354-7821-b141-362424d654ef", "category_id": "019cede6-d371-7d32-a331-47e509689a7f"}
+DEBUG    qualcoder.mcp:mcp_server.py:531 Tool move_code_to_category completed: success=True (3.0ms)
+DEBUG    qualcoder.mcp:mcp_server.py:178 POST /tools/move_code_to_category -> 200 (3.3ms)
+DEBUG    qualcoder.mcp:mcp_server.py:171 POST /tools/move_code_to_category
+DEBUG    qualcoder.mcp:mcp_server.py:486 Tool call: move_code_to_category args={"code_id": "019cede6-d34f-7d82-b066-77acf9a86883", "category_id": "019cede6-d377-7b03-83dc-f7c6231bf051"}
+DEBUG    qualcoder.mcp:mcp_server.py:531 Tool move_code_to_category completed: success=True (3.1ms)
+DEBUG    qualcoder.mcp:mcp_server.py:178 POST /tools/move_code_to_category -> 200 (3.4ms)
+DEBUG    qualcoder.mcp:mcp_server.py:171 POST /tools/move_code_to_category
+DEBUG    qualcoder.mcp:mcp_server.py:486 Tool call: move_code_to_category args={"code_id": "019cede6-d35f-7c83-b0da-15622cf73324", "category_id": "019cede6-d377-7b03-83dc-f7c6231bf051"}
+DEBUG    qualcoder.mcp:mcp_server.py:531 Tool move_code_to_category completed: success=True (3.2ms)
+DEBUG    qualcoder.mcp:mcp_server.py:178 POST /tools/move_code_to_category -> 200 (3.5ms)
+DEBUG    qualcoder.mcp:mcp_server.py:171 POST /tools/move_code_to_category
+DEBUG    qualcoder.mcp:mcp_server.py:486 Tool call: move_code_to_category args={"code_id": "019cede6-d34b-72c2-a344-7e7e743ccf9e", "category_id": "019cede6-d37c-7cd0-b162-39822ab7b088"}
+DEBUG    qualcoder.mcp:mcp_server.py:531 Tool move_code_to_category completed: success=True (2.9ms)
+DEBUG    qualcoder.mcp:mcp_server.py:178 POST /tools/move_code_to_category -> 200 (3.2ms)
+DEBUG    qualcoder.mcp:mcp_server.py:171 POST /tools/move_code_to_category
+DEBUG    qualcoder.mcp:mcp_server.py:486 Tool call: move_code_to_category args={"code_id": "019cede6-d35a-71a1-bc6b-e4fbed7860cb", "category_id": "019cede6-d37c-7cd0-b162-39822ab7b088"}
+DEBUG    qualcoder.mcp:mcp_server.py:531 Tool move_code_to_category completed: success=True (3.5ms)
+DEBUG    qualcoder.mcp:mcp_server.py:178 POST /tools/move_code_to_category -> 200 (3.8ms)
+DEBUG    qualcoder.mcp:mcp_server.py:171 POST /tools/merge_codes
+DEBUG    qualcoder.mcp:mcp_server.py:486 Tool call: merge_codes args={"source_code_id": "019cede6-d34b-72c2-a344-7e7e743ccf9e", "target_code_id": "019cede6-d35a-71a1-bc6b-e4fbed7860cb"}
+DEBUG    qualcoder.mcp:mcp_server.py:531 Tool merge_codes completed: success=True (3.6ms)
+DEBUG    qualcoder.mcp:mcp_server.py:178 POST /tools/merge_codes -> 200 (3.9ms)
+DEBUG    qualcoder.mcp:mcp_server.py:171 POST /tools/get_code
+DEBUG    qualcoder.mcp:mcp_server.py:486 Tool call: get_code args={"code_id": "019cede6-d34b-72c2-a344-7e7e743ccf9e"}
+DEBUG    qualcoder.mcp:mcp_server.py:531 Tool get_code completed: success=False (0.7ms)
+DEBUG    qualcoder.mcp:mcp_server.py:178 POST /tools/get_code -> 200 (1.0ms)
+DEBUG    qualcoder.mcp:mcp_server.py:171 POST /tools/rename_code
+DEBUG    qualcoder.mcp:mcp_server.py:486 Tool call: rename_code args={"code_id": "019cede6-d35a-71a1-bc6b-e4fbed7860cb", "new_name": "Institutional trust and open infrastructure"}
+DEBUG    qualcoder.mcp:mcp_server.py:531 Tool rename_code completed: success=True (3.3ms)
+DEBUG    qualcoder.mcp:mcp_server.py:178 POST /tools/rename_code -> 200 (3.6ms)
+DEBUG    qualcoder.mcp:mcp_server.py:171 POST /tools/update_code_memo
+DEBUG    qualcoder.mcp:mcp_server.py:486 Tool call: update_code_memo args={"code_id": "019cede6-d35a-71a1-bc6b-e4fbed7860cb", "memo": "THEME: Institutional Trust and Open Infrastructure\n\nDEFINITION: Captures how researchers' willingness to share data\nis shaped by trust i...
+DEBUG    qualcoder.mcp:mcp_server.py:531 Tool update_code_memo completed: success=True (3.5ms)
+DEBUG    qualcoder.mcp:mcp_server.py:178 POST /tools/update_code_memo -> 200 (3.8ms)
+DEBUG    qualcoder.mcp:mcp_server.py:171 POST /tools/list_codes
+DEBUG    qualcoder.mcp:mcp_server.py:486 Tool call: list_codes args={}
+DEBUG    qualcoder.mcp:mcp_server.py:531 Tool list_codes completed: success=True (0.7ms)
+DEBUG    qualcoder.mcp:mcp_server.py:178 POST /tools/list_codes -> 200 (1.0ms)
+DEBUG    qualcoder.mcp:mcp_server.py:171 POST /tools/list_categories
+DEBUG    qualcoder.mcp:mcp_server.py:486 Tool call: list_categories args={}
+DEBUG    qualcoder.mcp:mcp_server.py:531 Tool list_categories completed: success=True (0.9ms)
+DEBUG    qualcoder.mcp:mcp_server.py:178 POST /tools/list_categories -> 200 (1.2ms)
+DEBUG    qualcoder.mcp:mcp_server.py:171 POST /tools/get_code
+DEBUG    qualcoder.mcp:mcp_server.py:486 Tool call: get_code args={"code_id": "019cede6-d35a-71a1-bc6b-e4fbed7860cb"}
+DEBUG    qualcoder.mcp:mcp_server.py:531 Tool get_code completed: success=True (0.5ms)
+DEBUG    qualcoder.mcp:mcp_server.py:178 POST /tools/get_code -> 200 (1.1ms)
+INFO     qualcoder.mcp:mcp_server.py:149 Server stopping...
+ERROR    asyncio:base_events.py:1785 Task was destroyed but it is pending!
+task: <Task pending name='Task-35' coro=<MCPServerManager.serve_async() running at /home/runner/work/QualCoder-v2/QualCoder-v2/src/shared/infra/mcp_server.py:137>>
+ERROR    qualcoder.projects.core:auto_commit.py:61 auto_commit: skipped reason=NOT_INITIALIZED
+ERROR    src.contexts.projects.infra.version_control_listener:version_control_listener.py:163 VCS auto-commit failed: Version control not initialized [AUTO_COMMIT_SKIPPED/NOT_INITIALIZED]

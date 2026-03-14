@@ -1,0 +1,89 @@
+INFO     qualcoder.mcp:mcp_server.py:130 Server starting on port 18624 (debug=True, unified loop)
+INFO     qualcoder.mcp:mcp_server.py:226 Server ready at http://localhost:18624
+DEBUG    qualcoder.mcp:mcp_server.py:171 GET /tools
+DEBUG    qualcoder.mcp:mcp_server.py:178 GET /tools -> 200 (2.9ms)
+DEBUG    qualcoder.mcp:mcp_server.py:171 POST /tools/create_code
+DEBUG    qualcoder.mcp:mcp_server.py:486 Tool call: create_code args={"name": "Overwhelm", "color": "#E53935"}
+DEBUG    qualcoder.mcp:mcp_server.py:531 Tool create_code completed: success=True (6.5ms)
+DEBUG    qualcoder.mcp:mcp_server.py:178 POST /tools/create_code -> 200 (7.0ms)
+DEBUG    qualcoder.mcp:mcp_server.py:171 POST /tools/create_code
+DEBUG    qualcoder.mcp:mcp_server.py:486 Tool call: create_code args={"name": "Adaptation", "color": "#43A047"}
+DEBUG    qualcoder.mcp:mcp_server.py:531 Tool create_code completed: success=True (3.3ms)
+DEBUG    qualcoder.mcp:mcp_server.py:178 POST /tools/create_code -> 200 (3.7ms)
+DEBUG    qualcoder.mcp:mcp_server.py:171 POST /tools/create_code
+DEBUG    qualcoder.mcp:mcp_server.py:486 Tool call: create_code args={"name": "Loneliness", "color": "#1E88E5"}
+DEBUG    qualcoder.mcp:mcp_server.py:531 Tool create_code completed: success=True (2.7ms)
+DEBUG    qualcoder.mcp:mcp_server.py:178 POST /tools/create_code -> 200 (3.0ms)
+DEBUG    qualcoder.mcp:mcp_server.py:171 POST /tools/create_code
+DEBUG    qualcoder.mcp:mcp_server.py:486 Tool call: create_code args={"name": "Self-growth", "color": "#FF9800"}
+DEBUG    qualcoder.mcp:mcp_server.py:531 Tool create_code completed: success=True (2.9ms)
+DEBUG    qualcoder.mcp:mcp_server.py:178 POST /tools/create_code -> 200 (3.3ms)
+DEBUG    qualcoder.mcp:mcp_server.py:171 POST /tools/create_code
+DEBUG    qualcoder.mcp:mcp_server.py:486 Tool call: create_code args={"name": "Inequity", "color": "#00897B"}
+DEBUG    qualcoder.mcp:mcp_server.py:531 Tool create_code completed: success=True (3.3ms)
+DEBUG    qualcoder.mcp:mcp_server.py:178 POST /tools/create_code -> 200 (3.6ms)
+DEBUG    qualcoder.mcp:mcp_server.py:171 POST /tools/batch_apply_codes
+DEBUG    qualcoder.mcp:mcp_server.py:486 Tool call: batch_apply_codes args={"operations": [{"code_id": "019cede6-eddb-7621-bb5d-d07d51141a42", "source_id": "019cede6-edcc-7693-8a5e-8eacbdd3826c", "start_position": 115, "end_position": 138}, {"code_id": "019cede6-ede1-7982-98...
+DEBUG    qualcoder.mcp:mcp_server.py:531 Tool batch_apply_codes completed: success=True (15.2ms)
+DEBUG    qualcoder.mcp:mcp_server.py:178 POST /tools/batch_apply_codes -> 200 (15.7ms)
+DEBUG    qualcoder.mcp:mcp_server.py:171 POST /tools/create_category
+DEBUG    qualcoder.mcp:mcp_server.py:486 Tool call: create_category args={"name": "Struggle and Adaptation", "memo": "How students navigated challenges"}
+DEBUG    qualcoder.mcp:mcp_server.py:531 Tool create_category completed: success=True (5.1ms)
+DEBUG    qualcoder.mcp:mcp_server.py:178 POST /tools/create_category -> 200 (5.6ms)
+DEBUG    qualcoder.mcp:mcp_server.py:171 POST /tools/create_category
+DEBUG    qualcoder.mcp:mcp_server.py:486 Tool call: create_category args={"name": "Connection and Isolation", "memo": "Social dimension of online learning"}
+DEBUG    qualcoder.mcp:mcp_server.py:531 Tool create_category completed: success=True (7.3ms)
+DEBUG    qualcoder.mcp:mcp_server.py:178 POST /tools/create_category -> 200 (7.8ms)
+DEBUG    qualcoder.mcp:mcp_server.py:171 POST /tools/create_category
+DEBUG    qualcoder.mcp:mcp_server.py:486 Tool call: create_category args={"name": "Educational Justice", "memo": "Equity and access concerns"}
+DEBUG    qualcoder.mcp:mcp_server.py:531 Tool create_category completed: success=True (4.3ms)
+DEBUG    qualcoder.mcp:mcp_server.py:178 POST /tools/create_category -> 200 (4.8ms)
+DEBUG    qualcoder.mcp:mcp_server.py:171 POST /tools/move_code_to_category
+DEBUG    qualcoder.mcp:mcp_server.py:486 Tool call: move_code_to_category args={"code_id": "019cede6-eddb-7621-bb5d-d07d51141a42", "category_id": "019cede6-ee08-7e80-8580-6c53dc06b6d1"}
+DEBUG    qualcoder.mcp:mcp_server.py:531 Tool move_code_to_category completed: success=True (5.9ms)
+DEBUG    qualcoder.mcp:mcp_server.py:178 POST /tools/move_code_to_category -> 200 (6.4ms)
+DEBUG    qualcoder.mcp:mcp_server.py:171 POST /tools/move_code_to_category
+DEBUG    qualcoder.mcp:mcp_server.py:486 Tool call: move_code_to_category args={"code_id": "019cede6-ede1-7982-9896-d6c5d9dfebf9", "category_id": "019cede6-ee08-7e80-8580-6c53dc06b6d1"}
+DEBUG    qualcoder.mcp:mcp_server.py:531 Tool move_code_to_category completed: success=True (6.2ms)
+DEBUG    qualcoder.mcp:mcp_server.py:178 POST /tools/move_code_to_category -> 200 (6.7ms)
+DEBUG    qualcoder.mcp:mcp_server.py:171 POST /tools/move_code_to_category
+DEBUG    qualcoder.mcp:mcp_server.py:486 Tool call: move_code_to_category args={"code_id": "019cede6-ede6-7001-8670-be4b93a2ae43", "category_id": "019cede6-ee0f-7411-8ae4-7f6ae9763bfa"}
+DEBUG    qualcoder.mcp:mcp_server.py:531 Tool move_code_to_category completed: success=True (3.1ms)
+DEBUG    qualcoder.mcp:mcp_server.py:178 POST /tools/move_code_to_category -> 200 (3.5ms)
+DEBUG    qualcoder.mcp:mcp_server.py:171 POST /tools/move_code_to_category
+DEBUG    qualcoder.mcp:mcp_server.py:486 Tool call: move_code_to_category args={"code_id": "019cede6-edeb-7b60-8c8f-7371cc7e3af0", "category_id": "019cede6-ee0f-7411-8ae4-7f6ae9763bfa"}
+DEBUG    qualcoder.mcp:mcp_server.py:531 Tool move_code_to_category completed: success=True (4.5ms)
+DEBUG    qualcoder.mcp:mcp_server.py:178 POST /tools/move_code_to_category -> 200 (5.0ms)
+DEBUG    qualcoder.mcp:mcp_server.py:171 POST /tools/move_code_to_category
+DEBUG    qualcoder.mcp:mcp_server.py:486 Tool call: move_code_to_category args={"code_id": "019cede6-edf0-7963-8665-5f20d4d41444", "category_id": "019cede6-ee19-7063-8142-083be4faebde"}
+DEBUG    qualcoder.mcp:mcp_server.py:531 Tool move_code_to_category completed: success=True (4.5ms)
+DEBUG    qualcoder.mcp:mcp_server.py:178 POST /tools/move_code_to_category -> 200 (5.0ms)
+DEBUG    qualcoder.mcp:mcp_server.py:171 POST /tools/list_codes
+DEBUG    qualcoder.mcp:mcp_server.py:486 Tool call: list_codes args={}
+DEBUG    qualcoder.mcp:mcp_server.py:531 Tool list_codes completed: success=True (0.9ms)
+DEBUG    qualcoder.mcp:mcp_server.py:178 POST /tools/list_codes -> 200 (1.4ms)
+DEBUG    qualcoder.mcp:mcp_server.py:171 POST /tools/list_segments_for_source
+DEBUG    qualcoder.mcp:mcp_server.py:486 Tool call: list_segments_for_source args={"source_id": "019cede6-edcc-7693-8a5e-8eacbdd3826c"}
+DEBUG    qualcoder.mcp:mcp_server.py:531 Tool list_segments_for_source completed: success=True (2.1ms)
+DEBUG    qualcoder.mcp:mcp_server.py:178 POST /tools/list_segments_for_source -> 200 (2.4ms)
+DEBUG    qualcoder.mcp:mcp_server.py:171 POST /tools/list_segments_for_source
+DEBUG    qualcoder.mcp:mcp_server.py:486 Tool call: list_segments_for_source args={"source_id": "019cede6-edcf-7d32-b094-e20976cb8a7f"}
+DEBUG    qualcoder.mcp:mcp_server.py:531 Tool list_segments_for_source completed: success=True (0.9ms)
+DEBUG    qualcoder.mcp:mcp_server.py:178 POST /tools/list_segments_for_source -> 200 (1.2ms)
+DEBUG    qualcoder.mcp:mcp_server.py:171 POST /tools/list_segments_for_source
+DEBUG    qualcoder.mcp:mcp_server.py:486 Tool call: list_segments_for_source args={"source_id": "019cede6-edd0-7a50-91eb-0ef0c603a71f"}
+DEBUG    qualcoder.mcp:mcp_server.py:531 Tool list_segments_for_source completed: success=True (0.9ms)
+DEBUG    qualcoder.mcp:mcp_server.py:178 POST /tools/list_segments_for_source -> 200 (1.2ms)
+DEBUG    qualcoder.mcp:mcp_server.py:171 POST /tools/list_segments_for_source
+DEBUG    qualcoder.mcp:mcp_server.py:486 Tool call: list_segments_for_source args={"source_id": "019cede6-edd1-7793-80c7-e33ea7a9dcff"}
+DEBUG    qualcoder.mcp:mcp_server.py:531 Tool list_segments_for_source completed: success=True (0.9ms)
+DEBUG    qualcoder.mcp:mcp_server.py:178 POST /tools/list_segments_for_source -> 200 (1.2ms)
+DEBUG    qualcoder.mcp:mcp_server.py:171 POST /tools/list_segments_for_source
+DEBUG    qualcoder.mcp:mcp_server.py:486 Tool call: list_segments_for_source args={"source_id": "019cede6-edd2-7190-abc2-0ee314873650"}
+DEBUG    qualcoder.mcp:mcp_server.py:531 Tool list_segments_for_source completed: success=True (0.9ms)
+DEBUG    qualcoder.mcp:mcp_server.py:178 POST /tools/list_segments_for_source -> 200 (1.1ms)
+INFO     qualcoder.mcp:mcp_server.py:149 Server stopping...
+ERROR    asyncio:base_events.py:1785 Task was destroyed but it is pending!
+task: <Task pending name='Task-331' coro=<MCPServerManager.serve_async() running at /home/runner/work/QualCoder-v2/QualCoder-v2/src/shared/infra/mcp_server.py:137> wait_for=<Future finished result=True>>
+ERROR    qualcoder.projects.core:auto_commit.py:61 auto_commit: skipped reason=NOT_INITIALIZED
+ERROR    src.contexts.projects.infra.version_control_listener:version_control_listener.py:163 VCS auto-commit failed: Version control not initialized [AUTO_COMMIT_SKIPPED/NOT_INITIALIZED]

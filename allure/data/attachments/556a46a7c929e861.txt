@@ -1,0 +1,7 @@
+ERROR    qualcoder.shared.event_bus:event_bus.py:271 All-handler error for test_event_bus.sample_event: Handler failed
+Traceback (most recent call last):
+  File "/home/runner/work/QualCoder-v2/QualCoder-v2/src/shared/infra/event_bus.py", line 268, in publish
+    handler(event)
+  File "/home/runner/work/QualCoder-v2/QualCoder-v2/src/shared/infra/tests/test_event_bus.py", line 200, in bad_handler
+    raise ValueError("Handler failed")
+ValueError: Handler failed

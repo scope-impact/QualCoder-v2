@@ -1,0 +1,35 @@
+INFO     qualcoder.mcp:mcp_server.py:130 Server starting on port 18898 (debug=True, unified loop)
+INFO     qualcoder.mcp:mcp_server.py:226 Server ready at http://localhost:18898
+DEBUG    qualcoder.mcp:mcp_server.py:171 GET /tools
+DEBUG    qualcoder.mcp:mcp_server.py:178 GET /tools -> 200 (1.6ms)
+DEBUG    qualcoder.mcp:mcp_server.py:171 POST /tools/create_code
+DEBUG    qualcoder.mcp:mcp_server.py:486 Tool call: create_code args={"name": "Mental health impact", "color": "#D81B60", "memo": "Anxiety, burnout, emotional wellbeing"}
+DEBUG    qualcoder.mcp:mcp_server.py:531 Tool create_code completed: success=True (8.5ms)
+DEBUG    qualcoder.mcp:mcp_server.py:178 POST /tools/create_code -> 200 (9.0ms)
+DEBUG    qualcoder.mcp:mcp_server.py:171 POST /tools/batch_apply_codes
+DEBUG    qualcoder.mcp:mcp_server.py:486 Tool call: batch_apply_codes args={"operations": [{"code_id": "019cede6-f501-7e21-9d3d-de50373f97b0", "source_id": "019cede6-f4f1-7452-9381-43040a67ebec", "start_position": 297, "end_position": 347}, {"code_id": "019cede6-f501-7e21-9d...
+DEBUG    qualcoder.mcp:mcp_server.py:531 Tool batch_apply_codes completed: success=True (8.0ms)
+DEBUG    qualcoder.mcp:mcp_server.py:178 POST /tools/batch_apply_codes -> 200 (8.7ms)
+DEBUG    qualcoder.mcp:mcp_server.py:171 POST /tools/list_segments_for_source
+DEBUG    qualcoder.mcp:mcp_server.py:486 Tool call: list_segments_for_source args={"source_id": "019cede6-f4f1-7452-9381-43040a67ebec"}
+DEBUG    qualcoder.mcp:mcp_server.py:531 Tool list_segments_for_source completed: success=True (2.8ms)
+DEBUG    qualcoder.mcp:mcp_server.py:178 POST /tools/list_segments_for_source -> 200 (3.2ms)
+DEBUG    qualcoder.mcp:mcp_server.py:171 POST /tools/list_segments_for_source
+DEBUG    qualcoder.mcp:mcp_server.py:486 Tool call: list_segments_for_source args={"source_id": "019cede6-f4f4-70f2-9648-65906092737b"}
+DEBUG    qualcoder.mcp:mcp_server.py:531 Tool list_segments_for_source completed: success=True (0.9ms)
+DEBUG    qualcoder.mcp:mcp_server.py:178 POST /tools/list_segments_for_source -> 200 (1.2ms)
+DEBUG    qualcoder.mcp:mcp_server.py:171 POST /tools/list_segments_for_source
+DEBUG    qualcoder.mcp:mcp_server.py:486 Tool call: list_segments_for_source args={"source_id": "019cede6-f4f5-7d21-afa5-3957b6170761"}
+DEBUG    qualcoder.mcp:mcp_server.py:531 Tool list_segments_for_source completed: success=True (1.0ms)
+DEBUG    qualcoder.mcp:mcp_server.py:178 POST /tools/list_segments_for_source -> 200 (1.3ms)
+DEBUG    qualcoder.mcp:mcp_server.py:171 POST /tools/list_segments_for_source
+DEBUG    qualcoder.mcp:mcp_server.py:486 Tool call: list_segments_for_source args={"source_id": "019cede6-f4f6-7972-93a4-97d2a63f6fbd"}
+DEBUG    qualcoder.mcp:mcp_server.py:531 Tool list_segments_for_source completed: success=True (1.0ms)
+DEBUG    qualcoder.mcp:mcp_server.py:178 POST /tools/list_segments_for_source -> 200 (1.7ms)
+DEBUG    qualcoder.mcp:mcp_server.py:171 POST /tools/list_segments_for_source
+DEBUG    qualcoder.mcp:mcp_server.py:486 Tool call: list_segments_for_source args={"source_id": "019cede6-f4f7-7c31-871d-76b38ecfbaef"}
+DEBUG    qualcoder.mcp:mcp_server.py:531 Tool list_segments_for_source completed: success=True (0.9ms)
+DEBUG    qualcoder.mcp:mcp_server.py:178 POST /tools/list_segments_for_source -> 200 (1.2ms)
+INFO     qualcoder.mcp:mcp_server.py:149 Server stopping...
+ERROR    qualcoder.projects.core:auto_commit.py:61 auto_commit: skipped reason=NOT_INITIALIZED
+ERROR    src.contexts.projects.infra.version_control_listener:version_control_listener.py:163 VCS auto-commit failed: Version control not initialized [AUTO_COMMIT_SKIPPED/NOT_INITIALIZED]

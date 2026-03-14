@@ -1,0 +1,61 @@
+INFO     qualcoder.mcp:mcp_server.py:130 Server starting on port 18509 (debug=True, unified loop)
+INFO     qualcoder.mcp:mcp_server.py:226 Server ready at http://localhost:18509
+DEBUG    qualcoder.mcp:mcp_server.py:171 GET /tools
+DEBUG    qualcoder.mcp:mcp_server.py:178 GET /tools -> 200 (1.9ms)
+DEBUG    qualcoder.mcp:mcp_server.py:171 POST /tools/create_code
+DEBUG    qualcoder.mcp:mcp_server.py:486 Tool call: create_code args={"name": "Data sharing willingness", "color": "#4CAF50", "memo": "Researcher attitudes toward sharing qualitative data"}
+DEBUG    qualcoder.mcp:mcp_server.py:531 Tool create_code completed: success=True (5.7ms)
+DEBUG    qualcoder.mcp:mcp_server.py:178 POST /tools/create_code -> 200 (6.8ms)
+DEBUG    qualcoder.mcp:mcp_server.py:171 POST /tools/create_code
+DEBUG    qualcoder.mcp:mcp_server.py:486 Tool call: create_code args={"name": "Participant protection", "color": "#F44336", "memo": "Concerns about anonymity, consent, and participant welfare"}
+DEBUG    qualcoder.mcp:mcp_server.py:531 Tool create_code completed: success=True (4.5ms)
+DEBUG    qualcoder.mcp:mcp_server.py:178 POST /tools/create_code -> 200 (5.0ms)
+DEBUG    qualcoder.mcp:mcp_server.py:171 POST /tools/create_code
+DEBUG    qualcoder.mcp:mcp_server.py:486 Tool call: create_code args={"name": "Research software tools", "color": "#2196F3", "memo": "Use of QDA software: NVivo, Atlas.ti, manual analysis"}
+DEBUG    qualcoder.mcp:mcp_server.py:531 Tool create_code completed: success=True (2.4ms)
+DEBUG    qualcoder.mcp:mcp_server.py:178 POST /tools/create_code -> 200 (2.7ms)
+DEBUG    qualcoder.mcp:mcp_server.py:171 POST /tools/create_code
+DEBUG    qualcoder.mcp:mcp_server.py:486 Tool call: create_code args={"name": "Ethical tensions", "color": "#FF9800", "memo": "Tension between openness and ethical obligations"}
+DEBUG    qualcoder.mcp:mcp_server.py:531 Tool create_code completed: success=True (2.8ms)
+DEBUG    qualcoder.mcp:mcp_server.py:178 POST /tools/create_code -> 200 (3.1ms)
+DEBUG    qualcoder.mcp:mcp_server.py:171 POST /tools/create_code
+DEBUG    qualcoder.mcp:mcp_server.py:486 Tool call: create_code args={"name": "Institutional barriers", "color": "#9C27B0", "memo": "University policies, GDPR, repository access constraints"}
+DEBUG    qualcoder.mcp:mcp_server.py:531 Tool create_code completed: success=True (2.4ms)
+DEBUG    qualcoder.mcp:mcp_server.py:178 POST /tools/create_code -> 200 (2.7ms)
+DEBUG    qualcoder.mcp:mcp_server.py:171 POST /tools/batch_apply_codes
+DEBUG    qualcoder.mcp:mcp_server.py:486 Tool call: batch_apply_codes args={"operations": [{"code_id": "019cede6-d1ba-73c3-95e7-e118c820d2a2", "source_id": "019cede6-d1ad-7a12-85a2-9ae5a958eec1", "start_position": 8420, "end_position": 8464}]}
+DEBUG    qualcoder.mcp:mcp_server.py:531 Tool batch_apply_codes completed: success=True (3.6ms)
+DEBUG    qualcoder.mcp:mcp_server.py:178 POST /tools/batch_apply_codes -> 200 (4.0ms)
+DEBUG    qualcoder.mcp:mcp_server.py:171 POST /tools/batch_apply_codes
+DEBUG    qualcoder.mcp:mcp_server.py:486 Tool call: batch_apply_codes args={"operations": [{"code_id": "019cede6-d1c1-76e3-8659-bb768329d118", "source_id": "019cede6-d1b0-7b63-9728-503054166ecf", "start_position": 7155, "end_position": 7172}]}
+DEBUG    qualcoder.mcp:mcp_server.py:531 Tool batch_apply_codes completed: success=True (3.0ms)
+DEBUG    qualcoder.mcp:mcp_server.py:178 POST /tools/batch_apply_codes -> 200 (3.3ms)
+DEBUG    qualcoder.mcp:mcp_server.py:171 POST /tools/batch_apply_codes
+DEBUG    qualcoder.mcp:mcp_server.py:486 Tool call: batch_apply_codes args={"operations": [{"code_id": "019cede6-d1c7-73a1-b67c-a278f82f2ffb", "source_id": "019cede6-d1b0-7b63-9728-503054166ecf", "start_position": 2252, "end_position": 2292}]}
+DEBUG    qualcoder.mcp:mcp_server.py:531 Tool batch_apply_codes completed: success=True (3.0ms)
+DEBUG    qualcoder.mcp:mcp_server.py:178 POST /tools/batch_apply_codes -> 200 (3.3ms)
+DEBUG    qualcoder.mcp:mcp_server.py:171 POST /tools/batch_apply_codes
+DEBUG    qualcoder.mcp:mcp_server.py:486 Tool call: batch_apply_codes args={"operations": [{"code_id": "019cede6-d1c7-73a1-b67c-a278f82f2ffb", "source_id": "019cede6-d1b1-7cc0-9781-2e7c8ea988fd", "start_position": 2309, "end_position": 2321}]}
+DEBUG    qualcoder.mcp:mcp_server.py:531 Tool batch_apply_codes completed: success=True (4.0ms)
+DEBUG    qualcoder.mcp:mcp_server.py:178 POST /tools/batch_apply_codes -> 200 (4.3ms)
+DEBUG    qualcoder.mcp:mcp_server.py:171 POST /tools/batch_apply_codes
+DEBUG    qualcoder.mcp:mcp_server.py:486 Tool call: batch_apply_codes args={"operations": [{"code_id": "019cede6-d1cc-7d12-b085-6cfa40170711", "source_id": "019cede6-d1b1-7cc0-9781-2e7c8ea988fd", "start_position": 5137, "end_position": 5178}]}
+DEBUG    qualcoder.mcp:mcp_server.py:531 Tool batch_apply_codes completed: success=True (2.9ms)
+DEBUG    qualcoder.mcp:mcp_server.py:178 POST /tools/batch_apply_codes -> 200 (3.2ms)
+DEBUG    qualcoder.mcp:mcp_server.py:171 POST /tools/list_segments_for_source
+DEBUG    qualcoder.mcp:mcp_server.py:486 Tool call: list_segments_for_source args={"source_id": "019cede6-d1ad-7a12-85a2-9ae5a958eec1"}
+DEBUG    qualcoder.mcp:mcp_server.py:531 Tool list_segments_for_source completed: success=True (2.4ms)
+DEBUG    qualcoder.mcp:mcp_server.py:178 POST /tools/list_segments_for_source -> 200 (2.7ms)
+DEBUG    qualcoder.mcp:mcp_server.py:171 POST /tools/list_segments_for_source
+DEBUG    qualcoder.mcp:mcp_server.py:486 Tool call: list_segments_for_source args={"source_id": "019cede6-d1b0-7b63-9728-503054166ecf"}
+DEBUG    qualcoder.mcp:mcp_server.py:531 Tool list_segments_for_source completed: success=True (1.1ms)
+DEBUG    qualcoder.mcp:mcp_server.py:178 POST /tools/list_segments_for_source -> 200 (1.5ms)
+DEBUG    qualcoder.mcp:mcp_server.py:171 POST /tools/list_segments_for_source
+DEBUG    qualcoder.mcp:mcp_server.py:486 Tool call: list_segments_for_source args={"source_id": "019cede6-d1b1-7cc0-9781-2e7c8ea988fd"}
+DEBUG    qualcoder.mcp:mcp_server.py:531 Tool list_segments_for_source completed: success=True (1.0ms)
+DEBUG    qualcoder.mcp:mcp_server.py:178 POST /tools/list_segments_for_source -> 200 (1.3ms)
+INFO     qualcoder.mcp:mcp_server.py:149 Server stopping...
+ERROR    asyncio:base_events.py:1785 Task was destroyed but it is pending!
+task: <Task pending name='Task-2' coro=<MCPServerManager.serve_async() running at /home/runner/work/QualCoder-v2/QualCoder-v2/src/shared/infra/mcp_server.py:137> wait_for=<Future finished result=True>>
+ERROR    qualcoder.projects.core:auto_commit.py:61 auto_commit: skipped reason=NOT_INITIALIZED
+ERROR    src.contexts.projects.infra.version_control_listener:version_control_listener.py:163 VCS auto-commit failed: Version control not initialized [AUTO_COMMIT_SKIPPED/NOT_INITIALIZED]
