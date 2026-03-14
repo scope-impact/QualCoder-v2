@@ -7,27 +7,21 @@ No I/O, no side effects - returns events or SettingsNotChanged failure events.
 
 from __future__ import annotations
 
-from returns.result import Failure
-
 from src.contexts.settings.core.entities import UserSettings
 from src.contexts.settings.core.events import (
     AVCodingConfigChanged,
     BackupConfigChanged,
-    CloudSyncConfigChanged,
     FontChanged,
     LanguageChanged,
     ObservabilityConfigChanged,
     ThemeChanged,
 )
 from src.contexts.settings.core.failure_events import (
-    CloudSyncSettingsFailed,
     SettingsNotChanged,
 )
 from src.contexts.settings.core.invariants import (
     VALID_LANGUAGES,
-    can_enable_cloud_sync,
     is_valid_backup_interval,
-    is_valid_convex_url,
     is_valid_font_family,
     is_valid_font_size,
     is_valid_language_code,
@@ -233,35 +227,3 @@ def derive_observability_config_change(
     )
 
 
-def derive_cloud_sync_config_change(
-    enabled: bool,
-    convex_url: str | None,
-    current_settings: UserSettings,
-) -> CloudSyncConfigChanged | Failure:
-    """
-    Derive a cloud sync config change event from inputs.
-
-    Pure function - no I/O, no side effects.
-
-    Args:
-        enabled: Whether cloud sync is enabled
-        convex_url: Convex deployment URL (required if enabled)
-        current_settings: Current user settings for old cloud sync values
-
-    Returns:
-        CloudSyncConfigChanged event on success, Failure with reason on error
-    """
-    # Validate URL format if provided
-    if convex_url and not is_valid_convex_url(convex_url):
-        return Failure(CloudSyncSettingsFailed.invalid_url(convex_url))
-
-    # Cannot enable without valid URL
-    if enabled and not can_enable_cloud_sync(convex_url):
-        return Failure(CloudSyncSettingsFailed.url_required())
-
-    return CloudSyncConfigChanged.create(
-        old_enabled=current_settings.backend.cloud_sync_enabled,
-        old_convex_url=current_settings.backend.convex_url,
-        enabled=enabled,
-        convex_url=convex_url,
-    )

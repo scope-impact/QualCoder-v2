@@ -194,7 +194,7 @@ class SQLiteProjectRepository:
 
         Uses ``self._conn`` when available (the normal path during
         ``open_project``) so we share the lifecycle connection instead of
-        opening a competing one that can deadlock with the SyncEngine.
+        opening a competing one that can cause issues.
 
         Args:
             path: Path to the .qda file

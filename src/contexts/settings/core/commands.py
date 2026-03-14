@@ -87,14 +87,3 @@ class ConfigureObservabilityCommand:
     enable_telemetry: bool
 
 
-# =============================================================================
-# Cloud Sync Commands
-# =============================================================================
-
-
-@dataclass(frozen=True)
-class ConfigureCloudSyncCommand:
-    """Command to configure cloud sync settings."""
-
-    enabled: bool
-    convex_url: str | None = None

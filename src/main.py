@@ -36,7 +36,6 @@ from src.shared.infra.app_context import create_app_context
 from src.shared.infra.logging_config import configure_logging
 from src.shared.infra.mcp_server import MCPServerManager
 from src.shared.infra.signal_bridge.projects import ProjectSignalBridge
-from src.shared.infra.signal_bridge.sync import SyncSignalBridge
 from src.shared.infra.telemetry import init_telemetry
 from src.shared.presentation import create_empty_text_coding_data
 
@@ -85,8 +84,6 @@ class QualCoderApp:
         self._project_signal_bridge.start()
         self._coding_signal_bridge = CodingSignalBridge.instance(self._ctx.event_bus)
         self._coding_signal_bridge.start()
-        self._sync_signal_bridge = SyncSignalBridge.instance(self._ctx.event_bus)
-        self._sync_signal_bridge.start()
         # MCP server — started as asyncio task in run() on the unified loop
         self._mcp_server = MCPServerManager(ctx=self._ctx)
         self._shell: AppShell | None = None
@@ -129,14 +126,6 @@ class QualCoderApp:
         # Connect settings button to open dialog with live updates
         self._shell.settings_clicked.connect(self._on_settings_clicked)
 
-        # Connect sync button to trigger cloud sync pull
-        self._shell.sync_requested.connect(self._on_sync_requested)
-
-        # Connect SyncSignalBridge for reactive sync status updates
-        self._sync_signal_bridge.sync_status_changed.connect(
-            self._on_sync_status_changed
-        )
-
         # Connect file manager navigation to coding screen
         self._screens["files"].navigate_to_coding.connect(self._on_navigate_to_coding)
 
@@ -162,38 +151,6 @@ class QualCoderApp:
         if dialog:
             self._shell.load_and_apply_settings(self._ctx.settings_repo)
 
-    def _on_sync_requested(self):
-        """Handle sync button click - delegate to AppContext."""
-        self._ctx.trigger_sync_pull()
-
-    def _on_sync_status_changed(self, payload):
-        """Handle sync status changes from SyncSignalBridge."""
-        if self._shell:
-            self._shell.set_sync_status(
-                status=payload.status,
-                pending=payload.pending_count,
-                error_message=payload.error_message,
-            )
-
-    def _init_sync_status(self):
-        """Initialize sync status from AppContext state."""
-        if not self._shell:
-            return
-
-        if not self._ctx.is_cloud_sync_enabled():
-            self._shell.set_sync_status("offline")
-            return
-
-        # Get initial state from sync engine
-        sync_state = self._ctx.get_sync_state()
-        if sync_state:
-            self._shell.set_sync_status(
-                status=sync_state.status.value,
-                pending=sync_state.pending_changes,
-            )
-        else:
-            self._shell.set_sync_status("synced")
-
     def _wire_policy_repositories(self):
         """Wire repository references for policies now that contexts are available."""
         from src.contexts.coding.core.policies import (
@@ -217,8 +174,6 @@ class QualCoderApp:
         """Wire viewmodels to screens after a project is opened."""
         # Wire policy repositories now that contexts are available
         self._wire_policy_repositories()
-        # Initialize sync status (reactive updates via SignalBridge)
-        self._init_sync_status()
 
         # Create FileManagerViewModel now that contexts are available
         file_manager_viewmodel = FileManagerViewModel(

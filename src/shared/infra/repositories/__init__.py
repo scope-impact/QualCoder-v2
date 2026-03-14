@@ -2,7 +2,7 @@
 Repository Protocols and Backend Abstractions.
 
 This module defines the protocol interfaces that all repository
-implementations must follow, enabling swappable backends (SQLite, Convex, etc.).
+implementations must follow, enabling swappable backends.
 """
 
 from src.shared.infra.repositories.factory import RepositoryFactory, RepositorySet

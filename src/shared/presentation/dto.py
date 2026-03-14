@@ -209,9 +209,6 @@ class SettingsDTO:
     backup_path: str | None = None
     timestamp_format: str = "HH:MM:SS"
     speaker_format: str = "Speaker {n}"
-    # Cloud sync settings (SQLite is always primary)
-    cloud_sync_enabled: bool = False
-    convex_url: str | None = None
     # Observability settings
     log_level: str = "INFO"
     enable_file_logging: bool = False

@@ -38,13 +38,7 @@ from src.shared.infra.signal_bridge.payloads import (
     SignalPayload,
 )
 from src.shared.infra.signal_bridge.settings import (
-    CloudSyncConfigPayload,
     SettingsSignalBridge,
-)
-from src.shared.infra.signal_bridge.sync import (
-    SyncResultPayload,
-    SyncSignalBridge,
-    SyncStatusPayload,
 )
 from src.shared.infra.signal_bridge.thread_utils import (
     ThreadChecker,
@@ -58,9 +52,6 @@ __all__ = [
     "SignalPayload",
     "ActivityItem",
     "ActivityStatus",
-    "SyncStatusPayload",
-    "SyncResultPayload",
-    "CloudSyncConfigPayload",
     # Converter type
     "EventConverter",
     # Thread utilities
@@ -71,8 +62,6 @@ __all__ = [
     # Base class
     "BaseSignalBridge",
     "ConverterRegistration",
-    # Sync bridge
-    "SyncSignalBridge",
     # Settings bridge
     "SettingsSignalBridge",
 ]

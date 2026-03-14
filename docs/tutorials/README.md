@@ -112,8 +112,6 @@ src/shared/infra/
 │   ├── context.py        # AppContext (composition root)
 │   ├── factory.py        # create_app_context()
 │   └── bounded_contexts.py # Context factories
-└── sync/
-    └── engine.py         # SyncEngine (background threads)
 ```
 
 ## After the Tutorial

@@ -28,7 +28,6 @@ class BackendType(str, Enum):
     """Supported database backend types."""
 
     SQLITE = "sqlite"
-    CONVEX = "convex"
 
 
 @runtime_checkable

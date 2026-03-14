@@ -60,8 +60,6 @@ class SettingsProvider(Protocol):
         enable_file_logging: bool,
         enable_telemetry: bool,
     ) -> OperationResult: ...
-    def set_cloud_sync_enabled(self, enabled: bool) -> OperationResult: ...
-    def set_convex_url(self, url: str | None) -> OperationResult: ...
 
 
 class SettingsViewModel:
@@ -114,8 +112,6 @@ class SettingsViewModel:
             backup_path=settings.backup.backup_path,
             timestamp_format=settings.av_coding.timestamp_format,
             speaker_format=settings.av_coding.speaker_format,
-            cloud_sync_enabled=settings.backend.cloud_sync_enabled,
-            convex_url=settings.backend.convex_url,
             log_level=settings.observability.log_level,
             enable_file_logging=settings.observability.enable_file_logging,
             enable_telemetry=settings.observability.enable_telemetry,
@@ -315,32 +311,3 @@ class SettingsViewModel:
         except Exception:
             return format_str
 
-    # =========================================================================
-    # Backend Actions
-    # =========================================================================
-
-    def set_cloud_sync_enabled(self, enabled: bool) -> bool:
-        """
-        Enable or disable cloud sync with Convex.
-
-        Args:
-            enabled: True to enable cloud sync, False to disable
-
-        Returns:
-            True if successful, False otherwise
-        """
-        result = self._provider.set_cloud_sync_enabled(enabled)
-        return result.is_success
-
-    def set_convex_url(self, url: str | None) -> bool:
-        """
-        Set the Convex deployment URL.
-
-        Args:
-            url: Convex deployment URL or None to clear
-
-        Returns:
-            True if successful, False otherwise
-        """
-        result = self._provider.set_convex_url(url)
-        return result.is_success
