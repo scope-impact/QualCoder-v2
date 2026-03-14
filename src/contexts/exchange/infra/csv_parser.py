@@ -9,7 +9,10 @@ from __future__ import annotations
 
 import csv
 import io
+import re
 from dataclasses import dataclass
+
+from src.contexts.cases.core.entities import AttributeType
 
 
 @dataclass(frozen=True)
@@ -59,3 +62,56 @@ def parse_survey_csv(
         rows=rows,
         name_column=resolved_name_column,
     )
+
+
+# ============================================================
+# Type Inference
+# ============================================================
+
+_DATE_RE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
+
+
+def _is_numeric(value: str) -> bool:
+    try:
+        float(value)
+        return True
+    except ValueError:
+        return False
+
+
+def infer_attribute_type(values: list[str]) -> AttributeType:
+    """Infer the best-fit AttributeType from a list of string values.
+
+    Empty strings are skipped. If all non-empty values match a type,
+    that type is returned. Otherwise defaults to TEXT.
+    """
+    non_empty = [v for v in values if v.strip()]
+    if not non_empty:
+        return AttributeType.TEXT
+
+    if all(_is_numeric(v) for v in non_empty):
+        return AttributeType.NUMBER
+
+    if all(_DATE_RE.match(v) for v in non_empty):
+        return AttributeType.DATE
+
+    if all(v.lower() in ("true", "false") for v in non_empty):
+        return AttributeType.BOOLEAN
+
+    return AttributeType.TEXT
+
+
+def infer_column_types(
+    parse_result: CSVParseResult,
+) -> dict[str, AttributeType]:
+    """Infer AttributeType for each column in a CSVParseResult.
+
+    Skips the name_column (case name, not an attribute).
+    """
+    types: dict[str, AttributeType] = {}
+    for header in parse_result.headers:
+        if header == parse_result.name_column:
+            continue
+        column_values = [row.get(header, "") for row in parse_result.rows]
+        types[header] = infer_attribute_type(column_values)
+    return types

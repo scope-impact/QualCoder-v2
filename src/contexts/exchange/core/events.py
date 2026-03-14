@@ -80,6 +80,7 @@ class SurveyCSVImported(DomainEvent):
     source_path: str
     cases_created: int
     attributes_per_case: int
+    cases_updated: int = 0
 
     @classmethod
     def create(
@@ -87,6 +88,7 @@ class SurveyCSVImported(DomainEvent):
         source_path: str,
         cases_created: int,
         attributes_per_case: int,
+        cases_updated: int = 0,
     ) -> SurveyCSVImported:
         return cls(
             event_id=cls._generate_id(),
@@ -94,6 +96,7 @@ class SurveyCSVImported(DomainEvent):
             source_path=source_path,
             cases_created=cases_created,
             attributes_per_case=attributes_per_case,
+            cases_updated=cases_updated,
         )
 
 

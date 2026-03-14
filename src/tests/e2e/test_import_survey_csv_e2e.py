@@ -59,7 +59,7 @@ class TestImportSurveyCSV:
             assert alice is not None
             age_attr = alice.get_attribute("Age")
             assert age_attr is not None
-            assert age_attr.value == "30"
+            assert age_attr.value == 30
             gender_attr = alice.get_attribute("Gender")
             assert gender_attr is not None
             assert gender_attr.value == "F"

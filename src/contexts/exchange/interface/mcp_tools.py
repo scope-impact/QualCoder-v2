@@ -72,7 +72,7 @@ EXCHANGE_TOOLS = {
             ToolParameter(
                 name="format",
                 type="string",
-                description="Import format: code_list, csv, refi_qda, rqda",
+                description="Import format: code_list, csv, firebase_csv, refi_qda, rqda",
             ),
             ToolParameter(
                 name="source_path",
@@ -82,7 +82,7 @@ EXCHANGE_TOOLS = {
             ToolParameter(
                 name="name_column",
                 type="string",
-                description="Column to use as case name (CSV only)",
+                description="Column to use as case name (CSV and firebase_csv only)",
                 required=False,
             ),
         ),
@@ -229,7 +229,7 @@ class ExchangeTools:
             )
             return result.to_dict()
 
-        elif fmt == "csv":
+        elif fmt in ("csv", "firebase_csv"):
             result = self._coordinator.import_survey_csv(
                 ImportSurveyCSVCommand(
                     source_path=source_path,

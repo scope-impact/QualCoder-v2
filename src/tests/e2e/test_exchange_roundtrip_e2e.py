@@ -431,24 +431,24 @@ class TestCsvDeepImport:
 
         with allure.step("Verify Alice has ALL attributes"):
             alice = case_repo.get_by_name("Alice")
-            assert alice.get_attribute("Age").value == "30"
+            assert alice.get_attribute("Age").value == 30
             assert alice.get_attribute("Gender").value == "F"
             assert alice.get_attribute("City").value == "Boston"
-            assert alice.get_attribute("Score").value == "85"
+            assert alice.get_attribute("Score").value == 85
 
         with allure.step("Verify Bob has ALL attributes"):
             bob = case_repo.get_by_name("Bob")
-            assert bob.get_attribute("Age").value == "25"
+            assert bob.get_attribute("Age").value == 25
             assert bob.get_attribute("Gender").value == "M"
             assert bob.get_attribute("City").value == "Denver"
-            assert bob.get_attribute("Score").value == "92"
+            assert bob.get_attribute("Score").value == 92
 
         with allure.step("Verify Carol has ALL attributes"):
             carol = case_repo.get_by_name("Carol")
-            assert carol.get_attribute("Age").value == "28"
+            assert carol.get_attribute("Age").value == 28
             assert carol.get_attribute("Gender").value == "F"
             assert carol.get_attribute("City").value == "Austin"
-            assert carol.get_attribute("Score").value == "78"
+            assert carol.get_attribute("Score").value == 78
 
 
 # =============================================================================
@@ -584,12 +584,12 @@ class TestImportVisibleOnScreen:
             smith = case_repo.get_by_name("Dr. Smith")
             assert smith is not None
             assert smith.get_attribute("Role").value == "Researcher"
-            assert smith.get_attribute("Experience").value == "15"
+            assert smith.get_attribute("Experience").value == 15
 
             jane = case_repo.get_by_name("Jane Doe")
             assert jane is not None
             assert jane.get_attribute("Role").value == "Student"
-            assert jane.get_attribute("Experience").value == "2"
+            assert jane.get_attribute("Experience").value == 2
 
 
 # =============================================================================

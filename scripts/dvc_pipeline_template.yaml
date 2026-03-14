@@ -11,27 +11,30 @@
 # See: https://dvc.org/doc/user-guide/pipelines
 
 stages:
-  # Stage 1: Aggregate raw data from Firebase/external sources
-  # Pulls profiles, responses, or analytics data into a local directory.
-  aggregate-data:
+  # Stage 1: Aggregate Firebase Analytics into participant profiles
+  # Runs the aggregation script on raw BigQuery export JSON,
+  # producing a CSV ready for QualCoder case attribute import.
+  aggregate-firebase:
     cmd: >
-      python -m src.contexts.storage.scripts.aggregate
-      --source firebase
-      --output data/raw/
+      python scripts/aggregate_firebase.py
+      --input data/raw/firebase_export.json
+      --output data/processed/participant_profiles.csv
     deps:
-      - src/contexts/storage/scripts/aggregate.py
+      - data/raw/firebase_export.json
+      - scripts/aggregate_firebase.py
     outs:
-      - data/raw/
+      - data/processed/participant_profiles.csv
 
-  # Stage 2: Import source profiles into QualCoder project
-  # Converts raw data files into QualCoder-compatible sources.
+  # Stage 2: Import participant profiles as QualCoder case attributes
+  # Imports the aggregated CSV into a QualCoder project as typed Case attributes.
+  # Uses the MCP import_data tool with format=firebase_csv.
   import-profiles:
     cmd: >
       python -m src.contexts.storage.scripts.import_profiles
-      --input data/raw/
+      --input data/processed/participant_profiles.csv
       --project ${PROJECT_PATH}
     deps:
-      - data/raw/
+      - data/processed/participant_profiles.csv
       - src/contexts/storage/scripts/import_profiles.py
     outs:
       - data/imported/

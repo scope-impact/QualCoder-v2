@@ -359,7 +359,15 @@ class SQLiteCaseRepository:
             case AttributeType.NUMBER:
                 value_number = int(attr.value) if attr.value else None
             case AttributeType.DATE:
-                value_date = attr.value
+                if isinstance(attr.value, str):
+                    from datetime import date
+
+                    try:
+                        value_date = date.fromisoformat(attr.value)
+                    except ValueError:
+                        value_text = attr.value
+                else:
+                    value_date = attr.value
             case AttributeType.BOOLEAN:
                 value_text = str(attr.value).lower() if attr.value is not None else None
 
