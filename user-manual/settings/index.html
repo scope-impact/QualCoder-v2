@@ -879,78 +879,6 @@
   
 </li>
         
-          <li class="md-nav__item">
-  <a href="#cloud-sync-optional" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Cloud Sync (Optional)
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Cloud Sync (Optional)">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#enabling-cloud-sync" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Enabling Cloud Sync
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#configuring-convex" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Configuring Convex
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#how-cloud-sync-works" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        How Cloud Sync Works
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#sync-status-indicator" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Sync Status Indicator
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#offline-mode" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Offline Mode
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-        
       </ul>
     </nav>
   
@@ -10702,7 +10630,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../backlog/tasks/qc-047%20-%20Cloud-Sync-with-Convex/" class="md-nav__link">
+      <a href="../../backlog/tasks/qc-047 - Cloud-Sync-with-Convex.md" class="md-nav__link">
         
   
   
@@ -10715,13 +10643,6 @@
     
   </span>
   
-  
-    
-  
-  
-    <span class="md-status md-status--In Progress"></span>
-  
-
   
 
       </a>
@@ -11042,78 +10963,6 @@
   
 </li>
         
-          <li class="md-nav__item">
-  <a href="#cloud-sync-optional" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Cloud Sync (Optional)
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Cloud Sync (Optional)">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#enabling-cloud-sync" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Enabling Cloud Sync
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#configuring-convex" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Configuring Convex
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#how-cloud-sync-works" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        How Cloud Sync Works
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#sync-status-indicator" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Sync Status Indicator
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#offline-mode" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Offline Mode
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-        
       </ul>
     </nav>
   
@@ -11271,78 +11120,6 @@
 <li><strong>Fast performance</strong> - No network latency for read/write operations</li>
 <li><strong>Data ownership</strong> - Your data stays on your machine</li>
 </ul>
-<h3 id="cloud-sync-optional">Cloud Sync (Optional)<a class="headerlink" href="#cloud-sync-optional" title="Permanent link">&para;</a></h3>
-<p>Enable cloud synchronization to:</p>
-<ul>
-<li><strong>Collaborate in real-time</strong> with team members</li>
-<li><strong>Back up</strong> your project data to the cloud</li>
-<li><strong>Access</strong> your project from multiple devices</li>
-</ul>
-<h4 id="enabling-cloud-sync">Enabling Cloud Sync<a class="headerlink" href="#enabling-cloud-sync" title="Permanent link">&para;</a></h4>
-<ol>
-<li>Go to <strong>Database</strong> in the sidebar</li>
-<li>Check <strong>Enable cloud sync with Convex</strong></li>
-<li>The Convex configuration panel appears</li>
-</ol>
-<h4 id="configuring-convex">Configuring Convex<a class="headerlink" href="#configuring-convex" title="Permanent link">&para;</a></h4>
-<ol>
-<li>Get your deployment URL from <a href="https://convex.dev">convex.dev</a></li>
-<li>Create a new project or use an existing one</li>
-<li>Copy the deployment URL (looks like <code>https://your-project.convex.cloud</code>)</li>
-<li>Paste it into the <strong>Deployment URL</strong> field</li>
-</ol>
-<blockquote>
-<p><strong>Note: Reopening Required</strong></p>
-<p>After changing database settings, you may need to reopen your project for changes to take effect.</p>
-</blockquote>
-<h4 id="how-cloud-sync-works">How Cloud Sync Works<a class="headerlink" href="#how-cloud-sync-works" title="Permanent link">&para;</a></h4>
-<p>When cloud sync is enabled:</p>
-<ul>
-<li>All changes are <strong>saved locally first</strong> (SQLite remains primary)</li>
-<li>Changes are then <strong>queued for upload</strong> to Convex</li>
-<li>When connected, changes <strong>sync automatically</strong> in real-time</li>
-<li>Changes from other devices <strong>appear automatically</strong></li>
-</ul>
-<h4 id="sync-status-indicator">Sync Status Indicator<a class="headerlink" href="#sync-status-indicator" title="Permanent link">&para;</a></h4>
-<p>When cloud sync is enabled, a sync status indicator appears in the navigation bar:</p>
-<table>
-<thead>
-<tr>
-<th>Icon</th>
-<th>Status</th>
-<th>Meaning</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Green check</td>
-<td>Synced</td>
-<td>All changes uploaded</td>
-</tr>
-<tr>
-<td>Spinning</td>
-<td>Syncing</td>
-<td>Upload in progress</td>
-</tr>
-<tr>
-<td>Red warning</td>
-<td>Error</td>
-<td>Connection issue (hover for details)</td>
-</tr>
-</tbody>
-</table>
-<p>Click the indicator to manually trigger a sync or see pending changes.</p>
-<h4 id="offline-mode">Offline Mode<a class="headerlink" href="#offline-mode" title="Permanent link">&para;</a></h4>
-<p>If you lose internet connection:</p>
-<ol>
-<li>Continue working normally - all changes save locally</li>
-<li>Changes queue for upload automatically</li>
-<li>When reconnected, pending changes sync in the background</li>
-</ol>
-<blockquote>
-<p><strong>Tip: Check Connection Status</strong></p>
-<p>The sync indicator shows the current connection state. If syncing seems stuck, check your internet connection.</p>
-</blockquote>
 <h2 id="saving-settings">Saving Settings<a class="headerlink" href="#saving-settings" title="Permanent link">&para;</a></h2>
 <p>Settings are saved automatically as you change them. There's no need to click Save.</p>
 <ul>

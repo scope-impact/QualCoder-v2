@@ -1280,21 +1280,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#73-cloud-sync-convex-optional" class="md-nav__link">
+  <a href="#73-storage-decision-matrix" class="md-nav__link">
     <span class="md-ellipsis">
       
-        7.3 Cloud Sync (Convex - Optional)
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#74-storage-decision-matrix" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        7.4 Storage Decision Matrix
+        7.3 Storage Decision Matrix
       
     </span>
   </a>
@@ -10959,7 +10948,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../backlog/tasks/qc-047%20-%20Cloud-Sync-with-Convex/" class="md-nav__link">
+      <a href="../backlog/tasks/qc-047 - Cloud-Sync-with-Convex.md" class="md-nav__link">
         
   
   
@@ -10972,13 +10961,6 @@
     
   </span>
   
-  
-    
-  
-  
-    <span class="md-status md-status--In Progress"></span>
-  
-
   
 
       </a>
@@ -11461,21 +11443,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#73-cloud-sync-convex-optional" class="md-nav__link">
+  <a href="#73-storage-decision-matrix" class="md-nav__link">
     <span class="md-ellipsis">
       
-        7.3 Cloud Sync (Convex - Optional)
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#74-storage-decision-matrix" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        7.4 Storage Decision Matrix
+        7.3 Storage Decision Matrix
       
     </span>
   </a>
@@ -11790,13 +11761,6 @@
 <td>Database history, snapshots, restore</td>
 <td>Storage</td>
 </tr>
-<tr>
-<td>C8</td>
-<td>Cloud Sync</td>
-<td>Convex (optional)</td>
-<td>Real-time sync across devices</td>
-<td>Cloud</td>
-</tr>
 </tbody>
 </table>
 <h3 id="container-diagram">Container Diagram<a class="headerlink" href="#container-diagram" title="Permanent link">&para;</a></h3>
@@ -11807,7 +11771,6 @@
         APP[Application Shell - EventBus + SignalBridge]
         AGENT[Agent Context - MCP Protocol]
         VCS[Version Control - Git + sqlite-diffable]
-        SYNC[Cloud Sync - Convex Client]
 
         UI -- "Command DTOs / Python" --&gt; APP
         APP -- "Function calls / Python" --&gt; DOMAIN
@@ -11822,15 +11785,10 @@
         GIT[(Git Repository)]
     end
 
-    subgraph Cloud Storage
-        CONVEX[(Convex Backend)]
-    end
-
     APP -- "SQL / sqlite3" --&gt; DB
     AGENT -- "Embeddings / Python API" --&gt; VEC
     VCS -- "sqlite-diffable dump/load" --&gt; DB
     VCS -- "git commit/checkout" --&gt; GIT
-    SYNC -. "Optional HTTPS" .-&gt; CONVEX
 
     LLM(LLM Provider)
     AGENT -- "Chat API / HTTPS" --&gt; LLM</code></pre>
@@ -11892,8 +11850,8 @@
 </tr>
 <tr>
 <td><strong>Settings</strong></td>
-<td>Theme, Font, Language, Backup, AVCoding, Observability, CloudSync</td>
-<td>Configure preferences, cloud sync, observability</td>
+<td>Theme, Font, Language, Backup, AVCoding, Observability</td>
+<td>Configure preferences, observability</td>
 </tr>
 <tr>
 <td><strong>Folders</strong></td>
@@ -12134,16 +12092,10 @@
 <td>project_opened, project_closed, source_added, source_removed, folder_created, snapshot_created</td>
 </tr>
 <tr>
-<td><code>SyncSignalBridge</code></td>
-<td>Sync</td>
-<td><code>src/shared/infra/signal_bridge/sync.py</code></td>
-<td>sync_status_changed, sync_completed</td>
-</tr>
-<tr>
 <td><code>SettingsSignalBridge</code></td>
 <td>Settings</td>
 <td><code>src/shared/infra/signal_bridge/settings.py</code></td>
-<td>settings_changed, cloud_sync_config_changed</td>
+<td>settings_changed</td>
 </tr>
 </tbody>
 </table>
@@ -12165,8 +12117,7 @@
 - <code>FolderCreated</code>, <code>FolderRenamed</code>, <code>FolderDeleted</code>, <code>SourceMovedToFolder</code></p>
 <p><strong>Settings</strong> (<code>src/contexts/settings/core/events.py</code>):
 - <code>ThemeChanged</code>, <code>FontChanged</code>, <code>LanguageChanged</code>
-- <code>BackupConfigChanged</code>, <code>AVCodingConfigChanged</code>, <code>ObservabilityConfigChanged</code>
-- <code>CloudSyncConfigChanged</code>, <code>CloudSyncEnabled</code>, <code>CloudSyncDisabled</code></p>
+- <code>BackupConfigChanged</code>, <code>AVCodingConfigChanged</code>, <code>ObservabilityConfigChanged</code></p>
 <p><strong>Exchange</strong> (<code>src/contexts/exchange/core/events.py</code>):
 - <code>CodebookExported</code>, <code>CodedHTMLExported</code>, <code>RefiQdaExported</code>
 - <code>CodeListImported</code>, <code>SurveyCSVImported</code>, <code>RefiQdaImported</code>, <code>RqdaImported</code></p>
@@ -12429,16 +12380,11 @@
 <td>Git + sqlite-diffable</td>
 <td>Cross-platform, human-readable diffs</td>
 </tr>
-<tr>
-<td>Cloud Sync</td>
-<td>Convex</td>
-<td>Real-time sync, TypeScript backend</td>
-</tr>
 </tbody>
 </table>
 <hr />
 <h2 id="7-storage-architecture">7. Storage Architecture<a class="headerlink" href="#7-storage-architecture" title="Permanent link">&para;</a></h2>
-<p>QualCoder v2 uses a layered storage architecture with SQLite as the primary database, optional Git-based version control, and optional cloud sync.</p>
+<p>QualCoder v2 uses a layered storage architecture with SQLite as the primary database and optional Git-based version control.</p>
 <h3 id="storage-layers">Storage Layers<a class="headerlink" href="#storage-layers" title="Permanent link">&para;</a></h3>
 <pre class="mermaid"><code>graph TB
     subgraph "Storage Architecture"
@@ -12453,19 +12399,12 @@
             DIFF[sqlite-diffable]
             GIT[(Git Repository&lt;br&gt;.qualcoder-vcs/)]
         end
-
-        subgraph "Cloud Sync Layer"
-            SYNC[SyncEngine]
-            CONVEX[(Convex Backend)]
-        end
     end
 
     APP -- "SQL read/write" --&gt; SQLITE
     APP -- "DomainEvents" --&gt; VCS
     VCS -- "500ms debounce" --&gt; DIFF
-    DIFF -- "dump JSON" --&gt; GIT
-    APP -- "Optional" --&gt; SYNC
-    SYNC -. "HTTPS" .-&gt; CONVEX</code></pre>
+    DIFF -- "dump JSON" --&gt; GIT</code></pre>
 <h3 id="71-primary-storage-sqlite">7.1 Primary Storage (SQLite)<a class="headerlink" href="#71-primary-storage-sqlite" title="Permanent link">&para;</a></h3>
 <p>SQLite is always the source of truth for local data:</p>
 <table>
@@ -12580,49 +12519,7 @@
     Handler-&gt;&gt;Diff: load(json → sqlite)
     Diff-&gt;&gt;DB: Rebuild database
     Handler-&gt;&gt;Bus: publish(SnapshotRestored)</code></pre>
-<h3 id="73-cloud-sync-convex-optional">7.3 Cloud Sync (Convex - Optional)<a class="headerlink" href="#73-cloud-sync-convex-optional" title="Permanent link">&para;</a></h3>
-<p>When enabled, changes sync in real-time to Convex cloud backend.</p>
-<table>
-<thead>
-<tr>
-<th>Aspect</th>
-<th>Details</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Protocol</td>
-<td>HTTPS with Convex client</td>
-</tr>
-<tr>
-<td>Direction</td>
-<td>Bidirectional sync</td>
-</tr>
-<tr>
-<td>Conflict Resolution</td>
-<td>Last-write-wins with timestamps</td>
-</tr>
-<tr>
-<td>Offline Support</td>
-<td>Queue changes, sync when online</td>
-</tr>
-</tbody>
-</table>
-<p><strong>Configuration:</strong></p>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-6-1"><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="c1"># In settings</span>
-</span><span id="__span-6-2"><a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="n">backend</span> <span class="o">=</span> <span class="n">BackendConfig</span><span class="p">(</span>
-</span><span id="__span-6-3"><a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>    <span class="n">cloud_sync_enabled</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-</span><span id="__span-6-4"><a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a>    <span class="n">convex_url</span><span class="o">=</span><span class="s2">&quot;https://your-deployment.convex.cloud&quot;</span><span class="p">,</span>
-</span><span id="__span-6-5"><a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a>    <span class="n">convex_project_id</span><span class="o">=</span><span class="s2">&quot;project-123&quot;</span>
-</span><span id="__span-6-6"><a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a><span class="p">)</span>
-</span></code></pre></div>
-<p><strong>Sync Architecture:</strong></p>
-<div class="language-text highlight"><pre><span></span><code><span id="__span-7-1"><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>src/shared/infra/sync/
-</span><span id="__span-7-2"><a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>├── engine.py              # SyncEngine orchestration
-</span><span id="__span-7-3"><a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a>├── synced_repositories.py # Repository wrappers with sync
-</span><span id="__span-7-4"><a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a>└── commandHandlers/       # Pull/push handlers
-</span></code></pre></div>
-<h3 id="74-storage-decision-matrix">7.4 Storage Decision Matrix<a class="headerlink" href="#74-storage-decision-matrix" title="Permanent link">&para;</a></h3>
+<h3 id="73-storage-decision-matrix">7.3 Storage Decision Matrix<a class="headerlink" href="#73-storage-decision-matrix" title="Permanent link">&para;</a></h3>
 <table>
 <thead>
 <tr>
@@ -12640,16 +12537,8 @@
 <td>Enable Git VCS</td>
 </tr>
 <tr>
-<td>Multi-device access</td>
-<td>Enable Convex sync</td>
-</tr>
-<tr>
-<td>Team collaboration</td>
-<td>Convex + shared project</td>
-</tr>
-<tr>
-<td>Offline work + sync later</td>
-<td>Convex with queue</td>
+<td>Large file storage</td>
+<td>S3 + DVC</td>
 </tr>
 </tbody>
 </table>
@@ -12686,11 +12575,6 @@
 <td>User's file system</td>
 </tr>
 <tr>
-<td>Cloud Sync</td>
-<td>Convex cloud backend</td>
-<td>Cloud (optional)</td>
-</tr>
-<tr>
 <td>LLM Provider</td>
 <td>Cloud API or local (Ollama)</td>
 <td>External / Local</td>
@@ -12698,60 +12582,60 @@
 </tbody>
 </table>
 <h3 id="distribution">Distribution<a class="headerlink" href="#distribution" title="Permanent link">&para;</a></h3>
-<div class="language-text highlight"><pre><span></span><code><span id="__span-8-1"><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>QualCoder v2
-</span><span id="__span-8-2"><a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>├── macOS: .dmg installer (arm64, x86_64)
-</span><span id="__span-8-3"><a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a>├── Windows: .msi installer
-</span><span id="__span-8-4"><a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a>├── Linux: .deb, .rpm, AppImage
-</span><span id="__span-8-5"><a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a>└── PyPI: pip install qualcoder-v2
+<div class="language-text highlight"><pre><span></span><code><span id="__span-6-1"><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>QualCoder v2
+</span><span id="__span-6-2"><a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>├── macOS: .dmg installer (arm64, x86_64)
+</span><span id="__span-6-3"><a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>├── Windows: .msi installer
+</span><span id="__span-6-4"><a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a>├── Linux: .deb, .rpm, AppImage
+</span><span id="__span-6-5"><a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a>└── PyPI: pip install qualcoder-v2
 </span></code></pre></div>
 <hr />
 <h2 id="9-directory-structure">9. Directory Structure<a class="headerlink" href="#9-directory-structure" title="Permanent link">&para;</a></h2>
-<div class="language-text highlight"><pre><span></span><code><span id="__span-9-1"><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>src/
-</span><span id="__span-9-2"><a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>├── contexts/                   # Bounded Contexts (vertical slices)
-</span><span id="__span-9-3"><a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a>│   ├── coding/                 # Coding Context (includes AI coding)
-</span><span id="__span-9-4"><a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a>│   │   ├── core/               # Domain (Pure)
-</span><span id="__span-9-5"><a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a>│   │   │   ├── entities.py     # Code, Category, Segment
-</span><span id="__span-9-6"><a id="__codelineno-9-6" name="__codelineno-9-6" href="#__codelineno-9-6"></a>│   │   │   ├── ai_entities.py  # AI-specific entities
-</span><span id="__span-9-7"><a id="__codelineno-9-7" name="__codelineno-9-7" href="#__codelineno-9-7"></a>│   │   │   ├── invariants.py
-</span><span id="__span-9-8"><a id="__codelineno-9-8" name="__codelineno-9-8" href="#__codelineno-9-8"></a>│   │   │   ├── derivers.py
-</span><span id="__span-9-9"><a id="__codelineno-9-9" name="__codelineno-9-9" href="#__codelineno-9-9"></a>│   │   │   ├── events.py
-</span><span id="__span-9-10"><a id="__codelineno-9-10" name="__codelineno-9-10" href="#__codelineno-9-10"></a>│   │   │   ├── commandHandlers/  # Use cases
-</span><span id="__span-9-11"><a id="__codelineno-9-11" name="__codelineno-9-11" href="#__codelineno-9-11"></a>│   │   │   └── tests/
-</span><span id="__span-9-12"><a id="__codelineno-9-12" name="__codelineno-9-12" href="#__codelineno-9-12"></a>│   │   ├── infra/              # Repositories, AI providers
-</span><span id="__span-9-13"><a id="__codelineno-9-13" name="__codelineno-9-13" href="#__codelineno-9-13"></a>│   │   ├── interface/          # Signal bridges, MCP tools
-</span><span id="__span-9-14"><a id="__codelineno-9-14" name="__codelineno-9-14" href="#__codelineno-9-14"></a>│   │   └── presentation/       # Context-specific UI
-</span><span id="__span-9-15"><a id="__codelineno-9-15" name="__codelineno-9-15" href="#__codelineno-9-15"></a>│   ├── sources/                # Source file management
-</span><span id="__span-9-16"><a id="__codelineno-9-16" name="__codelineno-9-16" href="#__codelineno-9-16"></a>│   ├── cases/                  # Case/participant management
-</span><span id="__span-9-17"><a id="__codelineno-9-17" name="__codelineno-9-17" href="#__codelineno-9-17"></a>│   ├── projects/               # Project lifecycle + VCS
-</span><span id="__span-9-18"><a id="__codelineno-9-18" name="__codelineno-9-18" href="#__codelineno-9-18"></a>│   ├── exchange/               # Import/export (REFI-QDA, CSV, codebook)
-</span><span id="__span-9-19"><a id="__codelineno-9-19" name="__codelineno-9-19" href="#__codelineno-9-19"></a>│   ├── settings/               # User settings, cloud sync config
-</span><span id="__span-9-20"><a id="__codelineno-9-20" name="__codelineno-9-20" href="#__codelineno-9-20"></a>│   └── folders/                # Folder organization
-</span><span id="__span-9-21"><a id="__codelineno-9-21" name="__codelineno-9-21" href="#__codelineno-9-21"></a>│
-</span><span id="__span-9-22"><a id="__codelineno-9-22" name="__codelineno-9-22" href="#__codelineno-9-22"></a>├── shared/                     # Cross-cutting concerns
-</span><span id="__span-9-23"><a id="__codelineno-9-23" name="__codelineno-9-23" href="#__codelineno-9-23"></a>│   ├── common/                 # Shared types
-</span><span id="__span-9-24"><a id="__codelineno-9-24" name="__codelineno-9-24" href="#__codelineno-9-24"></a>│   │   ├── types.py            # DomainEvent, typed IDs
-</span><span id="__span-9-25"><a id="__codelineno-9-25" name="__codelineno-9-25" href="#__codelineno-9-25"></a>│   │   ├── operation_result.py # OperationResult pattern
-</span><span id="__span-9-26"><a id="__codelineno-9-26" name="__codelineno-9-26" href="#__codelineno-9-26"></a>│   │   └── failure_events.py   # Base failure types
-</span><span id="__span-9-27"><a id="__codelineno-9-27" name="__codelineno-9-27" href="#__codelineno-9-27"></a>│   ├── core/                   # Shared domain logic
-</span><span id="__span-9-28"><a id="__codelineno-9-28" name="__codelineno-9-28" href="#__codelineno-9-28"></a>│   │   └── sync_handlers.py    # Cross-context sync
-</span><span id="__span-9-29"><a id="__codelineno-9-29" name="__codelineno-9-29" href="#__codelineno-9-29"></a>│   ├── infra/                  # Shared infrastructure
-</span><span id="__span-9-30"><a id="__codelineno-9-30" name="__codelineno-9-30" href="#__codelineno-9-30"></a>│   │   ├── event_bus.py        # Pub/sub infrastructure
-</span><span id="__span-9-31"><a id="__codelineno-9-31" name="__codelineno-9-31" href="#__codelineno-9-31"></a>│   │   ├── signal_bridge/      # Thread-safe Qt bridge
-</span><span id="__span-9-32"><a id="__codelineno-9-32" name="__codelineno-9-32" href="#__codelineno-9-32"></a>│   │   ├── app_context/        # Application context, factories
-</span><span id="__span-9-33"><a id="__codelineno-9-33" name="__codelineno-9-33" href="#__codelineno-9-33"></a>│   │   ├── lifecycle.py        # Project lifecycle
-</span><span id="__span-9-34"><a id="__codelineno-9-34" name="__codelineno-9-34" href="#__codelineno-9-34"></a>│   │   └── state.py            # Project state cache
-</span><span id="__span-9-35"><a id="__codelineno-9-35" name="__codelineno-9-35" href="#__codelineno-9-35"></a>│   └── presentation/           # Shared UI components
-</span><span id="__span-9-36"><a id="__codelineno-9-36" name="__codelineno-9-36" href="#__codelineno-9-36"></a>│       ├── organisms/          # Reusable complex widgets
-</span><span id="__span-9-37"><a id="__codelineno-9-37" name="__codelineno-9-37" href="#__codelineno-9-37"></a>│       ├── molecules/          # Small composite widgets
-</span><span id="__span-9-38"><a id="__codelineno-9-38" name="__codelineno-9-38" href="#__codelineno-9-38"></a>│       ├── templates/          # Page layouts, app shell
-</span><span id="__span-9-39"><a id="__codelineno-9-39" name="__codelineno-9-39" href="#__codelineno-9-39"></a>│       └── services/           # Dialog service, etc.
-</span><span id="__span-9-40"><a id="__codelineno-9-40" name="__codelineno-9-40" href="#__codelineno-9-40"></a>│
-</span><span id="__span-9-41"><a id="__codelineno-9-41" name="__codelineno-9-41" href="#__codelineno-9-41"></a>├── tests/                      # E2E tests
-</span><span id="__span-9-42"><a id="__codelineno-9-42" name="__codelineno-9-42" href="#__codelineno-9-42"></a>│   └── e2e/
-</span><span id="__span-9-43"><a id="__codelineno-9-43" name="__codelineno-9-43" href="#__codelineno-9-43"></a>│
-</span><span id="__span-9-44"><a id="__codelineno-9-44" name="__codelineno-9-44" href="#__codelineno-9-44"></a>└── main.py                     # Application entry point
-</span><span id="__span-9-45"><a id="__codelineno-9-45" name="__codelineno-9-45" href="#__codelineno-9-45"></a>
-</span><span id="__span-9-46"><a id="__codelineno-9-46" name="__codelineno-9-46" href="#__codelineno-9-46"></a>design_system/                  # Reusable UI components, tokens
+<div class="language-text highlight"><pre><span></span><code><span id="__span-7-1"><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>src/
+</span><span id="__span-7-2"><a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>├── contexts/                   # Bounded Contexts (vertical slices)
+</span><span id="__span-7-3"><a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a>│   ├── coding/                 # Coding Context (includes AI coding)
+</span><span id="__span-7-4"><a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a>│   │   ├── core/               # Domain (Pure)
+</span><span id="__span-7-5"><a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a>│   │   │   ├── entities.py     # Code, Category, Segment
+</span><span id="__span-7-6"><a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a>│   │   │   ├── ai_entities.py  # AI-specific entities
+</span><span id="__span-7-7"><a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a>│   │   │   ├── invariants.py
+</span><span id="__span-7-8"><a id="__codelineno-7-8" name="__codelineno-7-8" href="#__codelineno-7-8"></a>│   │   │   ├── derivers.py
+</span><span id="__span-7-9"><a id="__codelineno-7-9" name="__codelineno-7-9" href="#__codelineno-7-9"></a>│   │   │   ├── events.py
+</span><span id="__span-7-10"><a id="__codelineno-7-10" name="__codelineno-7-10" href="#__codelineno-7-10"></a>│   │   │   ├── commandHandlers/  # Use cases
+</span><span id="__span-7-11"><a id="__codelineno-7-11" name="__codelineno-7-11" href="#__codelineno-7-11"></a>│   │   │   └── tests/
+</span><span id="__span-7-12"><a id="__codelineno-7-12" name="__codelineno-7-12" href="#__codelineno-7-12"></a>│   │   ├── infra/              # Repositories, AI providers
+</span><span id="__span-7-13"><a id="__codelineno-7-13" name="__codelineno-7-13" href="#__codelineno-7-13"></a>│   │   ├── interface/          # Signal bridges, MCP tools
+</span><span id="__span-7-14"><a id="__codelineno-7-14" name="__codelineno-7-14" href="#__codelineno-7-14"></a>│   │   └── presentation/       # Context-specific UI
+</span><span id="__span-7-15"><a id="__codelineno-7-15" name="__codelineno-7-15" href="#__codelineno-7-15"></a>│   ├── sources/                # Source file management
+</span><span id="__span-7-16"><a id="__codelineno-7-16" name="__codelineno-7-16" href="#__codelineno-7-16"></a>│   ├── cases/                  # Case/participant management
+</span><span id="__span-7-17"><a id="__codelineno-7-17" name="__codelineno-7-17" href="#__codelineno-7-17"></a>│   ├── projects/               # Project lifecycle + VCS
+</span><span id="__span-7-18"><a id="__codelineno-7-18" name="__codelineno-7-18" href="#__codelineno-7-18"></a>│   ├── exchange/               # Import/export (REFI-QDA, CSV, codebook)
+</span><span id="__span-7-19"><a id="__codelineno-7-19" name="__codelineno-7-19" href="#__codelineno-7-19"></a>│   ├── settings/               # User settings
+</span><span id="__span-7-20"><a id="__codelineno-7-20" name="__codelineno-7-20" href="#__codelineno-7-20"></a>│   └── folders/                # Folder organization
+</span><span id="__span-7-21"><a id="__codelineno-7-21" name="__codelineno-7-21" href="#__codelineno-7-21"></a>│
+</span><span id="__span-7-22"><a id="__codelineno-7-22" name="__codelineno-7-22" href="#__codelineno-7-22"></a>├── shared/                     # Cross-cutting concerns
+</span><span id="__span-7-23"><a id="__codelineno-7-23" name="__codelineno-7-23" href="#__codelineno-7-23"></a>│   ├── common/                 # Shared types
+</span><span id="__span-7-24"><a id="__codelineno-7-24" name="__codelineno-7-24" href="#__codelineno-7-24"></a>│   │   ├── types.py            # DomainEvent, typed IDs
+</span><span id="__span-7-25"><a id="__codelineno-7-25" name="__codelineno-7-25" href="#__codelineno-7-25"></a>│   │   ├── operation_result.py # OperationResult pattern
+</span><span id="__span-7-26"><a id="__codelineno-7-26" name="__codelineno-7-26" href="#__codelineno-7-26"></a>│   │   └── failure_events.py   # Base failure types
+</span><span id="__span-7-27"><a id="__codelineno-7-27" name="__codelineno-7-27" href="#__codelineno-7-27"></a>│   ├── core/                   # Shared domain logic
+</span><span id="__span-7-28"><a id="__codelineno-7-28" name="__codelineno-7-28" href="#__codelineno-7-28"></a>│   │   └── sync_handlers.py    # Cross-context sync
+</span><span id="__span-7-29"><a id="__codelineno-7-29" name="__codelineno-7-29" href="#__codelineno-7-29"></a>│   ├── infra/                  # Shared infrastructure
+</span><span id="__span-7-30"><a id="__codelineno-7-30" name="__codelineno-7-30" href="#__codelineno-7-30"></a>│   │   ├── event_bus.py        # Pub/sub infrastructure
+</span><span id="__span-7-31"><a id="__codelineno-7-31" name="__codelineno-7-31" href="#__codelineno-7-31"></a>│   │   ├── signal_bridge/      # Thread-safe Qt bridge
+</span><span id="__span-7-32"><a id="__codelineno-7-32" name="__codelineno-7-32" href="#__codelineno-7-32"></a>│   │   ├── app_context/        # Application context, factories
+</span><span id="__span-7-33"><a id="__codelineno-7-33" name="__codelineno-7-33" href="#__codelineno-7-33"></a>│   │   ├── lifecycle.py        # Project lifecycle
+</span><span id="__span-7-34"><a id="__codelineno-7-34" name="__codelineno-7-34" href="#__codelineno-7-34"></a>│   │   └── state.py            # Project state cache
+</span><span id="__span-7-35"><a id="__codelineno-7-35" name="__codelineno-7-35" href="#__codelineno-7-35"></a>│   └── presentation/           # Shared UI components
+</span><span id="__span-7-36"><a id="__codelineno-7-36" name="__codelineno-7-36" href="#__codelineno-7-36"></a>│       ├── organisms/          # Reusable complex widgets
+</span><span id="__span-7-37"><a id="__codelineno-7-37" name="__codelineno-7-37" href="#__codelineno-7-37"></a>│       ├── molecules/          # Small composite widgets
+</span><span id="__span-7-38"><a id="__codelineno-7-38" name="__codelineno-7-38" href="#__codelineno-7-38"></a>│       ├── templates/          # Page layouts, app shell
+</span><span id="__span-7-39"><a id="__codelineno-7-39" name="__codelineno-7-39" href="#__codelineno-7-39"></a>│       └── services/           # Dialog service, etc.
+</span><span id="__span-7-40"><a id="__codelineno-7-40" name="__codelineno-7-40" href="#__codelineno-7-40"></a>│
+</span><span id="__span-7-41"><a id="__codelineno-7-41" name="__codelineno-7-41" href="#__codelineno-7-41"></a>├── tests/                      # E2E tests
+</span><span id="__span-7-42"><a id="__codelineno-7-42" name="__codelineno-7-42" href="#__codelineno-7-42"></a>│   └── e2e/
+</span><span id="__span-7-43"><a id="__codelineno-7-43" name="__codelineno-7-43" href="#__codelineno-7-43"></a>│
+</span><span id="__span-7-44"><a id="__codelineno-7-44" name="__codelineno-7-44" href="#__codelineno-7-44"></a>└── main.py                     # Application entry point
+</span><span id="__span-7-45"><a id="__codelineno-7-45" name="__codelineno-7-45" href="#__codelineno-7-45"></a>
+</span><span id="__span-7-46"><a id="__codelineno-7-46" name="__codelineno-7-46" href="#__codelineno-7-46"></a>design_system/                  # Reusable UI components, tokens
 </span></code></pre></div>
 <hr />
 <h2 id="10-bounded-contexts">10. Bounded Contexts<a class="headerlink" href="#10-bounded-contexts" title="Permanent link">&para;</a></h2>
@@ -12798,8 +12682,8 @@
 </tr>
 <tr>
 <td><strong>Settings</strong></td>
-<td>User preferences, cloud sync</td>
-<td>ThemeChanged, CloudSyncConfigChanged</td>
+<td>User preferences</td>
+<td>ThemeChanged</td>
 <td>Independent</td>
 </tr>
 <tr>

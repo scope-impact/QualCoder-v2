@@ -21,6 +21,10 @@
          <lastmod>2026-03-14</lastmod>
     </url>
     <url>
+         <loc>https://qualcoder.dev/docs/api/storage-tools/</loc>
+         <lastmod>2026-03-14</lastmod>
+    </url>
+    <url>
          <loc>https://qualcoder.dev/docs/api/components/</loc>
          <lastmod>2026-03-14</lastmod>
     </url>
@@ -821,7 +825,7 @@
          <lastmod>2026-03-14</lastmod>
     </url>
     <url>
-         <loc>https://qualcoder.dev/docs/backlog/tasks/qc-047%20-%20Cloud-Sync-with-Convex/</loc>
+         <loc>https://qualcoder.dev/docs/backlog/tasks/qc-047%20-%20S3-Data-Store-with-DVC-Versioning/</loc>
          <lastmod>2026-03-14</lastmod>
     </url>
     <url>
@@ -834,6 +838,14 @@
     </url>
     <url>
          <loc>https://qualcoder.dev/docs/backlog/tasks/qc-050%20-%20Agent-Code-Management-MCP-Tools/</loc>
+         <lastmod>2026-03-14</lastmod>
+    </url>
+    <url>
+         <loc>https://qualcoder.dev/docs/backlog/tasks/qc-050%20-%20Remove-Convex-Sync-Infrastructure/</loc>
+         <lastmod>2026-03-14</lastmod>
+    </url>
+    <url>
+         <loc>https://qualcoder.dev/docs/backlog/tasks/qc-051%20-%20Firebase-Analytics-Import-Pipeline/</loc>
          <lastmod>2026-03-14</lastmod>
     </url>
     <url>
@@ -934,6 +946,10 @@
     </url>
     <url>
          <loc>https://qualcoder.dev/docs/user-manual/coding/</loc>
+         <lastmod>2026-03-14</lastmod>
+    </url>
+    <url>
+         <loc>https://qualcoder.dev/docs/user-manual/data-store/</loc>
          <lastmod>2026-03-14</lastmod>
     </url>
     <url>
