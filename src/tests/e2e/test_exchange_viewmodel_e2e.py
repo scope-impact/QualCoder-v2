@@ -50,7 +50,7 @@ def file_manager_screen(qapp, exchange_vm):
     return screen
 
 
-@allure.story("QC-039 Exchange ViewModel")
+@allure.story("QC-039 Import Export Formats")
 class TestExchangeViewModel:
     @allure.title("Export codebook succeeds and fails gracefully when no codes")
     def test_export_codebook_success_and_failure(
@@ -94,7 +94,7 @@ class TestExchangeViewModel:
         assert (tmp_path / "project.qdpx").exists()
 
 
-@allure.story("QC-039 FileManager Exchange Integration")
+@allure.story("QC-039 Import Export Formats")
 class TestFileManagerExchangeIntegration:
     @allure.title(
         "FileManagerScreen wired with exchange VM and has import/export menus"

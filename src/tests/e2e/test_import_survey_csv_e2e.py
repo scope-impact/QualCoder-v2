@@ -18,7 +18,7 @@ pytestmark = [
 ]
 
 
-@allure.story("QC-039.06 Import Survey CSV")
+@allure.story("QC-039.06 Import Survey Data")
 class TestImportSurveyCSV:
     @allure.title(
         "AC #1+#2: Import CSV creates cases with attributes and publishes event"

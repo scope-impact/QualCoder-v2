@@ -179,7 +179,7 @@ def _attach_timing_report(total_s: float, timings: list[dict]) -> None:
 # ---------------------------------------------------------------------------
 
 
-@allure.story("QC-027.15 Agent Batch Import Sources")
+@allure.story("QC-027.15 Agent Import File Source")
 @allure.severity(allure.severity_level.CRITICAL)
 class TestMcpImportDocxHangs:
     """Reproduce: first DOCX import succeeds, second call hangs."""
@@ -290,7 +290,7 @@ class TestMcpImportDocxHangs:
 # ---------------------------------------------------------------------------
 
 
-@allure.story("QC-027.15 Agent Batch Import Sources")
+@allure.story("QC-027.15 Agent Import File Source")
 @allure.severity(allure.severity_level.NORMAL)
 class TestBatchImportBaseline:
     """Performance baseline for batch import optimization."""

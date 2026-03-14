@@ -144,7 +144,7 @@ REFI_QDA_XML = """\
 # =============================================================================
 
 
-@allure.story("QC-039 Round-Trip Verification")
+@allure.story("QC-039 Import Export Formats")
 class TestRefiQdaRoundTrip:
     @allure.title("Export REFI-QDA then re-import: codes survive round-trip")
     def test_refi_qda_round_trip_codes(
@@ -402,7 +402,7 @@ class TestRqdaDeepImport:
 # =============================================================================
 
 
-@allure.story("QC-039.06 Import Survey CSV")
+@allure.story("QC-039.06 Import Survey Data")
 class TestCsvDeepImport:
     @allure.title("Import preserves ALL attribute columns for every case")
     def test_import_all_attributes(self, case_repo, event_bus, tmp_path):
@@ -456,7 +456,7 @@ class TestCsvDeepImport:
 # =============================================================================
 
 
-@allure.story("QC-039 Import to Screen Verification")
+@allure.story("QC-039 Import Export Formats")
 class TestImportVisibleOnScreen:
     @allure.title("Imported codes visible via ViewModel after import")
     def test_imported_codes_visible_via_viewmodel(
