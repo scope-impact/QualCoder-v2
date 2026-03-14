@@ -145,37 +145,85 @@ def coding_tools(app_context):
 
 
 class MCPClient:
-    """Test client that routes all tool calls through the MCP server dispatch.
+    """Test client that makes real HTTP calls to an embedded MCP server.
 
-    Uses ``MCPServerManager._execute_tool()`` — the exact same code path as
-    HTTP ``POST /tools/{name}`` — but without the HTTP transport layer.  This
-    tests the full MCP dispatch: tool routing, context wrapping, error
-    handling, and metrics, while keeping tests fast and thread-safe (SQLite
-    in-memory databases are single-threaded).
+    Starts a real ``MCPServerManager`` on a background thread with its own
+    asyncio event loop, then sends actual ``POST /tools/{name}`` HTTP
+    requests via ``httpx.Client`` — the exact same transport an AI agent uses.
 
     Provides the same ``execute()`` API as ``CodingTools`` for drop-in use.
     """
 
-    def __init__(self, mcp_server):
-        self._mcp = mcp_server
+    def __init__(self, base_url: str):
+        import httpx
+
+        self._base_url = base_url
+        self._http = httpx.Client(base_url=base_url, timeout=30.0)
 
     def execute(self, tool_name: str, arguments: dict) -> dict:
-        """Execute a tool through the MCP server dispatch pipeline."""
-        return self._mcp._execute_tool(tool_name, arguments)
+        """Execute a tool via HTTP POST to the MCP server."""
+        response = self._http.post(
+            f"/tools/{tool_name}",
+            json={"arguments": arguments},
+        )
+        assert response.status_code == 200, (
+            f"MCP HTTP {response.status_code}: {response.text}"
+        )
+        return response.json()
 
     def list_tools(self) -> list[str]:
-        """List all registered tool names (from the MCP server)."""
-        schemas = self._mcp._get_tool_schemas()
-        return [t["name"] for t in schemas]
+        """List all registered tool names via HTTP GET."""
+        response = self._http.get("/tools")
+        assert response.status_code == 200
+        return [t["name"] for t in response.json()["tools"]]
+
+    def close(self):
+        self._http.close()
+
+
+def _start_mcp_server_in_thread(mcp_server, port: int):
+    """Start the MCP aiohttp server in a background thread with its own event loop."""
+    import asyncio
+    import threading
+
+    loop = asyncio.new_event_loop()
+    ready = threading.Event()
+
+    def _run():
+        asyncio.set_event_loop(loop)
+
+        async def _serve_and_signal():
+            # Start the server's internal serve coroutine
+            asyncio.get_event_loop().create_task(mcp_server.serve_async())
+            # Wait until the port is accepting connections
+            import socket
+
+            for _ in range(100):
+                try:
+                    with socket.create_connection(("localhost", port), timeout=0.5):
+                        ready.set()
+                        return
+                except (ConnectionRefusedError, OSError):
+                    await asyncio.sleep(0.05)
+            ready.set()  # Signal even on failure so we don't hang
+
+        loop.run_until_complete(_serve_and_signal())
+        # Keep the loop running so the server stays alive
+        loop.run_forever()
+
+    thread = threading.Thread(target=_run, daemon=True)
+    thread.start()
+    ready.wait(timeout=10)
+    return thread, loop
 
 
 @pytest.fixture
 def mcp_server(app_context):
-    """Start the MCP server and return an MCPClient for tool execution.
+    """Start a real MCP HTTP server and return an MCPClient for tool execution.
 
-    Creates a real ``MCPServerManager`` bound to the test ``AppContext``,
-    verifies the server can list tools, then yields an ``MCPClient`` that
-    routes all calls through the MCP dispatch pipeline.
+    Launches ``MCPServerManager`` on a background thread with its own asyncio
+    event loop, waits for the HTTP port to accept connections, then yields an
+    ``MCPClient`` that makes real HTTP ``POST /tools/{name}`` requests.
 
     Usage in tests is identical to ``coding_tools``::
 
@@ -183,18 +231,29 @@ def mcp_server(app_context):
             result = mcp_server.execute("create_code", {"name": "X", "color": "#FF0000"})
             assert result["success"]
     """
+    import random
+
     from src.shared.infra.mcp_server import MCPServerManager
 
-    server = MCPServerManager(ctx=app_context, debug=True)
-    client = MCPClient(server)
+    port = random.randint(18000, 18999)
+    server = MCPServerManager(ctx=app_context, port=port, debug=True)
+    thread, loop = _start_mcp_server_in_thread(server, port)
 
-    # Verify the MCP server is functional
+    client = MCPClient(f"http://localhost:{port}")
+
+    # Verify the MCP server is accepting HTTP requests
     tools = client.list_tools()
     assert len(tools) > 0, "MCP server has no tools registered"
     assert "create_code" in tools, "MCP server missing coding tools"
     assert "list_codes" in tools, "MCP server missing coding tools"
 
-    return client
+    yield client
+
+    # Cleanup
+    client.close()
+    server.stop()
+    loop.call_soon_threadsafe(loop.stop)
+    thread.join(timeout=5)
 
 
 # =============================================================================

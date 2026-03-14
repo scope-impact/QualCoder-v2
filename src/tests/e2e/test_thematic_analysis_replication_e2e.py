@@ -175,6 +175,9 @@ def study_project(app_context: AppContext, tmp_path: Path) -> dict:
             "text": text,
         }
 
+    if app_context.session:
+        app_context.session.commit()
+
     return {"project_path": project_path, "sources": sources}
 
 

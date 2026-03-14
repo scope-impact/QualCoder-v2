@@ -17,14 +17,13 @@ import allure
 import pytest
 
 from src.shared.infra.app_context import AppContext
-from src.shared.infra.mcp_server import MCPServerManager
 
 if TYPE_CHECKING:
     from src.tests.e2e.conftest import MCPClient
 
 
 @pytest.fixture
-def project_with_codes(app_context: AppContext, tmp_path: Path) -> dict:
+def project_with_codes(mcp_server: MCPClient, app_context: AppContext, tmp_path: Path) -> dict:
     """Create a project with codes and a source for testing code management MCP tools."""
     project_path = tmp_path / "test_code_mgmt.qda"
     result = app_context.create_project("Code Mgmt Test", str(project_path))
@@ -32,9 +31,7 @@ def project_with_codes(app_context: AppContext, tmp_path: Path) -> dict:
     result = app_context.open_project(str(project_path))
     assert result.is_success
 
-    from src.tests.e2e.conftest import MCPClient
-
-    tools = MCPClient(MCPServerManager(ctx=app_context, debug=True))
+    tools = mcp_server
 
     # Create test codes
     code1 = tools.execute("create_code", {"name": "Anxiety", "color": "#FF0000"})
