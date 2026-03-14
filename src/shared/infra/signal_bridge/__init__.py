@@ -37,9 +37,6 @@ from src.shared.infra.signal_bridge.payloads import (
     ActivityStatus,
     SignalPayload,
 )
-from src.shared.infra.signal_bridge.settings import (
-    SettingsSignalBridge,
-)
 from src.shared.infra.signal_bridge.thread_utils import (
     ThreadChecker,
     get_current_thread_name,
@@ -62,6 +59,4 @@ __all__ = [
     # Base class
     "BaseSignalBridge",
     "ConverterRegistration",
-    # Settings bridge
-    "SettingsSignalBridge",
 ]

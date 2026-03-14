@@ -17,7 +17,7 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass, field
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from src.shared.common.operation_result import OperationResult
 from src.shared.infra.cascade_registry import CascadeRegistry
@@ -41,8 +41,6 @@ try:
 except ImportError:
     HAS_QT = False
     ProjectSignalBridge = None  # type: ignore[assignment, misc]
-
-from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from src.contexts.settings.infra import UserSettingsRepository
@@ -243,14 +241,14 @@ class AppContext:
     # Context Management (Internal)
     # =========================================================================
 
-    def _create_contexts(self, connection, project_path: str | None = None) -> dict:
+    def _create_contexts(self, _connection: Any, project_path: str | None = None) -> dict:
         """
         Create bounded context objects for the open project.
 
         Called by open_project use case after connection is established.
 
         Args:
-            connection: SQLAlchemy Connection object
+            _connection: SQLAlchemy Connection (unused — Session provides thread-local conns)
             project_path: Path to the project file (for VCS adapter initialization)
 
         Returns:

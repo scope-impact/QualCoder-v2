@@ -42,11 +42,10 @@ class SourcesContext:
     def create(
         cls,
         connection: Connection | None = None,
-        event_bus: Any = None,  # noqa: ARG003
     ) -> SourcesContext:
         """Create a SourcesContext with all repositories."""
         if connection is None:
-            raise ValueError("SQLAlchemy connection required for SQLite backend")
+            raise ValueError("Connection required")
         from src.contexts.sources.infra.source_repository import (
             SQLiteSourceRepository,
         )
@@ -71,11 +70,10 @@ class FoldersContext:
     def create(
         cls,
         connection: Connection | None = None,
-        event_bus: Any = None,  # noqa: ARG003
     ) -> FoldersContext:
         """Create a FoldersContext with all repositories."""
         if connection is None:
-            raise ValueError("SQLAlchemy connection required for SQLite backend")
+            raise ValueError("Connection required")
         from src.contexts.folders.infra.folder_repository import (
             SQLiteFolderRepository,
         )
@@ -100,11 +98,10 @@ class CasesContext:
     def create(
         cls,
         connection: Connection | None = None,
-        event_bus: Any = None,  # noqa: ARG003
     ) -> CasesContext:
         """Create a CasesContext with all repositories."""
         if connection is None:
-            raise ValueError("SQLAlchemy connection required for SQLite backend")
+            raise ValueError("Connection required")
         from src.contexts.cases.infra.case_repository import SQLiteCaseRepository
 
         return cls(case_repo=SQLiteCaseRepository(connection))
@@ -129,11 +126,10 @@ class CodingContext:
     def create(
         cls,
         connection: Connection | None = None,
-        event_bus: Any = None,  # noqa: ARG003
     ) -> CodingContext:
         """Create a CodingContext with all repositories."""
         if connection is None:
-            raise ValueError("SQLAlchemy connection required for SQLite backend")
+            raise ValueError("Connection required")
         from src.contexts.coding.infra.repositories import (
             SQLiteCategoryRepository,
             SQLiteCodeRepository,
