@@ -1,0 +1,37 @@
+INFO     qualcoder.mcp:mcp_server.py:130 Server starting on port 18362 (debug=True, unified loop)
+INFO     qualcoder.mcp:mcp_server.py:226 Server ready at http://localhost:18362
+DEBUG    qualcoder.mcp:mcp_server.py:171 GET /tools
+DEBUG    qualcoder.mcp:mcp_server.py:178 GET /tools -> 200 (2.2ms)
+DEBUG    qualcoder.mcp:mcp_server.py:171 POST /tools/create_code
+DEBUG    qualcoder.mcp:mcp_server.py:506 Tool call: create_code args={"name": "Anxiety", "color": "#FF0000"}
+DEBUG    qualcoder.mcp:mcp_server.py:562 Tool create_code completed: success=True (8.3ms)
+DEBUG    qualcoder.mcp:mcp_server.py:178 POST /tools/create_code -> 200 (8.8ms)
+DEBUG    qualcoder.mcp:mcp_server.py:171 POST /tools/create_code
+DEBUG    qualcoder.mcp:mcp_server.py:506 Tool call: create_code args={"name": "Stress", "color": "#FF5500"}
+DEBUG    qualcoder.mcp:mcp_server.py:562 Tool create_code completed: success=True (2.5ms)
+DEBUG    qualcoder.mcp:mcp_server.py:178 POST /tools/create_code -> 200 (2.8ms)
+DEBUG    qualcoder.mcp:mcp_server.py:171 POST /tools/create_code
+DEBUG    qualcoder.mcp:mcp_server.py:506 Tool call: create_code args={"name": "Resilience", "color": "#00FF00"}
+ERROR    asyncio:base_events.py:1785 Task was destroyed but it is pending!
+task: <Task pending name='Task-16' coro=<MCPServerManager.serve_async() running at /home/runner/work/QualCoder-v2/QualCoder-v2/src/shared/infra/mcp_server.py:137> wait_for=<_GatheringFuture pending cb=[Task.task_wakeup()]>>
+DEBUG    qualcoder.mcp:mcp_server.py:562 Tool create_code completed: success=True (4.5ms)
+DEBUG    qualcoder.mcp:mcp_server.py:178 POST /tools/create_code -> 200 (4.8ms)
+DEBUG    qualcoder.mcp:mcp_server.py:171 POST /tools/batch_apply_codes
+DEBUG    qualcoder.mcp:mcp_server.py:506 Tool call: batch_apply_codes args={"operations": [{"code_id": "019cec70-f839-7682-af66-bfb5595dbdfe", "source_id": "019cec70-f848-7070-bc8e-6bf259f25aa5", "start_position": 0, "end_position": 30}]}
+DEBUG    qualcoder.mcp:mcp_server.py:562 Tool batch_apply_codes completed: success=True (3.7ms)
+DEBUG    qualcoder.mcp:mcp_server.py:178 POST /tools/batch_apply_codes -> 200 (4.0ms)
+DEBUG    qualcoder.mcp:mcp_server.py:171 POST /tools/update_code_memo
+DEBUG    qualcoder.mcp:mcp_server.py:506 Tool call: update_code_memo args={"code_id": "019cec70-f839-7682-af66-bfb5595dbdfe", "memo": "Feelings of worry or unease about exams"}
+DEBUG    qualcoder.mcp:mcp_server.py:562 Tool update_code_memo completed: success=True (4.5ms)
+DEBUG    qualcoder.mcp:mcp_server.py:178 POST /tools/update_code_memo -> 200 (4.9ms)
+DEBUG    qualcoder.mcp:mcp_server.py:171 POST /tools/get_code
+DEBUG    qualcoder.mcp:mcp_server.py:506 Tool call: get_code args={"code_id": "019cec70-f839-7682-af66-bfb5595dbdfe"}
+DEBUG    qualcoder.mcp:mcp_server.py:562 Tool get_code completed: success=True (0.6ms)
+DEBUG    qualcoder.mcp:mcp_server.py:178 POST /tools/get_code -> 200 (0.9ms)
+DEBUG    qualcoder.mcp:mcp_server.py:171 POST /tools/update_code_memo
+DEBUG    qualcoder.mcp:mcp_server.py:506 Tool call: update_code_memo args={"code_id": "019cec70-f839-7682-af66-bfb5595dbdfe"}
+DEBUG    qualcoder.mcp:mcp_server.py:562 Tool update_code_memo completed: success=True (3.3ms)
+DEBUG    qualcoder.mcp:mcp_server.py:178 POST /tools/update_code_memo -> 200 (3.6ms)
+INFO     qualcoder.mcp:mcp_server.py:149 Server stopping...
+ERROR    qualcoder.projects.core:auto_commit.py:61 auto_commit: skipped reason=NOT_INITIALIZED
+ERROR    src.contexts.projects.infra.version_control_listener:version_control_listener.py:163 VCS auto-commit failed: Version control not initialized [AUTO_COMMIT_SKIPPED/NOT_INITIALIZED]

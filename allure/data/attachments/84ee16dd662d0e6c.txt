@@ -1,0 +1,1 @@
+ERROR    qualcoder.coding.core:create_code.py:63 create_code failed: invalid color not-a-color

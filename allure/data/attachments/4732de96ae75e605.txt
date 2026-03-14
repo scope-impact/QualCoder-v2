@@ -1,0 +1,25 @@
+INFO     qualcoder.mcp:mcp_server.py:130 Server starting on port 18077 (debug=True, unified loop)
+INFO     qualcoder.mcp:mcp_server.py:226 Server ready at http://localhost:18077
+DEBUG    qualcoder.mcp:mcp_server.py:171 GET /tools
+DEBUG    qualcoder.mcp:mcp_server.py:178 GET /tools -> 200 (1.8ms)
+DEBUG    qualcoder.mcp:mcp_server.py:171 POST /tools/create_code
+DEBUG    qualcoder.mcp:mcp_server.py:506 Tool call: create_code args={"name": "my analysis are much more craft", "color": "#FFB74D", "memo": "In vivo: Ana describing her analytical approach as craft rather than mechanical process"}
+DEBUG    qualcoder.mcp:mcp_server.py:562 Tool create_code completed: success=True (5.7ms)
+DEBUG    qualcoder.mcp:mcp_server.py:178 POST /tools/create_code -> 200 (6.1ms)
+DEBUG    qualcoder.mcp:mcp_server.py:171 POST /tools/batch_apply_codes
+DEBUG    qualcoder.mcp:mcp_server.py:506 Tool call: batch_apply_codes args={"operations": [{"code_id": "019cec71-1003-7a73-bb7a-a98dbb2306eb", "source_id": "019cec71-0ff8-77c2-bcfb-8afd8effedb9", "start_position": 3790, "end_position": 3821}]}
+DEBUG    qualcoder.mcp:mcp_server.py:562 Tool batch_apply_codes completed: success=True (3.5ms)
+DEBUG    qualcoder.mcp:mcp_server.py:178 POST /tools/batch_apply_codes -> 200 (3.8ms)
+DEBUG    qualcoder.mcp:mcp_server.py:171 POST /tools/create_code
+DEBUG    qualcoder.mcp:mcp_server.py:506 Tool call: create_code args={"name": "they do come first", "color": "#EF9A9A", "memo": "In vivo: David on prioritizing participants over open data"}
+DEBUG    qualcoder.mcp:mcp_server.py:562 Tool create_code completed: success=True (2.8ms)
+DEBUG    qualcoder.mcp:mcp_server.py:178 POST /tools/create_code -> 200 (3.1ms)
+DEBUG    qualcoder.mcp:mcp_server.py:171 POST /tools/batch_apply_codes
+DEBUG    qualcoder.mcp:mcp_server.py:506 Tool call: batch_apply_codes args={"operations": [{"code_id": "019cec71-100e-7772-aa38-2d8896da3e27", "source_id": "019cec71-0ffa-7cd3-abb9-32d4b3a5bff5", "start_position": 5470, "end_position": 5483}]}
+DEBUG    qualcoder.mcp:mcp_server.py:562 Tool batch_apply_codes completed: success=True (3.6ms)
+DEBUG    qualcoder.mcp:mcp_server.py:178 POST /tools/batch_apply_codes -> 200 (3.9ms)
+INFO     qualcoder.mcp:mcp_server.py:149 Server stopping...
+ERROR    asyncio:base_events.py:1785 Task was destroyed but it is pending!
+task: <Task pending name='Task-31' coro=<MCPServerManager.serve_async() running at /home/runner/work/QualCoder-v2/QualCoder-v2/src/shared/infra/mcp_server.py:137> wait_for=<Future finished result=True>>
+ERROR    qualcoder.projects.core:auto_commit.py:61 auto_commit: skipped reason=NOT_INITIALIZED
+ERROR    src.contexts.projects.infra.version_control_listener:version_control_listener.py:163 VCS auto-commit failed: Version control not initialized [AUTO_COMMIT_SKIPPED/NOT_INITIALIZED]

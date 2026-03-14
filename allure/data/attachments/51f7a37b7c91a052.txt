@@ -1,0 +1,1 @@
+ERROR    qualcoder.folders.core:rename_folder.py:62 rename_folder: no project is currently open

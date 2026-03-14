@@ -1,0 +1,4 @@
+ERROR    qualcoder.sources.core:import_file_source.py:170 import_file_source: duplicate source name=doc_000.txt
+WARNING  qualcoder.sources.viewmodel:file_manager_viewmodel.py:552 batch_import: [1/3] failed doc_000.txt: Source with name 'doc_000.txt' already exists (0.9ms)
+ERROR    qualcoder.sources.core:import_file_source.py:152 import_file_source: unsupported file type=.xyz
+WARNING  qualcoder.sources.viewmodel:file_manager_viewmodel.py:552 batch_import: [1/2] failed data.xyz: Unsupported file type: .xyz. Supported extensions: .aac, .avi, .bmp, .doc, .docx, .epub, .flac, .gif, .heic, .heif, .jpeg, .jpg, .m4a, .m4v, .md, .mkv, .mov, .mp3, .mp4, .odt, .ogg, .pdf, .png, .rtf, .tiff, .txt, .wav, .webm, .webp, .wma, .wmv (0.1ms)

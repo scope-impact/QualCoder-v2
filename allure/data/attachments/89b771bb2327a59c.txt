@@ -1,0 +1,14 @@
+INFO     qualcoder.mcp:mcp_server.py:130 Server starting on port 18372 (debug=True, unified loop)
+ERROR    qualcoder.mcp:mcp_server.py:139 Server error: [Errno 98] error while attempting to bind on address ('127.0.0.1', 18372): address already in use
+Traceback (most recent call last):
+  File "/home/runner/work/QualCoder-v2/QualCoder-v2/src/shared/infra/mcp_server.py", line 137, in serve_async
+    await self._serve()
+  File "/home/runner/work/QualCoder-v2/QualCoder-v2/src/shared/infra/mcp_server.py", line 224, in _serve
+    await site.start()
+  File "/home/runner/work/QualCoder-v2/QualCoder-v2/.venv/lib/python3.11/site-packages/aiohttp/web_runner.py", line 121, in start
+    self._server = await loop.create_server(
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/work/_temp/uv-python-dir/cpython-3.11.15-linux-x86_64-gnu/lib/python3.11/asyncio/base_events.py", line 1536, in create_server
+    raise OSError(err.errno, msg) from None
+OSError: [Errno 98] error while attempting to bind on address ('127.0.0.1', 18372): address already in use
+ERROR    qualcoder.projects.core:close_project.py:52 close_project: no project is currently open

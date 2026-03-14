@@ -1,0 +1,5 @@
+INFO     qualcoder.mcp:mcp_server.py:130 Server starting on port 19407 (debug=False, unified loop)
+INFO     qualcoder.mcp:mcp_server.py:226 Server ready at http://localhost:19407
+INFO     qualcoder.mcp:mcp_server.py:149 Server stopping...
+ERROR    qualcoder.projects.core:auto_commit.py:61 auto_commit: skipped reason=NOT_INITIALIZED
+ERROR    src.contexts.projects.infra.version_control_listener:version_control_listener.py:163 VCS auto-commit failed: Version control not initialized [AUTO_COMMIT_SKIPPED/NOT_INITIALIZED]

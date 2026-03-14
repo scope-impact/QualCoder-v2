@@ -1,0 +1,1 @@
+WARNING  qualcoder.sources.viewmodel:file_manager_viewmodel.py:468 import_sources_batch: import already in progress, ignoring
