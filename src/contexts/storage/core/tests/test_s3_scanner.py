@@ -116,6 +116,73 @@ class TestS3Scanner:
         content = local_path.read_text()
         assert '{"events": []}' in content
 
+    @allure.title("sync_file downloads when local file is missing")
+    def test_sync_file_downloads_when_missing(self, s3_bucket, tmp_path):
+        from src.contexts.storage.infra.s3_scanner import S3Scanner
+
+        scanner = S3Scanner(client=s3_bucket)
+        local_path = tmp_path / "firebase_export.json"
+
+        result = scanner.sync_file(
+            bucket="research-data",
+            key="raw/firebase_export.json",
+            local_path=str(local_path),
+        )
+
+        assert result is True
+        assert local_path.exists()
+        assert '{"events": []}' in local_path.read_text()
+
+    @allure.title("sync_file skips download when local file matches remote")
+    def test_sync_file_skips_when_in_sync(self, s3_bucket, tmp_path):
+        from src.contexts.storage.infra.s3_scanner import S3Scanner
+
+        scanner = S3Scanner(client=s3_bucket)
+        local_path = tmp_path / "firebase_export.json"
+
+        # First sync — downloads
+        scanner.sync_file(
+            bucket="research-data",
+            key="raw/firebase_export.json",
+            local_path=str(local_path),
+        )
+
+        # Second sync — should skip
+        result = scanner.sync_file(
+            bucket="research-data",
+            key="raw/firebase_export.json",
+            local_path=str(local_path),
+        )
+
+        assert result is False
+
+    @allure.title("sync_file re-downloads when local file differs")
+    def test_sync_file_downloads_when_changed(self, s3_bucket, tmp_path):
+        from src.contexts.storage.infra.s3_scanner import S3Scanner
+
+        scanner = S3Scanner(client=s3_bucket)
+        local_path = tmp_path / "firebase_export.json"
+
+        # First sync
+        scanner.sync_file(
+            bucket="research-data",
+            key="raw/firebase_export.json",
+            local_path=str(local_path),
+        )
+
+        # Modify the local file
+        local_path.write_text("STALE DATA")
+
+        # Should re-download because content differs
+        result = scanner.sync_file(
+            bucket="research-data",
+            key="raw/firebase_export.json",
+            local_path=str(local_path),
+        )
+
+        assert result is True
+        assert '{"events": []}' in local_path.read_text()
+
     @allure.title("Scanner uploads file to S3")
     def test_upload_file(self, s3_bucket, tmp_path):
         from src.contexts.storage.infra.s3_scanner import S3Scanner

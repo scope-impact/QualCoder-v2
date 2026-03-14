@@ -59,19 +59,22 @@ def pull_file(
     event: FilePulled = result
 
     try:
-        s3_scanner.download_file(
+        downloaded = s3_scanner.sync_file(
             bucket=store.bucket_name,
             key=command.key,
             local_path=command.local_path,
         )
     except Exception:
-        logger.exception("pull_file: download failed for %s", command.key)
+        logger.exception("pull_file: sync failed for %s", command.key)
         failure = FileNotPulled.download_failed(command.key)
         event_bus.publish(failure)
         return OperationResult.from_failure(failure)
 
     event_bus.publish(event)
 
-    logger.info("File pulled: %s -> %s", command.key, command.local_path)
+    if downloaded:
+        logger.info("File pulled: %s -> %s", command.key, command.local_path)
+    else:
+        logger.info("File already in sync: %s", command.key)
 
     return OperationResult.ok(data=command.local_path)

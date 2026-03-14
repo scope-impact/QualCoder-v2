@@ -55,6 +55,9 @@ class MockS3Scanner:
     def download_file(self, bucket, key, local_path):
         pass
 
+    def sync_file(self, bucket, key, local_path):
+        return True
+
 
 class MockExporter:
     """Simulates an exchange export handler that produces a file."""

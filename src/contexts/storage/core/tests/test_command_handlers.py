@@ -53,6 +53,9 @@ class MockS3Scanner:
     def download_file(self, bucket, key, local_path):
         pass  # No-op for testing
 
+    def sync_file(self, bucket, key, local_path):
+        return True  # Simulate download occurred
+
     def upload_file(self, bucket, key, local_path):
         pass  # No-op for testing
 
