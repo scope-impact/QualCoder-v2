@@ -3,6 +3,10 @@ Storage Infrastructure: DVC Gateway
 
 Uses dvc.repo.Repo Python API for data versioning with S3 remote.
 Assumes `dvc` pip package is installed and the project is a Git repo.
+
+Repo class supports context manager (``with Repo(path) as repo``),
+push() returns int (transferred count), pull() returns dict with stats.
+See: https://github.com/iterative/dvc/blob/main/dvc/repo/__init__.py
 """
 
 from __future__ import annotations
@@ -19,6 +23,7 @@ class DvcResult:
 
     success: bool
     message: str = ""
+    transferred: int = 0
 
 
 class DvcGateway:
@@ -26,11 +31,18 @@ class DvcGateway:
     Gateway to DVC Python API for data versioning with S3 remotes.
 
     Uses dvc.repo.Repo internally — the same API the DVC CLI uses.
+    Supports context manager for automatic resource cleanup.
     """
 
     def __init__(self, working_dir: str) -> None:
         self._cwd = working_dir
         self._repo = None
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.close()
 
     def _get_repo(self):
         """Lazy-load DVC Repo to avoid import cost at startup."""
@@ -102,27 +114,39 @@ class DvcGateway:
             return DvcResult(success=False, message=str(e))
 
     def push(self, remote: str | None = None) -> DvcResult:
-        """Push tracked data to remote storage."""
+        """Push tracked data to remote storage. Returns transferred count."""
         try:
             repo = self._get_repo()
             kwargs = {}
             if remote:
                 kwargs["remote"] = remote
             count = repo.push(**kwargs)
-            return DvcResult(success=True, message=f"Pushed {count} files")
+            return DvcResult(
+                success=True,
+                message=f"Pushed {count} file(s)",
+                transferred=count if isinstance(count, int) else 0,
+            )
         except Exception as e:
             logger.exception("dvc push failed")
             return DvcResult(success=False, message=str(e))
 
     def pull(self, remote: str | None = None) -> DvcResult:
-        """Pull tracked data from remote storage."""
+        """Pull tracked data from remote storage. DVC handles sync internally."""
         try:
             repo = self._get_repo()
             kwargs = {}
             if remote:
                 kwargs["remote"] = remote
-            count = repo.pull(**kwargs)
-            return DvcResult(success=True, message=f"Pulled {count} files")
+            result = repo.pull(**kwargs)
+            # pull() returns dict with "stats" key containing fetched count
+            fetched = 0
+            if isinstance(result, dict):
+                fetched = result.get("fetched", 0)
+            return DvcResult(
+                success=True,
+                message=f"Pulled (fetched {fetched})",
+                transferred=fetched if isinstance(fetched, int) else 0,
+            )
         except Exception as e:
             logger.exception("dvc pull failed")
             return DvcResult(success=False, message=str(e))
@@ -141,7 +165,7 @@ class DvcGateway:
             return DvcResult(success=False, message=str(e))
 
     def close(self) -> None:
-        """Close the DVC repo to release resources."""
+        """Close the DVC repo to release SCM, state, and filesystem resources."""
         if self._repo is not None:
             self._repo.close()
             self._repo = None
