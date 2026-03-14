@@ -403,6 +403,7 @@ class MCPServerManager:
             view_diff_tool,
         )
         from src.contexts.sources.interface.mcp_tools import ALL_SOURCE_TOOLS
+        from src.contexts.storage.interface.mcp_tools import ALL_STORAGE_TOOLS
 
         vcs_tools_list = [
             list_snapshots_tool,
@@ -417,6 +418,7 @@ class MCPServerManager:
             ALL_SOURCE_TOOLS,
             ALL_FOLDER_TOOLS,
             ALL_TOOLS,
+            ALL_STORAGE_TOOLS,
         ]:
             schemas.extend(t.to_schema() for t in tools_dict.values())
 
@@ -426,15 +428,17 @@ class MCPServerManager:
         return schemas
 
     def _get_all_result_tool_names(self) -> set[str]:
-        """Get tool names that return returns.Result (project, source, folder tools)."""
+        """Get tool names that return returns.Result (project, source, folder, storage tools)."""
         from src.contexts.folders.interface.mcp_tools import ALL_FOLDER_TOOLS
         from src.contexts.projects.interface.mcp_tools import ALL_PROJECT_TOOLS
         from src.contexts.sources.interface.mcp_tools import ALL_SOURCE_TOOLS
+        from src.contexts.storage.interface.mcp_tools import ALL_STORAGE_TOOLS
 
         return (
             set(ALL_PROJECT_TOOLS.keys())
             | set(ALL_SOURCE_TOOLS.keys())
             | set(ALL_FOLDER_TOOLS.keys())
+            | set(ALL_STORAGE_TOOLS.keys())
         )
 
     def _get_vcs_tool_names(self) -> set[str]:
@@ -566,6 +570,10 @@ class MCPServerManager:
             ALL_SOURCE_TOOLS,
             SourceTools,
         )
+        from src.contexts.storage.interface.mcp_tools import (
+            ALL_STORAGE_TOOLS,
+            StorageTools,
+        )
 
         if tool_name in ALL_PROJECT_TOOLS:
             result = ProjectTools(ctx=self._ctx).execute(tool_name, arguments)
@@ -573,6 +581,8 @@ class MCPServerManager:
             result = SourceTools(ctx=self._ctx).execute(tool_name, arguments)
         elif tool_name in ALL_FOLDER_TOOLS:
             result = FolderTools(ctx=self._ctx).execute(tool_name, arguments)
+        elif tool_name in ALL_STORAGE_TOOLS:
+            result = StorageTools(ctx=self._ctx).execute(tool_name, arguments)
         else:
             return {"success": False, "error": f"Unknown tool: {tool_name}"}
 

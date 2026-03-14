@@ -67,6 +67,7 @@ def create_all_contexts(engine) -> None:
     - Sources (src_source, src_folder)
     - Coding (cod_category, cod_code, cod_segment)
     - Cases (cas_case, cas_attribute, cas_source_link)
+    - Storage (stg_data_store)
 
     Args:
         engine: SQLAlchemy engine instance
@@ -74,12 +75,14 @@ def create_all_contexts(engine) -> None:
     from src.contexts.cases.infra import schema as cases_schema
     from src.contexts.coding.infra import schema as coding_schema
     from src.contexts.sources.infra import schema as sources_schema
+    from src.contexts.storage.infra import schema as storage_schema
 
     # Create tables in dependency order
     metadata.create_all(engine)  # Projects context
     sources_schema.metadata.create_all(engine)  # Sources context
     coding_schema.metadata.create_all(engine)  # Coding context
     cases_schema.metadata.create_all(engine)  # Cases context
+    storage_schema.metadata.create_all(engine)  # Storage context
 
 
 def drop_all_contexts(engine) -> None:

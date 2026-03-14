@@ -19,6 +19,7 @@ from src.contexts.cases.presentation import CaseManagerScreen
 
 # Context-specific presentation imports
 from src.contexts.coding.interface.signal_bridge import CodingSignalBridge
+from src.contexts.storage.interface.signal_bridge import StorageSignalBridge
 from src.contexts.coding.presentation import (
     CodingCoordinator,
     TextCodingScreen,
@@ -84,6 +85,8 @@ class QualCoderApp:
         self._project_signal_bridge.start()
         self._coding_signal_bridge = CodingSignalBridge.instance(self._ctx.event_bus)
         self._coding_signal_bridge.start()
+        self._storage_signal_bridge = StorageSignalBridge.instance(self._ctx.event_bus)
+        self._storage_signal_bridge.start()
         # MCP server — started as asyncio task in run() on the unified loop
         self._mcp_server = MCPServerManager(ctx=self._ctx)
         self._shell: AppShell | None = None

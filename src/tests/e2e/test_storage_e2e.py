@@ -1,7 +1,9 @@
 """
-Storage Context: E2E Tests (TDD RED phase)
+Storage Context: E2E Tests
 
 Full workflow tests: configure → scan → pull → push.
+Tests MCP tool integration, signal bridge, repository persistence,
+and AppContext wiring.
 Uses moto for S3 mock and a mock DVC gateway — no real AWS or DVC CLI.
 """
 
@@ -227,3 +229,259 @@ class TestStorageFullWorkflow:
 
             assert result.success is False
             assert "NOT_CONFIGURED" in (result.error_code or "")
+
+
+# =============================================================================
+# MCP Tool E2E Tests
+# =============================================================================
+
+
+@allure.story("QC-047.06 MCP Storage Tools")
+class TestStorageMCPTools:
+    """E2E tests for storage MCP tool handlers."""
+
+    @allure.title("AC #6.1: configure_datastore MCP tool")
+    def test_configure_datastore_tool(self, mock_s3):
+        from src.contexts.storage.interface.mcp_tools import StorageTools
+
+        store_repo = SimpleStoreRepo()
+        dvc = MockDvcGateway()
+        event_bus = SimpleEventBus()
+
+        # Create a context-like object for StorageTools
+        ctx = _MockStorageToolsContext(store_repo, mock_s3, dvc, event_bus)
+        tools = StorageTools(ctx=ctx)
+
+        result = tools.execute(
+            "configure_datastore",
+            {"bucket_name": "research-data", "region": "us-east-1"},
+        )
+
+        from returns.result import Success
+
+        assert isinstance(result, Success), f"Expected Success, got {result}"
+        data = result.unwrap()
+        assert data["bucket_name"] == "research-data"
+        assert data["region"] == "us-east-1"
+        assert store_repo.get() is not None
+
+    @allure.title("AC #6.2: scan_datastore MCP tool")
+    def test_scan_datastore_tool(self, mock_s3):
+        from src.contexts.storage.core.commandHandlers.configure_store import (
+            configure_store,
+        )
+        from src.contexts.storage.core.commands import ConfigureStoreCommand
+        from src.contexts.storage.interface.mcp_tools import StorageTools
+
+        store_repo = SimpleStoreRepo()
+        dvc = MockDvcGateway()
+        event_bus = SimpleEventBus()
+
+        # First configure store
+        configure_store(
+            command=ConfigureStoreCommand(
+                bucket_name="research-data", region="us-east-1"
+            ),
+            store_repo=store_repo,
+            dvc_gateway=dvc,
+            event_bus=event_bus,
+        )
+
+        ctx = _MockStorageToolsContext(store_repo, mock_s3, dvc, event_bus)
+        tools = StorageTools(ctx=ctx)
+
+        result = tools.execute("scan_datastore", {"prefix": "raw/"})
+        data = result.unwrap()
+        assert data["file_count"] == 2
+
+    @allure.title("AC #6.3: configure_datastore fails with invalid bucket")
+    def test_configure_invalid_bucket_fails(self, mock_s3):
+        from src.contexts.storage.interface.mcp_tools import StorageTools
+
+        store_repo = SimpleStoreRepo()
+        dvc = MockDvcGateway()
+        event_bus = SimpleEventBus()
+
+        ctx = _MockStorageToolsContext(store_repo, mock_s3, dvc, event_bus)
+        tools = StorageTools(ctx=ctx)
+
+        result = tools.execute(
+            "configure_datastore",
+            {"bucket_name": "AB", "region": "us-east-1"},  # Too short, uppercase
+        )
+
+        from returns.result import Failure
+
+        assert isinstance(result, Failure)
+
+    @allure.title("AC #6.4: tool returns error when no project open")
+    def test_scan_no_project_returns_error(self):
+        from src.contexts.storage.interface.mcp_tools import StorageTools
+
+        ctx = _NullStorageToolsContext()
+        tools = StorageTools(ctx=ctx)
+
+        result = tools.execute("scan_datastore", {})
+
+        from returns.result import Failure
+
+        assert isinstance(result, Failure)
+        assert "No project open" in result.failure()
+
+
+# =============================================================================
+# Repository Persistence E2E Tests
+# =============================================================================
+
+
+@allure.story("QC-047.01 Store Repository Persistence")
+class TestStoreRepositoryPersistence:
+    """E2E tests: real SQLite persistence for DataStore config."""
+
+    @allure.title("AC #1.1: Save and retrieve store config from SQLite")
+    def test_save_and_get_store_config(self, db_connection):
+        from src.contexts.storage.core.entities import DataStore, StoreId
+        from src.contexts.storage.infra.store_repository import SQLiteStoreRepository
+
+        repo = SQLiteStoreRepository(db_connection)
+
+        # Initially empty
+        assert repo.get() is None
+        assert repo.exists() is False
+
+        # Save config
+        store = DataStore(
+            id=StoreId.new(),
+            bucket_name="my-research-bucket",
+            region="eu-west-1",
+            prefix="project-alpha/",
+            dvc_remote_name="s3remote",
+        )
+        repo.save(store)
+
+        # Retrieve
+        loaded = repo.get()
+        assert loaded is not None
+        assert loaded.bucket_name == "my-research-bucket"
+        assert loaded.region == "eu-west-1"
+        assert loaded.prefix == "project-alpha/"
+        assert loaded.dvc_remote_name == "s3remote"
+        assert repo.exists() is True
+
+    @allure.title("AC #1.2: Save replaces existing config (singleton)")
+    def test_save_replaces_existing(self, db_connection):
+        from src.contexts.storage.core.entities import DataStore, StoreId
+        from src.contexts.storage.infra.store_repository import SQLiteStoreRepository
+
+        repo = SQLiteStoreRepository(db_connection)
+
+        # Save first config
+        store1 = DataStore(
+            id=StoreId.new(), bucket_name="bucket-one", region="us-east-1"
+        )
+        repo.save(store1)
+        assert repo.get().bucket_name == "bucket-one"
+
+        # Save second config — should replace
+        store2 = DataStore(
+            id=StoreId.new(), bucket_name="bucket-two", region="eu-west-1"
+        )
+        repo.save(store2)
+        loaded = repo.get()
+        assert loaded.bucket_name == "bucket-two"
+        assert loaded.region == "eu-west-1"
+
+
+# =============================================================================
+# AppContext Wiring E2E Tests
+# =============================================================================
+
+
+@allure.story("QC-047.11 AppContext Storage Wiring")
+class TestStorageContextWiring:
+    """E2E test: storage context is created when a project is opened."""
+
+    @allure.title("AC #11.1: StorageContext created on project open")
+    def test_storage_context_created_on_open(self, tmp_path):
+        from src.shared.infra.app_context import create_app_context
+
+        ctx = create_app_context()
+
+        # Before project open, storage context should be None
+        assert ctx.storage_context is None
+
+        # Create and open project
+        project_path = tmp_path / "test_storage.qda"
+        create_result = ctx.create_project("Test", str(project_path))
+        assert create_result.is_success
+
+        open_result = ctx.open_project(str(project_path))
+        assert open_result.is_success
+
+        # After opening, storage context should be available
+        assert ctx.storage_context is not None
+        assert ctx.storage_context.store_repo is not None
+        assert ctx.storage_context.s3_scanner is not None
+        assert ctx.storage_context.dvc_gateway is not None
+
+        # Close project — storage context should be cleared
+        ctx.close_project()
+        assert ctx.storage_context is None
+
+
+# =============================================================================
+# Test Helpers
+# =============================================================================
+
+
+class _MockStorageContext:
+    """Bundles repos/gateways for MCP tool tests."""
+
+    def __init__(self, store_repo, s3_client, dvc_gateway):
+        self.store_repo = store_repo
+        self.dvc_gateway = dvc_gateway
+        from src.contexts.storage.infra.s3_scanner import S3Scanner
+
+        self.s3_scanner = S3Scanner(client=s3_client)
+
+
+class _MockState:
+    """Minimal project state stub."""
+
+    project = True  # Non-None means project is open
+
+
+class _MockStorageToolsContext:
+    """Minimal context satisfying StorageToolsContext protocol."""
+
+    def __init__(self, store_repo, s3_client, dvc_gateway, event_bus):
+        self._storage = _MockStorageContext(store_repo, s3_client, dvc_gateway)
+        self._event_bus = event_bus
+
+    @property
+    def state(self):
+        return _MockState()
+
+    @property
+    def event_bus(self):
+        return self._event_bus
+
+    @property
+    def storage_context(self):
+        return self._storage
+
+
+class _NullStorageToolsContext:
+    """Context with no project open."""
+
+    @property
+    def state(self):
+        return _MockState()
+
+    @property
+    def event_bus(self):
+        return SimpleEventBus()
+
+    @property
+    def storage_context(self):
+        return None

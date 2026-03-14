@@ -31,6 +31,7 @@ from .bounded_contexts import (
     FoldersContext,
     ProjectsContext,
     SourcesContext,
+    StorageContext,
 )
 
 # Conditional imports for Qt (allows non-Qt tests to pass)
@@ -91,6 +92,7 @@ class AppContext:
     coding_context: CodingContext | None = None
     projects_context: ProjectsContext | None = None
     folders_context: FoldersContext | None = None
+    storage_context: StorageContext | None = None
 
     # Internal state
     _started: bool = field(default=False, init=False, repr=False)
@@ -267,6 +269,10 @@ class AppContext:
             connection=session,
             project_path=project_path,
         )
+        self.storage_context = StorageContext.create(
+            connection=session,
+            project_path=project_path,
+        )
 
         # Enable VCS auto-commit listener if adapters are available
         if (
@@ -298,6 +304,7 @@ class AppContext:
             "coding": self.coding_context,
             "folders": self.folders_context,
             "projects": self.projects_context,
+            "storage": self.storage_context,
         }
 
     def _clear_contexts(self) -> None:
@@ -313,6 +320,7 @@ class AppContext:
         self.coding_context = None
         self.projects_context = None
         self.folders_context = None
+        self.storage_context = None
 
         logger.debug("Cleared bounded contexts")
 

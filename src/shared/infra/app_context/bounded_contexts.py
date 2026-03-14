@@ -144,6 +144,132 @@ class CodingContext:
 
 
 @dataclass
+class StorageContext:
+    """
+    Storage bounded context - manages S3 data store and DVC versioning.
+
+    Provides access to:
+    - StoreRepository: Persistence for DataStore config
+    - S3Scanner: S3 file operations
+    - DvcGateway: DVC version control for data
+    """
+
+    store_repo: Any  # StoreRepository protocol
+    s3_scanner: Any  # S3ScannerProtocol
+    dvc_gateway: Any  # DvcGatewayProtocol
+
+    @classmethod
+    def create(
+        cls,
+        connection: Connection | None = None,
+        project_path: str | None = None,
+    ) -> StorageContext:
+        """Create a StorageContext with all repositories and gateways."""
+        if connection is None:
+            raise ValueError("Connection required")
+        from src.contexts.storage.infra.store_repository import SQLiteStoreRepository
+
+        store_repo = SQLiteStoreRepository(connection)
+
+        # Create S3 scanner (boto3 client created lazily on first use)
+        s3_scanner = _create_s3_scanner()
+
+        # Create DVC gateway (needs project working directory)
+        dvc_gateway = _create_dvc_gateway(project_path)
+
+        return cls(
+            store_repo=store_repo,
+            s3_scanner=s3_scanner,
+            dvc_gateway=dvc_gateway,
+        )
+
+
+def _create_s3_scanner() -> Any:
+    """Create an S3Scanner with a lazy boto3 client."""
+    try:
+        import boto3
+
+        client = boto3.client("s3")
+    except Exception:
+        # S3 not available (offline mode) — return a no-op scanner
+        client = None
+
+    if client is None:
+        return _NullS3Scanner()
+
+    from src.contexts.storage.infra.s3_scanner import S3Scanner
+
+    return S3Scanner(client)
+
+
+def _create_dvc_gateway(project_path: str | None) -> Any:
+    """Create a DvcGateway for the project directory."""
+    if project_path is None:
+        return _NullDvcGateway()
+
+    from pathlib import Path
+
+    from src.contexts.storage.infra.dvc_gateway import DvcGateway
+
+    return DvcGateway(str(Path(project_path).parent))
+
+
+class _NullS3Scanner:
+    """Null object for S3Scanner when boto3 is not available."""
+
+    def list_files(self, bucket: str, prefix: str = "") -> list:
+        return []
+
+    def download_file(self, bucket: str, key: str, local_path: str) -> None:
+        raise RuntimeError("S3 not available — check AWS credentials and boto3 installation")
+
+    def upload_file(self, bucket: str, key: str, local_path: str) -> None:
+        raise RuntimeError("S3 not available — check AWS credentials and boto3 installation")
+
+
+class _NullDvcGateway:
+    """Null object for DvcGateway when project path is not available."""
+
+    from dataclasses import dataclass as _dc
+
+    @_dc(frozen=True)
+    class _Result:
+        success: bool = False
+        message: str = "DVC not available — no project path"
+        transferred: int = 0
+
+    def init(self):
+        return self._Result()
+
+    def remote_add(self, name, url):
+        return self._Result()
+
+    def remote_modify(self, name, key, value):
+        return self._Result()
+
+    def remote_default(self, name):
+        return self._Result()
+
+    def add(self, path):
+        return self._Result()
+
+    def push(self, remote=None):
+        return self._Result()
+
+    def pull(self, remote=None):
+        return self._Result()
+
+    def status(self, remote=None):
+        return self._Result()
+
+    @staticmethod
+    def s3_url(bucket, prefix=""):
+        if prefix:
+            return f"s3://{bucket}/{prefix.strip('/')}"
+        return f"s3://{bucket}"
+
+
+@dataclass
 class ProjectsContext:
     """
     Projects bounded context - manages project metadata and settings.
