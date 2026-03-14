@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import re
 
+from src.shared.core.validation import is_non_empty_string
 
 # ============================================================
 # S3 Bucket Name Invariants
@@ -47,7 +48,7 @@ def is_valid_s3_key(key: str) -> bool:
     Rules:
     - Not empty or whitespace-only
     """
-    return bool(key and key.strip())
+    return is_non_empty_string(key)
 
 
 # ============================================================
@@ -63,4 +64,4 @@ def is_valid_store_config(bucket_name: str, region: str) -> bool:
     - Valid bucket name
     - Non-empty region
     """
-    return is_valid_bucket_name(bucket_name) and bool(region and region.strip())
+    return is_valid_bucket_name(bucket_name) and is_non_empty_string(region)

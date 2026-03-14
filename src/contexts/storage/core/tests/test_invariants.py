@@ -6,9 +6,8 @@ Tests for storage business rule predicates.
 
 from __future__ import annotations
 
-import pytest
 import allure
-
+import pytest
 
 pytestmark = [
     pytest.mark.unit,
@@ -79,25 +78,34 @@ class TestStoreConfigValidation:
     def test_valid_store_config(self):
         from src.contexts.storage.core.invariants import is_valid_store_config
 
-        assert is_valid_store_config(
-            bucket_name="research-data",
-            region="us-east-1",
-        ) is True
+        assert (
+            is_valid_store_config(
+                bucket_name="research-data",
+                region="us-east-1",
+            )
+            is True
+        )
 
     @allure.title("Store config with empty region fails")
     def test_empty_region_fails(self):
         from src.contexts.storage.core.invariants import is_valid_store_config
 
-        assert is_valid_store_config(
-            bucket_name="research-data",
-            region="",
-        ) is False
+        assert (
+            is_valid_store_config(
+                bucket_name="research-data",
+                region="",
+            )
+            is False
+        )
 
     @allure.title("Store config with invalid bucket fails")
     def test_invalid_bucket_fails(self):
         from src.contexts.storage.core.invariants import is_valid_store_config
 
-        assert is_valid_store_config(
-            bucket_name="",
-            region="us-east-1",
-        ) is False
+        assert (
+            is_valid_store_config(
+                bucket_name="",
+                region="us-east-1",
+            )
+            is False
+        )

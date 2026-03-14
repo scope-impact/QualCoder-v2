@@ -8,15 +8,23 @@ then pushes the resulting file to S3.
 from __future__ import annotations
 
 import logging
+from collections.abc import Callable
+from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Callable, Protocol
+from typing import TYPE_CHECKING
 
+from src.contexts.storage.core.commandHandlers._state import (
+    S3ScannerProtocol,
+    StoreRepository,
+)
 from src.contexts.storage.core.commands import ExportAndPushCommand
-from src.contexts.storage.core.derivers import StorageState, derive_push_export
-from src.contexts.storage.core.entities import DataStore
 from src.contexts.storage.core.events import ExportPushed
-from src.shared.common.failure_events import FailureEvent
+from src.contexts.storage.core.failure_events import ExportNotPushed
+from src.contexts.storage.core.invariants import is_valid_s3_key
 from src.shared.common.operation_result import OperationResult
+
+if TYPE_CHECKING:
+    from src.shared.infra.event_bus import EventBus
 
 logger = logging.getLogger("qualcoder.storage.core")
 
@@ -29,12 +37,11 @@ _FORMAT_EXTENSIONS = {
 }
 
 
-class StoreRepository(Protocol):
-    def get(self) -> DataStore | None: ...
+@dataclass(frozen=True)
+class ExportRequest:
+    """Input for an exporter callable."""
 
-
-class S3ScannerProtocol(Protocol):
-    def upload_file(self, bucket: str, key: str, local_path: str) -> None: ...
+    output_path: str
 
 
 def export_and_push(
@@ -42,7 +49,7 @@ def export_and_push(
     store_repo: StoreRepository,
     s3_scanner: S3ScannerProtocol,
     exporter: Callable[..., OperationResult],
-    event_bus: Any,
+    event_bus: EventBus,
 ) -> OperationResult:
     """
     Export project data and push to S3.
@@ -51,14 +58,6 @@ def export_and_push(
     2. Run the exporter to produce a local file
     3. Push the file to S3
     4. Publish ExportPushed event
-
-    Args:
-        command: Export format, destination key, and staging dir
-        store_repo: Repository for store config
-        s3_scanner: S3 client for uploading
-        exporter: Callable that produces a file; receives a command with
-                  output_path and returns OperationResult
-        event_bus: For publishing domain events
     """
     logger.debug(
         "export_and_push: format=%s, dest=%s",
@@ -66,44 +65,42 @@ def export_and_push(
         command.destination_key,
     )
 
-    # 1. Validate store config
+    # 1. Validate store config and destination key
     store = store_repo.get()
-    state = StorageState(configured_store=store)
+    if store is None:
+        failure = ExportNotPushed.not_configured()
+        event_bus.publish(failure)
+        return OperationResult.from_failure(failure)
 
-    result = derive_push_export(
-        local_path="(pending)",
-        destination_key=command.destination_key,
-        state=state,
-    )
-
-    if isinstance(result, FailureEvent):
-        logger.error("export_and_push failed: %s", result.event_type)
-        event_bus.publish(result)
-        return OperationResult.from_failure(result)
+    if not is_valid_s3_key(command.destination_key):
+        failure = ExportNotPushed.invalid_key(command.destination_key)
+        event_bus.publish(failure)
+        return OperationResult.from_failure(failure)
 
     # 2. Run the exporter to produce a local file
     ext = _FORMAT_EXTENSIONS.get(command.export_format, "")
     staging_path = Path(command.local_staging_dir) / f"export{ext}"
 
-    # Build a simple command-like object for the exporter
-    from dataclasses import dataclass
-
-    @dataclass(frozen=True)
-    class _ExportCmd:
-        output_path: str
-
-    export_result = exporter(_ExportCmd(output_path=str(staging_path)))
+    export_result = exporter(ExportRequest(output_path=str(staging_path)))
 
     if hasattr(export_result, "success") and not export_result.success:
         logger.error("export_and_push: export step failed")
         return export_result
 
     # 3. Upload to S3
-    s3_scanner.upload_file(
-        bucket=store.bucket_name,
-        key=command.destination_key,
-        local_path=str(staging_path),
-    )
+    try:
+        s3_scanner.upload_file(
+            bucket=store.bucket_name,
+            key=command.destination_key,
+            local_path=str(staging_path),
+        )
+    except Exception:
+        logger.exception(
+            "export_and_push: upload failed for %s", command.destination_key
+        )
+        failure = ExportNotPushed.upload_failed(command.destination_key)
+        event_bus.publish(failure)
+        return OperationResult.from_failure(failure)
 
     # 4. Publish event
     event = ExportPushed.create(

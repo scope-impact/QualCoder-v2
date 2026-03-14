@@ -12,7 +12,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from src.contexts.storage.core.entities import DataStore, RemoteFile, StoreId
+from src.contexts.storage.core.entities import DataStore, RemoteFile
 from src.contexts.storage.core.events import (
     ExportPushed,
     FilePulled,
@@ -25,12 +25,8 @@ from src.contexts.storage.core.failure_events import (
     StoreNotConfigured,
     StoreNotScanned,
 )
-from src.contexts.storage.core.invariants import (
-    is_valid_bucket_name,
-    is_valid_s3_key,
-    is_valid_store_config,
-)
-
+from src.contexts.storage.core.invariants import is_valid_s3_key, is_valid_store_config
+from src.shared.common.types import StoreId
 
 # ============================================================
 # State Container (Input to Derivers)
@@ -57,15 +53,17 @@ def derive_configure_store(
     region: str,
     prefix: str,
     dvc_remote_name: str,
-    state: StorageState,
+    state: StorageState,  # noqa: ARG001 - reserved for future store-exists check
 ) -> StoreConfigured | StoreNotConfigured:
     """
     Derive a StoreConfigured event or failure event.
     """
-    if not is_valid_bucket_name(bucket_name):
-        return StoreNotConfigured.invalid_bucket(bucket_name)
+    if not is_valid_store_config(bucket_name, region):
+        # Distinguish between bucket and region failures for specific error
+        from src.contexts.storage.core.invariants import is_valid_bucket_name
 
-    if not region or not region.strip():
+        if not is_valid_bucket_name(bucket_name):
+            return StoreNotConfigured.invalid_bucket(bucket_name)
         return StoreNotConfigured.invalid_region()
 
     store_id = StoreId.new()

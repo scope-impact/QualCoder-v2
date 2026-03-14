@@ -6,11 +6,8 @@ Uses moto to mock S3 — no real AWS calls.
 
 from __future__ import annotations
 
-import pytest
 import allure
-
-from datetime import UTC, datetime
-
+import pytest
 
 pytestmark = [
     pytest.mark.unit,

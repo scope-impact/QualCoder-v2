@@ -6,13 +6,11 @@ Tests for scanning S3, pulling files, and auto-routing to the right importer.
 
 from __future__ import annotations
 
-import pytest
-import allure
-
-from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
 
+import allure
+import pytest
 
 pytestmark = [
     pytest.mark.unit,
@@ -47,8 +45,6 @@ class MockStoreRepository:
 
 class MockS3Scanner:
     def __init__(self, files=None, file_contents=None):
-        from src.contexts.storage.core.entities import RemoteFile
-
         self._files = files or []
         self._file_contents = file_contents or {}
 
@@ -72,7 +68,9 @@ class MockImporter:
 
         self.called_with.append(source_path)
         if self._success:
-            return OperationResult.ok(data={"source_path": source_path, "imported": True})
+            return OperationResult.ok(
+                data={"source_path": source_path, "imported": True}
+            )
         return OperationResult.fail(error="Import failed", error_code="IMPORT_FAILED")
 
 
@@ -174,10 +172,10 @@ class TestScanAndImport:
 
     @allure.title("Scan and import pulls file and routes to importer")
     def test_scan_and_import_routes_correctly(self, tmp_path):
-        from src.contexts.storage.core.commands import ScanAndImportCommand
         from src.contexts.storage.core.commandHandlers.scan_and_import import (
             scan_and_import,
         )
+        from src.contexts.storage.core.commands import ScanAndImportCommand
 
         store_repo = MockStoreRepository(store=_make_store())
         scanner = MockS3Scanner(
@@ -204,10 +202,10 @@ class TestScanAndImport:
 
     @allure.title("Scan and import with QDPX file routes to qdpx importer")
     def test_scan_and_import_qdpx(self, tmp_path):
-        from src.contexts.storage.core.commands import ScanAndImportCommand
         from src.contexts.storage.core.commandHandlers.scan_and_import import (
             scan_and_import,
         )
+        from src.contexts.storage.core.commands import ScanAndImportCommand
 
         store_repo = MockStoreRepository(store=_make_store())
         scanner = MockS3Scanner(
@@ -234,10 +232,10 @@ class TestScanAndImport:
 
     @allure.title("Scan and import without store fails")
     def test_scan_and_import_no_store_fails(self, tmp_path):
-        from src.contexts.storage.core.commands import ScanAndImportCommand
         from src.contexts.storage.core.commandHandlers.scan_and_import import (
             scan_and_import,
         )
+        from src.contexts.storage.core.commands import ScanAndImportCommand
 
         store_repo = MockStoreRepository()  # no store
         scanner = MockS3Scanner()
@@ -261,15 +259,13 @@ class TestScanAndImport:
 
     @allure.title("Scan and import with unsupported format fails")
     def test_scan_and_import_unsupported_format_fails(self, tmp_path):
-        from src.contexts.storage.core.commands import ScanAndImportCommand
         from src.contexts.storage.core.commandHandlers.scan_and_import import (
             scan_and_import,
         )
+        from src.contexts.storage.core.commands import ScanAndImportCommand
 
         store_repo = MockStoreRepository(store=_make_store())
-        scanner = MockS3Scanner(
-            file_contents={"raw/data.xyz": "unknown format"}
-        )
+        scanner = MockS3Scanner(file_contents={"raw/data.xyz": "unknown format"})
         event_bus = MockEventBus()
 
         command = ScanAndImportCommand(
@@ -290,15 +286,13 @@ class TestScanAndImport:
 
     @allure.title("Scan and import with no importer registered for format fails")
     def test_scan_and_import_no_importer_fails(self, tmp_path):
-        from src.contexts.storage.core.commands import ScanAndImportCommand
         from src.contexts.storage.core.commandHandlers.scan_and_import import (
             scan_and_import,
         )
+        from src.contexts.storage.core.commands import ScanAndImportCommand
 
         store_repo = MockStoreRepository(store=_make_store())
-        scanner = MockS3Scanner(
-            file_contents={"raw/data.csv": "name\nAlice"}
-        )
+        scanner = MockS3Scanner(file_contents={"raw/data.csv": "name\nAlice"})
         event_bus = MockEventBus()
         importers = {}  # no csv importer registered
 

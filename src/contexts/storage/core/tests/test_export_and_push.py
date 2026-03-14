@@ -6,12 +6,10 @@ Tests for exporting project data (QDPX/codebook/SQLite) and pushing to S3.
 
 from __future__ import annotations
 
-import pytest
-import allure
-
-from dataclasses import dataclass
 from pathlib import Path
 
+import allure
+import pytest
 
 pytestmark = [
     pytest.mark.unit,
@@ -96,10 +94,10 @@ class TestExportAndPush:
 
     @allure.title("Export QDPX and push to S3 succeeds")
     def test_export_qdpx_and_push(self, tmp_path):
-        from src.contexts.storage.core.commands import ExportAndPushCommand
         from src.contexts.storage.core.commandHandlers.export_and_push import (
             export_and_push,
         )
+        from src.contexts.storage.core.commands import ExportAndPushCommand
 
         store_repo = MockStoreRepository(store=_make_store())
         scanner = MockS3Scanner()
@@ -127,10 +125,10 @@ class TestExportAndPush:
 
     @allure.title("Export codebook and push to S3 succeeds")
     def test_export_codebook_and_push(self, tmp_path):
-        from src.contexts.storage.core.commands import ExportAndPushCommand
         from src.contexts.storage.core.commandHandlers.export_and_push import (
             export_and_push,
         )
+        from src.contexts.storage.core.commands import ExportAndPushCommand
 
         store_repo = MockStoreRepository(store=_make_store())
         scanner = MockS3Scanner()
@@ -156,10 +154,10 @@ class TestExportAndPush:
 
     @allure.title("Export SQLite snapshot and push to S3 succeeds")
     def test_export_sqlite_and_push(self, tmp_path):
-        from src.contexts.storage.core.commands import ExportAndPushCommand
         from src.contexts.storage.core.commandHandlers.export_and_push import (
             export_and_push,
         )
+        from src.contexts.storage.core.commands import ExportAndPushCommand
 
         store_repo = MockStoreRepository(store=_make_store())
         scanner = MockS3Scanner()
@@ -185,10 +183,10 @@ class TestExportAndPush:
 
     @allure.title("Export and push without configured store fails")
     def test_export_and_push_no_store_fails(self, tmp_path):
-        from src.contexts.storage.core.commands import ExportAndPushCommand
         from src.contexts.storage.core.commandHandlers.export_and_push import (
             export_and_push,
         )
+        from src.contexts.storage.core.commands import ExportAndPushCommand
 
         store_repo = MockStoreRepository()  # no store
         scanner = MockS3Scanner()
@@ -215,10 +213,10 @@ class TestExportAndPush:
 
     @allure.title("Export and push with invalid destination key fails")
     def test_export_and_push_invalid_key_fails(self, tmp_path):
-        from src.contexts.storage.core.commands import ExportAndPushCommand
         from src.contexts.storage.core.commandHandlers.export_and_push import (
             export_and_push,
         )
+        from src.contexts.storage.core.commands import ExportAndPushCommand
 
         store_repo = MockStoreRepository(store=_make_store())
         scanner = MockS3Scanner()
@@ -244,10 +242,10 @@ class TestExportAndPush:
 
     @allure.title("Export failure prevents push")
     def test_export_failure_prevents_push(self, tmp_path):
-        from src.contexts.storage.core.commands import ExportAndPushCommand
         from src.contexts.storage.core.commandHandlers.export_and_push import (
             export_and_push,
         )
+        from src.contexts.storage.core.commands import ExportAndPushCommand
         from src.shared.common.operation_result import OperationResult
 
         store_repo = MockStoreRepository(store=_make_store())

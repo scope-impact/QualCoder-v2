@@ -7,12 +7,16 @@ Uploads a coded export from local project to S3.
 from __future__ import annotations
 
 import logging
-from typing import TYPE_CHECKING, Protocol
+from typing import TYPE_CHECKING
 
+from src.contexts.storage.core.commandHandlers._state import (
+    S3ScannerProtocol,
+    StoreRepository,
+)
 from src.contexts.storage.core.commands import PushExportCommand
 from src.contexts.storage.core.derivers import StorageState, derive_push_export
-from src.contexts.storage.core.entities import DataStore
 from src.contexts.storage.core.events import ExportPushed
+from src.contexts.storage.core.failure_events import ExportNotPushed
 from src.shared.common.failure_events import FailureEvent
 from src.shared.common.operation_result import OperationResult
 
@@ -22,19 +26,11 @@ if TYPE_CHECKING:
 logger = logging.getLogger("qualcoder.storage.core")
 
 
-class StoreRepository(Protocol):
-    def get(self) -> DataStore | None: ...
-
-
-class S3ScannerProtocol(Protocol):
-    def upload_file(self, bucket: str, key: str, local_path: str) -> None: ...
-
-
 def push_export(
     command: PushExportCommand,
     store_repo: StoreRepository,
     s3_scanner: S3ScannerProtocol,
-    event_bus: object,
+    event_bus: EventBus,
 ) -> OperationResult:
     """
     Push a coded export to S3.
@@ -62,12 +58,17 @@ def push_export(
 
     event: ExportPushed = result
 
-    # Perform actual upload
-    s3_scanner.upload_file(
-        bucket=store.bucket_name,
-        key=command.destination_key,
-        local_path=command.local_path,
-    )
+    try:
+        s3_scanner.upload_file(
+            bucket=store.bucket_name,
+            key=command.destination_key,
+            local_path=command.local_path,
+        )
+    except Exception:
+        logger.exception("push_export: upload failed for %s", command.destination_key)
+        failure = ExportNotPushed.upload_failed(command.destination_key)
+        event_bus.publish(failure)
+        return OperationResult.from_failure(failure)
 
     event_bus.publish(event)
 

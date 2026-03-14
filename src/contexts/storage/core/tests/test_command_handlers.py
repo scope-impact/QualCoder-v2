@@ -6,12 +6,10 @@ Tests for configure_store, scan_store, pull_file, push_export handlers.
 
 from __future__ import annotations
 
-import pytest
-import allure
-
 from datetime import UTC, datetime
-from unittest.mock import MagicMock
 
+import allure
+import pytest
 
 pytestmark = [
     pytest.mark.unit,
@@ -47,8 +45,6 @@ class MockS3Scanner:
     """Mock S3 scanner for testing."""
 
     def __init__(self, files=None):
-        from src.contexts.storage.core.entities import RemoteFile
-
         self._files = files or []
 
     def list_files(self, bucket, prefix=""):
@@ -67,10 +63,10 @@ class TestConfigureStoreHandler:
 
     @allure.title("Configure store with valid config succeeds")
     def test_configure_store_success(self):
-        from src.contexts.storage.core.commands import ConfigureStoreCommand
         from src.contexts.storage.core.commandHandlers.configure_store import (
             configure_store,
         )
+        from src.contexts.storage.core.commands import ConfigureStoreCommand
 
         command = ConfigureStoreCommand(
             bucket_name="research-data",
@@ -94,10 +90,10 @@ class TestConfigureStoreHandler:
 
     @allure.title("Configure store with empty bucket fails")
     def test_configure_store_empty_bucket_fails(self):
-        from src.contexts.storage.core.commands import ConfigureStoreCommand
         from src.contexts.storage.core.commandHandlers.configure_store import (
             configure_store,
         )
+        from src.contexts.storage.core.commands import ConfigureStoreCommand
 
         command = ConfigureStoreCommand(
             bucket_name="",
@@ -122,9 +118,9 @@ class TestScanStoreHandler:
 
     @allure.title("Scan store returns discovered files")
     def test_scan_store_success(self):
-        from src.contexts.storage.core.entities import DataStore, RemoteFile, StoreId
-        from src.contexts.storage.core.commands import ScanStoreCommand
         from src.contexts.storage.core.commandHandlers.scan_store import scan_store
+        from src.contexts.storage.core.commands import ScanStoreCommand
+        from src.contexts.storage.core.entities import DataStore, RemoteFile, StoreId
 
         store = DataStore(
             id=StoreId(value="store_001"),
@@ -158,8 +154,8 @@ class TestScanStoreHandler:
 
     @allure.title("Scan store without configured store fails")
     def test_scan_store_not_configured_fails(self):
-        from src.contexts.storage.core.commands import ScanStoreCommand
         from src.contexts.storage.core.commandHandlers.scan_store import scan_store
+        from src.contexts.storage.core.commands import ScanStoreCommand
 
         scanner = MockS3Scanner()
         store_repo = MockStoreRepository()  # no store configured
@@ -184,9 +180,9 @@ class TestPullFileHandler:
 
     @allure.title("Pull file from S3 succeeds")
     def test_pull_file_success(self):
-        from src.contexts.storage.core.entities import DataStore, StoreId
-        from src.contexts.storage.core.commands import PullFileCommand
         from src.contexts.storage.core.commandHandlers.pull_file import pull_file
+        from src.contexts.storage.core.commands import PullFileCommand
+        from src.contexts.storage.core.entities import DataStore, StoreId
 
         store = DataStore(
             id=StoreId(value="store_001"),
@@ -220,9 +216,9 @@ class TestPushExportHandler:
 
     @allure.title("Push export to S3 succeeds")
     def test_push_export_success(self):
-        from src.contexts.storage.core.entities import DataStore, StoreId
-        from src.contexts.storage.core.commands import PushExportCommand
         from src.contexts.storage.core.commandHandlers.push_export import push_export
+        from src.contexts.storage.core.commands import PushExportCommand
+        from src.contexts.storage.core.entities import DataStore, StoreId
 
         store = DataStore(
             id=StoreId(value="store_001"),

@@ -6,11 +6,10 @@ Tests for pure event derivation functions.
 
 from __future__ import annotations
 
-import pytest
-import allure
-
 from datetime import UTC, datetime
 
+import allure
+import pytest
 
 pytestmark = [
     pytest.mark.unit,
@@ -25,7 +24,10 @@ class TestDeriveConfigureStore:
 
     @allure.title("Valid config produces StoreConfigured event")
     def test_valid_config_produces_success_event(self):
-        from src.contexts.storage.core.derivers import derive_configure_store, StorageState
+        from src.contexts.storage.core.derivers import (
+            StorageState,
+            derive_configure_store,
+        )
         from src.contexts.storage.core.events import StoreConfigured
 
         state = StorageState()
@@ -43,7 +45,10 @@ class TestDeriveConfigureStore:
 
     @allure.title("Empty bucket name produces failure event")
     def test_empty_bucket_produces_failure(self):
-        from src.contexts.storage.core.derivers import derive_configure_store, StorageState
+        from src.contexts.storage.core.derivers import (
+            StorageState,
+            derive_configure_store,
+        )
         from src.contexts.storage.core.failure_events import StoreNotConfigured
 
         state = StorageState()
@@ -60,7 +65,10 @@ class TestDeriveConfigureStore:
 
     @allure.title("Empty region produces failure event")
     def test_empty_region_produces_failure(self):
-        from src.contexts.storage.core.derivers import derive_configure_store, StorageState
+        from src.contexts.storage.core.derivers import (
+            StorageState,
+            derive_configure_store,
+        )
         from src.contexts.storage.core.failure_events import StoreNotConfigured
 
         state = StorageState()
@@ -82,7 +90,7 @@ class TestDeriveScanStore:
 
     @allure.title("Scan with configured store produces StoreScanned event")
     def test_scan_with_configured_store(self):
-        from src.contexts.storage.core.derivers import derive_scan_store, StorageState
+        from src.contexts.storage.core.derivers import StorageState, derive_scan_store
         from src.contexts.storage.core.entities import DataStore, RemoteFile, StoreId
         from src.contexts.storage.core.events import StoreScanned
 
@@ -111,7 +119,7 @@ class TestDeriveScanStore:
 
     @allure.title("Scan without configured store produces failure")
     def test_scan_without_store_produces_failure(self):
-        from src.contexts.storage.core.derivers import derive_scan_store, StorageState
+        from src.contexts.storage.core.derivers import StorageState, derive_scan_store
         from src.contexts.storage.core.failure_events import StoreNotScanned
 
         state = StorageState()  # no store configured
@@ -132,7 +140,7 @@ class TestDerivePullFile:
 
     @allure.title("Pull valid key produces FilePulled event")
     def test_pull_valid_key(self):
-        from src.contexts.storage.core.derivers import derive_pull_file, StorageState
+        from src.contexts.storage.core.derivers import StorageState, derive_pull_file
         from src.contexts.storage.core.entities import DataStore, StoreId
         from src.contexts.storage.core.events import FilePulled
 
@@ -154,7 +162,7 @@ class TestDerivePullFile:
 
     @allure.title("Pull with empty key produces failure")
     def test_pull_empty_key_produces_failure(self):
-        from src.contexts.storage.core.derivers import derive_pull_file, StorageState
+        from src.contexts.storage.core.derivers import StorageState, derive_pull_file
         from src.contexts.storage.core.entities import DataStore, StoreId
         from src.contexts.storage.core.failure_events import FileNotPulled
 
@@ -176,7 +184,7 @@ class TestDerivePullFile:
 
     @allure.title("Pull without configured store produces failure")
     def test_pull_without_store_produces_failure(self):
-        from src.contexts.storage.core.derivers import derive_pull_file, StorageState
+        from src.contexts.storage.core.derivers import StorageState, derive_pull_file
         from src.contexts.storage.core.failure_events import FileNotPulled
 
         state = StorageState()
@@ -197,7 +205,7 @@ class TestDerivePushExport:
 
     @allure.title("Push valid export produces ExportPushed event")
     def test_push_valid_export(self):
-        from src.contexts.storage.core.derivers import derive_push_export, StorageState
+        from src.contexts.storage.core.derivers import StorageState, derive_push_export
         from src.contexts.storage.core.entities import DataStore, StoreId
         from src.contexts.storage.core.events import ExportPushed
 
@@ -219,7 +227,7 @@ class TestDerivePushExport:
 
     @allure.title("Push without store produces failure")
     def test_push_without_store_produces_failure(self):
-        from src.contexts.storage.core.derivers import derive_push_export, StorageState
+        from src.contexts.storage.core.derivers import StorageState, derive_push_export
         from src.contexts.storage.core.failure_events import ExportNotPushed
 
         state = StorageState()

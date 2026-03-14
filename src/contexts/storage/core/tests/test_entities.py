@@ -6,11 +6,10 @@ Tests for DataStore, RemoteFile, and SyncManifest entities.
 
 from __future__ import annotations
 
-import pytest
-import allure
-
 from datetime import UTC, datetime
 
+import allure
+import pytest
 
 pytestmark = [
     pytest.mark.unit,

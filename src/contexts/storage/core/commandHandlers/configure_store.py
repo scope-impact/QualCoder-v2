@@ -7,8 +7,9 @@ Sets up an S3 bucket as the project's data store.
 from __future__ import annotations
 
 import logging
-from typing import TYPE_CHECKING, Protocol
+from typing import TYPE_CHECKING
 
+from src.contexts.storage.core.commandHandlers._state import StoreRepository
 from src.contexts.storage.core.commands import ConfigureStoreCommand
 from src.contexts.storage.core.derivers import StorageState, derive_configure_store
 from src.contexts.storage.core.entities import DataStore
@@ -22,15 +23,10 @@ if TYPE_CHECKING:
 logger = logging.getLogger("qualcoder.storage.core")
 
 
-class StoreRepository(Protocol):
-    def get(self) -> DataStore | None: ...
-    def save(self, store: DataStore) -> None: ...
-
-
 def configure_store(
     command: ConfigureStoreCommand,
     store_repo: StoreRepository,
-    event_bus: object,
+    event_bus: EventBus,
 ) -> OperationResult:
     """
     Configure an S3 data store for the project.
@@ -39,7 +35,9 @@ def configure_store(
     2. Persist store config
     3. Publish event
     """
-    logger.debug("configure_store: bucket=%s, region=%s", command.bucket_name, command.region)
+    logger.debug(
+        "configure_store: bucket=%s, region=%s", command.bucket_name, command.region
+    )
 
     state = StorageState()
 

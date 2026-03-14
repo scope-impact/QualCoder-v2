@@ -9,24 +9,7 @@ from dataclasses import dataclass, field, replace
 from datetime import UTC, datetime
 from pathlib import PurePosixPath
 
-from src.shared.common.uuid7 import new_uuid7
-
-
-# ============================================================
-# Typed Identifiers
-# ============================================================
-
-
-@dataclass(frozen=True)
-class StoreId:
-    """Typed identifier for DataStore entities."""
-
-    value: str
-
-    @classmethod
-    def new(cls) -> StoreId:
-        return cls(value=new_uuid7())
-
+from src.shared.common.types import StoreId
 
 # ============================================================
 # Value Objects

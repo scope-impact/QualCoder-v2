@@ -7,12 +7,16 @@ Downloads a file from S3 into the local project.
 from __future__ import annotations
 
 import logging
-from typing import TYPE_CHECKING, Protocol
+from typing import TYPE_CHECKING
 
+from src.contexts.storage.core.commandHandlers._state import (
+    S3ScannerProtocol,
+    StoreRepository,
+)
 from src.contexts.storage.core.commands import PullFileCommand
 from src.contexts.storage.core.derivers import StorageState, derive_pull_file
-from src.contexts.storage.core.entities import DataStore
 from src.contexts.storage.core.events import FilePulled
+from src.contexts.storage.core.failure_events import FileNotPulled
 from src.shared.common.failure_events import FailureEvent
 from src.shared.common.operation_result import OperationResult
 
@@ -22,19 +26,11 @@ if TYPE_CHECKING:
 logger = logging.getLogger("qualcoder.storage.core")
 
 
-class StoreRepository(Protocol):
-    def get(self) -> DataStore | None: ...
-
-
-class S3ScannerProtocol(Protocol):
-    def download_file(self, bucket: str, key: str, local_path: str) -> None: ...
-
-
 def pull_file(
     command: PullFileCommand,
     store_repo: StoreRepository,
     s3_scanner: S3ScannerProtocol,
-    event_bus: object,
+    event_bus: EventBus,
 ) -> OperationResult:
     """
     Pull a file from S3 to local project.
@@ -62,12 +58,17 @@ def pull_file(
 
     event: FilePulled = result
 
-    # Perform actual download
-    s3_scanner.download_file(
-        bucket=store.bucket_name,
-        key=command.key,
-        local_path=command.local_path,
-    )
+    try:
+        s3_scanner.download_file(
+            bucket=store.bucket_name,
+            key=command.key,
+            local_path=command.local_path,
+        )
+    except Exception:
+        logger.exception("pull_file: download failed for %s", command.key)
+        failure = FileNotPulled.download_failed(command.key)
+        event_bus.publish(failure)
+        return OperationResult.from_failure(failure)
 
     event_bus.publish(event)
 

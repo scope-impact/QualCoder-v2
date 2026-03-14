@@ -10,9 +10,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import ClassVar
 
-from src.contexts.storage.core.entities import RemoteFile, StoreId
-from src.shared.common.types import DomainEvent
-
+from src.contexts.storage.core.entities import RemoteFile
+from src.shared.common.types import DomainEvent, StoreId
 
 # ============================================================
 # Store Events

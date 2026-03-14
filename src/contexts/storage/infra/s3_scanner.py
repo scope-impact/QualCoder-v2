@@ -26,29 +26,37 @@ class S3Scanner:
 
     def list_files(self, bucket: str, prefix: str = "") -> list[RemoteFile]:
         """
-        List files in an S3 bucket, optionally filtered by prefix.
+        List all files in an S3 bucket, optionally filtered by prefix.
+
+        Handles pagination (list_objects_v2 returns max 1000 per page).
 
         Returns:
             List of RemoteFile value objects.
         """
         logger.debug("list_files: bucket=%s, prefix=%s", bucket, prefix)
 
+        files: list[RemoteFile] = []
         kwargs: dict[str, str] = {"Bucket": bucket}
         if prefix:
             kwargs["Prefix"] = prefix
 
-        response = self._client.list_objects_v2(**kwargs)
-        contents = response.get("Contents", [])
+        while True:
+            response = self._client.list_objects_v2(**kwargs)
 
-        files = [
-            RemoteFile(
-                key=obj["Key"],
-                size_bytes=obj["Size"],
-                last_modified=obj["LastModified"],
-                etag=obj.get("ETag"),
-            )
-            for obj in contents
-        ]
+            for obj in response.get("Contents", []):
+                files.append(
+                    RemoteFile(
+                        key=obj["Key"],
+                        size_bytes=obj["Size"],
+                        last_modified=obj["LastModified"],
+                        etag=obj.get("ETag"),
+                    )
+                )
+
+            if not response.get("IsTruncated"):
+                break
+
+            kwargs["ContinuationToken"] = response["NextContinuationToken"]
 
         logger.debug("list_files: found %d files", len(files))
         return files

@@ -8,12 +8,21 @@ by extension, and routes to the appropriate importer.
 from __future__ import annotations
 
 import logging
+from collections.abc import Callable
 from pathlib import Path, PurePosixPath
-from typing import Any, Callable, Protocol
+from typing import TYPE_CHECKING
 
+from src.contexts.storage.core.commandHandlers._state import (
+    S3ScannerProtocol,
+    StoreRepository,
+)
 from src.contexts.storage.core.commands import ScanAndImportCommand
-from src.contexts.storage.core.entities import DataStore, RemoteFile
+from src.contexts.storage.core.entities import RemoteFile
+from src.contexts.storage.core.failure_events import FileNotPulled
 from src.shared.common.operation_result import OperationResult
+
+if TYPE_CHECKING:
+    from src.shared.infra.event_bus import EventBus
 
 logger = logging.getLogger("qualcoder.storage.core")
 
@@ -27,14 +36,6 @@ _IMPORTABLE_EXTENSIONS: dict[str, str] = {
     ".sqlite": "sqlite",
     ".sqlite3": "sqlite",
 }
-
-
-class StoreRepository(Protocol):
-    def get(self) -> DataStore | None: ...
-
-
-class S3ScannerProtocol(Protocol):
-    def download_file(self, bucket: str, key: str, local_path: str) -> None: ...
 
 
 def detect_import_format(key: str) -> str | None:
@@ -63,7 +64,7 @@ def scan_and_import(
     store_repo: StoreRepository,
     s3_scanner: S3ScannerProtocol,
     importers: dict[str, Callable[..., OperationResult]],
-    event_bus: Any,
+    event_bus: EventBus,
 ) -> OperationResult:
     """
     Pull a file from S3 and auto-import based on format detection.
@@ -72,24 +73,15 @@ def scan_and_import(
     2. Detect import format from key extension
     3. Pull file from S3
     4. Route to the correct importer
-    5. Publish events
-
-    Args:
-        command: S3 key and local staging dir
-        store_repo: Repository for store config
-        s3_scanner: S3 client for downloading
-        importers: Dict mapping format -> callable importer
-        event_bus: For publishing domain events
     """
     logger.debug("scan_and_import: key=%s", command.key)
 
     # 1. Validate store config
     store = store_repo.get()
     if store is None:
-        return OperationResult.fail(
-            error="No data store configured. Configure an S3 bucket first.",
-            error_code="FILE_NOT_PULLED/NOT_CONFIGURED",
-        )
+        failure = FileNotPulled.not_configured()
+        event_bus.publish(failure)
+        return OperationResult.from_failure(failure)
 
     # 2. Detect format
     fmt = detect_import_format(command.key)
@@ -116,15 +108,21 @@ def scan_and_import(
     filename = PurePosixPath(command.key).name
     local_path = str(Path(command.local_staging_dir) / filename)
 
-    s3_scanner.download_file(
-        bucket=store.bucket_name,
-        key=command.key,
-        local_path=local_path,
+    try:
+        s3_scanner.download_file(
+            bucket=store.bucket_name,
+            key=command.key,
+            local_path=local_path,
+        )
+    except Exception:
+        logger.exception("scan_and_import: download failed for %s", command.key)
+        failure = FileNotPulled.download_failed(command.key)
+        event_bus.publish(failure)
+        return OperationResult.from_failure(failure)
+
+    logger.info(
+        "Pulled %s -> %s, routing to '%s' importer", command.key, local_path, fmt
     )
 
-    logger.info("Pulled %s -> %s, routing to '%s' importer", command.key, local_path, fmt)
-
     # 5. Route to importer
-    import_result = importer(source_path=local_path)
-
-    return import_result
+    return importer(source_path=local_path)

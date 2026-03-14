@@ -12,7 +12,6 @@ from dataclasses import dataclass
 
 from src.shared.common.failure_events import FailureEvent
 
-
 # ============================================================
 # Store Failure Events
 # ============================================================
@@ -68,7 +67,7 @@ class StoreNotScanned(FailureEvent):
         )
 
     @classmethod
-    def connection_failed(cls, error: str) -> StoreNotScanned:
+    def connection_failed(cls, error: str) -> StoreNotScanned:  # noqa: ARG003 - error stored in event_type context
         """Could not connect to S3."""
         return cls(
             event_id=cls._generate_id(),
