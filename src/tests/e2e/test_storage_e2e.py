@@ -9,10 +9,16 @@ Uses moto for S3 mock and a mock DVC gateway — no real AWS or DVC CLI.
 
 from __future__ import annotations
 
+from datetime import datetime, timezone
+
 import allure
 import pytest
+from PySide6.QtWidgets import QApplication
 
+from src.contexts.storage.core.entities import RemoteFile
 from src.contexts.storage.infra.dvc_gateway import DvcResult
+from src.tests.e2e.helpers import attach_screenshot
+from src.tests.e2e.utils import DocScreenshot
 
 pytestmark = [
     pytest.mark.e2e,
@@ -707,3 +713,183 @@ class _NullStorageToolsContext:
     @property
     def storage_context(self):
         return None
+
+
+# =============================================================================
+# Screenshot E2E Tests — Full Wiring Verification
+# =============================================================================
+
+
+def _sample_remote_files() -> list[RemoteFile]:
+    """Create realistic remote files for screenshot capture."""
+    now = datetime.now(tz=timezone.utc)
+    return [
+        RemoteFile(
+            key="project-alpha/raw/interview_001.txt",
+            size_bytes=2048,
+            last_modified=now,
+        ),
+        RemoteFile(
+            key="project-alpha/raw/interview_002.txt",
+            size_bytes=3072,
+            last_modified=now,
+        ),
+        RemoteFile(
+            key="project-alpha/raw/focus_group.mp3",
+            size_bytes=15_728_640,
+            last_modified=now,
+        ),
+        RemoteFile(
+            key="project-alpha/processed/profiles.csv",
+            size_bytes=4096,
+            last_modified=now,
+        ),
+    ]
+
+
+@allure.story("QC-047.08 Import from S3 Dialog")
+class TestImportFromS3DialogScreenshot:
+    """Open Import from S3 dialog through the real wired app flow."""
+
+    @allure.title("DOC: Import from S3 triggered from FileManager toolbar")
+    def test_import_from_s3_via_toolbar(self, wired_app):
+        """Click 'Import > From S3 Data Store...' in the real FileManager toolbar.
+
+        Verifies the full wiring:
+        FileManagerScreen._data_store_vm is set → toolbar menu is enabled
+        → click opens ImportFromS3Dialog with real ViewModel.
+        """
+        from unittest.mock import patch
+
+        from src.contexts.storage.core.entities import DataStore, StoreId
+        from src.contexts.storage.presentation.dialogs.import_from_s3_dialog import (
+            ImportFromS3Dialog,
+        )
+
+        app = wired_app["app"]
+        file_manager = wired_app["screens"]["files"]
+
+        with allure.step("Verify DataStoreViewModel is wired to FileManager"):
+            assert file_manager._data_store_vm is not None, (
+                "DataStoreViewModel not wired — check main.py _wire_viewmodels()"
+            )
+
+        with allure.step("Configure store so toolbar enables S3 import"):
+            # Configure a store via the real store_repo
+            store_repo = wired_app["ctx"].storage_context.store_repo
+            store = DataStore(
+                id=StoreId.new(),
+                bucket_name="qualcoder-research",
+                region="us-east-1",
+                prefix="project-alpha/",
+                dvc_remote_name="origin",
+            )
+            store_repo.save(store)
+
+            # Re-enable the menu item now that store is configured
+            file_manager._page.set_import_from_s3_enabled(True)
+            QApplication.processEvents()
+
+        with allure.step("Click Import from S3 and capture dialog"):
+            # Patch scan to return sample files instead of hitting real S3
+            sample_files = _sample_remote_files()
+            with patch.object(
+                file_manager._data_store_vm, "scan", return_value=sample_files
+            ), patch.object(
+                file_manager._data_store_vm,
+                "get_imported_filenames",
+                return_value={"interview_001.txt"},
+            ):
+                # Intercept exec() so the dialog doesn't block
+                dialogs_captured = []
+                original_exec = ImportFromS3Dialog.exec
+
+                def capture_exec(dialog_self):
+                    dialog_self.resize(650, 400)
+                    dialog_self.show()
+                    QApplication.processEvents()
+                    dialogs_captured.append(dialog_self)
+                    # Don't call original exec — non-blocking for test
+
+                with patch.object(ImportFromS3Dialog, "exec", capture_exec):
+                    # Trigger the real signal flow: toolbar → page → screen
+                    file_manager._on_import_from_s3_clicked()
+                    QApplication.processEvents()
+
+                assert len(dialogs_captured) == 1, (
+                    "ImportFromS3Dialog was not opened — wiring broken"
+                )
+
+                dialog = dialogs_captured[0]
+                attach_screenshot(dialog, "ImportFromS3Dialog - via Toolbar")
+                DocScreenshot.capture(
+                    dialog, "import-from-s3-dialog", max_width=800
+                )
+                dialog.close()
+
+
+@allure.story("QC-047.07 Settings Data Store Configuration")
+class TestSettingsDataStoreScreenshot:
+    """Open Settings, navigate to Data Store tab through the real wired app."""
+
+    @allure.title("DOC: Settings > Data Store tab via real app wiring")
+    def test_settings_data_store_via_app(self, wired_app):
+        """Open Settings dialog through the real app flow and navigate to Data Store.
+
+        Verifies the full wiring:
+        _on_settings_clicked → DialogService.show_settings_dialog(data_store_vm=...)
+        → SettingsDialog has Data Store section wired.
+        """
+        from unittest.mock import patch
+
+        from src.contexts.settings.presentation.dialogs import SettingsDialog
+
+        app = wired_app["app"]
+
+        with allure.step("Open Settings dialog through real app flow"):
+            dialogs_captured = []
+            original_show = app._dialog_service.show_settings_dialog
+
+            def capture_show(*args, **kwargs):
+                kwargs["blocking"] = False
+                dialog = original_show(*args, **kwargs)
+                dialogs_captured.append(dialog)
+                return dialog
+
+            app._dialog_service.show_settings_dialog = capture_show
+            app._on_settings_clicked()
+            QApplication.processEvents()
+
+            assert len(dialogs_captured) == 1, (
+                "Settings dialog was not opened — wiring broken"
+            )
+            dialog = dialogs_captured[0]
+
+        with allure.step("Navigate to Data Store tab (index 5)"):
+            dialog._sidebar.setCurrentRow(5)
+            QApplication.processEvents()
+
+            # Verify we're on the Data Store section
+            assert dialog._content_stack.currentIndex() == 5
+
+        with allure.step("Verify Data Store fields are wired"):
+            assert hasattr(dialog, "_ds_bucket"), "Bucket field missing"
+            assert hasattr(dialog, "_ds_region"), "Region field missing"
+            assert hasattr(dialog, "_ds_prefix"), "Prefix field missing"
+            assert hasattr(dialog, "_ds_remote"), "DVC Remote field missing"
+            assert hasattr(dialog, "_ds_test_btn"), "Test Connection button missing"
+            assert hasattr(dialog, "_ds_save_btn"), "Save button missing"
+
+        with allure.step("Fill sample config and capture screenshot"):
+            dialog._ds_bucket.setText("qualcoder-research")
+            dialog._ds_region.setCurrentText("us-east-1")
+            dialog._ds_prefix.setText("project-alpha/")
+            dialog._ds_remote.setText("origin")
+            dialog._ds_status.setText("Connected")
+            dialog._ds_status.setStyleSheet("color: green; font-size: 11px;")
+            QApplication.processEvents()
+
+            attach_screenshot(dialog, "SettingsDialog - Data Store Tab")
+            DocScreenshot.capture(dialog, "settings-data-store", max_width=800)
+
+        dialog.close()

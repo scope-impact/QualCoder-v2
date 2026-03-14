@@ -23,6 +23,15 @@ The data store feature lets you:
 
 ## Configuration
 
+### Via Settings Dialog
+
+Open **Settings > Data Store** to configure your S3 bucket connection.
+
+![Settings Data Store Tab](images/settings-data-store.png)
+
+Enter your bucket name, AWS region, optional path prefix, and DVC remote name.
+Use **Test Connection** to verify S3 access before saving.
+
 ### Via MCP Tool (AI Agent)
 
 The AI agent can configure the data store using the `configure_datastore` tool:
@@ -44,6 +53,17 @@ configure_datastore(
 | `region` | Yes | AWS region (e.g., `us-east-1`) |
 | `prefix` | No | S3 key prefix to scope the store |
 | `dvc_remote_name` | No | DVC remote name (default: `origin`) |
+
+## Importing Files from S3
+
+Use the **Import > From S3 Data Store...** menu in the File Manager toolbar
+to open the import dialog.
+
+![Import from S3 Dialog](images/import-from-s3-dialog.png)
+
+The dialog shows all files in the configured S3 bucket. Files already imported
+into your project are greyed out with an "imported" status. Check the files
+you want to pull and click **Pull Selected** to download and auto-import them.
 
 ## Scanning Files
 

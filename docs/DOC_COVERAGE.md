@@ -132,14 +132,14 @@ This file tracks which features have documentation and screenshots.
 
 | ID | Story | Doc Page | Screenshots | Status |
 |----|-------|----------|-------------|--------|
-| QC-047.01 | Configure S3 Bucket | [data-store.md](user-manual/data-store.md), [storage-tools.md](api/storage-tools.md) | - | :construction: |
-| QC-047.02 | Scan/Browse S3 Files | [data-store.md](user-manual/data-store.md), [storage-tools.md](api/storage-tools.md) | - | :construction: |
-| QC-047.03 | Pull File from S3 | [data-store.md](user-manual/data-store.md), [storage-tools.md](api/storage-tools.md) | - | :construction: |
-| QC-047.04 | Push Export to S3 | [data-store.md](user-manual/data-store.md), [storage-tools.md](api/storage-tools.md) | - | :construction: |
-| QC-047.05 | DVC Versioning | [data-store.md](user-manual/data-store.md) | - | :construction: |
-| QC-047.06 | MCP Storage Tools | [storage-tools.md](api/storage-tools.md) | - | :construction: |
-| QC-047.07 | DVC Pipeline Support | [data-store.md](user-manual/data-store.md) | - | :construction: |
-| QC-047.08 | Offline Mode | [data-store.md](user-manual/data-store.md) | - | :construction: |
+| QC-047.01 | Configure S3 Bucket | [data-store.md](user-manual/data-store.md), [storage-tools.md](api/storage-tools.md) | settings-data-store.png | :white_check_mark: |
+| QC-047.02 | Scan/Browse S3 Files | [data-store.md](user-manual/data-store.md), [storage-tools.md](api/storage-tools.md) | import-from-s3-dialog.png | :white_check_mark: |
+| QC-047.03 | Pull File from S3 | [data-store.md](user-manual/data-store.md), [storage-tools.md](api/storage-tools.md) | import-from-s3-dialog.png | :white_check_mark: |
+| QC-047.04 | Push Export to S3 | [data-store.md](user-manual/data-store.md), [storage-tools.md](api/storage-tools.md) | - | :white_check_mark: |
+| QC-047.05 | DVC Versioning | [data-store.md](user-manual/data-store.md) | - | :white_check_mark: |
+| QC-047.06 | MCP Storage Tools | [storage-tools.md](api/storage-tools.md) | - | :white_check_mark: |
+| QC-047.07 | DVC Pipeline Support | [data-store.md](user-manual/data-store.md) | - | :white_check_mark: |
+| QC-047.08 | Offline Mode | [data-store.md](user-manual/data-store.md) | - | :white_check_mark: |
 
 ### QC-048 Version Control
 
