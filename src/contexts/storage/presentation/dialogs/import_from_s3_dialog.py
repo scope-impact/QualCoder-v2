@@ -225,13 +225,10 @@ class ImportFromS3Dialog(QDialog):
             name_item = QTableWidgetItem(rf.filename)
             if is_imported:
                 name_item.setFlags(Qt.ItemFlag.ItemIsEnabled)  # No checkbox
-                name_item.setForeground(
-                    Qt.GlobalColor.gray
-                )
+                name_item.setForeground(Qt.GlobalColor.gray)
             else:
                 name_item.setFlags(
-                    Qt.ItemFlag.ItemIsEnabled
-                    | Qt.ItemFlag.ItemIsUserCheckable
+                    Qt.ItemFlag.ItemIsEnabled | Qt.ItemFlag.ItemIsUserCheckable
                 )
                 name_item.setCheckState(Qt.CheckState.Unchecked)
             self._table.setItem(row, 0, name_item)

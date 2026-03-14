@@ -217,14 +217,18 @@ def _create_dvc_gateway(project_path: str | None) -> Any:
 class _NullS3Scanner:
     """Null object for S3Scanner when boto3 is not available."""
 
-    def list_files(self, bucket: str, prefix: str = "") -> list:
+    def list_files(self, _bucket: str, _prefix: str = "") -> list:
         return []
 
-    def download_file(self, bucket: str, key: str, local_path: str) -> None:
-        raise RuntimeError("S3 not available — check AWS credentials and boto3 installation")
+    def download_file(self, _bucket: str, _key: str, _local_path: str) -> None:
+        raise RuntimeError(
+            "S3 not available — check AWS credentials and boto3 installation"
+        )
 
-    def upload_file(self, bucket: str, key: str, local_path: str) -> None:
-        raise RuntimeError("S3 not available — check AWS credentials and boto3 installation")
+    def upload_file(self, _bucket: str, _key: str, _local_path: str) -> None:
+        raise RuntimeError(
+            "S3 not available — check AWS credentials and boto3 installation"
+        )
 
 
 class _NullDvcGateway:
@@ -241,25 +245,25 @@ class _NullDvcGateway:
     def init(self):
         return self._Result()
 
-    def remote_add(self, name, url):
+    def remote_add(self, _name, _url):
         return self._Result()
 
-    def remote_modify(self, name, key, value):
+    def remote_modify(self, _name, _key, _value):
         return self._Result()
 
-    def remote_default(self, name):
+    def remote_default(self, _name):
         return self._Result()
 
-    def add(self, path):
+    def add(self, _path):
         return self._Result()
 
-    def push(self, remote=None):
+    def push(self, _remote=None):
         return self._Result()
 
-    def pull(self, remote=None):
+    def pull(self, _remote=None):
         return self._Result()
 
-    def status(self, remote=None):
+    def status(self, _remote=None):
         return self._Result()
 
     @staticmethod

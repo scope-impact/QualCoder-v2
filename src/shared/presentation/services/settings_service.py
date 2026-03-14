@@ -140,4 +140,3 @@ class SettingsService:
             settings_repo=self._settings_repo,
             event_bus=self._event_bus,
         )
-

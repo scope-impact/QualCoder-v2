@@ -225,5 +225,3 @@ def derive_observability_config_change(
         enable_file_logging=enable_file_logging,
         enable_telemetry=enable_telemetry,
     )
-
-

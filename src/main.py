@@ -19,7 +19,6 @@ from src.contexts.cases.presentation import CaseManagerScreen
 
 # Context-specific presentation imports
 from src.contexts.coding.interface.signal_bridge import CodingSignalBridge
-from src.contexts.storage.interface.signal_bridge import StorageSignalBridge
 from src.contexts.coding.presentation import (
     CodingCoordinator,
     TextCodingScreen,
@@ -32,6 +31,7 @@ from src.contexts.projects.presentation import (
     VersionHistoryScreen,
 )
 from src.contexts.sources.presentation import FileManagerScreen, FileManagerViewModel
+from src.contexts.storage.interface.signal_bridge import StorageSignalBridge
 from src.contexts.storage.presentation.viewmodels.data_store_viewmodel import (
     DataStoreViewModel,
 )

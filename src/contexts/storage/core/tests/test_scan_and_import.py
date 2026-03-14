@@ -56,7 +56,6 @@ class MockS3Scanner:
         Path(local_path).write_text(content)
 
 
-
 class MockImporter:
     """Simulates an import handler."""
 

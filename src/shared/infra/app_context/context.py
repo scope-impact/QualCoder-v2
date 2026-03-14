@@ -243,7 +243,9 @@ class AppContext:
     # Context Management (Internal)
     # =========================================================================
 
-    def _create_contexts(self, _connection: Any, project_path: str | None = None) -> dict:
+    def _create_contexts(
+        self, _connection: Any, project_path: str | None = None
+    ) -> dict:
         """
         Create bounded context objects for the open project.
 

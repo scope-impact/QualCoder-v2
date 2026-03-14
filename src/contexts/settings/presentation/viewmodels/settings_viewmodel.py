@@ -320,7 +320,9 @@ class SettingsViewModel:
         """Configure the S3 data store."""
         if not hasattr(self, "_data_store_vm") or self._data_store_vm is None:
             return False
-        return self._data_store_vm.configure(bucket_name, region, prefix, dvc_remote_name)
+        return self._data_store_vm.configure(
+            bucket_name, region, prefix, dvc_remote_name
+        )
 
     def test_data_store_connection(self) -> bool:
         """Test S3 connectivity."""
@@ -349,4 +351,3 @@ class SettingsViewModel:
             return format_str.replace("{n}", str(speaker_num))
         except Exception:
             return format_str
-

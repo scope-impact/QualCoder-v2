@@ -85,5 +85,3 @@ class ConfigureObservabilityCommand:
     log_level: str
     enable_file_logging: bool
     enable_telemetry: bool
-
-

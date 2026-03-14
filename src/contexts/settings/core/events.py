@@ -7,7 +7,7 @@ and inherit from DomainEvent base class.
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import ClassVar
 
 from src.shared.common.types import DomainEvent
@@ -225,5 +225,3 @@ class ObservabilityConfigChanged(DomainEvent):
             enable_file_logging=enable_file_logging,
             enable_telemetry=enable_telemetry,
         )
-
-

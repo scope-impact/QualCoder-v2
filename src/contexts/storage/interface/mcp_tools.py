@@ -420,7 +420,7 @@ class StorageTools:
 
             # Use a no-op exporter placeholder — the real exporter
             # would come from the exchange context coordinator
-            def _noop_exporter(**kwargs):
+            def _noop_exporter(**_kwargs):
                 from src.shared.common.operation_result import OperationResult
 
                 return OperationResult.fail(

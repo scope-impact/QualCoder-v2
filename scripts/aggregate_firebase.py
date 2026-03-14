@@ -74,7 +74,12 @@ def aggregate(input_path: Path, output_path: Path) -> None:
     with open(output_path, "w", newline="") as f:
         writer = csv.DictWriter(
             f,
-            fieldnames=["participant_id", "sessions", "total_events", "engagement_tier"],
+            fieldnames=[
+                "participant_id",
+                "sessions",
+                "total_events",
+                "engagement_tier",
+            ],
         )
         writer.writeheader()
         writer.writerows(profiles)

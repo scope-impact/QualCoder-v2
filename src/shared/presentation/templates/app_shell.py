@@ -42,6 +42,7 @@ from design_system import (
     get_colors,
     set_theme,
 )
+
 # QualCoder navigation items (unified nav bar - QC-047.01)
 NAV_ITEMS = [
     ("project", "Project"),
@@ -314,6 +315,7 @@ class UnifiedNavBar(QFrame):
                     color: {self._colors.text_primary};
                 }}
             """)
+
 
 class AppShell(QMainWindow):
     """

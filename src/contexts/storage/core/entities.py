@@ -73,4 +73,3 @@ class DataStore:
     prefix: str = ""
     dvc_remote_name: str = "origin"
     created_at: datetime = field(default_factory=lambda: datetime.now(UTC))
-

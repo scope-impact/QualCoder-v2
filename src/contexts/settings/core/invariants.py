@@ -100,5 +100,3 @@ def is_valid_backup_interval(interval: int) -> bool:
 def is_valid_max_backups(max_backups: int) -> bool:
     """Check if max backups is within valid range."""
     return MIN_MAX_BACKUPS <= max_backups <= MAX_MAX_BACKUPS
-
-
