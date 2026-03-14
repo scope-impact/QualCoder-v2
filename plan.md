@@ -1,287 +1,235 @@
-# QC-047: Next Phase — Presentation + Settings + Wiring
+# QC-051: Firebase Analytics Import Pipeline — Implementation Plan
 
-## Status Summary
+## Research Summary
 
-### Completed (Phases 1-3, 8-9)
-- **Core domain**: Entities, events, invariants, derivers, 6 command handlers
-- **Infrastructure**: SqliteStoreRepository, DvcGateway, S3Scanner
-- **Interface**: 6 MCP tools, StorageSignalBridge
-- **E2E tests**: 9 tests passing (repository, MCP tools, full workflow, wiring)
-- **Documentation**: User manual + API docs
+### Firebase/GA4 BigQuery Export Schema
+Firebase Analytics exports to BigQuery as daily `events_YYYYMMDD` tables. Each row is a single event with:
+- **`user_pseudo_id`** — Auto-generated device-scoped user ID
+- **`user_id`** — Optional developer-set user ID
+- **`event_name`** — e.g. `session_start`, `screen_view`, `first_open`, `purchase`
+- **`event_timestamp`** — Microseconds since epoch
+- **`event_params`** — Nested RECORD of key-value pairs (`key`, `string_value`, `int_value`, `double_value`, `float_value`)
+- **`user_properties`** — Nested RECORD of user-scoped key-value pairs
+- **`device`** — Nested: `category`, `mobile_brand_name`, `model_name`, `operating_system`, `language`
+- **`geo`** — Nested: `country`, `region`, `city`
+- **`traffic_source`** — Nested: `name`, `medium`, `source`
+- **`platform`** — `ANDROID`, `IOS`, `WEB`
+- **`user_first_touch_timestamp`**, **`user_ltv`** (revenue, currency)
 
-### Remaining (Phases 4-7)
-- **Phase 4**: DataStoreViewModel + Import from S3 Dialog (presentation layer)
-- **Phase 5**: Settings dialog integration (Data Store tab)
-- **Phase 6**: Wiring in main.py + FileManager toolbar integration
-- **Phase 7**: DVC pipeline template
+### Export Formats Researchers Will Have
+1. **BigQuery JSON export** — NDJSON with nested `event_params` (needs aggregation)
+2. **Pre-aggregated CSV** — Already one-row-per-participant (simplest path)
+3. **BigQuery SQL → CSV** — Researcher runs SQL in BigQuery console, downloads CSV
 
-### UI Decision (resolved)
-**Import from S3 = Modal dialog**, not a standalone panel or tab.
-- Triggered by `[Import from S3]` button in FileManager toolbar
-- Same UX pattern as `[Import Files]` (opens QFileDialog) but for S3
-- No layout changes to FileManager — just one new toolbar button
-- Pull = download from S3 + auto-import via `import_file_source()`
-- Already-imported files shown greyed out with `●` status
+### Existing Codebase Patterns
+- **CSV import**: `parse_survey_csv()` → `import_survey_csv()` handler → creates `Case` entities with `CaseAttribute(attr_type=TEXT)` for all columns
+- **Key gap**: All attributes hardcoded to `AttributeType.TEXT` — no type inference
+- **Key gap**: No merge/upsert — creates new cases, fails silently on duplicates
+- **Coordinator pattern**: `ExchangeCoordinator` wraps handlers with repo references
+- **MCP pattern**: `ExchangeTools` delegates to coordinator methods
+- **Event pattern**: Success events (e.g. `SurveyCSVImported`) and `ImportFailed` failure events
 
----
-
-## Phase 4: Presentation — ViewModel + Panel
-
-### 4A: DataStoreViewModel
-**File**: `src/contexts/storage/presentation/data_store_viewmodel.py`
-
-Follow pattern from `src/contexts/settings/presentation/viewmodels/settings_viewmodel.py`.
-
-```
-DataStoreViewModel
-├── Properties (reactive via signals)
-│   ├── is_configured: bool
-│   ├── bucket_name: str
-│   ├── files: list[RemoteFile]
-│   ├── status_message: str
-│   └── is_loading: bool
-│
-├── Actions (delegate to command handlers)
-│   ├── configure(bucket, region, prefix, remote) → OperationResult
-│   ├── scan(prefix="") → OperationResult
-│   ├── pull(key, local_path) → OperationResult
-│   └── push(local_path, dest_key) → OperationResult
-│
-├── Signals (Qt)
-│   ├── files_changed()         # after scan completes
-│   ├── status_changed(str)     # status bar updates
-│   ├── configuration_changed() # after configure
-│   └── operation_failed(str)   # error display
-│
-└── Dependencies
-    ├── store_repo: StoreRepository
-    ├── s3_scanner: S3ScannerProtocol
-    ├── dvc_gateway: DvcGatewayProtocol
-    ├── event_bus: EventBus
-    └── signal_bridge: StorageSignalBridge
-```
-
-Key behaviors:
-- On init, load existing config from `store_repo.get()`
-- Connect to `StorageSignalBridge` signals to update state reactively
-- All actions are non-blocking (run in QThread or ThreadPool)
-
-### 4B: ImportFromS3Dialog (Modal)
-**File**: `src/contexts/storage/presentation/dialogs/import_from_s3_dialog.py`
-
-Triggered by `[Import from S3]` button in FileManager toolbar.
-Uses `design_system.modal.Modal` — same pattern as import progress modal.
-
-```
-┌─ Import from Data Store ──────────────────────────────┐
-│                                                        │
-│ S3: my-bucket/project-alpha/            [Refresh]     │
-│                                                        │
-│ +==+========================+==========+==============+│
-│ |  | Name                   | Size     | Status       |│
-│ +--+------------------------+----------+--------------+│
-│ |x | interview_02.txt       | 12 KB    |  remote      |│
-│ |x | field_notes.pdf        | 45 KB    |  remote      |│
-│ |  | notes_draft.docx       | 8 KB     |  remote      |│
-│ |  | interview_01.txt       | 23 KB    |  imported    |│
-│ |  | survey.pdf             | 2.1 MB   |  imported    |│
-│ +==+========================+==========+==============+│
-│                                                        │
-│                        [Cancel]  [Pull 2 Selected]    │
-└────────────────────────────────────────────────────────┘
-```
-
-Widget structure:
-- **Header**: Shows current S3 prefix + [Refresh] button
-- **File table**: QTableWidget with checkbox column
-  - Columns: Checkbox, Name, Size, Status
-  - `remote` = available to pull (checkable)
-  - `imported` = already in Sources (greyed out, not checkable)
-  - Status determined by cross-referencing S3 files with source_repo
-- **Action buttons**: Cancel + Pull Selected (count updates dynamically)
-
-Flow:
-1. Dialog opens → calls `scan_store` to list S3 files
-2. Cross-references with `source_repo` to mark already-imported files
-3. User checks files to pull
-4. Click "Pull Selected" → for each file:
-   a. Download from S3 via `pull_file` command handler
-   b. Auto-import via `import_file_source` command handler
-   c. Update status to `imported` in dialog
-5. Dialog closes → FileManager reloads via `sources_changed` signal
-
-Follows design_system tokens (SPACING, RADIUS, TYPOGRAPHY, ColorPalette).
-
-### 4C: E2E Tests for Presentation
-**Add to**: `src/tests/e2e/test_storage_e2e.py`
-
-```python
-@allure.story("QC-047.08 Import from S3 Dialog")
-class TestImportFromS3Dialog:
-    def test_dialog_shows_remote_files_after_scan(self)
-    def test_already_imported_files_greyed_out(self)
-    def test_pull_selected_downloads_and_imports(self)
-    def test_status_updates_to_imported_after_pull(self)
-    def test_cancel_closes_dialog(self)
-```
+Sources:
+- [BigQuery Export Schema](https://support.google.com/analytics/answer/7029846?hl=en)
+- [Firebase BigQuery Export Docs](https://firebase.google.com/docs/projects/bigquery-export)
+- [Basic Queries for GA4 BigQuery](https://developers.google.com/analytics/bigquery/basic-queries)
+- [Advanced Queries for GA4 BigQuery](https://developers.google.com/analytics/bigquery/advanced-queries)
+- [GA4 Audience Queries](https://support.google.com/firebase/answer/9037342?hl=en)
 
 ---
 
-## Phase 5: Settings Integration
+## Implementation Plan (9 slices, ordered by dependency)
 
-### 5A: Add "Data Store" Tab to Settings Dialog
-**Modify**: `src/contexts/settings/presentation/dialogs/settings_dialog.py`
+### Slice 1: Type Inference for CSV Parser
+**Files:** `src/contexts/exchange/infra/csv_parser.py`
 
-Add new nav item "Data Store" to the QListWidget sidebar:
-```
-| Appearance |
-| Language   |
-| Backup     |
-| AV Coding  |
-| Data Store |  <-- new
-```
+Add a pure function `infer_attribute_type(values: list[str]) -> AttributeType` that samples column values and returns the best-fit type:
+- All numeric → `NUMBER`
+- All ISO date-like → `DATE`
+- All true/false → `BOOLEAN`
+- Otherwise → `TEXT`
 
-Stacked page content:
-```
-+----------------------------------------------+
-| S3 Configuration                             |
-|                                              |
-| Bucket Name:  [________________________]     |
-| Region:       [us-east-1            v]       |
-| Path Prefix:  [________________________]     |
-| DVC Remote:   [origin_______________]        |
-|                                              |
-| [Test Connection]     Status: Not configured |
-+----------------------------------------------+
-```
+Add `infer_column_types(parse_result: CSVParseResult) -> dict[str, AttributeType]` that runs inference across all rows per column.
 
-- [Test Connection] → calls `s3_scanner.list_files()` with limit=1
-- Apply/OK → calls `configure_store` command handler
-- No "Browse" button here — browsing happens via FileManager toolbar
+**Tests:** Unit tests for type inference (int, float, dates, booleans, mixed, empty).
 
-### 5B: SettingsViewModel Extension
-**Modify**: `src/contexts/settings/presentation/viewmodels/settings_viewmodel.py`
+### Slice 2: Case Merge Behavior in CSV Import
+**Files:** `src/contexts/exchange/core/commandHandlers/import_survey_csv.py`
 
-Add data store settings to the viewmodel:
-- `data_store_bucket: str`
-- `data_store_region: str`
-- `data_store_prefix: str`
-- `data_store_remote: str`
-- `save_data_store_settings()` → delegates to `configure_store`
-- `test_connection()` → async check via S3Scanner
+Modify `import_survey_csv()` to:
+1. Call `infer_column_types()` on parsed CSV to get typed attributes
+2. Before creating a new Case, check `case_repo.get_by_name(case_name)` for existing case
+3. If exists: update attributes (overwrite existing, add new, preserve others) via `case_repo.save_attribute()`
+4. If not: create new Case as before, but with inferred types
+5. Track `cases_created` vs `cases_updated` counts in the event
 
-### 5C: E2E Tests for Settings
-**Add to**: `src/tests/e2e/test_storage_e2e.py`
+**Requires:** Add `get_by_name(name: str) -> Case | None` to `CaseRepository` if not present.
 
+**Update events:** Modify `SurveyCSVImported` to include `cases_updated: int` field.
+
+### Slice 3: Firebase JSON Parser
+**Files (new):** `src/contexts/exchange/infra/firebase_parser.py`
+
+Parse Firebase BigQuery NDJSON export format:
+- `parse_firebase_export(text: str) -> FirebaseParseResult`
+- Handle two formats: `{"events": [...]}` (wrapped) and NDJSON (one event per line)
+- Extract `user_pseudo_id` / `user_id` as participant identifier
+- Flatten `event_params` nested records into simple key-value pairs
+- Aggregate per user:
+  - `session_count` — count of `session_start` events
+  - `total_events` — count of all events
+  - `first_seen` / `last_seen` — min/max `event_timestamp`
+  - `top_event` — most frequent event_name (excluding session_start)
+  - `platform`, `country` — most common value from device/geo
+- Return `FirebaseParseResult(participants: list[dict], columns: list[str])`
+
+Configurable aggregation: allow caller to specify which aggregations to compute via an `AggregationConfig` dataclass.
+
+**Tests:** Unit tests with sample Firebase JSON fixtures.
+
+### Slice 4: ImportFirebaseCommand and Handler
+**Files:**
+- `src/contexts/exchange/core/commands.py` — Add `ImportFirebaseCommand`
+- `src/contexts/exchange/core/commandHandlers/import_firebase.py` — New handler
+- `src/contexts/exchange/core/events.py` — Add `FirebaseImported` event
+- `src/contexts/exchange/core/failure_events.py` — Add Firebase-specific failures
+
+`ImportFirebaseCommand` fields:
 ```python
-@allure.story("QC-047.07 Settings Data Store Configuration")
-class TestSettingsDataStore:
-    def test_settings_shows_data_store_tab(self)
-    def test_configure_from_settings_dialog(self)
-    def test_test_connection_button(self)
+@dataclass(frozen=True)
+class ImportFirebaseCommand:
+    source_path: str
+    id_column: str = "user_pseudo_id"  # configurable ID mapping
+    merge: bool = True  # merge with existing cases
 ```
 
----
+Handler `import_firebase()`:
+1. Read file, detect format (JSON vs CSV)
+2. If JSON → use `parse_firebase_export()` to aggregate
+3. If CSV → use existing `parse_survey_csv()` with type inference
+4. For each participant row: create/merge Case with typed attributes
+5. Publish `FirebaseImported` event
 
-## Phase 6: Wiring in main.py + FileManager Integration
+**Failure events:**
+- `ImportFailed.firebase_invalid_json(path)`
+- `ImportFailed.firebase_no_events(path)`
+- `ImportFailed.firebase_missing_user_id(path, id_column)`
 
-### 6A: DataStoreViewModel Wiring
-**Modify**: `src/main.py` → `_wire_viewmodels()`
+### Slice 5: Wire into Coordinator and MCP Tools
+**Files:**
+- `src/contexts/exchange/presentation/coordinator.py` — Add `import_firebase()` method
+- `src/contexts/exchange/interface/mcp_tools.py` — Add `import_firebase` tool + update `import_data`
 
+Coordinator addition:
 ```python
-def _wire_viewmodels(self):
-    # ... existing wiring ...
-
-    # Storage: DataStoreViewModel
-    data_store_vm = DataStoreViewModel(
-        store_repo=self._ctx.storage_context.store_repo,
-        source_repo=self._ctx.sources_context.source_repo,  # for cross-referencing
-        s3_scanner=self._ctx.storage_context.s3_scanner,
-        dvc_gateway=self._ctx.storage_context.dvc_gateway,
-        event_bus=self._ctx.event_bus,
-        signal_bridge=self._storage_signal_bridge,
+def import_firebase(self, command: ImportFirebaseCommand) -> OperationResult:
+    from src.contexts.exchange.core.commandHandlers.import_firebase import import_firebase
+    return import_firebase(
+        command=command,
+        case_repo=self._case_repo,
+        event_bus=self._event_bus,
+        session=self._session,
     )
-    # Wire to FileManagerScreen (provides the dialog's viewmodel)
-    self._screens["file_manager"].set_data_store_viewmodel(data_store_vm)
 ```
 
-### 6B: FileManager Toolbar Integration
-**Modify**: `src/contexts/sources/presentation/screens/file_manager.py`
+MCP tool: Add `"import_firebase"` to `EXCHANGE_TOOLS` with parameters:
+- `source_path` (required) — Path to Firebase export file (JSON or CSV)
+- `id_column` (optional, default `"user_pseudo_id"`) — Column to map to case names
+- `merge` (optional, default `true`) — Whether to merge with existing cases
 
-Add `[Import from S3]` button to toolbar (next to existing `[Import Files]`):
-- Button only enabled when Data Store is configured (`data_store_vm.is_configured`)
-- Click → opens `ImportFromS3Dialog` modal
-- Dialog receives `DataStoreViewModel` for S3 operations
-- On pull completion → `import_file_source()` auto-imports → `sources_changed` signal fires
+Also update `import_data` to accept `format="firebase"`.
 
-```python
-def _on_import_from_s3_clicked(self):
-    dialog = ImportFromS3Dialog(
-        viewmodel=self._data_store_vm,
-        colors=self._colors,
-        parent=self,
-    )
-    dialog.exec()
+### Slice 6: BigQuery SQL Template
+**Files (new):** `scripts/aggregate_firebase.sql`
+
+Ready-to-use BigQuery SQL template:
+```sql
+SELECT
+  user_pseudo_id AS participant_id,
+  COUNT(DISTINCT (SELECT value.int_value FROM UNNEST(event_params) WHERE key = 'ga_session_id')) AS sessions,
+  COUNT(*) AS total_events,
+  MIN(event_timestamp) AS first_seen,
+  MAX(event_timestamp) AS last_seen,
+  APPROX_TOP_COUNT(event_name, 1)[OFFSET(0)].value AS top_event,
+  APPROX_TOP_COUNT(geo.country, 1)[OFFSET(0)].value AS country,
+  APPROX_TOP_COUNT(device.category, 1)[OFFSET(0)].value AS device_category
+FROM `YOUR_DATASET.events_*`
+WHERE _TABLE_SUFFIX BETWEEN 'YYYYMMDD' AND 'YYYYMMDD'
+GROUP BY user_pseudo_id
+ORDER BY sessions DESC
 ```
 
-**Modify**: `src/shared/presentation/organisms/file_manager_toolbar.py`
-- Add `import_from_s3_clicked` signal
-- Add `[Import from S3]` button after `[Import Files]`
+### Slice 7: Update Python Aggregation Script
+**Files:** `scripts/aggregate_firebase.py`
 
----
+Enhance the existing starter script:
+- Support both wrapped JSON (`{"events": [...]}`) and NDJSON formats
+- Add `--id-column` flag (default: `user_pseudo_id`)
+- Add `first_seen`, `last_seen`, `top_event`, `platform`, `country` columns
+- Handle `event_params` flattening (nested params → flat key-value)
+- Add engagement tier customization via `--tiers` flag
 
-## Phase 7: DVC Pipeline Template
-
-**File**: `scripts/dvc_pipeline_template.yaml`
+### Slice 8: DVC Pipeline Stage Template
+**Files:** `scripts/dvc_pipeline_template.yaml` (append Firebase stage)
 
 ```yaml
-# Template dvc.yaml for mixed-methods research workflow
-# Copy to project root and customize
-
 stages:
   aggregate-firebase:
-    cmd: python scripts/aggregate_firebase.py
+    cmd: python scripts/aggregate_firebase.py --input raw/firebase_export.json --output processed/profiles.csv
     deps:
       - raw/firebase_export.json
+      - scripts/aggregate_firebase.py
     outs:
-      - processed/participant_profiles.csv
-
-  import-profiles:
-    cmd: qualcoder import-csv processed/participant_profiles.csv
-    deps:
-      - processed/participant_profiles.csv
-
-  export-results:
-    cmd: qualcoder export coded/
-    outs:
-      - coded/codebook.txt
-      - coded/segments.csv
+      - processed/profiles.csv
 ```
 
-Also create `scripts/aggregate_firebase.py` as a starter script.
+### Slice 9: E2E Tests
+**Files (new):** `src/tests/e2e/test_firebase_import_e2e.py`
+
+Test cases with `@allure.story("QC-051.XX ...")` decorators:
+
+1. **AC #1**: Import Firebase BigQuery JSON → aggregated Case attributes
+   - Fixture: sample Firebase NDJSON with 3 users, mixed events
+   - Assert: Cases created with correct typed attributes (NUMBER for sessions, TEXT for tier)
+
+2. **AC #2**: Import pre-aggregated CSV → Case attributes with type inference
+   - Fixture: CSV with numeric/text/date columns
+   - Assert: Attributes have correct inferred types (not all TEXT)
+
+3. **AC #3**: Type auto-detection works correctly
+   - Assert: NUMBER for "12", DATE for "2026-01-15", BOOLEAN for "true", TEXT for "hello"
+
+4. **AC #4**: Configurable ID column mapping
+   - Import with `id_column="custom_id"` → cases named from that column
+
+5. **AC #5**: Merge with existing cases
+   - Create cases first, then import → attributes updated, no duplicates, existing attrs preserved
+
+6. **AC #7**: MCP tool `import_firebase` works end-to-end
+   - Call via ExchangeTools.execute() → verify result
+
+**Fixture files (new):** `src/tests/e2e/fixtures/firebase/`
+- `sample_export.json` — 3 users, ~20 events each
+- `pre_aggregated.csv` — 5 users with mixed-type columns
 
 ---
 
-## Execution Order
+## Dependency Graph
 
 ```
-Phase 4A → 4B → 5A → 5B → 6A → 6B → 4C+5C → 7
-  |         |     |     |    |     |     |       |
-  VM     Dialog  Sett  SVM  Wire  Toolbar Tests Template
+Slice 1 (type inference) ──┐
+                            ├──→ Slice 2 (merge behavior) ──┐
+Slice 3 (firebase parser) ──┤                                ├──→ Slice 4 (handler) ──→ Slice 5 (coordinator + MCP)
+                            │                                │
+                            └────────────────────────────────┘
+
+Slice 6 (SQL template) ─────── independent, can parallel with 1-3
+Slice 7 (Python script) ─────── depends on Slice 3 patterns
+Slice 8 (DVC template) ──────── independent, can parallel
+Slice 9 (E2E tests) ─────────── depends on Slices 1-5
 ```
 
-All phases can be committed incrementally. Tests (4C, 5C) run after wiring (6B) since they need the full stack.
-
-## Sub-task Updates (for backlog)
-
-After completion, mark these sub-tasks done:
-- [x] QC-047.07 - Presentation: Settings UI for S3/DVC config
-- [x] QC-047.08 - Presentation: Import from S3 dialog (browse, pull + auto-import)
-- [x] QC-047.09 - DVC pipeline template
-
-## Screenshots Needed (for DOC_COVERAGE)
-
-After UI is built, capture:
-- `import-from-s3-dialog.png` — modal with file list, checkboxes, status
-- `data-store-settings.png` — settings dialog Data Store tab
-- `import-from-s3-pulling.png` — dialog during pull (progress indicator)
+## Out of Scope (deferred)
+- **Column mapping preview UI** (QC-051.04) — Presentation layer, deferred to separate PR
+- **User documentation** (QC-051.09) — After E2E tests pass, use `docs-updater` skill
+- **Storage context integration** — QC-047 dependency for DVC pull → auto-import flow
