@@ -134,6 +134,7 @@ class SettingsDialog(QDialog):
         self._content_stack.addWidget(self._create_backup_section())
         self._content_stack.addWidget(self._create_av_coding_section())
         self._content_stack.addWidget(self._create_database_section())
+        self._content_stack.addWidget(self._create_data_store_section())
         self._content_stack.addWidget(self._create_observability_section())
 
         # Sidebar navigation (created after content stack)
@@ -209,6 +210,7 @@ class SettingsDialog(QDialog):
             ("Backup", "mdi6.backup-restore"),
             ("AV Coding", "mdi6.video"),
             ("Database", "mdi6.database"),
+            ("Data Store", "mdi6.cloud-outline"),
             ("Observability", "mdi6.chart-line"),
         ]
 
@@ -583,6 +585,158 @@ class SettingsDialog(QDialog):
 
         return widget
 
+    def _create_data_store_section(self) -> QWidget:
+        """Create the Data Store (S3) settings section."""
+        widget = QWidget()
+        layout = QVBoxLayout(widget)
+        layout.setContentsMargins(SPACING.lg, SPACING.lg, SPACING.lg, SPACING.lg)
+        layout.setSpacing(SPACING.lg)
+
+        # Header
+        ds_label = QLabel("S3 Data Store Configuration")
+        ds_label.setStyleSheet(f"""
+            color: {self._colors.text_primary};
+            font-size: {TYPOGRAPHY.text_sm}px;
+            font-weight: {TYPOGRAPHY.weight_semibold};
+        """)
+        layout.addWidget(ds_label)
+
+        desc_label = QLabel(
+            "Configure an S3 bucket as external data store for pulling "
+            "source files and pushing coded exports."
+        )
+        desc_label.setWordWrap(True)
+        desc_label.setStyleSheet(f"""
+            color: {self._colors.text_secondary};
+            font-size: {TYPOGRAPHY.text_xs}px;
+        """)
+        layout.addWidget(desc_label)
+
+        # Bucket Name
+        bucket_frame = QFrame()
+        bucket_layout = QHBoxLayout(bucket_frame)
+        bucket_layout.setContentsMargins(0, 0, 0, 0)
+        bucket_layout.setSpacing(SPACING.sm)
+
+        bucket_label = QLabel("Bucket Name:")
+        bucket_label.setStyleSheet(f"""
+            color: {self._colors.text_secondary};
+            font-size: {TYPOGRAPHY.text_sm}px;
+        """)
+        bucket_label.setFixedWidth(100)
+        bucket_layout.addWidget(bucket_label)
+
+        self._ds_bucket = QLineEdit()
+        self._ds_bucket.setPlaceholderText("my-research-bucket")
+        self._ds_bucket.setStyleSheet(self._get_input_style())
+        bucket_layout.addWidget(self._ds_bucket, 1)
+
+        layout.addWidget(bucket_frame)
+
+        # Region
+        region_frame = QFrame()
+        region_layout = QHBoxLayout(region_frame)
+        region_layout.setContentsMargins(0, 0, 0, 0)
+        region_layout.setSpacing(SPACING.sm)
+
+        region_label = QLabel("Region:")
+        region_label.setStyleSheet(f"""
+            color: {self._colors.text_secondary};
+            font-size: {TYPOGRAPHY.text_sm}px;
+        """)
+        region_label.setFixedWidth(100)
+        region_layout.addWidget(region_label)
+
+        self._ds_region = QComboBox()
+        self._ds_region.setStyleSheet(self._get_combo_style())
+        self._ds_region.setMinimumWidth(200)
+        regions = [
+            "us-east-1", "us-east-2", "us-west-1", "us-west-2",
+            "eu-west-1", "eu-west-2", "eu-central-1",
+            "ap-southeast-1", "ap-northeast-1",
+        ]
+        for r in regions:
+            self._ds_region.addItem(r, r)
+        region_layout.addWidget(self._ds_region)
+        region_layout.addStretch()
+
+        layout.addWidget(region_frame)
+
+        # Path Prefix
+        prefix_frame = QFrame()
+        prefix_layout = QHBoxLayout(prefix_frame)
+        prefix_layout.setContentsMargins(0, 0, 0, 0)
+        prefix_layout.setSpacing(SPACING.sm)
+
+        prefix_label = QLabel("Path Prefix:")
+        prefix_label.setStyleSheet(f"""
+            color: {self._colors.text_secondary};
+            font-size: {TYPOGRAPHY.text_sm}px;
+        """)
+        prefix_label.setFixedWidth(100)
+        prefix_layout.addWidget(prefix_label)
+
+        self._ds_prefix = QLineEdit()
+        self._ds_prefix.setPlaceholderText("project-alpha/")
+        self._ds_prefix.setStyleSheet(self._get_input_style())
+        prefix_layout.addWidget(self._ds_prefix, 1)
+
+        layout.addWidget(prefix_frame)
+
+        # DVC Remote Name
+        remote_frame = QFrame()
+        remote_layout = QHBoxLayout(remote_frame)
+        remote_layout.setContentsMargins(0, 0, 0, 0)
+        remote_layout.setSpacing(SPACING.sm)
+
+        remote_label = QLabel("DVC Remote:")
+        remote_label.setStyleSheet(f"""
+            color: {self._colors.text_secondary};
+            font-size: {TYPOGRAPHY.text_sm}px;
+        """)
+        remote_label.setFixedWidth(100)
+        remote_layout.addWidget(remote_label)
+
+        self._ds_remote = QLineEdit()
+        self._ds_remote.setPlaceholderText("origin")
+        self._ds_remote.setText("origin")
+        self._ds_remote.setStyleSheet(self._get_input_style())
+        remote_layout.addWidget(self._ds_remote, 1)
+
+        layout.addWidget(remote_frame)
+
+        # Test Connection + Status
+        test_frame = QFrame()
+        test_layout = QHBoxLayout(test_frame)
+        test_layout.setContentsMargins(0, 0, 0, 0)
+        test_layout.setSpacing(SPACING.md)
+
+        self._ds_test_btn = QPushButton("Test Connection")
+        self._ds_test_btn.setCursor(Qt.CursorShape.PointingHandCursor)
+        self._ds_test_btn.setStyleSheet(self._get_button_style())
+        self._ds_test_btn.clicked.connect(self._on_test_data_store)
+        test_layout.addWidget(self._ds_test_btn)
+
+        self._ds_save_btn = QPushButton("Save")
+        self._ds_save_btn.setCursor(Qt.CursorShape.PointingHandCursor)
+        self._ds_save_btn.setStyleSheet(self._get_primary_button_style())
+        self._ds_save_btn.clicked.connect(self._on_save_data_store)
+        test_layout.addWidget(self._ds_save_btn)
+
+        self._ds_status = QLabel("Not configured")
+        self._ds_status.setStyleSheet(f"""
+            color: {self._colors.text_secondary};
+            font-size: {TYPOGRAPHY.text_xs}px;
+        """)
+        test_layout.addWidget(self._ds_status)
+        test_layout.addStretch()
+
+        layout.addWidget(test_frame)
+
+        layout.addStretch()
+
+        return widget
+
     def _create_observability_section(self) -> QWidget:
         """Create the Observability settings section."""
         widget = QWidget()
@@ -761,6 +915,22 @@ class SettingsDialog(QDialog):
         self._file_logging_cb.blockSignals(False)
         self._telemetry_cb.blockSignals(False)
 
+        # Data Store (load from DataStoreViewModel if available)
+        if hasattr(self._viewmodel, "get_data_store_config"):
+            config = self._viewmodel.get_data_store_config()
+            if config:
+                self._ds_bucket.setText(config.get("bucket_name", ""))
+                region_idx = self._ds_region.findData(config.get("region", "us-east-1"))
+                if region_idx >= 0:
+                    self._ds_region.setCurrentIndex(region_idx)
+                self._ds_prefix.setText(config.get("prefix", ""))
+                self._ds_remote.setText(config.get("dvc_remote_name", "origin"))
+                self._ds_status.setText("Configured")
+                self._ds_status.setStyleSheet(f"""
+                    color: {self._colors.success};
+                    font-size: {TYPOGRAPHY.text_xs}px;
+                """)
+
     # =========================================================================
     # Event Handlers
     # =========================================================================
@@ -861,6 +1031,66 @@ class SettingsDialog(QDialog):
             log_level, enable_file_logging, enable_telemetry
         )
         self.settings_changed.emit()
+
+    def _on_test_data_store(self) -> None:
+        """Handle test connection button for data store."""
+        if not hasattr(self._viewmodel, "test_data_store_connection"):
+            self._ds_status.setText("Not available (no project open)")
+            self._ds_status.setStyleSheet(f"""
+                color: {self._colors.warning};
+                font-size: {TYPOGRAPHY.text_xs}px;
+            """)
+            return
+
+        success = self._viewmodel.test_data_store_connection()
+        if success:
+            self._ds_status.setText("Connected")
+            self._ds_status.setStyleSheet(f"""
+                color: {self._colors.success};
+                font-size: {TYPOGRAPHY.text_xs}px;
+            """)
+        else:
+            error = self._viewmodel.data_store_last_error or "Connection failed"
+            self._ds_status.setText(error)
+            self._ds_status.setStyleSheet(f"""
+                color: {self._colors.error};
+                font-size: {TYPOGRAPHY.text_xs}px;
+            """)
+
+    def _on_save_data_store(self) -> None:
+        """Handle save button for data store configuration."""
+        if not hasattr(self._viewmodel, "configure_data_store"):
+            self._ds_status.setText("Not available (no project open)")
+            return
+
+        bucket = self._ds_bucket.text().strip()
+        region = self._ds_region.currentData() or "us-east-1"
+        prefix = self._ds_prefix.text().strip()
+        remote = self._ds_remote.text().strip() or "origin"
+
+        if not bucket:
+            self._ds_status.setText("Bucket name is required")
+            self._ds_status.setStyleSheet(f"""
+                color: {self._colors.error};
+                font-size: {TYPOGRAPHY.text_xs}px;
+            """)
+            return
+
+        success = self._viewmodel.configure_data_store(bucket, region, prefix, remote)
+        if success:
+            self._ds_status.setText("Configured")
+            self._ds_status.setStyleSheet(f"""
+                color: {self._colors.success};
+                font-size: {TYPOGRAPHY.text_xs}px;
+            """)
+            self.settings_changed.emit()
+        else:
+            error = self._viewmodel.data_store_last_error or "Configuration failed"
+            self._ds_status.setText(error)
+            self._ds_status.setStyleSheet(f"""
+                color: {self._colors.error};
+                font-size: {TYPOGRAPHY.text_xs}px;
+            """)
 
     def _on_ok(self) -> None:
         """Handle OK button click."""

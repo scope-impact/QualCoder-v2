@@ -430,8 +430,230 @@ class TestStorageContextWiring:
 
 
 # =============================================================================
+# DataStoreViewModel E2E Tests
+# =============================================================================
+
+
+@allure.story("QC-047.08 Import from S3 Dialog")
+class TestDataStoreViewModel:
+    """E2E tests for DataStoreViewModel — configure, scan, cross-reference."""
+
+    @allure.title("AC #8.1: ViewModel reports is_configured correctly")
+    def test_is_configured_false_then_true(self, mock_s3):
+        from src.contexts.storage.core.commandHandlers.configure_store import (
+            configure_store,
+        )
+        from src.contexts.storage.core.commands import ConfigureStoreCommand
+        from src.contexts.storage.presentation.viewmodels.data_store_viewmodel import (
+            DataStoreViewModel,
+        )
+
+        store_repo = SimpleStoreRepo()
+        dvc = MockDvcGateway()
+        event_bus = SimpleEventBus()
+        from src.contexts.storage.infra.s3_scanner import S3Scanner
+
+        scanner = S3Scanner(client=mock_s3)
+
+        vm = DataStoreViewModel(
+            store_repo=store_repo,
+            source_repo=_MockSourceRepo([]),
+            s3_scanner=scanner,
+            dvc_gateway=dvc,
+            event_bus=event_bus,
+        )
+
+        with allure.step("Initially not configured"):
+            assert vm.is_configured is False
+            assert vm.get_config() is None
+
+        with allure.step("Configure store"):
+            configure_store(
+                command=ConfigureStoreCommand(
+                    bucket_name="research-data", region="us-east-1"
+                ),
+                store_repo=store_repo,
+                dvc_gateway=dvc,
+                event_bus=event_bus,
+            )
+
+        with allure.step("Now configured"):
+            assert vm.is_configured is True
+            config = vm.get_config()
+            assert config["bucket_name"] == "research-data"
+
+    @allure.title("AC #8.2: Scan returns remote files")
+    def test_scan_returns_remote_files(self, mock_s3):
+        from src.contexts.storage.core.commandHandlers.configure_store import (
+            configure_store,
+        )
+        from src.contexts.storage.core.commands import ConfigureStoreCommand
+        from src.contexts.storage.presentation.viewmodels.data_store_viewmodel import (
+            DataStoreViewModel,
+        )
+
+        store_repo = SimpleStoreRepo()
+        dvc = MockDvcGateway()
+        event_bus = SimpleEventBus()
+        from src.contexts.storage.infra.s3_scanner import S3Scanner
+
+        scanner = S3Scanner(client=mock_s3)
+
+        configure_store(
+            command=ConfigureStoreCommand(
+                bucket_name="research-data", region="us-east-1"
+            ),
+            store_repo=store_repo,
+            dvc_gateway=dvc,
+            event_bus=event_bus,
+        )
+
+        vm = DataStoreViewModel(
+            store_repo=store_repo,
+            source_repo=_MockSourceRepo([]),
+            s3_scanner=scanner,
+            dvc_gateway=dvc,
+            event_bus=event_bus,
+        )
+
+        with allure.step("Scan returns files"):
+            files = vm.scan()
+            assert len(files) == 3  # 3 seeded files in mock_s3
+
+    @allure.title("AC #8.3: Already-imported files are identified")
+    def test_imported_filenames_cross_reference(self, mock_s3):
+        from src.contexts.storage.presentation.viewmodels.data_store_viewmodel import (
+            DataStoreViewModel,
+        )
+
+        store_repo = SimpleStoreRepo()
+        dvc = MockDvcGateway()
+        event_bus = SimpleEventBus()
+        from src.contexts.storage.infra.s3_scanner import S3Scanner
+
+        scanner = S3Scanner(client=mock_s3)
+
+        # Simulate that interview_001.txt is already imported
+        existing_sources = [_MockSource("interview_001.txt")]
+        vm = DataStoreViewModel(
+            store_repo=store_repo,
+            source_repo=_MockSourceRepo(existing_sources),
+            s3_scanner=scanner,
+            dvc_gateway=dvc,
+            event_bus=event_bus,
+        )
+
+        with allure.step("Cross-reference identifies imported files"):
+            imported = vm.get_imported_filenames()
+            assert "interview_001.txt" in imported
+            assert "firebase_export.json" not in imported
+
+
+# =============================================================================
+# Settings Data Store Tab E2E Tests
+# =============================================================================
+
+
+@allure.story("QC-047.07 Settings Data Store Configuration")
+class TestSettingsDataStoreConfig:
+    """E2E tests for SettingsViewModel data store methods."""
+
+    @allure.title("AC #7.1: SettingsViewModel exposes data store config")
+    def test_settings_viewmodel_data_store_config(self, mock_s3):
+        from src.contexts.storage.core.commandHandlers.configure_store import (
+            configure_store,
+        )
+        from src.contexts.storage.core.commands import ConfigureStoreCommand
+        from src.contexts.storage.presentation.viewmodels.data_store_viewmodel import (
+            DataStoreViewModel,
+        )
+
+        store_repo = SimpleStoreRepo()
+        dvc = MockDvcGateway()
+        event_bus = SimpleEventBus()
+        from src.contexts.storage.infra.s3_scanner import S3Scanner
+
+        scanner = S3Scanner(client=mock_s3)
+
+        # Configure store first
+        configure_store(
+            command=ConfigureStoreCommand(
+                bucket_name="research-data",
+                region="us-east-1",
+                prefix="project-alpha/",
+            ),
+            store_repo=store_repo,
+            dvc_gateway=dvc,
+            event_bus=event_bus,
+        )
+
+        data_store_vm = DataStoreViewModel(
+            store_repo=store_repo,
+            source_repo=_MockSourceRepo([]),
+            s3_scanner=scanner,
+            dvc_gateway=dvc,
+            event_bus=event_bus,
+        )
+
+        # Wire into SettingsViewModel
+        from src.contexts.settings.infra.user_settings_repository import (
+            UserSettingsRepository,
+        )
+        from src.contexts.settings.presentation.viewmodels.settings_viewmodel import (
+            SettingsViewModel,
+        )
+        from src.shared.presentation.services.settings_service import SettingsService
+
+        settings_repo = UserSettingsRepository()
+        settings_service = SettingsService(settings_repo, event_bus=event_bus)
+        settings_vm = SettingsViewModel(settings_provider=settings_service)
+        settings_vm.set_data_store_viewmodel(data_store_vm)
+
+        with allure.step("Settings VM returns data store config"):
+            config = settings_vm.get_data_store_config()
+            assert config is not None
+            assert config["bucket_name"] == "research-data"
+            assert config["prefix"] == "project-alpha/"
+
+    @allure.title("AC #7.2: SettingsViewModel returns None when no data store")
+    def test_settings_viewmodel_no_data_store(self):
+        from src.contexts.settings.infra.user_settings_repository import (
+            UserSettingsRepository,
+        )
+        from src.contexts.settings.presentation.viewmodels.settings_viewmodel import (
+            SettingsViewModel,
+        )
+        from src.shared.presentation.services.settings_service import SettingsService
+
+        event_bus = SimpleEventBus()
+        settings_repo = UserSettingsRepository()
+        settings_service = SettingsService(settings_repo, event_bus=event_bus)
+        settings_vm = SettingsViewModel(settings_provider=settings_service)
+
+        with allure.step("No data store VM wired"):
+            assert settings_vm.get_data_store_config() is None
+
+
+# =============================================================================
 # Test Helpers
 # =============================================================================
+
+
+class _MockSource:
+    """Minimal source stub for cross-referencing."""
+
+    def __init__(self, name: str):
+        self.name = name
+
+
+class _MockSourceRepo:
+    """Minimal source repository stub."""
+
+    def __init__(self, sources: list):
+        self._sources = sources
+
+    def get_all(self) -> list:
+        return self._sources
 
 
 class _MockStorageContext:

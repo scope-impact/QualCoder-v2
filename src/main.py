@@ -32,6 +32,9 @@ from src.contexts.projects.presentation import (
     VersionHistoryScreen,
 )
 from src.contexts.sources.presentation import FileManagerScreen, FileManagerViewModel
+from src.contexts.storage.presentation.viewmodels.data_store_viewmodel import (
+    DataStoreViewModel,
+)
 from src.shared.common.types import SourceId
 from src.shared.infra.app_context import create_app_context
 from src.shared.infra.logging_config import configure_logging
@@ -149,6 +152,7 @@ class QualCoderApp:
         dialog = self._dialog_service.show_settings_dialog(
             parent=self._shell,
             colors=self._shell._colors,
+            data_store_vm=getattr(self, "_data_store_vm", None),
         )
         # Live UI updates: re-apply theme/font after dialog closes
         if dialog:
@@ -218,6 +222,20 @@ class QualCoderApp:
         )
         exchange_viewmodel = ExchangeViewModel(coordinator=exchange_coordinator)
         self._screens["files"].set_exchange_viewmodel(exchange_viewmodel)
+
+        # Create DataStoreViewModel for S3 import/push
+        if self._ctx.storage_context:
+            data_store_vm = DataStoreViewModel(
+                store_repo=self._ctx.storage_context.store_repo,
+                source_repo=self._ctx.sources_context.source_repo,
+                s3_scanner=self._ctx.storage_context.s3_scanner,
+                dvc_gateway=self._ctx.storage_context.dvc_gateway,
+                event_bus=self._ctx.event_bus,
+                state=self._ctx.state,
+                session=self._ctx.session,
+            )
+            self._screens["files"].set_data_store_viewmodel(data_store_vm)
+            self._data_store_vm = data_store_vm
 
         # Create TextCodingViewModel with CodingCoordinator
         if self._ctx.coding_context:

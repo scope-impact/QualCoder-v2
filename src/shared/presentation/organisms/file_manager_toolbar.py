@@ -49,6 +49,8 @@ class FileManagerToolbar(QFrame):
     export_clicked = Signal()
     search_changed = Signal(str)
 
+    import_from_s3_clicked = Signal()
+
     # Exchange signals
     import_code_list = Signal()
     import_csv = Signal()
@@ -87,6 +89,10 @@ class FileManagerToolbar(QFrame):
         )
         self._import_menu = QMenu(self._import_btn)
         self._import_menu.addAction("Source Files...", self.import_clicked.emit)
+        self._import_from_s3_action = self._import_menu.addAction(
+            "From S3 Data Store...", self.import_from_s3_clicked.emit
+        )
+        self._import_from_s3_action.setEnabled(False)
         self._import_menu.addSeparator()
         self._import_menu.addAction("Code List (.txt)...", self.import_code_list.emit)
         self._import_menu.addAction("Survey CSV (.csv)...", self.import_csv.emit)
@@ -179,6 +185,10 @@ class FileManagerToolbar(QFrame):
     def set_export_enabled(self, enabled: bool):
         """Enable or disable the export button."""
         self._export_btn.setEnabled(enabled)
+
+    def set_import_from_s3_enabled(self, enabled: bool):
+        """Enable or disable the Import from S3 menu item."""
+        self._import_from_s3_action.setEnabled(enabled)
 
 
 class EmptyState(QFrame):

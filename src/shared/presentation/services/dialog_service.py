@@ -179,12 +179,13 @@ class DialogService:
         colors: Any = None,
         config_path: Path | None = None,
         blocking: bool = True,
+        data_store_vm: Any = None,
     ) -> Any:
         """
         Show the settings dialog.
 
         Displays the application settings dialog allowing the user to configure
-        theme, font, language, backup, and AV coding settings.
+        theme, font, language, backup, AV coding, and data store settings.
 
         Args:
             parent: Parent widget for the dialog (optional)
@@ -194,6 +195,7 @@ class DialogService:
                         instead of using the one from AppContext.
             blocking: If True, blocks until dialog is closed (exec).
                      If False, shows dialog non-blocking (show).
+            data_store_vm: DataStoreViewModel for S3 configuration (optional).
 
         Returns:
             The SettingsDialog instance (useful for testing)
@@ -215,6 +217,11 @@ class DialogService:
             )
 
         viewmodel = SettingsViewModel(settings_provider=settings_service)
+
+        # Wire DataStoreViewModel if available (requires open project)
+        if data_store_vm is not None:
+            viewmodel.set_data_store_viewmodel(data_store_vm)
+
         dialog = SettingsDialog(
             viewmodel=viewmodel,
             colors=colors,

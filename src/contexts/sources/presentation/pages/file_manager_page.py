@@ -85,6 +85,7 @@ class FileManagerPage(QWidget):
 
     # Toolbar actions
     import_clicked = Signal()
+    import_from_s3_clicked = Signal()
     link_clicked = Signal()
     create_text_clicked = Signal()
     export_clicked = Signal()
@@ -201,6 +202,7 @@ class FileManagerPage(QWidget):
         """Connect internal signals."""
         # Toolbar signals
         self._toolbar.import_clicked.connect(self.import_clicked.emit)
+        self._toolbar.import_from_s3_clicked.connect(self.import_from_s3_clicked.emit)
         self._toolbar.link_clicked.connect(self.link_clicked.emit)
         self._toolbar.create_text_clicked.connect(self.create_text_clicked.emit)
         self._toolbar.export_clicked.connect(self.export_clicked.emit)
@@ -355,6 +357,10 @@ class FileManagerPage(QWidget):
     def get_search_text(self) -> str:
         """Get the current search text."""
         return self._current_search
+
+    def set_import_from_s3_enabled(self, enabled: bool) -> None:
+        """Enable or disable the Import from S3 menu item."""
+        self._toolbar.set_import_from_s3_enabled(enabled)
 
     # =========================================================================
     # Public API - Accessors

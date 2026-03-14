@@ -297,6 +297,45 @@ class SettingsViewModel:
         return result.is_success
 
     # =========================================================================
+    # Data Store (S3) — delegates to DataStoreViewModel when wired
+    # =========================================================================
+
+    def set_data_store_viewmodel(self, data_store_vm) -> None:
+        """Wire the DataStoreViewModel for S3 configuration."""
+        self._data_store_vm = data_store_vm
+
+    def get_data_store_config(self) -> dict | None:
+        """Get current data store configuration."""
+        if not hasattr(self, "_data_store_vm") or self._data_store_vm is None:
+            return None
+        return self._data_store_vm.get_config()
+
+    def configure_data_store(
+        self,
+        bucket_name: str,
+        region: str,
+        prefix: str = "",
+        dvc_remote_name: str = "origin",
+    ) -> bool:
+        """Configure the S3 data store."""
+        if not hasattr(self, "_data_store_vm") or self._data_store_vm is None:
+            return False
+        return self._data_store_vm.configure(bucket_name, region, prefix, dvc_remote_name)
+
+    def test_data_store_connection(self) -> bool:
+        """Test S3 connectivity."""
+        if not hasattr(self, "_data_store_vm") or self._data_store_vm is None:
+            return False
+        return self._data_store_vm.test_connection()
+
+    @property
+    def data_store_last_error(self) -> str | None:
+        """Get last data store error."""
+        if not hasattr(self, "_data_store_vm") or self._data_store_vm is None:
+            return None
+        return self._data_store_vm.last_error
+
+    # =========================================================================
     # Validation Helpers
     # =========================================================================
 

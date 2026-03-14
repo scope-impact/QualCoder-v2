@@ -110,6 +110,7 @@ class FileManagerScreen(QWidget):
         self._import_progress = None
         self._import_progress_bar = None
         self._exchange_vm: ExchangeViewModel | None = None
+        self._data_store_vm = None
 
         self._setup_ui()
         self._connect_signals()
@@ -132,6 +133,7 @@ class FileManagerScreen(QWidget):
         """Connect page signals to screen handlers."""
         # Toolbar actions
         self._page.import_clicked.connect(self._on_import_clicked)
+        self._page.import_from_s3_clicked.connect(self._on_import_from_s3_clicked)
         self._page.link_clicked.connect(self._on_link_clicked)
         self._page.create_text_clicked.connect(self._on_create_text_clicked)
         self._page.export_clicked.connect(self._on_export_clicked)
@@ -337,6 +339,50 @@ class FileManagerScreen(QWidget):
                 "Import Warning",
                 f"{failed} file(s) could not be imported.\nSee log for details.",
             )
+
+    def _on_import_from_s3_clicked(self):
+        """Handle import from S3 data store button click."""
+        if not self._data_store_vm:
+            QMessageBox.information(
+                self,
+                "Data Store",
+                "No data store configured.\n\nGo to Settings > Data Store to configure an S3 bucket.",
+            )
+            return
+
+        if not self._data_store_vm.is_configured:
+            QMessageBox.information(
+                self,
+                "Data Store",
+                "Data store is not configured.\n\nGo to Settings > Data Store to configure an S3 bucket.",
+            )
+            return
+
+        from src.contexts.storage.presentation.dialogs.import_from_s3_dialog import (
+            ImportFromS3Dialog,
+        )
+
+        # Use project path as local download directory
+        local_dir = ""
+        if self._viewmodel:
+            state = getattr(self._viewmodel, "_state", None)
+            if state and hasattr(state, "project") and state.project:
+                local_dir = str(state.project.path)
+
+        if not local_dir:
+            local_dir = QFileDialog.getExistingDirectory(
+                self, "Select Download Directory"
+            )
+            if not local_dir:
+                return
+
+        dialog = ImportFromS3Dialog(
+            viewmodel=self._data_store_vm,
+            local_dir=local_dir,
+            colors=self._colors,
+            parent=self,
+        )
+        dialog.exec()
 
     def _on_link_clicked(self):
         """Handle link external files button click."""
@@ -611,6 +657,12 @@ class FileManagerScreen(QWidget):
     def set_exchange_viewmodel(self, exchange_vm: ExchangeViewModel) -> None:
         """Set the exchange viewmodel for import/export operations."""
         self._exchange_vm = exchange_vm
+
+    def set_data_store_viewmodel(self, data_store_vm) -> None:
+        """Set the data store viewmodel for S3 import operations."""
+        self._data_store_vm = data_store_vm
+        # Enable the Import from S3 menu item if store is configured
+        self._page.set_import_from_s3_enabled(data_store_vm.is_configured)
 
     # =========================================================================
     # Exchange Import/Export Handlers
