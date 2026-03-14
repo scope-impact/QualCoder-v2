@@ -111,7 +111,7 @@ move_source_to_folder_tool = ToolDefinition(
         ToolParameter(
             name="folder_id",
             type="string",
-            description="Target folder ID. Use null or 0 for root.",
+            description="Target folder ID. Omit or use 0 for root.",
             required=False,
             default=None,
         ),

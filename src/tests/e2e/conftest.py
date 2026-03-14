@@ -188,6 +188,7 @@ def _start_mcp_server_in_thread(mcp_server, port: int):
 
     loop = asyncio.new_event_loop()
     ready = threading.Event()
+    startup_error: list[Exception] = []
 
     def _run():
         asyncio.set_event_loop(loop)
@@ -203,7 +204,11 @@ def _start_mcp_server_in_thread(mcp_server, port: int):
                         return
                 except (ConnectionRefusedError, OSError):
                     await asyncio.sleep(0.05)
-            ready.set()  # Signal even on failure so we don't hang
+            # Port never opened — record the failure (Copilot review #2)
+            startup_error.append(
+                RuntimeError(f"MCP server failed to start on port {port} after 5s")
+            )
+            ready.set()
 
         loop.run_until_complete(_serve_and_signal())
         # Keep the loop running so the server stays alive
@@ -212,6 +217,8 @@ def _start_mcp_server_in_thread(mcp_server, port: int):
     thread = threading.Thread(target=_run, daemon=True)
     thread.start()
     ready.wait(timeout=10)
+    if startup_error:
+        raise startup_error[0]
     return thread, loop
 
 
@@ -247,9 +254,10 @@ def mcp_server(app_context):
 
     yield client
 
-    # Cleanup
+    # Cleanup — schedule stop on the server's own event loop to avoid
+    # cross-thread asyncio.Event access (Copilot review #1)
     client.close()
-    server.stop()
+    loop.call_soon_threadsafe(server.stop)
     loop.call_soon_threadsafe(loop.stop)
     thread.join(timeout=5)
     loop.close()

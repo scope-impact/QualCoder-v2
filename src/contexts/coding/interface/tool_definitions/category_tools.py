@@ -29,7 +29,7 @@ CATEGORY_TOOLS = (
         description=(
             "Update or set a code's memo (description/definition). "
             "Use for codebook definitions, inclusion/exclusion criteria, "
-            "or analytical notes. Pass null to clear the memo."
+            "or analytical notes. Omit the memo parameter to clear it."
         ),
         parameters=(
             ToolParameter(
@@ -41,7 +41,7 @@ CATEGORY_TOOLS = (
             ToolParameter(
                 name="memo",
                 type="string",
-                description="New memo text for the code. Use null to clear.",
+                description="New memo text for the code. Omit to clear.",
                 required=False,
             ),
         ),
@@ -78,7 +78,7 @@ CATEGORY_TOOLS = (
         name="move_code_to_category",
         description=(
             "Move a code into a category (or uncategorize it). "
-            "Pass category_id=null to remove from current category. "
+            "Omit category_id to remove from current category. "
             "Use for organizing codes under themes."
         ),
         parameters=(
@@ -91,7 +91,7 @@ CATEGORY_TOOLS = (
             ToolParameter(
                 name="category_id",
                 type="string",
-                description="ID of target category, or null to uncategorize.",
+                description="ID of target category. Omit to uncategorize.",
                 required=False,
             ),
         ),
