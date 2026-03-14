@@ -1,10 +1,10 @@
 ---
 id: QC-050
 title: Remove Convex Sync Infrastructure
-status: To Do
-assignee: []
+status: Done
+assignee: ['@myself']
 created_date: '2026-03-13'
-updated_date: '2026-03-13'
+updated_date: '2026-03-14'
 labels: [infrastructure, refactor, P1, tech-debt]
 dependencies: []
 ---
@@ -19,22 +19,22 @@ QualCoder v2's sync story shifts from real-time cloud database sync (Convex) to 
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 Remove `src/shared/infra/convex/` (ConvexClient)
-- [ ] #2 Remove `src/shared/infra/sync/` (SyncEngine, outbox, id_map)
-- [ ] #3 Remove `src/shared/core/sync/` (sync entities, events, derivers, invariants, commands)
-- [ ] #4 Remove `src/shared/infra/app_context/sync_context.py`
-- [ ] #5 Remove `src/shared/infra/signal_bridge/sync.py`
-- [ ] #6 Remove `src/shared/presentation/molecules/sync_status_button.py`
-- [ ] #7 Remove `src/contexts/cases/infra/convex_repository.py`
-- [ ] #8 Remove `src/contexts/settings/interface/cloud_sync_mcp_tools.py`
-- [ ] #9 Remove `convex/` directory (schema.ts, all table files, tsconfig)
-- [ ] #10 Remove `docker-compose.yml` Convex backend service (if only used for Convex)
-- [ ] #11 Remove cloud sync UI from Settings dialog (checkbox, URL field)
-- [ ] #12 Remove `BackendConfig.cloud_sync_enabled` and `convex_url` from settings entities
-- [ ] #13 Remove `src/tests/e2e/test_cloud_sync_e2e.py`
-- [ ] #14 Remove Convex dependencies from `pyproject.toml` / `requirements.txt`
-- [ ] #15 No remaining references to "convex" or "cloud_sync" in codebase (grep clean)
-- [ ] #16 All existing tests pass after removal (`make test-all`)
+- [x] #1 Remove `src/shared/infra/convex/` (ConvexClient)
+- [x] #2 Remove `src/shared/infra/sync/` (SyncEngine, outbox, id_map)
+- [x] #3 Remove `src/shared/core/sync/` (sync entities, events, derivers, invariants, commands)
+- [x] #4 Remove `src/shared/infra/app_context/sync_context.py`
+- [x] #5 Remove `src/shared/infra/signal_bridge/sync.py`
+- [x] #6 Remove `src/shared/presentation/molecules/sync_status_button.py`
+- [x] #7 Remove `src/contexts/cases/infra/convex_repository.py`
+- [x] #8 Remove `src/contexts/settings/interface/cloud_sync_mcp_tools.py`
+- [x] #9 Remove `convex/` directory (schema.ts, all table files, tsconfig)
+- [x] #10 Remove `docker-compose.yml` Convex backend service (if only used for Convex)
+- [x] #11 Remove cloud sync UI from Settings dialog (checkbox, URL field)
+- [x] #12 Remove `BackendConfig.cloud_sync_enabled` and `convex_url` from settings entities
+- [x] #13 Remove `src/tests/e2e/test_cloud_sync_e2e.py`
+- [x] #14 Remove Convex dependencies from `pyproject.toml` / `requirements.txt`
+- [x] #15 No remaining references to "convex" or "cloud_sync" in codebase (grep clean)
+- [x] #16 All existing tests pass after removal (`make test-all`)
 <!-- AC:END -->
 
 ## Implementation Notes
@@ -89,9 +89,9 @@ docker-compose.yml (review — may have other services)
 
 ## Sub-tasks
 
-- [ ] QC-050.01 - Remove Convex backend (`convex/`, docker-compose)
-- [ ] QC-050.02 - Remove sync infrastructure (`src/shared/infra/sync/`, `src/shared/core/sync/`)
-- [ ] QC-050.03 - Remove Convex client and context-specific adapters
-- [ ] QC-050.04 - Remove cloud sync UI and settings
-- [ ] QC-050.05 - Clean up dependencies and documentation
-- [ ] QC-050.06 - Verify all tests pass
+- [x] QC-050.01 - Remove Convex backend (`convex/`, docker-compose)
+- [x] QC-050.02 - Remove sync infrastructure (`src/shared/infra/sync/`, `src/shared/core/sync/`)
+- [x] QC-050.03 - Remove Convex client and context-specific adapters
+- [x] QC-050.04 - Remove cloud sync UI and settings
+- [x] QC-050.05 - Clean up dependencies and documentation
+- [x] QC-050.06 - Verify all tests pass
