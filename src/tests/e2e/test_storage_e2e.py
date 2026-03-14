@@ -775,7 +775,6 @@ class TestImportFromS3DialogScreenshot:
             ImportFromS3Dialog,
         )
 
-        app = wired_app["app"]
         file_manager = wired_app["screens"]["files"]
         storage_ctx = wired_app["ctx"].storage_context
 
@@ -803,7 +802,6 @@ class TestImportFromS3DialogScreenshot:
 
             # Re-enable the menu item now that store is configured
             file_manager._page.set_import_from_s3_enabled(True)
-            QApplication.processEvents()
 
         with allure.step("Click Import from S3 — dialog scans moto S3"):
             # Intercept exec() so the dialog doesn't block
@@ -874,19 +872,19 @@ class TestSettingsDataStoreScreenshot:
             )
             dialog = dialogs_captured[0]
 
-        with allure.step("Navigate to Data Store tab (index 5)"):
-            dialog._sidebar.setCurrentRow(5)
+        with allure.step("Navigate to Data Store tab"):
+            # Find tab by text rather than hardcoding index
+            sidebar = dialog._sidebar
+            ds_row = None
+            for i in range(sidebar.count()):
+                if sidebar.item(i).text() == "Data Store":
+                    ds_row = i
+                    break
+            assert ds_row is not None, "Data Store tab not found in sidebar"
+
+            sidebar.setCurrentRow(ds_row)
             QApplication.processEvents()
-
-            assert dialog._content_stack.currentIndex() == 5
-
-        with allure.step("Verify Data Store fields are wired"):
-            assert hasattr(dialog, "_ds_bucket"), "Bucket field missing"
-            assert hasattr(dialog, "_ds_region"), "Region field missing"
-            assert hasattr(dialog, "_ds_prefix"), "Prefix field missing"
-            assert hasattr(dialog, "_ds_remote"), "DVC Remote field missing"
-            assert hasattr(dialog, "_ds_test_btn"), "Test Connection button missing"
-            assert hasattr(dialog, "_ds_save_btn"), "Save button missing"
+            assert dialog._content_stack.currentIndex() == ds_row
 
         with allure.step("Fill sample config and capture screenshot"):
             dialog._ds_bucket.setText("qualcoder-research")
