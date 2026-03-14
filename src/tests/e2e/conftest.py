@@ -252,6 +252,7 @@ def mcp_server(app_context):
     server.stop()
     loop.call_soon_threadsafe(loop.stop)
     thread.join(timeout=5)
+    loop.close()
 
 
 # =============================================================================
