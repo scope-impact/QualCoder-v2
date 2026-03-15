@@ -289,6 +289,211 @@ All images in `docs/user-manual/images/`:
 
 ---
 
+## Backlog Dependencies (ASCII)
+
+```
+Legend: [x] Done  [~] In Progress  [ ] To Do  ──> depends on
+
+═══════════════════════════════════════════════════════════════════════════════
+                        QualCoder v2 Backlog Dependencies
+═══════════════════════════════════════════════════════════════════════════════
+
+QC-026 [ ] Open & Navigate Project
+├── .01 [ ] Open Existing Project
+├── .02 [ ] Create New Project
+├── .03 [ ] View Source List
+├── .04 [ ] Switch Between Screens
+├── .05 [ ] Get Project Context
+├── .06 [ ] Navigate to Source
+└── .07 [x] Agent Open/Close Project
+
+QC-027 [ ] Manage Sources
+├── .01 [ ] Import Text Document
+├── .02 [ ] Import PDF Document
+├── .03 [ ] Import Image Files ·······················╮
+├── .04 [ ] Import Audio Video Files ··········╮      │
+├── .05 [ ] Organize Sources                   │      │
+├── .06 [ ] View Source Metadata               │      │
+├── .07 [ ] Delete Source                      │      │
+├── .08 [ ] List Sources                       │      │
+├── .09 [ ] Read Source Content                │      │
+├── .10 [ ] Extract Source Metadata            │      │
+├── .11 [ ] Import Folder (Bulk Import)        │      │
+├── .12 [x] Agent Add Text Source              │      │
+├── .13 [x] Agent Manage Folders               │      │
+├── .14 [x] Agent Remove Source                │      │
+└── .15 [x] Agent Import File Source           │      │
+                                               │      │
+QC-028 [~] Manage Codes                        │      │
+├── .01 [x] Create New Code ···········╮       │      │
+├── .02 [x] Create Code Category ······│──╮    │      │
+├── .03 [x] Edit Code Properties ······│──│─╮  │      │
+├── .04 [x] Merge Codes ···············│──│─│  │      │
+├── .05 [x] Delete Code                │  │ │  │      │
+├── .06 [x] List All Codes            │  │ │  │      │
+├── .07 [ ] Suggest New Code           │  │ │  │      │
+└── .08 [ ] Detect Duplicate Codes     │  │ │  │      │
+                                       │  │ │  │      │
+QC-029 [~] Apply Codes to Text ·······─│──│─│──│──────│──╮
+├── .01 [x] Select Text & Apply Code   │  │ │  │      │  │
+├── .02 [x] Apply Multiple Codes       │  │ │  │      │  │
+├── .03 [x] View Coded Segments        │  │ │  │      │  │
+├── .04 [x] View Segments for Code     │  │ │  │      │  │
+├── .05 [x] Remove Coding              │  │ │  │      │  │
+├── .06 [x] Add Segment Memo           │  │ │  │      │  │
+├── .07 [ ] Apply Code to Text Range   │  │ │  │      │  │
+├── .08 [ ] Suggest Codes for Text     │  │ │  │      │  │
+└── .09 [x] List Coded Segments        │  │ │  │      │  │
+                                       │  │ │  │      │  │
+QC-045 [ ] Complete Coding Context     │  │ │  │      │  │
+├── .01 [ ] Image Coding Controller ···│──│─│──│──────│──│──╮
+├── .02 [ ] Image Coding Screen ·······│──│─│──│──────│──│──│──╮
+├── .03 [ ] AV Coding Controller ······│──│─│──│──╮   │  │  │  │
+└── .04 [ ] AV Coding Screen ··········│──│─│──│──│─╮ │  │  │  │
+                                       │  │ │  │  │ │ │  │  │  │
+QC-030 [ ] Apply Codes to Images ◄─────│──│─│──│──│─│─╯──│──╯──╯
+├── .01 [ ] Draw Region on Image       │  │ │  │  │ │    │
+├── .02 [ ] Apply Code to Image Region │  │ │  │  │ │    │
+├── .03 [ ] View Coded Image Regions   │  │ │  │  │ │    │
+├── .04 [ ] Remove Image Region Coding │  │ │  │  │ │    │
+├── .05 [ ] Detect Image Regions       │  │ │  │  │ │    │
+└── .06 [ ] Suggest Codes for Image    │  │ │  │  │ │    │
+      depends on: QC-045.01, .02, 027.03  │ │  │  │ │    │
+                                       │  │ │  │  │ │    │
+QC-031 [ ] Apply Codes to AV ◄────────│──│─│──│──╯─╯    │
+├── .01 [ ] Play Media w/ Transcript   │  │ │  │         │
+├── .02 [ ] Mark Time Range            │  │ │  │         │
+├── .03 [ ] Apply Code to Time Range   │  │ │  │         │
+├── .04 [ ] View Coded Timeline        │  │ │  │         │
+├── .05 [ ] Transcribe Media           │  │ │  │         │
+├── .06 [ ] Detect Speakers            │  │ │  │         │
+└── .07 [ ] Suggest Codes from Trans.  │  │ │  │         │
+      depends on: QC-045.03, .04, 027.04  │ │  │         │
+                                       │  │ │  │         │
+                              ╭────────│──│─│──│─────────╯
+                              │        │  │ │  │
+                              ▼        │  │ │  │
+QC-033 [ ] Search & Find               │  │ │  │
+├── .01 [ ] Full-Text Search           │  │ │  │
+├── .02 [ ] Filter by Code             │  │ │  │
+├── .03 [ ] Filter by Source           │  │ │  │
+├── .04 [ ] Navigate to Result         │  │ │  │
+├── .05 [ ] Save Search                │  │ │  │
+├── .06 [ ] Semantic Search            │  │ │  │
+├── .07 [ ] Find Related Segments      │  │ │  │
+└── .08 [ ] Answer Data Questions      │  │ │  │
+      depends on: QC-029, 030, 031     │  │ │  │
+                                       │  │ │  │
+QC-034 [~] Manage Cases                │  │ │  │
+├── .01 [~] Create Case                │  │ │  │
+├── .02 [~] Link Source to Case        │  │ │  │
+├── .03 [~] Add Case Attributes ·······│──│─│──│─╮
+├── .04 [~] View Case Data             │  │ │  │ │
+├── .05 [~] List All Cases             │  │ │  │ │
+├── .06 [~] Suggest Case Groupings     │  │ │  │ │
+├── .07 [~] Compare Across Cases       │  │ │  │ │
+└── .08 [ ] Case Attribute Detail Panel│  │ │  │ │
+      depends on: QC-034.03 ◄──────────│──│─│──│─╯
+                                       │  │ │  │
+QC-035 [ ] Generate Reports            │  │ │  │
+├── .01 [ ] Code Frequencies ··········│──│─│──│──╮
+├── .02 [ ] Co-occurrence Matrix       │  │ │  │  │
+├── .03 [ ] Export to Spreadsheet      │  │ │  │  │
+├── .04 [ ] Visualize Code Distrib.    │  │ │  │  │
+├── .05 [ ] Summarize Findings         │  │ │  │  │
+├── .06 [ ] Identify Themes            │  │ │  │  │
+├── .07 [ ] Generate Insight Report    │  │ │  │  │
+└── .08 [ ] Code × Attr Cross-Tab ◄────│──│─│──│──╯
+      depends on: QC-029, 030, 031     │  │ │  │
+      .08 depends on: 034.03, 035.01   │  │ │  │
+                                       │  │ │  │
+QC-036 [ ] Collaborate                 │  │ │  │
+├── .01 [ ] Switch Coder Identity      │  │ │  │
+├── .02 [ ] View Coding by Coder       │  │ │  │
+├── .03 [ ] Compare Coders             │  │ │  │
+├── .04 [ ] Merge Coding               │  │ │  │
+├── .05 [ ] Calculate Reliability      │  │ │  │
+├── .06 [ ] Detect Coding Conflicts    │  │ │  │
+└── .07 [ ] Suggest Conflict Resoln.   │  │ │  │
+      depends on: QC-029, 030, 031     │  │ │  │
+                                       │  │ │  │
+QC-044 [ ] Visualizations              │  │ │  │
+├── .01 [ ] Code Network Graph         │  │ │  │
+├── .02 [ ] Code Hierarchy Tree        │  │ │  │
+├── .03 [ ] Generate Charts            │  │ │  │
+├── .04 [ ] Generate Word Cloud        │  │ │  │
+├── .05 [ ] Customize Visualizations   │  │ │  │
+├── .06 [ ] Export Visualizations      │  │ │  │
+└── .07 [ ] Agent Generate Viz         │  │ │  │
+      depends on: QC-029, 030, 031     │  │ │  │
+                                       │  │ │  │
+QC-037 [ ] Chat with Agent             │  │ │  │
+├── .01 [ ] Ask Questions About Data   │  │ │  │
+├── .02 [ ] Give Coding Instructions   │  │ │  │
+├── .03 [ ] Review Pending Suggestions │  │ │  │
+├── .04 [ ] Approve Agent Action       │  │ │  │
+├── .05 [ ] Reject Agent Action        │  │ │  │
+├── .06 [ ] Execute Multi-Step Task    │  │ │  │
+├── .07 [ ] Present Findings Clearly   │  │ │  │
+└── .08 [ ] Learn from Feedback        │  │ │  │
+      depends on: QC-033, 035, 036     │  │ │  │
+                                       │  │ │  │
+QC-050 [x] Agent Code Mgmt MCP Tools ◄╯──╯─╯  │
+      depends on: QC-028.01, .02, .03          │
+                                               │
+QC-051 [x] Replication Tests                   │
+      depends on: QC-027, 028, 029, 050        │
+                                               │
+═══ STANDALONE (no cross-deps) ════════════════│═════
+                                               │
+QC-032 [x] Auto-Code                           │
+├── .01-.05 [x] (all done)                     │
+├── .06 [ ] Find Similar Passages              │
+└── .07 [ ] Batch Apply to Similar             │
+                                               │
+QC-038 [x] Settings and Preferences            │
+├── .01-.05 [ ] (subtasks pending)             │
+                                               │
+QC-039 [x] Import/Export Formats               │
+├── .01-.07 [x] (all done)                     │
+                                               │
+QC-040 [ ] Data Privacy                        │
+├── .01-.05 [ ] (all pending)                  │
+                                               │
+QC-041 [ ] References & Bibliography           │
+├── .01-.04 [ ] (all pending)                  │
+                                               │
+QC-042 [ ] Apply Codes to PDF                  │
+├── .01-.05 [ ] (all pending)                  │
+                                               │
+QC-043 [ ] Journals and Memos                  │
+├── .01-.07 [ ] (all pending)                  │
+                                               │
+QC-046 [x] Remove v1→v2 Migration Code         │
+QC-048 [x] SQLite DB Version Control           │
+QC-049 [x] Observability (Logging/OTEL)        │
+QC-054 [x] Thread-Safe AI/Human Collab         │
+                                               │
+═══ INFRA PIPELINE ════════════════════════════╯═════
+
+QC-050 [x] Remove Convex Sync
+  │
+  ▼
+QC-047 [ ] S3 Data Store + DVC
+  │
+  ▼
+QC-051 [ ] Firebase Analytics Import Pipeline
+
+
+═══ CRITICAL PATH (longest chain) ═══════════════════
+
+QC-045 ──> QC-030/031 ──> QC-033 ──╮
+                          QC-035 ──┤──> QC-037 Chat with Agent
+                          QC-036 ──╯
+```
+
+---
+
 ## How to Update This File
 
 1. After E2E tests pass, check which `@allure.story` tags were tested
