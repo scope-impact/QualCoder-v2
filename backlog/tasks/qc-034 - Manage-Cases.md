@@ -24,6 +24,7 @@ Enable researchers and agents to organize data into cases (e.g., participants, s
 - [ ] #5 Agent can list all cases
 - [ ] #6 Agent can suggest case groupings
 - [ ] #7 Agent can compare across cases
+- [ ] #8 Researcher can view case attribute details inline
 <!-- AC:END -->
 
 ## Implementation Notes

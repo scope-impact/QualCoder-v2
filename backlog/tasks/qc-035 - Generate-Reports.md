@@ -28,4 +28,5 @@ Enable researchers and agents to generate analysis reports and visualizations fr
 - [ ] #5 Agent can summarize findings
 - [ ] #6 Agent can identify themes
 - [ ] #7 Agent can generate insight report
+- [ ] #8 Researcher can generate code × attribute cross-tabulation
 <!-- AC:END -->
